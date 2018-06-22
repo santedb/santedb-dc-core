@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.Core", "SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj", "{554DF209-7744-433F-993A-783E2A2803EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.SQLite", "SanteDB.DisconnectedClient.Core.SQLite\SanteDB.DisconnectedClient.SQLite.csproj", "{406D064D-78B4-467F-86C6-B3E2F12C0A65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.Synchronization", "SanteDB.DisconnectedClient.Sync\SanteDB.DisconnectedClient.Synchronization.csproj", "{86E9D31E-C5B3-4BA2-B512-075133051D48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.i18n", "SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj", "{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		MacDebug|Any CPU = MacDebug|Any CPU
+		MacRelease|Any CPU = MacRelease|Any CPU
+		Release|Any CPU = Release|Any CPU
+		SignedRelease|Any CPU = SignedRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{554DF209-7744-433F-993A-783E2A2803EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.MacDebug|Any CPU.ActiveCfg = MacDebug|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.MacDebug|Any CPU.Build.0 = MacDebug|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.MacRelease|Any CPU.ActiveCfg = MacRelease|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.MacRelease|Any CPU.Build.0 = MacRelease|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.SignedRelease|Any CPU.ActiveCfg = SignedRelease|Any CPU
+		{554DF209-7744-433F-993A-783E2A2803EF}.SignedRelease|Any CPU.Build.0 = SignedRelease|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.MacDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.MacDebug|Any CPU.Build.0 = Debug|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.MacRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.MacRelease|Any CPU.Build.0 = Release|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.SignedRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{406D064D-78B4-467F-86C6-B3E2F12C0A65}.SignedRelease|Any CPU.Build.0 = Release|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.MacDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.MacDebug|Any CPU.Build.0 = Debug|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.MacRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.MacRelease|Any CPU.Build.0 = Release|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.SignedRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{86E9D31E-C5B3-4BA2-B512-075133051D48}.SignedRelease|Any CPU.Build.0 = Release|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.MacDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.MacDebug|Any CPU.Build.0 = Debug|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.MacRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.MacRelease|Any CPU.Build.0 = Release|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.SignedRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.SignedRelease|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {03DECBBC-3568-4A1D-91C5-5E3BA2F29323}
+	EndGlobalSection
+EndGlobal
