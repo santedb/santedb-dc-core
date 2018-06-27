@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persistence service which is derived from an act
@@ -42,7 +42,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified TModel into the database
         /// </summary>
-        protected override TModel InsertInternal(LocalDataContext context, TModel data)
+        protected override TModel InsertInternal(SQLiteDataContext context, TModel data)
         {
             var inserted = this.m_actPersister.InsertCoreProperties(context, data);
             data.Key = inserted.Key;
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified TModel
         /// </summary>
-        protected override TModel UpdateInternal(LocalDataContext context, TModel data)
+        protected override TModel UpdateInternal(SQLiteDataContext context, TModel data)
         {
             this.m_actPersister.UpdateCoreProperties(context, data);
             return base.UpdateInternal(context, data);
@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the object
         /// </summary>
-        protected override TModel ObsoleteInternal(LocalDataContext context, TModel data)
+        protected override TModel ObsoleteInternal(SQLiteDataContext context, TModel data)
         {
             var retVal = this.m_actPersister.ObsoleteCoreProperties(context, data);
             return data;

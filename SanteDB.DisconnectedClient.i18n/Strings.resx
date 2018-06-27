@@ -245,4 +245,127 @@ Sincerely,
   <data name="locale_preparingPush" xml:space="preserve">
     <value>Preparing to push data...</value>
   </data>
+  <data name="err_already_syncrhonizing" xml:space="preserve">
+    <value>The device is already synchronizing data</value>
+  </data>
+  <data name="err_authentication_exception" xml:space="preserve">
+    <value>General authentication error occurred</value>
+  </data>
+  <data name="err_backupNotExist" xml:space="preserve">
+    <value>Cannot restore from backup as the backup files do not exist</value>
+  </data>
+  <data name="err_certificate_not_found" xml:space="preserve">
+    <value>The specified security certificate was not found</value>
+  </data>
+  <data name="err_compactNotPermitted" xml:space="preserve">
+    <value>Unfortunately compact is not permitted at this time</value>
+  </data>
+  <data name="err_configuration_invalid_restore_prompt" xml:space="preserve">
+    <value>Your configuration file could not be read. There is a backup on your device, would you like to try and recover the backup?</value>
+  </data>
+  <data name="err_duplicate_deviceName" xml:space="preserve">
+    <value>Device has already been registered.</value>
+  </data>
+  <data name="err_duplicate_package_name" xml:space="preserve">
+    <value>Package is already installed</value>
+  </data>
+  <data name="err_invalid_accept" xml:space="preserve">
+    <value>Accept header is not understood</value>
+  </data>
+  <data name="err_invalid_argumentType" xml:space="preserve">
+    <value>Argument is of wrong type</value>
+  </data>
+  <data name="err_login_invalidusername" xml:space="preserve">
+    <value>Invalid Username/Password</value>
+  </data>
+  <data name="err_moreThanOneApplication" xml:space="preserve">
+    <value>There is more than one instance of the application running. This may cause serious issues. Closing all instances of the application and restarting is recommended.</value>
+  </data>
+  <data name="err_offline_use_cache_creds" xml:space="preserve">
+    <value>{0} - Hint: If you changed your password or account lately, try the password you last used on this device. </value>
+  </data>
+  <data name="err_purgeNotPermitted" xml:space="preserve">
+    <value>A purge is not permitted on this application configuration. Perhaps you're set to online mode only?</value>
+  </data>
+  <data name="err_reset_not_supported" xml:space="preserve">
+    <value>Password reset is not supported from this configuration</value>
+  </data>
+  <data name="err_response_failed_validation" xml:space="preserve">
+    <value>Invalid response received from server</value>
+  </data>
+  <data name="err_restoreNotPermitted" xml:space="preserve">
+    <value>A restore is not permitted due to the configuration of this device. Perhaps you're in online only mode?</value>
+  </data>
+  <data name="err_startup_error" xml:space="preserve">
+    <value>A startup error occurred. The application cannot continue. Please contact support.</value>
+  </data>
+  <data name="err_too_many_certificate_matches" xml:space="preserve">
+    <value>Too many certificates matched the criteria (perhaps search criteria is too vague?)</value>
+  </data>
+  <data name="err_unauthenticated_principal" xml:space="preserve">
+    <value>Cannot set context to unauthenticated principal</value>
+  </data>
+  <data name="err_updateFailed" xml:space="preserve">
+    <value>Update failed. Please try again at a later time.</value>
+  </data>
+  <data name="flushing_logFile" xml:space="preserve">
+    <value>Flusing diagnostics queue...</value>
+  </data>
+  <data name="locale_backup" xml:space="preserve">
+    <value>Backing up your files....</value>
+  </data>
+  <data name="locale_backup_compressing" xml:space="preserve">
+    <value>Compressing backup...</value>
+  </data>
+  <data name="locale_backup_confirm" xml:space="preserve">
+    <value>WARNING: YOU ARE ABOUT TO EXPORT SENSITIVE CLINICAL INFORMATION FROM A SECURED LOCATION TO A PUBLIC LOCATION. YOU MUST TAKE ALL PRECAUTIONS IN SAFEGUARDING THIS DATA. AN AUDIT WITH YOUR USERNAME WILL BE GENERATED UPON CLICKING OK. DO YOU WANT TO CONTINUE?</value>
+  </data>
+  <data name="locale_backup_restore" xml:space="preserve">
+    <value>Restoring Your Backup...</value>
+  </data>
+  <data name="locale_backup_restore_confirm" xml:space="preserve">
+    <value>You are about to restore a backup taken on {0}, this will overwrite any data you have on your tablet. Are you sure you want to do this?</value>
+  </data>
+  <data name="locale_certificateExpired" xml:space="preserve">
+    <value>The certificate for publisher {0} is expired (expired on {1:yyyy-MMM-dd}). Do you want to ignore this error and continue?</value>
+  </data>
+  <data name="locale_certificateValidation" xml:space="preserve">
+    <value>The server responded with an invalid certificate: {0}. Do you want to trust this certificate?</value>
+  </data>
+  <data name="locale_checkForUpdates" xml:space="preserve">
+    <value>Would you like to check the server for updates?</value>
+  </data>
+  <data name="locale_downloading" xml:space="preserve">
+    <value>Downloading {0}...</value>
+  </data>
+  <data name="locale_downloadingExternalPatient" xml:space="preserve">
+    <value>Downloading external patient data...</value>
+  </data>
+  <data name="locale_invalidSignature" xml:space="preserve">
+    <value>The applet could not be installed because the verification stage failed.</value>
+  </data>
+  <data name="locale_preparingPush1" xml:space="preserve">
+    <value>Preparing to push data...</value>
+  </data>
+  <data name="locale_truncateCarePlan" xml:space="preserve">
+    <value>Would you like to delete and completely re-calculate the entire facility plan? (selecting cancel will only do a partial re-calculation)</value>
+  </data>
+  <data name="locale_unsignedAppletPrompt" xml:space="preserve">
+    <value>The applet {0} is not signed and its authenticity cannot be verified. Do you want to continue installation?</value>
+  </data>
+  <data name="locale_unsignedAppletsNotAllowed" xml:space="preserve">
+    <value>The applet {0} is not signed or contains an invalid header. Your security settings do not allow for unsigned applets to be executed.</value>
+  </data>
+  <data name="locale_untrustedPublisherPrompt" xml:space="preserve">
+    <value>The applet {0} published by {1} is not trusted. Do you want to continue to load / install this applet?</value>
+  </data>
+  <data name="locale_updateCheck" xml:space="preserve">
+    <value>Checking for updates...</value>
+  </data>
+  <data name="locale_upgradeConfirm" xml:space="preserve">
+    <value>Would you like to upgrade {0} to version {1} from version {2}?</value>
+  </data>
+  <data name="locale_waitForOutbound" xml:space="preserve">
+    <value>Sending items to server...</value>
+  </data>
 </root>

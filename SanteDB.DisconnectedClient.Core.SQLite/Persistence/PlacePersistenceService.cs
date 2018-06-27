@@ -18,16 +18,16 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persister which persists places
@@ -37,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Load to a model instance
         /// </summary>
-        public override Place ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Place ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var place = dataInstance as DbPlace?? dataInstance.GetInstanceOf<DbPlace>() ?? context.Connection.Table<DbPlace>().Where(o => o.Uuid == iddat.Uuid).FirstOrDefault();
@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert 
         /// </summary>
-        protected override Place InsertInternal(LocalDataContext context, Place data)
+        protected override Place InsertInternal(SQLiteDataContext context, Place data)
         {
             var retVal = base.InsertInternal(context, data);
 
@@ -75,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the place
         /// </summary>
-        protected override Place UpdateInternal(LocalDataContext context, Place data)
+        protected override Place UpdateInternal(SQLiteDataContext context, Place data)
         {
             var retVal = base.UpdateInternal(context, data);
 

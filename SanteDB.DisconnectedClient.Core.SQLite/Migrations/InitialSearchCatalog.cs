@@ -18,8 +18,8 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
-using SanteDB.DisconnectedClient.Core.Search;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Search;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -27,8 +27,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.DisconnectedClient.SQLite.Search.Model;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
+namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
     /// <summary>
     /// Data migration that inserts the initial search catalog
@@ -83,9 +87,9 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
                 var conn = SQLiteConnectionManager.Current.GetConnection(connStr);
                 using (conn.Lock())
                 {
-                    conn.CreateTable<Search.Model.SearchEntityType>();
-                    conn.CreateTable<Search.Model.SearchTerm>();
-                    conn.CreateTable<Search.Model.SearchTermEntity>();
+                    conn.CreateTable<SearchEntityType>();
+                    conn.CreateTable<SearchTerm>();
+                    conn.CreateTable<SearchTermEntity>();
                 } // release lock
 
                 // Perform an initial indexing

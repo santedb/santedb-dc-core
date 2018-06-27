@@ -30,10 +30,10 @@ using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Core.Data
 {
-	/// <summary>
-	/// Entity source which loads local objects
-	/// </summary>
-	public class LocalEntitySource : IEntitySourceProvider
+    /// <summary>
+    /// Entity source which loads local objects
+    /// </summary>
+    public class LocalEntitySource : IEntitySourceProvider
 	{
 
 

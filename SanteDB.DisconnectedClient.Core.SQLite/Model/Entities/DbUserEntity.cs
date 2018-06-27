@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
@@ -27,7 +27,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
     /// <summary>
     /// User entity ORM

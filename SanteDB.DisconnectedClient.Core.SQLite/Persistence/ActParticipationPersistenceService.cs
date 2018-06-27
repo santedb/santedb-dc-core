@@ -20,8 +20,8 @@
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -29,7 +29,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Act participation persistence service
@@ -104,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Before inserting domain instance
         /// </summary>
-        protected override DbActParticipation BeforeInsertDomainObject(LocalDataContext context, DbActParticipation domain)
+        protected override DbActParticipation BeforeInsertDomainObject(SQLiteDataContext context, DbActParticipation domain)
         {
             lock (m_lockObject)
             {
@@ -126,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance 
         /// </summary>
-        public override ActParticipation ToModelInstance(object dataInstance, LocalDataContext context)
+        public override ActParticipation ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var dbi = dataInstance as DbActParticipation;
             if (dbi == null) return null;
@@ -151,7 +151,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Create DbActParticipation from modelinstance
         /// </summary>
-        public override object FromModelInstance(ActParticipation modelInstance, LocalDataContext context)
+        public override object FromModelInstance(ActParticipation modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbActParticipation()
@@ -167,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the relationship
         /// </summary>
-        protected override ActParticipation InsertInternal(LocalDataContext context, ActParticipation data)
+        protected override ActParticipation InsertInternal(SQLiteDataContext context, ActParticipation data)
         {
             // Ensure we haven't already persisted this
             if (data.PlayerEntity != null) data.PlayerEntity = data.PlayerEntity.EnsureExists(context);
@@ -217,7 +217,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified object
         /// </summary>
-        protected override ActParticipation UpdateInternal(LocalDataContext context, ActParticipation data)
+        protected override ActParticipation UpdateInternal(SQLiteDataContext context, ActParticipation data)
         {
             if (data.PlayerEntity != null) data.PlayerEntity = data.PlayerEntity.EnsureExists(context);
             data.PlayerEntityKey = data.PlayerEntity?.Key ?? data.PlayerEntityKey;

@@ -389,7 +389,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             {
                 IDTypeCode = AuditableObjectIdType.Uri,
                 NameData = identityProvider.GetType().AssemblyQualifiedName,
-                ObjectId = $"http://openiz.org/mobile/auth/{identityProvider.GetType().FullName.Replace(".", "/")}",
+                ObjectId = $"http://santedb.org/mobile/auth/{identityProvider.GetType().FullName.Replace(".", "/")}",
                 Type = AuditableObjectType.SystemObject,
                 Role = AuditableObjectRole.Job
             });

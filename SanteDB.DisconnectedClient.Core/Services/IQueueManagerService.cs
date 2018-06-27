@@ -1,4 +1,5 @@
-﻿using SanteDB.DisconnectedClient.Core.Synchronization;
+﻿using SanteDB.Core.Model.Query;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,6 +70,11 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// Queue has been exhuasted
         /// </summary>
         event EventHandler<QueueExhaustedEventArgs> QueueExhausted;
+
+        /// <summary>
+        /// Exhausts the starts the exhaustion of the queue
+        /// </summary>
+        void ExhaustOutboundQueues();
 
     }
 }

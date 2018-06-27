@@ -24,7 +24,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Search.Model
+namespace SanteDB.DisconnectedClient.SQLite.Search.Model
 {
     /// <summary>
     /// Identifies a link between a search term and an entity

@@ -30,22 +30,22 @@ namespace SanteDB.DisconnectedClient.Core.Security
 		/// <summary>
 		/// The open iz scope claim.
 		/// </summary>
-		public const string OpenIzScopeClaim = "http://openiz.org/claims/scope";
+		public const string OpenIzScopeClaim = "http://santedb.org/claims/scope";
 
 		/// <summary>
 		/// Granted policy claim
 		/// </summary>
-		public const string OpenIzGrantedPolicyClaim = "http://openiz.org/claims/grant";
+		public const string OpenIzGrantedPolicyClaim = "http://santedb.org/claims/grant";
 
 		/// <summary>
 		/// Device identifier claim
 		/// </summary>
-		public const string OpenIzDeviceIdentifierClaim = "http://openiz.org/claims/device-id";
+		public const string OpenIzDeviceIdentifierClaim = "http://santedb.org/claims/device-id";
 
 		/// <summary>
 		/// Identifier of the application
 		/// </summary>
-		public const string OpenIzApplicationIdentifierClaim = "http://openiz.org/claims/application-id";
+		public const string OpenIzApplicationIdentifierClaim = "http://santedb.org/claims/application-id";
 
 		/// <summary>
 		/// Patient identifier claim

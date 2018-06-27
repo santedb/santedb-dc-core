@@ -18,9 +18,9 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Roles;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Roles;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -29,7 +29,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Provider persistence service
@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Model instance
         /// </summary>
-        public override Provider ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Provider ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var provider = dataInstance as DbProvider ?? dataInstance.GetInstanceOf<DbProvider>()?? context.Connection.Table<DbProvider>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -65,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified person into the database
         /// </summary>
-        protected override Provider InsertInternal(LocalDataContext context, Provider data)
+        protected override Provider InsertInternal(SQLiteDataContext context, Provider data)
         {
             if(data.ProviderSpecialty != null) data.ProviderSpecialty?.EnsureExists(context);
             data.ProviderSpecialtyKey = data.ProviderSpecialty?.Key ?? data.ProviderSpecialtyKey;
@@ -77,7 +77,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified person
         /// </summary>
-        protected override Provider UpdateInternal(LocalDataContext context, Provider data)
+        protected override Provider UpdateInternal(SQLiteDataContext context, Provider data)
         {
             // Ensure exists
             if(data.ProviderSpecialty != null) data.ProviderSpecialty = data.ProviderSpecialty?.EnsureExists(context);
@@ -90,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the object
         /// </summary>
-        protected override Provider ObsoleteInternal(LocalDataContext context, Provider data)
+        protected override Provider ObsoleteInternal(SQLiteDataContext context, Provider data)
         {
             var retVal = this.m_personPersister.Obsolete(context, data);
             return data;

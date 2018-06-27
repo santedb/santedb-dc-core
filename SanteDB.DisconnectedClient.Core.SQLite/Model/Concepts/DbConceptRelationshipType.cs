@@ -21,7 +21,7 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Concepts
+namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
 {
 	/// <summary>
 	/// Concept relationship type.

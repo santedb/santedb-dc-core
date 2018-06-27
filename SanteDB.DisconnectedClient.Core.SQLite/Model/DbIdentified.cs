@@ -24,12 +24,12 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model
+namespace SanteDB.DisconnectedClient.SQLite.Model
 {
 	/// <summary>
 	/// Represents data that is identified in some way
@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Model
 	{
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Data.Model.Model.DbIdentified"/> class.
+		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.SQLite.Model.Model.DbIdentified"/> class.
 		/// </summary>
 		public DbIdentified ()
 		{

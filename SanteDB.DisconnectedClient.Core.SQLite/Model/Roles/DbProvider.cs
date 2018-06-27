@@ -18,13 +18,13 @@
  * Date: 2017-9-1
  */
 using System;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Roles
+namespace SanteDB.DisconnectedClient.SQLite.Model.Roles
 {
 	/// <summary>
 	/// Represents a health care provider in the database

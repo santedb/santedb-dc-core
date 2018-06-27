@@ -20,10 +20,10 @@
 using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
 	/// <summary>
 	/// Represents the entity representation of an object

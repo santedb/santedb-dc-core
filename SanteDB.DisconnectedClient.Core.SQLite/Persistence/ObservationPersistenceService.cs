@@ -19,11 +19,11 @@
  */
 using System;
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SQLite.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Persistence class for observations
@@ -37,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(TObservation modelInstance, LocalDataContext context)
+        public override object FromModelInstance(TObservation modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbObservation()
@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert a data act and observation instance to an observation
         /// </summary>
-        public virtual TObservation ToModelInstance(TDbObservation dataInstance, DbAct actInstance, DbObservation obsInstance, LocalDataContext context)
+        public virtual TObservation ToModelInstance(TDbObservation dataInstance, DbAct actInstance, DbObservation obsInstance, SQLiteDataContext context)
         {
             var retVal = m_actPersister.ToModelInstance<TObservation>(actInstance, context);
 
@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified observation into the database
         /// </summary>
-        protected override TObservation InsertInternal(LocalDataContext context, TObservation data)
+        protected override TObservation InsertInternal(SQLiteDataContext context, TObservation data)
         {
             if(data.InterpretationConcept != null) data.InterpretationConcept = data.InterpretationConcept?.EnsureExists(context);
             data.InterpretationConceptKey = data.InterpretationConcept?.Key ?? data.InterpretationConceptKey;
@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Updates the specified observation
         /// </summary>
-        protected override TObservation UpdateInternal(LocalDataContext context, TObservation data)
+        protected override TObservation UpdateInternal(SQLiteDataContext context, TObservation data)
         {
             if (data.InterpretationConcept != null) data.InterpretationConcept = data.InterpretationConcept?.EnsureExists(context);
             data.InterpretationConceptKey = data.InterpretationConcept?.Key ?? data.InterpretationConceptKey;
@@ -119,7 +119,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(TextObservation modelInstance, LocalDataContext context)
+        public override object FromModelInstance(TextObservation modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbTextObservation()
@@ -132,7 +132,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert the specified object to a model instance
         /// </summary>
-        public override TextObservation ToModelInstance(DbTextObservation dataInstance, DbAct actInstance, DbObservation obsInstance, LocalDataContext context)
+        public override TextObservation ToModelInstance(DbTextObservation dataInstance, DbAct actInstance, DbObservation obsInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, actInstance, obsInstance, context);
             retVal.Value = dataInstance.Value;
@@ -142,7 +142,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert to model instance
         /// </summary>
-        public override TextObservation ToModelInstance(object dataInstance, LocalDataContext context)
+        public override TextObservation ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var textObs = dataInstance as DbTextObservation ?? dataInstance.GetInstanceOf<DbTextObservation>() ?? context.Connection.Table<DbTextObservation>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -160,7 +160,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(CodedObservation modelInstance, LocalDataContext context)
+        public override object FromModelInstance(CodedObservation modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbCodedObservation()
@@ -173,7 +173,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert the specified object to a model instance
         /// </summary>
-        public override CodedObservation ToModelInstance(DbCodedObservation dataInstance, DbAct actInstance, DbObservation obsInstance, LocalDataContext context)
+        public override CodedObservation ToModelInstance(DbCodedObservation dataInstance, DbAct actInstance, DbObservation obsInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, actInstance, obsInstance, context);
             if(dataInstance.Value != null)
@@ -184,7 +184,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert to model instance
         /// </summary>
-        public override CodedObservation ToModelInstance(object dataInstance, LocalDataContext context)
+        public override CodedObservation ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var codeObs = dataInstance as DbCodedObservation ?? dataInstance.GetInstanceOf<DbCodedObservation>() ?? context.Connection.Table<DbCodedObservation>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -196,7 +196,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the observation
         /// </summary>
-        protected override CodedObservation InsertInternal(LocalDataContext context, CodedObservation data)
+        protected override CodedObservation InsertInternal(SQLiteDataContext context, CodedObservation data)
         {
             if(data.Value != null) data.Value = data.Value?.EnsureExists(context);
             data.ValueKey = data.Value?.Key ?? data.ValueKey;
@@ -206,7 +206,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified observation
         /// </summary>
-        protected override CodedObservation UpdateInternal(LocalDataContext context, CodedObservation data)
+        protected override CodedObservation UpdateInternal(SQLiteDataContext context, CodedObservation data)
         {
             if(data.Value != null) data.Value = data.Value?.EnsureExists(context);
             data.ValueKey = data.Value?.Key ?? data.ValueKey;
@@ -223,7 +223,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(QuantityObservation modelInstance, LocalDataContext context)
+        public override object FromModelInstance(QuantityObservation modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbQuantityObservation()
@@ -237,7 +237,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert the specified object to a model instance
         /// </summary>
-        public override QuantityObservation ToModelInstance(DbQuantityObservation dataInstance, DbAct actInstance, DbObservation obsInstance, LocalDataContext context)
+        public override QuantityObservation ToModelInstance(DbQuantityObservation dataInstance, DbAct actInstance, DbObservation obsInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, actInstance, obsInstance, context);
             if (dataInstance.UnitOfMeasureUuid != null)
@@ -249,7 +249,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert to model instance
         /// </summary>
-        public override QuantityObservation ToModelInstance(object dataInstance, LocalDataContext context)
+        public override QuantityObservation ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var qObs = dataInstance as DbQuantityObservation ?? dataInstance.GetInstanceOf<DbQuantityObservation>() ?? context.Connection.Table<DbQuantityObservation>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -261,7 +261,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the observation
         /// </summary>
-        protected override QuantityObservation InsertInternal(LocalDataContext context, QuantityObservation data)
+        protected override QuantityObservation InsertInternal(SQLiteDataContext context, QuantityObservation data)
         {
             if(data.UnitOfMeasure != null) data.UnitOfMeasure = data.UnitOfMeasure?.EnsureExists(context);
             data.UnitOfMeasureKey = data.UnitOfMeasure?.Key ?? data.UnitOfMeasureKey;
@@ -271,7 +271,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified observation
         /// </summary>
-        protected override QuantityObservation UpdateInternal(LocalDataContext context, QuantityObservation data)
+        protected override QuantityObservation UpdateInternal(SQLiteDataContext context, QuantityObservation data)
         {
             if(data.UnitOfMeasure != null) data.UnitOfMeasure = data.UnitOfMeasure?.EnsureExists(context);
             data.UnitOfMeasureKey = data.UnitOfMeasure?.Key ?? data.UnitOfMeasureKey;

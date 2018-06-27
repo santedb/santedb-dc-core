@@ -89,6 +89,204 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The device is already synchronizing data.
+        /// </summary>
+        public static string err_already_syncrhonizing {
+            get {
+                return ResourceManager.GetString("err_already_syncrhonizing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to General authentication error occurred.
+        /// </summary>
+        public static string err_authentication_exception {
+            get {
+                return ResourceManager.GetString("err_authentication_exception", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot restore from backup as the backup files do not exist.
+        /// </summary>
+        public static string err_backupNotExist {
+            get {
+                return ResourceManager.GetString("err_backupNotExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified security certificate was not found.
+        /// </summary>
+        public static string err_certificate_not_found {
+            get {
+                return ResourceManager.GetString("err_certificate_not_found", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unfortunately compact is not permitted at this time.
+        /// </summary>
+        public static string err_compactNotPermitted {
+            get {
+                return ResourceManager.GetString("err_compactNotPermitted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your configuration file could not be read. There is a backup on your device, would you like to try and recover the backup?.
+        /// </summary>
+        public static string err_configuration_invalid_restore_prompt {
+            get {
+                return ResourceManager.GetString("err_configuration_invalid_restore_prompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Device has already been registered..
+        /// </summary>
+        public static string err_duplicate_deviceName {
+            get {
+                return ResourceManager.GetString("err_duplicate_deviceName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package is already installed.
+        /// </summary>
+        public static string err_duplicate_package_name {
+            get {
+                return ResourceManager.GetString("err_duplicate_package_name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Accept header is not understood.
+        /// </summary>
+        public static string err_invalid_accept {
+            get {
+                return ResourceManager.GetString("err_invalid_accept", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Argument is of wrong type.
+        /// </summary>
+        public static string err_invalid_argumentType {
+            get {
+                return ResourceManager.GetString("err_invalid_argumentType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid Username/Password.
+        /// </summary>
+        public static string err_login_invalidusername {
+            get {
+                return ResourceManager.GetString("err_login_invalidusername", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There is more than one instance of the application running. This may cause serious issues. Closing all instances of the application and restarting is recommended..
+        /// </summary>
+        public static string err_moreThanOneApplication {
+            get {
+                return ResourceManager.GetString("err_moreThanOneApplication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} - Hint: If you changed your password or account lately, try the password you last used on this device. .
+        /// </summary>
+        public static string err_offline_use_cache_creds {
+            get {
+                return ResourceManager.GetString("err_offline_use_cache_creds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A purge is not permitted on this application configuration. Perhaps you&apos;re set to online mode only?.
+        /// </summary>
+        public static string err_purgeNotPermitted {
+            get {
+                return ResourceManager.GetString("err_purgeNotPermitted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Password reset is not supported from this configuration.
+        /// </summary>
+        public static string err_reset_not_supported {
+            get {
+                return ResourceManager.GetString("err_reset_not_supported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid response received from server.
+        /// </summary>
+        public static string err_response_failed_validation {
+            get {
+                return ResourceManager.GetString("err_response_failed_validation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A restore is not permitted due to the configuration of this device. Perhaps you&apos;re in online only mode?.
+        /// </summary>
+        public static string err_restoreNotPermitted {
+            get {
+                return ResourceManager.GetString("err_restoreNotPermitted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A startup error occurred. The application cannot continue. Please contact support..
+        /// </summary>
+        public static string err_startup_error {
+            get {
+                return ResourceManager.GetString("err_startup_error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Too many certificates matched the criteria (perhaps search criteria is too vague?).
+        /// </summary>
+        public static string err_too_many_certificate_matches {
+            get {
+                return ResourceManager.GetString("err_too_many_certificate_matches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set context to unauthenticated principal.
+        /// </summary>
+        public static string err_unauthenticated_principal {
+            get {
+                return ResourceManager.GetString("err_unauthenticated_principal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update failed. Please try again at a later time..
+        /// </summary>
+        public static string err_updateFailed {
+            get {
+                return ResourceManager.GetString("err_updateFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Flusing diagnostics queue....
+        /// </summary>
+        public static string flushing_logFile {
+            get {
+                return ResourceManager.GetString("flushing_logFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;p&gt;The server encountered an internal error while processing your request. Please contact the system administrator for more information. Include the following diagnostic error data:&lt;/p&gt;&lt;pre&gt;{0}&lt;/pre&gt;.
         /// </summary>
         public static string InternalServerError {
@@ -116,6 +314,51 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Backing up your files.....
+        /// </summary>
+        public static string locale_backup {
+            get {
+                return ResourceManager.GetString("locale_backup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Compressing backup....
+        /// </summary>
+        public static string locale_backup_compressing {
+            get {
+                return ResourceManager.GetString("locale_backup_compressing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to WARNING: YOU ARE ABOUT TO EXPORT SENSITIVE CLINICAL INFORMATION FROM A SECURED LOCATION TO A PUBLIC LOCATION. YOU MUST TAKE ALL PRECAUTIONS IN SAFEGUARDING THIS DATA. AN AUDIT WITH YOUR USERNAME WILL BE GENERATED UPON CLICKING OK. DO YOU WANT TO CONTINUE?.
+        /// </summary>
+        public static string locale_backup_confirm {
+            get {
+                return ResourceManager.GetString("locale_backup_confirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restoring Your Backup....
+        /// </summary>
+        public static string locale_backup_restore {
+            get {
+                return ResourceManager.GetString("locale_backup_restore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are about to restore a backup taken on {0}, this will overwrite any data you have on your tablet. Are you sure you want to do this?.
+        /// </summary>
+        public static string locale_backup_restore_confirm {
+            get {
+                return ResourceManager.GetString("locale_backup_restore_confirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Preparing imported data....
         /// </summary>
         public static string locale_calculateImportedCareplan {
@@ -130,6 +373,33 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_calculatingCarePlan {
             get {
                 return ResourceManager.GetString("locale_calculatingCarePlan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The certificate for publisher {0} is expired (expired on {1:yyyy-MMM-dd}). Do you want to ignore this error and continue?.
+        /// </summary>
+        public static string locale_certificateExpired {
+            get {
+                return ResourceManager.GetString("locale_certificateExpired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The server responded with an invalid certificate: {0}. Do you want to trust this certificate?.
+        /// </summary>
+        public static string locale_certificateValidation {
+            get {
+                return ResourceManager.GetString("locale_certificateValidation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Would you like to check the server for updates?.
+        /// </summary>
+        public static string locale_checkForUpdates {
+            get {
+                return ResourceManager.GetString("locale_checkForUpdates", resourceCulture);
             }
         }
         
@@ -166,6 +436,24 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_downloadErrorBody {
             get {
                 return ResourceManager.GetString("locale_downloadErrorBody", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloading {0}....
+        /// </summary>
+        public static string locale_downloading {
+            get {
+                return ResourceManager.GetString("locale_downloading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloading external patient data....
+        /// </summary>
+        public static string locale_downloadingExternalPatient {
+            get {
+                return ResourceManager.GetString("locale_downloadingExternalPatient", resourceCulture);
             }
         }
         
@@ -226,6 +514,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The applet could not be installed because the verification stage failed..
+        /// </summary>
+        public static string locale_invalidSignature {
+            get {
+                return ResourceManager.GetString("locale_invalidSignature", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid Username / Password.
         /// </summary>
         public static string locale_invalidUserNamePassword {
@@ -258,6 +555,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_preparingPush {
             get {
                 return ResourceManager.GetString("locale_preparingPush", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Preparing to push data....
+        /// </summary>
+        public static string locale_preparingPush1 {
+            get {
+                return ResourceManager.GetString("locale_preparingPush1", resourceCulture);
             }
         }
         
@@ -411,6 +717,69 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_syncErrorSubject {
             get {
                 return ResourceManager.GetString("locale_syncErrorSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Would you like to delete and completely re-calculate the entire facility plan? (selecting cancel will only do a partial re-calculation).
+        /// </summary>
+        public static string locale_truncateCarePlan {
+            get {
+                return ResourceManager.GetString("locale_truncateCarePlan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The applet {0} is not signed and its authenticity cannot be verified. Do you want to continue installation?.
+        /// </summary>
+        public static string locale_unsignedAppletPrompt {
+            get {
+                return ResourceManager.GetString("locale_unsignedAppletPrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The applet {0} is not signed or contains an invalid header. Your security settings do not allow for unsigned applets to be executed..
+        /// </summary>
+        public static string locale_unsignedAppletsNotAllowed {
+            get {
+                return ResourceManager.GetString("locale_unsignedAppletsNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The applet {0} published by {1} is not trusted. Do you want to continue to load / install this applet?.
+        /// </summary>
+        public static string locale_untrustedPublisherPrompt {
+            get {
+                return ResourceManager.GetString("locale_untrustedPublisherPrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking for updates....
+        /// </summary>
+        public static string locale_updateCheck {
+            get {
+                return ResourceManager.GetString("locale_updateCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Would you like to upgrade {0} to version {1} from version {2}?.
+        /// </summary>
+        public static string locale_upgradeConfirm {
+            get {
+                return ResourceManager.GetString("locale_upgradeConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sending items to server....
+        /// </summary>
+        public static string locale_waitForOutbound {
+            get {
+                return ResourceManager.GetString("locale_waitForOutbound", resourceCulture);
             }
         }
         

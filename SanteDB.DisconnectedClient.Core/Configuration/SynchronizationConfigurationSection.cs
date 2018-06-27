@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Configuration related to synchronization
     /// </summary>
-	[XmlType(nameof(SynchronizationConfigurationSection), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(SynchronizationConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
     public class SynchronizationConfigurationSection : IConfigurationSection
     {
         /// <summary>
@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Synchronization 
     /// </summary>
-    [XmlType(nameof(SynchronizationResource), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType(nameof(SynchronizationResource), Namespace = "http://santedb.org/mobile/configuration")]
     public class SynchronizationResource
     {
         /// <summary>
@@ -153,7 +153,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Represents synchronization pull triggers
     /// </summary>
-    [XmlType(nameof(SynchronizationPullTriggerType), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType(nameof(SynchronizationPullTriggerType), Namespace = "http://santedb.org/mobile/configuration")]
     [Flags]
     public enum SynchronizationPullTriggerType
     {

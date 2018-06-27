@@ -31,7 +31,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Represents configuration related to applets
 	/// </summary>
-	[JsonObject, XmlType(nameof(AppletConfigurationSection), Namespace = "http://openiz.org/mobile/configuration")]
+	[JsonObject, XmlType(nameof(AppletConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
 	public class AppletConfigurationSection : IConfigurationSection
 	{
 		/// <summary>
@@ -114,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Applet security configuration
     /// </summary>
-    [XmlType(nameof(AppletSecurityConfiguration), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType(nameof(AppletSecurityConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
     [JsonObject(nameof(AppletSecurityConfiguration))]
     public class AppletSecurityConfiguration
     {
@@ -143,7 +143,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Represents a configuration of an applet
     /// </summary>
-    [JsonObject, XmlType(nameof(AppletConfiguration), Namespace = "http://openiz.org/mobile/configuration")]
+    [JsonObject, XmlType(nameof(AppletConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
 	public class AppletConfiguration
 	{
 
@@ -170,7 +170,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Applet configuration entry
 	/// </summary>
-	[JsonObject, XmlType(nameof(AppletConfigurationEntry), Namespace = "http://openiz.org/mobile/configuration")]
+	[JsonObject, XmlType(nameof(AppletConfigurationEntry), Namespace = "http://santedb.org/mobile/configuration")]
 	public class AppletConfigurationEntry
 	{
 		/// <summary>

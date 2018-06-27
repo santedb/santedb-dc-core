@@ -21,10 +21,10 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Security
+namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
 	/// <summary>
 	/// Represents a security policy instance which includes a link to a policy and

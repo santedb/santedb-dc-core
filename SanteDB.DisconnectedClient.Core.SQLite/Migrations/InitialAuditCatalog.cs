@@ -18,15 +18,17 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.Core.Security.Audit.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
+namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
     /// <summary>
     /// Database migration for audit

@@ -59,12 +59,18 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Alerting\LocalAlertService.cs" />
     <Compile Include="Configuration\Data\Migrations\SubscribePrimaryLocationUpdate.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
+    <Compile Include="Security\IOfflinePrincipal.cs" />
+    <Compile Include="Security\LocalPolicyDecisionService.cs" />
+    <Compile Include="Synchronization\ISynchronizationLogService.cs" />
+    <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
     <Compile Include="Security\Audit\AuditUtil.cs" />
     <Compile Include="Security\NullCredentials.cs" />
     <Compile Include="Services\IBackupService.cs" />
     <Compile Include="Services\Impl\EntityRepositoryBase.cs" />
+    <Compile Include="Services\Impl\LocalAuditService.cs" />
     <Compile Include="Services\Impl\LocalTagPersistenceService.cs" />
     <Compile Include="Services\IQueueManagerService.cs" />
     <Compile Include="Services\ITickleService.cs" />
@@ -74,7 +80,7 @@
     <Compile Include="Caching\MemoryCache.cs" />
     <Compile Include="Caching\MemoryCacheService.cs" />
     <Compile Include="Configuration\SynchronizationConfigurationSection.cs" />
-    <Compile Include="Data\ImsiPersistenceService.cs" />
+    <Compile Include="Data\HdsiPersistenceService.cs" />
     <Compile Include="Exceptions\InvalidVersionException.cs" />
     <Compile Include="Exceptions\SessionExpiredException.cs" />
     <Compile Include="Interop\AMI\AmiIntegrationService.cs" />
@@ -124,7 +130,7 @@
     <Compile Include="Security\Remote\AmiPolicyInformationService.cs" />
     <Compile Include="Services\IDaemonService.cs" />
     <Compile Include="Services\IIdentityProviderService.cs" />
-    <Compile Include="Interop\IMSI\ImsiIntegrationService.cs" />
+    <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" />
     <Compile Include="Services\Impl\LocalConceptService.cs" />
     <Compile Include="Services\Impl\LocalPatientService.cs" />
     <Compile Include="Services\Impl\LocalSecurityService.cs" />
@@ -140,6 +146,7 @@
     <Compile Include="Services\IPasswordHashingService.cs" />
     <Compile Include="Configuration\ServiceClientDescriptionConfigurationSection.cs" />
     <Compile Include="Data\LocalEntitySource.cs" />
+    <Compile Include="Synchronization\IQueueFileProvider.cs" />
     <Compile Include="Synchronization\ISynchronizationLogEntry.cs" />
     <Compile Include="Synchronization\ISynchronizationQueue.cs" />
     <Compile Include="Synchronization\SynchronizationOperationType.cs" />
@@ -161,8 +168,8 @@
     <EmbeddedResource Include="Data\Warehouse\CarePlan\CarePlanWarehouseSchema.xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\OpenIZDC.licenseheader">
-      <Link>OpenIZDC.licenseheader</Link>
+    <None Include="..\SanteDB.licenseheader">
+      <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
     <None Include="packages.config" />

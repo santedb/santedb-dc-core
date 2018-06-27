@@ -18,6 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.Core;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
@@ -28,7 +29,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Connection
+namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
 
     public static class SQLiteCommandBuilder

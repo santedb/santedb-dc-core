@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,14 +27,15 @@ using System.Threading.Tasks;
 using SQLite.Net;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Extensibility;
-using SanteDB.DisconnectedClient.Core.Data.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.Core.Model.Map;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.Core.Services;
 using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persistence service which persists ACT classes
@@ -67,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Cache convert an act version
         /// </summary>
-        protected override Act CacheConvert(DbIdentified dataInstance, LocalDataContext context)
+        protected override Act CacheConvert(DbIdentified dataInstance, SQLiteDataContext context)
         {
             if (dataInstance == null) return null;
             DbAct dbAct = dataInstance as DbAct;
@@ -140,7 +141,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public virtual TActType ToModelInstance<TActType>(DbAct dbInstance, LocalDataContext context) where TActType : Act, new()
+        public virtual TActType ToModelInstance<TActType>(DbAct dbInstance, SQLiteDataContext context) where TActType : Act, new()
         {
             var retVal = m_mapper.MapDomainInstance<DbAct, TActType>(dbInstance);
 
@@ -180,7 +181,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Create an appropriate entity based on the class code
         /// </summary>
-        public override Act ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Act ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             // Alright first, which type am I mapping to?
             var dbAct = dataInstance.GetInstanceOf<DbAct>() ?? dataInstance as DbAct;
@@ -233,7 +234,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(Act modelInstance, LocalDataContext context)
+        public override object FromModelInstance(Act modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbAct()
@@ -261,7 +262,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the act into the database
         /// </summary>
-        internal Act InsertCoreProperties(LocalDataContext context, Act data)
+        internal Act InsertCoreProperties(SQLiteDataContext context, Act data)
         {
 
             if (data.ClassConcept != null) data.ClassConcept = data.ClassConcept.EnsureExists(context);
@@ -343,7 +344,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified data
         /// </summary>
-        internal Act UpdateCoreProperties(LocalDataContext context, Act data)
+        internal Act UpdateCoreProperties(SQLiteDataContext context, Act data)
         {
             if (data.ClassConcept != null) data.ClassConcept = data.ClassConcept.EnsureExists(context);
             if (data.MoodConcept != null) data.MoodConcept = data.MoodConcept.EnsureExists(context);
@@ -440,7 +441,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// Obsolete the act
         /// </summary>
         /// <param name="context"></param>
-        internal Act ObsoleteCoreProperties(LocalDataContext context, Act data)
+        internal Act ObsoleteCoreProperties(SQLiteDataContext context, Act data)
         {
             data.StatusConceptKey = StatusKeys.Obsolete;
             return base.ObsoleteInternal(context, data);
@@ -449,7 +450,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified act
         /// </summary>
-        protected override Act InsertInternal(LocalDataContext context, Act data)
+        protected override Act InsertInternal(SQLiteDataContext context, Act data)
         {
             switch (data.ClassConceptKey.ToString().ToUpper())
             {
@@ -482,7 +483,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the act
         /// </summary>
-        protected override Act UpdateInternal(LocalDataContext context, Act data)
+        protected override Act UpdateInternal(SQLiteDataContext context, Act data)
         {
             switch (data.ClassConceptKey.ToString().ToUpper())
             {
@@ -514,7 +515,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete
         /// </summary>
-        protected override Act ObsoleteInternal(LocalDataContext context, Act data)
+        protected override Act ObsoleteInternal(SQLiteDataContext context, Act data)
         {
             return this.ObsoleteCoreProperties(context, data);
         }

@@ -20,13 +20,13 @@
 using System;
 using SanteDB.Core.Model.Entities;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.Core.Model.DataTypes;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Roles
+namespace SanteDB.DisconnectedClient.SQLite.Model.Roles
 {
 	/// <summary>
 	/// Represents a patient in the SQLite store

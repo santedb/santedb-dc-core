@@ -20,16 +20,20 @@
 using System;
 using SanteDB.DisconnectedClient.Core.Diagnostics;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
 using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.Core.Alerting;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization.Model;
+using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Alerting;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
+namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Migrations
 {
 	/// <summary>
 	/// Initial queue catalog migration.
@@ -104,7 +108,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
 		/// <value>The identifier.</value>
 		public string Id {
 			get {
-				return "000-init-openiz-algonquin-queue";
+				return "000-init-santedb-algonquin-queue";
 			}
 		}
 		/// <summary>

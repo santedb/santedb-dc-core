@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +26,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persistence service for a device entity
@@ -36,7 +36,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert the database representation to a model instance
         /// </summary>
-        public override DeviceEntity ToModelInstance(object dataInstance, LocalDataContext context)
+        public override DeviceEntity ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var deviceEntity = dataInstance as DbDeviceEntity;
             var dbe = context.Connection.Table<DbEntity>().Where(o => o.Uuid == deviceEntity.Uuid).First();
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified device entity
         /// </summary>
-        protected override DeviceEntity InsertInternal(LocalDataContext context, DeviceEntity data)
+        protected override DeviceEntity InsertInternal(SQLiteDataContext context, DeviceEntity data)
         {
             if(data.SecurityDevice != null) data.SecurityDevice = data.SecurityDevice?.EnsureExists(context);
             data.SecurityDeviceKey = data.SecurityDevice?.Key ?? data.SecurityDeviceKey;
@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Updates the specified user
         /// </summary>
-        protected override DeviceEntity UpdateInternal(LocalDataContext context, DeviceEntity data)
+        protected override DeviceEntity UpdateInternal(SQLiteDataContext context, DeviceEntity data)
         {
             if (data.SecurityDevice != null) data.SecurityDevice = data.SecurityDevice?.EnsureExists(context);
             data.SecurityDeviceKey = data.SecurityDevice?.Key ?? data.SecurityDeviceKey;

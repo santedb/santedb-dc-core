@@ -7,8 +7,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{406D064D-78B4-467F-86C6-B3E2F12C0A65}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>SanteDB.DisconnectedClient.Core.SQLite</RootNamespace>
-    <AssemblyName>SanteDB.DisconnectedClient.Core.SQLite</AssemblyName>
+    <RootNamespace>SanteDB.DisconnectedClient.SQLite</RootNamespace>
+    <AssemblyName>SanteDB.DisconnectedClient.SQLite</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -39,8 +39,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Alerting\AlertPersistenceService.cs" />
     <Compile Include="Alerting\DbAlertMessage.cs" />
-    <Compile Include="Alerting\LocalAlertService.cs" />
     <Compile Include="Connection\LockableSQLiteConnection.cs" />
     <Compile Include="Connection\ReadonlySQLiteConnection.cs" />
     <Compile Include="Connection\SQLiteConnectionExtensions.cs" />
@@ -49,12 +49,10 @@
     <Compile Include="DataModelExtensions.cs" />
     <Compile Include="Hacks\ConceptQueryHack.cs" />
     <Compile Include="Hacks\RelationshipQueryHack.cs" />
-    <Compile Include="ILocalPersistenceService.cs" />
-    <Compile Include="ImsiPersistenceService.cs" />
-    <Compile Include="LocalDataContext.cs" />
-    <Compile Include="LocalEntitySource.cs" />
-    <Compile Include="LocalPersistenceService.cs" />
-    <Compile Include="LocalPersistenceServiceBase.cs" />
+    <Compile Include="ISQLitePersistenceService.cs" />
+    <Compile Include="SQLiteDataContext.cs" />
+    <Compile Include="SQLitePersistenceService.cs" />
+    <Compile Include="SQLitePersistenceServiceBase.cs" />
     <Compile Include="Migrations\CatalogEdmonton4Update.cs" />
     <Compile Include="Migrations\InitialAuditCatalog.cs" />
     <Compile Include="Migrations\InitialCatalog.cs" />
@@ -102,7 +100,6 @@
     <Compile Include="Model\Extensibility\DbNote.cs" />
     <Compile Include="Model\Extensibility\DbTag.cs" />
     <Compile Include="Model\Extensibility\DbTemplateDefinition.cs" />
-    <Compile Include="Model\ModelExtensions.cs" />
     <Compile Include="Model\Roles\DbPatient.cs" />
     <Compile Include="Model\Roles\DbProvider.cs" />
     <Compile Include="Model\Security\DbSecurityApplication.cs" />
@@ -156,17 +153,15 @@
     <Compile Include="Search\Model\SearchTerm.cs" />
     <Compile Include="Search\Model\SearchTermEntity.cs" />
     <Compile Include="Search\SearchIndexService.cs" />
-    <Compile Include="Security\Audit\LocalAuditRepositoryService.cs" />
-    <Compile Include="Security\Audit\LocalAuditService.cs" />
+    <Compile Include="Security\Audit\SQLiteAuditRepositoryService.cs" />
     <Compile Include="Security\Audit\Model\DbAuditActor.cs" />
     <Compile Include="Security\Audit\Model\DbAuditActorAssociation.cs" />
     <Compile Include="Security\Audit\Model\DbAuditCode.cs" />
     <Compile Include="Security\Audit\Model\DbAuditData.cs" />
     <Compile Include="Security\Audit\Model\DbAuditObject.cs" />
-    <Compile Include="Security\LocalIdentityService.cs" />
-    <Compile Include="Security\LocalPolicyDecisionService.cs" />
-    <Compile Include="Security\LocalPolicyInformationService.cs" />
-    <Compile Include="Security\LocalRoleProviderService.cs" />
+    <Compile Include="Security\SQLiteIdentityService.cs" />
+    <Compile Include="Security\SQLitePolicyInformationService.cs" />
+    <Compile Include="Security\SQLiteRoleProviderService.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Sql\000_init_openiz_algonquin.sql" />

@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 using SQLite.Net;
 using SanteDB.Core.Model.Constants;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Concept persistence service
@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public override Concept ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Concept ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var modelInstance = m_mapper.MapDomainInstance<DbConcept, Concept>(dataInstance as DbConcept);
 
@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert concept 
         /// </summary>
-        protected override Concept InsertInternal(LocalDataContext context, Concept data)
+        protected override Concept InsertInternal(SQLiteDataContext context, Concept data)
         {
             // Ensure exists
             if(data.Class != null) data.Class = data.Class?.EnsureExists(context);
@@ -114,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Override update to handle associated items
         /// </summary>
-        protected override Concept UpdateInternal(LocalDataContext context, Concept data)
+        protected override Concept UpdateInternal(SQLiteDataContext context, Concept data)
         {
             if(data.Class != null) data.Class = data.Class?.EnsureExists(context);
             if(data.StatusConcept != null) data.StatusConcept = data.StatusConcept?.EnsureExists(context);
@@ -153,7 +153,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the object
         /// </summary>
-        protected override Concept ObsoleteInternal(LocalDataContext context, Concept data)
+        protected override Concept ObsoleteInternal(SQLiteDataContext context, Concept data)
         {
             data.StatusConceptKey = StatusKeys.Obsolete;
             return base.ObsoleteInternal(context, data);

@@ -1,4 +1,5 @@
 ﻿using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,28 +17,48 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <summary>
         /// Gets the identifier of the queue entry
         /// </summary>
-        int Id { get; }
+        int Id { get; set; }
 
         /// <summary>
         /// Gets the time that the entry was created
         /// </summary>
-        DateTime CreationTime { get; }
+        DateTime CreationTime { get; set; }
 
         /// <summary>
         /// Gets the type of data
         /// </summary>
-        String Type { get; }
+        String Type { get; set; }
 
         /// <summary>
         /// Gets the data of the object
         /// </summary>
-        String Data { get; }
+        String Data { get; set;  }
 
         /// <summary>
         /// Gets the operation of the object
         /// </summary>
-        SynchronizationOperationType Operation { get; }
+        SynchronizationOperationType Operation { get; set; }
 
+        /// <summary>
+        /// Get whether the object is a retry
+        /// </summary>
+        bool IsRetry { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a retry entry
+    /// </summary>
+    public interface ISynchronizationQueueRetryEntry : ISynchronizationQueueEntry
+    {
+        /// <summary>
+        /// True if the object is a retry 
+        /// </summary>
+        String OriginalQueue { get;  }
+
+        /// <summary>
+        /// Specialized tag data
+        /// </summary>
+        byte[] TagData { get; }
     }
 
     /// <summary>
@@ -91,5 +112,15 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <returns>The raw queue items</returns>
         IEnumerable<ISynchronizationQueueEntry> GetAll(int offset, int count, out int totalResults);
 
+        /// <summary>
+        /// Requeue the queue item
+        /// </summary>
+        void Retry(ISynchronizationQueueRetryEntry queueItem);
+
+
+        /// <summary>
+        /// Query the dataset from the specified search parameters
+        /// </summary>
+        IEnumerable<ISynchronizationQueueEntry> Query(NameValueCollection search, int offset, int count, out int totalResults);
     }
 }

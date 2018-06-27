@@ -18,9 +18,9 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Roles;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Roles;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -28,7 +28,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Persistence service which is used to persist patients
@@ -42,7 +42,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(Patient modelInstance, LocalDataContext context)
+        public override object FromModelInstance(Patient modelInstance, SQLiteDataContext context)
         {
             /*
             var dbPatient = base.FromModelInstance(modelInstance, context) as DbPatient;
@@ -65,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Model instance
         /// </summary>
-        public override Patient ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Patient ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
 
             var iddat = dataInstance as DbVersionedData;
@@ -95,7 +95,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified person into the database
         /// </summary>
-        protected override Patient InsertInternal(LocalDataContext context, Patient data)
+        protected override Patient InsertInternal(SQLiteDataContext context, Patient data)
         {
             if(data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
             data.GenderConceptKey = data.GenderConcept?.Key ?? data.GenderConceptKey;
@@ -107,7 +107,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified person
         /// </summary>
-        protected override Patient UpdateInternal(LocalDataContext context, Patient data)
+        protected override Patient UpdateInternal(SQLiteDataContext context, Patient data)
         {
             // Ensure exists
             if(data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
@@ -120,7 +120,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the object
         /// </summary>
-        protected override Patient ObsoleteInternal(LocalDataContext context, Patient data)
+        protected override Patient ObsoleteInternal(SQLiteDataContext context, Patient data)
         {
             var retVal = this.m_personPersister.Obsolete(context, data);
             return data;

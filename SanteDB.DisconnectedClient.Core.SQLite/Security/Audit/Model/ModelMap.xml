@@ -17,7 +17,7 @@
  - User: fyfej
  - Date: 2017-9-1
  -->
-<modelMap xmlns="http://openiz.org/model/map">
+<modelMap xmlns="http://santedb.org/model/map">
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
 		domainClass="SanteDB.DisconnectedClient.Core.Security.Audit.Model.DbAuditData, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="CorrelationToken" domainName="Id"/>

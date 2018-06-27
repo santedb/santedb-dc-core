@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Acts
+namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
 {
     /// <summary>
     /// Represents storage class for a substance administration

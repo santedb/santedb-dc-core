@@ -18,7 +18,7 @@
  - User: fyfej
  - Date: 2017-9-1
  -->
-<DatamartSchema xmlns="http://openiz.org/warehousing" name="oizcp" id="07BA63B4-50FA-41D5-9D24-7FB41606A961">
+<DatamartSchema xmlns="http://santedb.org/warehousing" name="oizcp" id="07BA63B4-50FA-41D5-9D24-7FB41606A961">
   <property name="creation_date" type="date" attributes="nonnull"/>
   <property name="patient_id" type="uuid" attributes="nonnull index"/>
   <property name="location_id" type="uuid" attributes="index"/>

@@ -20,10 +20,10 @@
 using System;
 using System.Linq;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SQLite.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
 	/// <summary>
 	/// Persistence service for ConceptSets
@@ -34,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert the concept set to model
         /// </summary>
-        public override ConceptSet ToModelInstance(object dataInstance, LocalDataContext context)
+        public override ConceptSet ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             
             var modelInstance = base.ToModelInstance(dataInstance, context);
@@ -55,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified concept
         /// </summary>
-        protected override ConceptSet InsertInternal(LocalDataContext context, ConceptSet data)
+        protected override ConceptSet InsertInternal(SQLiteDataContext context, ConceptSet data)
         {
             // Concept set insertion
             var retVal = base.InsertInternal(context, data);
@@ -78,7 +78,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified data elements
         /// </summary>
-        protected override ConceptSet UpdateInternal(LocalDataContext context, ConceptSet data)
+        protected override ConceptSet UpdateInternal(SQLiteDataContext context, ConceptSet data)
         {
             var retVal = base.UpdateInternal(context, data);
             var keyuuid = retVal.Key.Value.ToByteArray();

@@ -27,8 +27,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 	/// <summary>
 	/// Data migration log
 	/// </summary>
-	[XmlType(nameof(DataMigrationLog), Namespace = "http://openiz.org/mobile/configuration")]
-	[XmlRoot(nameof(DataMigrationLog), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(DataMigrationLog), Namespace = "http://santedb.org/mobile/configuration")]
+	[XmlRoot(nameof(DataMigrationLog), Namespace = "http://santedb.org/mobile/configuration")]
 	public class DataMigrationLog
 	{
 
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 		/// <summary>
 		/// Data migration entry
 		/// </summary>
-		[XmlType(nameof(DataMigrationLog), Namespace = "http://openiz.org/mobile/data")]
+		[XmlType(nameof(DataMigrationLog), Namespace = "http://santedb.org/mobile/data")]
 		public class DataMigrationEntry
 		{
 

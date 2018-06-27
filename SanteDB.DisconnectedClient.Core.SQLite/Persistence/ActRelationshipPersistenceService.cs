@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -27,20 +27,20 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
 using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persister which is a act relationship 
     /// </summary>
-    public class ActRelationshipPersistenceService : IdentifiedPersistenceService<ActRelationship, DbActRelationship>, ILocalAssociativePersistenceService
+    public class ActRelationshipPersistenceService : IdentifiedPersistenceService<ActRelationship, DbActRelationship>, ISQLiteAssociativePersistenceService
     {
 
         /// <summary>
         /// Create DbActParticipation from modelinstance
         /// </summary>
-        public override object FromModelInstance(ActRelationship modelInstance, LocalDataContext context)
+        public override object FromModelInstance(ActRelationship modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbActRelationship()
@@ -55,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Get from source
         /// </summary>
-        public IEnumerable GetFromSource(LocalDataContext context, Guid id, decimal? versionSequenceId)
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             return this.Query(context, o => o.SourceEntityKey == id);
         }
@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the relationship
         /// </summary>
-        protected override ActRelationship InsertInternal(LocalDataContext context, ActRelationship data)
+        protected override ActRelationship InsertInternal(SQLiteDataContext context, ActRelationship data)
         {
             // Ensure we haven't already persisted this
             if (data.TargetAct != null) data.TargetAct = data.TargetAct.EnsureExists(context);
@@ -111,7 +111,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified object
         /// </summary>
-        protected override ActRelationship UpdateInternal(LocalDataContext context, ActRelationship data)
+        protected override ActRelationship UpdateInternal(SQLiteDataContext context, ActRelationship data)
         {
             if (data.TargetAct != null) data.TargetAct = data.TargetAct.EnsureExists(context);
             data.TargetActKey = data.TargetAct?.Key ?? data.TargetActKey;

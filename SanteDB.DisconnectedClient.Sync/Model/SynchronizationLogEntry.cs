@@ -17,6 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
@@ -25,7 +26,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization.Model
+namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
 {
     /// <summary>
     /// Represents a synchronization log entry

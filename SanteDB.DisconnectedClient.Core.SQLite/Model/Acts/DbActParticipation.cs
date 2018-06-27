@@ -18,8 +18,8 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
@@ -28,7 +28,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Acts
+namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
 {
     /// <summary>
     /// Represents a link between an act and an entity

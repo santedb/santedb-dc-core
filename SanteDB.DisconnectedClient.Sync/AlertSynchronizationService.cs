@@ -37,8 +37,10 @@ using SanteDB.DisconnectedClient.Core.Security;
 using System.Security.Principal;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Core.Model.AMI.Security;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
 	/// <summary>
 	/// Represents an alert synchronization service
@@ -113,6 +115,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 			{
 				try
 				{
+                    var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
+
 					// We are to poll for alerts always (never push supported)
 					TimeSpan pollInterval = this.m_configuration.PollInterval == TimeSpan.MinValue ? new TimeSpan(0, 10, 0) : this.m_configuration.PollInterval;
 					this.m_alertRepository = ApplicationContext.Current.GetService<IAlertRepositoryService>();
@@ -127,7 +131,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 							if (!this.m_isRunning) return;
 
 							// When was the last time we polled an alert?
-							var lastTime = SynchronizationLog.Current.GetLastTime(typeof(AlertMessage));
+							var lastTime = logSvc.GetLastTime(typeof(AlertMessage));
 
 							var syncTime = lastTime.HasValue ? new DateTimeOffset(lastTime.Value) : DateTimeOffset.Now.AddHours(-1);
 
@@ -168,21 +172,21 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 								this.m_alertRepository.BroadcastAlert(itm);
 							}
 
-							// Push alerts which I have created or updated
-							//int tc = 0;
-							//foreach(var itm in this.m_alertRepository.Find(a=> (a.TimeStamp >= lastTime ) && a.Flags != AlertMessageFlags.System, 0, null, out tc))
-							//{
-							//    if (!String.IsNullOrEmpty(itm.To))
-							//    {
-							//        this.m_tracer.TraceVerbose("Sending ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
-							//        if (itm.UpdatedTime != null)
-							//            amiClient.UpdateAlert(itm.Key.ToString(), new AlertMessageInfo(itm));
-							//        else
-							//            amiClient.CreateAlert(new AlertMessageInfo(itm));
-							//    }
-							//}
+                            // Push alerts which I have created or updated
+                            //int tc = 0;
+                            //foreach(var itm in this.m_alertRepository.Find(a=> (a.TimeStamp >= lastTime ) && a.Flags != AlertMessageFlags.System, 0, null, out tc))
+                            //{
+                            //    if (!String.IsNullOrEmpty(itm.To))
+                            //    {
+                            //        this.m_tracer.TraceVerbose("Sending ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
+                            //        if (itm.UpdatedTime != null)
+                            //            amiClient.UpdateAlert(itm.Key.ToString(), new AlertMessageInfo(itm));
+                            //        else
+                            //            amiClient.CreateAlert(new AlertMessageInfo(itm));
+                            //    }
+                            //}
 
-							SynchronizationLog.Current.Save(typeof(AlertMessage), null, null, null);
+                            logSvc.Save(typeof(AlertMessage), null, null, null);
 						}
 						catch (Exception ex)
 						{

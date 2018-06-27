@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
     /// <summary>
     /// Represents a tickle message
     /// </summary>
-    [JsonObject(nameof(Tickle)), XmlType(nameof(Tickle), Namespace = "http://openiz.org/mobile/tickle")]
+    [JsonObject(nameof(Tickle)), XmlType(nameof(Tickle), Namespace = "http://santedb.org/mobile/tickle")]
     public class Tickle
     {
 

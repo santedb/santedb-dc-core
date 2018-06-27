@@ -19,12 +19,12 @@
  */
 using System;
 using SanteDB.Core.Model.Security;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net;
 using System.Linq.Expressions;
 using System.Linq;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using System.Text;
 using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -39,8 +39,9 @@ using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Acts;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
 
     /// <summary>
@@ -55,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
     /// <summary>
     /// Generic persistence service which can persist between two simple types.
     /// </summary>
-    public abstract class IdentifiedPersistenceService<TModel, TDomain, TQueryResult> : LocalPersistenceServiceBase<TModel>
+    public abstract class IdentifiedPersistenceService<TModel, TDomain, TQueryResult> : SQLitePersistenceServiceBase<TModel>
     where TModel : IdentifiedData, new()
     where TDomain : DbIdentified, new()
     where TQueryResult : DbIdentified
@@ -80,7 +81,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Before inserting an instance
         /// </summary>
-        protected virtual TDomain BeforeInsertDomainObject(LocalDataContext context, TDomain domain)
+        protected virtual TDomain BeforeInsertDomainObject(SQLiteDataContext context, TDomain domain)
         {
             return domain;
         }
@@ -90,7 +91,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <returns>The model instance.</returns>
         /// <param name="dataInstance">Data instance.</param>
-        public override TModel ToModelInstance(object dataInstance, LocalDataContext context)
+        public override TModel ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var retVal = m_mapper.MapDomainInstance<TDomain, TModel>(dataInstance as TDomain);
 
@@ -104,7 +105,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <returns>The model instance.</returns>
         /// <param name="modelInstance">Model instance.</param>
         /// <param name="context">Context.</param>
-        public override object FromModelInstance(TModel modelInstance, LocalDataContext context)
+        public override object FromModelInstance(TModel modelInstance, SQLiteDataContext context)
         {
             return m_mapper.MapModelInstance<TModel, TDomain>(modelInstance);
 
@@ -115,7 +116,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel InsertInternal(LocalDataContext context, TModel data)
+        protected override TModel InsertInternal(SQLiteDataContext context, TModel data)
         {
             var domainObject = this.FromModelInstance(data, context) as TDomain;
 
@@ -158,7 +159,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel UpdateInternal(LocalDataContext context, TModel data)
+        protected override TModel UpdateInternal(SQLiteDataContext context, TModel data)
         {
             var domainObject = this.FromModelInstance(data, context) as TDomain;
             context.Connection.Update(domainObject);
@@ -170,7 +171,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel ObsoleteInternal(LocalDataContext context, TModel data)
+        protected override TModel ObsoleteInternal(SQLiteDataContext context, TModel data)
         {
             var domainObject = this.FromModelInstance(data, context) as TDomain;
             context.Connection.Delete(domainObject);
@@ -182,7 +183,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="query">Query.</param>
-        protected override System.Collections.Generic.IEnumerable<TModel> QueryInternal(LocalDataContext context, Expression<Func<TModel, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override System.Collections.Generic.IEnumerable<TModel> QueryInternal(SQLiteDataContext context, Expression<Func<TModel, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
         {
 
             // Query has been registered?
@@ -298,7 +299,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Try conversion from cache otherwise map
         /// </summary>
-        protected virtual TModel CacheConvert(DbIdentified o, LocalDataContext context)
+        protected virtual TModel CacheConvert(DbIdentified o, SQLiteDataContext context)
         {
             if (o == null) return null;
             var cacheItem = ApplicationContext.Current.GetService<IDataCachingService>()?.GetCacheItem<TModel>(new Guid(o.Uuid));
@@ -321,7 +322,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <param name="query">Query.</param>
         /// <param name="storedQueryName">Stored query name.</param>
         /// <param name="parms">Parms.</param>
-        protected override IEnumerable<TModel> QueryInternal(LocalDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override IEnumerable<TModel> QueryInternal(SQLiteDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
         {
 
 
@@ -514,7 +515,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Get the specified data element
         /// </summary>
-        internal override TModel Get(LocalDataContext context, Guid key)
+        internal override TModel Get(SQLiteDataContext context, Guid key)
         {
             var existing = ApplicationContext.Current.GetService<IDataCachingService>().GetCacheItem(key);
             if (existing != null)
@@ -540,7 +541,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update associated version items
         /// </summary>
-        protected void UpdateAssociatedItems<TAssociation, TModelEx>(IEnumerable<TAssociation> existing, IEnumerable<TAssociation> storage, Guid? sourceKey, LocalDataContext dataContext, bool inversionInd = false)
+        protected void UpdateAssociatedItems<TAssociation, TModelEx>(IEnumerable<TAssociation> existing, IEnumerable<TAssociation> storage, Guid? sourceKey, SQLiteDataContext dataContext, bool inversionInd = false)
             where TAssociation : IdentifiedData, ISimpleAssociation, new()
             where TModelEx : IdentifiedData
         {
@@ -548,7 +549,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
             // Remove all empty associations (associations which are messy)
             storage = storage.Where(o => !o.IsEmpty()).ToList();
 
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TAssociation>>() as LocalPersistenceServiceBase<TAssociation>;
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TAssociation>>() as SQLitePersistenceServiceBase<TAssociation>;
             if (persistenceService == null || !sourceKey.HasValue)
             {
                 this.m_tracer.TraceInfo("Missing persister for type {0}", typeof(TAssociation).Name);

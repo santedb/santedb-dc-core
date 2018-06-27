@@ -22,7 +22,7 @@ using SQLite.Net;
 using SanteDB.Core.Model.DataTypes;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
 	/// <summary>
 	/// Represents a person

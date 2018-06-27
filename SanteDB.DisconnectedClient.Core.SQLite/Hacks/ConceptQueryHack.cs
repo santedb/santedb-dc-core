@@ -1,7 +1,7 @@
 ﻿using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Map;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Hacks
+namespace SanteDB.DisconnectedClient.SQLite.Hacks
 {
     /// <summary>
     /// This particular hack will override queries where concepts are filtered by mnemonic to be more efficient

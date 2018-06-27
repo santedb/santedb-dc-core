@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Collection;
-using SanteDB.DisconnectedClient.Core.Data.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,8 +33,10 @@ using SanteDB.DisconnectedClient.i18n;
 using System.Diagnostics;
 using SQLite.Net.Interop;
 using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a bundle persistence service
@@ -44,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Cannot query for bundles
         /// </summary>
-        protected override IEnumerable<Bundle> QueryInternal(LocalDataContext context, Expression<Func<Bundle, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override IEnumerable<Bundle> QueryInternal(SQLiteDataContext context, Expression<Func<Bundle, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
         {
             totalResults = 0;
             return new List<Bundle>();
@@ -53,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Connot query bundles
         /// </summary>
-        protected override IEnumerable<Bundle> QueryInternal(LocalDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override IEnumerable<Bundle> QueryInternal(SQLiteDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
         {
             totalResults = 0;
             return new List<Bundle>();
@@ -75,13 +77,13 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
                 base.FireInserting(new DataPersistencePreEventArgs<Bundle>(data));
 
                 // Memory connection
-                using (var memConnection = new Data.Connection.WriteableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), ":memory:", SQLiteOpenFlags.ReadWrite))
+                using (var memConnection = new WriteableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), ":memory:", SQLiteOpenFlags.ReadWrite))
                 {
                     try
                     {
                         ApplicationContext.Current.SetProgress(Strings.locale_prepareBundle, 0.5f);
                         // We want to apply the initial schema
-                        new SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations.InitialCatalog().Install(memConnection, true);
+                        new SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations.InitialCatalog().Install(memConnection, true);
 
 
                         // Copy the name component and address component values
@@ -111,7 +113,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
                         memConnection.Execute("DETACH DATABASE file_db");
 
                         // We insert in the memcontext now
-                        using (var memContext = new LocalDataContext(memConnection))
+                        using (var memContext = new SQLiteDataContext(memConnection))
                             this.InsertInternal(memContext, data);
 
                         var columnMapping = memConnection.TableMappings.Where(o => o.MappedType.Namespace.StartsWith("SanteDB")).ToList();
@@ -165,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the bundle
         /// </summary>
-        protected override Bundle InsertInternal(LocalDataContext context, Bundle data)
+        protected override Bundle InsertInternal(SQLiteDataContext context, Bundle data)
         {
             // Prepare to insert a bundle
             for (int i = 0; i < data.Item.Count; i++)
@@ -181,7 +183,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
                 String method = "Insert";
                 if (context.Connection.DatabasePath != ":memory:" && itm.TryGetExisting(context, true) != null)
                     method = "Update";
-                var mi = svc.GetType().GetRuntimeMethod(method, new Type[] { typeof(LocalDataContext), itm.GetType() });
+                var mi = svc.GetType().GetRuntimeMethod(method, new Type[] { typeof(SQLiteDataContext), itm.GetType() });
                 data.Item[i] = mi.Invoke(svc, new object[] { context, itm }) as IdentifiedData;
 #if SHOW_STATUS || PERFMON
                 itmSw.Stop();
@@ -200,7 +202,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update everything in the bundle
         /// </summary>
-        protected override Bundle UpdateInternal(LocalDataContext context, Bundle data)
+        protected override Bundle UpdateInternal(SQLiteDataContext context, Bundle data)
         {
             foreach (var itm in data.Item)
             {
@@ -214,7 +216,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete everything in the bundle
         /// </summary>
-        protected override Bundle ObsoleteInternal(LocalDataContext context, Bundle data)
+        protected override Bundle ObsoleteInternal(SQLiteDataContext context, Bundle data)
         {
             foreach (var itm in data.Item)
             {

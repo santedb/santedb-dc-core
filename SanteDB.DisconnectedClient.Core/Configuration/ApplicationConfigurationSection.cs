@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Represents basic application configuration
     /// </summary>
-    [XmlType(nameof(ApplicationConfigurationSection), Namespace = "http://openiz.org/mobile/configuration"), JsonObject]
+    [XmlType(nameof(ApplicationConfigurationSection), Namespace = "http://santedb.org/mobile/configuration"), JsonObject]
     public class ApplicationConfigurationSection : IConfigurationSection
     {
 
@@ -109,7 +109,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Cache configuration
     /// </summary>
-    [XmlType(nameof(CacheConfiguration), Namespace = "http://openiz.org/mobile/configuration"), JsonObject]
+    [XmlType(nameof(CacheConfiguration), Namespace = "http://santedb.org/mobile/configuration"), JsonObject]
     public class CacheConfiguration
     {
         /// <summary>
@@ -138,7 +138,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Application key/value pair setting
     /// </summary>
-    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://santedb.org/mobile/configuration")]
     public class AppSettingKeyValuePair
     {
 
@@ -159,7 +159,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Style scheme type
     /// </summary>
-    [XmlType(nameof(StyleSchemeType), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType(nameof(StyleSchemeType), Namespace = "http://santedb.org/mobile/configuration")]
 	public enum StyleSchemeType
 	{
 		Dark,

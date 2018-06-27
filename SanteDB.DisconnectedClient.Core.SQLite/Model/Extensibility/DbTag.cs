@@ -20,11 +20,11 @@
 using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Extensibility
+namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
 	/// <summary>
 	/// Represents a simpe tag (version independent)

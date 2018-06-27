@@ -21,9 +21,9 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
 	/// <summary>
 	/// Represents an organization in the data store

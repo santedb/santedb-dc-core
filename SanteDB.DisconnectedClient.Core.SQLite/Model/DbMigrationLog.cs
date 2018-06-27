@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model
+namespace SanteDB.DisconnectedClient.SQLite.Model
 {
     /// <summary>
     /// Keeps track of migrations

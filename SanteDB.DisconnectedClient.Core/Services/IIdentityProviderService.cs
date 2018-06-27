@@ -169,5 +169,16 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <param name="userName"></param>
         void DeleteIdentity(string userName);
     }
+
+    /// <summary>
+    /// Represents an offline identity provider service
+    /// </summary>
+    public interface IOfflineIdentityProviderService : IIdentityProviderService
+    {
+        /// <summary>
+        /// Create a local offline identity
+        /// </summary>
+        IIdentity CreateIdentity(Guid sid, string username, string password, IPrincipal principal);
+    }
 }
 

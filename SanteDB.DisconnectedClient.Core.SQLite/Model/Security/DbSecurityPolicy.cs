@@ -21,7 +21,7 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Security
+namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
 	/// <summary>
 	/// Represents a single security policy

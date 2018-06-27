@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
     /// <summary>
     /// Represents a person's languages of communication

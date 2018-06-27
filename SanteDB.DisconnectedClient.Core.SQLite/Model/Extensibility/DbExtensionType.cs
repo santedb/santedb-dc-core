@@ -21,7 +21,7 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Extensibility
+namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
 	/// <summary>
 	/// Extension types

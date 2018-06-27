@@ -18,8 +18,8 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -27,7 +27,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents an organization persistence service
@@ -39,7 +39,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Model instance
         /// </summary>
-        public override Organization ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Organization ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var organization = dataInstance as DbOrganization ?? dataInstance.GetInstanceOf<DbOrganization>() ?? context.Connection.Table<DbOrganization>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the organization
         /// </summary>
-        protected override Organization InsertInternal(LocalDataContext context, Organization data)
+        protected override Organization InsertInternal(SQLiteDataContext context, Organization data)
         {
             // ensure industry concept exists
             if(data.IndustryConcept != null) data.IndustryConcept = data.IndustryConcept?.EnsureExists(context);
@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the organization
         /// </summary>
-        protected override Organization UpdateInternal(LocalDataContext context, Organization data)
+        protected override Organization UpdateInternal(SQLiteDataContext context, Organization data)
         {
             if(data.IndustryConcept != null) data.IndustryConcept = data.IndustryConcept?.EnsureExists(context);
             data.IndustryConceptKey = data.IndustryConcept?.Key ?? data.IndustryConceptKey;

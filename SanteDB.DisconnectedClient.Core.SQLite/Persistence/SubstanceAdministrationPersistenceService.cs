@@ -18,12 +18,12 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SQLite.Net;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persistence service for substance administrations
@@ -34,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Create from model instance
         /// </summary>
-        public override object FromModelInstance(SubstanceAdministration modelInstance, LocalDataContext context)
+        public override object FromModelInstance(SubstanceAdministration modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbSubstanceAdministration()
@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert databased model to model
         /// </summary>
-        public override SubstanceAdministration ToModelInstance(object dataInstance, LocalDataContext context)
+        public override SubstanceAdministration ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbIdentified;
             var dbSbadm = dataInstance as DbSubstanceAdministration ?? dataInstance.GetInstanceOf<DbSubstanceAdministration>() ?? context.Connection.Table<DbSubstanceAdministration>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified sbadm
         /// </summary>
-        protected override SubstanceAdministration InsertInternal(LocalDataContext context, SubstanceAdministration data)
+        protected override SubstanceAdministration InsertInternal(SQLiteDataContext context, SubstanceAdministration data)
         {
             if(data.DoseUnit != null) data.DoseUnit = data.DoseUnit?.EnsureExists(context);
             if(data.Route != null) data.Route = data.Route?.EnsureExists(context);
@@ -85,7 +85,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified sbadm
         /// </summary>
-        protected override SubstanceAdministration UpdateInternal(LocalDataContext context, SubstanceAdministration data)
+        protected override SubstanceAdministration UpdateInternal(SQLiteDataContext context, SubstanceAdministration data)
         {
             if(data.DoseUnit != null) data.DoseUnit = data.DoseUnit?.EnsureExists(context);
             if(data.Route != null) data.Route = data.Route?.EnsureExists(context);

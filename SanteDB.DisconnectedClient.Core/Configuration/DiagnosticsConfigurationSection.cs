@@ -34,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Diagnostics configuration
 	/// </summary>
-	[XmlType(nameof(DiagnosticsConfigurationSection), Namespace ="http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(DiagnosticsConfigurationSection), Namespace ="http://santedb.org/mobile/configuration")]
 	public class DiagnosticsConfigurationSection :IConfigurationSection
 	{
 
@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Trace writer configuration
 	/// </summary>
-	[XmlType(nameof(TraceWriterConfiguration), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(TraceWriterConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
 	public class TraceWriterConfiguration
 	{
 

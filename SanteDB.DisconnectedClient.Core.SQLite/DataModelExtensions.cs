@@ -25,7 +25,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections;
@@ -37,8 +37,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core
+namespace SanteDB.DisconnectedClient.SQLite
 {
     /// <summary>
     /// Ensure the data exists
@@ -77,6 +78,15 @@ namespace SanteDB.DisconnectedClient.Core
         // Get instance of cache
         private static Dictionary<Type, Dictionary<Type, Dictionary<PropertyInfo, PropertyInfo>>> s_getInstanceOfCache = new Dictionary<Type, Dictionary<Type, Dictionary<PropertyInfo, PropertyInfo>>>();
 
+        /// <summary>
+		/// Represents a byte array as a guid.
+		/// </summary>
+		/// <returns>The GUID.</returns>
+		/// <param name="me">Me.</param>
+		public static Guid? ToGuid(this byte[] me)
+        {
+            return me == null ? (Guid?)null : new Guid(me);
+        }
 
         /// <summary>
         /// Gets an instance of TDomain from me
@@ -124,7 +134,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Load specified associations
         /// </summary>
-        public static void LoadAssociations<TModel>(this TModel me, LocalDataContext context, params string[] excludeProperties) where TModel : IIdentifiedEntity
+        public static void LoadAssociations<TModel>(this TModel me, SQLiteDataContext context, params string[] excludeProperties) where TModel : IIdentifiedEntity
         {
             //using (context.LockConnection())
             //{
@@ -195,15 +205,15 @@ namespace SanteDB.DisconnectedClient.Core
                 if (excludeProperties?.Contains(pi.Name) == true)
                     continue;
                 // Map model type to domain
-                var adoPersister = LocalPersistenceService.GetPersister(pi.PropertyType.StripGeneric());
+                var adoPersister = SQLitePersistenceService.GetPersister(pi.PropertyType.StripGeneric());
 
                 // Loading associations, so what is the associated type?
                 if (typeof(IList).GetTypeInfo().IsAssignableFrom(pi.PropertyType.GetTypeInfo()) &&
-                    adoPersister is ILocalAssociativePersistenceService &&
+                    adoPersister is ISQLiteAssociativePersistenceService &&
                     me.Key.HasValue) // List so we select from the assoc table where we are the master table
                 {
                     // Is there not a value?
-                    var assocPersister = adoPersister as ILocalAssociativePersistenceService;
+                    var assocPersister = adoPersister as ISQLiteAssociativePersistenceService;
 
                     // We want to que   ry based on our PK and version if applicable
                     decimal? versionSequence = (me as IVersionedEntity)?.VersionSequence;
@@ -271,11 +281,11 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Try get by classifier
         /// </summary>
-        public static IIdentifiedEntity TryGetExisting(this IIdentifiedEntity me, LocalDataContext context, bool forceDbSearch = false)
+        public static IIdentifiedEntity TryGetExisting(this IIdentifiedEntity me, SQLiteDataContext context, bool forceDbSearch = false)
         {
 
             // Is there a classifier?
-            var idpInstance = LocalPersistenceService.GetPersister(me.GetType()) as ILocalPersistenceService;
+            var idpInstance = SQLitePersistenceService.GetPersister(me.GetType()) as ISQLitePersistenceService;
             if (idpInstance == null) return null;
             //if (me.Key?.ToString() == "e4d3350b-b0f5-45c1-80ba-49e3844cbcc8")
             //    System.Diagnostics.Debugger.Break();
@@ -303,7 +313,7 @@ namespace SanteDB.DisconnectedClient.Core
             {
 
                 // Get the domain type
-                var dataType = LocalPersistenceService.Mapper.MapModelType(me.GetType());
+                var dataType = SQLitePersistenceService.Mapper.MapModelType(me.GetType());
                 var tableMap = TableMapping.Get(dataType);
 
                 // Get the classifier attribute value
@@ -318,7 +328,7 @@ namespace SanteDB.DisconnectedClient.Core
                 }
 
                 // Column 
-                var column = tableMap.GetColumn(LocalPersistenceService.Mapper.MapModelProperty(me.GetType(), dataType, classProperty));
+                var column = tableMap.GetColumn(SQLitePersistenceService.Mapper.MapModelProperty(me.GetType(), dataType, classProperty));
                 // Now we want to query 
                 SqlStatement stmt = new SqlStatement().SelectFrom(dataType)
                     .Where($"{column.Name} = ?", classifierValue).Build();
@@ -339,14 +349,14 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Ensure the specified object exists
         /// </summary>
-        public static TModel EnsureExists<TModel>(this TModel me, LocalDataContext context) where TModel : IIdentifiedEntity
+        public static TModel EnsureExists<TModel>(this TModel me, SQLiteDataContext context) where TModel : IIdentifiedEntity
         {
 
             // Me
             var vMe = me as IVersionedEntity;
 
             // We have to find it
-            var idpInstance = LocalPersistenceService.GetPersister(me.GetType());
+            var idpInstance = SQLitePersistenceService.GetPersister(me.GetType());
 
             var existing = me.TryGetExisting(context);
 

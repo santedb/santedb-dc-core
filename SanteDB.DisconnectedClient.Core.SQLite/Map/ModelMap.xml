@@ -21,7 +21,7 @@
 <modelMap xmlns="http://openiz.org/model/map">
   <!-- Security Users -->
 	<class modelClass="SanteDB.Core.Model.Security.SecurityUser, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityUser, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityUser, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
 		<property modelName="Key" domainName="Uuid"/>
     <property modelName="ObsoletionTime" domainName="ObsoletionTime"/>
 		<property modelName="CreatedByKey" domainName="CreatedByUuid"/>
@@ -31,7 +31,7 @@
 
   <!-- Security Application -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityApplication, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityApplication, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityApplication, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="CreatedByKey" domainName="CreatedByUuid"/>
     <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
@@ -41,7 +41,7 @@
 
   <!-- Security Device -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityDevice, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityDevice, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityDevice, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="CreatedByKey" domainName="CreatedByUuid"/>
     <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
@@ -51,7 +51,7 @@
   
   <!-- Security Role -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityRole, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityRole, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityRole, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="Name" domainName="Name"/>
 
@@ -59,7 +59,7 @@
 
   <!-- Security Role -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityPolicyInstance, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityRolePolicy, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityRolePolicy, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="RoleId"/>
     <property modelName="PolicyKey" domainName="PolicyId"/>
@@ -67,7 +67,7 @@
   
   <!-- Security Role -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityPolicy, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityPolicy, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityPolicy, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="Name" domainName="Name"/>
     <property modelName="CanOverride" domainName="CanOverride"/>
@@ -76,11 +76,11 @@
   
   <!-- Concepts -->
 	<class modelClass="SanteDB.Core.Model.DataTypes.ConceptSet, SanteDB.Core.Model, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Concepts.DbConceptSet, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbConceptSet, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
 		<property modelName="Key" domainName="Uuid"/>
 	</class>
   <class modelClass="SanteDB.Core.Model.DataTypes.Concept, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Concepts.DbConcept, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbConcept, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
   
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="VersionKey" domainName="VersionUuid"/>
@@ -93,13 +93,13 @@
   </class>
   
   <class modelClass="SanteDB.Core.Model.DataTypes.ConceptClass, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Concepts.DbConceptClass, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbConceptClass, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
   </class>
 
   <!-- Concept Names -->
   <class modelClass="SanteDB.Core.Model.DataTypes.ConceptName, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Concepts.DbConceptName, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbConceptName, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="PhoneticAlgorithmKey" domainName="PhoneticAlgorithmUuid"/>
     <property modelName="SourceEntityKey" domainName="ConceptUuid"/>
@@ -107,7 +107,7 @@
 
   <!-- Entity Maps -->
   <class modelClass="SanteDB.Core.Model.Entities.Entity, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="VersionKey" domainName="VersionUuid"/>
     <property modelName="TemplateKey" domainName="TemplateUuid"/>
@@ -122,35 +122,35 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.EntityName, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbEntityName, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntityName, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="NameUseKey" domainName="UseConceptUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.EntityNameComponent, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbEntityNameComponent, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntityNameComponent, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="NameUuid"/>
     <property modelName="ComponentTypeKey" domainName="ComponentTypeUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.EntityAddress, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbEntityAddress, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntityAddress, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="AddressUseKey" domainName="UseConceptUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.EntityAddressComponent, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbEntityAddressComponent, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntityAddressComponent, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="AddressUuid"/>
     <property modelName="ComponentTypeKey" domainName="ComponentTypeUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.EntityRelationship, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbEntityRelationship, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntityRelationship, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
     <property modelName="TargetEntityKey" domainName="TargetUuid"/>
@@ -159,7 +159,7 @@
   </class>
   
   <class modelClass="SanteDB.Core.Model.DataTypes.EntityIdentifier, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.DataType.DbEntityIdentifier, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.DataType.DbEntityIdentifier, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="IdentifierTypeKey" domainName="TypeUuid"/>
     <property modelName="AuthorityKey" domainName="AuthorityUuid"/>
@@ -167,13 +167,13 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.IdentifierType, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.DataType.DbIdentifierType, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.DataType.DbIdentifierType, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="TypeConceptKey" domainName="TypeConceptUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.AssigningAuthority, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.DataType.DbAssigningAuthority, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.DataType.DbAssigningAuthority, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="AssigningDeviceKey" domainName="AssigningDeviceUuid"/>
     <property modelName="CreatedByKey" domainName="CreatedByUuid"    />
@@ -184,7 +184,7 @@
 
 
   <class modelClass="SanteDB.Core.Model.Entities.EntityTelecomAddress, SanteDB.Core.Model, Version=1.0.1.0"
-     domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbTelecomAddress, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+     domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbTelecomAddress, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="AddressUseKey" domainName="TelecomUseUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
@@ -192,7 +192,7 @@
 
 
   <class modelClass="SanteDB.Core.Model.DataTypes.EntityExtension, SanteDB.Core.Model, Version=1.0.1.0"
-   domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbEntityExtension, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+   domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbEntityExtension, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="ExtensionTypeKey" domainName="ExtensionTypeUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
@@ -200,77 +200,77 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.EntityNote, SanteDB.Core.Model, Version=1.0.1.0"
- domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbEntityNote, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+ domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbEntityNote, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="EntityUuid"/>
     <property modelName="AuthorKey" domainName="AuthorUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.EntityTag, SanteDB.Core.Model, Version=1.0.1.0"
- domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbEntityTag, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+ domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbEntityTag, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
   </class>
   
   <class modelClass="SanteDB.Core.Model.DataTypes.ExtensionType, SanteDB.Core.Model, Version=1.0.1.0"
-   domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbExtensionType, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+   domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbExtensionType, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
   </class>
 
 
   <!-- Person Maps -->
   <class modelClass="SanteDB.Core.Model.Entities.Person, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbPerson, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbPerson, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.PersonLanguageCommunication, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbPersonLanguageCommunication, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbPersonLanguageCommunication, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
   </class>
   
   <!-- Patient Maps -->
   <class modelClass="SanteDB.Core.Model.Roles.Patient, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Roles.DbPatient, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Roles.DbPatient, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="GenderConceptKey" domainName="GenderConceptUuid"/>
   </class>
 
   <!-- Material Maps -->
   <class modelClass="SanteDB.Core.Model.Entities.Material, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbMaterial, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbMaterial, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="FormConceptKey" domainName="FormConceptUuid"/>
     <property modelName="QuantityConceptKey" domainName="QuantityConceptUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.ManufacturedMaterial, SanteDB.Core.Model, Version=1.0.1.0"
-     domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbManufacturedMaterial, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+     domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbManufacturedMaterial, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
   </class>
   
   <!-- Provider Maps -->
   <class modelClass="SanteDB.Core.Model.Roles.Provider, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Roles.DbProvider, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Roles.DbProvider, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="ProviderSpecialtyKey" domainName="Specialty"/>
   </class>
   
   <!-- Industry Maps -->
   <class modelClass="SanteDB.Core.Model.Entities.Organization, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbOrganization, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbOrganization, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="IndustryConceptKey" domainName="IndustryConceptUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.Place, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbPlace, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbPlace, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
   </class>
   
   <class modelClass="SanteDB.Core.Model.Entities.PlaceService, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbPlaceService, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbPlaceService, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
     <property modelName="ServiceConceptKey" domainName="ServiceConceptUuid"/>
@@ -278,26 +278,26 @@
 
   <!-- Security entities -->
   <class modelClass="SanteDB.Core.Model.Entities.ApplicationEntity, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbApplicationEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbApplicationEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SecurityApplicationKey" domainName="SecurityApplicationUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.DeviceEntity, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbDeviceEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbDeviceEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SecurityDeviceKey" domainName="SecurityDeviceUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.UserEntity, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Entities.DbUserEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbUserEntity, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SecurityUserKey" domainName="SecurityUserUuid"/>
   </class>
 
   <!-- Represents Act Model -->
   <class modelClass="SanteDB.Core.Model.Acts.Act, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbAct, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbAct, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="VersionKey" domainName="VersionUuid"/>
     <property modelName="TemplateKey" domainName="TemplateUuid"/>
@@ -313,7 +313,7 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.ActExtension, SanteDB.Core.Model, Version=1.0.1.0"
- domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbActExtension, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+ domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbActExtension, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="ExtensionTypeKey" domainName="ExtensionTypeUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
@@ -322,21 +322,21 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.ActNote, SanteDB.Core.Model, Version=1.0.1.0"
- domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbActNote, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+ domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbActNote, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
     <property modelName="AuthorKey" domainName="AuthorUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.ActTag, SanteDB.Core.Model, Version=1.0.1.0"
- domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbActTag, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+ domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbActTag, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
   </class>
 
 
   <class modelClass="SanteDB.Core.Model.Acts.ActRelationship, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbActRelationship, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbActRelationship, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
     <property modelName="TargetActKey" domainName="TargetUuid"/>
@@ -344,7 +344,7 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.DataTypes.ActIdentifier, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.DataType.DbActIdentifier, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.DataType.DbActIdentifier, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="IdentifierTypeKey" domainName="TypeUuid"/>
     <property modelName="AuthorityKey" domainName="AuthorityUuid"/>
@@ -352,7 +352,7 @@
   </class>
 
   <class modelClass="SanteDB.Core.Model.Acts.ActParticipation, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbActParticipation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbActParticipation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="PlayerEntityKey" domainName="EntityUuid"/>
     <property modelName="PlayerEntityKey" domainName="Quantity"/>
@@ -362,7 +362,7 @@
 
 
   <class modelClass="SanteDB.Core.Model.Acts.SubstanceAdministration, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbSubstanceAdministration, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbSubstanceAdministration, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="RouteKey" domainName="RouteConceptUuid"/>
     <property modelName="SiteKey" domainName="SiteConceptUuid"/>
@@ -371,36 +371,36 @@
 
 
   <class modelClass="SanteDB.Core.Model.Acts.PatientEncounter, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbPatientEncounter, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbPatientEncounter, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="DischargeDispositionKey" domainName="DischargeDispositionUuid"/>
   </class>
   
   <class modelClass="SanteDB.Core.Model.Acts.Observation, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="InterpretationConceptKey" domainName="InterpretationConceptUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Acts.QuantityObservation, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbQuantityObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbQuantityObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="UnitOfMeasureKey" domainName="UnitOfMeasureUuid"/>
   </class>
 
   <class modelClass="SanteDB.Core.Model.Acts.CodedObservation, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbCodedObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbCodedObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="ValueKey" domainName="Value"/>
   </class>
       
   <class modelClass="SanteDB.Core.Model.Acts.TextObservation, SanteDB.Core.Model, Version=1.0.1.0"
-       domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbTextObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+       domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbTextObservation, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
   </class>
   
   <class modelClass="SanteDB.Core.Model.Acts.ActProtocol, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Acts.DbActProtocol, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Acts.DbActProtocol, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="ProtocolKey" domainName="ProtocolUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
@@ -408,7 +408,7 @@
   
 
   <class modelClass="SanteDB.Core.Model.DataTypes.TemplateDefinition, SanteDB.Core.Model, Version=1.0.1.0"
-         domainClass="SanteDB.DisconnectedClient.Core.Data.Model.Extensibility.DbTemplateDefinition, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Extensibility.DbTemplateDefinition, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="CreatedByKey" domainName="CreatedByUuid"/>
     <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>

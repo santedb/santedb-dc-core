@@ -30,8 +30,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using System.Diagnostics;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Connection
+namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
 
     /// <summary>

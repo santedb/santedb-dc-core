@@ -21,9 +21,9 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
 	/// <summary>
 	/// Represents an entity which is used to represent an application

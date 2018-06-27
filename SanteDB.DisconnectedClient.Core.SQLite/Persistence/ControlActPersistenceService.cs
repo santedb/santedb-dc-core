@@ -18,11 +18,11 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SQLite.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Control act persistence service
@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert to model instance
         /// </summary>
-        public override ControlAct ToModelInstance(object dataInstance, LocalDataContext context)
+        public override ControlAct ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbIdentified;
             var controlAct = dataInstance as DbControlAct ?? context.Connection.Table<DbControlAct>().Where(o => o.Uuid == iddat.Uuid).First();

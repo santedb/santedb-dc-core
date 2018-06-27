@@ -19,18 +19,19 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Alerting;
+using SanteDB.DisconnectedClient.Core;
 using SQLite.Net.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Alerting
+namespace SanteDB.DisconnectedClient.SQLite.Alerting
 {
 
     /// <summary>
     /// A message
     /// </summary>
-    [JsonObject, Table("alert"), XmlType(nameof(AlertMessage), Namespace = "http://openiz.org/alerting")]
+    [JsonObject, Table("alert"), XmlType(nameof(AlertMessage), Namespace = "http://santedb.org/alerting")]
     public class DbAlertMessage
     {
 

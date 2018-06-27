@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persistence service for authorities
@@ -37,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert assigning authority to model
         /// </summary>
-        public override AssigningAuthority ToModelInstance(object dataInstance, LocalDataContext context)
+        public override AssigningAuthority ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var dataAA = dataInstance as DbAssigningAuthority;
             var retVal = base.ToModelInstance(dataInstance, context);
@@ -48,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified data
         /// </summary>
-        protected override AssigningAuthority InsertInternal(LocalDataContext context, AssigningAuthority data)
+        protected override AssigningAuthority InsertInternal(SQLiteDataContext context, AssigningAuthority data)
         {
             var retVal = base.InsertInternal(context, data);
 
@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified data
         /// </summary>
-        protected override AssigningAuthority UpdateInternal(LocalDataContext context, AssigningAuthority data)
+        protected override AssigningAuthority UpdateInternal(SQLiteDataContext context, AssigningAuthority data)
         {
             var retVal = base.UpdateInternal(context, data);
             var ruuid = retVal.Key.Value.ToByteArray();

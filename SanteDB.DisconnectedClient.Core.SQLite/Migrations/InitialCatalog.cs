@@ -21,24 +21,28 @@ using System;
 using System.Reflection;
 using System.Linq;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.DisconnectedClient.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Data.Model.DataType;
-using SanteDB.DisconnectedClient.Core.Data.Model.Extensibility;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System.IO;
-using SanteDB.DisconnectedClient.Core.Data.Model.Roles;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Serices;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
-using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.SQLite.Security;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
+namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
     /// <summary>
     /// This class is responsible for setting up an initial catalog of items in the SQL Lite database
@@ -152,7 +156,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
                 });
 
                 // Need to create a local admin?
-                if (ApplicationContext.Current.GetService<LocalIdentityService>() != null)
+                if (ApplicationContext.Current.GetService<SQLiteIdentityService>() != null)
                 {
                     Guid uid = Guid.NewGuid();
                     // System user
@@ -219,8 +223,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
 
                 // Run SQL Script
                 string[] resourceSql = {
-                    "SanteDB.DisconnectedClient.Core.Data.Sql.000_init_openiz_algonquin.sql",
-                    "SanteDB.DisconnectedClient.Core.Data.Sql.001_init_openiz_core_data.sql"
+                    "SanteDB.DisconnectedClient.SQLite.Sql.000_init_openiz_algonquin.sql",
+                    "SanteDB.DisconnectedClient.SQLite.Sql.001_init_openiz_core_data.sql"
                 };
 
 

@@ -31,7 +31,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Hacks
+namespace SanteDB.DisconnectedClient.SQLite.Hacks
 {
     /// <summary>
     /// Represents a query hack for participations / relationships where the guard is being queried 

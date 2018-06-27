@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Security configuration section
 	/// </summary>
-	[XmlType(nameof(SecurityConfigurationSection), Namespace = "http://openiz.org/mobile/configuration"), JsonObject(nameof(SecurityConfigurationSection))]
+	[XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/mobile/configuration"), JsonObject(nameof(SecurityConfigurationSection))]
 	public class SecurityConfigurationSection : IConfigurationSection
 	{
 

@@ -19,8 +19,8 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SQLite.Net;
 using SQLite.Net.Interop;
@@ -30,20 +30,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persistence service for entity addresses
     /// </summary>
-    public class EntityAddressPersistenceService : IdentifiedPersistenceService<EntityAddress, DbEntityAddress>, ILocalAssociativePersistenceService
+    public class EntityAddressPersistenceService : IdentifiedPersistenceService<EntityAddress, DbEntityAddress>, ISQLiteAssociativePersistenceService
     {
 
 
         /// <summary>
         /// Get from source
         /// </summary>
-        public IEnumerable GetFromSource(LocalDataContext context, Guid id, decimal? versionSequenceId)
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             return this.Query(context, o => o.SourceEntityKey == id);
         }
@@ -51,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Override model instance
         /// </summary>
-        public override object FromModelInstance(EntityAddress modelInstance, LocalDataContext context)
+        public override object FromModelInstance(EntityAddress modelInstance, SQLiteDataContext context)
         {
             foreach (var itm in modelInstance.Component)
                 itm.Value = itm.Value.Trim();
@@ -69,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        protected override EntityAddress InsertInternal(LocalDataContext context, EntityAddress data)
+        protected override EntityAddress InsertInternal(SQLiteDataContext context, EntityAddress data)
         {
 
             // Ensure exists
@@ -94,7 +95,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the entity name
         /// </summary>
-        protected override EntityAddress UpdateInternal(LocalDataContext context, EntityAddress data)
+        protected override EntityAddress UpdateInternal(SQLiteDataContext context, EntityAddress data)
         {
 
             // Ensure exists
@@ -121,7 +122,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
     /// <summary>
     /// Entity address component persistence service
     /// </summary>
-    public class EntityAddressComponentPersistenceService : IdentifiedPersistenceService<EntityAddressComponent, DbEntityAddressComponent, DbEntityAddressComponent.QueryResult>, ILocalAssociativePersistenceService
+    public class EntityAddressComponentPersistenceService : IdentifiedPersistenceService<EntityAddressComponent, DbEntityAddressComponent, DbEntityAddressComponent.QueryResult>, ISQLiteAssociativePersistenceService
     {
 
         // Address value identifier lookup 
@@ -130,7 +131,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public override EntityAddressComponent ToModelInstance(object dataInstance, LocalDataContext context)
+        public override EntityAddressComponent ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             if (dataInstance == null) return null;
 
@@ -148,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From the model instance
         /// </summary>
-        public override object FromModelInstance(EntityAddressComponent modelInstance, LocalDataContext context)
+        public override object FromModelInstance(EntityAddressComponent modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             var retVal = new DbEntityAddressComponent()
@@ -188,7 +189,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Entity address component
         /// </summary>
-        protected override EntityAddressComponent InsertInternal(LocalDataContext context, EntityAddressComponent data)
+        protected override EntityAddressComponent InsertInternal(SQLiteDataContext context, EntityAddressComponent data)
         {
             if (data.ComponentType != null) data.ComponentType = data.ComponentType?.EnsureExists(context) as Concept;
             data.ComponentTypeKey = data.ComponentType?.Key ?? data.ComponentTypeKey;
@@ -198,7 +199,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update 
         /// </summary>
-        protected override EntityAddressComponent UpdateInternal(LocalDataContext context, EntityAddressComponent data)
+        protected override EntityAddressComponent UpdateInternal(SQLiteDataContext context, EntityAddressComponent data)
         {
             if (data.ComponentType != null) data.ComponentType = data.ComponentType?.EnsureExists(context) as Concept;
 
@@ -209,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Get components from source
         /// </summary>
-        public IEnumerable GetFromSource(LocalDataContext context, Guid id, decimal? versionSequenceId)
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             int tr = 0;
             return this.QueryInternal(context, o => o.SourceEntityKey == id, 0, -1, out tr, Guid.Empty, false);

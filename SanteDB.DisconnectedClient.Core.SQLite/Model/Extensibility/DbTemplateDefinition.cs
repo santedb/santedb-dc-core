@@ -24,7 +24,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Extensibility
+namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
     /// <summary>
     /// Represents a database template definition

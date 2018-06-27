@@ -20,7 +20,7 @@
 using System;
 using System.Linq;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SQLite.Net;
 using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -28,7 +28,7 @@ using System.Linq.Expressions;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Data.QueryBuilder;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Base data persistence service
@@ -57,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel InsertInternal (LocalDataContext context, TModel data)
+        protected override TModel InsertInternal (SQLiteDataContext context, TModel data)
 		{
 			var domainObject = this.FromModelInstance (data, context) as TDomain;
 
@@ -84,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel UpdateInternal (LocalDataContext context, TModel data)
+        protected override TModel UpdateInternal (SQLiteDataContext context, TModel data)
 		{
 			var domainObject = this.FromModelInstance (data, context) as TDomain;
             var existing = context.Connection.Table<TDomain>().Where(o=>o.Uuid == domainObject.Uuid).FirstOrDefault();
@@ -109,7 +109,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel ObsoleteInternal (LocalDataContext context, TModel data)
+        protected override TModel ObsoleteInternal (SQLiteDataContext context, TModel data)
 		{
 			var domainObject = this.FromModelInstance (data, context) as TDomain;
             if(data.ObsoletedBy != null) data.ObsoletedBy = data.ObsoletedBy?.EnsureExists(context);

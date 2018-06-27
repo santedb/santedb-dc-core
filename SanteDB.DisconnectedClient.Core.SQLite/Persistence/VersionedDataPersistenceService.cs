@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +26,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     public abstract class VersionedDataPersistenceService<TModel, TDomain> : VersionedDataPersistenceService<TModel, TDomain, TDomain>
     where TDomain : DbVersionedData, new()
@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the data
         /// </summary>
-        protected override TModel InsertInternal(LocalDataContext context, TModel data)
+        protected override TModel InsertInternal(SQLiteDataContext context, TModel data)
         {
             if(data.VersionKey.GetValueOrDefault() == Guid.Empty)
                 data.VersionKey = Guid.NewGuid();
@@ -56,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the data with new version information
         /// </summary>
-        protected override TModel UpdateInternal(LocalDataContext context, TModel data)
+        protected override TModel UpdateInternal(SQLiteDataContext context, TModel data)
         {
             var key = data.Key?.ToByteArray();
             if (!data.VersionKey.HasValue)
@@ -70,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the specified data
         /// </summary>
-        protected override TModel ObsoleteInternal(LocalDataContext context, TModel data)
+        protected override TModel ObsoleteInternal(SQLiteDataContext context, TModel data)
         {
             data.PreviousVersionKey = data.VersionKey;
             data.VersionKey = Guid.NewGuid();

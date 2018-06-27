@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,17 +27,17 @@ using System.Threading.Tasks;
 using SQLite.Net;
 using System.Collections;
 using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Model.Constants;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Entity relationship persistence service
     /// </summary>
-    public class EntityRelationshipPersistenceService : IdentifiedPersistenceService<EntityRelationship, DbEntityRelationship>, ILocalAssociativePersistenceService
+    public class EntityRelationshipPersistenceService : IdentifiedPersistenceService<EntityRelationship, DbEntityRelationship>, ISQLiteAssociativePersistenceService
     {
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Load relationship mnemonics
         /// </summary>
-        public string GetRelationshipMnemonic(LocalDataContext context, Guid id)
+        public string GetRelationshipMnemonic(SQLiteDataContext context, Guid id)
         {
             if (this.m_relationshipMnemonicDictionary.Count == 0)
                 lock(this.m_relationshipMnemonicDictionary)
@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance 
         /// </summary>
-        public override EntityRelationship ToModelInstance(object dataInstance, LocalDataContext context)
+        public override EntityRelationship ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var dbi = dataInstance as DbEntityRelationship;
             if (dbi == null) return null;
@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(EntityRelationship modelInstance, LocalDataContext context)
+        public override object FromModelInstance(EntityRelationship modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbEntityRelationship()
@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Get from source
         /// </summary>
-        public IEnumerable GetFromSource(LocalDataContext context, Guid id, decimal? versionSequenceId)
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             return this.Query(context, o => o.SourceEntityKey == id);
         }
@@ -111,7 +111,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the relationship
         /// </summary>
-        protected override EntityRelationship InsertInternal(LocalDataContext context, EntityRelationship data)
+        protected override EntityRelationship InsertInternal(SQLiteDataContext context, EntityRelationship data)
         {
             
             // Ensure we haven't already persisted this
@@ -160,7 +160,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified object
         /// </summary>
-        protected override EntityRelationship UpdateInternal(LocalDataContext context, EntityRelationship data)
+        protected override EntityRelationship UpdateInternal(SQLiteDataContext context, EntityRelationship data)
         {
             // Ensure we haven't already persisted this
             //if (data.TargetEntity != null) data.TargetEntity = data.TargetEntity.EnsureExists(context);

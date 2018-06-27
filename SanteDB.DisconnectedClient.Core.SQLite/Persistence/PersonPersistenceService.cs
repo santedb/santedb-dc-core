@@ -24,11 +24,11 @@ using System.Text;
 using System.Threading.Tasks;
 using SanteDB.Core.Model.Entities;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Person persistence service
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(Person modelInstance, LocalDataContext context)
+        public override object FromModelInstance(Person modelInstance, SQLiteDataContext context)
         {
             /*var dbPerson = base.FromModelInstance(modelInstance, context) as DbPerson;
 
@@ -71,7 +71,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Model instance
         /// </summary>
-        public override Person ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Person ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbIdentified;
             var person = iddat as DbPerson ?? iddat.GetInstanceOf<DbPerson>() ?? context.Connection.Table<DbPerson>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -94,7 +94,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <param name="context"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        protected override Person InsertInternal(LocalDataContext context, Person data)
+        protected override Person InsertInternal(SQLiteDataContext context, Person data)
         {
             var retVal = base.InsertInternal(context, data);
             byte[] sourceKey = retVal.Key.Value.ToByteArray();
@@ -114,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the person entity
         /// </summary>
-        protected override Person UpdateInternal(LocalDataContext context, Person data)
+        protected override Person UpdateInternal(SQLiteDataContext context, Person data)
         {
             var retVal = base.UpdateInternal(context, data);
             var sourceKey = retVal.Key.Value.ToByteArray();

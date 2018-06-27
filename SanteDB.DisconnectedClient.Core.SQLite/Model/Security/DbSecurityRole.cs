@@ -22,7 +22,7 @@ using SQLite.Net;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Security
+namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
 	/// <summary>
 	/// Represents a security role

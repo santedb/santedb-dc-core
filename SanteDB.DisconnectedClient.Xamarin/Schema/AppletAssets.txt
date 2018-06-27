@@ -1,0 +1,48 @@
+﻿SPA Pages (State Assets)
+=-=-=-=-=-=-=-=-=-=-=-=-
+
+State based applets (pages in the SPA framework) have the structure as follows:
+
+<[form|div|p] xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:sdb="http://santedb.org/applet"
+		xmlns:bind="http://santedb.org/applet/binding" 
+		>
+	<!-- 0..n static script references -->
+	<sdb:script></sdb:script>
+	<!-- 0..n static CSS references -->
+	<sdb:style></sdb:style>
+
+	<!-- 1..1 state name for ui-router -->
+    <sdb:state name="[applet].[state]">
+		<!-- 1..1 route -->
+        <sdb:url></sdb:url>
+		<!-- 1..1 view -->
+        <sdb:view>
+			<!-- 0..n titles -->
+            <sdb:title></sdb:title>
+			<!-- 0..n permissions -->
+            <sdb:demand>1.3.6.1.4.1.33349.3.1.5.9.2.2.0</sdb:demand>
+			<!-- 1..1 controller definition -->
+            <sdb:controller></sdb:controller>
+			<!-- 0..1 controller source file reference -->
+			<sdb:controller-src></sdb:controller-src>
+        </sdb:view>
+    </sdb:state>
+
+Widgets (embedded parts which can be reused)
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+<[div|p] xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:sdb="http://santedb.org/applet">
+	<sdb:widget type="[Tab|Panel]" scope="[Patient|Place|User]" name="[applet].[panelId]">
+		<!-- 0..1 icon to the widget -->
+		<sdb:icon></sdb:icon>
+		<!-- 0..n titles -->
+        <sdb:title></sdb:title>
+		<!-- 0..n permissions -->
+        <sdb:demand>1.3.6.1.4.1.33349.3.1.5.9.2.2.0</sdb:demand>
+		<!-- 1..1 controller definition -->
+        <sdb:controller></sdb:controller>
+		<!-- 0..1 controller source file reference -->
+		<sdb:controller-src></sdb:controller-src>
+	</sdb:widget>

@@ -18,15 +18,18 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
+namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
     /// <summary>
     /// Update for migrating Edmonton CTP5 to f4

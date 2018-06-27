@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Security;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -26,14 +26,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Security user persistence
     /// </summary>
     public class SecurityUserPersistenceService : BaseDataPersistenceService<SecurityUser, DbSecurityUser>
     {
-        public override SecurityUser ToModelInstance(object dataInstance, LocalDataContext context)
+        public override SecurityUser ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var dbUser = dataInstance as DbSecurityUser;
             var retVal = base.ToModelInstance(dataInstance, context);
@@ -48,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        protected override SecurityUser InsertInternal(LocalDataContext context, SecurityUser data)
+        protected override SecurityUser InsertInternal(SQLiteDataContext context, SecurityUser data)
         {
             var retVal = base.InsertInternal(context, data);
 
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the roles to security user
         /// </summary>
-        protected override SecurityUser UpdateInternal(LocalDataContext context, SecurityUser data)
+        protected override SecurityUser UpdateInternal(SQLiteDataContext context, SecurityUser data)
         {
             var retVal = base.UpdateInternal(context, data);
             byte[] keyuuid = retVal.Key.Value.ToByteArray();
@@ -106,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Represent as model instance
         /// </summary>
-        public override SecurityRole ToModelInstance(object dataInstance, LocalDataContext context)
+        public override SecurityRole ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, context);
             var dbRole = dataInstance as DbSecurityRole;
@@ -119,7 +119,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        protected override SecurityRole InsertInternal(LocalDataContext context, SecurityRole data)
+        protected override SecurityRole InsertInternal(SQLiteDataContext context, SecurityRole data)
         {
             var retVal = base.InsertInternal(context, data);
 
@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the roles to security user
         /// </summary>
-        protected override SecurityRole UpdateInternal(LocalDataContext context, SecurityRole data)
+        protected override SecurityRole UpdateInternal(SQLiteDataContext context, SecurityRole data)
         {
             var retVal = base.UpdateInternal(context, data);
             var entityUuid = retVal.Key.Value.ToByteArray();
@@ -163,7 +163,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Represent as model instance
         /// </summary>
-        public override SecurityDevice ToModelInstance(object dataInstance, LocalDataContext context)
+        public override SecurityDevice ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, context);
             var dbDevice = dataInstance as DbSecurityDevice;
@@ -174,7 +174,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        protected override SecurityDevice InsertInternal(LocalDataContext context, SecurityDevice data)
+        protected override SecurityDevice InsertInternal(SQLiteDataContext context, SecurityDevice data)
         {
             var retVal = base.InsertInternal(context, data);
 
@@ -193,7 +193,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the roles to security user
         /// </summary>
-        protected override SecurityDevice UpdateInternal(LocalDataContext context, SecurityDevice data)
+        protected override SecurityDevice UpdateInternal(SQLiteDataContext context, SecurityDevice data)
         {
             var retVal = base.UpdateInternal(context, data);
             var entityUuid = retVal.Key.Value.ToByteArray();
@@ -220,7 +220,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Represent as model instance
         /// </summary>
-        public override SecurityApplication ToModelInstance(object dataInstance, LocalDataContext context)
+        public override SecurityApplication ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, context);
             var dbApplication = dataInstance as DbSecurityApplication;
@@ -231,7 +231,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        protected override SecurityApplication InsertInternal(LocalDataContext context, SecurityApplication data)
+        protected override SecurityApplication InsertInternal(SQLiteDataContext context, SecurityApplication data)
         {
             var retVal = base.InsertInternal(context, data);
 
@@ -250,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the roles to security user
         /// </summary>
-        protected override SecurityApplication UpdateInternal(LocalDataContext context, SecurityApplication data)
+        protected override SecurityApplication UpdateInternal(SQLiteDataContext context, SecurityApplication data)
         {
             var retVal = base.UpdateInternal(context, data);
 

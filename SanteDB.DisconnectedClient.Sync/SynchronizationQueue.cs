@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using System;
-using SanteDB.DisconnectedClient.Core.Synchronization.Model;
+using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using System.Collections.Generic;
 using System.Reflection;
 using SQLite.Net;
@@ -29,11 +29,14 @@ using SanteDB.Core.Model;
 using System.IO;
 using System.Xml.Serialization;
 using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
 using System.Linq.Expressions;
 using System.Linq;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.Core.Model.Query;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
 	/// <summary>
 	/// Synchronization queue helper.
@@ -124,7 +127,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Synchronization.SynchronizationQueue`1"/> class.
+		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.SQLite.Synchronization.SynchronizationQueue`1"/> class.
 		/// </summary>
 		private SynchronizationQueue ()
 		{
@@ -432,6 +435,40 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         ISynchronizationQueueEntry ISynchronizationQueue.Enqueue(IdentifiedData data, SynchronizationOperationType operation)
         {
             return this.Enqueue(data, operation);
+        }
+
+        /// <summary>
+        /// Retry to queue the specified item
+        /// </summary>
+        /// <param name="queueItem">The item to retry queuing </param>
+        public void Retry(ISynchronizationQueueRetryEntry queueItem)
+        {
+            // HACK: Clean this up
+            switch (queueItem.OriginalQueue)
+            {
+                case "inbound":
+                case "inbound_queue":
+                    SynchronizationQueue.Inbound.EnqueueRaw(new InboundQueueEntry(queueItem as DeadLetterQueueEntry));
+                    break;
+                case "outbound":
+                case "outbound_queue":
+                    SynchronizationQueue.Outbound.EnqueueRaw(new OutboundQueueEntry(queueItem as DeadLetterQueueEntry));
+                    break;
+                case "admin":
+                case "admin_queue":
+                    SynchronizationQueue.Admin.EnqueueRaw(new OutboundAdminQueueEntry(queueItem as DeadLetterQueueEntry));
+                    break;
+                default:
+                    throw new KeyNotFoundException(queueItem.OriginalQueue);
+            }
+        }
+
+        /// <summary>
+        /// Query for matching records
+        /// </summary>
+        public IEnumerable<ISynchronizationQueueEntry> Query(NameValueCollection search, int offset, int count, out int totalResults)
+        {
+            return this.Query(QueryExpressionParser.BuildLinqExpression<TQueueEntry>(search), offset, count, out totalResults);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Data configuration section
 	/// </summary>
-	[XmlType(nameof(DataConfigurationSection), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(DataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
 	public class DataConfigurationSection : IConfigurationSection
 	{
 
@@ -86,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Represents a single connection string
 	/// </summary>
-	[XmlType(nameof(ConnectionString), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(ConnectionString), Namespace = "http://santedb.org/mobile/configuration")]
 	public class ConnectionString
 	{
 

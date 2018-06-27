@@ -21,7 +21,7 @@ using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Entities
+namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
 	/// <summary>
 	/// Represents a place in the local database

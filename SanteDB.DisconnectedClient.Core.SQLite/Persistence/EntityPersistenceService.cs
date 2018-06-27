@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,22 +26,23 @@ using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Data.Model.DataType;
-using SanteDB.DisconnectedClient.Core.Data.Model.Extensibility;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Roles;
 using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using System.Reflection;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Entity persistence service
@@ -75,7 +76,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public virtual TEntityType ToModelInstance<TEntityType>(DbEntity dbInstance, LocalDataContext context) where TEntityType : Entity, new()
+        public virtual TEntityType ToModelInstance<TEntityType>(DbEntity dbInstance, SQLiteDataContext context) where TEntityType : Entity, new()
         {
             var retVal = m_mapper.MapDomainInstance<DbEntity, TEntityType>(dbInstance, useCache: !context.Connection.IsInTransaction);
 
@@ -133,7 +134,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Create an appropriate entity based on the class code
         /// </summary>
-        public override Entity ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Entity ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             // Alright first, which type am I mapping to?
             var dbEntity = dataInstance as DbEntity;
@@ -193,7 +194,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert entity into a dbentity
         /// </summary>
-        public override object FromModelInstance(Entity modelInstance, LocalDataContext context)
+        public override object FromModelInstance(Entity modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbEntity()
@@ -217,7 +218,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Conversion based on type
         /// </summary>
-        protected override Entity CacheConvert(DbIdentified dataInstance, LocalDataContext context)
+        protected override Entity CacheConvert(DbIdentified dataInstance, SQLiteDataContext context)
         {
             return this.DoCacheConvert(dataInstance, context);
         }
@@ -225,7 +226,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Perform the cache convert
         /// </summary>
-        internal Entity DoCacheConvert(DbIdentified dataInstance, LocalDataContext context)
+        internal Entity DoCacheConvert(DbIdentified dataInstance, SQLiteDataContext context)
         {
             if (dataInstance == null)
                 return null;
@@ -320,7 +321,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified entity into the data context
         /// </summary>
-        internal Entity InsertCoreProperties(LocalDataContext context, Entity data)
+        internal Entity InsertCoreProperties(SQLiteDataContext context, Entity data)
         {
 
             // Ensure FK exists
@@ -433,7 +434,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified entity
         /// </summary>
-        internal Entity UpdateCoreProperties(LocalDataContext context, Entity data)
+        internal Entity UpdateCoreProperties(SQLiteDataContext context, Entity data)
         {
             // Esnure exists
             if (data.ClassConcept != null) data.ClassConcept = data.ClassConcept.EnsureExists(context);
@@ -580,7 +581,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsoleted status key
         /// </summary>
-        protected override Entity ObsoleteInternal(LocalDataContext context, Entity data)
+        protected override Entity ObsoleteInternal(SQLiteDataContext context, Entity data)
         {
             data.StatusConceptKey = StatusKeys.Obsolete;
             return base.ObsoleteInternal(context, data);
@@ -589,7 +590,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the object
         /// </summary>
-        protected override Entity InsertInternal(LocalDataContext context, Entity data)
+        protected override Entity InsertInternal(SQLiteDataContext context, Entity data)
         {
             switch (data.ClassConceptKey.ToString().ToUpper())
             {
@@ -625,7 +626,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the object
         /// </summary>
-        protected override Entity UpdateInternal(LocalDataContext context, Entity data)
+        protected override Entity UpdateInternal(SQLiteDataContext context, Entity data)
         {
             switch (data.ClassConceptKey.ToString().ToUpper())
             {

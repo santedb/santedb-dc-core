@@ -20,10 +20,10 @@
 using System;
 using SQLite.Net;
 using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.DataType
+namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
 {
 	/// <summary>
 	/// Identifier type table.

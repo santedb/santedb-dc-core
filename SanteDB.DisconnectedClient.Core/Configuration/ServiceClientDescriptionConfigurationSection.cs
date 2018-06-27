@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Service client configuration
 	/// </summary>
-	[XmlType (nameof (ServiceClientConfigurationSection), Namespace = "http://openiz.org/mobile/configuration"), JsonObject(nameof(ServiceClientConfigurationSection))]
+	[XmlType (nameof (ServiceClientConfigurationSection), Namespace = "http://santedb.org/mobile/configuration"), JsonObject(nameof(ServiceClientConfigurationSection))]
 	public class ServiceClientConfigurationSection : IConfigurationSection
 	{
 		/// <summary>
@@ -90,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// A service client reprsent a single client to a service 
 	/// </summary>
-	[XmlType (nameof (ServiceClientDescription), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType (nameof (ServiceClientDescription), Namespace = "http://santedb.org/mobile/configuration")]
 	public class ServiceClientDescription : IRestClientDescription
 	{
 
@@ -178,7 +178,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Service client binding
 	/// </summary>
-	[XmlType (nameof (ServiceClientBinding), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType (nameof (ServiceClientBinding), Namespace = "http://santedb.org/mobile/configuration")]
 	public class ServiceClientBinding : IRestClientBindingDescription
 	{
         /// <summary>
@@ -251,7 +251,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Optimization method
     /// </summary>
-    [XmlType(nameof(OptimizationMethod), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType(nameof(OptimizationMethod), Namespace = "http://santedb.org/mobile/configuration")]
     public enum OptimizationMethod
     {
         [XmlEnum("off")]
@@ -269,7 +269,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// <summary>
     /// Service client security configuration
     /// </summary>
-    [XmlType (nameof (ServiceClientSecurity), Namespace = "http://openiz.org/mobile/configuration")]
+    [XmlType (nameof (ServiceClientSecurity), Namespace = "http://santedb.org/mobile/configuration")]
 	public class ServiceClientSecurity : IRestClientSecurityDescription
 	{
 
@@ -366,7 +366,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Service certificate configuration
 	/// </summary>
-	[XmlType(nameof(ServiceCertificateConfiguration), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType(nameof(ServiceCertificateConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
 	public class ServiceCertificateConfiguration : IRestClientCertificateDescription
 	{
 		/// <summary>
@@ -414,7 +414,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Represnts a single endpoint for use in the service client
 	/// </summary>
-	[XmlType (nameof (ServiceClientEndpoint), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlType (nameof (ServiceClientEndpoint), Namespace = "http://santedb.org/mobile/configuration")]
 	public class ServiceClientEndpoint : IRestClientEndpointDescription
 	{
         /// <summary>

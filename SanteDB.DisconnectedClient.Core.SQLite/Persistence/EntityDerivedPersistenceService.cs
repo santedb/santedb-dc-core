@@ -18,11 +18,11 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SQLite.Net;
 using System.Reflection;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Entity derived persistence services
@@ -39,7 +39,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Do cache convert
         /// </summary>
-        protected override TModel CacheConvert(DbIdentified o, LocalDataContext context)
+        protected override TModel CacheConvert(DbIdentified o, SQLiteDataContext context)
         {
             return (TModel)this.m_entityPersister.DoCacheConvert(o, context);
         }
@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified TModel into the database
         /// </summary>
-        protected override TModel InsertInternal(LocalDataContext context, TModel data)
+        protected override TModel InsertInternal(SQLiteDataContext context, TModel data)
         {
             if (typeof(TModel).GetTypeInfo().BaseType == typeof(Entity))
             {
@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified TModel
         /// </summary>
-        protected override TModel UpdateInternal(LocalDataContext context, TModel data)
+        protected override TModel UpdateInternal(SQLiteDataContext context, TModel data)
         {
             if(typeof(TModel).GetTypeInfo().BaseType == typeof(Entity))
                 this.m_entityPersister.UpdateCoreProperties(context, data);
@@ -70,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the object
         /// </summary>
-        protected override TModel ObsoleteInternal(LocalDataContext context, TModel data)
+        protected override TModel ObsoleteInternal(SQLiteDataContext context, TModel data)
         {
             var retVal = this.m_entityPersister.Obsolete(context, data);
             return data;

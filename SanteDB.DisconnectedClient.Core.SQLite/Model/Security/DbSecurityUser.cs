@@ -22,7 +22,7 @@ using SQLite.Net;
 using SanteDB.Core.Model.Security;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Security
+namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
 	/// <summary>
 	/// Represents a user for the purpose of authentication
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Model.Security
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating whether this <see cref="SanteDB.DisconnectedClient.Core.Data.Model.Security.DbSecurityUser"/> lockout enabled.
+		/// Gets or sets a value indicating whether this <see cref="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityUser"/> lockout enabled.
 		/// </summary>
 		/// <value><c>true</c> if lockout enabled; otherwise, <c>false</c>.</value>
 		[Column("locked")]

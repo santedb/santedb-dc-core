@@ -43,5 +43,16 @@ namespace SanteDB.DisconnectedClient.Core.Services
 		/// </summary>
 		IPolicy GetPolicy(string policyOid);
 	}
+
+    /// <summary>
+    /// Represents an offline policy information service
+    /// </summary>
+    public interface IOfflinePolicyInformationService : IPolicyInformationService
+    {
+        /// <summary>
+        /// Create a local offline policy
+        /// </summary>
+        void CreatePolicy(IPolicy policy, IPrincipal principal);
+    }
 }
 

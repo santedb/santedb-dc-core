@@ -32,8 +32,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	/// <summary>
 	/// Configuration table object
 	/// </summary>
-	[XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://openiz.org/mobile/configuration")]
-	[XmlType(nameof(SanteDBConfiguration), Namespace = "http://openiz.org/mobile/configuration")]
+	[XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+	[XmlType(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
 	[XmlInclude(typeof(SecurityConfigurationSection))]
 	[XmlInclude(typeof(DataConfigurationSection))]
 	[XmlInclude(typeof(AppletConfigurationSection))]

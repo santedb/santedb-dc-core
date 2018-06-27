@@ -18,8 +18,8 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -28,7 +28,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SanteDB.Core.Data.QueryBuilder;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Manufactured material persistence service
@@ -50,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <param name="context"></param>
         /// <param name="principal"></param>
         /// <returns></returns>
-        public override ManufacturedMaterial ToModelInstance(object dataInstance, LocalDataContext context)
+        public override ManufacturedMaterial ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
 
             var iddat = dataInstance as DbIdentified;
@@ -66,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified manufactured material
         /// </summary>
-        protected override ManufacturedMaterial InsertInternal(LocalDataContext context, ManufacturedMaterial data)
+        protected override ManufacturedMaterial InsertInternal(SQLiteDataContext context, ManufacturedMaterial data)
         {
             var retVal = this.m_materialPersister.Insert(context, data);
             return base.InsertInternal(context, data);
@@ -75,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Updates the manufactured material
         /// </summary>
-        protected override ManufacturedMaterial UpdateInternal(LocalDataContext context, ManufacturedMaterial data)
+        protected override ManufacturedMaterial UpdateInternal(SQLiteDataContext context, ManufacturedMaterial data)
         {
             var updated = this.m_materialPersister.Update(context, data);
             return base.UpdateInternal(context, data);
@@ -84,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the specified manufactured material
         /// </summary>
-        protected override ManufacturedMaterial ObsoleteInternal(LocalDataContext context, ManufacturedMaterial data)
+        protected override ManufacturedMaterial ObsoleteInternal(SQLiteDataContext context, ManufacturedMaterial data)
         {
             var obsoleted = this.m_materialPersister.Obsolete(context, data);
             return data;

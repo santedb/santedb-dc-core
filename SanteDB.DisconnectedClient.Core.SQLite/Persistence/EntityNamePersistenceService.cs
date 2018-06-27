@@ -18,14 +18,14 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using System.Collections;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Constants;
@@ -33,16 +33,17 @@ using SanteDB.Core.Services;
 using SanteDB.Core.Interfaces;
 using SQLite.Net.Interop;
 using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.Core.Data.QueryBuilder;
 using System.Threading;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Entity name persistence service
     /// </summary>
-    public class EntityNamePersistenceService : IdentifiedPersistenceService<EntityName, DbEntityName>, ILocalAssociativePersistenceService
+    public class EntityNamePersistenceService : IdentifiedPersistenceService<EntityName, DbEntityName>, ISQLiteAssociativePersistenceService
     {
 
         private readonly Dictionary<Guid, String> m_nameUseMap = new Dictionary<Guid, String>() {
@@ -67,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Represent as a model instance
         /// </summary>
-        public override EntityName ToModelInstance(object dataInstance, LocalDataContext context)
+        public override EntityName ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var dbEntName = dataInstance as DbEntityName;
             var compPersister = new EntityNameComponentPersistenceService();
@@ -90,7 +91,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Get from source
         /// </summary>
-        public IEnumerable GetFromSource(LocalDataContext context, Guid id, decimal? versionSequenceId)
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             return this.Query(context, o => o.SourceEntityKey == id);
         }
@@ -98,7 +99,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Override model instance
         /// </summary>
-        public override object FromModelInstance(EntityName modelInstance, LocalDataContext context)
+        public override object FromModelInstance(EntityName modelInstance, SQLiteDataContext context)
         {
             foreach (var itm in modelInstance.Component)
                 itm.Value = itm.Value.Trim();
@@ -115,7 +116,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        protected override EntityName InsertInternal(LocalDataContext context, EntityName data)
+        protected override EntityName InsertInternal(SQLiteDataContext context, EntityName data)
         {
 
             // Ensure exists
@@ -137,7 +138,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the entity name
         /// </summary>
-        protected override EntityName UpdateInternal(LocalDataContext context, EntityName data)
+        protected override EntityName UpdateInternal(SQLiteDataContext context, EntityName data)
         {
             // Ensure exists
             if (data.NameUse != null) data.NameUse = data.NameUse?.EnsureExists(context);
@@ -163,7 +164,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
     /// <summary>
     /// Entity address component persistence service
     /// </summary>
-    public class EntityNameComponentPersistenceService : IdentifiedPersistenceService<EntityNameComponent, DbEntityNameComponent, DbEntityNameComponent.QueryResult>, ILocalAssociativePersistenceService
+    public class EntityNameComponentPersistenceService : IdentifiedPersistenceService<EntityNameComponent, DbEntityNameComponent, DbEntityNameComponent.QueryResult>, ISQLiteAssociativePersistenceService
     {
 
         // Name sequence
@@ -186,7 +187,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public override EntityNameComponent ToModelInstance(object dataInstance, LocalDataContext context)
+        public override EntityNameComponent ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             if (dataInstance == null) return null;
 
@@ -206,7 +207,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From the model instance
         /// </summary>
-        public override object FromModelInstance(EntityNameComponent modelInstance, LocalDataContext context)
+        public override object FromModelInstance(EntityNameComponent modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             var retVal = new DbEntityNameComponent()
@@ -251,7 +252,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Before inserting domain instance
         /// </summary>
-        protected override DbEntityNameComponent BeforeInsertDomainObject(LocalDataContext context, DbEntityNameComponent domain)
+        protected override DbEntityNameComponent BeforeInsertDomainObject(SQLiteDataContext context, DbEntityNameComponent domain)
         {
             lock(m_lockObject)
             {
@@ -265,7 +266,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Entity address component
         /// </summary>
-        protected override EntityNameComponent InsertInternal(LocalDataContext context, EntityNameComponent data)
+        protected override EntityNameComponent InsertInternal(SQLiteDataContext context, EntityNameComponent data)
         {
             if (data.ComponentType != null) data.ComponentType = data.ComponentType?.EnsureExists(context) as Concept;
             data.ComponentTypeKey = data.ComponentType?.Key ?? data.ComponentTypeKey;
@@ -275,7 +276,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update 
         /// </summary>
-        protected override EntityNameComponent UpdateInternal(LocalDataContext context, EntityNameComponent data)
+        protected override EntityNameComponent UpdateInternal(SQLiteDataContext context, EntityNameComponent data)
         {
             if (data.ComponentType != null) data.ComponentType = data.ComponentType?.EnsureExists(context) as Concept;
 
@@ -286,7 +287,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Get components from source
         /// </summary>
-        public IEnumerable GetFromSource(LocalDataContext context, Guid id, decimal? versionSequenceId)
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             int tr = 0;
             return this.QueryInternal(context, o => o.SourceEntityKey == id, 0, -1, out tr, Guid.Empty, false);

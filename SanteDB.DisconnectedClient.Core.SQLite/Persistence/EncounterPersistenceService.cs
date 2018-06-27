@@ -18,12 +18,12 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SQLite.Net;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Persistence class which persists encounters
@@ -34,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// From model instance
         /// </summary>
-        public override object FromModelInstance(PatientEncounter modelInstance, LocalDataContext context)
+        public override object FromModelInstance(PatientEncounter modelInstance, SQLiteDataContext context)
         {
             modelInstance.Key = modelInstance.Key ?? Guid.NewGuid();
             return new DbPatientEncounter()
@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert database instance to patient encounter
         /// </summary>
-        public override PatientEncounter ToModelInstance(object dataInstance, LocalDataContext context)
+        public override PatientEncounter ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbIdentified ;
             var dbEnc = dataInstance as DbPatientEncounter ?? dataInstance.GetInstanceOf<DbPatientEncounter>() ?? context.Connection.Table<DbPatientEncounter>().Where(o => o.Uuid == iddat.Uuid).FirstOrDefault();
@@ -62,7 +62,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the patient encounter
         /// </summary>
-        protected override PatientEncounter InsertInternal(LocalDataContext context, PatientEncounter data)
+        protected override PatientEncounter InsertInternal(SQLiteDataContext context, PatientEncounter data)
         {
             if(data.DischargeDisposition != null) data.DischargeDisposition = data.DischargeDisposition?.EnsureExists(context);
             data.DischargeDispositionKey = data.DischargeDisposition?.Key ?? data.DischargeDispositionKey;
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Updates the specified data
         /// </summary>
-        protected override PatientEncounter UpdateInternal(LocalDataContext context, PatientEncounter data)
+        protected override PatientEncounter UpdateInternal(SQLiteDataContext context, PatientEncounter data)
         {
             if (data.DischargeDisposition != null) data.DischargeDisposition = data.DischargeDisposition?.EnsureExists(context);
             data.DischargeDispositionKey = data.DischargeDisposition?.Key ?? data.DischargeDispositionKey;

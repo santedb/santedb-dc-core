@@ -17,6 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using SQLite.Net.Attributes;
 using System;
 using System.Collections.Generic;
@@ -24,13 +25,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization.Model
+namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
 {
     /// <summary>
     /// Synchroinzation query exec
     /// </summary>
     [Table("sync_queue")]
-    public class SynchronizationQuery : SynchronizationLogEntry
+    public class SynchronizationQuery : SynchronizationLogEntry, ISynchronizationLogQuery
     {
 
 
@@ -46,5 +47,13 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization.Model
         [Column("start")]
         public DateTime StartTime { get; set; }
 
+        /// <summary>
+        /// Gets or sets the UUID
+        /// </summary>
+        [Ignore]
+        Guid ISynchronizationLogQuery.Uuid {
+            get => new Guid(this.Uuid);
+            set => this.Uuid = value.ToByteArray();
+        }
     }
 }

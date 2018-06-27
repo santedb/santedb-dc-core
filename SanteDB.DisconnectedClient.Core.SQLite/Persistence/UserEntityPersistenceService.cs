@@ -18,16 +18,16 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Data.Model;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents a persister that can read/write user entities
@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public override UserEntity ToModelInstance(object dataInstance, LocalDataContext context)
+        public override UserEntity ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
             var userEntity = dataInstance as DbUserEntity ?? dataInstance.GetInstanceOf<DbUserEntity>() ?? context.Connection.Table<DbUserEntity>().Where(o => o.Uuid == iddat.Uuid).First();
@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Inserts the user entity
         /// </summary>
-        protected override UserEntity InsertInternal(LocalDataContext context, UserEntity data)
+        protected override UserEntity InsertInternal(SQLiteDataContext context, UserEntity data)
         {
             if(data.SecurityUser != null) data.SecurityUser = data.SecurityUser?.EnsureExists(context);
             data.SecurityUserKey = data.SecurityUser?.Key ?? data.SecurityUserKey;
@@ -76,7 +76,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified user entity
         /// </summary>
-        protected override UserEntity UpdateInternal(LocalDataContext context, UserEntity data)
+        protected override UserEntity UpdateInternal(SQLiteDataContext context, UserEntity data)
         {
 //            data.SecurityUser?.EnsureExists(context);
 //            data.SecurityUserKey = data.SecurityUser?.Key ?? data.SecurityUserKey;
@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Obsolete the specified user instance
         /// </summary>
-        protected override UserEntity ObsoleteInternal(LocalDataContext context, UserEntity data)
+        protected override UserEntity ObsoleteInternal(SQLiteDataContext context, UserEntity data)
         {
             var retVal = this.m_personPersister.Obsolete(context, data);
             return data;

@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +26,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SQLite.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Represents the persistence service for application eneities
@@ -36,7 +36,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// To model instance
         /// </summary>
-        public override ApplicationEntity ToModelInstance(object dataInstance, LocalDataContext context)
+        public override ApplicationEntity ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var applicationEntity = dataInstance as DbApplicationEntity;
             var dbe = context.Connection.Table<DbEntity>().Where(o => o.Uuid == applicationEntity.Uuid).First();
@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the application entity
         /// </summary>
-        protected override ApplicationEntity InsertInternal(LocalDataContext context, ApplicationEntity data)
+        protected override ApplicationEntity InsertInternal(SQLiteDataContext context, ApplicationEntity data)
         {
             if(data.SecurityApplication != null) data.SecurityApplication = data.SecurityApplication?.EnsureExists(context);
             data.SecurityApplicationKey = data.SecurityApplication?.Key ?? data.SecurityApplicationKey;
@@ -62,7 +62,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the application entity
         /// </summary>
-        protected override ApplicationEntity UpdateInternal(LocalDataContext context, ApplicationEntity data)
+        protected override ApplicationEntity UpdateInternal(SQLiteDataContext context, ApplicationEntity data)
         {
             if (data.SecurityApplication != null) data.SecurityApplication = data.SecurityApplication?.EnsureExists(context);
             data.SecurityApplicationKey = data.SecurityApplication?.Key ?? data.SecurityApplicationKey;

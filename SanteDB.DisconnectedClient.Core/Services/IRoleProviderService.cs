@@ -64,5 +64,21 @@ namespace SanteDB.DisconnectedClient.Core.Services
         void AddUsersToRoles(string[] userNames, string[] roleNames, IPrincipal principal = null);
 
     }
+
+    /// <summary>
+    /// Represents an offline role provider service
+    /// </summary>
+    public interface IOfflineRoleProviderService : IRoleProviderService
+    {
+        /// <summary>
+        /// Create offline role
+        /// </summary>
+        void CreateRole(string value, IPrincipal principal);
+
+        /// <summary>
+        /// Add specified policies to the specified roles
+        /// </summary>
+        void AddPoliciesToRoles(IPolicyInstance[] policies, string[] roles, IPrincipal principal);
+    }
 }
 

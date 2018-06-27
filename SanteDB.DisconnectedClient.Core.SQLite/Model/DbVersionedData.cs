@@ -20,10 +20,10 @@
 using System;
 using SQLite.Net;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model
+namespace SanteDB.DisconnectedClient.SQLite.Model
 {
 	/// <summary>
 	/// Versioned data

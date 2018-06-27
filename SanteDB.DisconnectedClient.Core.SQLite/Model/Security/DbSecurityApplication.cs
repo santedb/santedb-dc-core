@@ -22,7 +22,7 @@ using SQLite.Net;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Security
+namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
 	/// <summary>
 	/// Security application data. Should only be one entry here as well

@@ -24,7 +24,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Search.Model
+namespace SanteDB.DisconnectedClient.SQLite.Search.Model
 {
     /// <summary>
     /// Search entity master list of types

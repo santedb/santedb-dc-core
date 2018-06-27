@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.Concepts
+namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
 {
 	/// <summary>
 	/// Physical data layer implemntation of concept

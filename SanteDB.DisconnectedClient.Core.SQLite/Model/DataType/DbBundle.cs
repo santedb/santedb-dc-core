@@ -23,7 +23,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Model.DataType
+namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
 {
     /// <summary>
     /// Dummy class for bundles

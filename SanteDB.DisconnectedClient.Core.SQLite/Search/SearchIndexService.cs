@@ -24,10 +24,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Connection;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 using SQLite.Net;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Search.Model;
+using SanteDB.DisconnectedClient.SQLite.Search.Model;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Services;
@@ -36,12 +36,13 @@ using System.Threading;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.Core.Model.DataTypes;
 using SQLite.Net.Interop;
-using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.DisconnectedClient.Core;
 
-namespace SanteDB.DisconnectedClient.Core.Search
+namespace SanteDB.DisconnectedClient.SQLite.Search
 {
     /// <summary>
     /// Search indexing service

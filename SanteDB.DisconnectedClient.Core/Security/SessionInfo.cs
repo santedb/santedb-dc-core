@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
     /// <summary>
     /// Session information
     /// </summary>
-    [JsonObject("SessionInfo"), XmlType("SessionInfo", Namespace = "http://openiz.org/model")]
+    [JsonObject("SessionInfo"), XmlType("SessionInfo", Namespace = "http://santedb.org/model")]
     public class SessionInfo : IdentifiedData
     {
 

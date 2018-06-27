@@ -18,8 +18,8 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Data.Model;
-using SanteDB.DisconnectedClient.Core.Data.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -27,7 +27,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Persistence
+namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Persistence service for matrials
@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Convert persistence model to business objects
         /// </summary>
-        public override Material ToModelInstance(object dataInstance, LocalDataContext context)
+        public override Material ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             return this.ToModelInstance<Material>(dataInstance, context);
         }
@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Creates the specified model instance
         /// </summary>
-        internal TModel ToModelInstance<TModel>(object rawInstance, LocalDataContext context)
+        internal TModel ToModelInstance<TModel>(object rawInstance, SQLiteDataContext context)
             where TModel : Material, new()
         {
             var iddat = rawInstance as DbIdentified;
@@ -68,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Insert the material
         /// </summary>
-        protected override Material InsertInternal(LocalDataContext context, Material data)
+        protected override Material InsertInternal(SQLiteDataContext context, Material data)
         {
             if(data.FormConcept != null) data.FormConcept = data.FormConcept?.EnsureExists(context);
             if(data.QuantityConcept != null) data.QuantityConcept = data.QuantityConcept?.EnsureExists(context);
@@ -80,7 +80,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Persistence
         /// <summary>
         /// Update the specified material
         /// </summary>
-        protected override Material UpdateInternal(LocalDataContext context, Material data)
+        protected override Material UpdateInternal(SQLiteDataContext context, Material data)
         {
             if (data.FormConcept != null) data.FormConcept = data.FormConcept?.EnsureExists(context);
             if (data.QuantityConcept != null) data.QuantityConcept = data.QuantityConcept?.EnsureExists(context);

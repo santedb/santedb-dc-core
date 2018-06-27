@@ -26,7 +26,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Connection
+namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
     /// <summary>
     /// Represents a wrapper class which closes a connection when lock is released

@@ -7,9 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.SQLite", "SanteDB.DisconnectedClient.Core.SQLite\SanteDB.DisconnectedClient.SQLite.csproj", "{406D064D-78B4-467F-86C6-B3E2F12C0A65}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.Synchronization", "SanteDB.DisconnectedClient.Sync\SanteDB.DisconnectedClient.Synchronization.csproj", "{86E9D31E-C5B3-4BA2-B512-075133051D48}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.SQLite.Synchronization", "SanteDB.DisconnectedClient.Sync\SanteDB.DisconnectedClient.SQLite.Synchronization.csproj", "{86E9D31E-C5B3-4BA2-B512-075133051D48}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.i18n", "SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj", "{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.Xamarin", "SanteDB.DisconnectedClient.Xamarin\SanteDB.DisconnectedClient.Xamarin.csproj", "{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.DisconnectedClient.SQLite.Warehouse", "SanteDB.DisconnectedClient.SQLite.Warehouse\SanteDB.DisconnectedClient.SQLite.Warehouse.csproj", "{E74A91BA-E989-4D07-B382-B7DB52CEF502}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +64,26 @@ Global
 		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.SignedRelease|Any CPU.ActiveCfg = Release|Any CPU
 		{4A16BBDF-64EB-4CDE-97AA-B18C9A44CBB6}.SignedRelease|Any CPU.Build.0 = Release|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.MacDebug|Any CPU.ActiveCfg = MacDebug|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.MacDebug|Any CPU.Build.0 = MacDebug|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.MacRelease|Any CPU.ActiveCfg = MacRelease|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.MacRelease|Any CPU.Build.0 = MacRelease|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.SignedRelease|Any CPU.ActiveCfg = SignedRelease|Any CPU
+		{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}.SignedRelease|Any CPU.Build.0 = SignedRelease|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.MacDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.MacDebug|Any CPU.Build.0 = Debug|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.MacRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.MacRelease|Any CPU.Build.0 = Release|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.SignedRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{E74A91BA-E989-4D07-B382-B7DB52CEF502}.SignedRelease|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
