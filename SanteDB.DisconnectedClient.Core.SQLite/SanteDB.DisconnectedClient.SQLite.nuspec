@@ -20,7 +20,7 @@
       <dependency id="SanteDB.DisconnectedClient.Core" version="1.0.1"/>
       <dependency id="SQLite.Net.Core-PCL.MEDIC" version="3.1.1" />
       <dependency id="SanteDB.Core.Model" version="1.1.0"/>
-      <dependnecy id="SharpCompress" version="0.18.2"/>
+      <dependency id="SharpCompress" version="0.18.2"/>
     </dependencies>
   </metadata>
 </package>
