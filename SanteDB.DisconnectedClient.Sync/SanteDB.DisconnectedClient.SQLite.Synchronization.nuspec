@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>1.0.1</version>
+    <title>$title$</title>
+    <authors>Mohawk College of Applied Arts and Technology</authors>
+    <owners>Mohawk College of Applied Arts and Technology</owners>
+    <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://santedb.org</projectUrl>
+    <iconUrl>http://santedb.org/img/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Disconnected client SQLite bindings for Synchronization of DisconnectedClient data</description>
+    <releaseNotes>Initial Version</releaseNotes>
+    <copyright>Copyright (C) 2018, Mohawk College of Applied Arts and Technology</copyright>
+    <tags>santedb core</tags>
+    <dependencies>
+      <dependency id="Mono.Data.Sqlite.Portable" version="1.0.3"/>
+      <dependency id="SanteDB.ReportR" version="1.0.0"/>
+    </dependencies>
+  </metadata>
+</package>

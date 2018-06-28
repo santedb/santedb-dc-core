@@ -68,6 +68,7 @@ using SanteDB.DisconnectedClient.SQLite.Synchronization;
 using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Security;
+using SanteDB.DisconnectedClient.Core.Services.Impl;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {

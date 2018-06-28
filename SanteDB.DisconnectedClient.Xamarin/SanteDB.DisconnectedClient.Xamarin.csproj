@@ -151,6 +151,7 @@
     </None>
     <EmbeddedResource Include="Resources\antihaxor" />
     <None Include="app.config" />
+    <None Include="SanteDB.DisconnectedClient.Xamarin.nuspec" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core.SQLite\SanteDB.DisconnectedClient.SQLite.csproj">

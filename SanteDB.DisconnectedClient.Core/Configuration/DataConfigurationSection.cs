@@ -25,51 +25,61 @@ using System.IO;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
-	/// <summary>
-	/// Data configuration section
-	/// </summary>
-	[XmlType(nameof(DataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
-	public class DataConfigurationSection : IConfigurationSection
-	{
+    /// <summary>
+    /// Data configuration section
+    /// </summary>
+    [XmlType(nameof(DataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    public class DataConfigurationSection : IConfigurationSection
+    {
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.DataConfigurationSection"/> class.
-		/// </summary>
-		public DataConfigurationSection ()
-		{
-			this.MigrationLog = new DataMigrationLog();
-			this.ConnectionString = new List<SanteDB.DisconnectedClient.Core.Configuration.ConnectionString> ();
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.DataConfigurationSection"/> class.
+        /// </summary>
+        public DataConfigurationSection()
+        {
+            this.MigrationLog = new DataMigrationLog();
+            this.ConnectionString = new List<SanteDB.DisconnectedClient.Core.Configuration.ConnectionString>();
+        }
 
         /// <summary>
         /// Gets or sets connection strings
         /// </summary>
         /// <value>My property.</value>
         [XmlElement("connectionString")]
-		public List<ConnectionString> ConnectionString {
-			get;
-			set;
-		}
+        public List<ConnectionString> ConnectionString {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the name of the main data source connection string.
-		/// </summary>
-		/// <value>The name of the main data source connection string.</value>
-		[XmlAttribute("clinicalDataStore")]
-		public String MainDataSourceConnectionStringName {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the name of the main data source connection string.
+        /// </summary>
+        /// <value>The name of the main data source connection string.</value>
+        [XmlAttribute("clinicalDataStore")]
+        public String MainDataSourceConnectionStringName {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the name of the message queue connection string.
-		/// </summary>
-		/// <value>The name of the message queue connection string.</value>
-		[XmlAttribute("messageQueue")]
-		public String MessageQueueConnectionStringName {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the name of the message queue connection string.
+        /// </summary>
+        /// <value>The name of the message queue connection string.</value>
+        [XmlAttribute("messageQueue")]
+        public String MessageQueueConnectionStringName {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Gets or sets the name of the alerts data store
+        /// </summary>
+        [XmlAttribute("alertDataStore")]
+        public String AlertDataStoreConnectionStringName
+        {
+            get;
+            set;
+        }
 
 
 		/// <summary>

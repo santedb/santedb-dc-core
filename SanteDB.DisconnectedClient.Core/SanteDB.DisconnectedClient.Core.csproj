@@ -64,6 +64,7 @@
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
     <Compile Include="Security\LocalPolicyDecisionService.cs" />
+    <Compile Include="Services\Impl\AlertSynchronizationService.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
     <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
     <Compile Include="Security\Audit\AuditUtil.cs" />
@@ -173,6 +174,7 @@
     </None>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="SanteDB.DisconnectedClient.Core.nuspec" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.0" />

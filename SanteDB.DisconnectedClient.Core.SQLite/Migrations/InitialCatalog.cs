@@ -41,6 +41,7 @@ using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.SQLite.Alerting;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -94,6 +95,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 
                 if(!silent)
                     ApplicationContext.Current.SetProgress(Strings.locale_setting_table, 0);
+
                 // Create tables
                 tracer.TraceInfo("Installing Concept Tables...");
                 db.CreateTable<DbConcept>();

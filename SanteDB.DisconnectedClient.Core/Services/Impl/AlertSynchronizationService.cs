@@ -40,7 +40,7 @@ using SanteDB.Core.Model.AMI.Security;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 
-namespace SanteDB.DisconnectedClient.SQLite.Synchronization
+namespace SanteDB.DisconnectedClient.Core.Services.Impl
 {
 	/// <summary>
 	/// Represents an alert synchronization service
