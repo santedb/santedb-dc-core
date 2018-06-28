@@ -18,7 +18,7 @@
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
       <dependency id="SanteDB.Core.Api" version="1.1.0"/>
       <dependency id="SanteDB.Core.Model" version="1.1.0"/>
-      <dependnecy id="SharpCompress" version="0.18.2"/>
+      <dependency id="SharpCompress" version="0.18.2"/>
     </dependencies>
   </metadata>
 </package>
