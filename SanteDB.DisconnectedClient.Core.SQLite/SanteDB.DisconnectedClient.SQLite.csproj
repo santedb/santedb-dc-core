@@ -153,7 +153,7 @@
     <Compile Include="Search\Model\SearchEntityType.cs" />
     <Compile Include="Search\Model\SearchTerm.cs" />
     <Compile Include="Search\Model\SearchTermEntity.cs" />
-    <Compile Include="Search\SearchIndexService.cs" />
+    <Compile Include="Search\SQLiteSearchIndexService.cs" />
     <Compile Include="Security\Audit\SQLiteAuditRepositoryService.cs" />
     <Compile Include="Security\Audit\Model\DbAuditActor.cs" />
     <Compile Include="Security\Audit\Model\DbAuditActorAssociation.cs" />

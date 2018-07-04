@@ -47,11 +47,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
     /// <summary>
     /// Search indexing service
     /// </summary>
-    public class SearchIndexService : IFreetextSearchService, IDaemonService, IAuditEventSource
+    public class SQLiteSearchIndexService : IFreetextSearchService, IDaemonService, IAuditEventSource
     {
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(SearchIndexService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteSearchIndexService));
 
         // Is bound?
         private bool m_patientBound = false;

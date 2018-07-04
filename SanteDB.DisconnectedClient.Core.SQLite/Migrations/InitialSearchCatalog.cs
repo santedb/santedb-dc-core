@@ -77,8 +77,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 // Is the search service registered?
                 if (!String.IsNullOrEmpty(connStr) && ApplicationContext.Current.GetService<IFreetextSearchService>() == null)
                 {
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SearchIndexService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new SearchIndexService());
+                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteSearchIndexService).AssemblyQualifiedName);
+                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new SQLiteSearchIndexService());
                 }
 
                 // Get a connection to the search database
