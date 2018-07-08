@@ -39,7 +39,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// <summary>
         /// Configuration options
         /// </summary>
-        public Dictionary<String, Type> Options => new Dictionary<string, Type>() { { "encrypt", typeof(Boolean) } };
+        public Dictionary<String, ConfigurationOptionType> Options => new Dictionary<string, ConfigurationOptionType>() { { "encrypt", ConfigurationOptionType.Boolean } };
 
         /// <summary>
         /// Configure

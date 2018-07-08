@@ -136,8 +136,36 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         [JsonProperty("network")]
         public ServiceClientConfigurationSection Network { get; set; }
+        /// <summary>
+        /// Synchronization
+        /// </summary>
         [JsonProperty("sync")]
         public SynchronizationConfigurationSection Synchronization { get; set; }
+    }
+
+    /// <summary>
+    /// View model for provider
+    /// </summary>
+    [JsonObject]
+    public class StorageProviderViewModel
+    {
+        /// <summary>
+        /// The invariant name
+        /// </summary>
+        [JsonProperty("invariant")]
+        public string Invariant { get; set; }
+
+        /// <summary>
+        /// The property name
+        /// </summary>
+        [JsonProperty("name")]
+        public String Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the options
+        /// </summary>
+        [JsonProperty("options")]
+        public Dictionary<String, ConfigurationOptionType> Options { get; set; }
     }
 
     /// <summary>
@@ -149,6 +177,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(ConfigurationService));
+
+        /// <summary>
+        /// Get the data storage provider
+        /// </summary>
+        [RestOperation(UriPath = "/db", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [return: RestMessage(RestMessageFormat.Json)]
+        [Demand(PolicyIdentifiers.Login)]
+        public List<StorageProviderViewModel> GetDataStorageProviders()
+        {
+            return StorageProviderUtil.GetProviders().Select(o => new StorageProviderViewModel()
+            {
+                Invariant = o.Invariant,
+                Name = o.Name,
+                Options = o.Options
+            }).ToList();
+        }
 
         /// <summary>
         /// Gets the currently authenticated user's configuration

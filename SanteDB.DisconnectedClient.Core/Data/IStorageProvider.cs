@@ -20,6 +20,16 @@ namespace SanteDB.DisconnectedClient.Core.Data
     }
 
     /// <summary>
+    /// Configuration options type
+    /// </summary>
+    public enum ConfigurationOptionType
+    {
+        String,
+        Boolean,
+        Numeric
+    }
+
+    /// <summary>
     /// Represents a storage provider
     /// </summary>
     public interface IStorageProvider
@@ -43,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Core.Data
         /// <summary>
         /// Get the configuration options
         /// </summary>
-        Dictionary<String, Type> Options { get; }
+        Dictionary<String, ConfigurationOptionType> Options { get; }
 
         /// <summary>
         /// Add the necessary information to the operating system configuration
