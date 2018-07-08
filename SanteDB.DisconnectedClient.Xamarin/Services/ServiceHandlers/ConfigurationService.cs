@@ -69,6 +69,7 @@ using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Services.Impl;
+using SanteDB.DisconnectedClient.Xamarin.Data;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -224,59 +225,39 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                     break;
                 case "offline":
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
-
-                    if (optionObject["data"]["backend"].Value<String>() == "ADO")
-                        ;
-                    else
                     {
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteIdentityService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteRoleProviderService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Insert(0, typeof(SQLiteConnectionManager).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePersistenceService).AssemblyQualifiedName);
-                    }
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
+                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["backend"]["provider"].Value<String>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["backend"]["options"].ToObject<Dictionary<String, Object>>());
 
-                    break;
+                        break;
+                    }
                 case "sync":
-
-                    if (optionObject["data"]["backend"].Value<String>() == "ADO")
-                        ;
-                    else
                     {
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Insert(0, typeof(SQLiteConnectionManager).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePersistenceService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SanteDB.DisconnectedClient.SQLite.Alerting.AlertPersistenceService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteQueueManagerService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteSynchronizationLog).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteDatawarehouse).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteReportDatasource).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteRoleProviderService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteIdentityService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
-                    }
+                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["backend"]["provider"].Value<String>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["backend"]["options"].ToObject<Dictionary<String, Object>>());
 
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAlertService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiIntegrationService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiIntegrationService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiTwoFactorRequestService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AlertSynchronizationService).AssemblyQualifiedName);
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAlertService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiIntegrationService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiIntegrationService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiTwoFactorRequestService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AlertSynchronizationService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
 
-                    // Sync settings
-                    var syncConfig = new SynchronizationConfigurationSection();
-                    var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
+                        // Sync settings
+                        var syncConfig = new SynchronizationConfigurationSection();
+                        var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
-                    var facilityId = optionObject["data"]["sync"]["subscribe"].ToString();
-                    var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(facilityId), Guid.Empty);
-                    var facilityAddress = facility.LoadCollection<EntityAddress>("Addresses").FirstOrDefault();
-                    var facilityState = facilityAddress?.Value(AddressComponentKeys.State);
-                    var facilityCounty = facilityAddress?.Value(AddressComponentKeys.County);
+                        var facilityId = optionObject["data"]["sync"]["subscribe"].ToString();
+                        var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(facilityId), Guid.Empty);
+                        var facilityAddress = facility.LoadCollection<EntityAddress>("Addresses").FirstOrDefault();
+                        var facilityState = facilityAddress?.Value(AddressComponentKeys.State);
+                        var facilityCounty = facilityAddress?.Value(AddressComponentKeys.County);
 
-                    // TODO: Customize this and clean it up ... It is very hackish
-                    foreach (var res in new String[] {
+                        // TODO: Customize this and clean it up ... It is very hackish
+                        foreach (var res in new String[] {
                         "ConceptSet",
                         "AssigningAuthority",
                         "IdentifierType",
@@ -303,206 +284,207 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         "QuantityObservation",
                         "TextObservation",
                         "Act"})
-                    {
-                        var syncSetting = new SynchronizationResource()
                         {
-                            ResourceAqn = res,
-                            Triggers = new String[] { "Person", "Act", "SubstanceAdministration", "QuantityObservation", "CodedObservation", "TextObservation", "PatientEncounter" }.Contains(res) ? SynchronizationPullTriggerType.Always :
-                                SynchronizationPullTriggerType.OnNetworkChange | SynchronizationPullTriggerType.OnStart
-                        };
+                            var syncSetting = new SynchronizationResource()
+                            {
+                                ResourceAqn = res,
+                                Triggers = new String[] { "Person", "Act", "SubstanceAdministration", "QuantityObservation", "CodedObservation", "TextObservation", "PatientEncounter" }.Contains(res) ? SynchronizationPullTriggerType.Always :
+                                    SynchronizationPullTriggerType.OnNetworkChange | SynchronizationPullTriggerType.OnStart
+                            };
 
-                        // Subscription
-                        if (optionObject["data"]["sync"]["subscribe"] == null)
+                            // Subscription
+                            if (optionObject["data"]["sync"]["subscribe"] == null)
+                            {
+                                var efield = typeof(EntityClassKeys).GetField(res);
+
+                                if (res == "Person")
+                                {
+                                    syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Patient);
+                                    syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Person + "&relationship.source.classConcept=" + EntityClassKeys.Patient);
+                                }
+                                else if (res == "Act")
+                                {
+                                    syncSetting.Filters.Add("classConcept=" + ActClassKeys.AccountManagement);
+                                    syncSetting.Filters.Add("classConcept=" + ActClassKeys.Supply);
+                                }
+                                else if (res == "EntityRelationship" || res == "UserEntityMe") continue;
+                                else if (efield != null && res != "Place")
+                                    syncSetting.Filters.Add("classConcept=" + efield.GetValue(null).ToString());
+                            }
+                            else
+                            { // Only interested in a few facilities
+                                if (!syncConfig.Facilities.Contains(facilityId))
+                                    syncConfig.Facilities.Add(facilityId);
+
+                                switch (res)
+                                {
+                                    case "UserEntity":
+                                    case "Provider":
+                                        syncSetting.Name = "locale.sync.resource.Provider";
+                                        if (syncSetting.Filters.Count == 0)
+                                        {
+                                            // All users and providers for stuff I'm interested in the area
+                                            syncSetting.Filters.Add("participation[Location|EntryLocation|Destination|InformationRecipient|PrimaryInformationRecipient].player=" + facilityId + "&_exclude=relationship&_exclude=participation");
+                                            // All users or providers who are involved in acts this facility is subscribed to
+                                            syncSetting.Filters.Add("participation.source.participation.player=" + facilityId + "&_exclude=relationship&_exclude=participation");
+                                        }
+                                        break;
+                                    case "Patient":
+                                        syncSetting.Name = "locale.sync.resource.Patient";
+                                        syncSetting.Filters.Add("relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
+                                        break;
+                                    case "Person":
+                                        syncSetting.Name = "locale.sync.resource.Person";
+                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Person + "&relationship.source.classConcept=" + EntityClassKeys.Patient + "&relationship.source.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
+                                        break;
+                                    case "Act":
+                                        syncSetting.Name = "locale.sync.resource.Act.other";
+                                        syncSetting.Filters.Add("classConcept=!" + ActClassKeys.SubstanceAdministration +
+                                            "&classConcept=!" + ActClassKeys.Observation +
+                                            "&classConcept=!" + ActClassKeys.Encounter +
+                                            "&classConcept=!" + ActClassKeys.Procedure +
+                                            "&participation[Destination|Location].player=" + facilityId + "&_expand=relationship&_expand=participation");
+                                        //syncSetting.Filters.Add("classConcept=" + ActClassKeys.Supply + "&participation[Location].player=" + itm + "&_expand=relationship&_expand=participation");
+                                        //syncSetting.Filters.Add("classConcept=" + ActClassKeys.AccountManagement + "&participation[Location].player=" + itm + "&_expand=relationship&_expand=participation");
+                                        //syncSetting.Filters.Add("participation[EntryLocation].player=" + itm + "&_expand=relationship&_expand=participation");
+                                        break;
+                                    case "UserEntityMe":
+                                        syncSetting.Name = "locale.sync.resource.UserEntity.my";
+                                        syncSetting.ResourceAqn = "UserEntity";
+                                        syncSetting.Triggers = SynchronizationPullTriggerType.Always;
+                                        syncSetting.Filters.Add("relationship[DedicatedServiceDeliveryLocation].target=" + facilityId + "&_expand=relationship&_expand=participation");
+                                        break;
+                                    case "SubstanceAdministration":
+                                    case "QuantityObservation":
+                                    case "CodedObservation":
+                                    case "TextObservation":
+                                    case "PatientEncounter":
+
+                                        // I want all stuff for patients in my catchment
+                                        syncSetting.Filters.Add("participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
+                                        // I want all stuff for my facility for patients which are not assigned to me
+                                        syncSetting.Filters.Add("participation[Location|InformationRecipient|EntryLocation].player=" + facilityId + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&participation[RecordTarget].player.relationship[IncidentalServiceDeliveryLocation].target=!" + facilityId);
+                                        // All stuff that is happening out of my facility for any patient associated with me
+                                        //syncSetting.Filters.Add("participation[Location|InformationRecipient|EntryLocation].player=!" + itm + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + itm);
+                                        //syncSetting.Filters.Add("participation[Location].player=!" + itm + "&participation[RecordTarget].player.relationship[IncidentalServiceDeliveryLocation].target=" + itm);
+                                        //syncSetting.Filters.Add("participation[Location].player=" + itm + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation].target=!" + itm + "&_expand =relationship&_expand=participation");
+                                        break;
+                                    case "PatientEncounterMe":
+                                        syncSetting.Name = "locale.sync.resource.PatientEncounter.my";
+                                        syncSetting.Filters.Add("participation[RecordTarget].source.participation[Location].player=" + facilityId + "&participation[RecordTarget].source.statusConcept=" + StatusKeys.Active + "&participation[RecordTarget].source.classConcept=" + ActClassKeys.Encounter);
+                                        syncSetting.ResourceAqn = "Person";
+                                        syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
+                                        break;
+                                    case "Place":
+                                        if (facilityState != null)
+                                        {
+                                            syncSetting.Name = "locale.sync.resource.Place.state";
+
+                                            // all SDL in my county
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=" + facilityCounty + "&_exclude=relationship&_exclude=participation");
+                                            // all places in my county
+                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=" + facilityCounty + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
+                                        }
+                                        else if (facilityCounty != null)
+                                        {
+                                            syncSetting.Name = "locale.sync.resource.Place.county";
+                                            // all sdl in my state
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=" + facilityState + "&_exclude=relationship&_exclude=participation");
+                                            // all places in my state
+                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=" + facilityState + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
+                                        }
+                                        else
+                                        {
+                                            syncSetting.Name = "locale.sync.resource.Place.all";
+
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&_exclude=relationship&_exclude=participation");
+                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
+                                        }
+                                        // all places assigned to me
+                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&relationship[DedicatedServiceDeliveryLocation].target=" + facilityId);
+                                        break;
+                                    case "PlaceOther":
+
+                                        syncSetting.ResourceAqn = "Place";
+                                        syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
+                                        if (facilityState != null)
+                                        {
+                                            syncSetting.Name = "locale.sync.resource.Place.outOfState";
+
+                                            // all SDL in my county
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=!" + facilityCounty + "&_exclude=relationship&_exclude=participation");
+                                            // all places in my county
+                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=!" + facilityCounty + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
+                                        }
+                                        else if (facilityCounty != null)
+                                        {
+                                            syncSetting.Name = "locale.sync.resource.Place.outOfCounty";
+                                            // all sdl in my state
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=!" + facilityState + "&_exclude=relationship&_exclude=participation");
+                                            // all places in my state
+                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=!" + facilityState + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
+                                        }
+                                        else
+                                            syncSetting = null;
+                                        break;
+                                    case "PlaceMe":
+                                        syncSetting.Name = "locale.sync.resource.Place.my";
+
+                                        syncSetting.ResourceAqn = "Place";
+                                        syncSetting.Triggers = SynchronizationPullTriggerType.Always;
+                                        syncSetting.Filters.Add("id=" + facilityId);
+                                        syncSetting.Always = true;
+                                        break;
+                                    case "Material":
+                                        syncSetting.Name = "locale.sync.resource.Material";
+
+                                        if (syncSetting.Filters.Count == 0)
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Material);
+                                        break;
+                                    case "ManufacturedMaterial":
+                                        syncSetting.Name = "locale.sync.resource.ManufacturedMaterial";
+
+                                        if (syncSetting.Filters.Count == 0)
+                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ManufacturedMaterial);
+                                        break;
+                                    case "ManufacturedMaterialMe":
+                                        syncSetting.Name = "locale.sync.resource.ManufacturedMaterial.my";
+                                        syncSetting.ResourceAqn = "ManufacturedMaterial";
+                                        syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
+                                        // Any materials involved in an act assigned to me
+                                        syncSetting.Filters.Add("participation[Consumable].source.participation[Location|Destination].player=" + facilityId);
+                                        // Any materials I own
+                                        syncSetting.Filters.Add("relationship[OwnedEntity].source=" + facilityId);
+                                        break;
+
+                                }
+                            }
+
+                            // Assignable from
+                            //if (typeof(BaseEntityData).IsAssignableFrom(binder.BindToType(typeof(BaseEntityData).Assembly.FullName, res)))
+                            //{
+                            //    for (int i = 0; i < syncSetting.Filters.Count; i++)
+                            //        syncSetting.Filters[i] += "&obsoletionTime=null";
+                            //    if (syncSetting.Filters.Count == 0)
+                            //        syncSetting.Filters.Add("obsoletionTime=null");
+                            //}
+
+                            // TODO: Patient registration <> facility
+
+                            if (syncSetting != null)
+                                syncConfig.SynchronizationResources.Add(syncSetting);
+                        }
+                        syncConfig.SynchronizationResources.Add(new SynchronizationResource()
                         {
-                            var efield = typeof(EntityClassKeys).GetField(res);
+                            ResourceAqn = "EntityRelationship",
+                            Triggers = SynchronizationPullTriggerType.OnCommit
+                        });
+                        if (optionObject["data"]["sync"]["pollInterval"].Value<String>() != "00:00:00")
+                            syncConfig.PollIntervalXml = optionObject["data"]["sync"]["pollInterval"].Value<String>();
+                        ApplicationContext.Current.Configuration.Sections.Add(syncConfig);
 
-                            if (res == "Person")
-                            {
-                                syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Patient);
-                                syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Person + "&relationship.source.classConcept=" + EntityClassKeys.Patient);
-                            }
-                            else if (res == "Act")
-                            {
-                                syncSetting.Filters.Add("classConcept=" + ActClassKeys.AccountManagement);
-                                syncSetting.Filters.Add("classConcept=" + ActClassKeys.Supply);
-                            }
-                            else if (res == "EntityRelationship" || res == "UserEntityMe") continue;
-                            else if (efield != null && res != "Place")
-                                syncSetting.Filters.Add("classConcept=" + efield.GetValue(null).ToString());
-                        }
-                        else
-                        { // Only interested in a few facilities
-                            if (!syncConfig.Facilities.Contains(facilityId))
-                                syncConfig.Facilities.Add(facilityId);
-
-                            switch (res)
-                            {
-                                case "UserEntity":
-                                case "Provider":
-                                    syncSetting.Name = "locale.sync.resource.Provider";
-                                    if (syncSetting.Filters.Count == 0)
-                                    {
-                                        // All users and providers for stuff I'm interested in the area
-                                        syncSetting.Filters.Add("participation[Location|EntryLocation|Destination|InformationRecipient|PrimaryInformationRecipient].player=" + facilityId + "&_exclude=relationship&_exclude=participation");
-                                        // All users or providers who are involved in acts this facility is subscribed to
-                                        syncSetting.Filters.Add("participation.source.participation.player=" + facilityId + "&_exclude=relationship&_exclude=participation");
-                                    }
-                                    break;
-                                case "Patient":
-                                    syncSetting.Name = "locale.sync.resource.Patient";
-                                    syncSetting.Filters.Add("relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
-                                    break;
-                                case "Person":
-                                    syncSetting.Name = "locale.sync.resource.Person";
-                                    syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Person + "&relationship.source.classConcept=" + EntityClassKeys.Patient + "&relationship.source.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
-                                    break;
-                                case "Act":
-                                    syncSetting.Name = "locale.sync.resource.Act.other";
-                                    syncSetting.Filters.Add("classConcept=!" + ActClassKeys.SubstanceAdministration +
-                                        "&classConcept=!" + ActClassKeys.Observation +
-                                        "&classConcept=!" + ActClassKeys.Encounter +
-                                        "&classConcept=!" + ActClassKeys.Procedure +
-                                        "&participation[Destination|Location].player=" + facilityId + "&_expand=relationship&_expand=participation");
-	                                //syncSetting.Filters.Add("classConcept=" + ActClassKeys.Supply + "&participation[Location].player=" + itm + "&_expand=relationship&_expand=participation");
-									//syncSetting.Filters.Add("classConcept=" + ActClassKeys.AccountManagement + "&participation[Location].player=" + itm + "&_expand=relationship&_expand=participation");
-                                    //syncSetting.Filters.Add("participation[EntryLocation].player=" + itm + "&_expand=relationship&_expand=participation");
-                                    break;
-                                case "UserEntityMe":
-                                    syncSetting.Name = "locale.sync.resource.UserEntity.my";
-                                    syncSetting.ResourceAqn = "UserEntity";
-                                    syncSetting.Triggers = SynchronizationPullTriggerType.Always;
-                                    syncSetting.Filters.Add("relationship[DedicatedServiceDeliveryLocation].target=" + facilityId + "&_expand=relationship&_expand=participation");
-                                    break;
-                                case "SubstanceAdministration":
-                                case "QuantityObservation":
-                                case "CodedObservation":
-                                case "TextObservation":
-                                case "PatientEncounter":
-
-                                    // I want all stuff for patients in my catchment
-                                    syncSetting.Filters.Add("participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
-                                    // I want all stuff for my facility for patients which are not assigned to me
-                                    syncSetting.Filters.Add("participation[Location|InformationRecipient|EntryLocation].player=" + facilityId + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&participation[RecordTarget].player.relationship[IncidentalServiceDeliveryLocation].target=!" + facilityId);
-                                    // All stuff that is happening out of my facility for any patient associated with me
-                                    //syncSetting.Filters.Add("participation[Location|InformationRecipient|EntryLocation].player=!" + itm + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + itm);
-                                    //syncSetting.Filters.Add("participation[Location].player=!" + itm + "&participation[RecordTarget].player.relationship[IncidentalServiceDeliveryLocation].target=" + itm);
-                                    //syncSetting.Filters.Add("participation[Location].player=" + itm + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation].target=!" + itm + "&_expand =relationship&_expand=participation");
-                                    break;
-                                case "PatientEncounterMe":
-                                    syncSetting.Name = "locale.sync.resource.PatientEncounter.my";
-                                    syncSetting.Filters.Add("participation[RecordTarget].source.participation[Location].player=" + facilityId + "&participation[RecordTarget].source.statusConcept=" + StatusKeys.Active + "&participation[RecordTarget].source.classConcept=" + ActClassKeys.Encounter);
-                                    syncSetting.ResourceAqn = "Person";
-                                    syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
-                                    break;
-                                case "Place":
-                                    if (facilityState != null)
-                                    {
-                                        syncSetting.Name = "locale.sync.resource.Place.state";
-
-                                        // all SDL in my county
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=" + facilityCounty + "&_exclude=relationship&_exclude=participation");
-                                        // all places in my county
-                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=" + facilityCounty + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                    }
-                                    else if (facilityCounty != null)
-                                    {
-                                        syncSetting.Name = "locale.sync.resource.Place.county";
-                                        // all sdl in my state
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=" + facilityState + "&_exclude=relationship&_exclude=participation");
-                                        // all places in my state
-                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=" + facilityState + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                    }
-                                    else
-                                    {
-                                        syncSetting.Name = "locale.sync.resource.Place.all";
-
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&_exclude=relationship&_exclude=participation");
-                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                    }
-                                    // all places assigned to me
-                                    syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&relationship[DedicatedServiceDeliveryLocation].target=" + facilityId);
-                                    break;
-                                case "PlaceOther":
-
-                                    syncSetting.ResourceAqn = "Place";
-                                    syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
-                                    if (facilityState != null)
-                                    {
-                                        syncSetting.Name = "locale.sync.resource.Place.outOfState";
-
-                                        // all SDL in my county
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=!" + facilityCounty + "&_exclude=relationship&_exclude=participation");
-                                        // all places in my county
-                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=!" + facilityCounty + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                    }
-                                    else if (facilityCounty != null)
-                                    {
-                                        syncSetting.Name = "locale.sync.resource.Place.outOfCounty";
-                                        // all sdl in my state
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=!" + facilityState + "&_exclude=relationship&_exclude=participation");
-                                        // all places in my state
-                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=!" + facilityState + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                    }
-                                    else
-                                        syncSetting = null;
-                                    break;
-                                case "PlaceMe":
-                                    syncSetting.Name = "locale.sync.resource.Place.my";
-
-                                    syncSetting.ResourceAqn = "Place";
-                                    syncSetting.Triggers = SynchronizationPullTriggerType.Always;
-                                    syncSetting.Filters.Add("id=" + facilityId);
-                                    syncSetting.Always = true;
-                                    break;
-                                case "Material":
-                                    syncSetting.Name = "locale.sync.resource.Material";
-
-                                    if (syncSetting.Filters.Count == 0)
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Material);
-                                    break;
-                                case "ManufacturedMaterial":
-                                    syncSetting.Name = "locale.sync.resource.ManufacturedMaterial";
-
-                                    if (syncSetting.Filters.Count == 0)
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ManufacturedMaterial);
-                                    break;
-                                case "ManufacturedMaterialMe":
-                                    syncSetting.Name = "locale.sync.resource.ManufacturedMaterial.my";
-                                    syncSetting.ResourceAqn = "ManufacturedMaterial";
-                                    syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
-                                    // Any materials involved in an act assigned to me
-                                    syncSetting.Filters.Add("participation[Consumable].source.participation[Location|Destination].player=" + facilityId);
-                                    // Any materials I own
-                                    syncSetting.Filters.Add("relationship[OwnedEntity].source=" + facilityId);
-                                    break;
-
-                            }
-                        }
-
-                        // Assignable from
-                        //if (typeof(BaseEntityData).IsAssignableFrom(binder.BindToType(typeof(BaseEntityData).Assembly.FullName, res)))
-                        //{
-                        //    for (int i = 0; i < syncSetting.Filters.Count; i++)
-                        //        syncSetting.Filters[i] += "&obsoletionTime=null";
-                        //    if (syncSetting.Filters.Count == 0)
-                        //        syncSetting.Filters.Add("obsoletionTime=null");
-                        //}
-
-                        // TODO: Patient registration <> facility
-
-                        if(syncSetting != null)
-                            syncConfig.SynchronizationResources.Add(syncSetting);
+                        break;
                     }
-                    syncConfig.SynchronizationResources.Add(new SynchronizationResource()
-                    {
-                        ResourceAqn = "EntityRelationship",
-                        Triggers = SynchronizationPullTriggerType.OnCommit
-                    });
-                    if (optionObject["data"]["sync"]["pollInterval"].Value<String>() != "00:00:00")
-                        syncConfig.PollIntervalXml = optionObject["data"]["sync"]["pollInterval"].Value<String>();
-                    ApplicationContext.Current.Configuration.Sections.Add(syncConfig);
-
-                    break;
             }
 
            

@@ -21,7 +21,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
     /// <summary>
     /// Alert persistence service
     /// </summary>
-    public class AlertPersistenceService : IDataPersistenceService<AlertMessage>
+    public class SQLiteAlertPersistenceService : IDataPersistenceService<AlertMessage>
     {
         public event EventHandler<DataPersistenceEventArgs<AlertMessage>> Inserted;
         public event EventHandler<DataPersistencePreEventArgs<AlertMessage>> Inserting;
@@ -40,13 +40,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         protected static DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
 
         // Mapper
-        protected static ModelMapper m_mapper = new ModelMapper(typeof(AlertPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Alerting.ModelMap.xml"));
+        protected static ModelMapper m_mapper = new ModelMapper(typeof(SQLiteAlertPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Alerting.ModelMap.xml"));
 
         // Builder
         protected static QueryBuilder m_builder;
 
         // Static CTOR
-        static AlertPersistenceService()
+        static SQLiteAlertPersistenceService()
         {
             m_mapper = SQLitePersistenceService.Mapper;
             m_builder = new QueryBuilder(m_mapper);
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Alert persistence ctor
         /// </summary>
-        public AlertPersistenceService()
+        public SQLiteAlertPersistenceService()
         {
             this.m_tracer = Tracer.GetTracer(this.GetType());
         }

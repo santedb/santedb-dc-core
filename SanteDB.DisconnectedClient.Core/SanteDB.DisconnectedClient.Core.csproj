@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="Alerting\LocalAlertService.cs" />
     <Compile Include="Configuration\Data\Migrations\SubscribePrimaryLocationUpdate.cs" />
+    <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
     <Compile Include="Security\LocalPolicyDecisionService.cs" />

@@ -39,7 +39,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Alerting\AlertPersistenceService.cs" />
+    <Compile Include="Alerting\SQLiteAlertPersistenceService.cs" />
     <Compile Include="Alerting\DbAlertMessage.cs" />
     <Compile Include="Connection\LockableSQLiteConnection.cs" />
     <Compile Include="Connection\ReadonlySQLiteConnection.cs" />
@@ -189,6 +189,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\SanteDB.licenseheader">
+      <Link>SanteDB.licenseheader</Link>
+    </None>
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="SanteDB.DisconnectedClient.SQLite.nuspec" />

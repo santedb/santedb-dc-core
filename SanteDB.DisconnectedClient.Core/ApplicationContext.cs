@@ -34,6 +34,7 @@ using SanteDB.Core.Services;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Interfaces;
 using System.Diagnostics;
+using SanteDB.DisconnectedClient.Core.Data;
 
 namespace SanteDB.DisconnectedClient.Core
 {
@@ -237,6 +238,10 @@ namespace SanteDB.DisconnectedClient.Core
 		/// </summary>
 		/// <value>The device.</value>
 		public abstract SecurityDevice Device { get; }
+        /// <summary>
+        /// Gets the operating system of the current application context
+        /// </summary>
+        public abstract OperatingSystemID OperatingSystem { get; }
         /// <summary>
         /// Execution UUID
         /// </summary>

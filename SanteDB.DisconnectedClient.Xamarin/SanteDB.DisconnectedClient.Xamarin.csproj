@@ -91,6 +91,8 @@
     <Compile Include="Backup\XamarinBackupService.cs" />
     <Compile Include="Configuration\AmiUpdateManager.cs" />
     <Compile Include="Configuration\IConfigurationManager.cs" />
+    <Compile Include="Data\SQLiteStorageProvider.cs" />
+    <Compile Include="Data\StorageProviderUtil.cs" />
     <Compile Include="Diagnostics\FileTraceWriter.cs" />
     <Compile Include="Diagnostics\LogTraceWriter.cs" />
     <Compile Include="Http\RestClient.cs" />
@@ -146,10 +148,10 @@
     <EmbeddedResource Include="Resources\ViewModel.xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\OpenIZDC.licenseheader">
-      <Link>OpenIZDC.licenseheader</Link>
-    </None>
     <EmbeddedResource Include="Resources\antihaxor" />
+    <None Include="..\SanteDB.licenseheader">
+      <Link>SanteDB.licenseheader</Link>
+    </None>
     <None Include="app.config" />
     <None Include="SanteDB.DisconnectedClient.Xamarin.nuspec" />
   </ItemGroup>
