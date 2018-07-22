@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 			iids.ChangePassword(securityUser.UserName, password);
 
 			// Create an admin queue entry that will change the password
-            ApplicationContext.Current.GetService<IQueueManagerService>()?.Admin.Enqueue(new SecurityUser() { Key = userId, PasswordHash = password }, SynchronizationOperationType.Update);
+            ApplicationContext.Current.GetService<IQueueManagerService>()?.Admin.Enqueue(new SecurityUser() { Key = userId, Password = password }, SynchronizationOperationType.Update);
 
             this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(securityUser, "password"));
 
@@ -127,7 +127,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 
 			// Communicate the retVal to the AMI
 			var commAdmin = retVal.Clone() as SecurityUser;
-			commAdmin.PasswordHash = password;
+			commAdmin.Password = password;
             ApplicationContext.Current.GetService<IQueueManagerService>()?.Admin.Enqueue(commAdmin, SynchronizationOperationType.Insert);
 
             this.DataCreated?.Invoke(this, new AuditDataEventArgs(retVal));
@@ -501,7 +501,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 
 			// Notify admin queue
 			var commUser = retVal.Clone() as SecurityUser;
-			commUser.PasswordHash = null; // Don't set password
+			commUser.Password = null; // Don't set password
                                           //SynchronizationQueue.Admin.Enqueue(commUser, Synchronization.Model.DataOperationType.Update);
 
             this.DataUpdated?.Invoke(this, new AuditDataEventArgs(user));
