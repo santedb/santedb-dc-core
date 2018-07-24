@@ -171,7 +171,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
     /// <summary>
     /// Restful service
     /// </summary>
-    [RestService("/__config")]
+    [RestService("/__ami")]
     public class ConfigurationService
     {
 
@@ -181,7 +181,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Get the data storage provider
         /// </summary>
-        [RestOperation(UriPath = "/db", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [RestOperation(UriPath = "/dbp", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
         [return: RestMessage(RestMessageFormat.Json)]
         [Demand(PolicyIdentifiers.Login)]
         public List<StorageProviderViewModel> GetDataStorageProviders()
@@ -197,7 +197,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Gets the currently authenticated user's configuration
         /// </summary>
-        [RestOperation(UriPath = "/user", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [RestOperation(UriPath = "/configuration/user", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
         [return: RestMessage(RestMessageFormat.Json)]
         [Demand(PolicyIdentifiers.Login)]
         public ConfigurationViewModel GetUserConfiguration()
@@ -210,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Gets the currently authenticated user's configuration
         /// </summary>
-        [RestOperation(UriPath = "/user", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [RestOperation(UriPath = "/configuration/user", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
         public void SaveUserConfiguration([RestMessage(RestMessageFormat.Json)]ConfigurationViewModel model)
         {
             String userId = MiniHdsiServer.CurrentContext.Request.QueryString["_id"] ?? AuthenticationContext.Current.Principal.Identity.Name;
@@ -229,7 +229,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Gets the specified forecast
         /// </summary>
-        [RestOperation(UriPath = "/all", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [RestOperation(UriPath = "/configuration", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
         [return: RestMessage(RestMessageFormat.Json)]
         public ConfigurationViewModel GetConfiguration()
         {
@@ -239,7 +239,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Save configuration
         /// </summary>
-        [RestOperation(UriPath = "/all", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [RestOperation(UriPath = "/configuration", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
         [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
         public ConfigurationViewModel SaveConfiguration([RestMessage(RestMessageFormat.Json)]JObject optionObject)
@@ -612,7 +612,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Join a realm
         /// </summary>
         /// <param name="realmData"></param>
-        [RestOperation(UriPath = "/realm", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [RestOperation(UriPath = "/configuration/realm", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
         [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
         public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.FormData)]NameValueCollection realmData)

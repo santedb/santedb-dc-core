@@ -35,6 +35,7 @@ using System.IO;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
+using SharpCompress.Compressors.LZMA;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services
 {
@@ -324,7 +325,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     // Extract content
                     if (itm.Content is byte[])
                     {
-                        File.WriteAllBytes(itmPath, itm.Content as byte[]);
+                        if (Encoding.UTF8.GetString(itm.Content as byte[], 0, 4) == "LZMA")
+                            using (var fs = File.Create(itmPath))
+                            using (var ms = new MemoryStream(itm.Content as byte[]))
+                            using (var lzs = new LZipStream(ms, SharpCompress.Compressors.CompressionMode.Decompress))
+                                lzs.CopyTo(fs);
+                        else
+                            File.WriteAllBytes(itmPath, itm.Content as byte[]);
                         itm.Content = null;
                     }
                     else if (itm.Content is String)
