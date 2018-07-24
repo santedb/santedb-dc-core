@@ -273,7 +273,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         else // User is using a browser to try and access this? How dare they
                         {
                             response.AddHeader("Content-Encoding", "gzip");
-                            using (var rdr = typeof(MiniImsServer).Assembly.GetManifestResourceStream("OpenIZ.Mobile.Core.Xamarin.Resources.antihaxor"))
+                            using (var rdr = typeof(MiniHdsiServer).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Xamarin.Resources.antihaxor"))
                                 rdr.CopyTo(response.OutputStream);
                             return;
                         }

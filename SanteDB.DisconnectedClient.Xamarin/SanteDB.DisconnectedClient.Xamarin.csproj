@@ -150,7 +150,7 @@
     <Compile Include="Services\Attributes\RestMessageAttribute.cs" />
     <Compile Include="Services\Attributes\RestOperationAttribute.cs" />
     <Compile Include="Services\Attributes\RestServiceAttribute.cs" />
-    <Compile Include="Services\MiniImsServer.cs" />
+    <Compile Include="Services\MiniHdsiServer.cs" />
     <Compile Include="Services\ServiceHandlers\ApplicationService.cs" />
     <Compile Include="Services\ServiceHandlers\AuthenticationService.cs" />
     <Compile Include="Services\ServiceHandlers\CarePlanService.cs" />
