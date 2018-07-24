@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [RestOperation(Method = "POST", UriPath = "/abandon", FaultProvider = nameof(AuthenticationFault))]
         public SessionInfo Abandon()
         {
-            var cookie = MiniImsServer.CurrentContext.Request.Cookies["_s"];
+            var cookie = MiniHdsiServer.CurrentContext.Request.Cookies["_s"];
 
             var value = Guid.Empty;
 
@@ -71,8 +71,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             {
                 ISessionManagerService sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
                 var sessionInfo = sessionService.Delete(value);
-                if (MiniImsServer.CurrentContext.Request.Cookies["_s"] == null)
-                    MiniImsServer.CurrentContext.Response.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
+                if (MiniHdsiServer.CurrentContext.Request.Cookies["_s"] == null)
+                    MiniHdsiServer.CurrentContext.Response.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
 
                 if (sessionInfo != null)
                 {
@@ -203,12 +203,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 // Set the session 
                 if (!authRequest.ContainsKey("scope"))
-                    MiniImsServer.CurrentContext.Response.SetCookie(new Cookie("_s", retVal.Key.ToString())
+                    MiniHdsiServer.CurrentContext.Response.SetCookie(new Cookie("_s", retVal.Key.ToString())
                     {
                         HttpOnly = true,
                         Secure = true,
                         Path = "/",
-                        Domain = MiniImsServer.CurrentContext.Request.Url.Host
+                        Domain = MiniHdsiServer.CurrentContext.Request.Url.Host
                     });
                 return retVal;
             }
@@ -239,7 +239,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public SessionInfo GetSession()
         {
-            NameValueCollection query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             ISessionManagerService sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
 
             if (query.ContainsKey("_id"))
@@ -260,7 +260,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             // this is used for the forgot password functionality
             // need to find a way to stop people from simply searching users via username...
 
-            NameValueCollection query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             var predicate = QueryExpressionParser.BuildLinqExpression<SecurityUser>(query);
             ISecurityRepositoryService securityRepositoryService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 

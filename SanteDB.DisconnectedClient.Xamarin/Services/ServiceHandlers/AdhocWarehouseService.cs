@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
             var warehouseSvc = ApplicationContext.Current.GetService<IAdHocDatawarehouseService>();
 
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             int totalResults = 0,
                    offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
                    count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
             var warehouseSvc = ApplicationContext.Current.GetService<IAdHocDatawarehouseService>();
 
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             int totalResults = 0,
                    offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
                    count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;

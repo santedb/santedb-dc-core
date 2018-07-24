@@ -56,9 +56,9 @@ using SanteDB.DisconnectedClient.i18n;
 namespace SanteDB.DisconnectedClient.Xamarin.Services
 {
     /// <summary>
-    /// Represents a mini IMS server that the web-view can access
+    /// Represents a mini HDSI server that the web-view can access
     /// </summary>
-    public class MiniImsServer : IDaemonService
+    public class MiniHdsiServer : IDaemonService
     {
 
         // Default view model
@@ -70,9 +70,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
         // Mini-listener
         private Boolean m_bypassMagic = false;
+        private Boolean m_allowCors = false;
         private HttpListener m_listener;
         private Thread m_acceptThread;
-        private Tracer m_tracer = Tracer.GetTracer(typeof(MiniImsServer));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(MiniHdsiServer));
         private Dictionary<String, AppletAsset> m_cacheApplets = new Dictionary<string, AppletAsset>();
         private object m_lockObject = new object();
         private Dictionary<String, InvokationInformation> m_services = new Dictionary<string, InvokationInformation>();
@@ -102,19 +103,20 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             {
                 this.Starting?.Invoke(this, EventArgs.Empty);
 
-                this.m_tracer.TraceInfo("Starting internal IMS services...");
+                this.m_tracer.TraceInfo("Starting internal HDSI services...");
                 this.m_threadPool = ApplicationContext.Current.GetService<IThreadPoolService>();
 
-                XamarinApplicationContext.Current.SetProgress("IMS Service Bus", 0);
+                XamarinApplicationContext.Current.SetProgress("HDSI Service Bus", 0);
 
                 this.m_bypassMagic = XamarinApplicationContext.Current.GetType().Name == "MiniApplicationContext";
+                this.m_tracer.TraceInfo("HDSI magic check : {0}", !this.m_bypassMagic);
                 this.m_listener = new HttpListener();
-                this.m_defaultViewModel = ViewModelDescription.Load(typeof(MiniImsServer).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Xamarin.Resources.ViewModel.xml"));
+                this.m_defaultViewModel = ViewModelDescription.Load(typeof(MiniHdsiServer).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Xamarin.Resources.ViewModel.xml"));
 
                 // Scan for services
                 try
                 {
-                    foreach (var t in typeof(MiniImsServer).Assembly.DefinedTypes.Where(o => o.GetCustomAttribute<RestServiceAttribute>() != null))
+                    foreach (var t in typeof(MiniHdsiServer).Assembly.DefinedTypes.Where(o => o.GetCustomAttribute<RestServiceAttribute>() != null))
                     {
                         var serviceAtt = t.GetCustomAttribute<RestServiceAttribute>();
                         object instance = Activator.CreateInstance(t);
@@ -147,8 +149,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 // Get loopback
                 var loopback = GetLocalIpAddress();
 
-                // Core always on 9200
-                this.m_listener.Prefixes.Add(String.Format("http://{0}:9200/", loopback));
+                // Core always on 9200 unless overridden
+                var portSetting = ApplicationContext.Current.Configuration.GetAppSetting("http.port");
+                if (portSetting != null)
+                    this.m_listener.Prefixes.Add(String.Format("http://{0}:{1}/", loopback, portSetting));
+                else
+                    this.m_listener.Prefixes.Add(String.Format("http://{0}:9200/", loopback));
 
                 this.m_acceptThread = new Thread(() =>
                 {
@@ -172,8 +178,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 this.m_listener.Start();
                 this.m_acceptThread.IsBackground = true;
                 this.m_acceptThread.Start();
-                this.m_acceptThread.Name = "MiniIMS";
-                this.m_tracer.TraceInfo("Started internal IMS services...");
+                this.m_acceptThread.Name = "MiniHDSI";
+                this.m_tracer.TraceInfo("Started internal HDSI services...");
 
                 // We have to wait for the IAppletManager service to come up or else it is pretty useless
                 this.Started?.Invoke(this, EventArgs.Empty);
@@ -183,7 +189,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             }
             catch (Exception ex)
             {
-                this.m_tracer.TraceError("Error starting IMS : {0}", ex);
+                this.m_tracer.TraceError("Error starting HDSI : {0}", ex);
                 ApplicationContext.Current.Alert(Strings.err_moreThanOneApplication);
                 return false;
             }
@@ -233,40 +239,53 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 var appletManager = ApplicationContext.Current.GetService<IAppletManagerService>();
 
 #if DEBUG
-            Stopwatch perfTimer = new Stopwatch();
-            perfTimer.Start();
+                Stopwatch perfTimer = new Stopwatch();
+                perfTimer.Start();
 #endif
 
                 try
                 {
                     if (!request.RemoteEndPoint.Address.Equals(IPAddress.Loopback) &&
-                                    !request.RemoteEndPoint.Address.Equals(IPAddress.IPv6Loopback))
+                        !request.RemoteEndPoint.Address.Equals(IPAddress.IPv6Loopback) &&
+                        ApplicationContext.Current.Configuration.GetAppSetting("http.externAllowed") != "true")
                         throw new UnauthorizedAccessException("Only local access allowed");
 
-                    MiniImsServer.CurrentContext = context;
+                    MiniHdsiServer.CurrentContext = context;
 
                     // Services require magic
 #if !DEBUG
                     if (!this.m_bypassMagic &&
                         request.Headers["X-OIZMagic"] != ApplicationContext.Current.ExecutionUuid.ToString() &&
-                        request.UserAgent != $"SanteDB-DC {ApplicationContext.Current.ExecutionUuid}")
+                        request.UserAgent != $"OpenIZ-DC {ApplicationContext.Current.ExecutionUuid}")
                     {
                         // Something wierd with the appp, show them the nice message
-                        if (request.UserAgent.StartsWith("SanteDB"))
+                        if (request.UserAgent.StartsWith("OpenIZ"))
                         {
                             using (var sw = new StreamWriter(response.OutputStream))
                                 sw.WriteLine("Hmm, something went wrong. For security's sake we can't show the information you requested. Perhaps restarting the application will help");
                             return;
                         }
+                        else if (ApplicationContext.Current.Configuration.GetAppSetting("http.bypassMagic") == ApplicationContext.Current.ExecutionUuid.ToString())
+                        {
+                            this.m_bypassMagic = true;
+                            this.m_tracer.TraceInfo("MINHDSI bypass magic unlocked!");
+                        }
                         else // User is using a browser to try and access this? How dare they
                         {
                             response.AddHeader("Content-Encoding", "gzip");
-                            using (var rdr = typeof(MiniImsServer).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Xamarin.Resources.antihaxor"))
+                            using (var rdr = typeof(MiniImsServer).Assembly.GetManifestResourceStream("OpenIZ.Mobile.Core.Xamarin.Resources.antihaxor"))
                                 rdr.CopyTo(response.OutputStream);
                             return;
                         }
                     }
 #endif
+
+                    if (!String.IsNullOrEmpty(ApplicationContext.Current.Configuration.GetAppSetting("http.cors")))
+                    {
+                        response.Headers.Add("Access-Control-Allow-Origin", ApplicationContext.Current.Configuration.GetAppSetting("http.cors"));
+                        response.Headers.Add("Access-Control-Allow-Headers", "*");
+                        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH, NULLIFY");
+                    }
 
                     this.m_tracer.TraceVerbose("Client has the right magic word");
 
@@ -342,6 +361,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
                     // Attempt to find a service which implements the path
                     var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath);
+
+                    if (request.Url.AbsolutePath == "/" && ApplicationContext.Current.Configuration.GetAppSetting("http.index") != null)
+                    {
+                        response.StatusCode = 302;
+                        response.RedirectLocation = $"{request.Url.Scheme}://{request.Url.Host}:{request.Url.Port}{ApplicationContext.Current.Configuration.GetAppSetting("http.index")}";
+                        return;
+                    }
                     InvokationInformation invoke = null;
                     this.m_tracer.TraceVerbose("Performing service matching on {0}", rootPath);
                     if (this.m_services.TryGetValue(rootPath, out invoke))
@@ -455,6 +481,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                                     break;
                             }
                     }
+                    else if (request.HttpMethod.ToUpper() == "OPTIONS")
+                    {
+                        response.StatusCode = 200;
+                    }
                     else
                         this.HandleAssetRenderRequest(request, response);
                 }
@@ -463,7 +493,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     this.m_tracer.TraceError("Unauthorized action: {0}", ex.Message);
                     AuditUtil.AuditRestrictedFunction(ex, request.Url);
                     response.StatusCode = 403;
-                    var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/403.html");
+                    var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/403.html");
                     var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                     response.OutputStream.Write(buffer, 0, buffer.Length);
 
@@ -478,7 +508,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         if (String.IsNullOrEmpty(authentication))
                             authentication = appletManager.Applets.AuthenticationAssets.FirstOrDefault();
                         if (String.IsNullOrEmpty(authentication))
-                            authentication = "/org/santedb/core/views/security/login.html";
+                            authentication = "/org/openiz/core/views/security/login.html";
 
                         string redirectLocation = String.Format("{0}",
                             authentication, request.RawUrl);
@@ -488,7 +518,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     {
                         response.StatusCode = 403;
 
-                        var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/403.html");
+                        var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/403.html");
                         var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                         response.OutputStream.Write(buffer, 0, buffer.Length);
                     }
@@ -498,7 +528,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 {
                     this.m_tracer.TraceError(ex.Message);
                     response.StatusCode = 404;
-                    var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/404.html");
+                    var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/404.html");
                     var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                     response.OutputStream.Write(buffer, 0, buffer.Length);
 
@@ -507,7 +537,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 {
                     this.m_tracer.TraceError("Internal applet error: {0}", ex.ToString());
                     response.StatusCode = 500;
-                    var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/500.html");
+                    var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/500.html");
                     var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                     buffer = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(buffer).Replace("{{ exception }}", ex.ToString()));
                     response.OutputStream.Write(buffer, 0, buffer.Length);
@@ -517,12 +547,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     try
                     {
 #if DEBUG
-                    perfTimer.Stop();
-                    this.m_tracer.TraceVerbose("PERF : MiniIMS >>>> {0} took {1} ms to service", request.Url, perfTimer.ElapsedMilliseconds);
+                        perfTimer.Stop();
+                        this.m_tracer.TraceVerbose("PERF : MiniHDSI >>>> {0} took {1} ms to service", request.Url, perfTimer.ElapsedMilliseconds);
 #endif
 
 #if DEBUG
-                    response.AddHeader("Cache-Control", "no-cache");
+                        response.AddHeader("Cache-Control", "no-cache");
 #else
                         response.AddHeader("Cache-Control", "no-store");
 #endif
@@ -531,13 +561,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     }
                     catch { }
 
-                    MiniImsServer.CurrentContext = null;
+                    MiniHdsiServer.CurrentContext = null;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceWarning("General exception on listener: {0}", e);
-                
+
             }
         }
 
@@ -576,7 +606,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 response.StatusCode = 403;
                 return invoke.FaultProvider?.Invoke(invoke.BindObject, new object[] { e });
             }
-            else if(e is DetectedIssueException)
+            else if (e is DetectedIssueException)
             {
                 return new ErrorResult(e);
             }
@@ -605,7 +635,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             if (!this.m_cacheApplets.TryGetValue(appletPath, out navigateAsset))
             {
 
-                navigateAsset = appletManagerService.Applets.ResolveAsset(appletPath);
+                if (appletPath == "/") // startup asset
+                    navigateAsset = appletManagerService.Applets.DefaultApplet?.Assets.FirstOrDefault(o=>o.Name == "index.html");
+                else
+                    navigateAsset = appletManagerService.Applets.ResolveAsset(appletPath);
 
                 if (navigateAsset == null)
                 {
@@ -659,7 +692,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
         public bool Stop()
         {
             this.Stopping?.Invoke(this, EventArgs.Empty);
-            this.m_tracer?.TraceInfo("Stopping IMS services...");
+            this.m_tracer?.TraceInfo("Stopping HDSI services...");
             this.m_listener?.Stop();
             this.m_listener = null;
             this.Stopped?.Invoke(this, EventArgs.Empty);

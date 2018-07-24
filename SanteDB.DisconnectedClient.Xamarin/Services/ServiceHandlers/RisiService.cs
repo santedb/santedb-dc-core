@@ -48,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.Json)]
         public IEnumerable GetSummary()
         {
-            String _name = MiniImsServer.CurrentContext.Request.QueryString["_name"];
+            String _name = MiniHdsiServer.CurrentContext.Request.QueryString["_name"];
             if (!String.IsNullOrEmpty(_name))
                 return new List<ReportDefinition>() { ApplicationContext.Current.GetService<IReportRepository>().GetReport(_name) };
             else
@@ -62,8 +62,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.Raw)]
         public byte[] ExecuteReport()
         {
-            String _view = MiniImsServer.CurrentContext.Request.QueryString["_view"],
-                _name = MiniImsServer.CurrentContext.Request.QueryString["_name"];
+            String _view = MiniHdsiServer.CurrentContext.Request.QueryString["_view"],
+                _name = MiniHdsiServer.CurrentContext.Request.QueryString["_name"];
 
             var query = this.GetQueryWithContext();
 
@@ -79,7 +79,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         private IDictionary<String, Object> GetQueryWithContext()
         {
-            var retVal = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query).ToDictionary(o => o.Key, o => (Object)o.Value.FirstOrDefault());
+            var retVal = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query).ToDictionary(o => o.Key, o => (Object)o.Value.FirstOrDefault());
             retVal.Add("Context_LocationId", AuthenticationContext.Current?.Session?.UserEntity?.Relationships.FirstOrDefault(o => o.Key == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation)?.TargetEntityKey ??
                 Guid.Parse(ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().Facilities.FirstOrDefault()));
             retVal.Add("Context_UserEntityId", AuthenticationContext.Current.Session?.UserEntity?.Key);
@@ -95,8 +95,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public IEnumerable<dynamic> GetDataset()
         {
             
-            String _report = MiniImsServer.CurrentContext.Request.QueryString["_report"],
-                _name = MiniImsServer.CurrentContext.Request.QueryString["_name"];
+            String _report = MiniHdsiServer.CurrentContext.Request.QueryString["_report"],
+                _name = MiniHdsiServer.CurrentContext.Request.QueryString["_name"];
             var query = this.GetQueryWithContext();
 
             // Name and view

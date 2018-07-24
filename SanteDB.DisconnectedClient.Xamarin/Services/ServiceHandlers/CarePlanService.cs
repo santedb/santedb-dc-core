@@ -70,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
             // Additional instructions?
             this.m_tracer.TraceInfo(">>>> CALCULATING CARE PLAN ");
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             var predicate = QueryExpressionParser.BuildLinqExpression<Act>(search);
 
             if (search.ContainsKey("_patientId"))

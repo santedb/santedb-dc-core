@@ -37,7 +37,6 @@ using Newtonsoft.Json.Linq;
 using SanteDB.Core.Services;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Roles;
-using Jint.Parser.Ast;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Entities;
 using System.Threading;
@@ -84,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             // 1. We scan the entire database for all Patients that were created in the specified date ranges
             // 2. We scan the entire database for all Acts that were created in the specified date ranges
             // 3. We take all of those and we put them in the outbox in bundles to be shipped to the server at a later time
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             // Hit the act repository
             var patientDataRepository = ApplicationContext.Current.GetService<IRepositoryService<Patient>>() as IPersistableQueryRepositoryService;
@@ -236,7 +235,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             // Perform a backup if possible
             var bksvc = XamarinApplicationContext.Current.GetService<IBackupService>();
-            if (MiniImsServer.CurrentContext.Request.QueryString["backup"] == "true" ||
+            if (MiniHdsiServer.CurrentContext.Request.QueryString["backup"] == "true" ||
                     parm?["backup"]?.Value<Boolean>() == true)
                 bksvc.Backup(BackupMedia.Public);
 
@@ -305,8 +304,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
         public void DeleteQueueEntry()
         {
-            var id = Int32.Parse(MiniImsServer.CurrentContext.Request.QueryString["_id"]);
-            var queue = MiniImsServer.CurrentContext.Request.QueryString["_queue"];
+            var id = Int32.Parse(MiniHdsiServer.CurrentContext.Request.QueryString["_id"]);
+            var queue = MiniHdsiServer.CurrentContext.Request.QueryString["_queue"];
 
             // Now delete
             switch (queue)
@@ -338,7 +337,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.Json)]
         public void ReQueueDead()
         {
-            var id = Int32.Parse(MiniImsServer.CurrentContext.Request.QueryString["_id"]);
+            var id = Int32.Parse(MiniHdsiServer.CurrentContext.Request.QueryString["_id"]);
 
             // Get > Requeue > Delete
             var queueItem = this.m_queueService.DeadLetter.Get(id) as ISynchronizationQueueRetryEntry;
@@ -374,17 +373,17 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.Json)]
         public AmiCollection<ISynchronizationQueueEntry> GetQueueEntry()
         {
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
-            int offset = Int32.Parse(MiniImsServer.CurrentContext.Request.QueryString["_offset"] ?? "0"),
-                count = Int32.Parse(MiniImsServer.CurrentContext.Request.QueryString["_count"] ?? "100"),
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+            int offset = Int32.Parse(MiniHdsiServer.CurrentContext.Request.QueryString["_offset"] ?? "0"),
+                count = Int32.Parse(MiniHdsiServer.CurrentContext.Request.QueryString["_count"] ?? "100"),
                 totalResults = 0;
 
-            var explId = MiniImsServer.CurrentContext.Request.QueryString["_id"];
+            var explId = MiniHdsiServer.CurrentContext.Request.QueryString["_id"];
             if (!String.IsNullOrEmpty(explId))
             {
                 ISynchronizationQueueEntry retVal = null;
                 // Get the queue
-                switch (MiniImsServer.CurrentContext.Request.QueryString["_queue"])
+                switch (MiniHdsiServer.CurrentContext.Request.QueryString["_queue"])
                 {
                     case "inbound":
                         retVal = this.m_queueService.Inbound.Get(Int32.Parse(explId));
@@ -410,7 +409,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             {
                 IEnumerable<ISynchronizationQueueEntry> results = null;
                 // Get the queue
-                switch (MiniImsServer.CurrentContext.Request.QueryString["_queue"])
+                switch (MiniHdsiServer.CurrentContext.Request.QueryString["_queue"])
                 {
                     case "inbound":
                         results = this.m_queueService.Inbound.Query(search, offset, count, out totalResults)

@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public AmiCollection<AuditInfo> GetAudits()
         {
             var auditRepository = ApplicationContext.Current.GetService<IAuditRepositoryService>();
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {

@@ -231,7 +231,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [Demand(PolicyIdentifiers.Login)]
         public List<DiagnosticTextAttachment> GetLogs()
         {
-            var query = MiniImsServer.CurrentContext.Request.QueryString;
+            var query = MiniHdsiServer.CurrentContext.Request.QueryString;
             if (query["_id"] != null)
             {
                 return new List<DiagnosticTextAttachment>() { this.CreateLogAttachment(query["_id"]) };
@@ -408,7 +408,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             try
             {
                 // Gets the specified alert messages
-                NameValueCollection query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+                NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
                 var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
 

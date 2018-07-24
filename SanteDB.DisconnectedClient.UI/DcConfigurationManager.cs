@@ -129,7 +129,7 @@ namespace SanteDB.DisconnectedClient.UI
                     typeof(CarePlanManagerService).AssemblyQualifiedName,
                     typeof(BusinessRulesDaemonService).AssemblyQualifiedName,
                     typeof(LocalEntitySource).AssemblyQualifiedName,
-                    typeof(MiniImsServer).AssemblyQualifiedName,
+                    typeof(MiniHdsiServer).AssemblyQualifiedName,
                     typeof(MemoryCacheService).AssemblyQualifiedName,
                     typeof(SanteDBThreadPool).AssemblyQualifiedName,
                     typeof(SimpleCarePlanService).AssemblyQualifiedName,

@@ -92,7 +92,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetPatient()
         {
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             var patientService = ApplicationContext.Current.GetService<IPatientRepositoryService>();
             var integrationService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
 
@@ -134,7 +134,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 if (search.ContainsKey("any") || search.ContainsKey("any[]"))
                 {
 
-                    this.m_tracer.TraceVerbose("Freetext search: {0}", MiniImsServer.CurrentContext.Request.Url.Query);
+                    this.m_tracer.TraceVerbose("Freetext search: {0}", MiniHdsiServer.CurrentContext.Request.Url.Query);
 
                     var values = search.ContainsKey("any") ? search["any"] : search["any[]"];
 
@@ -183,7 +183,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 if (search.Keys.Count(o => !o.StartsWith("_")) > 0)
                 {
                     var predicate = QueryExpressionParser.BuildLinqExpression<Patient>(search, null, false);
-                    this.m_tracer.TraceVerbose("Searching Patients : {0} / {1}", MiniImsServer.CurrentContext.Request.Url.Query, predicate);
+                    this.m_tracer.TraceVerbose("Searching Patients : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
                     if (search.ContainsKey("_onlineOnly"))
                     {
@@ -246,7 +246,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData DownloadPatient()
         {
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             if (!search.ContainsKey("_id"))
                 throw new ArgumentNullException("Missing _id parameter");
 

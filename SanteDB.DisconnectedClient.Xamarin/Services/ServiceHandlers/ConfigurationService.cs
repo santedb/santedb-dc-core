@@ -202,7 +202,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [Demand(PolicyIdentifiers.Login)]
         public ConfigurationViewModel GetUserConfiguration()
         {
-            String userId = MiniImsServer.CurrentContext.Request.QueryString["_id"] ?? AuthenticationContext.Current.Principal.Identity.Name;
+            String userId = MiniHdsiServer.CurrentContext.Request.QueryString["_id"] ?? AuthenticationContext.Current.Principal.Identity.Name;
             return new ConfigurationViewModel(XamarinApplicationContext.Current.GetUserConfiguration(userId));
 
         }
@@ -213,7 +213,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [RestOperation(UriPath = "/user", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
         public void SaveUserConfiguration([RestMessage(RestMessageFormat.Json)]ConfigurationViewModel model)
         {
-            String userId = MiniImsServer.CurrentContext.Request.QueryString["_id"] ?? AuthenticationContext.Current.Principal.Identity.Name;
+            String userId = MiniHdsiServer.CurrentContext.Request.QueryString["_id"] ?? AuthenticationContext.Current.Principal.Identity.Name;
             XamarinApplicationContext.Current.SaveUserConfiguration(userId,
                 new SanteDBConfiguration()
                 {

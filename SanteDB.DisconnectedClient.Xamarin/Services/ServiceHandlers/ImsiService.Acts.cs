@@ -138,7 +138,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         private IdentifiedData GetAct<TAct>() where TAct : IdentifiedData
         {
             var actRepositoryService = ApplicationContext.Current.GetService<IRepositoryService<TAct>>();
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {
@@ -204,7 +204,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
             var actRepositoryService = ApplicationContext.Current.GetService<IActRepositoryService>();
 
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {
@@ -230,7 +230,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act CancelAct([RestMessage(RestMessageFormat.SimpleJson)] Act act)
         {
-            var query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             Guid actKey = Guid.Empty;
             Guid actVersionKey = Guid.Empty;
@@ -260,7 +260,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act NullifyAct([RestMessage(RestMessageFormat.SimpleJson)] Act act)
         {
-            var query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             Guid actKey = Guid.Empty;
             Guid actVersionKey = Guid.Empty;
@@ -290,7 +290,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act UpdateAct([RestMessage(RestMessageFormat.SimpleJson)] Act act)
         {
-            var query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             Guid actKey = Guid.Empty;
 

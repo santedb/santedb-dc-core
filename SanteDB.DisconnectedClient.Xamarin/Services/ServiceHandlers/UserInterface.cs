@@ -53,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
 
             // Ensure response makes sense
-            MiniImsServer.CurrentContext.Response.ContentType = "text/javascript";
+            MiniHdsiServer.CurrentContext.Response.ContentType = "text/javascript";
             IAppletManagerService appletService = ApplicationContext.Current.GetService<IAppletManagerService>();
 
             // Calculate routes

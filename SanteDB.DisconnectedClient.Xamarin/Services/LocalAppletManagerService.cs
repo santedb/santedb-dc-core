@@ -98,8 +98,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 		/// <param name="applet">Applet.</param>
 		public virtual bool LoadApplet(AppletManifest applet)
         {
-            if (applet.Info.Id == (ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().StartupAsset ?? "org.santedb.core"))
+            if (applet.Info.Id == (ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().StartupAsset ?? "org.santedb.uicore"))
+            {
                 this.m_appletCollection.DefaultApplet = applet;
+                this.m_readonlyAppletCollection.DefaultApplet = applet;
+            }
             applet.Initialize();
             this.m_appletCollection.Add(applet);
             AppletCollection.ClearCaches();

@@ -141,7 +141,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
             var erRepositoryService = ApplicationContext.Current.GetService<IRepositoryService<EntityRelationship>>();
 
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {
@@ -161,7 +161,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <returns></returns>
         private IdentifiedData GetEntity<TEntity>() where TEntity : Entity { 
             var entityService = ApplicationContext.Current.GetService<IRepositoryService<TEntity>>();
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {
@@ -184,7 +184,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     if (search.ContainsKey("any") || search.ContainsKey("any[]"))
                     {
 
-                        this.m_tracer.TraceVerbose("Freetext search: {0}", MiniImsServer.CurrentContext.Request.Url.Query);
+                        this.m_tracer.TraceVerbose("Freetext search: {0}", MiniHdsiServer.CurrentContext.Request.Url.Query);
 
                         var values = search.ContainsKey("any") ? search["any"] : search["any[]"];
                         // Filtes
@@ -197,7 +197,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     if (search.Keys.Count(o => !o.StartsWith("_")) > 0)
                     {
                         var predicate = QueryExpressionParser.BuildLinqExpression<TEntity>(search);
-                        this.m_tracer.TraceVerbose("Searching Entities : {0} / {1}", MiniImsServer.CurrentContext.Request.Url.Query, predicate);
+                        this.m_tracer.TraceVerbose("Searching Entities : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
                         var tret = entityService.Find(predicate, offset, count, out totalResults);
                         if (retVal == null)
@@ -229,7 +229,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public IdentifiedData GetProvider()
         {
 
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             var providerService = ApplicationContext.Current.GetService<IProviderRepositoryService>();
 
             if (search.ContainsKey("_id"))
@@ -250,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                   count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
 
 
-                this.m_tracer.TraceVerbose("Searching Providers : {0} / {1}", MiniImsServer.CurrentContext.Request.Url.Query, predicate);
+                this.m_tracer.TraceVerbose("Searching Providers : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
                 var retVal = providerService.Find(predicate, offset, count, out totalResults);
 
@@ -313,7 +313,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
 
             var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             // The template to construct
             List<String> templateId = search["templateId"];
 
@@ -354,7 +354,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [Demand(PolicyIdentifiers.Login)]
         public IdentifiedData GetUserEntity()
         {
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             var securityService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
             if (search.ContainsKey("_id"))
@@ -374,7 +374,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                   offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
                   count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
 
-                this.m_tracer.TraceVerbose("Searching User Entity : {0} / {1}", MiniImsServer.CurrentContext.Request.Url.Query, predicate);
+                this.m_tracer.TraceVerbose("Searching User Entity : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
                 var retVal = securityService.FindUserEntity(predicate, offset, count, out totalResults);
 
@@ -407,7 +407,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [Demand(PolicyIdentifiers.Login)]
         public UserEntity UpdateUserEntity([RestMessage(RestMessageFormat.SimpleJson)] UserEntity user)
         {
-            var query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             ISecurityRepositoryService securityRepositoryService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
             AuthenticationContext.Current?.Session?.ClearCached();
             //IDataPersistenceService<UserEntity> persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<UserEntity>>();
@@ -423,7 +423,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetPlace()
         {
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             var placeService = ApplicationContext.Current.GetService<IPlaceRepositoryService>();
 
             if (search.ContainsKey("_id"))
@@ -431,7 +431,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             else
             {
                 var predicate = QueryExpressionParser.BuildLinqExpression<Place>(search);
-                this.m_tracer.TraceVerbose("Searching Places : {0} / {1}", MiniImsServer.CurrentContext.Request.Url.Query, predicate);
+                this.m_tracer.TraceVerbose("Searching Places : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
                 int totalResults = 0,
                     offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
@@ -474,7 +474,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public Entity UpdateEntityExtension([RestMessage(RestMessageFormat.SimpleJson)]EntityExtension extensionToSave)
         {
             var entityRepository = ApplicationContext.Current.GetService<IRepositoryService<Entity>>();
-            var query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             Guid entityKey = Guid.Empty;
 
@@ -527,7 +527,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public ManufacturedMaterial UpdateManufacturedMaterial([RestMessage(RestMessageFormat.SimpleJson)] ManufacturedMaterial manufacturedMaterial)
         {
-            var query = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             Guid manufacturedMaterialKey = Guid.Empty;
             Guid manufacturedMaterialVersionKey = Guid.Empty;

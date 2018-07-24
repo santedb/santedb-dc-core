@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public IdentifiedData GetConcept()
         {
             var conceptRepositoryService = ApplicationContext.Current.GetService<IConceptRepositoryService>();
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {
@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public IdentifiedData GetConceptSet()
         {
             var conceptRepositoryService = ApplicationContext.Current.GetService<IConceptRepositoryService>();
-            var search = NameValueCollection.ParseQueryString(MiniImsServer.CurrentContext.Request.Url.Query);
+            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
             if (search.ContainsKey("_id"))
             {
