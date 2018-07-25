@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Abandons the users session.
         /// </summary>
         /// <returns>Returns an empty session.</returns>
-        [RestOperation(Method = "POST", UriPath = "/abandon", FaultProvider = nameof(AuthenticationFault))]
+        [RestOperation(Method = "DELETE", UriPath = "/session", FaultProvider = nameof(AuthenticationFault))]
         public SessionInfo Abandon()
         {
             var cookie = MiniHdsiServer.CurrentContext.Request.Cookies["_s"];
@@ -81,28 +81,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             }
 
             return new SessionInfo();
-        }
-
-
-        /// <summary>
-        /// Update the security user
-        /// </summary>
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        [RestOperation(UriPath = "/SecurityUser", Method = "POST", FaultProvider = nameof(AuthenticationFault))]
-        public SecurityUser UpdateSecurityUser([RestMessage(RestMessageFormat.SimpleJson)] SecurityUser user)
-        {
-            var localSecSrv = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-            var amiServ = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-
-            // Session
-            amiServ.Client.Credentials = new TokenCredentials(AuthenticationContext.Current.Principal);
-            var remoteUser = amiServ.GetUser(user.Key.ToString());
-            remoteUser.User.Email = user.Email;
-            remoteUser.User.PhoneNumber = user.PhoneNumber;
-            // Save the remote user in the local
-            localSecSrv.SaveUser(remoteUser.User);
-            amiServ.UpdateUser(remoteUser.UserId.Value, remoteUser);
-            return remoteUser.User;
         }
 
         /// <summary>
@@ -235,7 +213,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <param name="authRequest"></param>
         /// <returns></returns>
-        [RestOperation(Method = "GET", UriPath = "/get_session")]
+        [RestOperation(Method = "GET", UriPath = "/session")]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public SessionInfo GetSession()
         {
@@ -248,38 +226,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 return AuthenticationContext.Current.Session;
         }
 
-        /// <summary>
-        /// Gets a user by username.
-        /// </summary>
-        /// <param name="username">The username of the user to be retrieved.</param>
-        /// <returns>Returns the user.</returns>
-        [RestOperation(Method = "GET", UriPath = "/SecurityUser")]
-        [return: RestMessage(RestMessageFormat.Json)]
-        public IdentifiedData GetUser()
-        {
-            // this is used for the forgot password functionality
-            // need to find a way to stop people from simply searching users via username...
 
-            NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-            var predicate = QueryExpressionParser.BuildLinqExpression<SecurityUser>(query);
-            ISecurityRepositoryService securityRepositoryService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-
-            if (query.ContainsKey("_id"))
-                return securityRepositoryService.GetUser(Guid.Parse(query["_id"][0]));
-            else
-                return Bundle.CreateBundle(securityRepositoryService.FindUsers(predicate), 0, 0);
-        }
-
-        /// <summary>
-        /// Sets the user's password
-        /// </summary>
-        [RestOperation(Method = "POST", UriPath = "/passwd", FaultProvider = nameof(AuthenticationFault))]
-        [return: RestMessage(RestMessageFormat.Json)]
-        public SessionInfo SetPassword([RestMessage(RestMessageFormat.FormData)]NameValueCollection controlData)
-        {
-            var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
-            idp.ChangePassword(controlData["username"].FirstOrDefault().ToLower(), controlData["password"].FirstOrDefault(), AuthenticationContext.Current.Principal);
-            return AuthenticationContext.Current.Session;
-        }
     }
 }

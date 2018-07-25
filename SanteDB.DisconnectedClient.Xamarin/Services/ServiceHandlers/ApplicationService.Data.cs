@@ -43,6 +43,7 @@ using System.Threading;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Interop.HDSI;
+using SanteDB.Core.Model.AMI.Collections;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {

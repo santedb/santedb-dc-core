@@ -39,6 +39,7 @@ using SanteDB.Messaging.AMI.Client;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.Core.Model.AMI.Collections;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Impl
 {

@@ -47,6 +47,7 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.Core.Alerting;
+using System.Dynamic;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -458,6 +459,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             }
         }
 
+        /// <summary>
+        /// Get asset information for locales
+        /// </summary>
+        [RestOperation(UriPath = "/locale", Method = "GET")]
+        public Dictionary<String, String[]> GetLocaleAssets()
+        {
+
+            // Get all locales from the asset manager
+            var retVal = new Dictionary<String, String[]>();
+            foreach(var locale in ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o=>o.Locales).GroupBy(o=>o.Code))
+            {
+                retVal.Add(locale.Key, locale.SelectMany(o => o.Assets).ToArray());
+            }
+            return retVal;
+
+        }
     }
 
 }

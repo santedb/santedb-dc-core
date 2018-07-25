@@ -432,24 +432,27 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             if (tuser == null)
                                 throw new ArgumentException(string.Format("User {0} not found", userName));
                             else
-                                userId = tuser.UserId.Value;
+                                userId = tuser.Entity.Key.Value;
                         }
                         else
                             userId = securityUser.Key.Value;
                     }
 
                     // Use the current configuration's credential provider
-                    var user = new SecurityUserInfo()
+                    var user = new SecurityUserInfo(new SecurityUser()
                     {
-                        UserId = userId,
+                        Key = userId,
                         UserName = userName,
                         Password = newPassword
+                    })
+                    {
+                        PasswordOnly = true
                     };
 
                     // Set the credentials 
                     client.Client.Credentials = ApplicationContext.Current.Configuration.GetServiceDescription("ami").Binding.Security.CredentialProvider.GetCredentials(principal);
 
-                    client.UpdateUser(user.UserId.Value, user);
+                    client.UpdateUser(userId, user);
                     var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
                     // Change locally

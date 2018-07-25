@@ -18,6 +18,7 @@
  * Date: 2017-9-1
  */
 using MARC.HI.EHRS.SVC.Auditing.Data;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;

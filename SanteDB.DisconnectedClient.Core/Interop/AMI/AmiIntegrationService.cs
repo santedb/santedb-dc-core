@@ -123,7 +123,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                     case "SecurityUser":
                         return new Bundle()
                         {
-                            Item = amiClient.GetUsers((Expression<Func<SecurityUser, bool>>)(Expression)predicate).CollectionItem.Select(o => o.User as IdentifiedData).ToList()
+                            Item = amiClient.GetUsers((Expression<Func<SecurityUser, bool>>)(Expression)predicate).CollectionItem.Select(o => o.Entity as IdentifiedData).ToList()
                         };
                     default:
                         throw new NotSupportedException($"AMI servicing not supported for {typeof(TModel).Name}");
@@ -297,7 +297,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 			    amiClient.Client.Requesting += IntegrationQueryOptions.CreateRequestingHandler(null);
 			    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
 
-			    return amiClient.GetUser(key.ToString())?.User;
+			    return amiClient.GetUser(key.ToString())?.Entity;
 		    }
 		    catch (Exception ex)
 		    {

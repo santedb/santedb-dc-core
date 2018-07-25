@@ -70,6 +70,16 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Xamarin.Data;
+using System.Security.Cryptography;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Asn1.Pkcs;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -741,7 +751,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     }
 
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret = Encoding.ASCII.GetString(pcharArray);
-
                 // Create the necessary device user
                 try
                 {
@@ -750,7 +759,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     // Create application user
                     var role = amiClient.GetRoles(o => o.Name == "SYNCHRONIZERS").CollectionItem.First();
 
-
                     // Does the user actually exist?
                     var existingClient = amiClient.GetUsers(o => o.UserName == deviceName);
                     if (existingClient.CollectionItem.Count > 0)
@@ -758,10 +766,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         if (!realmData.ContainsKey("force") || !Boolean.Parse(realmData["force"][0]))
                             throw new DuplicateNameException(Strings.err_duplicate_deviceName);
                         else
-                            amiClient.UpdateUser(existingClient.CollectionItem.First().UserId.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
+                            amiClient.UpdateUser(existingClient.CollectionItem.First().Entity.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
                             {
-                                Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
-                                UserName = deviceName
+                                PasswordOnly = true,
+                                Entity = new SanteDB.Core.Model.Security.SecurityUser()
+                                {
+                                    Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
+                                    UserName = deviceName
+                                }
                             });
                     }
                     else
@@ -772,44 +784,46 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             UserName = deviceName,
                             Key = Guid.NewGuid(),
                             UserClass = UserClassKeys.ApplicationUser,
-                            SecurityHash = Guid.NewGuid().ToString()
+                            SecurityHash = Guid.NewGuid().ToString(),
+                            Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
                         })
                         {
-                            Roles = new List<SanteDB.Core.Model.AMI.Auth.SecurityRoleInfo>()
-                            {
-                                role
-                            },
-                            Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
+                            Roles = new List<string>() { "SYNCHORNIZERS" },
                         });
 
-                    // TODO: Generate the CSR
-
-                    // Lookup sync role
+                    
+                    // lookup existing device
                     var existingDevice = amiClient.GetDevices(o => o.Name == deviceName);
                     if (existingDevice.CollectionItem.Count == 0)
                     {
                         // Create device
-                        var newDevice = amiClient.CreateDevice(new SecurityDeviceInfo()
+                        var newDevice = amiClient.CreateDevice(new SecurityEntityInfo<SanteDB.Core.Model.Security.SecurityDevice>(new SanteDB.Core.Model.Security.SecurityDevice()
                         {
-                            Device = new SanteDB.Core.Model.Security.SecurityDevice()
-                            {
-                                CreationTime = DateTimeOffset.Now,
-                                Name = deviceName,
-                                DeviceSecret = Guid.NewGuid().ToString()
-                            }
-                        });
+                            CreationTime = DateTimeOffset.Now,
+                            Name = deviceName,
+                            DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                        }));
 
-                        //// Now create device entity
-                        //var newDeviceEntity = ApplicationContext.Current.GetService<IDataPersistenceService<DeviceEntity>>().Insert(new DeviceEntity()
+                        // TODO: Send device entity to server
+                        //amiClient.CreateDeviceEntity(new DeviceEntity()
                         //{
-                        //    SecurityDevice = newDevice,
+                        //    SecurityDevice = newDevice.Entity,
                         //    StatusConceptKey = StatusKeys.Active,
-                        //    ManufacturedModelName = Environment.MachineName,
+                        //    ManufacturerModelName = Environment.MachineName,
                         //    OperatingSystemName = Environment.OSVersion.ToString(),
                         //});
+
                     }
                     else
-                        ; // TODO: Update
+                    {
+                        amiClient.UpdateDevice(existingDevice.CollectionItem.First().Entity.Key.ToString(), new SecurityEntityInfo<SanteDB.Core.Model.Security.SecurityDevice>(new SanteDB.Core.Model.Security.SecurityDevice()
+                        {
+
+                            UpdatedTime = DateTime.Now,
+                            Name = deviceName,
+                            DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                        }));
+                    }
                 }
                 catch (Exception e)
                 {

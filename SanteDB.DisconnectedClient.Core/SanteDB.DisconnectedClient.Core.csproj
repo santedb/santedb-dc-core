@@ -64,6 +64,7 @@
     <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
+    <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\LocalPolicyDecisionService.cs" />
     <Compile Include="Services\Impl\AlertSynchronizationService.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
