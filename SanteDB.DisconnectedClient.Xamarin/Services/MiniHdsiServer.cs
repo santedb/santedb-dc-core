@@ -647,7 +647,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
                 lock (m_lockObject)
                 {
-                    if (!this.m_cacheApplets.ContainsKey(appletPath))
+                    if (!this.m_cacheApplets.ContainsKey(appletPath) && appletManagerService.Applets.CachePages)
                     {
                         this.m_cacheApplets.Add(appletPath, navigateAsset);
                     }

@@ -60,36 +60,41 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 #if !DEBUG
             if (this.m_routes == null)
 #endif
-                using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (StreamWriter sw = new StreamWriter(ms))
                 {
-                    using (StreamWriter sw = new StreamWriter(ms))
+                    sw.WriteLine("SanteDB = SanteDB || {}");
+                    sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
+                    sw.WriteLine("SanteDB.UserInterface.states = [");
+                    // Collect routes
+                    foreach (var itm in appletService.Applets.ViewStateAssets)
                     {
-                        sw.WriteLine("SanteDB = SanteDB || {}");
-                        sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
-                        sw.WriteLine("SanteDB.UserInterface.states = [");
-                        // Collect routes
-                        foreach (var itm in appletService.Applets.ViewStateAssets)
+                        var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
+                        var viewState = htmlContent.ViewState;
+                        sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
+                        if (viewState.View.Count > 0)
                         {
-                            var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
-                            var viewState = htmlContent.ViewState;
-                            sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}, views: {{");
-                            foreach(var view in viewState.View)
+                            sw.Write(", views: {");
+                            foreach (var view in viewState.View)
                             {
                                 sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
                                 var dynScripts = appletService.Applets.GetLazyScripts(itm);
                                 if (dynScripts.Any())
                                 {
                                     int i = 0;
-                                    sw.Write($", resolve: {{ {String.Join(",", dynScripts.Select(o => $"loadState{i++}: [ '$ocLazyLoad', function($ocLazyLoad) {{ return $ocLazyLoad.load('{appletService.Applets.ResolveAsset(o.Reference, itm)}'); }} ]")) }  }}");
+                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
                                 }
-                                sw.WriteLine(" }}, ");
+                                sw.WriteLine(" }, ");
                             }
-                            sw.WriteLine("} ,");
+                            sw.WriteLine("}");
                         }
-                        sw.Write("];");
+                        sw.WriteLine("} ,");
                     }
-                    this.m_routes = ms.ToArray();
+                    sw.Write("];");
                 }
+                this.m_routes = ms.ToArray();
+            }
             return this.m_routes;
         }
 
