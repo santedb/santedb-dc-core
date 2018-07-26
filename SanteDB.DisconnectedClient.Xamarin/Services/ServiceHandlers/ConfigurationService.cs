@@ -268,7 +268,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAuditService).AssemblyQualifiedName);
 
             // Data mode
-            switch (optionObject["data"]["mode"].Value<String>())
+            switch (optionObject["sync"]["mode"].Value<String>())
             {
                 case "online":
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
@@ -304,7 +304,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         var syncConfig = new SynchronizationConfigurationSection();
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
-                        var facilityId = optionObject["data"]["sync"]["subscribe"].ToString();
+                        var facilityId = optionObject["sync"]["subscribe"].ToString();
                         var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(facilityId), Guid.Empty);
                         var facilityAddress = facility.LoadCollection<EntityAddress>("Addresses").FirstOrDefault();
                         var facilityState = facilityAddress?.Value(AddressComponentKeys.State);
