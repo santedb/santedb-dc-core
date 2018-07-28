@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SanteDB.Core.Data.Warehouse;
 using System.Runtime.CompilerServices;
 using Mono.Data.Sqlite;
 using System.IO;
@@ -38,6 +37,7 @@ using SanteDB.Core.Model.Query;
 using Newtonsoft.Json;
 using System.Data;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.Core.Model.Warehouse;
 
 namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 {
@@ -687,7 +687,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
         /// <summary>
         /// Execute a stored query
         /// </summary>
-        public IEnumerable<dynamic> StoredQuery(Guid datamartId, string queryId, dynamic queryParameters, out int tr)
+        public IEnumerable<dynamic> StoredQuery(Guid datamartId, string queryId, dynamic queryParameters, int offset, int count, out int tr)
         {
             this.ThrowIfDisposed();
 
@@ -718,7 +718,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 
                     var queryDefn = mart.Schema.Queries.FirstOrDefault(m => m.Name == queryId);
 
-                    return this.QueryInternal(String.Format("sqp_{0}_{1}", mart.Schema.Name, queryId), queryDefn.Properties, parms, 0, 0, out tr);
+                    return this.QueryInternal(String.Format("sqp_{0}_{1}", mart.Schema.Name, queryId), queryDefn.Properties, parms, offset, count, out tr);
                 }
                 catch (Exception e)
                 {
@@ -747,9 +747,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             using (var dbc = this.CreateCommand(null, String.Format("SELECT COUNT(*) FROM ({0})", sb), vals.ToArray()))
                 totalResults = Convert.ToInt32(dbc.ExecuteScalar());
 
-            if (count > 0)
+            if (count >= 0)
                 sb.AppendFormat(" LIMIT {0}", count);
-            if (offset > 0)
+            if (offset >= 0)
                 sb.AppendFormat(" OFFSET {0}", offset);
 
             lock (this.m_lock)

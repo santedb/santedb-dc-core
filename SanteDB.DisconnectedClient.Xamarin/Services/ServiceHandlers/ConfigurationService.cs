@@ -80,6 +80,8 @@ using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Asn1.Pkcs;
 using System.Security.Cryptography.X509Certificates;
+using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -189,11 +191,20 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         private Tracer m_tracer = Tracer.GetTracer(typeof(ConfigurationService));
 
         /// <summary>
+        /// Get a list of all subscription definitions defined in the loaded applets
+        /// </summary>
+        [RestOperation(UriPath = "/subscriptionDefinition", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [return: RestMessage(RestMessageFormat.Json)]
+        public List<AppletSubscriptionDefinition> GetSubscriptionDefinitions()
+        {
+            return ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.SubscriptionDefinition).ToList();
+        }
+
+        /// <summary>
         /// Get the data storage provider
         /// </summary>
         [RestOperation(UriPath = "/dbp", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
         [return: RestMessage(RestMessageFormat.Json)]
-        [Demand(PolicyIdentifiers.Login)]
         public List<StorageProviderViewModel> GetDataStorageProviders()
         {
             return StorageProviderUtil.GetProviders().Select(o => new StorageProviderViewModel()
@@ -259,11 +270,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(HdsiPersistenceService).AssemblyQualifiedName);
             ApplicationContext.Current.Configuration.Sections.RemoveAll(o => o is SynchronizationConfigurationSection);
 
-            // TODO: Add ADO audit repository service
-            if (optionObject["data"]["backend"].Value<String>() == "ADO")
-                ;
-            else
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteAuditRepositoryService).AssemblyQualifiedName);
 
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAuditService).AssemblyQualifiedName);
 
@@ -282,15 +288,15 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     {
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
-                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["backend"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["backend"]["options"].ToObject<Dictionary<String, Object>>());
+                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         break;
                     }
                 case "sync":
                     {
-                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["backend"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["backend"]["options"].ToObject<Dictionary<String, Object>>());
+                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAlertService).AssemblyQualifiedName);

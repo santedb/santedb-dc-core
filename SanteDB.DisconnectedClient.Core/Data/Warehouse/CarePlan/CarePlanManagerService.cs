@@ -17,7 +17,6 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.Core.Data.Warehouse;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
@@ -38,6 +37,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SanteDB.Core.Model.Warehouse;
 
 namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
 {
@@ -340,7 +340,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                 )
             {
                 int tr = 1, ofs = 0;
-                var warehousePatients = this.m_warehouseService.StoredQuery(this.m_dataMart.Id, "consistency", new { }, out tr);
+                var warehousePatients = this.m_warehouseService.StoredQuery(this.m_dataMart.Id, "consistency", new { }, 0, -1, out tr);
                 Guid queryId = Guid.NewGuid();
                 tr = 1;
                 while (ofs < tr)

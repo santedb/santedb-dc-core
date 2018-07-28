@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,8 +18,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// Gets providers for the specified platform
         /// </summary>
         public static IEnumerable<IStorageProvider> GetProviders() => AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(a=>!a.IsDynamic)
                         .SelectMany(a => a.ExportedTypes)
-                        .Where(o => typeof(IStorageProvider).IsAssignableFrom(o))
+                        .Where(o => typeof(IStorageProvider).IsAssignableFrom(o) && !o.GetTypeInfo().IsInterface && !o.GetTypeInfo().IsAbstract)
                         .Select(t => Activator.CreateInstance(t) as IStorageProvider);
 
         /// <summary>

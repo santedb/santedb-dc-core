@@ -1,6 +1,7 @@
 ﻿using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.SQLite.Alerting;
 using SanteDB.DisconnectedClient.SQLite.Connection;
@@ -39,7 +40,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// <summary>
         /// Configuration options
         /// </summary>
-        public Dictionary<String, ConfigurationOptionType> Options => new Dictionary<string, ConfigurationOptionType>() { { "encrypt", ConfigurationOptionType.Boolean } };
+        public Dictionary<String, ConfigurationOptionType> Options => new Dictionary<string, ConfigurationOptionType>() {
+            { "encrypt", ConfigurationOptionType.Boolean }
+        };
 
         /// <summary>
         /// Configure
@@ -88,12 +91,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteRoleProviderService).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteIdentityService).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
+            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteAuditRepositoryService).AssemblyQualifiedName);
 
             // SQLite provider
-            #if NOCRYPT
+#if NOCRYPT
 			appSection.ServiceTypes.Add(typeof(SQLite.Net.Platform.Generic.SQLitePlatformGeneric).AssemblyQualifiedName);
-            #else
-            switch(ApplicationContext.Current.OperatingSystem)
+#else
+            switch (ApplicationContext.Current.OperatingSystem)
             {
                 case OperatingSystemID.Win32:
                     if (options["encrypt"].Equals(true))

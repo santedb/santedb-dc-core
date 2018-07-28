@@ -362,12 +362,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     // Attempt to find a service which implements the path
                     var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath);
 
-                    if (request.Url.AbsolutePath == "/" && ApplicationContext.Current.Configuration.GetAppSetting("http.index") != null)
-                    {
-                        response.StatusCode = 302;
-                        response.RedirectLocation = $"{request.Url.Scheme}://{request.Url.Host}:{request.Url.Port}{ApplicationContext.Current.Configuration.GetAppSetting("http.index")}";
-                        return;
-                    }
+                    
                     InvokationInformation invoke = null;
                     this.m_tracer.TraceVerbose("Performing service matching on {0}", rootPath);
                     if (this.m_services.TryGetValue(rootPath, out invoke))

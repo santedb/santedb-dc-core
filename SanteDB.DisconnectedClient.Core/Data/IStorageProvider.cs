@@ -26,7 +26,8 @@ namespace SanteDB.DisconnectedClient.Core.Data
     {
         String,
         Boolean,
-        Numeric
+        Numeric,
+        Password
     }
 
     /// <summary>
