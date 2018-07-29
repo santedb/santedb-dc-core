@@ -627,26 +627,19 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Join a realm
         /// </summary>
-        /// <param name="realmData"></param>
+        /// <param name="configData"></param>
         [RestOperation(UriPath = "/configuration/realm", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
         [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
-        public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.FormData)]NameValueCollection realmData)
+        public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.Json)]JObject configData)
         {
-            String realmUri = realmData["realmUri"][0];
-            String deviceName = realmData["deviceName"][0];
+            String realmUri = configData["realmUri"].Value<String>(),
+                deviceName = configData["deviceName"].Value<String>();
+            Int32 port = configData["port"].Value<Int32>();
+            Boolean enableSSL = configData["enableSSL"].Value<Boolean>(),
+                enableTrace = configData["enableTrace"].Value<Boolean>(),
+                replaceExisting = configData["replaceExisting"].Value<Boolean>();
             this.m_tracer.TraceInfo("Joining {0}", realmUri);
-
-            List<string> enableTrace = null, noTimeout = null, enableSSL = null, portNo;
-            realmData.TryGetValue("enableTrace", out enableTrace);
-            enableTrace = enableTrace ?? new List<String>();
-            realmData.TryGetValue("noTimeout", out noTimeout);
-            noTimeout = noTimeout ?? new List<String>();
-            realmData.TryGetValue("enableSSL", out enableSSL);
-            enableSSL = enableSSL ?? new List<string>();
-            realmData.TryGetValue("port", out portNo);
-            portNo = portNo ?? new List<string>() { "8080" };
-
 
             // Stage 1 - Demand access admin policy
             try
@@ -675,7 +668,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 };
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().TokenType = "urn:ietf:params:oauth:token-type:jwt";
                 // Parse ACS URI
-                var scheme = enableSSL.FirstOrDefault() == "true" ? "https" : "http";
+                var scheme = enableSSL ? "https" : "http";
                 // AMI Client
                 AmiServiceClient amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 
@@ -723,7 +716,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             Address = o.Replace("0.0.0.0", realmUri),
                             Timeout = itm.ServiceType == ServiceEndpointType.ImmunizationIntegrationService ? 60000 : 30000
                         }).ToList(),
-                        Trace = enableTrace.Count > 0 && enableTrace[0] == "true",
+                        Trace = enableTrace,
                         Name = serviceName
                     };
 
@@ -769,7 +762,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     var existingClient = amiClient.GetUsers(o => o.UserName == deviceName);
                     if (existingClient.CollectionItem.Count > 0)
                     {
-                        if (!realmData.ContainsKey("force") || !Boolean.Parse(realmData["force"][0]))
+                        if (!replaceExisting)
                             throw new DuplicateNameException(Strings.err_duplicate_deviceName);
                         else
                             amiClient.UpdateUser(existingClient.CollectionItem.First().Entity.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
@@ -863,10 +856,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 // AMI Client
                 serviceClientSection.Client.Clear();
 
-                var scheme = enableSSL.FirstOrDefault() == "true" ? "https" : "http";
+                var scheme = enableSSL ? "https" : "http";
                 string amiUri = String.Format("{0}://{1}:{2}/ami", scheme,
                     realmUri,
-                    portNo.FirstOrDefault());
+                    port);
                 serviceClientSection.Client.Add(new ServiceClientDescription()
                 {
                     Binding = new ServiceClientBinding()
@@ -879,7 +872,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         }
                     },
                     Name = "ami",
-                    Trace = enableTrace.Count > 0 && enableTrace[0] == "true"
+                    Trace = enableTrace
                 });
 
 
@@ -913,7 +906,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             Optimize = false
                         },
                         Name = "acs",
-                        Trace = enableTrace.Count > 0 && enableTrace[0] == "true",
+                        Trace = enableTrace,
                         Endpoint = option.BaseUrl.Select(o => new ServiceClientEndpoint()
                         {
                             Address = o.Replace("0.0.0.0", realmUri),
@@ -923,10 +916,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 }
 
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw new UnauthorizedAccessException();
             }
             catch (Exception e)
             {
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw;
             }

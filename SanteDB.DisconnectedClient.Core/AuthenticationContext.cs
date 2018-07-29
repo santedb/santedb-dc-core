@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.Core
         }
 
         /// <summary>
-        /// Gets or sets the current context
+        /// Gets or sets the current context for the user interface rather than any background thread that is processing
         /// </summary>
         public static AuthenticationContext CurrentUIContext
         {

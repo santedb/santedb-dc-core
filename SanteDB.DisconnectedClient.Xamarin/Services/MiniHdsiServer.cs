@@ -588,7 +588,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             response.StatusCode = 500;
             if (e is SecurityException)
             {
-                response.StatusCode = 401;
+                response.StatusCode = AuthenticationContext.CurrentUIContext == null || AuthenticationContext.CurrentUIContext.Principal == AuthenticationContext.AnonymousPrincipal ? 401 : 403;
                 return invoke.FaultProvider?.Invoke(invoke.BindObject, new object[] { e });
             }
             else if (e is FileNotFoundException)
@@ -598,7 +598,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             }
             else if (e is UnauthorizedAccessException)
             {
-                response.StatusCode = 403;
+                response.StatusCode = AuthenticationContext.CurrentUIContext == null || AuthenticationContext.CurrentUIContext.Principal == AuthenticationContext.AnonymousPrincipal ? 401 : 403;
                 return invoke.FaultProvider?.Invoke(invoke.BindObject, new object[] { e });
             }
             else if (e is DetectedIssueException)

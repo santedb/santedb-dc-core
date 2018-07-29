@@ -103,6 +103,9 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 // Get the user object from the principal
                 var pip = ApplicationContext.Current.PolicyInformationService;
 
+                if (pip == null)
+                    return PolicyGrantType.Deny;
+
                 // Policies
                 var activePolicies = pip.GetActivePolicies(principal).Where(o => policyId == o.Policy.Oid || policyId.StartsWith(String.Format("{0}.", o.Policy.Oid)));
 
