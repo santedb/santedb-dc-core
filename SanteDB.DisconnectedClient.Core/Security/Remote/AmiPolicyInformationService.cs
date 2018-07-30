@@ -69,12 +69,19 @@ namespace SanteDB.DisconnectedClient.Core.Security
             {
                 string name = (securable as SecurityRole).Name;
                 return this.m_client.FindRole(o => o.Name == name).CollectionItem.OfType<SecurityRoleInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
-                
+
             }
             else if (securable is SecurityApplication)
                 throw new NotImplementedException();
             else if (securable is IPrincipal || securable is IIdentity)
-                throw new NotImplementedException();
+            {
+                var userInfo = this.m_client.GetUsers(o => o.UserName == (securable as IPrincipal).Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
+                if (userInfo != null)
+                    return this.GetActivePolicies(new SecurityRole() { Name = userInfo.Roles.FirstOrDefault() });
+                else
+                    return new List<IPolicyInstance>();
+
+            }
             else if (securable is Act)
                 throw new NotImplementedException();
             else if (securable is Entity)

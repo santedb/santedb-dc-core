@@ -82,6 +82,7 @@ using Org.BouncyCastle.Asn1.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -547,7 +548,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     }
             }
 
-           
+
             // Password hashing
             switch (optionObject["security"]["hasher"].Value<String>())
             {
@@ -574,8 +575,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             var optimize = optionObject["network"]["optimize"].Value<String>();
             OptimizationMethod method = OptimizationMethod.Gzip;
-            if(!String.IsNullOrEmpty(optimize))
-                switch(optimize)
+            if (!String.IsNullOrEmpty(optimize))
+                switch (optimize)
                 {
                     case "lzma":
                         method = OptimizationMethod.Lzma;
@@ -592,7 +593,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 }
 
             foreach (var itm in ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>().Client)
-                if(itm.Binding.Optimize)
+                if (itm.Binding.Optimize)
                     itm.Binding.OptimizationMethod = method;
 
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = true;
@@ -617,7 +618,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             };
 
-            
+
             this.m_tracer.TraceInfo("Saving configuration options {0}", optionObject);
             XamarinApplicationContext.Current.ConfigurationManager.Save();
 
@@ -641,11 +642,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 enableTrace = configData["enableTrace"].Value<Boolean>(),
                 replaceExisting = configData["replaceExisting"].Value<Boolean>();
 
-            if(configData.ContainsKey("client_secret"))
+            if (configData.ContainsKey("client_secret"))
                 ApplicationContext.Current.Application.ApplicationSecret = configData["client_secret"].Value<String>();
 
             // Set domain security
-            switch(domainSecurity)
+            switch (domainSecurity)
             {
                 case "Basic":
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Basic;
@@ -741,7 +742,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new AmiPolicyInformationService());
                 ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new HdsiPersistenceService());
-                ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>().Query(o => o.ConceptSets.Any(s=>s.Key == ConceptSetKeys.AddressComponentType));
+                ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>().Query(o => o.ConceptSets.Any(s => s.Key == ConceptSetKeys.AddressComponentType));
                 EntitySource.Current = new EntitySource(new ConfigurationEntitySource());
                 byte[] pcharArray = Guid.NewGuid().ToByteArray();
                 char[] spec = { '@', '#', '$', '*', '~' };
@@ -803,10 +804,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
                         })
                         {
-                            Roles = new List<string>() { "SYNCHORNIZERS" },
+                            Roles = new List<string>() { "SYNCHRONIZERS" },
                         });
 
-                    
+
                     // lookup existing device
                     var existingDevice = amiClient.GetDevices(o => o.Name == deviceName);
                     if (existingDevice.CollectionItem.Count == 0)
@@ -819,15 +820,18 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
                         }));
 
-                        // TODO: Send device entity to server
-                        //amiClient.CreateDeviceEntity(new DeviceEntity()
-                        //{
-                        //    SecurityDevice = newDevice.Entity,
-                        //    StatusConceptKey = StatusKeys.Active,
-                        //    ManufacturerModelName = Environment.MachineName,
-                        //    OperatingSystemName = Environment.OSVersion.ToString(),
-                        //});
-
+                        // Create the device entity 
+                        amiClient.CreateDeviceEntity(new DeviceEntity()
+                        {
+                            SecurityDevice = newDevice.Entity,
+                            StatusConceptKey = StatusKeys.Active,
+                            ManufacturerModelName = Environment.MachineName,
+                            OperatingSystemName = Environment.OSVersion.ToString(),
+                            Names = new List<EntityName>()
+                                {
+                                    new EntityName(NameUseKeys.Assigned, deviceName)
+                                }
+                        });
                     }
                     else
                     {
@@ -932,11 +936,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 }
 
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is HdsiPersistenceService);
+
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw new UnauthorizedAccessException();
             }
             catch (Exception e)
             {
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is HdsiPersistenceService);
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw;
@@ -988,7 +997,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
             {
-                return ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>()?.Query(o=>o.SourceEntityKey == sourceKey) ?? new List<TObject>();
+                return ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>()?.Query(o => o.SourceEntityKey == sourceKey) ?? new List<TObject>();
             }
 
             public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, decimal? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
