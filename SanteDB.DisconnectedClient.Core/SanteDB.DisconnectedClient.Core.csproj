@@ -67,6 +67,7 @@
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\LocalPolicyDecisionService.cs" />
     <Compile Include="Services\Impl\AlertSynchronizationService.cs" />
+    <Compile Include="Services\ISymmetricCryptographicProvider.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
     <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
     <Compile Include="Security\Audit\AuditUtil.cs" />

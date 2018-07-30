@@ -108,7 +108,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             // Get the scope being requested
             String scope = "*";
             if (principal is ClaimsPrincipal)
-                scope = (principal as ClaimsPrincipal).Claims.FirstOrDefault(o => o.Type == ClaimTypes.OpenIzScopeClaim)?.Value ?? scope;
+                scope = (principal as ClaimsPrincipal).Claims.FirstOrDefault(o => o.Type == ClaimTypes.SanteDBScopeClaim)?.Value ?? scope;
             else if (principal is IOfflinePrincipal && password == null)
                 return localIdp.Authenticate(principal, password);
             else
@@ -124,9 +124,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                     try
                     {
-                        // Set credentials
-                        restClient.Credentials = new OAuthTokenServiceCredentials(principal);
-
                         // Create grant information
                         OAuthTokenRequest request = null;
                         if (!String.IsNullOrEmpty(password))
@@ -136,11 +133,20 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         else
                             request = new OAuthTokenRequest(principal.Identity.Name, null, scope);
 
+                        // Set credentials
+                        if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
+                            restClient.Credentials = new OAuthTokenServiceCredentials(principal);
+                        else
+                        {
+                            request.ClientId = ApplicationContext.Current.Application.Name;
+                            request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
+                        }
+
                         try
                         {
                             restClient.Requesting += (o, p) =>
                             {
-                                p.AdditionalHeaders.Add("X-SanteDBClient-Claim", Convert.ToBase64String(Encoding.UTF8.GetBytes(String.Format("{0}={1}", ClaimTypes.OpenIzScopeClaim, scope))));
+                                p.AdditionalHeaders.Add("X-SanteDBClient-Claim", Convert.ToBase64String(Encoding.UTF8.GetBytes(String.Format("{0}={1}", ClaimTypes.SanteDBScopeClaim, scope))));
                                 if (!String.IsNullOrEmpty(tfaSecret))
                                     p.AdditionalHeaders.Add("X-SanteDB-TfaSecret", tfaSecret);
                             };
@@ -154,7 +160,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                     restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
 
                                 OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
-                                retVal = new TokenClaimsPrincipal(response.AccessToken, response.TokenType, response.RefreshToken);
+                                retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
                             }
                             else
                             {
@@ -294,7 +300,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 //AndroidApplicationContext.Current.SetPrincipal(cprincipal);
 
                 // Ensure policies exist from the claim
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimTypes.OpenIzGrantedPolicyClaim))
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
                 {
                     if (localPip.GetPolicy(itm.Value) == null)
                     {

@@ -99,8 +99,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 				var identity = (securable as IPrincipal)?.Identity ?? securable as IIdentity;
 
 				// Is the identity a claims identity? If yes, we just use the claims made in the policy
-				if (identity is ClaimsIdentity && (identity as ClaimsIdentity).Claim.Any(o => o.Type == ClaimTypes.OpenIzGrantedPolicyClaim))
-					return (identity as ClaimsIdentity).Claim.Where(o => o.Type == ClaimTypes.OpenIzGrantedPolicyClaim).Select(
+				if (identity is ClaimsIdentity && (identity as ClaimsIdentity).Claim.Any(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
+					return (identity as ClaimsIdentity).Claim.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(
 						o => new GenericPolicyInstance(new GenericPolicy(o.Value, "ClaimPolicy", false), PolicyGrantType.Grant)
 						);
 

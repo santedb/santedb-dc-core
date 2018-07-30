@@ -634,11 +634,27 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.Json)]JObject configData)
         {
             String realmUri = configData["realmUri"].Value<String>(),
-                deviceName = configData["deviceName"].Value<String>();
+                deviceName = configData["deviceName"].Value<String>(),
+                domainSecurity = configData["domainSecurity"].Value<String>();
             Int32 port = configData["port"].Value<Int32>();
             Boolean enableSSL = configData["enableSSL"].Value<Boolean>(),
                 enableTrace = configData["enableTrace"].Value<Boolean>(),
                 replaceExisting = configData["replaceExisting"].Value<Boolean>();
+
+            if(configData.ContainsKey("client_secret"))
+                ApplicationContext.Current.Application.ApplicationSecret = configData["client_secret"].Value<String>();
+
+            // Set domain security
+            switch(domainSecurity)
+            {
+                case "Basic":
+                    ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Basic;
+                    break;
+                case "Inline":
+                    ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Inline;
+                    break;
+
+            }
             this.m_tracer.TraceInfo("Joining {0}", realmUri);
 
             // Stage 1 - Demand access admin policy

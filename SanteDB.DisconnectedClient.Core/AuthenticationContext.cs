@@ -50,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// System identity
         /// </summary>
         private static readonly IPrincipal s_system = new ClaimsPrincipal(new ClaimsIdentity("SYSTEM", true, new Claim[] {
-            new Claim(ClaimTypes.OpenIzGrantedPolicyClaim, PolicyIdentifiers.AccessClientAdministrativeFunction)
+            new Claim(ClaimTypes.SanteDBGrantedPolicyClaim, PolicyIdentifiers.AccessClientAdministrativeFunction)
         }));
         
         /// <summary>

@@ -24,6 +24,8 @@ using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using System.IO;
 using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core.Services;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
