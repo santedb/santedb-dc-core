@@ -16,6 +16,8 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Collection;
 using SanteDB.DisconnectedClient.Xamarin.Services.Model;
+using SanteDB.Core.Mail;
+using SanteDB.Core.Diagnostics;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -25,6 +27,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
     [RestService("/__ami")]
     public class AmiService
     {
+
+        // Get mail tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(AmiService));
 
         /// <summary>
         /// Update the security user
@@ -46,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             {
                 // Session
                 amiServ.Client.Credentials = new TokenCredentials(AuthenticationContext.Current.Principal);
-                var remoteUser = amiServ.GetUser(user.Entity.Key.ToString());
+                var remoteUser = amiServ.GetUser(user.Entity.Key.Value);
                 remoteUser.Entity.Email = user.Entity.Email;
                 remoteUser.Entity.PhoneNumber = user.Entity.PhoneNumber;
                 // Save the remote user in the local
@@ -86,5 +91,65 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         {
             return new ErrorResult() { Error = e.Message, ErrorDescription = e.InnerException?.Message, ErrorType = e.GetType().Name };
         }
+
+        /// <summary>
+        /// Get the alerts from the service
+        /// </summary>
+        [RestOperation(UriPath = "/mail", Method = "GET")]
+        public List<MailMessage> GetMailMessages()
+        {
+            try
+            {
+                // Gets the specified alert messages
+                NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+
+                var alertService = ApplicationContext.Current.GetService<IMailMessageRepositoryService>();
+
+                List<string> key = null;
+
+                if (query.ContainsKey("id") && query.TryGetValue("id", out key))
+                {
+                    var id = key?.FirstOrDefault();
+
+                    return new List<MailMessage> { alertService.Get(Guid.Parse(id)) };
+                }
+
+                var predicate = QueryExpressionParser.BuildLinqExpression<MailMessage>(query);
+                int offset = query.ContainsKey("_offset") ? Int32.Parse(query["_offset"][0]) : 0,
+                    count = query.ContainsKey("_count") ? Int32.Parse(query["_count"][0]) : 100;
+
+
+
+                int totalCount = 0;
+
+                return alertService.Find(predicate, offset, count, out totalCount).ToList();
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Could not retrieve alerts {0}...", e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get the alerts from the service
+        /// </summary>
+        [RestOperation(UriPath = "/mail", Method = "POST")]
+        public MailMessage SaveAlert([RestMessage(RestMessageFormat.SimpleJson)]MailMessage alert)
+        {
+            try
+            {
+                // Gets the specified alert messages
+                var alertService = ApplicationContext.Current.GetService<IMailMessageRepositoryService>();
+                alertService.Save(alert);
+                return alert;
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Could not retrieve alerts {0}...", e);
+                return null;
+            }
+        }
+
     }
 }

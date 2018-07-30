@@ -18,24 +18,24 @@
  * Date: 2017-9-1
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Alerting;
+using SanteDB.Core.Mail;
 using SanteDB.DisconnectedClient.Core;
 using SQLite.Net.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.SQLite.Alerting
+namespace SanteDB.DisconnectedClient.SQLite.Mail
 {
 
     /// <summary>
     /// A message
     /// </summary>
-    [JsonObject, Table("alert"), XmlType(nameof(AlertMessage), Namespace = "http://santedb.org/alerting")]
-    public class DbAlertMessage
+    [JsonObject, Table("mailbox"), XmlType(nameof(MailMessage), Namespace = "http://santedb.org/mail")]
+    public class DbMailMessage
     {
 
-        public DbAlertMessage()
+        public DbMailMessage()
         {
             this.Id = Guid.NewGuid().ToByteArray();
         }
@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Creates a new alert message
         /// </summary>
-        public DbAlertMessage(AlertMessage am)
+        public DbMailMessage(MailMessage am)
         {
             this.TimeStamp = am.TimeStamp.DateTime;
             this.From = am.From;
@@ -58,9 +58,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Gets the alert
         /// </summary>
-        public AlertMessage ToAlert()
+        public MailMessage ToAlert()
         {
-            return new AlertMessage(this.From, this.To, this.Subject, this.Body, (AlertMessageFlags)this.Flags)
+            return new MailMessage(this.From, this.To, this.Subject, this.Body, (MailMessageFlags)this.Flags)
             {
                 Key = new Guid(this.Id),
 				CreationTime = this.TimeStamp.GetValueOrDefault(),

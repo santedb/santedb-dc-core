@@ -46,7 +46,7 @@ using SanteDB.DisconnectedClient.Xamarin.Threading;
 using SanteDB.Core.Applets.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Alerting;
+using SanteDB.Core.Mail;
 using System.Dynamic;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
@@ -400,65 +400,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.GetService<IUpdateManager>().Install(appId);
         }
 
-        /// <summary>
-        /// Get the alerts from the service
-        /// </summary>
-        [RestOperation(UriPath = "/alerts", Method = "GET")]
-        public List<AlertMessage> GetAlerts()
-        {
-            try
-            {
-                // Gets the specified alert messages
-                NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-
-                var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-
-                List<string> key = null;
-
-                if (query.ContainsKey("id") && query.TryGetValue("id", out key))
-                {
-                    var id = key?.FirstOrDefault();
-
-                    return new List<AlertMessage> { alertService.Get(Guid.Parse(id)) };
-                }
-
-                var predicate = QueryExpressionParser.BuildLinqExpression<AlertMessage>(query);
-                int offset = query.ContainsKey("_offset") ? Int32.Parse(query["_offset"][0]) : 0,
-                    count = query.ContainsKey("_count") ? Int32.Parse(query["_count"][0]) : 100;
-
-
-
-                int totalCount = 0;
-
-                return alertService.Find(predicate, offset, count, out totalCount).ToList();
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Could not retrieve alerts {0}...", e);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Get the alerts from the service
-        /// </summary>
-        [RestOperation(UriPath = "/alerts", Method = "POST")]
-        public AlertMessage SaveAlert([RestMessage(RestMessageFormat.SimpleJson)]AlertMessage alert)
-        {
-            try
-            {
-                // Gets the specified alert messages
-                var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-                alertService.Save(alert);
-                return alert;
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Could not retrieve alerts {0}...", e);
-                return null;
-            }
-        }
-
+        
         /// <summary>
         /// Get asset information for locales
         /// </summary>

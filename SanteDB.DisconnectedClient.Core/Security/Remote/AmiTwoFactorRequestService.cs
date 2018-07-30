@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Remote
             {
                 var authContext = AuthenticationContext.Current;
                 AuthenticationContext.Current = this.m_authContext;
-                var retVal = amiClient.GetTwoFactorMechanisms().CollectionItem;
+                var retVal = amiClient.GetTwoFactorMechanisms().CollectionItem.OfType<TfaMechanismInfo>().ToList();
                 AuthenticationContext.Current = authContext;
                 return retVal;
             }

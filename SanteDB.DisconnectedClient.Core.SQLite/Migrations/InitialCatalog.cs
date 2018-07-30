@@ -41,7 +41,6 @@ using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.SQLite.Alerting;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {

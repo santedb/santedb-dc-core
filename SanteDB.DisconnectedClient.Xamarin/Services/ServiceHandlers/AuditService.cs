@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [RestOperation(FaultProvider = nameof(AuditFaultProvider), Method = "GET", UriPath = "/audit")]
         [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
-        public AmiCollection<AuditInfo> GetAudits()
+        public AmiCollection GetAudits()
         {
             var auditRepository = ApplicationContext.Current.GetService<IAuditRepositoryService>();
             var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
@@ -56,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             {
                 // Force load from DB
                 var retVal = auditRepository.Get(search["_id"][0]);
-                return new AmiCollection<AuditInfo>(new AuditInfo[] { new AuditInfo(retVal) });
+                return new AmiCollection(new AuditData[] { retVal }, 0, 1);
             }
             else
             {
@@ -66,11 +66,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                        count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
 
                 var results = auditRepository.Find(QueryExpressionParser.BuildLinqExpression<AuditData>(search), offset, count, out totalResults);
-                return new AmiCollection<AuditInfo>(results.Select(o => new AuditInfo(o)))
-                {
-                    Size = totalResults,
-                    Offset = offset
-                };
+                return new AmiCollection(results, offset, totalResults);
             }
         }
 

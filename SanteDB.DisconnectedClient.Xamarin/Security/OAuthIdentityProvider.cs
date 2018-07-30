@@ -434,7 +434,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         var securityUser = securityUserService.GetUser(principal.Identity);
                         if (securityUser == null)
                         {
-                            var tuser = client.GetUsers(o => o.UserName == principal.Identity.Name).CollectionItem.FirstOrDefault();
+                            var tuser = client.GetUsers(o => o.UserName == principal.Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
                             if (tuser == null)
                                 throw new ArgumentException(string.Format("User {0} not found", userName));
                             else

@@ -299,11 +299,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAlertService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalMailService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiIntegrationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiIntegrationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiTwoFactorRequestService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AlertSynchronizationService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(MailSynchronizationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
 
                         // Sync settings
@@ -781,7 +781,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         if (!replaceExisting)
                             throw new DuplicateNameException(Strings.err_duplicate_deviceName);
                         else
-                            amiClient.UpdateUser(existingClient.CollectionItem.First().Entity.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
+                            amiClient.UpdateUser(existingClient.CollectionItem.OfType<SecurityUserInfo>().First().Entity.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
                             {
                                 PasswordOnly = true,
                                 Entity = new SanteDB.Core.Model.Security.SecurityUser()
@@ -812,7 +812,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     if (existingDevice.CollectionItem.Count == 0)
                     {
                         // Create device
-                        var newDevice = amiClient.CreateDevice(new SecurityEntityInfo<SanteDB.Core.Model.Security.SecurityDevice>(new SanteDB.Core.Model.Security.SecurityDevice()
+                        var newDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
                         {
                             CreationTime = DateTimeOffset.Now,
                             Name = deviceName,
@@ -831,7 +831,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     }
                     else
                     {
-                        amiClient.UpdateDevice(existingDevice.CollectionItem.First().Entity.Key.ToString(), new SecurityEntityInfo<SanteDB.Core.Model.Security.SecurityDevice>(new SanteDB.Core.Model.Security.SecurityDevice()
+                        amiClient.UpdateDevice(existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
                         {
 
                             UpdatedTime = DateTime.Now,

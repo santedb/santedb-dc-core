@@ -23,15 +23,14 @@ using SQLite.Net;
 using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Core.Alerting;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.SQLite.Alerting;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.Core.Mail;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Migrations
 {
@@ -81,11 +80,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Migrations
 
 				try
 				{
-					new LocalAlertService()?.Save(new AlertMessage()
+					new LocalMailService()?.Save(new MailMessage()
 					{
 						Body = Strings.locale_welcomeMessageBody,
 						From = "SanteDB Team",
-						Flags = AlertMessageFlags.None,
+						Flags = MailMessageFlags.None,
 						Subject = Strings.locale_welcomeMessageSubject,
 						TimeStamp = DateTime.Now
 					});

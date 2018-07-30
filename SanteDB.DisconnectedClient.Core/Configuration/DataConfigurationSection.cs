@@ -74,8 +74,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// Gets or sets the name of the alerts data store
         /// </summary>
-        [XmlAttribute("alertDataStore")]
-        public String AlertDataStoreConnectionStringName
+        [XmlAttribute("mailDataStore")]
+        public String MailDataStore
         {
             get;
             set;

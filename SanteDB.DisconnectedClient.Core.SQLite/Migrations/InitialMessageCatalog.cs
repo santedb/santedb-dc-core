@@ -2,7 +2,7 @@
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.SQLite.Alerting;
+using SanteDB.DisconnectedClient.SQLite.Mail;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
@@ -16,18 +16,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// <summary>
     /// Represents an initial alert catalog
     /// </summary>
-    public class InitialAlertCatalog : IDbMigration
+    public class InitialMessageCatalog : IDbMigration
     {
 
         /// <summary>
         /// Gets the id of this catalog
         /// </summary>
-        public string Id => "000-init-alerts";
+        public string Id => "000-init-mail";
 
         /// <summary>
         /// Gets the description
         /// </summary>
-        public string Description => "Alert message catalog";
+        public string Description => "Mail message catalog";
 
         /// <summary>
         /// Installation
@@ -35,9 +35,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
         public bool Install()
         {
             // Database for the SQL Lite connection
-            var tracer = Tracer.GetTracer(typeof(InitialAlertCatalog));
+            var tracer = Tracer.GetTracer(typeof(InitialMessageCatalog));
 
-            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.Configuration.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().AlertDataStoreConnectionStringName).Value);
+            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.Configuration.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MailDataStore).Value);
             try
             {
                 using (db.Lock())
@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                             InstallationDate = DateTime.Now
                         });
 
-                    db.CreateTable<DbAlertMessage>();
+                    db.CreateTable<DbMailMessage>();
 
                     db.Commit();
 

@@ -17,7 +17,6 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.Core.Alerting;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Interfaces;

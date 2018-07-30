@@ -372,7 +372,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "GET", UriPath = "/queue")]
         [Demand(PolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
-        public AmiCollection<ISynchronizationQueueEntry> GetQueueEntry()
+        public AmiCollection GetQueueEntry()
         {
             var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
             int offset = Int32.Parse(MiniHdsiServer.CurrentContext.Request.QueryString["_offset"] ?? "0"),
@@ -404,7 +404,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 retVal.Data = Convert.ToBase64String(ApplicationContext.Current.GetService<IQueueFileProvider>().GetQueueData(retVal.Data));
 
-                return new AmiCollection<ISynchronizationQueueEntry>() { CollectionItem = new List<ISynchronizationQueueEntry>() { retVal } };
+                return new AmiCollection() { CollectionItem = new List<Object>() { retVal } };
             }
             else
             {
@@ -438,11 +438,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     r.Data = null;
 
                 // Results
-                return new AmiCollection<ISynchronizationQueueEntry>(results)
-                {
-                    Offset = offset,
-                    Size = totalResults
-                };
+                return new AmiCollection(results.OfType<Object>(), offset, totalResults);
             }
         }
 

@@ -197,7 +197,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             ApplicationContext.Current.Stopped += (o, e) => AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStop);
             ApplicationContext.Current.Stopping += (o, e) => this.m_safeToStop = true;
 
-            AuditInfo sendAudit = new AuditInfo();
+            AuditSubmission sendAudit = new AuditSubmission();
 
             // Send audit
             Action<Object> timerQueue = null;
@@ -206,7 +206,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 lock (sendAudit)
                     if (sendAudit.Audit.Count > 0)
                     {
-                        ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(new AuditInfo() { Audit = new List<AuditData>(sendAudit.Audit) }, SynchronizationOperationType.Insert);
+                        ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(new AuditSubmission() { Audit = new List<AuditData>(sendAudit.Audit) }, SynchronizationOperationType.Insert);
                         sendAudit.Audit.Clear();
                     }
                 ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 0, 30), timerQueue, null);

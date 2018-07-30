@@ -39,8 +39,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Alerting\SQLiteAlertPersistenceService.cs" />
-    <Compile Include="Alerting\DbAlertMessage.cs" />
+    <Compile Include="Mail\SQLiteMailPersistenceService.cs" />
+    <Compile Include="Mail\DbMailMessage.cs" />
     <Compile Include="Connection\LockableSQLiteConnection.cs" />
     <Compile Include="Connection\ReadonlySQLiteConnection.cs" />
     <Compile Include="Connection\SQLiteConnectionExtensions.cs" />
@@ -50,7 +50,7 @@
     <Compile Include="Hacks\ConceptQueryHack.cs" />
     <Compile Include="Hacks\RelationshipQueryHack.cs" />
     <Compile Include="ISQLitePersistenceService.cs" />
-    <Compile Include="Migrations\InitialAlertCatalog.cs" />
+    <Compile Include="Migrations\InitialMessageCatalog.cs" />
     <Compile Include="SQLiteDataContext.cs" />
     <Compile Include="SQLitePersistenceService.cs" />
     <Compile Include="SQLitePersistenceServiceBase.cs" />
@@ -174,7 +174,7 @@
     <EmbeddedResource Include="Sql\999_optimize_db.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Alerting\ModelMap.xml" />
+    <EmbeddedResource Include="Mail\ModelMap.xml" />
     <EmbeddedResource Include="Security\Audit\Model\ModelMap.xml" />
     <Content Include="Sql\ExtractingConceptsFromOpenIZDefaultDictionary.txt" />
   </ItemGroup>

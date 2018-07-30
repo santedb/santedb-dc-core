@@ -29,6 +29,7 @@ using System.Linq;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.Core.Model.AMI.Auth;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
@@ -67,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             else if (securable is SecurityRole)
             {
                 string name = (securable as SecurityRole).Name;
-                return this.m_client.FindRole(o => o.Name == name).CollectionItem.First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
+                return this.m_client.FindRole(o => o.Name == name).CollectionItem.OfType<SecurityRoleInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
                 
             }
             else if (securable is SecurityApplication)
@@ -92,7 +93,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public IPolicy GetPolicy(string policyOid)
         {
-            return this.m_client.FindPolicy(p=>p.Oid == policyOid).CollectionItem.Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
+            return this.m_client.FindPolicy(p=>p.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
         }
     }
 }
