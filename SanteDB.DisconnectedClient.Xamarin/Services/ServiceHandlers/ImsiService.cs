@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
     /// <summary>
     /// Represents an IMS service handler
     /// </summary>
-    [RestService("/__ims")]
+    [RestService("/__hdsi")]
     public partial class HdsiService
     {
 

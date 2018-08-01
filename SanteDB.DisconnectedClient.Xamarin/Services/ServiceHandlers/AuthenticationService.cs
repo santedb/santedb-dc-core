@@ -144,10 +144,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             List<String> usernameColl = null,
                 tfaSecretColl = null,
-                passwordColl = null;
+                passwordColl = null,
+                purposeOfUse = null;
             authRequest.TryGetValue("username", out usernameColl);
             authRequest.TryGetValue("password", out passwordColl);
             authRequest.TryGetValue("tfaSecret", out tfaSecretColl);
+            authRequest.TryGetValue("purposeOfUse", out purposeOfUse);
 
             String username = usernameColl?.FirstOrDefault().ToLower(),
                 password = passwordColl?.FirstOrDefault(),
@@ -180,7 +182,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(lanugageCode);
 
                 // Set the session 
-                if (!authRequest.ContainsKey("scope"))
+                if (authRequest.ContainsKey("scope") && authRequest["scope"][0] == "*") // Requesting all access so we need to send back a session ID :)
                     MiniHdsiServer.CurrentContext.Response.SetCookie(new Cookie("_s", retVal.Key.ToString())
                     {
                         HttpOnly = true,

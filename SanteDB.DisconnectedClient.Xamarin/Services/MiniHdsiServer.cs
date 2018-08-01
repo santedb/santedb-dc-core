@@ -124,7 +124,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         {
                             var operationAtt = mi.GetCustomAttribute<RestOperationAttribute>();
                             var faultMethod = operationAtt.FaultProvider != null ? t.GetRuntimeMethod(operationAtt.FaultProvider, new Type[] { typeof(Exception) }) : null;
-                            String pathMatch = String.Format("{0}:{1}{2}", operationAtt.Method, serviceAtt.BaseAddress, operationAtt.UriPath);
+                            String pathMatch = String.Format("{0}:{1}{2}", operationAtt.Method, serviceAtt.BaseAddress.ToLower(), operationAtt.UriPath.ToLower());
                             if (!this.m_services.ContainsKey(pathMatch))
                                 lock (this.m_lockObject)
                                     this.m_services.Add(pathMatch, new InvokationInformation()
@@ -360,7 +360,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     }
 
                     // Attempt to find a service which implements the path
-                    var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath);
+                    var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath.ToLower());
 
                     
                     InvokationInformation invoke = null;
