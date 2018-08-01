@@ -1,4 +1,4 @@
-﻿using SanteDB.Core.Alerting;
+﻿using SanteDB.Core.Mail;
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Map;
@@ -16,21 +16,21 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.SQLite.Alerting
+namespace SanteDB.DisconnectedClient.SQLite.Mail
 {
     /// <summary>
     /// Alert persistence service
     /// </summary>
-    public class SQLiteAlertPersistenceService : IDataPersistenceService<AlertMessage>
+    public class SQLiteMailPersistenceService : IDataPersistenceService<MailMessage>
     {
-        public event EventHandler<DataPersistenceEventArgs<AlertMessage>> Inserted;
-        public event EventHandler<DataPersistencePreEventArgs<AlertMessage>> Inserting;
-        public event EventHandler<DataPersistenceEventArgs<AlertMessage>> Updated;
-        public event EventHandler<DataPersistencePreEventArgs<AlertMessage>> Updating;
-        public event EventHandler<DataPersistenceEventArgs<AlertMessage>> Obsoleted;
-        public event EventHandler<DataPersistencePreEventArgs<AlertMessage>> Obsoleting;
-        public event EventHandler<DataQueryEventArgsBase<AlertMessage>> Queried;
-        public event EventHandler<DataQueryEventArgsBase<AlertMessage>> Querying;
+        public event EventHandler<DataPersistenceEventArgs<MailMessage>> Inserted;
+        public event EventHandler<DataPersistencePreEventArgs<MailMessage>> Inserting;
+        public event EventHandler<DataPersistenceEventArgs<MailMessage>> Updated;
+        public event EventHandler<DataPersistencePreEventArgs<MailMessage>> Updating;
+        public event EventHandler<DataPersistenceEventArgs<MailMessage>> Obsoleted;
+        public event EventHandler<DataPersistencePreEventArgs<MailMessage>> Obsoleting;
+        public event EventHandler<DataQueryEventArgsBase<MailMessage>> Queried;
+        public event EventHandler<DataQueryEventArgsBase<MailMessage>> Querying;
 
 
         // Get tracer
@@ -40,13 +40,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         protected static DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
 
         // Mapper
-        protected static ModelMapper m_mapper = new ModelMapper(typeof(SQLiteAlertPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Alerting.ModelMap.xml"));
+        protected static ModelMapper m_mapper = new ModelMapper(typeof(SQLiteMailPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Alerting.ModelMap.xml"));
 
         // Builder
         protected static QueryBuilder m_builder;
 
         // Static CTOR
-        static SQLiteAlertPersistenceService()
+        static SQLiteMailPersistenceService()
         {
             m_mapper = SQLitePersistenceService.Mapper;
             m_builder = new QueryBuilder(m_mapper);
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Alert persistence ctor
         /// </summary>
-        public SQLiteAlertPersistenceService()
+        public SQLiteMailPersistenceService()
         {
             this.m_tracer = Tracer.GetTracer(this.GetType());
         }
@@ -82,7 +82,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// </summary>
         /// <param name="p">The query to filter the count</param>
         /// <returns>The total count of object matching the alert</returns>
-        public int Count(Expression<Func<AlertMessage, bool>> p)
+        public int Count(Expression<Func<MailMessage, bool>> p)
         {
             throw new NotImplementedException();
         }
@@ -90,18 +90,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Get the alert message
         /// </summary>
-        public AlertMessage Get(Guid key)
+        public MailMessage Get(Guid key)
         {
             var idKey = key.ToByteArray();
             var conn = this.CreateReadonlyConnection();
             using (conn.LockConnection())
-                return conn.Connection.Table<DbAlertMessage>().Where(o => o.Id == idKey).FirstOrDefault()?.ToAlert();
+                return conn.Connection.Table<DbMailMessage>().Where(o => o.Id == idKey).FirstOrDefault()?.ToAlert();
         }
 
         /// <summary>
         /// Insert the specified object
         /// </summary>
-        public AlertMessage Insert(AlertMessage data)
+        public MailMessage Insert(MailMessage data)
         {
             var conn = this.CreateConnection();
             try
@@ -109,15 +109,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
                 using (conn.LockConnection())
                 {
                     if (!data.Key.HasValue) data.Key = Guid.NewGuid();
-                    var dbData = new DbAlertMessage(data);
+                    var dbData = new DbMailMessage(data);
                 
                     if(String.IsNullOrEmpty(dbData.CreatedBy))
                         dbData.CreatedBy = AuthenticationContext.Current.Principal?.Identity?.Name;
 
                     // Create table if not exists
-                    if (!conn.Connection.TableMappings.Any(o => o.MappedType == typeof(DbAlertMessage)))
+                    if (!conn.Connection.TableMappings.Any(o => o.MappedType == typeof(DbMailMessage)))
                     {
-                        conn.Connection.CreateTable<DbAlertMessage>();
+                        conn.Connection.CreateTable<DbMailMessage>();
                     }
 
                     conn.Connection.Insert(dbData);
@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// </summary>
         public object Insert(object data)
         {
-            return this.Insert((AlertMessage)data);
+            return this.Insert((MailMessage)data);
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public AlertMessage Obsolete(AlertMessage data)
+        public MailMessage Obsolete(MailMessage data)
         {
             throw new NotImplementedException();
         }
@@ -161,7 +161,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Query for alerts
         /// </summary>
-        public IEnumerable<AlertMessage> Query(Expression<Func<AlertMessage, bool>> query)
+        public IEnumerable<MailMessage> Query(Expression<Func<MailMessage, bool>> query)
         {
             int tr = 0;
             return this.Query(query, 0, 100, out tr, Guid.Empty);
@@ -170,14 +170,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Query for alerts with restrictions
         /// </summary>
-        public IEnumerable<AlertMessage> Query(Expression<Func<AlertMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
+        public IEnumerable<MailMessage> Query(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
         {
             try
             {
                 var conn = this.CreateReadonlyConnection();
                 using (conn.LockConnection())
                 {
-                    var dbPredicate = m_mapper.MapModelExpression<AlertMessage, DbAlertMessage>(query, false);
+                    var dbPredicate = m_mapper.MapModelExpression<MailMessage, DbMailMessage>(query, false);
 
                     if (dbPredicate == null)
                     {
@@ -187,7 +187,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
                     }
                     else
                     {
-                        var results = conn.Connection.Table<DbAlertMessage>().Where(dbPredicate).Skip(offset).Take(count ?? 100).OrderByDescending(o => o.TimeStamp).ToList().Select(o => o.ToAlert());
+                        var results = conn.Connection.Table<DbMailMessage>().Where(dbPredicate).Skip(offset).Take(count ?? 100).OrderByDescending(o => o.TimeStamp).ToList().Select(o => o.ToAlert());
                         totalResults = results.Count();
                         return results;
                     }
@@ -203,7 +203,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Perform a stored query 
         /// </summary>
-        public IEnumerable<AlertMessage> Query(string queryName, IDictionary<string, object> parameters)
+        public IEnumerable<MailMessage> Query(string queryName, IDictionary<string, object> parameters)
         {
             throw new NotSupportedException();
         }
@@ -211,7 +211,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Perform a stored query 
         /// </summary>
-        public IEnumerable<AlertMessage> Query(string queryName, IDictionary<string, object> parameters, int offset, int? count, out int totalResults, Guid queryId)
+        public IEnumerable<MailMessage> Query(string queryName, IDictionary<string, object> parameters, int offset, int? count, out int totalResults, Guid queryId)
         {
             throw new NotSupportedException();
         }
@@ -221,13 +221,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// </summary>
         public IEnumerable Query(Expression query, int offset, int? count, out int totalResults)
         {
-            return this.Query((Expression<Func<AlertMessage, bool>>)query, offset, count, out totalResults, Guid.Empty);
+            return this.Query((Expression<Func<MailMessage, bool>>)query, offset, count, out totalResults, Guid.Empty);
         }
 
         /// <summary>
         /// Query with explicit load
         /// </summary>
-        public IEnumerable<AlertMessage> QueryExplicitLoad(Expression<Func<AlertMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId, IEnumerable<string> expandProperties)
+        public IEnumerable<MailMessage> QueryExplicitLoad(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId, IEnumerable<string> expandProperties)
         {
             throw new NotSupportedException();
         }
@@ -235,7 +235,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Perform a fast query
         /// </summary>
-        public IEnumerable<AlertMessage> QueryFast(Expression<Func<AlertMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
+        public IEnumerable<MailMessage> QueryFast(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
         {
             return this.Query(query, offset, count, out totalResults, Guid.Empty);
         }
@@ -243,7 +243,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// <summary>
         /// Update the alert message
         /// </summary>
-        public AlertMessage Update(AlertMessage data)
+        public MailMessage Update(MailMessage data)
         {
             var conn = this.CreateConnection();
             try
@@ -253,11 +253,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
                     if (!data.Key.HasValue)
                         throw new ArgumentException("Update object must have a key");
 
-                    var dbData = new DbAlertMessage(data);
+                    var dbData = new DbMailMessage(data);
 
                     // Create table if not exists
-                    if (!conn.Connection.TableMappings.Any(o => o.MappedType == typeof(DbAlertMessage)))
-                        conn.Connection.CreateTable<DbAlertMessage>();
+                    if (!conn.Connection.TableMappings.Any(o => o.MappedType == typeof(DbMailMessage)))
+                        conn.Connection.CreateTable<DbMailMessage>();
 
                     conn.Connection.Update(dbData);
 
@@ -276,7 +276,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Alerting
         /// </summary>
         public object Update(object data)
         {
-            return this.Update((AlertMessage)data);
+            return this.Update((MailMessage)data);
         }
 
         /// <summary>

@@ -70,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// Gets or sets the list of synchronization queries
         /// </summary>
-        [XmlElement("sync"), JsonProperty("sync")]
+        [XmlElement("resource"), JsonProperty("resource")]
         public List<SynchronizationResource> SynchronizationResources { get; set; }
 
         /// <summary>

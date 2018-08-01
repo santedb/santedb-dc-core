@@ -59,13 +59,15 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Alerting\LocalAlertService.cs" />
+    <Compile Include="Mail\LocalMailService.cs" />
     <Compile Include="Configuration\Data\Migrations\SubscribePrimaryLocationUpdate.cs" />
     <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
+    <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\LocalPolicyDecisionService.cs" />
-    <Compile Include="Services\Impl\AlertSynchronizationService.cs" />
+    <Compile Include="Services\Impl\MailSynchronizationService.cs" />
+    <Compile Include="Services\ISymmetricCryptographicProvider.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
     <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
     <Compile Include="Security\Audit\AuditUtil.cs" />

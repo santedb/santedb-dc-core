@@ -94,7 +94,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             }
 
             // Can we make this decision based on the claims?
-            if (principal is ClaimsPrincipal && (principal as ClaimsPrincipal).HasClaim(c => c.Type == ClaimTypes.OpenIzGrantedPolicyClaim && (c.Value == policyId || policyId.StartsWith(String.Format("{0}.", c.Value)))))
+            if (principal is ClaimsPrincipal && (principal as ClaimsPrincipal).HasClaim(c => c.Type == ClaimTypes.SanteDBGrantedPolicyClaim && (c.Value == policyId || policyId.StartsWith(String.Format("{0}.", c.Value)))))
             {
                 rule = PolicyGrantType.Grant;
             }
@@ -102,6 +102,9 @@ namespace SanteDB.DisconnectedClient.Core.Security
             {
                 // Get the user object from the principal
                 var pip = ApplicationContext.Current.PolicyInformationService;
+
+                if (pip == null)
+                    return PolicyGrantType.Deny;
 
                 // Policies
                 var activePolicies = pip.GetActivePolicies(principal).Where(o => policyId == o.Policy.Oid || policyId.StartsWith(String.Format("{0}.", o.Policy.Oid)));

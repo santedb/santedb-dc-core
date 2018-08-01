@@ -103,6 +103,9 @@
   <ItemGroup>
     <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Portable.BouncyCastle">
+      <Version>1.8.2</Version>
+    </PackageReference>
     <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="1.1.0" />
     <PackageReference Include="SharpCompress" Version="0.18.2" />
     <Reference Include="SanteDB.Core.Model.ViewModelSerializers">
@@ -128,6 +131,7 @@
     <Compile Include="Http\RestClient.cs" />
     <Compile Include="Net\NetworkInformationService.cs" />
     <Compile Include="Rules\BusinessRulesDaemonService.cs" />
+    <Compile Include="Security\AesSymmetricCrypographicProvider.cs" />
     <Compile Include="Security\HttpBasicIdentityProvider.cs" />
     <Compile Include="Security\HttpBasicTokenCredentialProvider.cs" />
     <Compile Include="Security\TokenValidationManager.cs" />
@@ -139,6 +143,7 @@
     <Compile Include="Services\Model\ErrorResult.cs" />
     <Compile Include="Services\Model\MenuInformation.cs" />
     <Compile Include="Services\ServiceHandlers\AdhocWarehouseService.cs" />
+    <Compile Include="Services\ServiceHandlers\AmiService.cs" />
     <Compile Include="Services\ServiceHandlers\ApplicationService.Data.cs" />
     <Compile Include="Services\ServiceHandlers\AuditService.cs" />
     <Compile Include="Services\ServiceHandlers\ConfigurationService.cs" />

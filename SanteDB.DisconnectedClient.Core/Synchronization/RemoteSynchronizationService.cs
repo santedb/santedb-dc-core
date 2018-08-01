@@ -37,7 +37,7 @@ using System.Security.Principal;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.Core.Services;
-using SanteDB.Core.Alerting;
+using SanteDB.Core.Mail;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using System.Reflection;
@@ -225,8 +225,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 
                         if (totalResults > 0 && initialSync)
                         {
-                            var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-                            alertService?.BroadcastAlert(new AlertMessage(AuthenticationContext.Current.Principal.Identity.Name, "everyone", Strings.locale_importDoneSubject, Strings.locale_importDoneBody, AlertMessageFlags.System));
+                            var tickleService = ApplicationContext.Current.GetService<ITickleService>();
+                            tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_importDoneBody, new DateTime().AddMinutes(2)));
                             this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
                         }
                         else if (totalResults > 0)
@@ -406,8 +406,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                 {
                     var e = ex.InnerException;
                     this.m_tracer.TraceError("Error synchronizing {0} : {1} ", modelType, e);
-                    var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-                    alertService?.BroadcastAlert(new AlertMessage(AuthenticationContext.Current.Principal.Identity.Name ?? "System", "everyone", Strings.locale_downloadError, String.Format(Strings.locale_downloadErrorBody, e), AlertMessageFlags.Transient));
+                    var tickleService = ApplicationContext.Current.GetService<ITickleService>();
+                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, Strings.locale_downloadErrorBody));
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), 0));
 
                     return 0;
@@ -416,8 +416,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Error synchronizing {0} : {1} ", modelType, e);
-                    var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-                    alertService?.BroadcastAlert(new AlertMessage(AuthenticationContext.Current.Principal.Identity.Name ?? "System", "everyone", Strings.locale_downloadError, String.Format(Strings.locale_downloadErrorBody, e), AlertMessageFlags.Transient));
+                    var tickleService = ApplicationContext.Current.GetService<ITickleService>();
+                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, Strings.locale_downloadErrorBody));
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), 0));
 
                     return 0;

@@ -66,16 +66,22 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 		/// </summary>
 		/// <value>The password hash.</value>
 		[Column("password"), NotNull, Indexed]
-		public String PasswordHash {
+		public String Password {
 			get;
 			set;
 		}
 
-		/// <summary>
-		/// Gets or sets the security stamp.
-		/// </summary>
-		/// <value>The security stamp.</value>
-		[Column("security_stamp")]
+        /// <summary>
+        /// Gets or sets a PIN hash which can only be used on this device
+        /// </summary>
+        [Column("pin"), Indexed]
+        public string PinHash { get; set; }
+
+        /// <summary>
+        /// Gets or sets the security stamp.
+        /// </summary>
+        /// <value>The security stamp.</value>
+        [Column("security_stamp")]
 		public String SecurityHash {
 			get;
 			set;

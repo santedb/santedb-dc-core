@@ -26,56 +26,68 @@ namespace SanteDB.DisconnectedClient.Core.Security
 	/// </summary>
 	public static class ClaimTypes
 	{
+        /// <summary>
+        /// Granted policy claim
+        /// </summary>
+        public const string SanteDBGrantedPolicyClaim = "grant";
 
-		/// <summary>
-		/// The open iz scope claim.
-		/// </summary>
-		public const string OpenIzScopeClaim = "http://santedb.org/claims/scope";
+        /// <summary>
+        /// Device identifier claim
+        /// </summary>
+        public const string SanteDBDeviceIdentifierClaim = "devid";
 
-		/// <summary>
-		/// Granted policy claim
-		/// </summary>
-		public const string OpenIzGrantedPolicyClaim = "http://santedb.org/claims/grant";
+        /// <summary>
+        /// Identifier of the application
+        /// </summary>
+        public const string SanteDBApplicationIdentifierClaim = "appid";
 
-		/// <summary>
-		/// Device identifier claim
-		/// </summary>
-		public const string OpenIzDeviceIdentifierClaim = "http://santedb.org/claims/device-id";
+        /// <summary>
+        /// Secret claim
+        /// </summary>
+        public const string SanteDBTfaSecretClaim = "tfa";
 
-		/// <summary>
-		/// Identifier of the application
-		/// </summary>
-		public const string OpenIzApplicationIdentifierClaim = "http://santedb.org/claims/application-id";
+        /// <summary>
+        /// TFA secret expiry
+        /// </summary>
+        public const string SanteDBTfaSecretExpiry = "tfa-exp";
 
-		/// <summary>
-		/// Patient identifier claim
-		/// </summary>
-		public const string XUAPatientIdentifierClaim = "urn:oasis:names:tc:xacml:2.0:resource:resource-id";
-		/// <summary>
-		/// Purpose of use claim
-		/// </summary>
-		public const string XspaPurposeOfUseClaim = "urn:oasis:names:tc:xacml:2.0:action:purpose";
-		/// <summary>
-		/// Purpose of use claim
-		/// </summary>
-		public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
-		/// <summary>
-		/// Facility id claim
-		/// </summary>
-		public const string XspaFacilityUrlClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";
-		/// <summary>
-		/// Organization name claim
-		/// </summary>
-		public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
-		/// <summary>
-		/// User identifier claim
-		/// </summary>
-		public const string XspaUserIdentifierClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
+        /// <summary>
+        /// TFA secret expiry
+        /// </summary>
+        public const string SanteDBScopeClaim = "scope";
 
-		/// <summary>
-		/// Authentication type
-		/// </summary>
-		public const string AuthenticationType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/authentication";
+
+        /// <summary>
+        /// Patient identifier claim
+        /// </summary>
+        public const string XUAPatientIdentifierClaim = "urn:oasis:names:tc:xacml:2.0:resource:resource-id";
+
+        /// <summary>
+        /// Purpose of use claim
+        /// </summary>
+        public const string XspaPurposeOfUseClaim = "urn:oasis:names:tc:xacml:2.0:action:purpose";
+        /// <summary>
+        /// Purpose of use claim
+        /// </summary>
+        public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
+        /// <summary>
+        /// Facility id claim
+        /// </summary>
+        public const string XspaFacilityUrlClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";
+        /// <summary>
+        /// Organization name claim
+        /// </summary>
+        public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
+        /// <summary>
+        /// User identifier claim
+        /// </summary>
+        public const string XspaUserIdentifierClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
+
+
+        /// <summary>
+        /// Authentication type
+        /// </summary>
+        public const string AuthenticationType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/authentication";
 		/// <summary>
 		/// The authentication instant claim.
 		/// </summary>

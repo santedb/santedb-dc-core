@@ -41,7 +41,6 @@ using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.SQLite.Alerting;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -138,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 db.Insert(new DbSecurityUser()
                 {
                     Key = Guid.Parse("C96859F0-043C-4480-8DAB-F69D6E86696C"),
-                    PasswordHash = "XXX",
+                    Password = "XXX",
                     SecurityHash = "XXX",
                     Lockout = DateTime.MaxValue,
                     UserName = "ANONYMOUS",
@@ -149,7 +148,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 db.Insert(new DbSecurityUser()
                 {
                     Key = Guid.Parse("fadca076-3690-4a6e-af9e-f1cd68e8c7e8"),
-                    PasswordHash = "XXXX",
+                    Password = "XXXX",
                     SecurityHash = "XXXX",
                     Lockout = DateTime.MaxValue,
                     UserName = "SYSTEM",
@@ -165,7 +164,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     db.Insert(new DbSecurityUser()
                     {
                         Key = uid,
-                        PasswordHash = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash("SanteDB123"),
+                        Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash("SanteDB123"),
                         SecurityHash = Guid.NewGuid().ToString(),
                         Lockout = DateTime.MaxValue,
                         UserName = "LocalAdministrator",

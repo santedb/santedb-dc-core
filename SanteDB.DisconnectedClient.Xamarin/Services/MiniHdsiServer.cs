@@ -124,7 +124,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         {
                             var operationAtt = mi.GetCustomAttribute<RestOperationAttribute>();
                             var faultMethod = operationAtt.FaultProvider != null ? t.GetRuntimeMethod(operationAtt.FaultProvider, new Type[] { typeof(Exception) }) : null;
-                            String pathMatch = String.Format("{0}:{1}{2}", operationAtt.Method, serviceAtt.BaseAddress, operationAtt.UriPath);
+                            String pathMatch = String.Format("{0}:{1}{2}", operationAtt.Method, serviceAtt.BaseAddress.ToLower(), operationAtt.UriPath.ToLower());
                             if (!this.m_services.ContainsKey(pathMatch))
                                 lock (this.m_lockObject)
                                     this.m_services.Add(pathMatch, new InvokationInformation()
@@ -360,14 +360,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     }
 
                     // Attempt to find a service which implements the path
-                    var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath);
+                    var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath.ToLower());
 
-                    if (request.Url.AbsolutePath == "/" && ApplicationContext.Current.Configuration.GetAppSetting("http.index") != null)
-                    {
-                        response.StatusCode = 302;
-                        response.RedirectLocation = $"{request.Url.Scheme}://{request.Url.Host}:{request.Url.Port}{ApplicationContext.Current.Configuration.GetAppSetting("http.index")}";
-                        return;
-                    }
+                    
                     InvokationInformation invoke = null;
                     this.m_tracer.TraceVerbose("Performing service matching on {0}", rootPath);
                     if (this.m_services.TryGetValue(rootPath, out invoke))
@@ -593,7 +588,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             response.StatusCode = 500;
             if (e is SecurityException)
             {
-                response.StatusCode = 401;
+                response.StatusCode = AuthenticationContext.CurrentUIContext == null || AuthenticationContext.CurrentUIContext.Principal == AuthenticationContext.AnonymousPrincipal ? 401 : 403;
                 return invoke.FaultProvider?.Invoke(invoke.BindObject, new object[] { e });
             }
             else if (e is FileNotFoundException)
@@ -603,7 +598,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             }
             else if (e is UnauthorizedAccessException)
             {
-                response.StatusCode = 403;
+                response.StatusCode = AuthenticationContext.CurrentUIContext == null || AuthenticationContext.CurrentUIContext.Principal == AuthenticationContext.AnonymousPrincipal ? 401 : 403;
                 return invoke.FaultProvider?.Invoke(invoke.BindObject, new object[] { e });
             }
             else if (e is DetectedIssueException)
@@ -647,7 +642,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
                 lock (m_lockObject)
                 {
-                    if (!this.m_cacheApplets.ContainsKey(appletPath))
+                    if (!this.m_cacheApplets.ContainsKey(appletPath) && appletManagerService.Applets.CachePages)
                     {
                         this.m_cacheApplets.Add(appletPath, navigateAsset);
                     }

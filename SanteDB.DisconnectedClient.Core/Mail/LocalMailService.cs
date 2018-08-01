@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.Core.Alerting;
+using SanteDB.Core.Mail;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -34,19 +34,19 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
     /// <summary>
     /// Represents a local alerting service
     /// </summary>
-    public class LocalAlertService : IAlertRepositoryService
+    public class LocalMailService : IMailMessageRepositoryService
     {
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(LocalAlertService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(LocalMailService));
 
-        public event EventHandler<AlertEventArgs> Committed;
+        public event EventHandler<MailMessageEventArgs> Committed;
 
-        public event EventHandler<AlertEventArgs> Received;
+        public event EventHandler<MailMessageEventArgs> Received;
 
         /// <summary>
         /// Broadcast alert
         /// </summary>
-        public void BroadcastAlert(AlertMessage msg)
+        public void Broadcast(MailMessage msg)
         {
             try
             {
@@ -54,12 +54,12 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
 
                 // Broadcast alert
                 // TODO: Fix this, this is bad
-                var args = new AlertEventArgs(msg);
+                var args = new MailMessageEventArgs(msg);
                 this.Received?.Invoke(this, args);
                 if (args.Ignore)
                     return;
 
-                if (msg.Flags == AlertMessageFlags.Transient)
+                if (msg.Flags == MailMessageFlags.Transient)
                     ApplicationContext.Current.ShowToast(msg.Subject);
                 else
                     this.Save(msg);
@@ -78,9 +78,9 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public IEnumerable<AlertMessage> Find(Expression<Func<AlertMessage, bool>> predicate, int offset, int? count, out int totalCount)
+        public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount)
         {
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<AlertMessage>>();
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<MailMessage>>();
             if (persistenceService == null)
                 throw new InvalidOperationException("Cannot find alert persistence service");
 
@@ -90,9 +90,9 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
         /// <summary>
         /// Get an alert from the storage
         /// </summary>
-        public AlertMessage Get(Guid id)
+        public MailMessage Get(Guid id)
         {
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<AlertMessage>>();
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<MailMessage>>();
             if (persistenceService == null)
                 throw new InvalidOperationException("Cannot find alert persistence service");
             return persistenceService.Get(id);
@@ -104,17 +104,17 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
         /// </summary>
         /// <param name="message">The alert message to be inserted.</param>
         /// <returns>Returns the inserted alert.</returns>
-        public AlertMessage Insert(AlertMessage message)
+        public MailMessage Insert(MailMessage message)
         {
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<AlertMessage>>();
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<MailMessage>>();
 
             if (persistenceService == null)
             {
-                throw new InvalidOperationException(string.Format("{0} not found", nameof(IDataPersistenceService<AlertMessage>)));
+                throw new InvalidOperationException(string.Format("{0} not found", nameof(IDataPersistenceService<MailMessage>)));
             }
 
-            AlertMessage alert = persistenceService.Insert(message);
-            this.Received?.Invoke(this, new AlertEventArgs(alert));
+            MailMessage alert = persistenceService.Insert(message);
+            this.Received?.Invoke(this, new MailMessageEventArgs(alert));
 
             return alert;
         }
@@ -122,19 +122,19 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
         /// <summary>
         /// Save the alert without notifying anyone
         /// </summary>
-        public AlertMessage Save(AlertMessage alert)
+        public MailMessage Save(MailMessage alert)
         {
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<AlertMessage>>();
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<MailMessage>>();
 
             if (persistenceService == null)
             {
-                throw new InvalidOperationException(string.Format("{0} not found", nameof(IDataPersistenceService<AlertMessage>)));
+                throw new InvalidOperationException(string.Format("{0} not found", nameof(IDataPersistenceService<MailMessage>)));
             }
 
             try
             {
                 // Transient messages don't get saved
-                if (alert.Flags.HasFlag(AlertMessageFlags.Transient))
+                if (alert.Flags.HasFlag(MailMessageFlags.Transient))
                 {
                     return alert;
                 }
@@ -151,7 +151,7 @@ namespace SanteDB.DisconnectedClient.Core.Alerting
                 {
                     persistenceService.Update(alert);
                 }
-                this.Committed?.Invoke(this, new AlertEventArgs(alert));
+                this.Committed?.Invoke(this, new MailMessageEventArgs(alert));
             }
             catch (Exception e)
             {

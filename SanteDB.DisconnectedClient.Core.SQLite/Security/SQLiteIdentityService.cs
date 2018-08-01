@@ -35,13 +35,14 @@ using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Tickler;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
     /// <summary>
     /// Local identity service.
     /// </summary>
-    public class SQLiteIdentityService : IOfflineIdentityProviderService, ISecurityAuditEventSource
+    public class SQLiteIdentityService : IOfflineIdentityProviderService, ISecurityAuditEventSource, IPinAuthenticationService
     {
         // Configuration
         private DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
@@ -80,7 +81,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             if (String.IsNullOrEmpty(password))
                 throw new ArgumentNullException(nameof(password));
 
-            return this.Authenticate(new SQLitePrincipal(new SQLiteIdentity(userName, false), null), password);
+            return this.AuthenticateInternal(userName, password, null);
         }
 
         /// <summary>
@@ -118,12 +119,25 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new ArgumentNullException(nameof(password));
             }
 
+            return this.AuthenticateInternal(principal.Identity.Name, password, null);
+        }
+
+        /// <summary>
+        /// Authenticate this user with a local PIN number
+        /// </summary>
+        /// <param name="userName">The name of the user</param>
+        /// <param name="password">The password of the user</param>
+        /// <param name="pin">The PIN number for PIN based authentication</param>
+        /// <returns>The authenticated principal</returns>
+        private IPrincipal AuthenticateInternal(String userName, string password, byte[] pin) {
+            var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
+
             // Pre-event
-            AuthenticatingEventArgs e = new AuthenticatingEventArgs(principal.Identity.Name, password) { Principal = principal };
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(userName, password) { };
             this.Authenticating?.Invoke(this, e);
             if (e.Cancel)
             {
-                this.m_tracer.TraceWarning("Pre-Event hook indicates cancel {0}", principal.Identity.Name);
+                this.m_tracer.TraceWarning("Pre-Event hook indicates cancel {0}", userName);
                 return e.Principal;
             }
 
@@ -137,14 +151,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     // Password service
                     IPasswordHashingService passwordHash = ApplicationContext.Current.GetService(typeof(IPasswordHashingService)) as IPasswordHashingService;
 
-                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName == principal.Identity.Name);
+                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName == userName);
                     if (dbs == null)
                         throw new SecurityException(Strings.locale_invalidUserNamePassword);
                     else if (config?.MaxInvalidLogins.HasValue == true && dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
                         throw new SecurityException(Strings.locale_accountLocked);
                     else if (dbs.ObsoletionTime != null)
                         throw new SecurityException(Strings.locale_accountObsolete);
-                    else if (passwordHash.ComputeHash(password) != dbs.PasswordHash)
+                    else if (!String.IsNullOrEmpty(password) && passwordHash.ComputeHash(password) != dbs.Password ||
+                        pin != null && passwordHash.ComputeHash(Encoding.UTF8.GetString(pin.Select(o => (byte)(o + 48)).ToArray(), 0, pin.Length)) != dbs.PinHash)
                     {
                         dbs.InvalidLoginAttempts++;
                         connection.Update(dbs);
@@ -171,13 +186,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 }
 
                 // Post-event
-                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(principal.Identity.Name, password, true) { Principal = retVal });
+                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, password, true) { Principal = retVal });
 
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error establishing session: {0}", ex);
-                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(principal.Identity.Name, password, false) { Principal = retVal });
+                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, password, false) { Principal = retVal });
 
                 throw;
             }
@@ -194,6 +209,22 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public System.Security.Principal.IPrincipal Authenticate(string userName, string password, string tfaSecret)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Authenticates a user with a local device PIN
+        /// </summary>
+        /// <param name="userName">The user to authenticate</param>
+        /// <param name="pin">The PIN number for that user</param>
+        /// <returns>The authenticated user</returns>
+        public IPrincipal Authenticate(string userName, byte[] pin)
+        {
+            if (String.IsNullOrEmpty(userName))
+                throw new ArgumentNullException(nameof(userName));
+            if (pin.Length < 4 || pin.Length > 8 || pin.Any(o=>o > 9 || o < 0))
+                throw new ArgumentOutOfRangeException(nameof(pin));
+
+            return this.AuthenticateInternal(userName, null, pin);
         }
 
         /// <summary>
@@ -221,7 +252,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     else
                     {
                         IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
-                        dbu.PasswordHash = hash.ComputeHash(password);
+                        dbu.Password = hash.ComputeHash(password);
                         dbu.SecurityHash = Guid.NewGuid().ToString();
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;
@@ -301,7 +332,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 {
                     DbSecurityUser dbu = new DbSecurityUser()
                     {
-                        PasswordHash = hash.ComputeHash(password),
+                        Password = hash.ComputeHash(password),
                         SecurityHash = Guid.NewGuid().ToString(),
                         PhoneNumber = securityUser.PhoneNumber,
                         Email = securityUser.Email,
@@ -394,6 +425,49 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         private LockableSQLiteConnection CreateConnection()
         {
             return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).Value);
+        }
+
+        /// <summary>
+        /// Change the PIN for the user
+        /// </summary>
+        /// <param name="userName">The name of the user to change the PIN for</param>
+        /// <param name="pin">The PIN to change to</param>
+        /// <remarks>Only the currently logged in credential can change a PIN number for themselves</remarks>
+        public void ChangePin(string userName, byte[] pin)
+        {
+            // We must demand the change password permission
+            try
+            {
+                if (userName != AuthenticationContext.Current.Principal.Identity.Name)
+                    throw new SecurityException("Can only change PIN number of your own account");
+                else if (pin.Length < 4 || pin.Length > 8 || pin.Any(o=>o < 0 || o > 9))
+                    throw new ArgumentOutOfRangeException("PIN numbers must be between 4 and 8 digits");
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    var dbu = conn.Table<DbSecurityUser>().Where(o => o.UserName == userName).FirstOrDefault();
+                    if (dbu == null)
+                        throw new KeyNotFoundException();
+                    else
+                    {
+                        IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
+                        dbu.PinHash = hash.ComputeHash(Encoding.UTF8.GetString(pin.Select(o=>(byte)(o + 48)).ToArray(), 0, pin.Length));
+                        dbu.SecurityHash = Guid.NewGuid().ToString();
+                        dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == AuthenticationContext.Current.Principal.Identity.Name).Uuid;
+                        dbu.UpdatedTime = DateTime.Now;
+                        conn.Update(dbu);
+                        this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(dbu, "pin"));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+                this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(new SecurityUser() { Key = Guid.Empty, UserName = userName }, "pin") { Success = false });
+
+                this.m_tracer.TraceError("Error changing password for user {0} : {1}", userName, e);
+                throw;
+            }
         }
 
         #endregion IIdentityProviderService implementation

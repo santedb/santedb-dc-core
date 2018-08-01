@@ -17,7 +17,6 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.Core.Alerting;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Interop;
@@ -39,20 +38,22 @@ using SanteDB.Messaging.AMI.Client;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Mail;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Impl
 {
 	/// <summary>
 	/// Represents an alert synchronization service
 	/// </summary>
-	public class AlertSynchronizationService : IDaemonService
+	public class MailSynchronizationService : IDaemonService
 	{
 
 		// Cached credetials
 		private IPrincipal m_cachedCredential = null;
 
 		// Tracer for alerts
-		private Tracer m_tracer = Tracer.GetTracer(typeof(AlertSynchronizationService));
+		private Tracer m_tracer = Tracer.GetTracer(typeof(MailSynchronizationService));
 
 		// Running service
 		private bool m_isRunning = false;
@@ -64,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 		private SecurityConfigurationSection m_securityConfiguration;
 
 		// Alert repository
-		private IAlertRepositoryService m_alertRepository;
+		private IMailMessageRepositoryService m_mailRepository;
 
 		/// <summary>
 		/// True when the service is running
@@ -119,7 +120,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 
 					// We are to poll for alerts always (never push supported)
 					TimeSpan pollInterval = this.m_configuration.PollInterval == TimeSpan.MinValue ? new TimeSpan(0, 10, 0) : this.m_configuration.PollInterval;
-					this.m_alertRepository = ApplicationContext.Current.GetService<IAlertRepositoryService>();
+					this.m_mailRepository = ApplicationContext.Current.GetService<IMailMessageRepositoryService>();
 					Action<Object> pollAction = null;
 					pollAction = x =>
 					{
@@ -131,12 +132,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 							if (!this.m_isRunning) return;
 
 							// When was the last time we polled an alert?
-							var lastTime = logSvc.GetLastTime(typeof(AlertMessage));
+							var lastTime = logSvc.GetLastTime(typeof(MailMessage));
 
 							var syncTime = lastTime.HasValue ? new DateTimeOffset(lastTime.Value) : DateTimeOffset.Now.AddHours(-1);
 
 							// Poll action for all alerts to "everyone"
-							AmiCollection<AlertMessage> serverAlerts = amiClient.GetAlerts(a => a.CreationTime >= lastTime && a.To.Contains("everyone"));
+							AmiCollection serverAlerts = amiClient.GetMailMessages(a => a.CreationTime >= lastTime && a.To.Contains("everyone"));
 
 
 							// TODO: We need to filter by users in which this tablet will be interested in
@@ -151,7 +152,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 									Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(user.UserName))
 									);
 
-							ParameterExpression parmExpr = Expression.Parameter(typeof(AlertMessage), "a");
+							ParameterExpression parmExpr = Expression.Parameter(typeof(MailMessage), "a");
 							Expression timeExpression = Expression.GreaterThanOrEqual(
 								Expression.Convert(Expression.MakeMemberAccess(parmExpr, parmExpr.Type.GetRuntimeProperty("CreationTime")), typeof(DateTimeOffset)),
 								Expression.Constant(syncTime)
@@ -161,15 +162,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 								(MethodInfo)typeof(Enumerable).GetGenericMethod("Any", new Type[] { typeof(SecurityUser) }, new Type[] { typeof(IEnumerable<SecurityUser>), typeof(Func<SecurityUser, bool>) }),
 								Expression.MakeMemberAccess(parmExpr, parmExpr.Type.GetRuntimeProperty("RcptTo")),
 								Expression.Lambda<Func<SecurityUser, bool>>(userNameFilter, userParameter));
-
-							serverAlerts.CollectionItem = serverAlerts.CollectionItem.Union(amiClient.GetAlerts(Expression.Lambda<Func<AlertMessage, bool>>(Expression.AndAlso(timeExpression, userExpression), parmExpr)).CollectionItem).ToList();
+                            
+							serverAlerts.CollectionItem = serverAlerts.CollectionItem.Union(amiClient.GetMailMessages(Expression.Lambda<Func<MailMessage, bool>>(Expression.AndAlso(timeExpression, userExpression), parmExpr)).CollectionItem).ToList();
 
 							// Import the alerts
-							foreach (var itm in serverAlerts.CollectionItem)
+							foreach (var itm in serverAlerts.CollectionItem.OfType<MailMessage>())
 							{
 								this.m_tracer.TraceVerbose("Importing ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
 								itm.Body = String.Format("<pre>{0}</pre>", itm.Body);
-								this.m_alertRepository.BroadcastAlert(itm);
+								this.m_mailRepository.Broadcast(itm);
 							}
 
                             // Push alerts which I have created or updated
@@ -186,7 +187,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
                             //    }
                             //}
 
-                            logSvc.Save(typeof(AlertMessage), null, null, null);
+                            logSvc.Save(typeof(MailMessage), null, null, null);
 						}
 						catch (Exception ex)
 						{

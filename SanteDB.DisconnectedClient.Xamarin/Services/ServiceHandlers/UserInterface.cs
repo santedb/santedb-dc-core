@@ -60,13 +60,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 #if !DEBUG
             if (this.m_routes == null)
 #endif
-                using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (StreamWriter sw = new StreamWriter(ms))
                 {
-                    using (StreamWriter sw = new StreamWriter(ms))
-                    {
-                        sw.WriteLine("SanteDB = SanteDB || {}");
-                        sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
-                        sw.WriteLine("SanteDB.UserInterface.states = [");
+                    sw.WriteLine("SanteDB = SanteDB || {}");
+                    sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
+                    sw.WriteLine("SanteDB.UserInterface.states = [");
                     // Collect routes
                     foreach (var itm in appletService.Applets.ViewStateAssets)
                     {
@@ -75,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
                         if (viewState.View.Count > 0)
                         {
-                            sw.WriteLine(", views: {");
+                            sw.Write(", views: {");
                             foreach (var view in viewState.View)
                             {
                                 sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
@@ -83,18 +83,18 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                                 if (dynScripts.Any())
                                 {
                                     int i = 0;
-                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o=>$"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'")) }]");
+                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
                                 }
                                 sw.WriteLine(" }, ");
                             }
                             sw.WriteLine("}");
                         }
-                        sw.WriteLine("},");
+                        sw.WriteLine("} ,");
                     }
-                        sw.Write("];");
-                    }
-                    this.m_routes = ms.ToArray();
+                    sw.Write("];");
                 }
+                this.m_routes = ms.ToArray();
+            }
             return this.m_routes;
         }
 

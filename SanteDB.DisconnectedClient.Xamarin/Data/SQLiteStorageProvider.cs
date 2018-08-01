@@ -1,8 +1,8 @@
 ﻿using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite;
-using SanteDB.DisconnectedClient.SQLite.Alerting;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.SQLite.Synchronization;
@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.DisconnectedClient.SQLite.Mail;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Data
 {
@@ -39,7 +40,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// <summary>
         /// Configuration options
         /// </summary>
-        public Dictionary<String, ConfigurationOptionType> Options => new Dictionary<string, ConfigurationOptionType>() { { "encrypt", ConfigurationOptionType.Boolean } };
+        public Dictionary<String, ConfigurationOptionType> Options => new Dictionary<string, ConfigurationOptionType>() {
+            { "encrypt", ConfigurationOptionType.Boolean }
+        };
 
         /// <summary>
         /// Configure
@@ -80,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
             // Services
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Insert(0, typeof(SQLiteConnectionManager).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePersistenceService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteAlertPersistenceService).AssemblyQualifiedName);
+            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteMailPersistenceService).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteQueueManagerService).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteSynchronizationLog).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteDatawarehouse).AssemblyQualifiedName);
@@ -88,12 +91,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteRoleProviderService).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteIdentityService).AssemblyQualifiedName);
             configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
+            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteAuditRepositoryService).AssemblyQualifiedName);
 
             // SQLite provider
-            #if NOCRYPT
+#if NOCRYPT
 			appSection.ServiceTypes.Add(typeof(SQLite.Net.Platform.Generic.SQLitePlatformGeneric).AssemblyQualifiedName);
-            #else
-            switch(ApplicationContext.Current.OperatingSystem)
+#else
+            switch (ApplicationContext.Current.OperatingSystem)
             {
                 case OperatingSystemID.Win32:
                     if (options["encrypt"].Equals(true))

@@ -123,7 +123,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                     case "SecurityUser":
                         return new Bundle()
                         {
-                            Item = amiClient.GetUsers((Expression<Func<SecurityUser, bool>>)(Expression)predicate).CollectionItem.Select(o => o.User as IdentifiedData).ToList()
+                            Item = amiClient.GetUsers((Expression<Func<SecurityUser, bool>>)(Expression)predicate).CollectionItem.OfType<SecurityUserInfo>().Select(o => o.Entity as IdentifiedData).ToList()
                         };
                     default:
                         throw new NotSupportedException($"AMI servicing not supported for {typeof(TModel).Name}");
@@ -176,7 +176,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                 switch (typeof(TModel).Name)
                 {
                     case "SecurityUser":
-                        return amiClient.GetUser(key.ToString()) as TModel;
+                        return amiClient.GetUser(key) as TModel;
                     default:
                         throw new NotSupportedException($"AMI servicing not supported for {typeof(TModel).Name}");
                 }
@@ -201,14 +201,17 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 
                 switch (data.GetType().Name)
                 {
-                    case "AuditInfo":
+                    case "AuditSubmission":
                         // Only send audits over wifi
                         if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkWifi ||
                             ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Count() > 10)
                         {
-                            foreach(var a in (data as AuditInfo).Audit)
-                                AuditUtil.AddDeviceActor(a);
-                            amiClient.SubmitAudit(data as AuditInfo);
+                            if (data is AuditSubmission)
+                                foreach (var a in (data as AuditSubmission).Audit)
+                                {
+                                    AuditUtil.AddDeviceActor(a);
+                                }
+                            amiClient.SubmitAudit(data as AuditSubmission);
                         }
                         break;
                     default:
@@ -297,7 +300,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 			    amiClient.Client.Requesting += IntegrationQueryOptions.CreateRequestingHandler(null);
 			    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
 
-			    return amiClient.GetUser(key.ToString())?.User;
+			    return amiClient.GetUser(key)?.Entity;
 		    }
 		    catch (Exception ex)
 		    {

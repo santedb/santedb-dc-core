@@ -36,8 +36,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 	public class TokenClaimsPrincipal : ClaimsPrincipal
 	{
 
-        
-
 		// Claim map
 		private readonly Dictionary<String, String> claimMap = new Dictionary<string, string>() {
 			{ "unique_name", ClaimsIdentity.DefaultNameClaimType },
@@ -51,7 +49,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 		};
 
 		// The token
-		private String m_token;
+		private String m_idToken;
+
+        // Access token
+        private String m_accessToken;
 
 		// Configuration
 		private SecurityConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
@@ -64,21 +65,23 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Xamarin.Security.TokenClaimsPrincipal"/> class.
         /// </summary>
-        /// <param name="token">Token.</param>
+        /// <param name="idToken">Token.</param>
         /// <param name="tokenType">Token type.</param>
-        public TokenClaimsPrincipal (String token, String tokenType, String refreshToken) : base(null)
+        public TokenClaimsPrincipal (String accessToken, String idToken, String tokenType, String refreshToken) : base(null)
 		{
-			if (String.IsNullOrEmpty (token))
-				throw new ArgumentNullException (nameof (token));
+			if (String.IsNullOrEmpty (idToken))
+				throw new ArgumentNullException (nameof (idToken));
 			else if (String.IsNullOrEmpty (tokenType))
 				throw new ArgumentNullException (nameof (tokenType));
-			else if (tokenType != "urn:ietf:params:oauth:token-type:jwt")
+			else if (tokenType != "urn:ietf:params:oauth:token-type:jwt" &&
+                tokenType != "bearer")
 				throw new ArgumentOutOfRangeException (nameof (tokenType), "expected urn:ietf:params:oauth:token-type:jwt");
 
 			// Token
-			this.m_token = token;
+			this.m_idToken = idToken;
+            this.m_accessToken = accessToken;
 
-			String[] tokenObjects = token.Split ('.');
+			String[] tokenObjects = idToken.Split ('.');
             // Correct each token to be proper B64 encoding
             for (int i = 0; i < tokenObjects.Length; i++)
                 tokenObjects[i] = tokenObjects[i].PadRight(tokenObjects[i].Length + (tokenObjects[i].Length % 4), '=').Replace("===","=");
@@ -154,13 +157,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 		}
 
 		/// <summary>
-		/// Represent the token claims principal as a string (the JWT token itself)
+		/// Represent the token claims principal as a string (the access token itself)
 		/// </summary>
 		/// <returns>To be added.</returns>
 		/// <remarks>To be added.</remarks>
 		public override string ToString ()
 		{
-			return this.m_token;
+			return this.m_accessToken;
 		}
 	}
 }

@@ -70,6 +70,19 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Xamarin.Data;
+using System.Security.Cryptography;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Asn1.Pkcs;
+using System.Security.Cryptography.X509Certificates;
+using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -179,11 +192,20 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         private Tracer m_tracer = Tracer.GetTracer(typeof(ConfigurationService));
 
         /// <summary>
+        /// Get a list of all subscription definitions defined in the loaded applets
+        /// </summary>
+        [RestOperation(UriPath = "/subscriptionDefinition", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
+        [return: RestMessage(RestMessageFormat.Json)]
+        public List<AppletSubscriptionDefinition> GetSubscriptionDefinitions()
+        {
+            return ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.SubscriptionDefinition).ToList();
+        }
+
+        /// <summary>
         /// Get the data storage provider
         /// </summary>
         [RestOperation(UriPath = "/dbp", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
         [return: RestMessage(RestMessageFormat.Json)]
-        [Demand(PolicyIdentifiers.Login)]
         public List<StorageProviderViewModel> GetDataStorageProviders()
         {
             return StorageProviderUtil.GetProviders().Select(o => new StorageProviderViewModel()
@@ -249,16 +271,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(HdsiPersistenceService).AssemblyQualifiedName);
             ApplicationContext.Current.Configuration.Sections.RemoveAll(o => o is SynchronizationConfigurationSection);
 
-            // TODO: Add ADO audit repository service
-            if (optionObject["data"]["backend"].Value<String>() == "ADO")
-                ;
-            else
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteAuditRepositoryService).AssemblyQualifiedName);
 
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAuditService).AssemblyQualifiedName);
 
             // Data mode
-            switch (optionObject["data"]["mode"].Value<String>())
+            switch (optionObject["sync"]["mode"].Value<String>())
             {
                 case "online":
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
@@ -272,29 +289,29 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     {
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
-                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["backend"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["backend"]["options"].ToObject<Dictionary<String, Object>>());
+                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         break;
                     }
                 case "sync":
                     {
-                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["backend"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["backend"]["options"].ToObject<Dictionary<String, Object>>());
+                        var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAlertService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalMailService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiIntegrationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiIntegrationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiTwoFactorRequestService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AlertSynchronizationService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(MailSynchronizationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
 
                         // Sync settings
                         var syncConfig = new SynchronizationConfigurationSection();
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
-                        var facilityId = optionObject["data"]["sync"]["subscribe"].ToString();
+                        var facilityId = optionObject["sync"]["subscribe"].ToString();
                         var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(facilityId), Guid.Empty);
                         var facilityAddress = facility.LoadCollection<EntityAddress>("Addresses").FirstOrDefault();
                         var facilityState = facilityAddress?.Value(AddressComponentKeys.State);
@@ -531,7 +548,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     }
             }
 
-           
+
             // Password hashing
             switch (optionObject["security"]["hasher"].Value<String>())
             {
@@ -558,8 +575,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             var optimize = optionObject["network"]["optimize"].Value<String>();
             OptimizationMethod method = OptimizationMethod.Gzip;
-            if(!String.IsNullOrEmpty(optimize))
-                switch(optimize)
+            if (!String.IsNullOrEmpty(optimize))
+                switch (optimize)
                 {
                     case "lzma":
                         method = OptimizationMethod.Lzma;
@@ -576,7 +593,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 }
 
             foreach (var itm in ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>().Client)
-                if(itm.Binding.Optimize)
+                if (itm.Binding.Optimize)
                     itm.Binding.OptimizationMethod = method;
 
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = true;
@@ -601,7 +618,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             };
 
-            
+
             this.m_tracer.TraceInfo("Saving configuration options {0}", optionObject);
             XamarinApplicationContext.Current.ConfigurationManager.Save();
 
@@ -611,26 +628,35 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Join a realm
         /// </summary>
-        /// <param name="realmData"></param>
+        /// <param name="configData"></param>
         [RestOperation(UriPath = "/configuration/realm", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
         [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
-        public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.FormData)]NameValueCollection realmData)
+        public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.Json)]JObject configData)
         {
-            String realmUri = realmData["realmUri"][0];
-            String deviceName = realmData["deviceName"][0];
+            String realmUri = configData["realmUri"].Value<String>(),
+                deviceName = configData["deviceName"].Value<String>(),
+                domainSecurity = configData["domainSecurity"].Value<String>();
+            Int32 port = configData["port"].Value<Int32>();
+            Boolean enableSSL = configData["enableSSL"].Value<Boolean>(),
+                enableTrace = configData["enableTrace"].Value<Boolean>(),
+                replaceExisting = configData["replaceExisting"].Value<Boolean>();
+
+            if (configData.ContainsKey("client_secret"))
+                ApplicationContext.Current.Application.ApplicationSecret = configData["client_secret"].Value<String>();
+
+            // Set domain security
+            switch (domainSecurity)
+            {
+                case "Basic":
+                    ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Basic;
+                    break;
+                case "Inline":
+                    ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Inline;
+                    break;
+
+            }
             this.m_tracer.TraceInfo("Joining {0}", realmUri);
-
-            List<string> enableTrace = null, noTimeout = null, enableSSL = null, portNo;
-            realmData.TryGetValue("enableTrace", out enableTrace);
-            enableTrace = enableTrace ?? new List<String>();
-            realmData.TryGetValue("noTimeout", out noTimeout);
-            noTimeout = noTimeout ?? new List<String>();
-            realmData.TryGetValue("enableSSL", out enableSSL);
-            enableSSL = enableSSL ?? new List<string>();
-            realmData.TryGetValue("port", out portNo);
-            portNo = portNo ?? new List<string>() { "8080" };
-
 
             // Stage 1 - Demand access admin policy
             try
@@ -659,7 +685,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 };
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().TokenType = "urn:ietf:params:oauth:token-type:jwt";
                 // Parse ACS URI
-                var scheme = enableSSL.FirstOrDefault() == "true" ? "https" : "http";
+                var scheme = enableSSL ? "https" : "http";
                 // AMI Client
                 AmiServiceClient amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 
@@ -707,7 +733,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             Address = o.Replace("0.0.0.0", realmUri),
                             Timeout = itm.ServiceType == ServiceEndpointType.ImmunizationIntegrationService ? 60000 : 30000
                         }).ToList(),
-                        Trace = enableTrace.Count > 0 && enableTrace[0] == "true",
+                        Trace = enableTrace,
                         Name = serviceName
                     };
 
@@ -716,7 +742,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new AmiPolicyInformationService());
                 ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new HdsiPersistenceService());
-                ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>().Query(o => o.ConceptSets.Any(s=>s.Key == ConceptSetKeys.AddressComponentType));
+                ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>().Query(o => o.ConceptSets.Any(s => s.Key == ConceptSetKeys.AddressComponentType));
                 EntitySource.Current = new EntitySource(new ConfigurationEntitySource());
                 byte[] pcharArray = Guid.NewGuid().ToByteArray();
                 char[] spec = { '@', '#', '$', '*', '~' };
@@ -741,7 +767,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     }
 
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret = Encoding.ASCII.GetString(pcharArray);
-
                 // Create the necessary device user
                 try
                 {
@@ -750,18 +775,21 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     // Create application user
                     var role = amiClient.GetRoles(o => o.Name == "SYNCHRONIZERS").CollectionItem.First();
 
-
                     // Does the user actually exist?
                     var existingClient = amiClient.GetUsers(o => o.UserName == deviceName);
                     if (existingClient.CollectionItem.Count > 0)
                     {
-                        if (!realmData.ContainsKey("force") || !Boolean.Parse(realmData["force"][0]))
+                        if (!replaceExisting)
                             throw new DuplicateNameException(Strings.err_duplicate_deviceName);
                         else
-                            amiClient.UpdateUser(existingClient.CollectionItem.First().UserId.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
+                            amiClient.UpdateUser(existingClient.CollectionItem.OfType<SecurityUserInfo>().First().Entity.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
                             {
-                                Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
-                                UserName = deviceName
+                                PasswordOnly = true,
+                                Entity = new SanteDB.Core.Model.Security.SecurityUser()
+                                {
+                                    Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
+                                    UserName = deviceName
+                                }
                             });
                     }
                     else
@@ -772,44 +800,49 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             UserName = deviceName,
                             Key = Guid.NewGuid(),
                             UserClass = UserClassKeys.ApplicationUser,
-                            SecurityHash = Guid.NewGuid().ToString()
+                            SecurityHash = Guid.NewGuid().ToString(),
+                            Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
                         })
                         {
-                            Roles = new List<SanteDB.Core.Model.AMI.Auth.SecurityRoleInfo>()
-                            {
-                                role
-                            },
-                            Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
+                            Roles = new List<string>() { "SYNCHRONIZERS" },
                         });
 
-                    // TODO: Generate the CSR
 
-                    // Lookup sync role
+                    // lookup existing device
                     var existingDevice = amiClient.GetDevices(o => o.Name == deviceName);
                     if (existingDevice.CollectionItem.Count == 0)
                     {
                         // Create device
-                        var newDevice = amiClient.CreateDevice(new SecurityDeviceInfo()
+                        var newDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
                         {
-                            Device = new SanteDB.Core.Model.Security.SecurityDevice()
-                            {
-                                CreationTime = DateTimeOffset.Now,
-                                Name = deviceName,
-                                DeviceSecret = Guid.NewGuid().ToString()
-                            }
-                        });
+                            CreationTime = DateTimeOffset.Now,
+                            Name = deviceName,
+                            DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                        }));
 
-                        //// Now create device entity
-                        //var newDeviceEntity = ApplicationContext.Current.GetService<IDataPersistenceService<DeviceEntity>>().Insert(new DeviceEntity()
-                        //{
-                        //    SecurityDevice = newDevice,
-                        //    StatusConceptKey = StatusKeys.Active,
-                        //    ManufacturedModelName = Environment.MachineName,
-                        //    OperatingSystemName = Environment.OSVersion.ToString(),
-                        //});
+                        // Create the device entity 
+                        amiClient.CreateDeviceEntity(new DeviceEntity()
+                        {
+                            SecurityDevice = newDevice.Entity,
+                            StatusConceptKey = StatusKeys.Active,
+                            ManufacturerModelName = Environment.MachineName,
+                            OperatingSystemName = Environment.OSVersion.ToString(),
+                            Names = new List<EntityName>()
+                                {
+                                    new EntityName(NameUseKeys.Assigned, deviceName)
+                                }
+                        });
                     }
                     else
-                        ; // TODO: Update
+                    {
+                        amiClient.UpdateDevice(existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
+                        {
+
+                            UpdatedTime = DateTime.Now,
+                            Name = deviceName,
+                            DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                        }));
+                    }
                 }
                 catch (Exception e)
                 {
@@ -843,10 +876,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 // AMI Client
                 serviceClientSection.Client.Clear();
 
-                var scheme = enableSSL.FirstOrDefault() == "true" ? "https" : "http";
+                var scheme = enableSSL ? "https" : "http";
                 string amiUri = String.Format("{0}://{1}:{2}/ami", scheme,
                     realmUri,
-                    portNo.FirstOrDefault());
+                    port);
                 serviceClientSection.Client.Add(new ServiceClientDescription()
                 {
                     Binding = new ServiceClientBinding()
@@ -859,7 +892,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         }
                     },
                     Name = "ami",
-                    Trace = enableTrace.Count > 0 && enableTrace[0] == "true"
+                    Trace = enableTrace
                 });
 
 
@@ -893,7 +926,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             Optimize = false
                         },
                         Name = "acs",
-                        Trace = enableTrace.Count > 0 && enableTrace[0] == "true",
+                        Trace = enableTrace,
                         Endpoint = option.BaseUrl.Select(o => new ServiceClientEndpoint()
                         {
                             Address = o.Replace("0.0.0.0", realmUri),
@@ -903,10 +936,17 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 }
 
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is HdsiPersistenceService);
+
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw new UnauthorizedAccessException();
             }
             catch (Exception e)
             {
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
+                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is HdsiPersistenceService);
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw;
             }
@@ -957,7 +997,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
             {
-                return ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>()?.Query(o=>o.SourceEntityKey == sourceKey) ?? new List<TObject>();
+                return ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>()?.Query(o => o.SourceEntityKey == sourceKey) ?? new List<TObject>();
             }
 
             public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, decimal? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()

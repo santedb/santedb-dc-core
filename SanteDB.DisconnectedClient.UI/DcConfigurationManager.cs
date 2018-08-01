@@ -47,6 +47,7 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.Compressors.BZip2;
 using SanteDB.Cdss.Xml;
 using SanteDB.DisconnectedClient.Xamarin.Backup;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -112,6 +113,7 @@ namespace SanteDB.DisconnectedClient.UI
                 Style = StyleSchemeType.Dark,
                 UserPrefDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDBDC", "userpref"),
                 ServiceTypes = new List<string>() {
+                    typeof(AesSymmetricCrypographicProvider).AssemblyQualifiedName,
                     typeof(LocalPolicyDecisionService).AssemblyQualifiedName,
                     typeof(LocalPatientService).AssemblyQualifiedName,
                     typeof(LocalPlaceService).AssemblyQualifiedName,

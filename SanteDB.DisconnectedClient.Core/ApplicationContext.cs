@@ -259,6 +259,9 @@ namespace SanteDB.DisconnectedClient.Core
             if (this.m_running)
                 return;
 
+            // Set the application secret to the configured value
+            this.Application.ApplicationSecret = this.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ?? this.Application.ApplicationSecret;
+
             this.m_running = true;
 
             if (!this.m_cache.ContainsKey(typeof(IServiceManager)))

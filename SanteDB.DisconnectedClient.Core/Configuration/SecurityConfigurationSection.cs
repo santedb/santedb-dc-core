@@ -23,9 +23,33 @@ using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using System.IO;
 using Newtonsoft.Json;
+using System.Linq;
+using SanteDB.DisconnectedClient.Core.Services;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
+
+    /// <summary>
+    /// Dictates how the domain client performs authentication of the application
+    /// </summary>
+    public enum DomainClientAuthentication
+    {
+        /// <summary>
+        /// Authentication is performed using a certificate
+        /// </summary>
+        [XmlEnum("cert")]
+        Certificate,
+        /// <summary>
+        /// Authentication is performed using BASIC AUTH
+        /// </summary>
+        [XmlEnum("basic")]
+        Basic,
+        /// <summary>
+        /// Authentication is performed using inline client credentials
+        /// </summary>
+        Inline
+    }
 
 	/// <summary>
 	/// Security configuration section
@@ -41,6 +65,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public SecurityConfigurationSection()
         {
             this.MaxLocalSession = new TimeSpan(0, 30, 0);
+            this.DomainAuthentication = DomainClientAuthentication.Basic;
         }
 
 		/// <summary>
@@ -51,6 +76,16 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 			get;
 			set;
 		}
+
+        /// <summary>
+        /// Domain authentication
+        /// </summary>
+        [XmlElement("domainSecurity"), JsonProperty("domainSecurity")]
+        public DomainClientAuthentication DomainAuthentication
+        {
+            get;
+            set;
+        }
 
 		/// <summary>
 		/// Gets or sets the allowed token type
@@ -96,12 +131,81 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// Sets the device secret.
 		/// </summary>
 		/// <value>The device secret.</value>
-		[XmlElement("deviceSecret"), JsonIgnore]
+		[XmlIgnore, JsonIgnore]
 		public String DeviceSecret {
 			get;
 			set;
 		}
 
+        /// <summary>
+        /// Gets or sets the device secret
+        /// </summary>
+        [XmlElement("deviceSecret"), JsonIgnore]
+        public byte[] DeviceSecretXml
+        {
+            get {
+                var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
+                if (cryptoService != null)
+                {
+                    var iv = cryptoService.GenerateIV();
+                    var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(this.DeviceSecret), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
+                    return iv.Union(res).ToArray();
+                }
+                else
+                    return Encoding.UTF8.GetBytes(this.DeviceSecret);
+            }
+            set {
+                var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
+                if (cryptoService != null)
+                {
+                    var res = cryptoService.Decrypt(value.Skip(16).ToArray(), ApplicationContext.Current.GetCurrentContextSecurityKey(), value.Take(16).ToArray());
+                    this.DeviceSecret = Encoding.UTF8.GetString(res, 0, res.Length);
+                }
+                else
+                    this.DeviceSecret = Encoding.UTF8.GetString(value, 0, value.Length);
+            }
+        }
+
+        /// <summary>
+        /// Sets the application secret
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public String ApplicationSecret
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Gets or sets the device secret
+        /// </summary>
+        [XmlElement("appSecret"), JsonIgnore]
+        public byte[] ApplicationSecretXml
+        {
+            get
+            {
+                var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
+                if (cryptoService != null)
+                {
+                    var iv = cryptoService.GenerateIV();
+                    var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(this.DeviceSecret), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
+                    return iv.Union(res).ToArray();
+                }
+                else
+                    return Encoding.UTF8.GetBytes(this.DeviceSecret);
+            }
+            set
+            {
+                var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
+                if (cryptoService != null)
+                {
+                    var res = cryptoService.Decrypt(value.Skip(16).ToArray(), ApplicationContext.Current.GetCurrentContextSecurityKey(), value.Take(16).ToArray());
+                    this.DeviceSecret = Encoding.UTF8.GetString(res, 0, res.Length);
+                }
+                else
+                    this.DeviceSecret = Encoding.UTF8.GetString(value, 0, value.Length);
+            }
+        }
         /// <summary>
         /// Gets or sets teh device certificate
         /// </summary>

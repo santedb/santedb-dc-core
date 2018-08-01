@@ -53,6 +53,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         public String AccessToken { get; set; }
 
         /// <summary>
+        /// Represents the id token
+        /// </summary>
+        [JsonProperty("id_token")]
+        public String IdToken { get; set; }
+
+        /// <summary>
         /// Token type
         /// </summary>
         [JsonProperty("token_type")]
@@ -159,5 +165,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             private set;
         }
 
+        /// <summary>
+        /// Gets or sets the client id
+        /// </summary>
+        [FormElement("client_id")]
+        public string ClientId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the client secret
+        /// </summary>
+        [FormElement("client_secret")]
+        public string ClientSecret { get; set; }
     }
 }

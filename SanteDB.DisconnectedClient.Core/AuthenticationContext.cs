@@ -50,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// System identity
         /// </summary>
         private static readonly IPrincipal s_system = new ClaimsPrincipal(new ClaimsIdentity("SYSTEM", true, new Claim[] {
-            new Claim(ClaimTypes.OpenIzGrantedPolicyClaim, PolicyIdentifiers.AccessClientAdministrativeFunction)
+            new Claim(ClaimTypes.SanteDBGrantedPolicyClaim, PolicyIdentifiers.AccessClientAdministrativeFunction)
         }));
         
         /// <summary>
@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.Core
         }
 
         /// <summary>
-        /// Gets or sets the current context
+        /// Gets or sets the current context for the user interface rather than any background thread that is processing
         /// </summary>
         public static AuthenticationContext CurrentUIContext
         {

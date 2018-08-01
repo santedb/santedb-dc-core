@@ -34,6 +34,7 @@ using SanteDB.Messaging.AMI.Client;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Core.Model.AMI.Applet;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Configuration
 {
@@ -158,7 +159,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                     if (amiClient.Ping())
                     {
                         amiClient.Client.Description.Endpoint[0].Timeout = 30000;
-                        foreach (var i in amiClient.GetApplets().CollectionItem)
+                        foreach (var i in amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>())
                         {
                             var installed = ApplicationContext.Current.GetService<IAppletManagerService>().GetApplet(i.AppletInfo.Id);
                             if (installed == null ||

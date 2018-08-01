@@ -46,7 +46,8 @@ using SanteDB.DisconnectedClient.Xamarin.Threading;
 using SanteDB.Core.Applets.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Alerting;
+using SanteDB.Core.Mail;
+using System.Dynamic;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -399,65 +400,23 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.GetService<IUpdateManager>().Install(appId);
         }
 
+        
         /// <summary>
-        /// Get the alerts from the service
+        /// Get asset information for locales
         /// </summary>
-        [RestOperation(UriPath = "/alerts", Method = "GET")]
-        public List<AlertMessage> GetAlerts()
+        [RestOperation(UriPath = "/locale", Method = "GET")]
+        public Dictionary<String, String[]> GetLocaleAssets()
         {
-            try
+
+            // Get all locales from the asset manager
+            var retVal = new Dictionary<String, String[]>();
+            foreach(var locale in ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o=>o.Locales).GroupBy(o=>o.Code))
             {
-                // Gets the specified alert messages
-                NameValueCollection query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-
-                var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-
-                List<string> key = null;
-
-                if (query.ContainsKey("id") && query.TryGetValue("id", out key))
-                {
-                    var id = key?.FirstOrDefault();
-
-                    return new List<AlertMessage> { alertService.Get(Guid.Parse(id)) };
-                }
-
-                var predicate = QueryExpressionParser.BuildLinqExpression<AlertMessage>(query);
-                int offset = query.ContainsKey("_offset") ? Int32.Parse(query["_offset"][0]) : 0,
-                    count = query.ContainsKey("_count") ? Int32.Parse(query["_count"][0]) : 100;
-
-
-
-                int totalCount = 0;
-
-                return alertService.Find(predicate, offset, count, out totalCount).ToList();
+                retVal.Add(locale.Key, locale.SelectMany(o => o.Assets).ToArray());
             }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Could not retrieve alerts {0}...", e);
-                throw;
-            }
+            return retVal;
+
         }
-
-        /// <summary>
-        /// Get the alerts from the service
-        /// </summary>
-        [RestOperation(UriPath = "/alerts", Method = "POST")]
-        public AlertMessage SaveAlert([RestMessage(RestMessageFormat.SimpleJson)]AlertMessage alert)
-        {
-            try
-            {
-                // Gets the specified alert messages
-                var alertService = ApplicationContext.Current.GetService<IAlertRepositoryService>();
-                alertService.Save(alert);
-                return alert;
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Could not retrieve alerts {0}...", e);
-                return null;
-            }
-        }
-
     }
 
 }
