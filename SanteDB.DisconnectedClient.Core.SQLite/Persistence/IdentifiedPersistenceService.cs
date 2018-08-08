@@ -262,8 +262,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }).ToArray();
 
 
-            if (queryId != Guid.Empty)
-                this.m_queryPersistence?.RegisterQuerySet(queryId, context.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).Select(o => o.Key), query);
             // Total count
             if (countResults && queryId == Guid.Empty)
                 totalResults = context.Connection.ExecuteScalar<Int32>("SELECT COUNT(*) FROM (" + queryStatement.SQL + ")", args);
@@ -275,6 +273,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }
             else
                 totalResults = 0;
+
+            if (queryId != Guid.Empty)
+                this.m_queryPersistence?.RegisterQuerySet(queryId, context.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).Select(o => o.Key), query, countResults ? totalResults : 0);
 
             if (count > 0)
                 queryStatement.Limit(count);
@@ -494,16 +495,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 #endif
 
             // First get total results before we reduce the result-set size
+            // TODO: See if this can be improved performance wise
             var retVal = context.Connection.Query<TDomain>(sb.ToString(), vals.ToArray()).ToList();
-
-            if (queryId != Guid.Empty)
-                this.m_queryPersistence.RegisterQuerySet(queryId, retVal.Select(o => o.Key), parms);
 
             // Retrieve the results
             if (countResults)
                 totalResults = retVal.Count();
             else
                 totalResults = 0;
+
+            if (queryId != Guid.Empty)
+                this.m_queryPersistence.RegisterQuerySet(queryId, retVal.Select(o => o.Key), parms, retVal.Count);
+
 #if DEBUG
             sw.Stop();
             this.m_tracer.TraceVerbose("Query Finished: {0}", sw.ElapsedMilliseconds);
@@ -511,6 +514,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             //totalResults = retVal.Count;
             return retVal.Skip(offset).Take(count < 0 ? 100 : count).Select(o => this.CacheConvert(o, context)).ToList();
         }
+
+
 
         /// <summary>
         /// Get the specified data element

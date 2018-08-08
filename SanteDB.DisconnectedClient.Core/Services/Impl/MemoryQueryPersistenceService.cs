@@ -55,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
             /// <summary>
             /// Results in the result set
             /// </summary>
-            public IEnumerable<Guid> Results { get; set; }
+            public List<Guid> Results { get; set; }
 
             /// <summary>
             /// The query tag
@@ -108,14 +108,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
         /// <summary>
         /// Register a query
         /// </summary>
-        public bool RegisterQuerySet(Guid queryId, IEnumerable<Guid> results, object tag)
+        public bool RegisterQuerySet(Guid queryId, IEnumerable<Guid> results, object tag, int totalResults)
         {
             MemoryQueryInfo retVal = null;
             if (this.m_queryCache.TryGetValue(queryId, out retVal))
             {
                 this.m_tracer.TraceVerbose("Updating query {0} ({1} results)", queryId, results.Count());
-                retVal.Results = results;
+                retVal.Results = results.ToList();
                 retVal.QueryTag = tag;
+                retVal.TotalResults = totalResults;
             }
             else
                 lock (this.m_syncObject)
@@ -125,11 +126,23 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
                     this.m_queryCache.Add(queryId, new MemoryQueryInfo()
                     {
                         QueryTag = tag,
-                        Results = results,
-                        TotalResults = results.Count()
+                        Results = results.ToList(),
+                        TotalResults = totalResults
                     });
                 }
             return true;
+        }
+
+        /// <summary>
+        /// Add results to an existing query 
+        /// </summary>
+        /// <param name="queryId">The identifier of the query to add to</param>
+        /// <param name="results">The results to add</param>
+        public void AddResults(Guid queryId, IEnumerable<Guid> results)
+        {
+            MemoryQueryInfo query = null;
+            if (this.m_queryCache.TryGetValue(queryId, out query))
+                query.Results.AddRange(results);
         }
     }
 }
