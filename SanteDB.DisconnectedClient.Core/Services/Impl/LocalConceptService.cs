@@ -136,7 +136,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 		/// <summary>
 		/// Get the specified concept
 		/// </summary>
-		public IdentifiedData GetConcept(Guid id, Guid versionId)
+		public Concept GetConcept(Guid id, Guid versionId)
 		{
 			var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>();
 			if (persistenceService == null)
