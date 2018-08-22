@@ -48,6 +48,7 @@ using SanteDB.DisconnectedClient.Core.Tickler;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.Core.Mail;
 using System.Dynamic;
+using SanteDB.Core.Model.AMI.Applet;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -404,7 +405,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Get asset information for locales
         /// </summary>
-        [RestOperation(UriPath = "/locale", Method = "GET")]
+        [RestOperation(UriPath = "/locale", Method = "GET", FaultProvider = nameof(ApplicationServiceFault))]
         public Dictionary<String, String[]> GetLocaleAssets()
         {
 
@@ -416,6 +417,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             }
             return retVal;
 
+        }
+
+        /// <summary>
+        /// Get asset information for locales
+        /// </summary>
+        [RestOperation(UriPath = "/solutions", Method = "GET", FaultProvider = nameof(ApplicationServiceFault))]
+        public List<AppletSolutionInfo> GetAppletSolutions()
+        {
+            var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+            return amiClient.GetAppletSolutions().CollectionItem.OfType<AppletSolutionInfo>().ToList();
         }
     }
 

@@ -143,7 +143,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 }
                 catch (Exception e)
                 {
-                    this.m_tracer.TraceWarning("Could scan for handlers : {1}", e);
+                    this.m_tracer.TraceWarning("Couldn't scan for handlers : {0}", e);
                 }
 
                 // Get loopback

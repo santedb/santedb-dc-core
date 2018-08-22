@@ -40,7 +40,6 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		public AppletConfigurationSection ()
 		{
 			this.AppletConfiguration = new List<AppletConfiguration> ();
-			this.AppletGroupOrder = new List<string> ();
 			this.Applets = new List<AppletName> ();
             this.Security = new AppletSecurityConfiguration();
 		}
@@ -78,16 +77,6 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		}
 
 		/// <summary>
-		/// Identifies the applet group orders
-		/// </summary>
-		/// <value>The applet group order.</value>
-		[XmlElement("appletGroup")]
-		public List<String> AppletGroupOrder {
-			get;
-			set;
-		}
-
-		/// <summary>
 		/// Gets or sets a list of applets which are permitted for use and their 
 		/// public key token used for validation
 		/// </summary>
@@ -109,6 +98,12 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         [XmlElement("security"), JsonProperty("security")]
         public AppletSecurityConfiguration Security { get; set; }
+
+        /// <summary>
+        /// Gets or sets the applet solution
+        /// </summary>
+        [XmlElement("solution"), JsonProperty("solution")]
+        public String AppletSolution { get; set; }
     }
 
     /// <summary>

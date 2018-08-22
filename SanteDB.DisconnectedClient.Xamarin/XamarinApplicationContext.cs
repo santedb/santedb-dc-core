@@ -201,7 +201,7 @@ namespace SanteDB.DisconnectedClient.Xamarin
                         try
                         {
                             var asmL = Assembly.ReflectionOnlyLoadFrom(f);
-                            if (asmL.GetExportedTypes().Any(o => o.GetInterfaces().Any(i => i == typeof(IStorageProvider))))
+                            if (asmL.GetExportedTypes().Any(o => o.GetInterfaces().Any(i => i.FullName == typeof(IStorageProvider).FullName)))
                             {
                                 this.m_tracer.TraceInfo("Loading {0}...", f);
                                 Assembly.LoadFile(f);
