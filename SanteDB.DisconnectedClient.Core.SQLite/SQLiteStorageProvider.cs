@@ -53,27 +53,27 @@ namespace SanteDB.DisconnectedClient.SQLite
             // Connection Strings
             DataConfigurationSection dataSection = new DataConfigurationSection()
             {
-                MainDataSourceConnectionStringName = "openIzData",
-                MessageQueueConnectionStringName = "openIzQueue",
+                MainDataSourceConnectionStringName = "santeDbData",
+                MessageQueueConnectionStringName = "santeDbQueue",
                 ConnectionString = new System.Collections.Generic.List<ConnectionString>() {
                     new ConnectionString () {
-                        Name = "openIzData",
+                        Name = "santeDbData",
                         Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name, "SanteDB.sqlite")
                     },
                     new ConnectionString () {
-                        Name = "openIzSearch",
+                        Name = "santeDbSearch",
                         Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.ftsearch.sqlite")
                     },
                     new ConnectionString () {
-                        Name = "openIzQueue",
+                        Name = "santeDbQueue",
                         Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.MessageQueue.sqlite")
                     },
                     new ConnectionString () {
-                        Name = "openIzWarehouse",
+                        Name = "santeDbWarehouse",
                         Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.warehouse.sqlite")
                     },
                     new ConnectionString () {
-                        Name = "openIzAudit",
+                        Name = "santeDbAudit",
                         Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name, "SanteDB.audit.sqlite")
                     }
                 }

@@ -44,6 +44,7 @@ using SanteDB.DisconnectedClient.Xamarin.Configuration;
 using System.Security.Cryptography.X509Certificates;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Core.Data;
 
 namespace SanteDB.DisconnectedClient.Xamarin
 {
@@ -172,6 +173,51 @@ namespace SanteDB.DisconnectedClient.Xamarin
         }
 
         #endregion
+
+        /// <summary>
+        /// Load all assemblies in the same startup directory
+        /// </summary>
+        protected override void Start()
+        {
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
+            {
+                var asmLoc = Path.Combine(Path.GetDirectoryName(typeof(XamarinApplicationContext).Assembly.Location), r.Name.Substring(0, r.Name.IndexOf(",")) + ".dll");
+                var retVal = Assembly.ReflectionOnlyLoad(r.Name);
+                if (retVal != null)
+                    return retVal;
+                else if (File.Exists(asmLoc))
+                    return Assembly.ReflectionOnlyLoadFrom(asmLoc);
+                else
+                    return null;
+            };
+
+            try
+            {
+                var asmLoc = Assembly.GetEntryAssembly().Location;
+                if(!String.IsNullOrEmpty(asmLoc))
+                {
+                    foreach(var f in Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll"))
+                    {
+                        try
+                        {
+                            var asmL = Assembly.ReflectionOnlyLoadFrom(f);
+                            if (asmL.GetExportedTypes().Any(o => o.GetInterfaces().Any(i => i == typeof(IStorageProvider))))
+                            {
+                                this.m_tracer.TraceInfo("Loading {0}...", f);
+                                Assembly.LoadFile(f);
+                            }
+                        }
+                        catch (Exception e) { }
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceWarning("Could not scan startup assembly location: {0}", e);
+            }
+
+            base.Start();
+        }
     }
 }
 

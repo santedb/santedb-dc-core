@@ -94,6 +94,16 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
+        /// Get session by the session token
+        /// </summary>
+        /// <param name="sessionToken">The session token</param>
+        /// <returns>The session information</returns>
+        public SessionInfo Get(String sessionToken)
+        {
+            return this.m_session.Values.FirstOrDefault(o => o.Token == sessionToken);
+        }
+
+        /// <summary>
         /// Refreshes the specified session
         /// </summary>
         public SessionInfo Refresh(SessionInfo session, String password)

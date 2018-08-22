@@ -183,7 +183,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 // Set the session 
                 if (authRequest.ContainsKey("scope") && authRequest["scope"][0] == "*") // Requesting all access so we need to send back a session ID :)
-                    MiniHdsiServer.CurrentContext.Response.SetCookie(new Cookie("_s", retVal.Key.ToString())
+                    MiniHdsiServer.CurrentContext.Response.SetCookie(new Cookie("_s", retVal.Token)
                     {
                         HttpOnly = true,
                         Secure = true,

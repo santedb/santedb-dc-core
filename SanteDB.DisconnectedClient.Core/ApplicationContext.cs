@@ -253,7 +253,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Start the daemon services
         /// </summary>
-        protected void Start()
+        protected virtual void Start()
         {
             // Already running
             if (this.m_running)

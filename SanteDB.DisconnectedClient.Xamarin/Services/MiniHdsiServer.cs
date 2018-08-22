@@ -296,7 +296,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         if (!cookie.Expired)
                         {
                             var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-                            var session = smgr.Get(Guid.Parse(cookie.Value));
+                            var session = smgr.Get(cookie.Value);
                             if (session != null)
                             {
                                 try
@@ -337,7 +337,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                             case "bearer":
                                 {
                                     var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-                                    var session = smgr.Get(Guid.Parse(authHeader[1]));
+                                    var session = smgr.Get(authHeader[1]);
                                     if (session != null)
                                     {
                                         try

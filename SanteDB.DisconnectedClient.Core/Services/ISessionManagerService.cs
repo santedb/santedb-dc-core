@@ -60,5 +60,9 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// </summary>
         SessionInfo Get(Guid sessionId);
 
+        /// <summary>
+        /// Gets the session from the specified session token
+        /// </summary>
+        SessionInfo Get(String sessionToken);
     }
 }

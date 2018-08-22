@@ -29,7 +29,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Granted policy claim
         /// </summary>
-        public const string SanteDBGrantedPolicyClaim = "grant";
+        public const string SanteDBGrantedPolicyClaim = "scope";
 
         /// <summary>
         /// Device identifier claim

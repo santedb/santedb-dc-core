@@ -178,10 +178,16 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public DateTime Issued { get; set; }
 
         /// <summary>
+        /// Gets or sets the access token
+        /// </summary>
+        [JsonProperty("token")]
+        public String Token { get; set; }
+
+        /// <summary>
         /// Gets or sets the JWT token
         /// </summary>
-        [JsonProperty("jwt")]
-        public String Token { get; set; }
+        [JsonProperty("idToken")]
+        public string IdentityToken { get; set; }
 
         /// <summary>
         /// Gets or sets the refresh token
@@ -334,5 +340,6 @@ namespace SanteDB.DisconnectedClient.Core.Security
             }
 
         }
+
     }
 }
