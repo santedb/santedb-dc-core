@@ -62,12 +62,7 @@ using SanteDB.Core.Model.Interfaces;
 using System.Linq.Expressions;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Alerting;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.SQLite;
-using SanteDB.DisconnectedClient.SQLite.Synchronization;
-using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Xamarin.Data;
 using System.Security.Cryptography;
@@ -278,7 +273,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             switch (optionObject["sync"]["mode"].Value<String>())
             {
                 case "online":
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiPolicyInformationService).AssemblyQualifiedName);
 
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiPersistenceService).AssemblyQualifiedName);
@@ -290,14 +284,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
                         var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         break;
                     }
                 case "sync":
                     {
                         var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalMailService).AssemblyQualifiedName);
@@ -696,7 +690,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 Dictionary<ServiceEndpointType, String> endpointNames = new Dictionary<ServiceEndpointType, string>()
                 {
                     { ServiceEndpointType.AdministrationIntegrationService, "ami" },
-                    { ServiceEndpointType.ImmunizationIntegrationService, "hdsi" },
+                    { ServiceEndpointType.HealthDataService, "hdsi" },
                     { ServiceEndpointType.AuthenticationService, "acs" }
                 };
 
@@ -731,7 +725,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         Endpoint = urlInfo.Select(o => new ServiceClientEndpoint()
                         {
                             Address = o.Replace("0.0.0.0", realmUri),
-                            Timeout = itm.ServiceType == ServiceEndpointType.ImmunizationIntegrationService ? 60000 : 30000
+                            Timeout = itm.ServiceType == ServiceEndpointType.HealthDataService ? 60000 : 30000
                         }).ToList(),
                         Trace = enableTrace,
                         Name = serviceName

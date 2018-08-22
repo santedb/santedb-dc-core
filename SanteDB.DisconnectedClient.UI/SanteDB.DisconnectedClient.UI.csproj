@@ -76,10 +76,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core.SQLite\SanteDB.DisconnectedClient.SQLite.csproj">
-      <Project>{406d064d-78b4-467f-86c6-b3e2f12c0a65}</Project>
-      <Name>SanteDB.DisconnectedClient.SQLite</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554DF209-7744-433F-993A-783E2A2803EF}</Project>
       <Name>OpenIZ.Mobile.Core</Name>
@@ -87,14 +83,6 @@
     <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
       <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
       <Name>SanteDB.DisconnectedClient.i18n</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.SQLite.Warehouse\SanteDB.DisconnectedClient.SQLite.Warehouse.csproj">
-      <Project>{e74a91ba-e989-4d07-b382-b7db52cef502}</Project>
-      <Name>SanteDB.DisconnectedClient.SQLite.Warehouse</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Sync\SanteDB.DisconnectedClient.SQLite.Synchronization.csproj">
-      <Project>{86e9d31e-c5b3-4ba2-b512-075133051d48}</Project>
-      <Name>SanteDB.DisconnectedClient.SQLite.Synchronization</Name>
     </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Xamarin\SanteDB.DisconnectedClient.Xamarin.csproj">
       <Project>{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}</Project>

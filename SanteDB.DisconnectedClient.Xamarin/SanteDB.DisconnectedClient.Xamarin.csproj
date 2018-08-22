@@ -124,7 +124,6 @@
     <Compile Include="Backup\XamarinBackupService.cs" />
     <Compile Include="Configuration\AmiUpdateManager.cs" />
     <Compile Include="Configuration\IConfigurationManager.cs" />
-    <Compile Include="Data\SQLiteStorageProvider.cs" />
     <Compile Include="Data\StorageProviderUtil.cs" />
     <Compile Include="Diagnostics\FileTraceWriter.cs" />
     <Compile Include="Diagnostics\LogTraceWriter.cs" />
@@ -191,10 +190,6 @@
     <None Include="SanteDB.DisconnectedClient.Xamarin.nuspec" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core.SQLite\SanteDB.DisconnectedClient.SQLite.csproj">
-      <Project>{406d064d-78b4-467f-86c6-b3e2f12c0a65}</Project>
-      <Name>SanteDB.DisconnectedClient.SQLite</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
       <Name>SanteDB.DisconnectedClient.Core</Name>
@@ -202,14 +197,6 @@
     <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
       <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
       <Name>SanteDB.DisconnectedClient.i18n</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.SQLite.Warehouse\SanteDB.DisconnectedClient.SQLite.Warehouse.csproj">
-      <Project>{E74A91BA-E989-4D07-B382-B7DB52CEF502}</Project>
-      <Name>SanteDB.DisconnectedClient.SQLite.Warehouse</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Sync\SanteDB.DisconnectedClient.SQLite.Synchronization.csproj">
-      <Project>{86E9D31E-C5B3-4BA2-B512-075133051D48}</Project>
-      <Name>SanteDB.DisconnectedClient.SQLite.Synchronization</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

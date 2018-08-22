@@ -129,7 +129,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                     this.InitializeConnection(dbFile);
 
                     // Initialize the warehouse
-                    using (var initStream = typeof(SQLiteDatawarehouse).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Xamarin.Data.InitWarehouse.sql"))
+                    using (var initStream = typeof(SQLiteDatawarehouse).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Resources.InitWarehouse.sql"))
                     using (var sr = new StreamReader(initStream))
                     {
                         var stmts = sr.ReadToEnd().Split(';').Select(o => o.Trim()).ToArray();

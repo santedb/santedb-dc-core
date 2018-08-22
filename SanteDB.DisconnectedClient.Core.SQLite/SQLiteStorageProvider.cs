@@ -15,7 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SanteDB.DisconnectedClient.SQLite.Mail;
 
-namespace SanteDB.DisconnectedClient.Xamarin.Data
+namespace SanteDB.DisconnectedClient.SQLite
 {
     /// <summary>
     /// A storage provider for SQLite
@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// <summary>
         /// Configure
         /// </summary>
-        public bool Configure(SanteDBConfiguration configuration, Dictionary<String, Object> options)
+        public bool Configure(SanteDBConfiguration configuration, String dataDirectory, Dictionary<String, Object> options)
         {
             
             // Connection Strings
@@ -58,23 +58,23 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
                 ConnectionString = new System.Collections.Generic.List<ConnectionString>() {
                     new ConnectionString () {
                         Name = "openIzData",
-                        Value = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.LocalApplicationData), ApplicationContext.Current.Application.Name, "SanteDB.sqlite")
+                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name, "SanteDB.sqlite")
                     },
                     new ConnectionString () {
                         Name = "openIzSearch",
-                        Value = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.LocalApplicationData), ApplicationContext.Current.Application.Name,"SanteDB.ftsearch.sqlite")
+                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.ftsearch.sqlite")
                     },
                     new ConnectionString () {
                         Name = "openIzQueue",
-                        Value = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.LocalApplicationData), ApplicationContext.Current.Application.Name,"SanteDB.MessageQueue.sqlite")
+                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.MessageQueue.sqlite")
                     },
                     new ConnectionString () {
                         Name = "openIzWarehouse",
-                        Value = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.LocalApplicationData), ApplicationContext.Current.Application.Name,"SanteDB.warehouse.sqlite")
+                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.warehouse.sqlite")
                     },
                     new ConnectionString () {
                         Name = "openIzAudit",
-                        Value = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.LocalApplicationData), ApplicationContext.Current.Application.Name, "SanteDB.audit.sqlite")
+                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name, "SanteDB.audit.sqlite")
                     }
                 }
             };

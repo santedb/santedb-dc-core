@@ -59,7 +59,7 @@ namespace SanteDB.DisconnectedClient.Core.Data
         /// <summary>
         /// Add the necessary information to the operating system configuration
         /// </summary>
-        bool Configure(SanteDBConfiguration configuration, Dictionary<String, Object> options);
+        bool Configure(SanteDBConfiguration configuration, String dataDirectory, Dictionary<String, Object> options);
 
     }
 }

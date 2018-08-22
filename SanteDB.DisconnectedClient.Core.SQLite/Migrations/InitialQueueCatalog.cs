@@ -32,7 +32,7 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Mail;
 
-namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Migrations
+namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
 	/// <summary>
 	/// Initial queue catalog migration.
