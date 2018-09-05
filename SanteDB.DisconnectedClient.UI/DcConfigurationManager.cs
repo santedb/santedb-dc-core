@@ -93,12 +93,6 @@ namespace SanteDB.DisconnectedClient.UI
             AppletConfigurationSection appletSection = new AppletConfigurationSection()
             {
                 AppletDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDBDC", "applets"),
-                AppletGroupOrder = new System.Collections.Generic.List<string>() {
-                    "Patient Management",
-                    "Encounter Management",
-                    "Stock Management",
-                    "Administration"
-                },
                 StartupAsset = "org.santedb.core",
                 Security = new AppletSecurityConfiguration()
                 {
