@@ -128,9 +128,9 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Api" Version="1.1.0.4" />
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.1.0" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.1.0.1" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.1.0.9" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.1.0.5" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.2.0" />
         <PackageReference Include="SanteDB.ReportR" Version="1.0.0" />
         <PackageReference Include="SanteDB.Cdss.Xml">
           <Version>1.1.0</Version>
@@ -140,10 +140,10 @@
   </Choose>
   <ItemGroup>
     <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core">
-      <Version>2.0.0</Version>
+      <Version>2.0.1.6</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>1.1.0</Version>
+      <Version>1.1.3</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
       <Version>1.1.0</Version>
