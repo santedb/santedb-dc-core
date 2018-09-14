@@ -322,10 +322,38 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 			return pers.Get(roleId);
 		}
 
-		/// <summary>
-		/// Get the specified user
-		/// </summary>
-		public SecurityUser GetUser(Guid userId)
+        /// <summary>
+        /// Gets the specified named role
+        /// </summary>
+        /// <param name="roleName">The name of the role to retrieve</param>
+        /// <returns>The security role</returns>
+        public SecurityRole GetRole(String roleName)
+        {
+            var pers = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityRole>>();
+            if (pers == null)
+                throw new InvalidOperationException("Missing role persistence service");
+            int tr = 0;
+            return pers.Query(o=>o.Name == roleName, 0, 1, out tr, Guid.Empty).SingleOrDefault();
+        }
+
+        /// <summary>
+        /// Gets the specified policy
+        /// </summary>
+        /// <param name="policyOid"></param>
+        /// <returns></returns>
+        public SecurityPolicy GetPolicy(String policyOid)
+        {
+            var pers = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityPolicy>>();
+            if (pers == null)
+                throw new InvalidOperationException("Missing role persistence service");
+            int tr = 0;
+            return pers.Query(o => o.Oid == policyOid, 0, 1, out tr, Guid.Empty).SingleOrDefault();
+        }
+
+        /// <summary>
+        /// Get the specified user
+        /// </summary>
+        public SecurityUser GetUser(Guid userId)
 		{
 			var pers = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>();
 			if (pers == null)
