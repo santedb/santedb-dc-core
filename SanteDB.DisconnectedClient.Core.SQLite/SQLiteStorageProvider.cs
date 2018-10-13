@@ -58,23 +58,23 @@ namespace SanteDB.DisconnectedClient.SQLite
                 ConnectionString = new System.Collections.Generic.List<ConnectionString>() {
                     new ConnectionString () {
                         Name = "santeDbData",
-                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name, "SanteDB.sqlite")
+                        Value = Path.Combine (dataDirectory, "SanteDB.sqlite")
                     },
                     new ConnectionString () {
                         Name = "santeDbSearch",
-                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.ftsearch.sqlite")
+                        Value = Path.Combine (dataDirectory, "SanteDB.ftsearch.sqlite")
                     },
                     new ConnectionString () {
                         Name = "santeDbQueue",
-                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.MessageQueue.sqlite")
+                        Value = Path.Combine (dataDirectory, "SanteDB.MessageQueue.sqlite")
                     },
                     new ConnectionString () {
                         Name = "santeDbWarehouse",
-                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name,"SanteDB.warehouse.sqlite")
+                        Value = Path.Combine (dataDirectory, "SanteDB.warehouse.sqlite")
                     },
                     new ConnectionString () {
                         Name = "santeDbAudit",
-                        Value = Path.Combine (dataDirectory, ApplicationContext.Current.Application.Name, "SanteDB.audit.sqlite")
+                        Value = Path.Combine (dataDirectory, "SanteDB.audit.sqlite")
                     }
                 }
             };

@@ -284,14 +284,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
                         var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, XamarinApplicationContext.Current.ConfigurationManager.ApplicationDataDirectory, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         break;
                     }
                 case "sync":
                     {
                         var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, XamarinApplicationContext.Current.ConfigurationManager.ApplicationDataDirectory, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSynchronizationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalMailService).AssemblyQualifiedName);

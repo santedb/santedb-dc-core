@@ -34,6 +34,14 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     public class ApplicationConfigurationSection : IConfigurationSection
     {
 
+        /// <summary>
+        /// Application settings
+        /// </summary>
+        public ApplicationConfigurationSection()
+        {
+            this.AppSettings = new List<AppSettingKeyValuePair>();
+        }
+
         // Services
         private List<Object> m_services;
 

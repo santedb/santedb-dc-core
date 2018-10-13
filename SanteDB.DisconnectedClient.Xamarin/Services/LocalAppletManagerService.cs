@@ -325,10 +325,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     // Extract content
                     if (itm.Content is byte[])
                     {
-                        if (Encoding.UTF8.GetString(itm.Content as byte[], 0, 4) == "LZMA")
+                        if (Encoding.UTF8.GetString(itm.Content as byte[], 0, 4) == "LZIP")
                             using (var fs = File.Create(itmPath))
                             using (var ms = new MemoryStream(itm.Content as byte[]))
-                            using (var lzs = new LZipStream(ms, SharpCompress.Compressors.CompressionMode.Decompress))
+                            using (var lzs = new LZipStream(ms, SharpCompress.Compressors.CompressionMode.Decompress, true))
                                 lzs.CopyTo(fs);
                         else
                             File.WriteAllBytes(itmPath, itm.Content as byte[]);

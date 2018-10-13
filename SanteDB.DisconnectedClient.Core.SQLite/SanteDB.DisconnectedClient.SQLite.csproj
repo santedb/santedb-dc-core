@@ -244,7 +244,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.1.6" />
+    <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.1.8" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.0" />
     <PackageReference Include="SharpCompress" Version="0.18.2" />
     <PackageReference Include="SQLite.Net.Core-PCL.MEDIC">

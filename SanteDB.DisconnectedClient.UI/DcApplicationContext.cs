@@ -155,7 +155,7 @@ namespace SanteDB.DisconnectedClient.UI
 		/// Initializes a new instance of the <see cref="DisconnectedClient.DcApplicationContext"/> class.
 		/// </summary>
 		/// <param name="dialogProvider">Dialog provider.</param>
-		public DcApplicationContext (IDialogProvider dialogProvider, SecurityApplication applicationId)
+		public DcApplicationContext (IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
 		{
 			this.m_dialogProvider = dialogProvider;
             c_application = applicationId;
@@ -166,14 +166,14 @@ namespace SanteDB.DisconnectedClient.UI
 		/// configuring the software
 		/// </summary>
 		/// <returns><c>true</c>, if temporary was started, <c>false</c> otherwise.</returns>
-		public static bool StartTemporary(IDialogProvider dialogProvider, SecurityApplication applicationId)
+		public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
         {
             try
             {
-                var retVal = new DcApplicationContext(dialogProvider, applicationId);
+                var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
                 retVal.SetProgress("Run setup", 0);
 
-                retVal.m_configurationManager = new DcConfigurationManager(DcConfigurationManager.GetDefaultConfiguration());
+                retVal.m_configurationManager = new DcConfigurationManager(instanceName, DcConfigurationManager.GetDefaultConfiguration(instanceName));
 
                 ApplicationContext.Current = retVal;
                 ApplicationServiceContext.Current = ApplicationContext.Current;
@@ -218,11 +218,11 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Start the application context
         /// </summary>
-        public static bool StartContext(IDialogProvider dialogProvider, SecurityApplication applicationId)
+        public static bool StartContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
         {
 
-            var retVal = new DcApplicationContext(dialogProvider, applicationId);
-            retVal.m_configurationManager = new DcConfigurationManager();
+            var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
+            retVal.m_configurationManager = new DcConfigurationManager(instanceName);
             // Not configured
             if (!retVal.ConfigurationManager.IsConfigured)
             {
@@ -363,16 +363,13 @@ namespace SanteDB.DisconnectedClient.UI
                 {
                     retVal.m_tracer?.TraceError(e.ToString());
                     //ApplicationContext.Current = null;
-                    retVal.m_configurationManager= new DcConfigurationManager(DcConfigurationManager.GetDefaultConfiguration());
+                    retVal.m_configurationManager= new DcConfigurationManager(instanceName, DcConfigurationManager.GetDefaultConfiguration(instanceName));
                     AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                     throw;
                 }
                 return true;
             }
         }
-
-
-
 
         private static Dictionary<String, String> mime = new Dictionary<string, string>()
         {

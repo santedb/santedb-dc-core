@@ -66,7 +66,10 @@ namespace SanteDB.DisconnectedClient.UI
         private SanteDBConfiguration m_configuration;
 
         // Configuration path
-        private readonly String m_configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SanteDBDC", "SanteDB.config");
+        private readonly String m_configPath;
+
+        // The name of the instance
+        private readonly String m_instanceName;
 
         /// <summary>
         /// Returns true if SanteDB is configured
@@ -83,7 +86,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Get a bare bones configuration
         /// </summary>
-        public static SanteDBConfiguration GetDefaultConfiguration()
+        public static SanteDBConfiguration GetDefaultConfiguration(String instanceName)
         {
             // TODO: Bring up initial settings dialog and utility
             var retVal = new SanteDBConfiguration();
@@ -92,8 +95,8 @@ namespace SanteDB.DisconnectedClient.UI
             // Initial Applet configuration
             AppletConfigurationSection appletSection = new AppletConfigurationSection()
             {
-                AppletDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDBDC", "applets"),
-                StartupAsset = "org.santedb.core",
+                AppletDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", instanceName, "applets"),
+                StartupAsset = "org.santedb.uicore",
                 Security = new AppletSecurityConfiguration()
                 {
                     AllowUnsignedApplets = true,
@@ -105,7 +108,7 @@ namespace SanteDB.DisconnectedClient.UI
             ApplicationConfigurationSection appSection = new ApplicationConfigurationSection()
             {
                 Style = StyleSchemeType.Dark,
-                UserPrefDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDBDC", "userpref"),
+                UserPrefDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", instanceName, "userpref"),
                 ServiceTypes = new List<string>() {
                     typeof(AesSymmetricCrypographicProvider).AssemblyQualifiedName,
                     typeof(LocalPolicyDecisionService).AssemblyQualifiedName,
@@ -212,15 +215,17 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Creates a new instance of the configuration manager with the specified configuration file
         /// </summary>
-        public DcConfigurationManager()
+        public DcConfigurationManager(String instanceName)
         {
+            this.m_instanceName = instanceName;
+            this.m_configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SanteDB", instanceName, "SanteDB.config");
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Android.Configuration.ConfigurationManager"/> class.
         /// </summary>
         /// <param name="config">Config.</param>
-        public DcConfigurationManager(SanteDBConfiguration config)
+        public DcConfigurationManager(String instanceName, SanteDBConfiguration config) : this(instanceName)
         {
             this.m_configuration = config;
         }
@@ -290,7 +295,7 @@ namespace SanteDB.DisconnectedClient.UI
         {
             get
             {
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDBDC");
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName);
             }
         }
 

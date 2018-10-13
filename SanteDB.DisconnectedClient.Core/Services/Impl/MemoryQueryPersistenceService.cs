@@ -144,5 +144,23 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
             if (this.m_queryCache.TryGetValue(queryId, out query))
                 query.Results.AddRange(results);
         }
+        
+        /// <summary>
+        /// Find the query id by the query tag
+        /// </summary>
+        public Guid FindQueryId(object queryTag)
+        {
+            return this.m_queryCache.FirstOrDefault(o => o.Value.QueryTag == queryTag).Key;
+        }
+
+        /// <summary>
+        /// Set the query tag
+        /// </summary>
+        public void SetQueryTag(Guid queryId, object value)
+        {
+            MemoryQueryInfo query = null;
+            if (this.m_queryCache.TryGetValue(queryId, out query))
+                query.QueryTag = value;
+        }
     }
 }
