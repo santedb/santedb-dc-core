@@ -71,11 +71,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Hacks
                     sqlStatement.Append($" INNER JOIN {tblMap.TableName} AS {tblName} ON ({directFkName}.{fkKeyColumn.Name} = {tblName}.{fkKeyColumn.Name})");
 
                     // Append the where clause
-                    whereClause.And(builder.CreateWhereCondition(property.PropertyType, predicate.SubPath, values, $"{queryPrefix}{declProp.Name}_", new List<TableMapping>() { tblMap }));
+                    whereClause.And(builder.CreateWhereCondition(property.PropertyType, predicate.SubPath, values, $"{queryPrefix}{declProp.Name}_", new List<TableMapping>() { tblMap }, tblName));
 
-                    // Add obslt_utc version?
-                    if (typeof(DbBaseData).GetTypeInfo().IsAssignableFrom(tblMap.OrmType.GetTypeInfo()))
-                        whereClause.And($"{tblName}.{tblMap.GetColumn(nameof(DbBaseData.ObsoletionTime)).Name} IS NULL");
+                }
+                else
+                {
+                    // Append the where clause
+                    whereClause.And(builder.CreateWhereCondition(property.PropertyType, predicate.SubPath, values, $"{queryPrefix}{declProp.Name}_", new List<TableMapping>() { tblMap }, $"{directFkName}"));
                 }
 
                 return true;
