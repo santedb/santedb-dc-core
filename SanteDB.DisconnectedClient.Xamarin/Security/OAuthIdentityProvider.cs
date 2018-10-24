@@ -107,12 +107,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
             // Get the scope being requested
             String scope = "*";
-            if (principal is ClaimsPrincipal)
-                scope = (principal as ClaimsPrincipal).Claims.FirstOrDefault(o => o.Type == ClaimTypes.SanteDBScopeClaim)?.Value ?? scope;
-            else if (principal is IOfflinePrincipal && password == null)
+            if (principal is IOfflinePrincipal && password == null)
                 return localIdp.Authenticate(principal, password);
-            else
-                scope = "*";
 
             // Authenticate
             IPrincipal retVal = null;
@@ -124,6 +120,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                     try
                     {
+                        // TODO: Add claims for elevation!
+                        var overrideClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.SanteDBOverrideClaim)?.Value;
+                        var purposeOfUseClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.XspaPurposeOfUseClaim)?.Value;
+
+                        if (!String.IsNullOrEmpty(overrideClaim))
+                            scope = overrideClaim;
+
                         // Create grant information
                         OAuthTokenRequest request = null;
                         if (!String.IsNullOrEmpty(password))
@@ -146,7 +149,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         {
                             restClient.Requesting += (o, p) =>
                             {
-                                p.AdditionalHeaders.Add("X-SanteDBClient-Claim", Convert.ToBase64String(Encoding.UTF8.GetBytes(String.Format("{0}={1}", ClaimTypes.SanteDBScopeClaim, scope))));
+
+                                if (!String.IsNullOrEmpty(overrideClaim))
+                                {
+                                    p.AdditionalHeaders.Add("X-SanteDBClient-Claim", Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                                            $"{ClaimTypes.SanteDBOverrideClaim}=true;{ClaimTypes.XspaPurposeOfUseClaim}={purposeOfUseClaim}"
+                                        )));
+                                }
+
                                 if (!String.IsNullOrEmpty(tfaSecret))
                                     p.AdditionalHeaders.Add("X-SanteDB-TfaSecret", tfaSecret);
                             };

@@ -58,6 +58,12 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
 
         /// <summary>
+        /// Override claim
+        /// </summary>
+        public const string SanteDBOverrideClaim = "urn:santedb:org:override";
+
+
+        /// <summary>
         /// Patient identifier claim
         /// </summary>
         public const string XUAPatientIdentifierClaim = "urn:oasis:names:tc:xacml:2.0:resource:resource-id";
