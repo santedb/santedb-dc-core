@@ -610,5 +610,13 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
 			iids.SetLockout(securityUser.UserName, false);
             this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(securityUser, "lock=false"));
 		}
-	}
+
+        /// <summary>
+        /// Get the specified provenance identifier
+        /// </summary>
+        public SecurityProvenance GetProvenance(Guid provenanceId)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
