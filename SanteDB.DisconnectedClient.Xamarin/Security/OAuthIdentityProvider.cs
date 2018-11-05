@@ -177,6 +177,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                 this.m_tracer.TraceWarning("Network unavailable, trying local");
                                 try
                                 {
+                                    if (localIdp == null)
+                                        throw new SecurityException(Strings.err_offline_no_local_available);
                                     retVal = localIdp.Authenticate(principal, password);
                                 }
                                 catch (Exception ex2)
@@ -197,7 +199,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             this.m_tracer.TraceWarning("Original OAuth2 request failed trying local. {0}", ex.Message);
                             try
                             {
-                                retVal = localIdp.Authenticate(principal, password);
+                                if (localIdp == null)
+                                    throw new SecurityException(Strings.err_offline_no_local_available);
+                                retVal = localIdp?.Authenticate(principal, password);
                             }
                             catch (Exception ex2)
                             {
@@ -215,7 +219,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             try
                             {
                                 this.m_tracer.TraceWarning("Original OAuth2 request failed trying local. {0}", ex.Message);
-                                retVal = localIdp.Authenticate(principal, password);
+                                if (localIdp == null)
+                                    throw new SecurityException(Strings.err_offline_no_local_available);
+
+                                retVal = localIdp?.Authenticate(principal, password);
                             }
                             catch (Exception ex2)
                             {
@@ -238,7 +245,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             try
                             {
                                 this.m_tracer.TraceWarning("Failed to fetch remote security parameters - {0}", ex.Message);
-                                retVal = localIdp.Authenticate(principal, password);
+
+                                if (localIdp == null)
+                                    throw new SecurityException(Strings.err_offline_no_local_available);
+
+                                retVal = localIdp?.Authenticate(principal, password);
                             }
                             catch (Exception ex2)
                             {
@@ -279,8 +290,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
+                this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, password, false) { Principal = retVal });
                 throw;
             }

@@ -100,7 +100,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             switch (ApplicationContext.Current.OperatingSystem)
             {
                 case OperatingSystemID.Win32:
-                    if (options["encrypt"].Equals(true))
+                    if (options.ContainsKey("encrypt") && options["encrypt"].Equals(true))
                         configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add("SQLite.Net.Platform.SqlCipher.SQLitePlatformSqlCipher, SQLite.Net.Platform.SqlCipher");
                     else
                         configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic");

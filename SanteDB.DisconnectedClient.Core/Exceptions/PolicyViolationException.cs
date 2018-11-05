@@ -71,6 +71,7 @@ namespace SanteDB.DisconnectedClient.Core.Exceptions
         /// Gets the principal that violated the policy
         /// </summary>
         public IPrincipal Principal { get; private set; }
+
         /// <summary>
         /// Gets the policy that was violated
         /// </summary>

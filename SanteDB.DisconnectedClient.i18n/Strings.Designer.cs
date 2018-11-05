@@ -197,6 +197,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot contact central authentication server and local identity provider has been configured..
+        /// </summary>
+        public static string err_offline_no_local_available {
+            get {
+                return ResourceManager.GetString("err_offline_no_local_available", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} - Hint: If you changed your password or account lately, try the password you last used on this device. .
         /// </summary>
         public static string err_offline_use_cache_creds {

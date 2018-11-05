@@ -55,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 					{ "Authorization", String.Format ("Bearer {0}", this.Principal.ToString ()) }
 				};
 			else
-				throw new InvalidOperationException ("Cannot create a token credential from non-token principal");
+				throw new UnauthorizedAccessException ("Cannot create a token credential from non-token principal");
 		}
 		#endregion
 	}

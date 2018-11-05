@@ -368,4 +368,7 @@ Sincerely,
   <data name="locale_waitForOutbound" xml:space="preserve">
     <value>Sending items to server...</value>
   </data>
+  <data name="err_offline_no_local_available" xml:space="preserve">
+    <value>Cannot contact central authentication server and local identity provider has been configured.</value>
+  </data>
 </root>

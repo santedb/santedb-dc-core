@@ -93,6 +93,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         }
 
         /// <summary>
+        /// Get the type
+        /// </summary>
+        [JsonProperty("$type")]
+        public String Type { get { return "configuration"; } }
+
+        /// <summary>
         /// Configuation
         /// </summary>
         /// <param name="config"></param>
@@ -266,6 +272,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(HdsiPersistenceService).AssemblyQualifiedName);
             ApplicationContext.Current.Configuration.Sections.RemoveAll(o => o is SynchronizationConfigurationSection);
 
+            ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution = optionObject["applet"]?["solution"]?.ToString();
+            ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = optionObject["applet"]?["autoUpdate"]?.Value<Boolean>() == true;
 
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalAuditService).AssemblyQualifiedName);
 
@@ -305,237 +313,59 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         var syncConfig = new SynchronizationConfigurationSection();
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
-                        var facilityId = optionObject["sync"]["subscribe"].ToString();
-                        var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(facilityId), Guid.Empty);
-                        var facilityAddress = facility.LoadCollection<EntityAddress>("Addresses").FirstOrDefault();
-                        var facilityState = facilityAddress?.Value(AddressComponentKeys.State);
-                        var facilityCounty = facilityAddress?.Value(AddressComponentKeys.County);
-
-                        // TODO: Customize this and clean it up ... It is very hackish
-                        foreach (var res in new String[] {
-                        "ConceptSet",
-                        "AssigningAuthority",
-                        "IdentifierType",
-                        "TemplateDefinition",
-                        "ExtensionType",
-                        "ConceptClass",
-                        "Concept",
-                        "Material",
-                        "Place",
-                        "PlaceMe",
-                        "Organization",
-                        "UserEntity",
-                        "UserEntityMe",
-                        "PlaceOther",
-                        "Provider",
-                        "ManufacturedMaterial",
-                        "ManufacturedMaterialMe",
-                        "Patient",
-                        "Person",
-                        "PatientEncounter",
-                        "PatientEncounterMe",
-                        "SubstanceAdministration",
-                        "CodedObservation",
-                        "QuantityObservation",
-                        "TextObservation",
-                        "Act"})
+                        var facilityIdentifiers = optionObject["sync"]["subscribe"].ToArray();
+                        foreach(var id in facilityIdentifiers)
                         {
-                            var syncSetting = new SynchronizationResource()
+                            var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(id.ToString()), Guid.Empty);
+
+                            // Subscription data
+                            // TODO: Check if mode is ALL
+                            var subscriptions = optionObject["sync"]["resource"].ToArray();
+                            syncConfig.SynchronizationResources.AddRange(subscriptions.Select(sub => new SynchronizationResource()
                             {
-                                ResourceAqn = res,
-                                Triggers = new String[] { "Person", "Act", "SubstanceAdministration", "QuantityObservation", "CodedObservation", "TextObservation", "PatientEncounter" }.Contains(res) ? SynchronizationPullTriggerType.Always :
-                                    SynchronizationPullTriggerType.OnNetworkChange | SynchronizationPullTriggerType.OnStart
-                            };
-
-                            // Subscription
-                            if (optionObject["data"]["sync"]["subscribe"] == null)
-                            {
-                                var efield = typeof(EntityClassKeys).GetField(res);
-
-                                if (res == "Person")
+                                Name = sub["name"].ToString(),
+                                ResourceAqn = sub["resource"].ToString(),
+                                Triggers = (SynchronizationPullTriggerType)Enum.Parse(typeof(SynchronizationPullTriggerType), sub["trigger"].ToString()),
+                                Always = sub["trigger"].ToString() == "Always",
+                                Filters = sub["filter"].ToArray().Select(f =>
                                 {
-                                    syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Patient);
-                                    syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Person + "&relationship.source.classConcept=" + EntityClassKeys.Patient);
-                                }
-                                else if (res == "Act")
-                                {
-                                    syncSetting.Filters.Add("classConcept=" + ActClassKeys.AccountManagement);
-                                    syncSetting.Filters.Add("classConcept=" + ActClassKeys.Supply);
-                                }
-                                else if (res == "EntityRelationship" || res == "UserEntityMe") continue;
-                                else if (efield != null && res != "Place")
-                                    syncSetting.Filters.Add("classConcept=" + efield.GetValue(null).ToString());
-                            }
-                            else
-                            { // Only interested in a few facilities
-                                if (!syncConfig.Facilities.Contains(facilityId))
-                                    syncConfig.Facilities.Add(facilityId);
+                                    var filter = f.ToString();
 
-                                switch (res)
-                                {
-                                    case "UserEntity":
-                                    case "Provider":
-                                        syncSetting.Name = "locale.sync.resource.Provider";
-                                        if (syncSetting.Filters.Count == 0)
-                                        {
-                                            // All users and providers for stuff I'm interested in the area
-                                            syncSetting.Filters.Add("participation[Location|EntryLocation|Destination|InformationRecipient|PrimaryInformationRecipient].player=" + facilityId + "&_exclude=relationship&_exclude=participation");
-                                            // All users or providers who are involved in acts this facility is subscribed to
-                                            syncSetting.Filters.Add("participation.source.participation.player=" + facilityId + "&_exclude=relationship&_exclude=participation");
-                                        }
-                                        break;
-                                    case "Patient":
-                                        syncSetting.Name = "locale.sync.resource.Patient";
-                                        syncSetting.Filters.Add("relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
-                                        break;
-                                    case "Person":
-                                        syncSetting.Name = "locale.sync.resource.Person";
-                                        syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Person + "&relationship.source.classConcept=" + EntityClassKeys.Patient + "&relationship.source.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
-                                        break;
-                                    case "Act":
-                                        syncSetting.Name = "locale.sync.resource.Act.other";
-                                        syncSetting.Filters.Add("classConcept=!" + ActClassKeys.SubstanceAdministration +
-                                            "&classConcept=!" + ActClassKeys.Observation +
-                                            "&classConcept=!" + ActClassKeys.Encounter +
-                                            "&classConcept=!" + ActClassKeys.Procedure +
-                                            "&participation[Destination|Location].player=" + facilityId + "&_expand=relationship&_expand=participation");
-                                        //syncSetting.Filters.Add("classConcept=" + ActClassKeys.Supply + "&participation[Location].player=" + itm + "&_expand=relationship&_expand=participation");
-                                        //syncSetting.Filters.Add("classConcept=" + ActClassKeys.AccountManagement + "&participation[Location].player=" + itm + "&_expand=relationship&_expand=participation");
-                                        //syncSetting.Filters.Add("participation[EntryLocation].player=" + itm + "&_expand=relationship&_expand=participation");
-                                        break;
-                                    case "UserEntityMe":
-                                        syncSetting.Name = "locale.sync.resource.UserEntity.my";
-                                        syncSetting.ResourceAqn = "UserEntity";
-                                        syncSetting.Triggers = SynchronizationPullTriggerType.Always;
-                                        syncSetting.Filters.Add("relationship[DedicatedServiceDeliveryLocation].target=" + facilityId + "&_expand=relationship&_expand=participation");
-                                        break;
-                                    case "SubstanceAdministration":
-                                    case "QuantityObservation":
-                                    case "CodedObservation":
-                                    case "TextObservation":
-                                    case "PatientEncounter":
+                                    while (filter.Contains("$"))
+                                    {
+                                        int spos = filter.IndexOf("$") + 1,
+                                            slen = filter.IndexOf("$", spos) - spos;
 
-                                        // I want all stuff for patients in my catchment
-                                        syncSetting.Filters.Add("participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + facilityId);
-                                        // I want all stuff for my facility for patients which are not assigned to me
-                                        syncSetting.Filters.Add("participation[Location|InformationRecipient|EntryLocation].player=" + facilityId + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&participation[RecordTarget].player.relationship[IncidentalServiceDeliveryLocation].target=!" + facilityId);
-                                        // All stuff that is happening out of my facility for any patient associated with me
-                                        //syncSetting.Filters.Add("participation[Location|InformationRecipient|EntryLocation].player=!" + itm + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation].target=" + itm);
-                                        //syncSetting.Filters.Add("participation[Location].player=!" + itm + "&participation[RecordTarget].player.relationship[IncidentalServiceDeliveryLocation].target=" + itm);
-                                        //syncSetting.Filters.Add("participation[Location].player=" + itm + "&participation[RecordTarget].player.relationship[DedicatedServiceDeliveryLocation].target=!" + itm + "&_expand =relationship&_expand=participation");
-                                        break;
-                                    case "PatientEncounterMe":
-                                        syncSetting.Name = "locale.sync.resource.PatientEncounter.my";
-                                        syncSetting.Filters.Add("participation[RecordTarget].source.participation[Location].player=" + facilityId + "&participation[RecordTarget].source.statusConcept=" + StatusKeys.Active + "&participation[RecordTarget].source.classConcept=" + ActClassKeys.Encounter);
-                                        syncSetting.ResourceAqn = "Person";
-                                        syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
-                                        break;
-                                    case "Place":
-                                        if (facilityState != null)
-                                        {
-                                            syncSetting.Name = "locale.sync.resource.Place.state";
+                                        var varName = filter.Substring(spos, slen);
+                                        var pexpr = QueryExpressionParser.BuildPropertySelector<Place>(varName.Substring(varName.IndexOf(".") + 1));
 
-                                            // all SDL in my county
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=" + facilityCounty + "&_exclude=relationship&_exclude=participation");
-                                            // all places in my county
-                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=" + facilityCounty + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                        }
-                                        else if (facilityCounty != null)
-                                        {
-                                            syncSetting.Name = "locale.sync.resource.Place.county";
-                                            // all sdl in my state
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=" + facilityState + "&_exclude=relationship&_exclude=participation");
-                                            // all places in my state
-                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=" + facilityState + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                        }
-                                        else
-                                        {
-                                            syncSetting.Name = "locale.sync.resource.Place.all";
+                                        // Evaluate
+                                        var sval = pexpr.Compile().DynamicInvoke(facility);
+                                        filter = filter.Replace($"${varName}$", sval?.ToString());
+                                    }
 
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&_exclude=relationship&_exclude=participation");
-                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                        }
-                                        // all places assigned to me
-                                        syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&relationship[DedicatedServiceDeliveryLocation].target=" + facilityId);
-                                        break;
-                                    case "PlaceOther":
-
-                                        syncSetting.ResourceAqn = "Place";
-                                        syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
-                                        if (facilityState != null)
-                                        {
-                                            syncSetting.Name = "locale.sync.resource.Place.outOfState";
-
-                                            // all SDL in my county
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=!" + facilityCounty + "&_exclude=relationship&_exclude=participation");
-                                            // all places in my county
-                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[County].value=!" + facilityCounty + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                        }
-                                        else if (facilityCounty != null)
-                                        {
-                                            syncSetting.Name = "locale.sync.resource.Place.outOfCounty";
-                                            // all sdl in my state
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=!" + facilityState + "&_exclude=relationship&_exclude=participation");
-                                            // all places in my state
-                                            syncSetting.Filters.Add("classConcept=!" + EntityClassKeys.ServiceDeliveryLocation + "&address.component[State].value=!" + facilityState + "&relationship[DedicatedServiceDeliveryLocation].target=!" + facilityId + "&_exclude=relationship");
-                                        }
-                                        else
-                                            syncSetting = null;
-                                        break;
-                                    case "PlaceMe":
-                                        syncSetting.Name = "locale.sync.resource.Place.my";
-
-                                        syncSetting.ResourceAqn = "Place";
-                                        syncSetting.Triggers = SynchronizationPullTriggerType.Always;
-                                        syncSetting.Filters.Add("id=" + facilityId);
-                                        syncSetting.Always = true;
-                                        break;
-                                    case "Material":
-                                        syncSetting.Name = "locale.sync.resource.Material";
-
-                                        if (syncSetting.Filters.Count == 0)
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.Material);
-                                        break;
-                                    case "ManufacturedMaterial":
-                                        syncSetting.Name = "locale.sync.resource.ManufacturedMaterial";
-
-                                        if (syncSetting.Filters.Count == 0)
-                                            syncSetting.Filters.Add("classConcept=" + EntityClassKeys.ManufacturedMaterial);
-                                        break;
-                                    case "ManufacturedMaterialMe":
-                                        syncSetting.Name = "locale.sync.resource.ManufacturedMaterial.my";
-                                        syncSetting.ResourceAqn = "ManufacturedMaterial";
-                                        syncSetting.Triggers = SynchronizationPullTriggerType.PeriodicPoll;
-                                        // Any materials involved in an act assigned to me
-                                        syncSetting.Filters.Add("participation[Consumable].source.participation[Location|Destination].player=" + facilityId);
-                                        // Any materials I own
-                                        syncSetting.Filters.Add("relationship[OwnedEntity].source=" + facilityId);
-                                        break;
-
-                                }
-                            }
-
-                            // Assignable from
-                            //if (typeof(BaseEntityData).IsAssignableFrom(binder.BindToType(typeof(BaseEntityData).Assembly.FullName, res)))
-                            //{
-                            //    for (int i = 0; i < syncSetting.Filters.Count; i++)
-                            //        syncSetting.Filters[i] += "&obsoletionTime=null";
-                            //    if (syncSetting.Filters.Count == 0)
-                            //        syncSetting.Filters.Add("obsoletionTime=null");
-                            //}
-
-                            // TODO: Patient registration <> facility
-
-                            if (syncSetting != null)
-                                syncConfig.SynchronizationResources.Add(syncSetting);
+                                    return filter;
+                                }).ToList()
+                            }));
                         }
+
+                        // Synchronization resources
                         syncConfig.SynchronizationResources.Add(new SynchronizationResource()
                         {
                             ResourceAqn = "EntityRelationship",
                             Triggers = SynchronizationPullTriggerType.OnCommit
                         });
-                        if (optionObject["data"]["sync"]["pollInterval"].Value<String>() != "00:00:00")
-                            syncConfig.PollIntervalXml = optionObject["data"]["sync"]["pollInterval"].Value<String>();
+
+                        syncConfig.SynchronizationResources = syncConfig.SynchronizationResources.GroupBy(o => o.Name + o.Triggers.ToString())
+                            .Select(g =>
+                            {
+                                var retVal = g.First();
+                                retVal.Filters = g.SelectMany(r => r.Filters).Distinct().ToList();
+                                return retVal;
+                            })
+                            .ToList();
+                        if (optionObject["sync"]["pollInterval"].Value<String>() != "00:00:00")
+                            syncConfig.PollIntervalXml = optionObject["sync"]["pollInterval"].Value<String>();
                         ApplicationContext.Current.Configuration.Sections.Add(syncConfig);
 
                         break;
@@ -560,7 +390,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             // Audit retention.
             ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().AuditRetention = TimeSpan.Parse(optionObject["security"]["auditRetention"].Value<String>());
 
-            if (optionObject["security"]["onlySubscribedAuth"].Value<Boolean>())
+            if (optionObject["security"]?["onlySubscribedAuth"]?.Value<Boolean>() == true)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().OnlySubscribedFacilities = true;
 
             // Proxy
@@ -590,7 +420,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 if (itm.Binding.Optimize)
                     itm.Binding.OptimizationMethod = method;
 
-            ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = true;
             // Log settings
             var logSettings = ApplicationContext.Current.Configuration.GetSection<DiagnosticsConfigurationSection>();
             logSettings.TraceWriter = new System.Collections.Generic.List<TraceWriterConfiguration>()
@@ -767,40 +596,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     // Recreate the client with the updated security configuration
                     amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                     // Create application user
-                    var role = amiClient.GetRoles(o => o.Name == "SYNCHRONIZERS").CollectionItem.First();
-
-                    // Does the user actually exist?
-                    var existingClient = amiClient.GetUsers(o => o.UserName == deviceName);
-                    if (existingClient.CollectionItem.Count > 0)
-                    {
-                        if (!replaceExisting)
-                            throw new DuplicateNameException(Strings.err_duplicate_deviceName);
-                        else
-                            amiClient.UpdateUser(existingClient.CollectionItem.OfType<SecurityUserInfo>().First().Entity.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
-                            {
-                                PasswordOnly = true,
-                                Entity = new SanteDB.Core.Model.Security.SecurityUser()
-                                {
-                                    Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret,
-                                    UserName = deviceName
-                                }
-                            });
-                    }
-                    else
-                        // Create user
-                        amiClient.CreateUser(new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(new SanteDB.Core.Model.Security.SecurityUser()
-                        {
-                            CreationTime = DateTimeOffset.Now,
-                            UserName = deviceName,
-                            Key = Guid.NewGuid(),
-                            UserClass = UserClassKeys.ApplicationUser,
-                            SecurityHash = Guid.NewGuid().ToString(),
-                            Password = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
-                        })
-                        {
-                            Roles = new List<string>() { "SYNCHRONIZERS" },
-                        });
-
+                    var role = amiClient.GetRole("SYNCHRONIZERS");
 
                     // lookup existing device
                     var existingDevice = amiClient.GetDevices(o => o.Name == deviceName);
@@ -812,7 +608,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             CreationTime = DateTimeOffset.Now,
                             Name = deviceName,
                             DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
-                        }));
+                        })
+                        {
+                            Policies = role.Policies
+                        });
 
                         // Create the device entity 
                         amiClient.CreateDeviceEntity(new DeviceEntity()
