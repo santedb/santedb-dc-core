@@ -411,6 +411,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     case "deflate":
                         method = OptimizationMethod.Deflate;
                         break;
+                    case "gzip":
+                        method = OptimizationMethod.Gzip;
+                        break;
                     case "off":
                         method = OptimizationMethod.None;
                         break;
