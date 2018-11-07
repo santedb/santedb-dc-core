@@ -197,6 +197,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot authenticate device when network unavailable. Synchronization will be suspended.
+        /// </summary>
+        public static string err_network_securityNotAvailable {
+            get {
+                return ResourceManager.GetString("err_network_securityNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot contact central authentication server and local identity provider has been configured..
         /// </summary>
         public static string err_offline_no_local_available {

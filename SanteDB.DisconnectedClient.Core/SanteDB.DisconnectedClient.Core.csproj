@@ -66,6 +66,7 @@
     <Compile Include="Security\IOfflinePrincipal.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\LocalPolicyDecisionService.cs" />
+    <Compile Include="Services\IDeviceIdentityProviderService.cs" />
     <Compile Include="Services\Impl\MailSynchronizationService.cs" />
     <Compile Include="Services\ISymmetricCryptographicProvider.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />

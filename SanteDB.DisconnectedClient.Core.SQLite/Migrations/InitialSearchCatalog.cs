@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
             try
             {
 
-                var connStr = ApplicationContext.Current.Configuration.GetConnectionString("openIzSearch")?.Value;
+                var connStr = ApplicationContext.Current.Configuration.GetConnectionString("santeDbSearch")?.Value;
 
                 // Is the search service registered?
                 if (!String.IsNullOrEmpty(connStr) && ApplicationContext.Current.GetService<IFreetextSearchService>() == null)

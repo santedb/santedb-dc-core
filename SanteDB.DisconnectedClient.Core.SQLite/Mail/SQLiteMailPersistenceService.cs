@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         protected static DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
 
         // Mapper
-        protected static ModelMapper m_mapper = new ModelMapper(typeof(SQLiteMailPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Alerting.ModelMap.xml"));
+        protected static ModelMapper m_mapper = new ModelMapper(typeof(SQLiteMailPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Mail.ModelMap.xml"));
 
         // Builder
         protected static QueryBuilder m_builder;

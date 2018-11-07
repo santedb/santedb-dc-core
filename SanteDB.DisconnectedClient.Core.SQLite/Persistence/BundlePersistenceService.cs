@@ -88,9 +88,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                         // Copy the name component and address component values
                         if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
-                            memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("openIzData").Value}' AS file_db KEY ''");
+                            memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("santeDbData").Value}' AS file_db KEY ''");
                         else
-                            memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("openIzData").Value}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
+                            memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("santeDbData").Value}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
 
                         try
                         {
@@ -123,9 +123,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         using (fileContext.LockConnection())
                         {
                             if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
-                                memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("openIzData").Value}' AS file_db KEY ''");
+                                memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("santeDbData").Value}' AS file_db KEY ''");
                             else
-                                memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("openIzData").Value}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
+                                memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.Configuration.GetConnectionString("santeDbData").Value}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
 
                             try
                             {

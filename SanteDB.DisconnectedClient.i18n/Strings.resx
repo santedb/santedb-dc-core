@@ -371,4 +371,7 @@ Sincerely,
   <data name="err_offline_no_local_available" xml:space="preserve">
     <value>Cannot contact central authentication server and local identity provider has been configured.</value>
   </data>
+  <data name="err_network_securityNotAvailable" xml:space="preserve">
+    <value>Cannot authenticate device when network unavailable. Synchronization will be suspended</value>
+  </data>
 </root>

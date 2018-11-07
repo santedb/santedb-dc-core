@@ -92,6 +92,27 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     {
 
         /// <summary>
+        /// Create a password grant request
+        /// </summary>
+        public static OAuthTokenRequest CreatePasswordRequest(String username, String password, String scope)
+        {
+            return new OAuthTokenRequest(username, password, scope);
+        }
+
+        /// <summary>
+        /// Create a client credentials grant
+        /// </summary>
+        public static OAuthTokenRequest CreateClientCredentialRequest(String clientId, String clientSecret, String scope)
+        {
+            return new OAuthTokenRequest(null, null, "*")
+            {
+                ClientId = clientId,
+                ClientSecret = clientSecret,
+                GrantType = "client_credentials"
+            };
+        }
+
+        /// <summary>
         /// Initializes a new instance of the
         /// <see cref="SanteDB.DisconnectedClient.Xamarin.Security.OAuthTokenServiceCredentials+OAuthTokenRequest"/> class.
         /// </summary>

@@ -133,6 +133,7 @@
     <Compile Include="Security\AesSymmetricCrypographicProvider.cs" />
     <Compile Include="Security\HttpBasicIdentityProvider.cs" />
     <Compile Include="Security\HttpBasicTokenCredentialProvider.cs" />
+    <Compile Include="Security\OAuthDeviceIdentityProvider.cs" />
     <Compile Include="Security\TokenValidationManager.cs" />
     <Compile Include="Services\Attributes\AnonymousAttribute.cs" />
     <Compile Include="Services\Attributes\DemandAttribute.cs" />

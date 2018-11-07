@@ -19,20 +19,20 @@
  -->
 <modelMap xmlns="http://santedb.org/model/map">
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.Core.Security.Audit.Model.DbAuditData, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+		domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditData, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
     <property modelName="CorrelationToken" domainName="Id"/>
   </class>
 
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditActorData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
-  domainClass="SanteDB.DisconnectedClient.Core.Security.Audit.Model.DbAuditActor, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+  domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditActor, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
 
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditableObject, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
-domainClass="SanteDB.DisconnectedClient.Core.Security.Audit.Model.DbAuditObject, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditObject, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
 
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditCode, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
-domainClass="SanteDB.DisconnectedClient.Core.Security.Audit.Model.DbAuditCode, SanteDB.DisconnectedClient.Core, Version=0.5.0.0">
+domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditCode, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
   
 </modelMap>

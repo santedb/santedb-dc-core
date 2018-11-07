@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Security.Audit.Model
+namespace SanteDB.DisconnectedClient.SQLite.Security.Audit.Model
 {
     /// <summary>
     /// Audit actors

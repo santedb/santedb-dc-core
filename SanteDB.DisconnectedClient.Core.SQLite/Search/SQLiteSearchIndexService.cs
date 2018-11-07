@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// </summary>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString("openIzSearch").Value);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString("santeDbSearch").Value);
         }
 
         /// <summary>
@@ -314,7 +314,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     try
                     {
                         // Not Indexed
-                        if (ApplicationContext.Current.Configuration.GetAppSetting("openiz.mobile.core.search.lastIndex") == null)
+                        if (ApplicationContext.Current.Configuration.GetAppSetting("santedb.mobile.core.search.lastIndex") == null)
                             this.Index();
                     }
                     catch { }
@@ -374,7 +374,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                                 ApplicationContext.Current.SetProgress(Strings.locale_indexing, (float)ofs / tr);
                             }
                             if (patientService != null)
-                                ApplicationContext.Current.Configuration.SetAppSetting("openiz.mobile.core.search.lastIndex", DateTime.Now);
+                                ApplicationContext.Current.Configuration.SetAppSetting("santedb.mobile.core.search.lastIndex", DateTime.Now);
                         }
                         catch (Exception e)
                         {

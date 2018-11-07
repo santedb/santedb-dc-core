@@ -19,7 +19,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.Core.Security.Audit.Model;
+using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +53,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
             get
             {
-                return "000-init-openiz-dalhouse-audit";
+                return "000-init-santedb-dalhouse-audit";
             }
         }
 
@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
             var tracer = Tracer.GetTracer(this.GetType());
             // Database for the SQL Lite connection
-            var connStr = ApplicationContext.Current?.Configuration.GetConnectionString("openIzAudit")?.Value;
+            var connStr = ApplicationContext.Current?.Configuration.GetConnectionString("santeDbAudit")?.Value;
             if (String.IsNullOrEmpty(connStr))
                 return true;
             var db = SQLiteConnectionManager.Current.GetConnection(connStr);

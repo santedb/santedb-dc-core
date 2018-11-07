@@ -1101,7 +1101,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            var connectionString = ApplicationContext.Current.Configuration.GetConnectionString("openIzWarehouse");
+            var connectionString = ApplicationContext.Current.Configuration.GetConnectionString("santeDbWarehouse");
 
             this.InitializeDatabase(connectionString.Value);
 

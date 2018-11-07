@@ -31,7 +31,7 @@ using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Model.Map;
 using System.Reflection;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Security.Audit.Model;
+using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
 using SanteDB.Core.Data.QueryBuilder;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
     {
 
         // Model mapper
-        private ModelMapper m_mapper = new ModelMapper(typeof(SQLiteAuditRepositoryService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Security.Audit.Model.ModelMap.xml"));
+        private ModelMapper m_mapper = new ModelMapper(typeof(SQLiteAuditRepositoryService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.ModelMap.xml"));
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteAuditRepositoryService));
@@ -73,7 +73,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         private LockableSQLiteConnection CreateConnection()
         {
             return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(
-                "openIzAudit"
+                "santeDbAudit"
             ).Value);
         }
 

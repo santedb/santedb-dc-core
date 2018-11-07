@@ -256,10 +256,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 #if !DEBUG
                     if (!this.m_bypassMagic &&
                         request.Headers["X-OIZMagic"] != ApplicationContext.Current.ExecutionUuid.ToString() &&
-                        request.UserAgent != $"OpenIZ-DC {ApplicationContext.Current.ExecutionUuid}")
+                        request.UserAgent != $"SanteDB-DC {ApplicationContext.Current.ExecutionUuid}")
                     {
                         // Something wierd with the appp, show them the nice message
-                        if (request.UserAgent.StartsWith("OpenIZ"))
+                        if (request.UserAgent.StartsWith("SanteDB"))
                         {
                             using (var sw = new StreamWriter(response.OutputStream))
                                 sw.WriteLine("Hmm, something went wrong. For security's sake we can't show the information you requested. Perhaps restarting the application will help");
@@ -488,7 +488,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     this.m_tracer.TraceError("Unauthorized action: {0}", ex.Message);
                     AuditUtil.AuditRestrictedFunction(ex, request.Url);
                     response.StatusCode = 403;
-                    var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/403.html");
+                    var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/403.html");
                     var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                     response.OutputStream.Write(buffer, 0, buffer.Length);
 
@@ -503,7 +503,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         if (String.IsNullOrEmpty(authentication))
                             authentication = appletManager.Applets.AuthenticationAssets.FirstOrDefault();
                         if (String.IsNullOrEmpty(authentication))
-                            authentication = "/org/openiz/core/views/security/login.html";
+                            authentication = "/org/santedb/core/views/security/login.html";
 
                         string redirectLocation = String.Format("{0}",
                             authentication, request.RawUrl);
@@ -513,7 +513,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     {
                         response.StatusCode = 403;
 
-                        var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/403.html");
+                        var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/403.html");
                         var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                         response.OutputStream.Write(buffer, 0, buffer.Length);
                     }
@@ -523,7 +523,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 {
                     this.m_tracer.TraceError(ex.Message);
                     response.StatusCode = 404;
-                    var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/404.html");
+                    var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/404.html");
                     var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                     response.OutputStream.Write(buffer, 0, buffer.Length);
 
@@ -532,7 +532,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 {
                     this.m_tracer.TraceError("Internal applet error: {0}", ex.ToString());
                     response.StatusCode = 500;
-                    var errAsset = appletManager.Applets.ResolveAsset("/org.openiz.core/views/errors/500.html");
+                    var errAsset = appletManager.Applets.ResolveAsset("/org.santedb.core/views/errors/500.html");
                     var buffer = appletManager.Applets.RenderAssetContent(errAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                     buffer = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(buffer).Replace("{{ exception }}", ex.ToString()));
                     response.OutputStream.Write(buffer, 0, buffer.Length);

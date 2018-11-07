@@ -71,8 +71,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
         /// <summary>
         /// Assigning device identifier
         /// </summary>
-        [Column("assigningDevice"), ForeignKey(typeof(DbSecurityDevice), nameof(DbSecurityDevice.Uuid))]
-        public byte[] AssigningDeviceUuid { get; set; }
+        [Column("assigningApplicationId"), ForeignKey(typeof(DbSecurityDevice), nameof(DbSecurityDevice.Uuid))]
+        public byte[] AssigningApplicationUuid { get; set; }
 
         /// <summary>
         /// Validation regex

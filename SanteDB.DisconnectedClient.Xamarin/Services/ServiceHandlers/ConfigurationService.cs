@@ -314,7 +314,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
                         var facilityIdentifiers = optionObject["sync"]["subscribe"].ToArray();
-                        foreach(var id in facilityIdentifiers)
+                        foreach (var id in facilityIdentifiers)
                         {
                             var facility = ApplicationContext.Current.GetService<IPlaceRepositoryService>().Get(Guid.Parse(id.ToString()), Guid.Empty);
 
@@ -386,6 +386,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(PlainTextPasswordHasher).AssemblyQualifiedName);
                     break;
             }
+
+            // Override application secret
+            ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret = optionObject["security"]?["client_secret"]?.Value<String>() ?? ApplicationContext.Current.Application.ApplicationSecret;
 
             // Audit retention.
             ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().AuditRetention = TimeSpan.Parse(optionObject["security"]["auditRetention"].Value<String>());
@@ -631,13 +634,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     }
                     else
                     {
-                        amiClient.UpdateDevice(existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
+                        if (!configData.ContainsKey("replaceExisting") || !configData["replaceExisting"].Value<Boolean>())
                         {
+                            ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret = ApplicationContext.Current.Device.DeviceSecret = null;
+                            throw new DuplicateNameException(Strings.err_duplicate_deviceName);
+                        }
+                        else
+                            amiClient.UpdateDevice(existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
+                            {
 
-                            UpdatedTime = DateTime.Now,
-                            Name = deviceName,
-                            DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
-                        }));
+                                UpdatedTime = DateTime.Now,
+                                Name = deviceName,
+                                DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                            })
+                            {
+                                Policies = role.Policies
+                            });
                     }
                 }
                 catch (Exception e)
@@ -707,7 +719,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 else
                 {
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new OAuthIdentityProvider());
+                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new OAuthDeviceIdentityProvider());
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthIdentityProvider).AssemblyQualifiedName);
+                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthDeviceIdentityProvider).AssemblyQualifiedName);
                     // Parse ACS URI
                     serviceClientSection.Client.Add(new ServiceClientDescription()
                     {

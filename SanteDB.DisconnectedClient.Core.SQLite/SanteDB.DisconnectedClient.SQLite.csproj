@@ -176,10 +176,10 @@
     <Compile Include="Warehouse\SQLiteReportDatasource.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Sql\000_init_openiz_algonquin.sql" />
+    <EmbeddedResource Include="Sql\000_init_santedb_algonquin.sql" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Sql\001_init_openiz_core_data.sql" />
+    <EmbeddedResource Include="Sql\001_init_santedb_core_data.sql" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Sql\999_optimize_db.sql" />

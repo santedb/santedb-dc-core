@@ -51,6 +51,7 @@ using System.Security.Cryptography;
 using SanteDB.Core.Applets.Services;
 using SanteDB.DisconnectedClient.UI.Resources;
 using SanteDB.DisconnectedClient.Xamarin.Backup;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 
 namespace SanteDB.DisconnectedClient.UI
 {

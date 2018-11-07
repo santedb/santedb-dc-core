@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
             get
             {
-                return "openiz-edmonton-ctp3-CTP5";
+                return "santedb-edmonton-ctp3-CTP5";
             }
         }
 

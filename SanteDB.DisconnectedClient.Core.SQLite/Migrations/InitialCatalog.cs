@@ -224,8 +224,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 
                 // Run SQL Script
                 string[] resourceSql = {
-                    "SanteDB.DisconnectedClient.SQLite.Sql.000_init_openiz_algonquin.sql",
-                    "SanteDB.DisconnectedClient.SQLite.Sql.001_init_openiz_core_data.sql"
+                    "SanteDB.DisconnectedClient.SQLite.Sql.000_init_santedb_algonquin.sql",
+                    "SanteDB.DisconnectedClient.SQLite.Sql.001_init_santedb_core_data.sql"
                 };
 
 
@@ -287,7 +287,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
             get
             {
-                return "000-init-openiz-algonquin";
+                return "000-init-santedb-algonquin";
             }
         }
 
