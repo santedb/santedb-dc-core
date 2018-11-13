@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(m_configuration.MessageQueueConnectionStringName).Value));
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(m_configuration.MailDataStore).Value));
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         private SQLiteDataContext CreateReadonlyConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.Configuration.GetConnectionString(m_configuration.MessageQueueConnectionStringName).Value));
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.Configuration.GetConnectionString(m_configuration.MailDataStore).Value));
         }
 
         /// <summary>

@@ -55,10 +55,15 @@ namespace SanteDB.DisconnectedClient.SQLite
             {
                 MainDataSourceConnectionStringName = "santeDbData",
                 MessageQueueConnectionStringName = "santeDbQueue",
+                MailDataStore = "santeDbMail",
                 ConnectionString = new System.Collections.Generic.List<ConnectionString>() {
                     new ConnectionString () {
                         Name = "santeDbData",
                         Value = Path.Combine (dataDirectory, "SanteDB.sqlite")
+                    },
+                    new ConnectionString () {
+                        Name = "santeDbMail",
+                        Value = Path.Combine (dataDirectory, "SanteDB.mail.sqlite")
                     },
                     new ConnectionString () {
                         Name = "santeDbSearch",

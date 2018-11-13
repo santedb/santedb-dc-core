@@ -52,7 +52,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 			this.m_tracer.TraceInfo ("Scanning for data migrations...");
 
 			// Scan for migrations 
-			foreach (var dbm in typeof(DataMigrator).GetTypeInfo().Assembly.DefinedTypes) {
+			foreach (var dbm in ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes
+                .Select(o=>Type.GetType(o)?.GetTypeInfo().Assembly).Distinct().SelectMany(a=>a.DefinedTypes)) {
 				try {
 					if(dbm.AsType() == typeof(DataMigrator) ||
                         !typeof(IDbMigration).GetTypeInfo().IsAssignableFrom(dbm))
