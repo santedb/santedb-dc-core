@@ -158,8 +158,15 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                     amiClient.Client.Description.Endpoint[0].Timeout = 10000;
                     if (amiClient.Ping())
                     {
+                        var solution = ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution;
+                        IEnumerable<AppletManifestInfo> infos = null;
+                        if (!String.IsNullOrEmpty(solution))
+                            infos = amiClient.GetAppletSolution(solution).Include;
+                        else
+                            infos = amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>();
+
                         amiClient.Client.Description.Endpoint[0].Timeout = 30000;
-                        foreach (var i in amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>())
+                        foreach (var i in infos)
                         {
                             var installed = ApplicationContext.Current.GetService<IAppletManagerService>().GetApplet(i.AppletInfo.Id);
                             if (installed == null ||
@@ -183,7 +190,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            if (!this.m_checkedForUpdates)
+            if (!this.m_checkedForUpdates &&
+                ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets)
                 this.AutoUpdate();
 
             this.Started?.Invoke(this, EventArgs.Empty);
