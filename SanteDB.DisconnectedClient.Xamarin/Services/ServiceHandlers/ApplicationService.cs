@@ -163,12 +163,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 // Cannot have menus if not logged in
                 if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated) return null;
 
+                var context = MiniHdsiServer.CurrentContext.Request.QueryString["context"];
+
                 var rootMenus = ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.Menus).OrderBy(o => o.Order).ToArray();
                 List<MenuInformation> retVal = new List<MenuInformation>();
 
                 // Create menus
                 foreach (var mnu in rootMenus)
-                    this.ProcessMenuItem(mnu, retVal);
+                    this.ProcessMenuItem(mnu, retVal, context);
                 retVal.RemoveAll(o => o.Action == null && o.Menu?.Count == 0);
 
 
@@ -184,10 +186,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <summary>
         /// Process menu item
         /// </summary>
-        private void ProcessMenuItem(AppletMenu menu, List<MenuInformation> retVal)
+        private void ProcessMenuItem(AppletMenu menu, List<MenuInformation> retVal, String context)
         {
             // TODO: Demand permission
-            if (menu.Asset != null &&
+            if (menu.Context != context || menu.Asset != null &&
                 !ApplicationContext.Current.GetService<IAppletManagerService>().Applets.ResolveAsset(menu.Asset, menu.Manifest.Assets[0])?.Policies?.Any(p => ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) == SanteDB.Core.Model.Security.PolicyGrantType.Deny) == false)
                 return;
 
@@ -208,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             {
                 existing.Menu = new List<MenuInformation>();
                 foreach (var child in menu.Menus)
-                    this.ProcessMenuItem(child, existing.Menu);
+                    this.ProcessMenuItem(child, existing.Menu, context);
             }
         }
 

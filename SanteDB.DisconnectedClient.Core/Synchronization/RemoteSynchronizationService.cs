@@ -211,7 +211,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 
                             var syncResource = syncTargets[i];
 
-                            ApplicationContext.Current.SetProgress(Strings.locale_startingPoll, (float)i / syncTargets.Count);
+                            ApplicationContext.Current.SetProgress(String.Format(Strings.locale_startingPoll, syncResource.Name), (float)i / syncTargets.Count);
                             foreach (var fltr in syncResource.Filters)
                                 totalResults += this.Pull(syncResource.ResourceType, NameValueCollection.ParseQueryString(fltr), syncResource.Always, syncResource.Name);
                             if (syncResource.Filters.Count == 0)

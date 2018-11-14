@@ -99,13 +99,18 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public String Type { get { return "configuration"; } }
 
         /// <summary>
+        /// Return true if configured
+        /// </summary>
+        [JsonProperty("isConfigured")]
+        public bool IsConfigured { get => (XamarinApplicationContext.Current as XamarinApplicationContext).ConfigurationManager.IsConfigured; }
+
+        /// <summary>
         /// Configuation
         /// </summary>
         /// <param name="config"></param>
         public ConfigurationViewModel(SanteDBConfiguration config)
         {
             if (config == null) return;
-
             this.RealmName = config.GetSection<SecurityConfigurationSection>()?.Domain;
             this.Security = config.GetSection<SecurityConfigurationSection>();
             this.Data = config.GetSection<DataConfigurationSection>();
@@ -326,7 +331,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                                 Name = sub["name"].ToString(),
                                 ResourceAqn = sub["resource"].ToString(),
                                 Triggers = (SynchronizationPullTriggerType)Enum.Parse(typeof(SynchronizationPullTriggerType), sub["trigger"].ToString()),
-                                Always = sub["trigger"].ToString() == "Always",
+                                Always = Boolean.Parse(sub["ignoreModifiedOn"].ToString()),
                                 Filters = sub["filter"].ToArray().Select(f =>
                                 {
                                     var filter = f.ToString();

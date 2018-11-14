@@ -749,6 +749,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 
             if (count >= 0)
                 sb.AppendFormat(" LIMIT {0}", count);
+            else
+                sb.AppendFormat(" LIMIT 100 ");
             if (offset >= 0)
                 sb.AppendFormat(" OFFSET {0}", offset);
 
