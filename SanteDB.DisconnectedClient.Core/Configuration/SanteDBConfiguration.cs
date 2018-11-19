@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 	{
 
 	    private static XmlSerializer s_xsz = new XmlSerializer(typeof(SanteDBConfiguration));
-        
+                
         /// <summary>
         /// SanteDB configuration
         /// </summary>

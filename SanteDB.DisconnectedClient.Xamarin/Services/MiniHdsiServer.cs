@@ -503,7 +503,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         if (String.IsNullOrEmpty(authentication))
                             authentication = appletManager.Applets.AuthenticationAssets.FirstOrDefault();
                         if (String.IsNullOrEmpty(authentication))
-                            authentication = "/org/santedb/core/views/security/login.html";
+                            authentication = "/org.santedb.uicore/views/login.html";
 
                         string redirectLocation = String.Format("{0}",
                             authentication, request.RawUrl);

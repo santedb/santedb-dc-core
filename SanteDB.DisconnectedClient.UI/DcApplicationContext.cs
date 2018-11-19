@@ -179,7 +179,6 @@ namespace SanteDB.DisconnectedClient.UI
                 ApplicationContext.Current = retVal;
                 ApplicationServiceContext.Current = ApplicationContext.Current;
                 ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
-
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
 
