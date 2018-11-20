@@ -78,7 +78,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554DF209-7744-433F-993A-783E2A2803EF}</Project>
-      <Name>OpenIZ.Mobile.Core</Name>
+      <Name>SanteDB.DisconnectedClient.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
       <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
@@ -86,7 +86,7 @@
     </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Xamarin\SanteDB.DisconnectedClient.Xamarin.csproj">
       <Project>{9A06ACC9-4D6F-4EAB-8A8A-9652BC6A70AE}</Project>
-      <Name>OpenIZ.Mobile.Core.Xamarin</Name>
+      <Name>SanteDB.DisconnectedClient.Xamarin</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
