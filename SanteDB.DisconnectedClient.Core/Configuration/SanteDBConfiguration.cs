@@ -26,28 +26,35 @@ using System.IO;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
 using System.Text;
+using System.Linq;
+using System.Xml;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
 
+    /// <summary>
+    /// SanteDB Base configuration
+    /// </summary>
+    [XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    [XmlType(nameof(SanteDBBaseConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    public class SanteDBBaseConfiguration
+    {
+        /// <summary>
+        /// Gets the list of section types in this configuration
+        /// </summary>
+        [XmlArray("sections"), XmlArrayItem("add")]
+        public List<String> SectionTypes { get; set; }
 
-	/// <summary>
-	/// Configuration table object
-	/// </summary>
-	[XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    }
+
+    /// <summary>
+    /// Configuration table object
+    /// </summary>
+    [XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
 	[XmlType(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
-	[XmlInclude(typeof(SecurityConfigurationSection))]
-	[XmlInclude(typeof(DataConfigurationSection))]
-	[XmlInclude(typeof(AppletConfigurationSection))]
-	[XmlInclude(typeof(ServiceClientConfigurationSection))]
-	[XmlInclude(typeof(ApplicationConfigurationSection))]
-	[XmlInclude(typeof(DiagnosticsConfigurationSection))]
-    [XmlInclude(typeof(SynchronizationConfigurationSection))]
-    public class SanteDBConfiguration
+    public class SanteDBConfiguration : SanteDBBaseConfiguration
 	{
-
-	    private static XmlSerializer s_xsz = new XmlSerializer(typeof(SanteDBConfiguration));
-                
+        
         /// <summary>
         /// SanteDB configuration
         /// </summary>
@@ -87,7 +94,18 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// <param name="dataStream">Data stream.</param>
 		public static SanteDBConfiguration Load(Stream dataStream)
 		{
-			return s_xsz.Deserialize (dataStream) as SanteDBConfiguration;
+            var configStream = dataStream;
+            if (!configStream.CanSeek)
+            {
+                configStream = new MemoryStream();
+                dataStream.CopyTo(configStream);
+                configStream.Seek(0, SeekOrigin.Begin);
+            }
+
+            // Load the base types
+            var tbaseConfig = new XmlSerializer(typeof(SanteDBBaseConfiguration)).Deserialize(configStream) as SanteDBBaseConfiguration;
+            configStream.Seek(0, SeekOrigin.Begin);
+            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o=>Type.GetType(o)).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
 		}
 
 		/// <summary>
@@ -96,15 +114,15 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// <param name="dataStream">Data stream.</param>
 		public void Save(Stream dataStream)
 		{
-            s_xsz.Serialize (dataStream, this);
+            this.SectionTypes = this.Sections.Select(o => o.GetType().AssemblyQualifiedName).ToList();
+            new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o=>Type.GetType(o)).ToArray()).Serialize(dataStream, this);
 		}
 
-
-		/// <summary>
-		/// Configuration sections
-		/// </summary>
-		/// <value>The sections.</value>
-		[XmlElement("section")]
+        /// <summary>
+        /// Configuration sections
+        /// </summary>
+        /// <value>The sections.</value>
+        [XmlElement("configure")]
 		public List<Object> Sections {
 			get;
 			set;

@@ -25,7 +25,7 @@ using System.Text;
 using System.Threading;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 

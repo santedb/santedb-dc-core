@@ -35,7 +35,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Constants;
 using System.Linq;
 using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Caching;
 using SanteDB.Core.Model.Interfaces;

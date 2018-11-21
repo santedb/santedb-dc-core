@@ -425,7 +425,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <summary>
         /// Audit the use of a restricted function
         /// </summary>
-        public static void AuditRestrictedFunction(UnauthorizedAccessException ex, Uri url)
+        public static void AuditRestrictedFunction(Exception ex, Uri url)
         {
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.UseOfARestrictedFunction));
             AddUserActor(audit);

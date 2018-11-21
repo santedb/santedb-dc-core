@@ -28,13 +28,13 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.EntityLoader;
 using System.Linq;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Services;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Interfaces;
 using System.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.Core.Diagnostics;
 
 namespace SanteDB.DisconnectedClient.Core
 {

@@ -23,7 +23,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;

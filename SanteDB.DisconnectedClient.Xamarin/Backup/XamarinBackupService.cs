@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2017-10-30
  */
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Services;
 using SharpCompress.Archives.Tar;
 using System.IO.Compression;

@@ -21,7 +21,7 @@ using System;
 using System.Security.Permissions;
 using System.Security;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using System.Text;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Exceptions;

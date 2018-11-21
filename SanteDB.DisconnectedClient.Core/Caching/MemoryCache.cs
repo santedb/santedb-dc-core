@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;

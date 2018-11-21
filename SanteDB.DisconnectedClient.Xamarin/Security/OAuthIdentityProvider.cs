@@ -22,7 +22,7 @@ using System.Linq;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Security;
 using Newtonsoft.Json;
 using System.Security;

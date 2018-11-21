@@ -21,7 +21,7 @@ using System;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using System.Security.Permissions;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Http;

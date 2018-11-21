@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SanteDB.Core.Model.ViewModelSerializers">
+      <HintPath>..\Solution Items\SanteDB.Core.Model.ViewModelSerializers.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,49 +45,65 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AgsService.cs" />
+    <Compile Include="Behaviors\AgsCompressionEndpointBehavior.cs" />
+    <Compile Include="Behaviors\AgsCorsEndpointBehavior.cs" />
+    <Compile Include="Behaviors\AgsMagicServiceBehavior.cs" />
+    <Compile Include="Behaviors\AgsMessageLoggingEndpointBehavior.cs" />
+    <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
+    <Compile Include="Model\ConfigurationViewModel.cs" />
+    <Compile Include="Model\StorageProviderViewModel.cs" />
+    <Compile Include="Services\WwwServiceBehavior.cs" />
+    <Compile Include="Configuration\AgsBehaviorConfiguration.cs" />
+    <Compile Include="Configuration\AgsConfigurationSection.cs" />
+    <Compile Include="Configuration\AgsEndpointConfiguration.cs" />
+    <Compile Include="Configuration\AgsServiceConfiguration.cs" />
+    <Compile Include="Contracts\IApplicationServiceContract.cs" />
+    <Compile Include="Contracts\IAuthenticationServiceContract.cs" />
+    <Compile Include="Contracts\IWwwServiceContract.cs" />
+    <Compile Include="Formatter\AgsMessageDispatchFormatter.cs" />
+    <Compile Include="HttpConfigurationKeys.cs" />
+    <Compile Include="Model\ApplicationInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Behaviors\AgsAuthorizationServiceBehavior.cs" />
+    <Compile Include="Behaviors\AgsErrorHandlerServiceBehavior.cs" />
+    <Compile Include="Services\AmiServiceBehavior.cs" />
+    <Compile Include="Services\ApplicationServiceBehavior.cs" />
+    <Compile Include="Services\AuthenticationServiceBehavior.cs" />
+    <Compile Include="Services\HdsiServiceBehavior.cs" />
+    <Compile Include="Services\RisiServiceBehavior.cs" />
   </ItemGroup>
-  
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        <ProjectReference Include="..\restsrvr\RestSrvr\RestSrvr.csproj">
+        <ProjectReference Include="..\..\restsrvr\RestSrvr\RestSrvr.csproj">
           <Project>{16EF1840-0361-439D-806C-92D0411122EB}</Project>
           <Name>RestSrvr</Name>
         </ProjectReference>
-        <ProjectReference Include="..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj">
+        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj">
           <Project>{3a45f695-47a2-464c-ace6-bdabbfa39fbc}</Project>
           <Name>SanteDB.Core.Api</Name>
         </ProjectReference>
-        <ProjectReference Include="..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj">
+        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj">
           <Project>{39e61451-f4fe-493d-b754-5f06eb284aac}</Project>
           <Name>SanteDB.Core.Applets</Name>
         </ProjectReference>
-        <ProjectReference Include="..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
+        <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
           <Project>{f1a82a4f-4a57-47d7-ae76-444c8a4ff54a}</Project>
           <Name>SanteDB.Core.Model</Name>
         </ProjectReference>
-        <ProjectReference Include="..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj">
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj">
           <Project>{786bd0ee-1806-4158-ba45-80249ac6dfe7}</Project>
           <Name>SanteDB.Rest.Common</Name>
         </ProjectReference>
-        <ProjectReference Include="..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj">
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj">
           <Project>{903e2e75-7b62-4c42-a001-404dc0235a6b}</Project>
           <Name>SanteDB.Rest.HDSI</Name>
         </ProjectReference>
-        <ProjectReference Include="..\SanteDB.Core\SanteDB.Core.csproj">
-          <Project>{db9bc05e-45f1-4f96-a161-f36bdecaf566}</Project>
-          <Name>SanteDB.Core</Name>
-        </ProjectReference>
-        <ProjectReference Include="..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj">
-          <Project>{65ef51c6-5cb8-43b8-ae65-4a68f0b44ad2}</Project>
-          <Name>SanteDB.Core.Model.AMI</Name>
-        </ProjectReference>
-        <ProjectReference Include="..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj">
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj">
           <Project>{f14023e2-f8df-4ebc-b2c4-34a825e3790e}</Project>
           <Name>SanteDB.Rest.AMI</Name>
         </ProjectReference>
-        <ProjectReference Include="..\santedb-restsvc\SanteDB.Core.Model.RISI\SanteDB.Core.Model.RISI.csproj">
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.RISI\SanteDB.Core.Model.RISI.csproj">
           <Project>{f3d2fa84-c398-4390-9834-1272cc2d6f89}</Project>
           <Name>SanteDB.Core.Model.RISI</Name>
         </ProjectReference>
@@ -141,6 +160,12 @@
       <Project>{9a06acc9-4d6f-4eab-8a8a-9652bc6a70ae}</Project>
       <Name>SanteDB.DisconnectedClient.Xamarin</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\ViewModel.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\antihaxor" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

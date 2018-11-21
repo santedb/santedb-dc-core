@@ -34,7 +34,7 @@ using System.Globalization;
 using SanteDB.DisconnectedClient.Core.Security;
 using System.Net;
 using SanteDB.Core.Model.AMI.Auth;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Security.Audit;

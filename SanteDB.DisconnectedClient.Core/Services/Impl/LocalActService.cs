@@ -31,7 +31,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Patch;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Impl

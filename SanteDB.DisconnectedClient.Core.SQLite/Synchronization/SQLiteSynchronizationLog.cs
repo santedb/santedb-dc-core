@@ -19,7 +19,7 @@
  */
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using SQLite.Net;
 using System;

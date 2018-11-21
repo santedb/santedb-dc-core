@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using System;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SQLite.Net;
 using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.DisconnectedClient.Core.Services;

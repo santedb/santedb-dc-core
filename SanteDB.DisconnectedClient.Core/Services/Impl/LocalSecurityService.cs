@@ -21,6 +21,7 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
@@ -28,13 +29,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
+using SanteDB.DisconnectedClient.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Impl
 {
 	/// <summary>
 	/// Represents a security repository service that uses the direct local services
 	/// </summary>
-	public class LocalSecurityService : ISecurityRepositoryService, ISecurityAuditEventSource
+	public class LocalSecurityService : 
+        ISecurityRepositoryService, 
+        ISecurityAuditEventSource,
+        ISecurityInformationService
 	{
         public event EventHandler<AuditDataEventArgs> DataCreated;
         public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
@@ -617,6 +622,57 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
         public SecurityProvenance GetProvenance(Guid provenanceId)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Get the active policies for the securable
+        /// </summary>
+        public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
+        {
+            return ApplicationContext.Current.GetService<IPolicyInformationService>().GetActivePolicies(securable).Select(o=>o.ToPolicyInstance());
+        }
+
+        /// <summary>
+        /// Change the password
+        /// </summary>
+        public void ChangePassword(string userName, string password)
+        {
+            ApplicationContext.Current.GetService<IIdentityProviderService>().ChangePassword(userName, password);
+        }
+
+        /// <summary>
+        /// Add users to specified roles
+        /// </summary>
+        /// <param name="users"></param>
+        /// <param name="roles"></param>
+        public void AddUsersToRoles(string[] users, string[] roles)
+        {
+            ApplicationContext.Current.GetService<IRoleProviderService>().AddUsersToRoles(users, roles);
+        }
+
+        /// <summary>
+        /// Remove users from roles
+        /// </summary>
+        public void RemoveUsersFromRoles(string[] users, string[] roles)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Get all roles
+        /// </summary>
+        /// <returns></returns>
+        public string[] GetAllRoles()
+        {
+            return ApplicationContext.Current.GetService<IRoleProviderService>().GetAllRoles();
+        }
+
+        /// <summary>
+        /// Determine user's role membership
+        /// </summary>
+        public bool IsUserInRole(string user, string role)
+        {
+            return ApplicationContext.Current.GetService<IRoleProviderService>().IsUserInRole(user, role);
         }
     }
 }

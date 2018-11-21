@@ -29,7 +29,7 @@ using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.Core;
 

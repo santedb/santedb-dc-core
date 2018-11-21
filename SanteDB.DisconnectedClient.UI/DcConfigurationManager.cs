@@ -23,7 +23,7 @@ using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.DisconnectedClient.Core.Caching;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Xamarin.Configuration;
@@ -176,12 +176,12 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 TraceWriter = new System.Collections.Generic.List<TraceWriterConfiguration>() {
                     new TraceWriterConfiguration () {
-                        Filter = System.Diagnostics.Tracing.EventLevel.LogAlways,
+                        Filter = System.Diagnostics.Tracing.EventLevel.Informational,
                         InitializationData = "SanteDB",
                         TraceWriter = new LogTraceWriter (System.Diagnostics.Tracing.EventLevel.LogAlways, "SanteDB")
                     },
                     new TraceWriterConfiguration() {
-                        Filter = System.Diagnostics.Tracing.EventLevel.LogAlways,
+                        Filter = System.Diagnostics.Tracing.EventLevel.Informational,
                         InitializationData = "SanteDB",
                         TraceWriter = new FileTraceWriter(System.Diagnostics.Tracing.EventLevel.LogAlways, "SanteDB")
                     }

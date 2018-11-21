@@ -26,7 +26,7 @@ using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
 using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using Newtonsoft.Json;
 using SanteDB.Core.Applets.Model;

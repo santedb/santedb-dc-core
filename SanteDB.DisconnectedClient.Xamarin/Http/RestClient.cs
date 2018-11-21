@@ -23,7 +23,7 @@ using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using System.Security;
 using SanteDB.Core.Http;

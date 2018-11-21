@@ -24,7 +24,7 @@ using System.Reflection;
 using SQLite.Net;
 using System.Threading.Tasks;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using System.IO;
 using System.Xml.Serialization;

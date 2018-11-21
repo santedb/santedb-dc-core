@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Services;
 using SQLite.Net;

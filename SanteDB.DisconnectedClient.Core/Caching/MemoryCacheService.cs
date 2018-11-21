@@ -27,7 +27,7 @@ using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;

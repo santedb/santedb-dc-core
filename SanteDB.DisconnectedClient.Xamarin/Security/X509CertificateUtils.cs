@@ -20,7 +20,7 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.i18n;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security

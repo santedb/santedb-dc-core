@@ -20,7 +20,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using System.IO;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;

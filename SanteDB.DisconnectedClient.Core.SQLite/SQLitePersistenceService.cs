@@ -22,7 +22,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Map;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Persistence;

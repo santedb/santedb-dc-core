@@ -28,7 +28,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
 using System.Reflection;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model;
 using SanteDB.Core.Http;

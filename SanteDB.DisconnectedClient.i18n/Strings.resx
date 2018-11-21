@@ -374,4 +374,7 @@ Sincerely,
   <data name="err_network_securityNotAvailable" xml:space="preserve">
     <value>Cannot authenticate device when network unavailable. Synchronization will be suspended</value>
   </data>
+  <data name="err_notInitialized" xml:space="preserve">
+    <value>Not Initialized</value>
+  </data>
 </root>

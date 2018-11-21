@@ -22,7 +22,7 @@ using System.Reflection;
 using System.Linq;
 using SQLite.Net;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;

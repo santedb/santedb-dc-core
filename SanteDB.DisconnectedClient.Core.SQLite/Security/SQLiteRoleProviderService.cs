@@ -22,7 +22,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
 using SQLite.Net;

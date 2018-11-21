@@ -33,7 +33,6 @@ using System.IO;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using System.Security;
 using SanteDB.Core.Applets.Model;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
 using System.Reflection;
 using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
 using SanteDB.Core.Http;
@@ -52,6 +51,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.DisconnectedClient.Xamarin.Services.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Core.Diagnostics;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services
 {

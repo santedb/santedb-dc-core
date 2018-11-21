@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using System.IO;
 using System.Diagnostics.Tracing;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 

@@ -33,7 +33,7 @@ using SanteDB.Core.Model.EntityLoader;
 using System.Diagnostics;
 using System.Security.Principal;
 using SanteDB.Core.Applets;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using System.Diagnostics.Tracing;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.Core.Applets.Model;
@@ -180,6 +180,10 @@ namespace SanteDB.DisconnectedClient.UI
                 ApplicationServiceContext.Current = ApplicationContext.Current;
                 ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
+                foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
+                {
+                    Tracer.AddWriter(tr.TraceWriter, tr.Filter);
+                }
                 retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
 
                 var appletService = retVal.GetService<IAppletManagerService>();
@@ -269,8 +273,11 @@ namespace SanteDB.DisconnectedClient.UI
                         Value = "true"
                     });
 
-                    retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext), retVal.ConfigurationManager.Configuration);
-
+                    retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
+                    foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
+                    {
+                        Tracer.AddWriter(tr.TraceWriter, tr.Filter);
+                    }
                     retVal.SetProgress("Loading configuration", 0.2f);
                     // Load all user-downloaded applets in the data directory
                     var configuredApplets = retVal.Configuration.GetSection<AppletConfigurationSection>().Applets;

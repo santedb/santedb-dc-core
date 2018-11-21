@@ -30,7 +30,7 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Services;
 using System.Globalization;
 using SanteDB.Core.Model.Constants;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;

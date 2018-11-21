@@ -18,7 +18,7 @@
  * Date: 2017-9-1
  */
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Linq;

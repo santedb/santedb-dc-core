@@ -25,7 +25,7 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Interop.HDSI;
 using SanteDB.DisconnectedClient.Core.Security;

@@ -24,7 +24,7 @@ using SanteDB.Core.Services;
 using SanteDB.Core.Model.Collection;
 using System.Linq;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using System.Diagnostics;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Acts;

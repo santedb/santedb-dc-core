@@ -23,7 +23,7 @@ using System.IO;
 using System.Reflection;
 using System.Linq;
 using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.i18n;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration.Data

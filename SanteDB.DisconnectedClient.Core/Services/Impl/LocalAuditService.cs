@@ -24,7 +24,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MARC.HI.EHRS.SVC.Auditing.Data;
-using SanteDB.DisconnectedClient.Core.Diagnostics;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.Core.Model;
