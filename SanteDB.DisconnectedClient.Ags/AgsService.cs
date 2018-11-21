@@ -12,5 +12,21 @@ namespace SanteDB.DisconnectedClient.Ags
     /// </summary>
     public class AgsService : IDaemonService
     {
+        public bool IsRunning => throw new NotImplementedException();
+
+        public event EventHandler Starting;
+        public event EventHandler Started;
+        public event EventHandler Stopping;
+        public event EventHandler Stopped;
+
+        public bool Start()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Stop()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
