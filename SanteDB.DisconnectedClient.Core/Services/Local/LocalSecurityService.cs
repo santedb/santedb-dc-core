@@ -31,7 +31,7 @@ using System.Linq.Expressions;
 using System.Security.Principal;
 using SanteDB.DisconnectedClient.Core.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Impl
+namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
 	/// <summary>
 	/// Represents a security repository service that uses the direct local services

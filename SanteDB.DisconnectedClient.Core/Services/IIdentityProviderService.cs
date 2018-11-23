@@ -128,10 +128,17 @@ namespace SanteDB.DisconnectedClient.Core.Services
 		/// <param name="password">Password.</param>
 		IPrincipal Authenticate(IPrincipal principal, string password);
 
-		/// <summary>
-		/// Gets an un-authenticated identity
-		/// </summary>
-		IIdentity GetIdentity(string userName);
+        /// <summary>
+        /// Authenticate the specified principal with the password
+        /// </summary>
+        /// <param name="principal">Principal.</param>
+        /// <param name="password">Password.</param>
+        IPrincipal Authenticate(IPrincipal principal, string password, string tfaSecret);
+
+        /// <summary>
+        /// Gets an un-authenticated identity
+        /// </summary>
+        IIdentity GetIdentity(string userName);
 
 		/// <summary>
 		/// Authenticate the user using a TwoFactorAuthentication secret

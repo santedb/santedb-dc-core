@@ -17,30 +17,26 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using Newtonsoft.Json;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Security.Principal;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Services;
-using System.Globalization;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
-using System.Xml.Serialization;
-using System.ComponentModel;
-using System.Threading;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using System.Security;
+using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Core.Exceptions;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
+using System.Linq;
+using System.Security;
+using System.Security.Principal;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
@@ -295,7 +291,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                     this.m_entity = amiService.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
 
                     ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => {
-                        var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<UserEntity>>();
+                        var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
                         try
                         {
                             if(persistence.Get((o as Entity).Key.Value) == null)
@@ -321,7 +317,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             {
                 var subFacl = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().Facilities;
                 var isInSubFacility = this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.ToString())) == true;
-                if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(principal, PolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
+                if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {
                     if (this.m_entity == null) {
                         this.m_tracer.TraceError("User facility check could not be done : entity null");

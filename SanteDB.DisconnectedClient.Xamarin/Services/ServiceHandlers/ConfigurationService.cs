@@ -61,9 +61,8 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using System.Linq.Expressions;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Alerting;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Core.Services.Impl;
+using SanteDB.DisconnectedClient.Core.Services.Local;
 using SanteDB.DisconnectedClient.Xamarin.Data;
 using System.Security.Cryptography;
 using Org.BouncyCastle.Crypto.Generators;
@@ -78,6 +77,9 @@ using System.Security.Cryptography.X509Certificates;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using System.Reflection;
+using SanteDB.DisconnectedClient.Core.Services.Remote;
+using SanteDB.DisconnectedClient.Core.Mail;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -227,7 +229,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         [RestOperation(UriPath = "/configuration/user", Method = "GET", FaultProvider = nameof(ConfigurationFaultProvider))]
         [return: RestMessage(RestMessageFormat.Json)]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public ConfigurationViewModel GetUserConfiguration()
         {
             String userId = MiniHdsiServer.CurrentContext.Request.QueryString["_id"] ?? AuthenticationContext.Current.Principal.Identity.Name;
@@ -268,13 +270,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Save configuration
         /// </summary>
         [RestOperation(UriPath = "/configuration", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
-        [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
         public ConfigurationViewModel SaveConfiguration([RestMessage(RestMessageFormat.Json)]JObject optionObject)
         {
             // Clean up join realm stuff
             ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(AmiPolicyInformationService).AssemblyQualifiedName);
-            ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(HdsiPersistenceService).AssemblyQualifiedName);
+            ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(RemoteRepositoryService).AssemblyQualifiedName);
             ApplicationContext.Current.Configuration.Sections.RemoveAll(o => o is SynchronizationConfigurationSection);
 
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution = optionObject["applet"]?["solution"]?.ToString();
@@ -287,15 +289,15 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             {
                 case "online":
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiPolicyInformationService).AssemblyQualifiedName);
-
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiPersistenceService).AssemblyQualifiedName);
+                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteRepositoryService).AssemblyQualifiedName);
+                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(RemoteSecurityRepository).AssemblyQualifiedName);
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiTwoFactorRequestService).AssemblyQualifiedName);
 
                     break;
                 case "offline":
                     {
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(OAuthIdentityProvider).AssemblyQualifiedName || o == typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(DefaultPolicyDecisionService).AssemblyQualifiedName);
                         var storageProvider = StorageProviderUtil.GetProvider(optionObject["data"]["provider"].Value<String>());
                         storageProvider.Configure(ApplicationContext.Current.Configuration, XamarinApplicationContext.Current.ConfigurationManager.ApplicationDataDirectory, optionObject["data"]["options"].ToObject<Dictionary<String, Object>>());
 
@@ -312,7 +314,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiIntegrationService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiTwoFactorRequestService).AssemblyQualifiedName);
                         ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(MailSynchronizationService).AssemblyQualifiedName);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPolicyDecisionService).AssemblyQualifiedName);
+                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(DefaultPolicyDecisionService).AssemblyQualifiedName);
 
                         // Sync settings
                         var syncConfig = new SynchronizationConfigurationSection();
@@ -464,7 +466,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <param name="configData"></param>
         [RestOperation(UriPath = "/configuration/realm", Method = "POST", FaultProvider = nameof(ConfigurationFaultProvider))]
-        [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
         public ConfigurationViewModel JoinRealm([RestMessage(RestMessageFormat.Json)]JObject configData)
         {
@@ -496,7 +498,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             try
             {
 
-                new PolicyPermission(PermissionState.Unrestricted, PolicyIdentifiers.UnrestrictedAdministration).Demand();
+                new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.UnrestrictedAdministration).Demand();
 
                 // We're allowed to access server admin!!!! Yay!!!
                 // We're goin to conigure the realm settings now (all of them)
@@ -574,8 +576,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                     serviceClientSection.Client.Add(description);
                 }
 
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new AmiPolicyInformationService());
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new HdsiPersistenceService());
+                //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new AmiPolicyInformationService());
+                //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new RemoteRepositoryService());
                 ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>().Query(o => o.ConceptSets.Any(s => s.Key == ConceptSetKeys.AddressComponentType));
                 EntitySource.Current = new EntitySource(new ConfigurationEntitySource());
                 byte[] pcharArray = Guid.NewGuid().ToByteArray();
@@ -718,13 +720,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 if (option == null)
                 {
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new HttpBasicIdentityProvider());
+                    //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new HttpBasicIdentityProvider());
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
                 }
                 else
                 {
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new OAuthIdentityProvider());
-                    ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new OAuthDeviceIdentityProvider());
+                    //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new OAuthIdentityProvider());
+                    //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.Add(new OAuthDeviceIdentityProvider());
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthIdentityProvider).AssemblyQualifiedName);
                     ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthDeviceIdentityProvider).AssemblyQualifiedName);
                     // Parse ACS URI
@@ -751,16 +753,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 }
 
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is HdsiPersistenceService);
+                //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
+                //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is RemoteRepositoryService);
 
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw new UnauthorizedAccessException();
             }
             catch (Exception e)
             {
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
-                ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is HdsiPersistenceService);
+                //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is AmiPolicyInformationService);
+                //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Services.RemoveAll(o => o is RemoteRepositoryService);
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw;

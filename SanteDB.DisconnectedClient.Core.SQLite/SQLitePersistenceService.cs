@@ -296,8 +296,6 @@ namespace SanteDB.DisconnectedClient.SQLite
         // Constructor
         public SQLitePersistenceService()
         {
-            var appSection = ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>();
-
             this.m_tracer.TraceInfo("Starting local persistence services...");
             // Iterate the persistence services
             foreach (var t in typeof(SQLitePersistenceService).GetTypeInfo().Assembly.ExportedTypes.Where(o => o.Namespace == "SanteDB.DisconnectedClient.SQLite.Persistence" && !o.GetTypeInfo().IsAbstract && !o.GetTypeInfo().IsGenericTypeDefinition))
@@ -305,7 +303,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                 try
                 {
                     this.m_tracer.TraceVerbose("Loading {0}...", t.AssemblyQualifiedName);
-                    appSection.Services.Add(Activator.CreateInstance(t));
+                    ApplicationContext.Current.AddServiceProvider(t);
                 }
                 catch (Exception e)
                 {
@@ -329,7 +327,7 @@ namespace SanteDB.DisconnectedClient.SQLite
 
 
                     // Already created
-                    if (appSection.Services.Any(o => idpType.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo())))
+                    if (ApplicationContext.Current.GetService(idpType) != null)
                         continue;
 
                     this.m_tracer.TraceVerbose("Creating map {0} > {1}", modelClassType, domainClassType);
@@ -341,7 +339,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         // Construct a type
                         var pclass = typeof(GenericVersionedPersistenceService<,>);
                         pclass = pclass.MakeGenericType(modelClassType, domainClassType);
-                        appSection.Services.Add(Activator.CreateInstance(pclass));
+                        ApplicationContext.Current.AddServiceProvider(pclass);
                     }
                     else if (modelClassType.GetRuntimeProperty("CreatedByKey") != null &&
                         typeof(DbBaseData).GetTypeInfo().IsAssignableFrom(domainClassType.GetTypeInfo()))
@@ -349,7 +347,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         // Construct a type
                         var pclass = typeof(GenericBasePersistenceService<,>);
                         pclass = pclass.MakeGenericType(modelClassType, domainClassType);
-                        appSection.Services.Add(Activator.CreateInstance(pclass));
+                        ApplicationContext.Current.AddServiceProvider(pclass);
                     }
                     else
                     {
@@ -362,7 +360,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         else
                             pclass = typeof(GenericIdentityPersistenceService<,>);
                         pclass = pclass.MakeGenericType(modelClassType, domainClassType);
-                        appSection.Services.Add(Activator.CreateInstance(pclass));
+                        ApplicationContext.Current.AddServiceProvider(pclass);
                     }
 
                 }

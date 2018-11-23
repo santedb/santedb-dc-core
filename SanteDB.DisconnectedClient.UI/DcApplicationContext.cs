@@ -26,7 +26,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using System.IO;
 using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Services.Impl;
+using SanteDB.DisconnectedClient.Core.Services.Local;
 using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.Core.Model.EntityLoader;

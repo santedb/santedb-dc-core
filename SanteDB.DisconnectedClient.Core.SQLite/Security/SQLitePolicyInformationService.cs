@@ -33,6 +33,8 @@ using System.Linq;
 using System.Security.Principal;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Model;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -54,8 +56,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 		{
 			// Demand local admin
 			var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-			if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-				throw new PolicyViolationException(PolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+			if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
+				throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
 
 			var conn = this.CreateConnection();
 			using (conn.Lock())
@@ -107,22 +109,36 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 				var conn = this.CreateConnection();
 				using (conn.Lock())
 				{
-					var policyRaw = conn.Query<DbSecurityPolicy>("SELECT security_policy.* FROM security_user_role INNER JOIN security_role_policy ON (security_role_policy.role_id = security_user_role.role_id) INNER JOIN security_policy ON (security_policy.uuid = security_role_policy.policy_id) INNER JOIN security_user ON (security_user_role.user_id = security_user.uuid) WHERE security_user.username = ? and grant_type = 2",
+					var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_user_role INNER JOIN security_role_policy ON (security_role_policy.role_id = security_user_role.role_id) INNER JOIN security_policy ON (security_policy.uuid = security_role_policy.policy_id) INNER JOIN security_user ON (security_user_role.user_id = security_user.uuid) WHERE security_user.username = ?",
 						identity.Name).ToList();
-					return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), PolicyGrantType.Grant));
+					return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
 				}
 			}
-			else if (securable is Act)
-			{
-				var pAct = securable as Act;
-				throw new NotImplementedException();
-			}
-			else if (securable is Entity)
-			{
-				throw new NotImplementedException();
-			}
-			else
-				return new List<IPolicyInstance>();
+            else if (securable is Act)
+            {
+                var pAct = securable as Act;
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM act_security_policy INNER JOIN security_policy ON (security_policy.uuid = act_security_policy.policy_id) WHERE act_id = ?",
+                        pAct.Key).ToList();
+
+                    return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
+                }
+            }
+            else if (securable is Entity)
+            {
+                var pEntity = securable as Entity;
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM entity_security_policy INNER JOIN security_policy ON (security_policy.uuid = entity_security_policy.policy_id) WHERE ent_id = ?",
+                        pEntity.Key).ToList();
+                    return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
+                }
+            }
+            else
+                return new List<IPolicyInstance>();
 		}
 
 		/// <summary>

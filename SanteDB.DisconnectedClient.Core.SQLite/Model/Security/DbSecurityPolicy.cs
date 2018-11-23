@@ -80,6 +80,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
             set;
         }
 
+        /// <summary>
+        /// Represents the result of a query 
+        /// </summary>
+        public class DbSecurityPolicyInstanceQueryResult : DbSecurityPolicy
+        {
+
+            /// <summary>
+            /// The grant
+            /// </summary>
+            [Column("grant_type")]
+            public int GrantType { get; set; }
+
+        }
 
     }
 }

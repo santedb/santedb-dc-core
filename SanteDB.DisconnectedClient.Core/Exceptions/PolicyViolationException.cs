@@ -39,18 +39,20 @@ namespace SanteDB.DisconnectedClient.Core.Exceptions
         public PolicyViolationException(string policyId, PolicyGrantType outcome)
         {
             this.PolicyId = policyId;
-            this.PolicyDecision = outcome;
+            this.PolicyDecision = AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal ? PolicyGrantType.Elevate : outcome;
+            this.Principal = AuthenticationContext.Current.Principal;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.PolicyViolationException"/> class.
         /// </summary>
         /// <param name="policy">Policy.</param>
         /// <param name="outcome">Outcome.</param>
-        public PolicyViolationException(IPolicy policy, PolicyGrantType outcome)
+        public PolicyViolationException(IPrincipal principal, IPolicy policy, PolicyGrantType outcome)
         {
             this.Policy = policy;
             this.PolicyId = policy.Oid;
-            this.PolicyDecision = outcome;
+            this.PolicyDecision = AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal ? PolicyGrantType.Elevate : outcome;
+            this.Principal = AuthenticationContext.Current.Principal;
         }
 
         /// <summary>

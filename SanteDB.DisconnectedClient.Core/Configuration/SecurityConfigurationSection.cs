@@ -202,7 +202,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// Sets the application secret.
         /// </summary>
         /// <value>The application secret.</value>
-        [XmlIgnore, JsonIgnore]
+        [XmlIgnore, JsonProperty("client_secret")]
         public String ApplicationSecret
         {
             get
@@ -250,6 +250,9 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
                     this.ApplicationSecretXml = null;
             }
         }
+
+        // Don't dislose it
+        public bool ShouldSerializeApplicationSecret => false;
 
         /// <summary>
         /// Gets or sets the application secret
@@ -323,6 +326,12 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         [XmlElement("maxInvalidLogins"), JsonProperty("maxInvalidLogins")]
         public int? MaxInvalidLogins { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hasher (for JSON view model only)
+        /// </summary>
+        [XmlIgnore, JsonProperty("hasher")]
+        public string Hasher { get; set; }
     }
 
 }

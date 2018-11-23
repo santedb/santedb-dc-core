@@ -14,7 +14,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
     /// <summary>
     /// Configuration view model
     /// </summary>
-    [JsonObject]
+    [JsonObject("Configuration")]
     public class ConfigurationViewModel
     {
         public ConfigurationViewModel()
@@ -26,7 +26,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Get the type
         /// </summary>
         [JsonProperty("$type")]
-        public String Type { get { return "configuration"; } }
+        public String Type { get { return "Configuration"; } }
 
         /// <summary>
         /// Return true if configured

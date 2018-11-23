@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// Represents a service client
 		/// </summary>
 		/// <value>The client.</value>
-		[XmlElement("client")]
+		[XmlElement("client"), JsonProperty("client")]
 		public List<ServiceClientDescription> Client {
 			get;
 			set;
@@ -68,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// Gets or sets the type which is to be used for rest clients
 		/// </summary>
 		/// <value>The rest client type xml.</value>
-		[XmlAttribute ("clientType")]
+		[XmlAttribute ("clientType"), JsonIgnore]
 		public String RestClientTypeXml {
 			get { return this.RestClientType?.AssemblyQualifiedName; }
 			set {
@@ -80,12 +80,18 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// Gets or sets the rest client implementation
 		/// </summary>
 		/// <value>The type of the rest client.</value>
-		[XmlIgnore]
+		[XmlIgnore, JsonIgnore]
 		public Type RestClientType {
 			get;
 			set;
 		}
-	}
+
+        /// <summary>
+        /// The optimization
+        /// </summary>
+        [XmlIgnore, JsonProperty("optimize")]
+        public OptimizationMethod Optimize { get; set; }
+    }
 
 	/// <summary>
 	/// A service client reprsent a single client to a service 

@@ -43,31 +43,55 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Authentication with the user and establish a session
         /// </summary>
-        public SessionInfo Authenticate(string userName, string password)
+        public SessionInfo Authenticate(string userName, string password, params Claim[] claims)
         {
-            return this.Authenticate(userName, password, null);
+            return this.Authenticate(userName, password, null, claims);
         }
 
         /// <summary>
         /// Authenticate the user and establish a sessions
         /// </summary>
-        public SessionInfo Authenticate(string userName, string password, string tfaSecret)
+        public SessionInfo Authenticate(string userName, string password, string tfaSecret, params Claim[] claims)
         {
             var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
-            IPrincipal principal = null;
+            IPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(userName, false, claims));
             if (String.IsNullOrEmpty(tfaSecret))
-                principal = idp.Authenticate(userName, password);
+                principal = idp.Authenticate(principal, password);
             else
-                principal = idp.Authenticate(userName, password, tfaSecret);
+                principal = idp.Authenticate(principal, password, tfaSecret);
 
             if (principal == null)
                 throw new SecurityException(Strings.locale_sessionError);
             else
             {
+                AuthenticationContext.Current = new AuthenticationContext(principal);
                 var session = new SessionInfo(principal);
                 session.Key = Guid.NewGuid();
                 this.m_session.Add(session.Key.Value, session);
                 return session;
+            }
+        }
+
+        /// <summary>
+        /// Authenticate the user with PIN
+        /// </summary>
+        public SessionInfo Authenticate(string userName, byte[] pin, params Claim[] claims)
+        {
+            var idp = ApplicationContext.Current.GetService<IPinAuthenticationService>();
+            if (idp == null)
+                throw new NotSupportedException("Authentication provide does not support PIN logins");
+            else
+            {
+                var principal = idp.Authenticate(new ClaimsPrincipal(new ClaimsIdentity(userName, false, claims)), pin);
+                if (principal == null)
+                    throw new SecurityException(Strings.locale_sessionError);
+                else
+                {
+                    var session = new SessionInfo(principal) { Key = Guid.NewGuid() };
+                    this.m_session.Add(session.Key.Value, session);
+                    return session;
+                }
+
             }
         }
 

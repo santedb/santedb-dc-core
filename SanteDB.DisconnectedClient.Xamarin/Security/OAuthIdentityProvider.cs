@@ -41,6 +41,7 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Constants;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
@@ -121,11 +122,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     try
                     {
                         // TODO: Add claims for elevation!
+                        var scopeClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.SanteDBScopeClaim)?.Value;
                         var overrideClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.SanteDBOverrideClaim)?.Value;
                         var purposeOfUseClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.XspaPurposeOfUseClaim)?.Value;
 
-                        if (!String.IsNullOrEmpty(overrideClaim))
-                            scope = overrideClaim;
+                        if (!String.IsNullOrEmpty(scopeClaim))
+                            scope = scopeClaim;
 
                         // Create grant information
                         OAuthTokenRequest request = null;
@@ -152,16 +154,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                                 // Add device credential
                                 if(!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
-                                    p.AdditionalHeaders.Add("X-Device-Authorization", $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
-                                if (!String.IsNullOrEmpty(overrideClaim))
+                                    p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
+                                if (overrideClaim == "true")
                                 {
-                                    p.AdditionalHeaders.Add("X-SanteDBClient-Claim", Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                                    p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
                                             $"{ClaimTypes.SanteDBOverrideClaim}=true;{ClaimTypes.XspaPurposeOfUseClaim}={purposeOfUseClaim}"
                                         )));
                                 }
 
                                 if (!String.IsNullOrEmpty(tfaSecret))
-                                    p.AdditionalHeaders.Add("X-SanteDB-TfaSecret", tfaSecret);
+                                    p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
                             };
 
                             // Invoke
@@ -434,7 +436,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             {
                 // The principal must change their own password or must have the changepassword credential
                 if (!userName.Equals(principal.Identity.Name, StringComparison.InvariantCultureIgnoreCase))
-                    new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.ChangePassword).Demand();
+                    new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.ChangePassword).Demand();
                 else if (!principal.Identity.IsAuthenticated)
                     throw new InvalidOperationException("Unauthenticated principal cannot change user password");
 

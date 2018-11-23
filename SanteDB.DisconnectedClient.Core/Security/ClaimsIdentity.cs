@@ -18,17 +18,16 @@
  * Date: 2017-9-1
  */
 using System;
-using System.Security.Principal;
-using System.Linq;
 using System.Collections.Generic;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
 
-	/// <summary>
-	/// Represents an identity with one or more claims
-	/// </summary>
-	public class ClaimsIdentity : IIdentity
+    /// <summary>
+    /// Represents an identity with one or more claims
+    /// </summary>
+    public class ClaimsIdentity : IIdentity
 	{
 
 		public const string DefaultNameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
@@ -94,7 +93,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
 		/// <value>The name.</value>
 		public string Name {
 			get {
-				return this.m_claims.Find (o => o.Type == DefaultNameClaimType).Value.ToLower();
+				return this.m_claims.Find (o => o.Type == DefaultNameClaimType).Value;
 			}
 		}
 

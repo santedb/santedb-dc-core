@@ -7,6 +7,7 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.ViewModel.Description;
 using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Json.Formatter;
@@ -17,8 +18,10 @@ using SanteDB.DisconnectedClient.Ags.Services;
 using SanteDB.DisconnectedClient.Core;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -163,22 +166,40 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     }
                     else if (contentType?.StartsWith("application/json") == true)
                     {
+                        
                         using (var sr = new StreamReader(request.Body))
+                        using(var jsr = new JsonTextReader(sr))
                         {
                             JsonSerializer jsz = new JsonSerializer()
                             {
-                                SerializationBinder = new ModelSerializationBinder(),
+                                SerializationBinder = new ModelSerializationBinder(parm.ParameterType),
                                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                                 TypeNameHandling = TypeNameHandling.All
                             };
                             jsz.Converters.Add(new StringEnumConverter());
-                            var dserType = parm.ParameterType;
-                            parameters[pNumber] = jsz.Deserialize(sr, dserType);
+
+                            // Can the binder resolve the type from the message?
+                            parameters[pNumber] = jsz.Deserialize(jsr, parm.ParameterType);
                         }
                     }
                     else if (contentType == "application/octet-stream")
                     {
                         parameters[pNumber] = request.Body;
+                    }
+                    else if(contentType == "application/x-www-urlform-encoded")
+                    {
+                        NameValueCollection nvc = new NameValueCollection();
+                        using (var sr = new StreamReader(request.Body))
+                        {
+                            var ptext = sr.ReadToEnd();
+                            var parms = ptext.Split('&');
+                            foreach (var p in parms)
+                            {
+                                var parmData = p.Split('=');
+                                nvc.Add(WebUtility.UrlDecode(parmData[0]), WebUtility.UrlDecode(parmData[1]));
+                            }
+                        }
+                        parameters[pNumber] = nvc;
                     }
                     else if (contentType != null)// TODO: Binaries
                         throw new InvalidOperationException("Invalid request format");
@@ -201,8 +222,8 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
             {
                 // Outbound control
                 var httpRequest = RestOperationContext.Current.IncomingRequest;
-                string accepts = httpRequest.Headers["Accept"],
-                    contentType = httpRequest.Headers["Content-Type"];
+                string accepts = httpRequest.Headers["Accept"]?.ToLower(),
+                    contentType = httpRequest.Headers["Content-Type"]?.ToLower();
 
                 // The request was in JSON or the accept is JSON
                 if (result is Stream) // TODO: This is messy, clean it up

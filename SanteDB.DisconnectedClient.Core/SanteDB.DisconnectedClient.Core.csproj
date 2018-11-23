@@ -59,25 +59,31 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Data\RepositoryEntitySource.cs" />
     <Compile Include="Mail\LocalMailService.cs" />
     <Compile Include="Configuration\Data\Migrations\SubscribePrimaryLocationUpdate.cs" />
     <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
+    <Compile Include="Security\HeaderTypes.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
-    <Compile Include="Security\LocalPolicyDecisionService.cs" />
+    <Compile Include="Security\DefaultPolicyDecisionService.cs" />
     <Compile Include="Security\SecurityExtensions.cs" />
     <Compile Include="Services\IDeviceIdentityProviderService.cs" />
-    <Compile Include="Services\Impl\MailSynchronizationService.cs" />
+    <Compile Include="Services\Local\MailSynchronizationService.cs" />
     <Compile Include="Services\ISymmetricCryptographicProvider.cs" />
+    <Compile Include="Services\Remote\AmiRepositoryBaseService.cs" />
+    <Compile Include="Services\Remote\RemoteAuditRepositoryService.cs" />
+    <Compile Include="Services\Remote\RemoteMailRepositoryService.cs" />
+    <Compile Include="Services\Remote\RemoteSecurityRepository.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
     <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
     <Compile Include="Security\Audit\AuditUtil.cs" />
     <Compile Include="Security\NullCredentials.cs" />
     <Compile Include="Services\IBackupService.cs" />
-    <Compile Include="Services\Impl\EntityRepositoryBase.cs" />
-    <Compile Include="Services\Impl\LocalAuditService.cs" />
-    <Compile Include="Services\Impl\LocalTagPersistenceService.cs" />
+    <Compile Include="Services\Local\EntityRepositoryBase.cs" />
+    <Compile Include="Services\Local\LocalAuditService.cs" />
+    <Compile Include="Services\Local\LocalTagPersistenceService.cs" />
     <Compile Include="Services\IQueueManagerService.cs" />
     <Compile Include="Services\ITickleService.cs" />
     <Compile Include="Services\IUpdateManager.cs" />
@@ -86,26 +92,26 @@
     <Compile Include="Caching\MemoryCache.cs" />
     <Compile Include="Caching\MemoryCacheService.cs" />
     <Compile Include="Configuration\SynchronizationConfigurationSection.cs" />
-    <Compile Include="Data\HdsiPersistenceService.cs" />
+    <Compile Include="Services\Remote\RemoteRepositoryServices.cs" />
     <Compile Include="Exceptions\InvalidVersionException.cs" />
     <Compile Include="Exceptions\SessionExpiredException.cs" />
     <Compile Include="Interop\AMI\AmiIntegrationService.cs" />
     <Compile Include="Interop\ConfigurationExtensions.cs" />
-    <Compile Include="Data\Warehouse\CarePlan\CarePlanManagerService.cs" />
+    <Compile Include="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
     <Compile Include="Security\MemorySessionManagerService.cs" />
     <Compile Include="Security\ITwoFactorRequestService.cs" />
     <Compile Include="Security\Remote\AmiTwoFactorRequestService.cs" />
     <Compile Include="Security\SessionInfo.cs" />
     <Compile Include="Services\IDataConnectionManager.cs" />
     <Compile Include="Services\IFreetextSearchService.cs" />
-    <Compile Include="Services\Impl\LocalActService.cs" />
-    <Compile Include="Services\Impl\LocalBatchService.cs" />
-    <Compile Include="Services\Impl\LocalEntityService.cs" />
-    <Compile Include="Services\Impl\LocalMaterialService.cs" />
-    <Compile Include="Services\Impl\LocalOrganizationService.cs" />
-    <Compile Include="Services\Impl\LocalPlaceService.cs" />
-    <Compile Include="Services\Impl\LocalProviderService.cs" />
-    <Compile Include="Services\Impl\MemoryQueryPersistenceService.cs" />
+    <Compile Include="Services\Local\LocalActService.cs" />
+    <Compile Include="Services\Local\LocalBatchService.cs" />
+    <Compile Include="Services\Local\LocalEntityService.cs" />
+    <Compile Include="Services\Local\LocalMaterialService.cs" />
+    <Compile Include="Services\Local\LocalOrganizationService.cs" />
+    <Compile Include="Services\Local\LocalPlaceService.cs" />
+    <Compile Include="Services\Local\LocalProviderService.cs" />
+    <Compile Include="Services\Local\MemoryQueryPersistenceService.cs" />
     <Compile Include="Services\IntegrationQueryOptions.cs" />
     <Compile Include="Services\ISessionManagerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -131,14 +137,13 @@
     <Compile Include="Security\ClaimTypes.cs" />
     <Compile Include="Exceptions\PolicyViolationException.cs" />
     <Compile Include="ApplicationContext.cs" />
-    <Compile Include="Security\PolicyIdentifiers.cs" />
     <Compile Include="Security\Remote\AmiPolicyInformationService.cs" />
     <Compile Include="Services\IDaemonService.cs" />
     <Compile Include="Services\IIdentityProviderService.cs" />
     <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" />
-    <Compile Include="Services\Impl\LocalConceptService.cs" />
-    <Compile Include="Services\Impl\LocalPatientService.cs" />
-    <Compile Include="Services\Impl\LocalSecurityService.cs" />
+    <Compile Include="Services\Local\LocalConceptService.cs" />
+    <Compile Include="Services\Local\LocalPatientService.cs" />
+    <Compile Include="Services\Local\LocalSecurityService.cs" />
     <Compile Include="Services\INetworkInformationService.cs" />
     <Compile Include="Services\IPolicyDecisionService.cs" />
     <Compile Include="Services\IPolicyInformationService.cs" />
@@ -208,7 +213,7 @@
     <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.1.8" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>1.9.5</Version>
+      <Version>1.9.8</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
       <Version>1.9.5</Version>

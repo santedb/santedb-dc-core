@@ -17,27 +17,25 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using System;
 using SanteDB.Core.Diagnostics;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Alerting;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Core.Mail;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.Core.Mail;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core.Mail;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
-	/// <summary>
-	/// Initial queue catalog migration.
-	/// </summary>
-	public class InitialQueueCatalog : IDbMigration
+    /// <summary>
+    /// Initial queue catalog migration.
+    /// </summary>
+    public class InitialQueueCatalog : IDbMigration
 	{
 		private Tracer tracer = Tracer.GetTracer(typeof(InitialQueueCatalog));
 

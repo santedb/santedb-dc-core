@@ -62,6 +62,12 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the mode of operation
+        /// </summary>
+        [XmlElement("mode"), JsonProperty("mode")]
+        public SynchronizationMode Mode { get; set; }
+
+        /// <summary>
         /// Poll interval
         /// </summary>
         [XmlIgnore, JsonIgnore]
@@ -79,9 +85,21 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         [XmlElement("subscribe"), JsonProperty("subscribe")]
         public List<String> Facilities { get; set; }
 
-
+        /// <summary>
+        /// When true never force a patch
+        /// </summary>
         [XmlElement("safePatchOnly"), JsonProperty("safePatch")]
         public bool SafePatchOnly { get; set; }
+    }
+
+    /// <summary>
+    /// Synchronization mode
+    /// </summary>
+    public enum SynchronizationMode
+    {
+        Sync,
+        Online,
+        Offline
     }
 
     /// <summary>
@@ -110,13 +128,13 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// Represents the triggers
         /// </summary>
-        [XmlAttribute("trigger")]
+        [XmlAttribute("trigger"), JsonProperty("trigger")]
         public SynchronizationPullTriggerType Triggers { get; set; }
 
         /// <summary>
         /// Gets or sets the resource type
         /// </summary>
-        [XmlAttribute("resourceType")]
+        [XmlAttribute("resourceType"), JsonProperty("resource")]
         public string ResourceAqn
         {
             get
@@ -132,19 +150,19 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// One or more filters 
         /// </summary>
-        [XmlElement("filter")]
+        [XmlElement("filter"), JsonProperty("filter")]
         public List<string> Filters { get; set; }
 
         /// <summary>
         /// Always pull?
         /// </summary>
-        [XmlAttribute("ignoreModifiedOn")]
+        [XmlAttribute("ignoreModifiedOn"), JsonProperty("ignoreModifiedOn")]
         public bool Always { get; set; }
 
         /// <summary>
         /// The friendly name
         /// </summary>
-        [XmlAttribute("name")]
+        [XmlAttribute("name"), JsonProperty("name")]
         public String Name { get; set; }
 
     }

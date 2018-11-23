@@ -38,6 +38,7 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin.Services.Model;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Backup
 {
@@ -103,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
 
             // Make a determination that the user is allowed to perform this action
             if(AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
-                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.ExportClinicalData).Demand();
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.ExportClinicalData).Demand();
 
             // Get the output medium
             var directoryName = this.GetBackupDirectory(media);

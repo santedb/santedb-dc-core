@@ -47,7 +47,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 if (navigateAsset == null)
                 {
-                    throw new FileNotFoundException(RestOperationContext.Current.IncomingRequest.RawUrl);
+                    RestOperationContext.Current.OutgoingResponse.StatusCode = 404;
+                    using (var sr = new StreamReader(typeof(WwwServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.GenericError.html")))
+                    {
+                        return new MemoryStream(Encoding.UTF8.GetBytes(sr.ReadToEnd().Replace("{status}", "404")
+                            .Replace("{message}", $"Resource {appletPath} not found")
+                            .Replace("{trace}", "No trace provided")));
+                    }
                 }
 
                 lock (m_lockObject)

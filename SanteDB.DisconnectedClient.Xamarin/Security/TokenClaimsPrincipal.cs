@@ -136,7 +136,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             this.RefreshToken = refreshToken;
 
 			this.m_identities.Clear ();
-			this.m_identities.Add(new ClaimsIdentity(body["unique_name"]?.Value<String>().ToLower() ?? body["sub"]?.Value<String>().ToLower(), true, claims));
+			this.m_identities.Add(new ClaimsIdentity(body["unique_name"]?.Value<String>() ?? body["sub"]?.Value<String>(), true, claims));
 		}
 
 

@@ -24,6 +24,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Caching;
@@ -52,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="actToInsert">The act to be inserted.</param>
         /// <returns>Returns the inserted act.</returns>
         [RestOperation(Method = "POST", UriPath = "/Act", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act CreateAct([RestMessage(RestMessageFormat.SimpleJson)]Act actToInsert)
         {
@@ -65,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/Act", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetAct()
         {
@@ -77,7 +78,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/SubstanceAdministration", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetSubstanceAdministration()
         {
@@ -89,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/QuantityObservation", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetQuantityObservation()
         {
@@ -101,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/TextObservation", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetTextObservation()
         {
@@ -113,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/CodedObservation", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetCodedObservation()
         {
@@ -125,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/PatientEncounter", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetPatientEncounter()
         {
@@ -198,7 +199,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Deletes the act
         /// </summary>
         [RestOperation(Method = "DELETE", UriPath = "/Act", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.DeleteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.DeleteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act DeleteAct()
         {
@@ -221,72 +222,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         }
 
         /// <summary>
-        /// Cancels an act.
-        /// </summary>
-        /// <param name="act">The act to update.</param>
-        /// <returns>Returns the updated act.</returns>
-        [RestOperation(Method = "CANCEL", UriPath = "/Act", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public Act CancelAct([RestMessage(RestMessageFormat.SimpleJson)] Act act)
-        {
-            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-
-            Guid actKey = Guid.Empty;
-            Guid actVersionKey = Guid.Empty;
-
-            if (query.ContainsKey("_id") && Guid.TryParse(query["_id"][0], out actKey))
-            {
-                var actRepositoryService = ApplicationContext.Current.GetService<IActRepositoryService>();
-                if (act == null)
-                    act = actRepositoryService.Get<Act>(actKey, Guid.Empty);
-
-                if (act.Key == actKey)
-                    return actRepositoryService.Cancel<Act>(act);
-                else
-                    throw new FileNotFoundException("Act not found");
-            }
-            else
-                throw new FileNotFoundException("Act not found");
-        }
-
-        /// <summary>
-        /// Nullify an act.
-        /// </summary>
-        /// <param name="act">The act to update.</param>
-        /// <returns>Returns the updated act.</returns>
-        [RestOperation(Method = "NULLIFY", UriPath = "/Act", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.DeleteClinicalData)]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public Act NullifyAct([RestMessage(RestMessageFormat.SimpleJson)] Act act)
-        {
-            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-
-            Guid actKey = Guid.Empty;
-            Guid actVersionKey = Guid.Empty;
-
-            if (query.ContainsKey("_id") && Guid.TryParse(query["_id"][0], out actKey))
-            {
-                var actRepositoryService = ApplicationContext.Current.GetService<IActRepositoryService>();
-                if (act == null)
-                    act = actRepositoryService.Get<Act>(actKey, Guid.Empty);
-
-                if (act.Key == actKey)
-                    return actRepositoryService.Nullify<Act>(act);
-                else
-                    throw new FileNotFoundException("Act not found");
-            }
-            else
-                throw new FileNotFoundException("Act not found");
-        }
-        
-        /// <summary>
         /// Updates an act.
         /// </summary>
         /// <param name="act">The act to update.</param>
         /// <returns>Returns the updated act.</returns>
         [RestOperation(Method = "PUT", UriPath = "/Act", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act UpdateAct([RestMessage(RestMessageFormat.SimpleJson)] Act act)
         {

@@ -164,7 +164,6 @@
     <Compile Include="Services\Attributes\RestServiceAttribute.cs" />
     <Compile Include="Services\MiniHdsiServer.cs" />
     <Compile Include="Services\ServiceHandlers\ApplicationService.cs" />
-    <Compile Include="Services\ServiceHandlers\AuthenticationService.cs" />
     <Compile Include="Services\ServiceHandlers\CarePlanService.cs" />
     <Compile Include="Services\ServiceHandlers\ImsiService.cs" />
     <Compile Include="Services\LocalAppletManagerService.cs" />
@@ -198,6 +197,10 @@
     <None Include="SanteDB.DisconnectedClient.Xamarin.nuspec" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj">
+      <Project>{786BD0EE-1806-4158-BA45-80249AC6DFE7}</Project>
+      <Name>SanteDB.Rest.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
       <Name>SanteDB.DisconnectedClient.Core</Name>

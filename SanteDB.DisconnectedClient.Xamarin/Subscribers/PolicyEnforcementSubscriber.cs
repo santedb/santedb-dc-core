@@ -32,6 +32,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
 {
@@ -83,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
             try
             {
                 // Attach the subscriptions here
-                foreach (var t in typeof(Entity).Assembly.GetTypes().Where(t => typeof(Entity).IsAssignableFrom(t) || typeof(Act).IsAssignableFrom(t) || typeof(Concept).IsAssignableFrom(t)))
+                foreach (var t in typeof(Entity).Assembly.GetTypes().Where(t => typeof(Entity).IsAssignableFrom(t) || typeof(Act).IsAssignableFrom(t)))
                 {
                     var idpType = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { t });
                     var idpInstance = ApplicationContext.Current.GetService(idpType);
@@ -110,35 +111,37 @@ namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
             // Demand query
             persister.Querying += (o, e) =>
             {
-                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.QueryClinicalData).Demand();
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.QueryClinicalData).Demand();
             };
 
             // Demand insert
             persister.Inserting += (o, e) =>
             {
-                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.WriteClinicalData).Demand();
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.WriteClinicalData).Demand();
             };
 
             // Demand update
             persister.Updating += (o, e) =>
             {
-                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.WriteClinicalData).Demand();
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.WriteClinicalData).Demand();
             };
 
             // Obsoletion permission demand
             persister.Obsoleting += (o, e) =>
             {
-                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.DeleteClinicalData).Demand();
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.DeleteClinicalData).Demand();
             };
 
             // Queried data filter
             persister.Queried += (o, e) =>
             {
-                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PolicyIdentifiers.ReadClinicalData).Demand();
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.ReadClinicalData).Demand();
                 DataQueryResultEventArgs<TData> dqre = e as DataQueryResultEventArgs<TData>;
                 // Filter dataset
-                if(dqre != null)
+                if (dqre != null)
+                {
                     dqre.Results = dqre.Results.Where(i => ApplicationContext.Current.PolicyDecisionService.GetPolicyDecision(AuthenticationContext.Current.Principal, i) == SanteDB.Core.Model.Security.PolicyGrantType.Grant);
+                }
             };
         }
 

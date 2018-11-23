@@ -17,6 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
 using System;
@@ -50,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// System identity
         /// </summary>
         private static readonly IPrincipal s_system = new ClaimsPrincipal(new ClaimsIdentity("SYSTEM", true, new Claim[] {
-            new Claim(ClaimTypes.SanteDBGrantedPolicyClaim, PolicyIdentifiers.AccessClientAdministrativeFunction)
+            new Claim(ClaimTypes.SanteDBGrantedPolicyClaim, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)
         }));
         
         /// <summary>

@@ -498,7 +498,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     try
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
-                        return restClient.Get<AmiCollection>($"/{resourceType}?{RestOperationContext.Current.IncomingRequest.Url.Query}");
+                        return restClient.Get<AmiCollection>($"/{resourceType}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
                     }
                     catch (Exception e)
                     {

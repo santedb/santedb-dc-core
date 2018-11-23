@@ -35,12 +35,17 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <summary>
         /// Authenticates the specified username/password pair
         /// </summary>
-        SessionInfo Authenticate(String userName, String password);
+        SessionInfo Authenticate(String userName, String password, params Claim[] claims);
 
         /// <summary>
         /// Authenticates the specified username/password/tfasecret pair
         /// </summary>
-        SessionInfo Authenticate(String userName, String password, String tfaSecret);
+        SessionInfo Authenticate(String userName, String password, String tfaSecret, params Claim[] claims);
+
+        /// <summary>
+        /// Authenticate with PIN (offline local context only)
+        /// </summary>
+        SessionInfo Authenticate(String userName, byte[] pin, params Claim[] claims);
 
         /// <summary>
         /// Refreshes the specified session

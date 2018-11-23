@@ -22,16 +22,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// The application services behavior
     /// </summary>
     [ServiceBehavior(Name = "APP", InstanceMode = ServiceInstanceMode.PerCall)]
-    public class ApplicationServiceBehavior : IApplicationServiceContract
+    public partial class ApplicationServiceBehavior : IApplicationServiceContract
     {
-        /// <summary>
-        /// Get the configuration
-        /// </summary>
-        public ConfigurationViewModel GetConfiguration()
-        {
-            return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
-        }
-
+        
         /// <summary>
         /// Get storage providers
         /// </summary>
@@ -120,28 +113,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             return ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.SubscriptionDefinition).ToList();
         }
 
-        [Demand(PermissionPolicyIdentifiers.Login)]
-        public ConfigurationViewModel GetUserConfiguration(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
-        public ConfigurationViewModel JoinRealm(ConfigurationViewModel configData)
-        {
-            throw new NotImplementedException();
-        }
-
-        [Demand(PermissionPolicyIdentifiers.Login)]
-        public ConfigurationViewModel SaveUserConfiguration(ConfigurationViewModel configuration)
-        {
-            throw new NotImplementedException();
-        }
-
-        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
-        public ConfigurationViewModel UpdateConfiguration(ConfigurationViewModel configuration)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

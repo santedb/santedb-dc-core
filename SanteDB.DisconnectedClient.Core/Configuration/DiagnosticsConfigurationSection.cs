@@ -55,7 +55,12 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 			set;
 		}
 
-	}
+        /// <summary>
+        /// Gets the default log mode
+        /// </summary>
+        [JsonProperty("mode"), XmlIgnore]
+        public EventLevel Mode { get; set; }
+    }
 
 	/// <summary>
 	/// Trace writer configuration

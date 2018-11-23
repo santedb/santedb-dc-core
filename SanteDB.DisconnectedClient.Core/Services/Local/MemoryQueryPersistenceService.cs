@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Impl
+namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
     /// <summary>
     /// Memory query persistence service

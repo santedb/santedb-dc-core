@@ -21,6 +21,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Caching;
@@ -44,7 +45,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/Concept", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.ReadMetadata)]
+        [Demand(PermissionPolicyIdentifiers.ReadMetadata)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetConcept()
         {
@@ -82,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns a list of acts.</returns>
         [RestOperation(Method = "GET", UriPath = "/ConceptSet", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.ReadMetadata)]
+        [Demand(PermissionPolicyIdentifiers.ReadMetadata)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetConceptSet()
         {

@@ -41,10 +41,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         {
             this.AppSettings = new List<AppSettingKeyValuePair>();
         }
-
-        // Services
-        private List<Object> m_services;
-
+        
 
         /// <summary>
         /// The location of the directory where user preferences are stored
@@ -87,25 +84,25 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
             set;
         }
 
-		/// <summary>
-		/// Sets the services.
-		/// </summary>
-		/// <value>The services.</value>
-		[XmlIgnore, JsonIgnore]
-		public List<Object> Services {
-			get {
-				if (this.m_services == null) {
-					this.m_services = new List<object> ();
-					foreach (var itm in this.ServiceTypes) {
-						Type t = Type.GetType (itm);
-                        if (t == null)
-                            throw new KeyNotFoundException(itm);
-						this.m_services.Add (Activator.CreateInstance (t));
-					}
-				}
-				return this.m_services;
-			}
-		}
+		///// <summary>
+		///// Sets the services.
+		///// </summary>
+		///// <value>The services.</value>
+		//[XmlIgnore, JsonIgnore]
+		//public List<Object> Services {
+		//	get {
+		//		if (this.m_services == null) {
+		//			this.m_services = new List<object> ();
+		//			foreach (var itm in this.ServiceTypes) {
+		//				Type t = Type.GetType (itm);
+  //                      if (t == null)
+  //                          throw new KeyNotFoundException(itm);
+		//				this.m_services.Add (Activator.CreateInstance (t));
+		//			}
+		//		}
+		//		return this.m_services;
+		//	}
+		//}
 
         /// <summary>
         /// Gets or sets the cache configuration

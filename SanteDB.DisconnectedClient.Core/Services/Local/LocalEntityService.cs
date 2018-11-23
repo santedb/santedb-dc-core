@@ -26,7 +26,7 @@ using System.Linq.Expressions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Impl
+namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
 	/// <summary>
 	/// Represents an entity repository service.

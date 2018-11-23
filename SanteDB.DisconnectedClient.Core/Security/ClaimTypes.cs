@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Override claim
         /// </summary>
-        public const string SanteDBOverrideClaim = "urn:santedb:org:override";
+        public const string SanteDBOverrideClaim = "http://santedb.org/claims/override";
 
 
         /// <summary>

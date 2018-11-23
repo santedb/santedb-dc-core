@@ -26,6 +26,7 @@ using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using System.Security.Principal;
 using SanteDB.Core.Http;
+using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
@@ -55,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 					{ "Authorization", String.Format ("Bearer {0}", this.Principal.ToString ()) }
 				};
 			else
-				throw new UnauthorizedAccessException ("Cannot create a token credential from non-token principal");
+				throw new SecurityTokenException (SecurityTokenExceptionType.InvalidTokenType, "Improper principal type");
 		}
 		#endregion
 	}

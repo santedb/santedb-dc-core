@@ -188,6 +188,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
                 service.AddServiceBehavior(new AgsMagicServiceBehavior());
                 service.AddServiceBehavior(new AgsErrorHandlerServiceBehavior());
+                service.AddServiceBehavior(new AgsPermissionPolicyBehavior());
                 foreach (var bhvr in itm.Behaviors)
                 {
                     this.m_tracer.TraceVerbose("AGS Service {0} has behavior {1}", itm.Name, bhvr.XmlType);

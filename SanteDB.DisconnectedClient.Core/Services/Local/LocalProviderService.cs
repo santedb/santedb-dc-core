@@ -26,7 +26,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Impl
+namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
 	/// <summary>
 	/// Represents the local provider service

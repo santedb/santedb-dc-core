@@ -53,6 +53,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             throw new NotImplementedException();
         }
 
+        public IPrincipal Authenticate(IPrincipal principal, string password, string tfaSecret)
+        {
+            throw new NotImplementedException();
+        }
+
         public void ChangePassword(string userName, string password)
         {
             throw new NotImplementedException();

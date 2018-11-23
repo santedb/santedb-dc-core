@@ -22,6 +22,7 @@ using System.Xml.Serialization;
 using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
@@ -45,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// Gets or sets connection strings
         /// </summary>
         /// <value>My property.</value>
-        [XmlElement("connectionString")]
+        [XmlElement("connectionString"), JsonIgnore]
         public List<ConnectionString> ConnectionString {
             get;
             set;
@@ -55,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// Gets or sets the name of the main data source connection string.
         /// </summary>
         /// <value>The name of the main data source connection string.</value>
-        [XmlAttribute("clinicalDataStore")]
+        [XmlAttribute("clinicalDataStore"), JsonIgnore]
         public String MainDataSourceConnectionStringName {
             get;
             set;
@@ -65,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// Gets or sets the name of the message queue connection string.
         /// </summary>
         /// <value>The name of the message queue connection string.</value>
-        [XmlAttribute("messageQueue")]
+        [XmlAttribute("messageQueue"), JsonIgnore]
         public String MessageQueueConnectionStringName {
             get;
             set;
@@ -74,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// Gets or sets the name of the alerts data store
         /// </summary>
-        [XmlAttribute("mailDataStore")]
+        [XmlAttribute("mailDataStore"), JsonIgnore]
         public String MailDataStore
         {
             get;
@@ -86,12 +87,24 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
 		/// Migration log 
 		/// </summary>
 		/// <value>The migration log.</value>
-		[XmlElement("migration")]
+		[XmlElement("migration"), JsonProperty("migration")]
 		public DataMigrationLog MigrationLog {
 			get;
 			set;
 		}
-	}
+
+        /// <summary>
+        /// Gets or sets the data provider
+        /// </summary>
+        [XmlIgnore, JsonProperty("provider")]
+        public string Provider { get; set; }
+
+        /// <summary>
+        /// Gets or sets the options object
+        /// </summary>
+        [XmlIgnore, JsonProperty("options")]
+        public Dictionary<string, object> Options { get; set; }
+    }
 
 	/// <summary>
 	/// Represents a single connection string

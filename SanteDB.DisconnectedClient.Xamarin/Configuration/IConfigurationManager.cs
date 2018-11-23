@@ -17,36 +17,14 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using System;
-using System.Linq;
-using System.Reflection;
-using System.IO;
-using System.Xml.Serialization;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Xamarin.Http;
-using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
-using System.Collections.Generic;
-using SanteDB.Core.Diagnostics;
-using System.Security.Cryptography;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Services.Impl;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using SanteDB.DisconnectedClient.Core.Data;
-using System.Net.NetworkInformation;
-using System.Security.Cryptography.X509Certificates;
-using SanteDB.DisconnectedClient.Xamarin.Threading;
-using SanteDB.DisconnectedClient.Core.Caching;
-using SanteDB.DisconnectedClient.Core.Alerting;
-using SanteDB.Core.Services.Impl;
-using SanteDB.Core.Protocol;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Configuration
 {
-	/// <summary>
-	/// Configuration manager for the application
-	/// </summary>
-	public interface IConfigurationManager
+    /// <summary>
+    /// Configuration manager for the application
+    /// </summary>
+    public interface IConfigurationManager
 	{
 		/// <summary>
 		/// Returns true if SanteDB is configured

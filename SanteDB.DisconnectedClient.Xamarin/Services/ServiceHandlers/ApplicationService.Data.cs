@@ -44,6 +44,7 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Interop.HDSI;
 using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -75,7 +76,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Force re-queue of all data to server
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "PUT", UriPath = "/data/sync")]
-        [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public void ForceRequeue()
         {
 
@@ -141,7 +142,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Delete queue entry
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "POST", UriPath = "/data/restore")]
-        [Demand(PolicyIdentifiers.UnrestrictedAdministration)]
+        [Demand(PermissionPolicyIdentifiers.UnrestrictedAdministration)]
         public void Restore()
         {
 
@@ -167,7 +168,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Delete queue entry
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "POST", UriPath = "/data/backup")]
-        [Demand(PolicyIdentifiers.ExportClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.ExportClinicalData)]
         public void Backup()
         {
 
@@ -200,7 +201,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Instructs the service to compact all databases
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "POST", UriPath = "/data")]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public void Compact()
         {
 
@@ -218,7 +219,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Delete queue entry
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "DELETE", UriPath = "/data")]
-        [Demand(PolicyIdentifiers.UnrestrictedAdministration)]
+        [Demand(PermissionPolicyIdentifiers.UnrestrictedAdministration)]
         public void Purge([RestMessage(RestMessageFormat.Json)] JObject parm)
         {
             // Purge the data = Remove the fact that migrations were performed
@@ -248,7 +249,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "POST", UriPath = "/queue")]
         [return: RestMessage(RestMessageFormat.Json)]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public void ForceSync()
         {
 
@@ -302,7 +303,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "DELETE", UriPath = "/queue")]
         [return: RestMessage(RestMessageFormat.Json)]
-        [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public void DeleteQueueEntry()
         {
             var id = Int32.Parse(MiniHdsiServer.CurrentContext.Request.QueryString["_id"]);
@@ -334,7 +335,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Delete queue entry
         /// </summary>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "PUT", UriPath = "/queue")]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
         public void ReQueueDead()
         {
@@ -370,7 +371,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns></returns>
         [RestOperation(FaultProvider = nameof(AdminFaultProvider), Method = "GET", UriPath = "/queue")]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
         public AmiCollection GetQueueEntry()
         {

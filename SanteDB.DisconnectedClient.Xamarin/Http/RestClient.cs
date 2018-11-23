@@ -45,6 +45,7 @@ using System.Xml.Serialization;
 using System.Net.Sockets;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Rest.Common.Fault;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Http
 {
@@ -334,13 +335,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
 
                                     requestStream = requestTask.Result;
                                 }
-                                catch(AggregateException e)
+                                catch (AggregateException e)
                                 {
                                     requestObj.Abort();
                                     throw e.InnerExceptions.First();
                                 }
                             }
-                            
+
                             if (contentType == null && typeof(TResult) != typeof(Object))
                                 throw new ArgumentNullException(nameof(contentType));
 
@@ -533,7 +534,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                 {
 
                     var errorResponse = (e.Response as HttpWebResponse);
-                    if(errorResponse?.StatusCode == HttpStatusCode.NotModified)
+                    if (errorResponse?.StatusCode == HttpStatusCode.NotModified)
                     {
                         this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
                         responseHeaders = errorResponse?.Headers;
@@ -549,7 +550,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
 
                             // Deserialize
                             object errorResult = default(ErrorResult);
-                            
+
                             var responseContentType = errorResponse.ContentType;
                             if (responseContentType.Contains(";"))
                                 responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
@@ -558,75 +559,44 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                             errorResponse.GetResponseStream().CopyTo(ms);
                             ms.Seek(0, SeekOrigin.Begin);
 
+
                             try
                             {
                                 var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
 
-                                try
+                                switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
                                 {
-                                    switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
-                                    {
-                                        case "deflate":
-                                            using (DeflateStream df = new DeflateStream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (TResult)serializer.DeSerialize(df);
-                                            break;
-                                        case "gzip":
-                                            using (GZipStream df = new GZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (TResult)serializer.DeSerialize(df);
-                                            break;
-                                        case "bzip2":
-                                            using (var bzs = new BZip2Stream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (TResult)serializer.DeSerialize(bzs);
-                                            break;
-                                        case "lzma":
-                                            using (var lzmas = new LZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (TResult)serializer.DeSerialize(lzmas);
-                                            break;
-                                        default:
-                                            errorResult = (TResult)serializer.DeSerialize(ms);
-                                            break;
-                                    }
+                                    case "deflate":
+                                        using (DeflateStream df = new DeflateStream(ms, CompressionMode.Decompress, leaveOpen: true))
+                                            errorResult = serializer.DeSerialize(df);
+                                        break;
+                                    case "gzip":
+                                        using (GZipStream df = new GZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
+                                            errorResult = serializer.DeSerialize(df);
+                                        break;
+                                    case "bzip2":
+                                        using (var bzs = new BZip2Stream(ms, CompressionMode.Decompress, leaveOpen: true))
+                                            errorResult = serializer.DeSerialize(bzs);
+                                        break;
+                                    case "lzma":
+                                        using (var lzmas = new LZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
+                                            errorResult = serializer.DeSerialize(lzmas);
+                                        break;
+                                    default:
+                                        errorResult = serializer.DeSerialize(ms);
+                                        break;
                                 }
-                                catch
-                                {
-                                    serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(ErrorResult));
-
-                                    ms.Seek(0, SeekOrigin.Begin); // rewind and try generic error codes
-                                    switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
-                                    {
-                                        case "deflate":
-                                            using (DeflateStream df = new DeflateStream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (ErrorResult)serializer.DeSerialize(df);
-                                            break;
-                                        case "gzip":
-                                            using (GZipStream df = new GZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (ErrorResult)serializer.DeSerialize(df);
-                                            break;
-                                        case "bzip2":
-                                            using (var bzs = new BZip2Stream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (ErrorResult)serializer.DeSerialize(bzs);
-                                            break;
-                                        case "lzma":
-                                            using (var lzmas = new LZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
-                                                errorResult = (ErrorResult)serializer.DeSerialize(lzmas);
-                                            break;
-                                        default:
-                                            errorResult = (ErrorResult)serializer.DeSerialize(ms);
-                                            break;
-                                    }
-                                }
-                                //result = (TResult)serializer.DeSerialize(errorResponse.GetResponseStream());
                             }
-                            catch (Exception dse)
+                            catch
                             {
-                                this.m_tracer.TraceError("Could not de-serialize error response! {0}", dse.Message);
+                                errorResult = new RestServiceFault(e);
                             }
 
                             Exception exception = null;
                             if (errorResult is TResult)
                                 exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
                             else
-                                exception = new RestClientException<ErrorResult>((ErrorResult)errorResult, e, e.Status, e.Response);
+                                exception = new RestClientException<RestServiceFault>((RestServiceFault)errorResult, e, e.Status, e.Response);
 
                             switch (errorResponse.StatusCode)
                             {

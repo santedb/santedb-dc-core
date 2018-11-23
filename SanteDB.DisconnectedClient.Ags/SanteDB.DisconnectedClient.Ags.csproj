@@ -49,9 +49,11 @@
     <Compile Include="Behaviors\AgsCorsEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsMagicServiceBehavior.cs" />
     <Compile Include="Behaviors\AgsMessageLoggingEndpointBehavior.cs" />
+    <Compile Include="Behaviors\AgsPermissionPolicyBehavior.cs" />
     <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
     <Compile Include="Model\ConfigurationViewModel.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
+    <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" />
     <Compile Include="Services\WwwServiceBehavior.cs" />
     <Compile Include="Configuration\AgsBehaviorConfiguration.cs" />
     <Compile Include="Configuration\AgsConfigurationSection.cs" />
@@ -106,6 +108,10 @@
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.RISI\SanteDB.Core.Model.RISI.csproj">
           <Project>{f3d2fa84-c398-4390-9834-1272cc2d6f89}</Project>
           <Name>SanteDB.Core.Model.RISI</Name>
+        </ProjectReference>
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj">
+          <Project>{65ef51c6-5cb8-43b8-ae65-4a68f0b44ad2}</Project>
+          <Name>SanteDB.Core.Model.AMI</Name>
         </ProjectReference>
       </ItemGroup>
     </When>
@@ -166,6 +172,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\antihaxor" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\GenericError.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

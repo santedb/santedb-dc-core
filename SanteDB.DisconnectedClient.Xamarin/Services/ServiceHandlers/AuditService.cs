@@ -21,6 +21,7 @@ using MARC.HI.EHRS.SVC.Auditing.Data;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -45,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get audits
         /// </summary>
         [RestOperation(FaultProvider = nameof(AuditFaultProvider), Method = "GET", UriPath = "/audit")]
-        [Demand(PolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         [return: RestMessage(RestMessageFormat.Json)]
         public AmiCollection GetAudits()
         {

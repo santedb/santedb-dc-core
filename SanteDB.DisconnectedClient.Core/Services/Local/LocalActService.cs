@@ -34,7 +34,7 @@ using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Impl
+namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
     /// <summary>
     /// Represents an act repository service.
@@ -45,7 +45,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
         IRepositoryService<QuantityObservation>,
         IRepositoryService<PatientEncounter>,
         IRepositoryService<CodedObservation>,
-        IRepositoryService<TextObservation>
+        IRepositoryService<TextObservation>,
+        ICancelRepositoryService,
+        INullifyRepositoryService
     {
         public event EventHandler<AuditDataEventArgs> DataCreated;
         public event EventHandler<AuditDataEventArgs> DataUpdated;
@@ -280,8 +282,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
         /// <summary>
         /// Nullify the specified act
         /// </summary>
-        public TAct Nullify<TAct>(TAct act) where TAct : Act
+        public TAct Nullify<TAct>(Guid id)
         {
+            var act = this.Get(id);
+            return (TAct)(object)this.Nullify(act as Act);
+        }
+
+        /// <summary>
+        /// Perform nullification internally
+        /// </summary>
+        private TAct Nullify<TAct>(TAct act) where TAct : Act
+        { 
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TAct>>();
             var breService = ApplicationContext.Current.GetService<IBusinessRulesService<TAct>>();
 
@@ -347,19 +358,26 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
         /// <summary>
         /// Cancels the specified act
         /// </summary>
-        public TAct Cancel<TAct>(TAct act) where TAct : Act
+        public TAct Cancel<TAct>(Guid id)
         {
-            // You can only cancel active acts!
-            if (act.StatusConceptKey != StatusKeys.Active)
-                throw new InvalidOperationException("Only active acts can be cancelled");
+            var act = this.Get(id);
+            return (TAct)(object)this.Cancel(act as Act);
+        }
 
+        /// <summary>
+        /// Cancel the specified act
+        /// </summary>
+        private TAct Cancel<TAct>(TAct act) where TAct : Act
+        { 
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TAct>>();
             var breService = ApplicationContext.Current.GetService<IBusinessRulesService<TAct>>();
 
             if (persistenceService == null)
-            {
                 throw new InvalidOperationException(string.Format("{0} not found", nameof(IDataPersistenceService<TAct>)));
-            }
+            
+            // You can only cancel active acts!
+            if (act.StatusConceptKey != StatusKeys.Active)
+                throw new InvalidOperationException("Only active acts can be cancelled");
 
             // Validate act
             act = this.Validate(act);
@@ -387,7 +405,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Impl
                     foreach (var itm in act.Relationships.Where(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && !o.IsEmpty()))
                         try
                         {
-                            this.Cancel<Act>(itm.TargetAct ?? this.Get(itm.TargetActKey.Value));
+                            this.Cancel<Act>(itm.TargetActKey.Value);
                         }
                         catch(Exception e)
                         {

@@ -146,10 +146,12 @@ namespace SanteDB.DisconnectedClient.Core
         public object GetService (Type serviceType)
 		{
 			
+            
+
 			Object candidateService = null;
 			if (!this.m_cache.TryGetValue (serviceType, out candidateService)) {
 				ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection> ();
-				candidateService = appSection.Services.Find (o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
+				candidateService = this.GetServices().FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
                 if (candidateService != null)
                     lock (this.m_lockObject)
                         if (!this.m_cache.ContainsKey(serviceType))
@@ -271,7 +273,8 @@ namespace SanteDB.DisconnectedClient.Core
 
 
             ApplicationConfigurationSection config = this.Configuration.GetSection<ApplicationConfigurationSection>();
-            var daemons = config.Services.OfType<IDaemonService>();
+            
+            var daemons = this.GetServices().OfType<IDaemonService>();
             Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
             var nonChangeDaemons = daemons.Distinct().ToArray();
             foreach (var d in nonChangeDaemons)
@@ -304,7 +307,7 @@ namespace SanteDB.DisconnectedClient.Core
             this.Stopping?.Invoke(this, EventArgs.Empty);
 
             ApplicationConfigurationSection config = this.Configuration.GetSection<ApplicationConfigurationSection>();
-            var daemons = config.Services.OfType<IDaemonService>();
+            var daemons = this.GetServices().OfType<IDaemonService>();
             Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
             foreach (var d in daemons)
             {
@@ -326,10 +329,15 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Add service 
         /// </summary>
-        public void AddServiceProvider(Type serviceType)
+        public void AddServiceProvider(Type serviceType, bool addToConfiguration)
         {
+
             ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
-            appSection.Services.Add(Activator.CreateInstance(serviceType));
+            if(!this.GetServices().Any(o=>o.GetType() == serviceType))
+                lock(this.m_lockObject)
+                    this.m_providers.Add(Activator.CreateInstance(serviceType));
+            if (addToConfiguration && !appSection.ServiceTypes.Any(o => Type.GetType(o) == serviceType))
+                appSection.ServiceTypes.Add(serviceType.AssemblyQualifiedName);
         }
 
         /// <summary>
@@ -337,17 +345,56 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         public IEnumerable<object> GetServices()
         {
-            ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
-            return appSection.Services;
+            // We have to try to get the configuration
+            if (this.m_providers == null)
+            {
+                lock (this.m_lockObject)
+                {
+                    this.m_providers = new List<object>();
+                    Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
+                    foreach (var itm in this.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes)
+                    {
+                        Type t = Type.GetType(itm);
+                        if (t == null)
+                            tracer.TraceWarning("Could not find provider {0}...", itm);
+                        else
+                        {
+                            tracer.TraceInfo("Adding service provider {0}...", t.FullName);
+                            this.m_providers.Add(Activator.CreateInstance(t));
+                        }
+                    }
+                }
+            }
+
+            return this.m_providers;
         }
 
         /// <summary>
         /// Remove a service provider
         /// </summary>
-        public void RemoveServiceProvider(Type serviceType)
+        public void RemoveServiceProvider(Type serviceType, bool updateConfiguration)
         {
+            if (serviceType == null)
+                throw new ArgumentNullException(nameof(serviceType));
+
             ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
-            appSection.Services.RemoveAll(o=>o.GetType() == serviceType);
+            if(this.GetServices().Any(o=>o.GetType() == serviceType))
+                lock(this.m_lockObject)
+                    this.m_providers.RemoveAll(o=>
+                    {
+                        if (o.GetType() == serviceType)
+                        {
+                            (o as IDaemonService)?.Stop();
+                            (o as IDisposable)?.Dispose();
+                            return true;
+                        }
+                        return false;
+                    });
+            foreach(var p in this.m_cache.Where(o => o.Value.GetType() == serviceType).ToList())
+                this.m_cache.Remove(p.Key);
+
+            if (updateConfiguration)
+                appSection.ServiceTypes.RemoveAll(t => Type.GetType(t) == serviceType);
         }
 
         /// <summary>
@@ -355,6 +402,22 @@ namespace SanteDB.DisconnectedClient.Core
         /// SanteDB databases. This should be a consistent key (i.e. generate from machine, user SID, etc.).
         /// </summary>
         public abstract byte[] GetCurrentContextSecurityKey();
+
+        /// <summary>
+        /// Add service provider 
+        /// </summary>
+        public void AddServiceProvider(Type serviceType)
+        {
+            this.AddServiceProvider(serviceType, false);
+        }
+
+        /// <summary>
+        /// Remove the service provider
+        /// </summary>
+        public void RemoveServiceProvider(Type serviceType)
+        {
+            this.RemoveServiceProvider(serviceType, false);
+        }
     }
 }
 

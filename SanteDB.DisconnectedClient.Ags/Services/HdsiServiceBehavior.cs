@@ -34,6 +34,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
         }
 
+        /// <summary>
+        /// Create the specified resource
+        /// </summary>
         public override IdentifiedData Create(string resourceType, IdentifiedData body)
         {
             // create only on the external server
@@ -91,13 +94,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override IdentifiedData Delete(string resourceType, string id)
         {
-            // Delete only on the external server
+            // Only on the remote server
             if (RestOperationContext.Current.IncomingRequest.QueryString["_extern"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                        restClient.Requesting += (o, e) => e.AdditionalHeaders.Add("X-Delete-Mode", RestOperationContext.Current.IncomingRequest.Headers["X-Delete-Mode"] ?? "OBSOLETE");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
                         return restClient.Delete<IdentifiedData>($"{resourceType}/{id}");
                     }
@@ -302,7 +306,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Get<IdentifiedData>($"/{resourceType}?{RestOperationContext.Current.IncomingRequest.Url.Query}");
+                        return restClient.Get<IdentifiedData>($"/{resourceType}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
                     }
                     catch (Exception e)
                     {

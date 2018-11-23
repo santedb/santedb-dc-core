@@ -29,5 +29,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// <param name="invariantName">The name of the storage provider to retrieve</param>
         /// <returns>The registered storage provider</returns>
         public static IStorageProvider GetProvider(String invariantName) => GetProviders().First(o => o.Invariant == invariantName);
+
+        public static object GetProvider(object provider, string v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

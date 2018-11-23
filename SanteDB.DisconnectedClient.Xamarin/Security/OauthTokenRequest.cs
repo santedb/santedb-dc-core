@@ -138,6 +138,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         }
 
         /// <summary>
+        /// OAuth token request
+        /// </summary>
+        public OAuthTokenRequest()
+        {
+
+        }
+
+        /// <summary>
         /// Gets the type of the grant.
         /// </summary>
         /// <value>The type of the grant.</value>
@@ -197,5 +205,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         [FormElement("client_secret")]
         public string ClientSecret { get; set; }
+
+
     }
 }

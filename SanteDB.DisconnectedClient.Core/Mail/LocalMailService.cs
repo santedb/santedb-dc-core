@@ -29,7 +29,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace SanteDB.DisconnectedClient.Core.Alerting
+namespace SanteDB.DisconnectedClient.Core.Mail
 {
     /// <summary>
     /// Represents a local alerting service

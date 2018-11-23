@@ -17,38 +17,30 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using Newtonsoft.Json.Linq;
+using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.AMI.Applet;
+using SanteDB.Core.Model.AMI.Diagnostics;
+using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Tickler;
+using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
+using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
+using SanteDB.DisconnectedClient.Xamarin.Services.Model;
+using SanteDB.DisconnectedClient.Xamarin.Threading;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
-using SanteDB.DisconnectedClient.Core.Alerting;
-using SanteDB.Core.Model.Query;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using Newtonsoft.Json;
-using SanteDB.Core.Applets.Model;
-using System.Reflection;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.IO;
-using SanteDB.DisconnectedClient.Xamarin.Services.Model;
 using System.Globalization;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.Core.Model.AMI.Diagnostics;
+using System.IO;
 using System.IO.Compression;
-using Newtonsoft.Json.Linq;
-using SanteDB.DisconnectedClient.Xamarin.Threading;
-using SanteDB.Core.Applets.Services;
-using SanteDB.DisconnectedClient.Core.Tickler;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Mail;
-using System.Dynamic;
-using SanteDB.Core.Model.AMI.Applet;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -80,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Submits a bug report via the AMI interface
         /// </summary>
         [RestOperation(UriPath = "/bug", Method = "POST", FaultProvider = nameof(ApplicationServiceFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
         public DiagnosticReport PostBugReport([RestMessage(RestMessageFormat.Json)] BugReport report)
         {
@@ -131,7 +123,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get tickles
         /// </summary>
         [RestOperation(UriPath = "/tickle", Method = "GET", FaultProvider = nameof(ApplicationServiceFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
         public List<Tickle> GetTickles()
         {
@@ -142,7 +134,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get tickles
         /// </summary>
         [RestOperation(UriPath = "/tickle", Method = "POST", FaultProvider = nameof(ApplicationServiceFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
         public void SendTickle([RestMessage(RestMessageFormat.Json)] Tickle tickle)
         {
@@ -153,7 +145,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get menu information
         /// </summary>
         [RestOperation(UriPath = "/menu", Method = "GET", FaultProvider = nameof(ApplicationServiceFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.Json)]
         public List<MenuInformation> GetMenus()
         {
@@ -232,7 +224,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get the specified log file
         /// </summary>
         [RestOperation(UriPath = "/log", Method = "GET", FaultProvider = nameof(ApplicationServiceFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public List<DiagnosticTextAttachment> GetLogs()
         {
             var query = MiniHdsiServer.CurrentContext.Request.QueryString;
@@ -391,7 +383,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Perform an update operation
         /// </summary>
         [RestOperation(Method = "POST", UriPath = "/update", FaultProvider = nameof(ApplicationServiceFault))]
-        [Demand(PolicyIdentifiers.UnrestrictedAdministration)]
+        [Demand(PermissionPolicyIdentifiers.UnrestrictedAdministration)]
         public void DoUpdate(JObject appObject)
         {
 

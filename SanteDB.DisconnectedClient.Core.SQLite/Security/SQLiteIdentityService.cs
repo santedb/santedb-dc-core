@@ -36,6 +36,7 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using System.Text;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -151,7 +152,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     // Password service
                     IPasswordHashingService passwordHash = ApplicationContext.Current.GetService(typeof(IPasswordHashingService)) as IPasswordHashingService;
 
-                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName == userName);
+                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower());
                     if (dbs == null)
                         throw new SecurityException(Strings.locale_invalidUserNamePassword);
                     else if (config?.MaxInvalidLogins.HasValue == true && dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
@@ -241,7 +242,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
                 if (userName != principal.Identity.Name &&
-                    pdp.GetPolicyOutcome(principal, PolicyIdentifiers.ChangePassword) == SanteDB.Core.Model.Security.PolicyGrantType.Deny)
+                    pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.ChangePassword) == SanteDB.Core.Model.Security.PolicyGrantType.Deny)
                     throw new SecurityException("User cannot change specified users password");
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -322,8 +323,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(PolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
+                    throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
 
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
@@ -371,7 +372,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                    var userData = conn.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName == userName);
+                    var userData = conn.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower());
                     if (userData == null)
                         return null;
                     else
@@ -470,6 +471,21 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             }
         }
 
+        public IPrincipal Authenticate(IPrincipal principal, string password, string tfaSecret)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Authenticate the user with pin
+        /// </summary>
+        public IPrincipal Authenticate(IPrincipal principal, byte[] pin)
+        {
+            return this.AuthenticateInternal(principal.Identity.Name, null, pin);
+
+        }
+
+ 
         #endregion IIdentityProviderService implementation
     }
 

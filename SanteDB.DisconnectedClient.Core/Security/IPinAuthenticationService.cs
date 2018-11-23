@@ -18,9 +18,17 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// Authenticate with a numeric PIN
         /// </summary>
         /// <param name="username">The user being authenticated</param>
-        /// <param name="pin">The PIN number</param>
+        /// <param name="pin">The PIN number digits</param>
         /// <returns>The authenticated principal</returns>
         IPrincipal Authenticate(String username, byte[] pin);
+
+        /// <summary>
+        /// Authenticate with a numeric PIN
+        /// </summary>
+        /// <param name="principal">The user being authenticated</param>
+        /// <param name="pin">The PIN number digits</param>
+        /// <returns>The authenticated principal</returns>
+        IPrincipal Authenticate(IPrincipal principal, byte[] pin);
 
         /// <summary>
         /// Change the user's PIN number

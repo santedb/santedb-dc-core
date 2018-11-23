@@ -3,6 +3,7 @@ using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
@@ -77,16 +78,31 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             object fault = new RestServiceFault(error);
 
             // Formulate appropriate response
-            if (error is PolicyViolationException || error is SecurityException)
+            if(error is PolicyViolationException)
             {
+                var pve = error as PolicyViolationException;
                 AuditUtil.AuditRestrictedFunction(error, uriMatched);
-                faultMessage.StatusCode = (int)System.Net.HttpStatusCode.Forbidden;
+                if (pve.PolicyDecision == SanteDB.Core.Model.Security.PolicyGrantType.Elevate ||
+                    pve.PolicyId == PermissionPolicyIdentifiers.Login)
+                {
+                    // Ask the user to elevate themselves
+                    faultMessage.StatusCode = 401;
+                    RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", $"{RestOperationContext.Current.IncomingRequest.Url.Host} realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error_code=\"insufficient_scope\" scope=\"{pve.PolicyId}\"");
+
+                }
+                else
+                    faultMessage.StatusCode = 403;
             }
             else if (error is SecurityTokenException)
             {
                 // TODO: Audit this
                 faultMessage.StatusCode = (int)System.Net.HttpStatusCode.Unauthorized;
-                faultMessage.Headers.Add("WWW-Authenticate", "Bearer");
+                RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", $"Bearer realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error=\"invalid_token\" error_description=\"{error.Message}\"");
+            }
+            else if (error is SecurityException)
+            {
+                AuditUtil.AuditRestrictedFunction(error, uriMatched);
+                faultMessage.StatusCode = (int)System.Net.HttpStatusCode.Forbidden;
             }
             else if (error is LimitExceededException)
             {

@@ -1,4 +1,5 @@
-﻿using RestSrvr.Attributes;
+﻿using Newtonsoft.Json.Linq;
+using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Model;
@@ -47,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// Get user configuration
         /// </summary>
         [Get("/Configuration/User")]
-        ConfigurationViewModel GetUserConfiguration(String userId);
+        ConfigurationViewModel GetUserConfiguration();
 
         /// <summary>
         /// Get subscription definitions
@@ -65,13 +66,13 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// Save the user configuration
         /// </summary>
         [Post("/Configuration/User")]
-        ConfigurationViewModel SaveUserConfiguration(ConfigurationViewModel configuration);
+        void SaveUserConfiguration(ConfigurationViewModel configuration);
 
         /// <summary>
         /// Join the realm
         /// </summary>
         [Post("/Configuration/Realm")]
-        ConfigurationViewModel JoinRealm(ConfigurationViewModel configData);
+        ConfigurationViewModel JoinRealm(JObject configData);
 
     }
 }

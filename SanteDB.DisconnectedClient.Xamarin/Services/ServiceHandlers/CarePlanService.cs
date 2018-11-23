@@ -57,8 +57,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         public void Refresh()
         {
             if(ApplicationContext.Current.Confirm(Strings.locale_truncateCarePlan))
-                ApplicationContext.Current.GetService<CarePlanManagerService>().Truncate();
-            ApplicationContext.Current.GetService<CarePlanManagerService>().RefreshCarePlan(true);
+                ApplicationContext.Current.GetService<LocalCarePlanManagerService>()?.Truncate();
+            ApplicationContext.Current.GetService<LocalCarePlanManagerService>()?.RefreshCarePlan(true);
         }
 
         /// <summary>

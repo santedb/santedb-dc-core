@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model.Security;
+﻿using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,17 @@ namespace SanteDB.DisconnectedClient.Core.Security
                     Name = me.Policy.Name
                 },
                 (PolicyGrantType)(int)me.Rule
+            );
+        }
+
+        /// <summary>
+        /// Convert an IPolicy to a policy instance
+        /// </summary>
+        public static SecurityPolicyInstance ToPolicyInstance(this SecurityPolicyInfo me)
+        {
+            return new SecurityPolicyInstance(
+                me.Policy,
+                (PolicyGrantType)(int)me.Grant
             );
         }
     }

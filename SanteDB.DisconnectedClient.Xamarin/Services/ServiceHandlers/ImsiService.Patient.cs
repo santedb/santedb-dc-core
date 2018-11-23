@@ -27,6 +27,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Core;
@@ -58,7 +59,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="patientToInsert">The patient to be inserted.</param>
         /// <returns>Returns the inserted patient.</returns>
         [RestOperation(Method = "POST", UriPath = "/Patient", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Patient CreatePatient([RestMessage(RestMessageFormat.SimpleJson)]Patient patientToInsert)
         {
@@ -73,7 +74,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="patientToUpdate">The patient to be updated.</param>
         /// <returns>Returns the updated patient.</returns>
         [RestOperation(Method = "PUT", UriPath = "/Patient", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Patient UpdatePatient([RestMessage(RestMessageFormat.SimpleJson)]Patient patientToUpdate)
         {
@@ -88,7 +89,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 		/// </summary>
 		/// <returns>Returns the patient.</returns>
         [RestOperation(Method = "GET", UriPath = "/Patient", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetPatient()
         {
@@ -242,7 +243,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 		/// </summary>
 		/// <returns>Returns the patient.</returns>
         [RestOperation(Method = "GET", UriPath = "/Patient.Download", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData DownloadPatient()
         {
@@ -306,7 +307,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get a patient
         /// </summary>
         [RestOperation(Method = "GET", UriPath = "/Empty/Patient", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Patient GetEmptyPatient()
         {

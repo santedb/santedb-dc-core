@@ -42,9 +42,38 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 			get;
 			set;
 		}
+
 	}
 
+    /// <summary>
+    /// Represents a security policy applied to an act
+    /// </summary>
+    [Table("entity_security_policy")]
+    public class DbEntitySecurityPolicy : DbSecurityPolicyInstance
+    {
+        /// <summary>
+        /// Gets or sets the source
+        /// </summary>
+        /// <value>The source identifier.</value>
+        [Column("entity_id"), Indexed(Name = "entity_security_policy_source_policy", Unique = true), NotNull, ForeignKey(typeof(DbEntity), nameof(DbEntity.Uuid))]
+        public byte[] EntityId
+        {
+            get;
+            set;
+        }
 
+        /// <summary>
+        /// Gets or sets the policy identifier.
+        /// </summary>
+        /// <value>The policy identifier.</value>
+        [Column("policy_id"), Indexed(Name = "entity_security_policy_source_policy", Unique = true), NotNull, ForeignKey(typeof(DbSecurityPolicy), nameof(DbSecurityPolicy.Uuid))]
+        public byte[] PolicyId
+        {
+            get;
+            set;
+        }
+
+    }
 
     /// <summary>
     /// Represents a security policy applied to an act

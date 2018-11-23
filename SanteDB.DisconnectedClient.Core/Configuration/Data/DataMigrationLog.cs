@@ -21,6 +21,7 @@ using System;
 using System.Xml.Serialization;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 {
@@ -43,7 +44,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 		/// <summary>
 		/// Gets or sets the entry.
 		/// </summary>
-		[XmlElement("entry")]
+		[XmlElement("entry"), JsonProperty("entry")]
 		public List<DataMigrationEntry> Entry {
 			get;
 			set;
@@ -80,7 +81,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 			/// Gets or sets the identifier of the migration
 			/// </summary>
 			/// <value>The identifier.</value>
-			[XmlAttribute("id")]
+			[XmlAttribute("id"), JsonProperty("id")]
 			public String Id {
 				get;
 				set;
@@ -89,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 			/// <summary>
 			/// Gets or sets the date when the entry was installed
 			/// </summary>
-			[XmlAttribute("date")]
+			[XmlAttribute("date"), JsonProperty("date")]
 			public DateTime Date {
 				get;
 				set;

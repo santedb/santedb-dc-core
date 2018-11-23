@@ -17,34 +17,21 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.DisconnectedClient.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model;
-using System.Linq.Expressions;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Messaging.HDSI.Client;
+using SanteDB.Core.Http;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.Threading;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.i18n;
-using System.Security.Principal;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Alerting;
-using SanteDB.Core.Services;
-using SanteDB.Core.Mail;
-using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
-using System.Reflection;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.DisconnectedClient.Core;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Core.Synchronization
 {

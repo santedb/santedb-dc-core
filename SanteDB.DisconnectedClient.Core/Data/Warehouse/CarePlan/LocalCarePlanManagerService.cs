@@ -17,27 +17,23 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.Warehouse;
 using SanteDB.Core.Services;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.Warehouse;
 
 namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
 {
@@ -45,7 +41,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
     /// The protocol watch service is used to watch patient regsitrations and ensure the clinical
     /// protocol is complete
     /// </summary>
-    public class CarePlanManagerService : IDaemonService
+    public class LocalCarePlanManagerService : IDaemonService
     {
 
         // Parameters
@@ -69,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                         this.m_warehouseService.DeleteDatamart(this.m_dataMart.Id);
 
                     this.m_tracer.TraceInfo("Datamart for care plan service doesn't exist, will have to create it...");
-                    this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(CarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
+                    this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(LocalCarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
                     this.m_tracer.TraceVerbose("Datamart {0} created", this.m_dataMart.Id);
                 }
                 else
@@ -93,7 +89,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
         private ManualResetEvent m_resetEvent = new ManualResetEvent(false);
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(CarePlanManagerService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(LocalCarePlanManagerService));
 
         // Represents a promise to perform a care plan
         private readonly List<IdentifiedData> m_actCarePlanPromise = new List<IdentifiedData>();
@@ -166,7 +162,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                     if (this.m_dataMart == null)
                     {
                         this.m_tracer.TraceInfo("Datamart for care plan service doesn't exist, will have to create it...");
-                        this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(CarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
+                        this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(LocalCarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
                         this.m_tracer.TraceVerbose("Datamart {0} created", this.m_dataMart.Id);
                     }
                     //else // prune datamart
@@ -441,9 +437,9 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                 var senderParm = Expression.Parameter(typeof(Object), "o");
                 var eventParm = Expression.Parameter(ppeArgType, "e");
                 var eventData = Expression.Convert(Expression.MakeMemberAccess(eventParm, ppeArgType.GetRuntimeProperty("Data")), typeof(Act));
-                var insertInstanceDelegate = Expression.Lambda(evtHdlrType, Expression.Call(Expression.Constant(this), typeof(CarePlanManagerService).GetRuntimeMethod(nameof(QueueWorkItem), new Type[] { typeof(IdentifiedData) }), eventData), senderParm, eventParm).Compile();
-                var updateInstanceDelegate = Expression.Lambda(evtHdlrType, Expression.Call(Expression.Constant(this), typeof(CarePlanManagerService).GetRuntimeMethod(nameof(QueueWorkItem), new Type[] { typeof(IdentifiedData) }), eventData), senderParm, eventParm).Compile();
-                var obsoleteInstanceDelegate = Expression.Lambda(evtHdlrType, Expression.Call(Expression.Constant(this), typeof(CarePlanManagerService).GetRuntimeMethod(nameof(QueueWorkItem), new Type[] { typeof(IdentifiedData) }), eventData), senderParm, eventParm).Compile();
+                var insertInstanceDelegate = Expression.Lambda(evtHdlrType, Expression.Call(Expression.Constant(this), typeof(LocalCarePlanManagerService).GetRuntimeMethod(nameof(QueueWorkItem), new Type[] { typeof(IdentifiedData) }), eventData), senderParm, eventParm).Compile();
+                var updateInstanceDelegate = Expression.Lambda(evtHdlrType, Expression.Call(Expression.Constant(this), typeof(LocalCarePlanManagerService).GetRuntimeMethod(nameof(QueueWorkItem), new Type[] { typeof(IdentifiedData) }), eventData), senderParm, eventParm).Compile();
+                var obsoleteInstanceDelegate = Expression.Lambda(evtHdlrType, Expression.Call(Expression.Constant(this), typeof(LocalCarePlanManagerService).GetRuntimeMethod(nameof(QueueWorkItem), new Type[] { typeof(IdentifiedData) }), eventData), senderParm, eventParm).Compile();
 
                 // Bind to events
                 pType.GetRuntimeEvent("Inserted").AddEventHandler(pInstance, insertInstanceDelegate);

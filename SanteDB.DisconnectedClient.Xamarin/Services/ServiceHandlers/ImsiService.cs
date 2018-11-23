@@ -48,6 +48,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Applets.Services;
 using System.Text.RegularExpressions;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 {
@@ -73,7 +74,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="bundleToInsert">The bundle to be inserted.</param>
         /// <returns>Returns the inserted bundle.</returns>
         [RestOperation(Method = "POST", UriPath = "/Bundle", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Bundle CreateBundle([RestMessage(RestMessageFormat.SimpleJson)]Bundle bundleToInsert)
         {
@@ -87,7 +88,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 		/// <param name="entityRelationship">The entity relationship.</param>
 		/// <returns>Returns the created entity relationship.</returns>
 		[RestOperation(Method = "POST", UriPath = "/EntityRelationship", FaultProvider = nameof(HdsiFault))]
-	    [Demand(PolicyIdentifiers.WriteClinicalData)]
+	    [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
 		public EntityRelationship CreateEntityRelationship([RestMessage(RestMessageFormat.SimpleJson)] EntityRelationship entityRelationship)
 	    {
 			var erRepositoryService = ApplicationContext.Current.GetService<IRepositoryService<EntityRelationship>>();
@@ -100,7 +101,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns an entity.</returns>
         [RestOperation(Method = "GET", UriPath = "/Entity", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetEntity()
         {
@@ -112,7 +113,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns an entity.</returns>
         [RestOperation(Method = "GET", UriPath = "/Material", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetMaterial()
         {
@@ -124,7 +125,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// </summary>
         /// <returns>Returns an entity.</returns>
         [RestOperation(Method = "GET", UriPath = "/ManufacturedMaterial", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetManufacturedMaterial()
         {
@@ -135,7 +136,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Deletes the act
         /// </summary>
         [RestOperation(Method = "DELETE", UriPath = "/EntityRelationship", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.DeleteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.DeleteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public EntityRelationship DeleteEntityRelationship()
         {
@@ -224,7 +225,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 		/// </summary>
 		/// <returns>Returns a list of providers.</returns>
         [RestOperation(Method = "GET", UriPath = "/Provider", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.QueryClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public IdentifiedData GetProvider()
         {
@@ -269,7 +270,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get a template
         /// </summary>
         [RestOperation(Method = "GET", UriPath = "/Act/Template", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Act GetActTemplate()
         {
@@ -291,7 +292,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// Get a template
         /// </summary>
         [RestOperation(Method = "GET", UriPath = "/Entity/Template", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Entity GetEntityTemplate()
         {
@@ -351,7 +352,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <returns>Returns the user profile of the current user.</returns>
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         [RestOperation(UriPath = "/UserEntity", Method = "GET")]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public IdentifiedData GetUserEntity()
         {
             var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
@@ -404,7 +405,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <returns>Returns the users updated profile.</returns>
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         [RestOperation(UriPath = "/UserEntity", Method = "PUT")]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public UserEntity UpdateUserEntity([RestMessage(RestMessageFormat.SimpleJson)] UserEntity user)
         {
             var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
@@ -454,7 +455,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="entityToUpdate">The entity to be updated.</param>
         /// <returns>Returns the updated entity.</returns>
         [RestOperation(Method = "PUT", UriPath = "/entity", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Entity UpdateEntity([RestMessage(RestMessageFormat.SimpleJson)]Entity entityToUpdate)
         {
@@ -469,7 +470,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="entityToUpdate">The entity to be updated.</param>
         /// <returns>Returns the updated entity.</returns>
         [RestOperation(Method = "PUT", UriPath = "/EntityExtension", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public Entity UpdateEntityExtension([RestMessage(RestMessageFormat.SimpleJson)]EntityExtension extensionToSave)
         {
@@ -508,7 +509,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         /// <param name="entityRelationship">The entity relationship.</param>
         /// <returns>Returns the updated entity relationship.</returns>
         [RestOperation(Method = "PUT", UriPath = "/EntityRelationship", FaultProvider = nameof(HdsiFault))]
-	    [Demand(PolicyIdentifiers.WriteClinicalData)]
+	    [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
 	    public EntityRelationship UpdateEntityRelationship([RestMessage(RestMessageFormat.SimpleJson)] EntityRelationship entityRelationship)
 	    {
 		    var erRepositoryService = ApplicationContext.Current.GetService<IRepositoryService<EntityRelationship>>();
@@ -523,7 +524,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 		/// <param name="manufacturedMaterial">The manufactured material to be updated.</param>
 		/// <returns>Returns the updated manufactured material.</returns>
 		[RestOperation(Method = "PUT", UriPath = "/ManufacturedMaterial", FaultProvider = nameof(HdsiFault))]
-        [Demand(PolicyIdentifiers.Login)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         [return: RestMessage(RestMessageFormat.SimpleJson)]
         public ManufacturedMaterial UpdateManufacturedMaterial([RestMessage(RestMessageFormat.SimpleJson)] ManufacturedMaterial manufacturedMaterial)
         {

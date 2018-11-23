@@ -30,7 +30,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Impl
+namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
 	/// <summary>
 	/// Local batch service

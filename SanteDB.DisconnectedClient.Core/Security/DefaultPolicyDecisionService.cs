@@ -29,7 +29,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
 	/// <summary>
 	/// Represents the policy decision service
 	/// </summary>
-	public class LocalPolicyDecisionService : IPolicyDecisionService
+	public class DefaultPolicyDecisionService : IPolicyDecisionService
 	{
 
         // Policy cache
@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.PolicyDecisionService"/> class.
 		/// </summary>
-		public LocalPolicyDecisionService()
+		public DefaultPolicyDecisionService()
 		{
 		}
 
