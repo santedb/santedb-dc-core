@@ -501,8 +501,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         // Is there an authentication asset in the configuration
                         var authentication = XamarinApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AuthenticationAsset;
                         if (String.IsNullOrEmpty(authentication))
-                            authentication = appletManager.Applets.AuthenticationAssets.FirstOrDefault();
-                        if (String.IsNullOrEmpty(authentication))
                             authentication = "/org.santedb.uicore/views/login.html";
 
                         string redirectLocation = String.Format("{0}",

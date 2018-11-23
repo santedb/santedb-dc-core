@@ -24,6 +24,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Formatter;
+using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Xamarin.Exceptions;
@@ -76,12 +77,13 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// <returns></returns>
         public bool ProvideFault(Exception error, RestResponseMessage faultMessage)
         {
+
 #if DEBUG
             var ie = error;
             while (ie != null)
             {
-                this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By", 
-                    RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name, 
+                this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
+                    RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                     ie.GetType().FullName, ie.Message);
                 ie = ie.InnerException;
             }
@@ -92,69 +94,12 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 this.m_tracer.TraceError("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
 #endif
 
-            var uriMatched = RestOperationContext.Current.IncomingRequest.Url;
+            faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
             object fault = new RestServiceFault(error);
 
-            // Formulate appropriate response
-            if(error is PolicyViolationException)
-            {
-                var pve = error as PolicyViolationException;
-                AuditUtil.AuditRestrictedFunction(error, uriMatched);
-                if (pve.PolicyDecision == SanteDB.Core.Model.Security.PolicyGrantType.Elevate ||
-                    pve.PolicyId == PermissionPolicyIdentifiers.Login)
-                {
-                    // Ask the user to elevate themselves
-                    faultMessage.StatusCode = 401;
-                    RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", $"{RestOperationContext.Current.IncomingRequest.Url.Host} realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error_code=\"insufficient_scope\" scope=\"{pve.PolicyId}\"");
-
-                }
-                else
-                    faultMessage.StatusCode = 403;
-            }
-            else if (error is SecurityTokenException)
-            {
-                // TODO: Audit this
-                faultMessage.StatusCode = (int)System.Net.HttpStatusCode.Unauthorized;
-                RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", $"Bearer realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error=\"invalid_token\" error_description=\"{error.Message}\"");
-            }
-            else if (error is SecurityException)
-            {
-                AuditUtil.AuditRestrictedFunction(error, uriMatched);
-                faultMessage.StatusCode = (int)System.Net.HttpStatusCode.Forbidden;
-            }
-            else if (error is LimitExceededException)
-            {
-                faultMessage.StatusCode = (int)429;
-                faultMessage.StatusDescription = "Too Many Requests";
-                faultMessage.Headers.Add("Retry-After", "1200");
-            }
-            else if (error is UnauthorizedAccessException)
-            {
-                AuditUtil.AuditRestrictedFunction(error, uriMatched);
-                faultMessage.StatusCode = (int)System.Net.HttpStatusCode.Forbidden;
-            }
-            else if (error is FaultException)
-            {
-                faultMessage.StatusCode = (int)(error as FaultException).StatusCode;
-                if (error.GetType() != typeof(FaultException)) // Special classification
+            if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
                     fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
-            }
-            else if (error is Newtonsoft.Json.JsonException ||
-                error is System.Xml.XmlException)
-                faultMessage.StatusCode = (int)400;
-            else if (error is DuplicateKeyException || error is DuplicateNameException)
-                faultMessage.StatusCode = (int)409;
-            else if (error is FileNotFoundException || error is KeyNotFoundException)
-                faultMessage.StatusCode = (int)404;
-            else if (error is DetectedIssueException)
-                faultMessage.StatusCode = (int)422;
-            else if (error is NotImplementedException)
-                faultMessage.StatusCode = (int)501;
-            else if (error is NotSupportedException)
-                faultMessage.StatusCode = (int)405;
-            else
-                faultMessage.StatusCode = (int)500;
 
             AgsMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
             return true;

@@ -51,6 +51,7 @@
     <Compile Include="Behaviors\AgsMessageLoggingEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsPermissionPolicyBehavior.cs" />
     <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
+    <Compile Include="Behaviors\AgsWebErrorHandlerServiceBehavior.cs" />
     <Compile Include="Model\ConfigurationViewModel.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
     <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" />
@@ -73,6 +74,7 @@
     <Compile Include="Services\AuthenticationServiceBehavior.cs" />
     <Compile Include="Services\HdsiServiceBehavior.cs" />
     <Compile Include="Services\RisiServiceBehavior.cs" />
+    <Compile Include="Util\WebErrorUtility.cs" />
   </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">

@@ -28,6 +28,7 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -425,9 +426,9 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <summary>
         /// Audit the use of a restricted function
         /// </summary>
-        public static void AuditRestrictedFunction(Exception ex, Uri url)
+        public static void AuditRestrictedFunction(Exception ex, Uri url, params String[] mitigations)
         {
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.UseOfARestrictedFunction));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, mitigations.Length > 0 ? OutcomeIndicator.MinorFail : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAlert));
             AddUserActor(audit);
             AddDeviceActor(audit);
             audit.AuditableObjects.Add(new AuditableObject()
@@ -439,6 +440,34 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 Type = AuditableObjectType.SystemObject
             });
             AddAncillaryObject(audit);
+            
+            if (ex is PolicyViolationException)
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Uri,
+                    LifecycleType = AuditableObjectLifecycle.Report,
+                    ObjectId = $"http://santedb.org/policy/{(ex as PolicyViolationException).PolicyId}",
+                    Role = AuditableObjectRole.SecurityResource,
+                    Type = AuditableObjectType.SystemObject,
+                    ObjectData = new List<ObjectDataExtension>(mitigations.Select(o => new ObjectDataExtension("mitigation", Encoding.UTF8.GetBytes(o))))
+                    {
+                        new ObjectDataExtension("decision", new byte[] { (byte)(ex as PolicyViolationException).PolicyDecision }),
+                        new ObjectDataExtension("policyId", Encoding.UTF8.GetBytes((ex as PolicyViolationException).PolicyId))
+                    }
+                });
+            else
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Uri,
+                    LifecycleType = AuditableObjectLifecycle.Report,
+                    ObjectId = $"http://santedb.org/error/{ex.GetType().Name}",
+                    Role = AuditableObjectRole.SecurityResource,
+                    Type = AuditableObjectType.SystemObject,
+                    ObjectData = new List<ObjectDataExtension>(mitigations.Select(o => new ObjectDataExtension("mitigation", Encoding.UTF8.GetBytes(o))))
+                    {
+                        new ObjectDataExtension("exception", Encoding.UTF8.GetBytes(ex.ToString()))
+                    }
+                });
 
             SendAudit(audit);
         }

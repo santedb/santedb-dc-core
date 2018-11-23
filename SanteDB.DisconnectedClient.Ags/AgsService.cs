@@ -79,9 +79,15 @@ namespace SanteDB.DisconnectedClient.Ags
         public static AgsConfigurationSection GetDefaultConfiguration()
         {
             // Behaviors for a secured endpoint
+            var unsecuredBehaviors = new List<AgsBehaviorConfiguration>()
+            {
+                new AgsBehaviorConfiguration(typeof(AgsWebErrorHandlerServiceBehavior))
+            };
+
             var securedBehaviors = new List<AgsBehaviorConfiguration>()
             {
-                new AgsBehaviorConfiguration(typeof(AgsAuthorizationServiceBehavior)),
+                new AgsBehaviorConfiguration(typeof(AgsErrorHandlerServiceBehavior)),
+                new AgsBehaviorConfiguration(typeof(AgsAuthorizationServiceBehavior))
             };
 
             var endpointBehaviors = new List<AgsBehaviorConfiguration>()
@@ -169,6 +175,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     },
                     new AgsServiceConfiguration(typeof(WwwServiceBehavior))
                     {
+                        Behaviors = unsecuredBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -206,7 +213,6 @@ namespace SanteDB.DisconnectedClient.Ags
                 RestService service = new RestService(itm.ServiceType);
 
                 service.AddServiceBehavior(new AgsMagicServiceBehavior());
-                service.AddServiceBehavior(new AgsErrorHandlerServiceBehavior());
                 service.AddServiceBehavior(new AgsPermissionPolicyBehavior());
                 foreach (var bhvr in itm.Behaviors)
                 {

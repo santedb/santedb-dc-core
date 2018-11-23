@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Navigate asset
             AppletAsset navigateAsset = null;
             var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
-
+            
             String appletPath = RestOperationContext.Current.IncomingRequest.Url.AbsolutePath.ToLower();
             if (!m_cacheApplets.TryGetValue(appletPath, out navigateAsset))
             {
@@ -65,15 +65,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     navigateAsset = appletManagerService.Applets.ResolveAsset(appletPath);
 
                 if (navigateAsset == null)
-                {
-                    RestOperationContext.Current.OutgoingResponse.StatusCode = 404;
-                    using (var sr = new StreamReader(typeof(WwwServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.GenericError.html")))
-                    {
-                        return new MemoryStream(Encoding.UTF8.GetBytes(sr.ReadToEnd().Replace("{status}", "404")
-                            .Replace("{message}", $"Resource {appletPath} not found")
-                            .Replace("{trace}", "No trace provided")));
-                    }
-                }
+                    throw new FileNotFoundException(appletPath);
 
                 lock (m_lockObject)
                 {

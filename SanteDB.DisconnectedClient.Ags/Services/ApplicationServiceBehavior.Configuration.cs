@@ -56,6 +56,7 @@ using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
 using SanteDB.DisconnectedClient.Xamarin.Http;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Messaging.AMI.Client;
+using SanteDB.Messaging.HDSI.Client;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
@@ -245,6 +246,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 {
                     // Recreate the client with the updated security configuration
                     amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                    var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
 
                     // Create application user
                     var role = amiClient.GetRole("SYNCHRONIZERS");
@@ -265,12 +267,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         });
 
                         // Create the device entity 
-                        amiClient.CreateDeviceEntity(new DeviceEntity()
+                        hdsiClient.Create(new DeviceEntity()
                         {
                             SecurityDevice = newDevice.Entity,
                             StatusConceptKey = StatusKeys.Active,
                             ManufacturerModelName = Environment.MachineName,
                             OperatingSystemName = Environment.OSVersion.ToString(),
+                            GeoTag = ApplicationContext.Current.GetService<IGeoTaggingService>()?.GetCurrentPosition(),
                             Names = new List<EntityName>()
                                 {
                                     new EntityName(NameUseKeys.Assigned, deviceName)
@@ -285,7 +288,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             throw new DuplicateNameException(Strings.err_duplicate_deviceName);
                         }
                         else
-                            amiClient.UpdateDevice(existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
+                        {
+                            var existingDeviceItem = existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity;
+                            amiClient.UpdateDevice(existingDeviceItem.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
                             {
 
                                 UpdatedTime = DateTime.Now,
@@ -295,6 +300,25 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             {
                                 Policies = role.Policies
                             });
+
+                            // Create the device entity 
+                            var existingDeviceEntity = hdsiClient.Query<DeviceEntity>(o => o.SecurityDeviceKey == existingDeviceItem.Key.Value, 0, 1, false).Item.OfType<DeviceEntity>().FirstOrDefault();
+                            if (existingDeviceEntity != null)
+                                hdsiClient.Obsolete(existingDeviceEntity);
+                            hdsiClient.Create(new DeviceEntity()
+                            {
+                                SecurityDevice = existingDeviceItem,
+                                StatusConceptKey = StatusKeys.Active,
+                                ManufacturerModelName = Environment.MachineName,
+                                OperatingSystemName = Environment.OSVersion.ToString(),
+                                GeoTag = ApplicationContext.Current.GetService<IGeoTaggingService>()?.GetCurrentPosition(),
+                                Names = new List<EntityName>()
+                                {
+                                    new EntityName(NameUseKeys.Assigned, deviceName)
+                                }
+                            });
+
+                        }
                     }
                 }
                 catch (Exception e)
