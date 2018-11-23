@@ -203,9 +203,9 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.9.5" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.9.8" />
         <PackageReference Include="SanteDB.Core.Api" Version="1.9.8" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.9.5" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.9.8" />
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -216,7 +216,7 @@
       <Version>1.9.8</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>1.9.5</Version>
+      <Version>1.9.8</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.18.2" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
