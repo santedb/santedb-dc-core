@@ -182,5 +182,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\GenericError.html" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\SanteDB.licenseheader">
+      <Link>SanteDB.licenseheader</Link>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
