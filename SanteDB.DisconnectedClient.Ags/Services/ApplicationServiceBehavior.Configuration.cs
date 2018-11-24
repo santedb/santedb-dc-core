@@ -547,6 +547,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiIntegrationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
