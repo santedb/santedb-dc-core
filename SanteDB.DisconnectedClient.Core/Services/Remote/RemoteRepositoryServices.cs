@@ -127,6 +127,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         // Service client
         private HdsiServiceClient m_client = null;
 
+        // Used to reduce requests to the server which the server had previously rejected
+        private HashSet<Guid> m_missEntity = new HashSet<Guid>();
+
         public RemoteRepositoryService()
         {
             this.m_client = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
@@ -189,7 +192,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     else if (etag != (existing as IdentifiedData).Tag) // Versions don't match the latest
                         ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(existing.Key.Value);
                 }
-                if (existing == null || (existing as IVersionedEntity)?.VersionKey != versionKey)
+                if (!this.m_missEntity.Contains(key) && (existing == null || 
+                    (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
                 {
                     existing = this.m_client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
 
@@ -201,6 +205,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             }
             catch (WebException)
             {
+                lock(this.m_missEntity)
+                    this.m_missEntity.Add(key);
                 // Web exceptions should not bubble up
                 return default(TModel);
             }

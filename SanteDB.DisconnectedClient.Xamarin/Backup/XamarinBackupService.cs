@@ -39,6 +39,7 @@ using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin.Services.Model;
 using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core.Configuration;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Backup
 {
@@ -131,7 +132,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                 {
                     this.BackupDirectory(writer, sourceDirectory, sourceDirectory);
 
-                    var appInfo = new ApplicationInfo(false).ToDiagnosticReport();
+                    var appInfo = new DiagnosticReport()
+                    {
+                        ApplicationInfo = new DiagnosticApplicationInfo(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(o => o.DefinedTypes.Any(t => t.Name == "Program" || t.Name == "SplashActivity")) ?? typeof(SanteDBConfiguration).Assembly)
+                    };
+
                     // Output appInfo
                     using (var ms = new MemoryStream()) {
                         XmlSerializer xsz = new XmlSerializer(appInfo.GetType());

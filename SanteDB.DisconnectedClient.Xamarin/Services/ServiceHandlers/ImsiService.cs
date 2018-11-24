@@ -68,19 +68,19 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         // View model serliazer
         private JsonViewModelSerializer m_serializer = new JsonViewModelSerializer();
         
-        /// <summary>
-        /// Creates a bundle.
-        /// </summary>
-        /// <param name="bundleToInsert">The bundle to be inserted.</param>
-        /// <returns>Returns the inserted bundle.</returns>
-        [RestOperation(Method = "POST", UriPath = "/Bundle", FaultProvider = nameof(HdsiFault))]
-        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public Bundle CreateBundle([RestMessage(RestMessageFormat.SimpleJson)]Bundle bundleToInsert)
-        {
-            IBatchRepositoryService bundleService = ApplicationContext.Current.GetService<IBatchRepositoryService>();
-            return bundleService.Insert(bundleToInsert);
-        }
+        ///// <summary>
+        ///// Creates a bundle.
+        ///// </summary>
+        ///// <param name="bundleToInsert">The bundle to be inserted.</param>
+        ///// <returns>Returns the inserted bundle.</returns>
+        //[RestOperation(Method = "POST", UriPath = "/Bundle", FaultProvider = nameof(HdsiFault))]
+        //[Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
+        //[return: RestMessage(RestMessageFormat.SimpleJson)]
+        //public Bundle CreateBundle([RestMessage(RestMessageFormat.SimpleJson)]Bundle bundleToInsert)
+        //{
+        //    IBatchRepositoryService bundleService = ApplicationContext.Current.GetService<IBatchRepositoryService>();
+        //    return bundleService.Insert(bundleToInsert);
+        //}
 
 		/// <summary>
 		/// Creates the entity relationship.
@@ -220,51 +220,51 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         }
 
         
-        /// <summary>
-		/// Gets providers.
-		/// </summary>
-		/// <returns>Returns a list of providers.</returns>
-        [RestOperation(Method = "GET", UriPath = "/Provider", FaultProvider = nameof(HdsiFault))]
-        [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public IdentifiedData GetProvider()
-        {
+  //      /// <summary>
+		///// Gets providers.
+		///// </summary>
+		///// <returns>Returns a list of providers.</returns>
+  //      [RestOperation(Method = "GET", UriPath = "/Provider", FaultProvider = nameof(HdsiFault))]
+  //      [Demand(PermissionPolicyIdentifiers.QueryClinicalData)]
+  //      [return: RestMessage(RestMessageFormat.SimpleJson)]
+  //      public IdentifiedData GetProvider()
+  //      {
 
-            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-            var providerService = ApplicationContext.Current.GetService<IProviderRepositoryService>();
+  //          var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+  //          var providerService = ApplicationContext.Current.GetService<IProviderRepositoryService>();
 
-            if (search.ContainsKey("_id"))
-            {
-                // Force load from DB
-                ApplicationContext.Current.GetService<IDataCachingService>().Remove(Guid.Parse(search["_id"].FirstOrDefault()));
-                var provider = providerService.Get(Guid.Parse(search["_id"].FirstOrDefault()), Guid.Empty);
-                // Ensure expanded
-                //JniUtil.ExpandProperties(patient, search);
-                return provider;
-            }
-            else
-            {
-                var predicate = QueryExpressionParser.BuildLinqExpression<Provider>(search);
+  //          if (search.ContainsKey("_id"))
+  //          {
+  //              // Force load from DB
+  //              ApplicationContext.Current.GetService<IDataCachingService>().Remove(Guid.Parse(search["_id"].FirstOrDefault()));
+  //              var provider = providerService.Get(Guid.Parse(search["_id"].FirstOrDefault()), Guid.Empty);
+  //              // Ensure expanded
+  //              //JniUtil.ExpandProperties(patient, search);
+  //              return provider;
+  //          }
+  //          else
+  //          {
+  //              var predicate = QueryExpressionParser.BuildLinqExpression<Provider>(search);
 
-                int totalResults = 0,
-                  offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
-                  count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
+  //              int totalResults = 0,
+  //                offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
+  //                count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
 
 
-                this.m_tracer.TraceVerbose("Searching Providers : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
+  //              this.m_tracer.TraceVerbose("Searching Providers : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
-                var retVal = providerService.Find(predicate, offset, count, out totalResults);
+  //              var retVal = providerService.Find(predicate, offset, count, out totalResults);
 
-                // Serialize the response
-                return new Bundle()
-                {
-                    Item = retVal.OfType<IdentifiedData>().ToList(),
-                    Offset = offset,
-                    Count = count,
-                    TotalResults = totalResults
-                };
-            }
-        }
+  //              // Serialize the response
+  //              return new Bundle()
+  //              {
+  //                  Item = retVal.OfType<IdentifiedData>().ToList(),
+  //                  Offset = offset,
+  //                  Count = count,
+  //                  TotalResults = totalResults
+  //              };
+  //          }
+  //      }
         
         /// <summary>
         /// Get a template
@@ -346,49 +346,49 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         }
 
 
-        /// <summary>
-        /// Gets the user profile of the current user.
-        /// </summary>
-        /// <returns>Returns the user profile of the current user.</returns>
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        [RestOperation(UriPath = "/UserEntity", Method = "GET")]
-        [Demand(PermissionPolicyIdentifiers.Login)]
-        public IdentifiedData GetUserEntity()
-        {
-            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-            var securityService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
+        ///// <summary>
+        ///// Gets the user profile of the current user.
+        ///// </summary>
+        ///// <returns>Returns the user profile of the current user.</returns>
+        //[return: RestMessage(RestMessageFormat.SimpleJson)]
+        //[RestOperation(UriPath = "/UserEntity", Method = "GET")]
+        //[Demand(PermissionPolicyIdentifiers.Login)]
+        //public IdentifiedData GetUserEntity()
+        //{
+        //    var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+        //    var securityService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
-            if (search.ContainsKey("_id"))
-            {
-                // Force load from DB
-                ApplicationContext.Current.GetService<IDataCachingService>().Remove(Guid.Parse(search["_id"].FirstOrDefault()));
-                var provider = securityService.GetUserEntity(Guid.Parse(search["_id"].FirstOrDefault()), Guid.Empty);
-                // Ensure expanded
-                //JniUtil.ExpandProperties(patient, search);
-                return provider;
-            }
-            else
-            {
-                var predicate = QueryExpressionParser.BuildLinqExpression<UserEntity>(search);
+        //    if (search.ContainsKey("_id"))
+        //    {
+        //        // Force load from DB
+        //        ApplicationContext.Current.GetService<IDataCachingService>().Remove(Guid.Parse(search["_id"].FirstOrDefault()));
+        //        var provider = securityService.GetUserEntity(Guid.Parse(search["_id"].FirstOrDefault()), Guid.Empty);
+        //        // Ensure expanded
+        //        //JniUtil.ExpandProperties(patient, search);
+        //        return provider;
+        //    }
+        //    else
+        //    {
+        //        var predicate = QueryExpressionParser.BuildLinqExpression<UserEntity>(search);
 
-                int totalResults = 0,
-                  offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
-                  count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
+        //        int totalResults = 0,
+        //          offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
+        //          count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
 
-                this.m_tracer.TraceVerbose("Searching User Entity : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
+        //        this.m_tracer.TraceVerbose("Searching User Entity : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
-                var retVal = securityService.FindUserEntity(predicate, offset, count, out totalResults);
+        //        var retVal = securityService.FindUserEntity(predicate, offset, count, out totalResults);
 
-                // Serialize the response
-                return new Bundle()
-                {
-                    Item = retVal.OfType<IdentifiedData>().ToList(),
-                    Offset = offset,
-                    Count = count,
-                    TotalResults = totalResults
-                };
-            }
-        }
+        //        // Serialize the response
+        //        return new Bundle()
+        //        {
+        //            Item = retVal.OfType<IdentifiedData>().ToList(),
+        //            Offset = offset,
+        //            Count = count,
+        //            TotalResults = totalResults
+        //        };
+        //    }
+        //}
 
         /// <summary>
         /// Handle a fault
@@ -398,71 +398,71 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             return new ErrorResult(e);
         }
 
-        /// <summary>
-        /// Saves the user profile.
-        /// </summary>
-        /// <param name="user">The users modified profile information.</param>
-        /// <returns>Returns the users updated profile.</returns>
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        [RestOperation(UriPath = "/UserEntity", Method = "PUT")]
-        [Demand(PermissionPolicyIdentifiers.Login)]
-        public UserEntity UpdateUserEntity([RestMessage(RestMessageFormat.SimpleJson)] UserEntity user)
-        {
-            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-            ISecurityRepositoryService securityRepositoryService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-            AuthenticationContext.Current?.Session?.ClearCached();
-            //IDataPersistenceService<UserEntity> persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<UserEntity>>();
-            return securityRepositoryService.SaveUserEntity(user);
-        }
+        ///// <summary>
+        ///// Saves the user profile.
+        ///// </summary>
+        ///// <param name="user">The users modified profile information.</param>
+        ///// <returns>Returns the users updated profile.</returns>
+        //[return: RestMessage(RestMessageFormat.SimpleJson)]
+        //[RestOperation(UriPath = "/UserEntity", Method = "PUT")]
+        //[Demand(PermissionPolicyIdentifiers.Login)]
+        //public UserEntity UpdateUserEntity([RestMessage(RestMessageFormat.SimpleJson)] UserEntity user)
+        //{
+        //    var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+        //    ISecurityRepositoryService securityRepositoryService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
+        //    AuthenticationContext.Current?.Session?.ClearCached();
+        //    //IDataPersistenceService<UserEntity> persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<UserEntity>>();
+        //    return securityRepositoryService.SaveUserEntity(user);
+        //}
 
 
 
-        /// <summary>
-        /// Search places
-        /// </summary>
-        [RestOperation(Method = "GET", UriPath = "/Place", FaultProvider = nameof(HdsiFault))]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public IdentifiedData GetPlace()
-        {
-            var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
-            var placeService = ApplicationContext.Current.GetService<IPlaceRepositoryService>();
+        ///// <summary>
+        ///// Search places
+        ///// </summary>
+        //[RestOperation(Method = "GET", UriPath = "/Place", FaultProvider = nameof(HdsiFault))]
+        //[return: RestMessage(RestMessageFormat.SimpleJson)]
+        //public IdentifiedData GetPlace()
+        //{
+        //    var search = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+        //    var placeService = ApplicationContext.Current.GetService<IPlaceRepositoryService>();
 
-            if (search.ContainsKey("_id"))
-                return placeService.Get(Guid.Parse(search["_id"].FirstOrDefault()), Guid.Empty);
-            else
-            {
-                var predicate = QueryExpressionParser.BuildLinqExpression<Place>(search);
-                this.m_tracer.TraceVerbose("Searching Places : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
+        //    if (search.ContainsKey("_id"))
+        //        return placeService.Get(Guid.Parse(search["_id"].FirstOrDefault()), Guid.Empty);
+        //    else
+        //    {
+        //        var predicate = QueryExpressionParser.BuildLinqExpression<Place>(search);
+        //        this.m_tracer.TraceVerbose("Searching Places : {0} / {1}", MiniHdsiServer.CurrentContext.Request.Url.Query, predicate);
 
-                int totalResults = 0,
-                    offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
-                    count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
-                var retVal = placeService.Find(predicate, offset, count, out totalResults);
+        //        int totalResults = 0,
+        //            offset = search.ContainsKey("_offset") ? Int32.Parse(search["_offset"][0]) : 0,
+        //            count = search.ContainsKey("_count") ? Int32.Parse(search["_count"][0]) : 100;
+        //        var retVal = placeService.Find(predicate, offset, count, out totalResults);
 
-                return new Bundle()
-                {
-                    Item = retVal.OfType<IdentifiedData>().ToList(),
-                    Offset = offset,
-                    Count = count,
-                    TotalResults = totalResults
-                };
-            }
-        }
+        //        return new Bundle()
+        //        {
+        //            Item = retVal.OfType<IdentifiedData>().ToList(),
+        //            Offset = offset,
+        //            Count = count,
+        //            TotalResults = totalResults
+        //        };
+        //    }
+        //}
 
-        /// <summary>
-        /// Updates an entity.
-        /// </summary>
-        /// <param name="entityToUpdate">The entity to be updated.</param>
-        /// <returns>Returns the updated entity.</returns>
-        [RestOperation(Method = "PUT", UriPath = "/entity", FaultProvider = nameof(HdsiFault))]
-        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public Entity UpdateEntity([RestMessage(RestMessageFormat.SimpleJson)]Entity entityToUpdate)
-        {
-            IEntityRepositoryService repository = ApplicationContext.Current.GetService<IEntityRepositoryService>();
-            // Get all the acts if none were supplied, and all of the relationships if none were supplied
-            return repository.Save(entityToUpdate).GetLocked() as Entity;
-        }
+        ///// <summary>
+        ///// Updates an entity.
+        ///// </summary>
+        ///// <param name="entityToUpdate">The entity to be updated.</param>
+        ///// <returns>Returns the updated entity.</returns>
+        //[RestOperation(Method = "PUT", UriPath = "/entity", FaultProvider = nameof(HdsiFault))]
+        //[Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
+        //[return: RestMessage(RestMessageFormat.SimpleJson)]
+        //public Entity UpdateEntity([RestMessage(RestMessageFormat.SimpleJson)]Entity entityToUpdate)
+        //{
+        //    //IEntityRepositoryService repository = ApplicationContext.Current.GetService<IEntityRepositoryService>();
+        //    // Get all the acts if none were supplied, and all of the relationships if none were supplied
+        //    //return repository.Save(entityToUpdate).GetLocked() as Entity;
+        //}
 
         /// <summary>
         /// Updates an entity.
@@ -518,39 +518,39 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 	    }
 
 
-		/// <summary>
-		/// Updates a manufactured material.
-		/// </summary>
-		/// <param name="manufacturedMaterial">The manufactured material to be updated.</param>
-		/// <returns>Returns the updated manufactured material.</returns>
-		[RestOperation(Method = "PUT", UriPath = "/ManufacturedMaterial", FaultProvider = nameof(HdsiFault))]
-        [Demand(PermissionPolicyIdentifiers.Login)]
-        [return: RestMessage(RestMessageFormat.SimpleJson)]
-        public ManufacturedMaterial UpdateManufacturedMaterial([RestMessage(RestMessageFormat.SimpleJson)] ManufacturedMaterial manufacturedMaterial)
-        {
-            var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
+		///// <summary>
+		///// Updates a manufactured material.
+		///// </summary>
+		///// <param name="manufacturedMaterial">The manufactured material to be updated.</param>
+		///// <returns>Returns the updated manufactured material.</returns>
+		//[RestOperation(Method = "PUT", UriPath = "/ManufacturedMaterial", FaultProvider = nameof(HdsiFault))]
+  //      [Demand(PermissionPolicyIdentifiers.Login)]
+  //      [return: RestMessage(RestMessageFormat.SimpleJson)]
+  //      public ManufacturedMaterial UpdateManufacturedMaterial([RestMessage(RestMessageFormat.SimpleJson)] ManufacturedMaterial manufacturedMaterial)
+  //      {
+  //          var query = NameValueCollection.ParseQueryString(MiniHdsiServer.CurrentContext.Request.Url.Query);
 
-            Guid manufacturedMaterialKey = Guid.Empty;
-            Guid manufacturedMaterialVersionKey = Guid.Empty;
+  //          Guid manufacturedMaterialKey = Guid.Empty;
+  //          Guid manufacturedMaterialVersionKey = Guid.Empty;
 
-            if (query.ContainsKey("_id") && Guid.TryParse(query["_id"][0], out manufacturedMaterialKey) && query.ContainsKey("_versionId") && Guid.TryParse(query["_versionId"][0], out manufacturedMaterialVersionKey))
-            {
-                if (manufacturedMaterial.Key == manufacturedMaterialKey && manufacturedMaterial.VersionKey == manufacturedMaterialVersionKey)
-                {
-                    var manufacturedMaterialRepositoryService = ApplicationContext.Current.GetService<IMaterialRepositoryService>();
+  //          if (query.ContainsKey("_id") && Guid.TryParse(query["_id"][0], out manufacturedMaterialKey) && query.ContainsKey("_versionId") && Guid.TryParse(query["_versionId"][0], out manufacturedMaterialVersionKey))
+  //          {
+  //              if (manufacturedMaterial.Key == manufacturedMaterialKey && manufacturedMaterial.VersionKey == manufacturedMaterialVersionKey)
+  //              {
+  //                  var manufacturedMaterialRepositoryService = ApplicationContext.Current.GetService<IMaterialRepositoryService>();
 
-                    return manufacturedMaterialRepositoryService.Save(manufacturedMaterial);
-                }
-                else
-                {
-                    throw new ArgumentException("Manufactured Material not found");
-                }
-            }
-            else
-            {
-                throw new ArgumentException("Manufactured Material not found");
-            }
-        }
+  //                  return manufacturedMaterialRepositoryService.Save(manufacturedMaterial);
+  //              }
+  //              else
+  //              {
+  //                  throw new ArgumentException("Manufactured Material not found");
+  //              }
+  //          }
+  //          else
+  //          {
+  //              throw new ArgumentException("Manufactured Material not found");
+  //          }
+  //      }
     }
 
     /// <summary>

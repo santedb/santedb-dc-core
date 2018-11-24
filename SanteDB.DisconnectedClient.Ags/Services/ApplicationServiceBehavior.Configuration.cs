@@ -547,16 +547,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiIntegrationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalPatientService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalPlaceService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalConceptService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalEntityRepositoryService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalOrganizationService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalMaterialService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalBatchService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalActService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalProviderService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);

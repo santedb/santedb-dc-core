@@ -46,78 +46,84 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         public void Apply(RestRequestMessage request)
         {
-
-            // Session cookie?
-            if (request.Cookies["_s"] != null)
+            try
             {
-                var cookie = request.Cookies["_s"];
-                if (!cookie.Expired)
+                // Session cookie?
+                if (request.Cookies["_s"] != null)
                 {
-                    var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-                    var session = smgr.Get(cookie.Value);
-                    if (session != null)
+                    var cookie = request.Cookies["_s"];
+                    if (!cookie.Expired)
                     {
-                        try
+                        var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
+                        var session = smgr.Get(cookie.Value);
+                        if (session != null)
                         {
-                            AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(session);
-                            this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
+                            try
+                            {
+                                AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(session);
+                                this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
+                            }
+                            catch (SessionExpiredException)
+                            {
+                                this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", cookie.Value);
+                                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
+                            }
                         }
-                        catch (SessionExpiredException)
+                        else // No session found
                         {
-                            this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", cookie.Value);
+                            this.m_tracer.TraceWarning("Session {0} is not registered with the session provider", cookie.Value);
                             RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
                         }
                     }
-                    else // No session found
+                }
+
+                // Authorization header
+                if (request.Headers["Authorization"] != null)
+                {
+                    var authHeader = request.Headers["Authorization"].Split(' ');
+                    switch (authHeader[0].ToLowerInvariant()) // Type / scheme
                     {
-                        this.m_tracer.TraceWarning("Session {0} is not registered with the session provider", cookie.Value);
-                        RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
+                        case "basic":
+                            {
+                                var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
+                                var authString = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader[1])).Split(':');
+                                var principal = idp.Authenticate(authString[0], authString[1]);
+                                if (principal == null)
+                                    throw new UnauthorizedAccessException();
+                                else
+                                    AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(principal);
+                                this.m_tracer.TraceVerbose("Performed BASIC auth for {0}", AuthenticationContext.Current.Principal.Identity.Name);
+
+                                break;
+                            }
+                        case "bearer":
+                            {
+                                var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
+                                var session = smgr.Get(authHeader[1]);
+                                if (session != null)
+                                {
+                                    try
+                                    {
+                                        AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(session);
+                                        this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
+                                    }
+                                    catch (SessionExpiredException)
+                                    {
+                                        this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", authHeader[1]);
+                                        throw new UnauthorizedAccessException("Session is expired");
+                                    }
+                                }
+                                else // Something wrong??? Perhaps it is an issue with the thingy?
+                                    throw new UnauthorizedAccessException("Session is invalid");
+                                break;
+                            }
+
                     }
                 }
             }
-
-            // Authorization header
-            if (request.Headers["Authorization"] != null)
+            finally
             {
-                var authHeader = request.Headers["Authorization"].Split(' ');
-                switch (authHeader[0].ToLowerInvariant()) // Type / scheme
-                {
-                    case "basic":
-                        {
-                            var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
-                            var authString = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader[1])).Split(':');
-                            var principal = idp.Authenticate(authString[0], authString[1]);
-                            if (principal == null)
-                                throw new UnauthorizedAccessException();
-                            else
-                                AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(principal);
-                            this.m_tracer.TraceVerbose("Performed BASIC auth for {0}", AuthenticationContext.Current.Principal.Identity.Name);
-
-                            break;
-                        }
-                    case "bearer":
-                        {
-                            var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-                            var session = smgr.Get(authHeader[1]);
-                            if (session != null)
-                            {
-                                try
-                                {
-                                    AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(session);
-                                    this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
-                                }
-                                catch (SessionExpiredException)
-                                {
-                                    this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", authHeader[1]);
-                                    throw new UnauthorizedAccessException("Session is expired");
-                                }
-                            }
-                            else // Something wrong??? Perhaps it is an issue with the thingy?
-                                throw new UnauthorizedAccessException("Session is invalid");
-                            break;
-                        }
-
-                }
+                RestOperationContext.Current.Disposed += (o, e) => AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.AnonymousPrincipal);
             }
         }
 

@@ -57,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [RestOperation(UriPath = "/SecurityUser", Method = "POST", FaultProvider = nameof(AmiFaultProvider))]
         public Object UpdateSecurityUser([RestMessage(RestMessageFormat.SimpleJson)] SecurityUserInfo user)
         {
-            var localSecSrv = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
+            var localSecSrv = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>();
             var amiServ = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 
             if (user.PasswordOnly)
@@ -74,7 +74,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 remoteUser.Entity.Email = user.Entity.Email;
                 remoteUser.Entity.PhoneNumber = user.Entity.PhoneNumber;
                 // Save the remote user in the local
-                localSecSrv.SaveUser(remoteUser.Entity);
+                localSecSrv.Save(remoteUser.Entity);
                 amiServ.UpdateUser(remoteUser.Entity.Key.Value, remoteUser);
                 return remoteUser.Entity;
             }
@@ -96,10 +96,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             var predicate = QueryExpressionParser.BuildLinqExpression<SecurityUser>(query);
             ISecurityRepositoryService securityRepositoryService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
-            if (query.ContainsKey("_id"))
-                return securityRepositoryService.GetUser(Guid.Parse(query["_id"][0]));
-            else
-                return Bundle.CreateBundle(securityRepositoryService.FindUsers(predicate), 0, 0);
+            return null;
+            //if (query.ContainsKey("_id"))
+            //    return securityRepositoryService.GetUser(Guid.Parse(query["_id"][0]));
+            //else
+            //    return Bundle.CreateBundle(securityRepositoryService.FindUsers(predicate), 0, 0);
         }
 
          /// <summary>

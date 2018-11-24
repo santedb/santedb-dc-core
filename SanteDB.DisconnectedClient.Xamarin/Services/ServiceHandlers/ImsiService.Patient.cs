@@ -202,10 +202,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                             retVal = retVal.Where(predicate.Compile());
                         else
                         {
-                            if (search.ContainsKey("_viewModel") && search["_viewModel"][0] != "full")
-                                retVal = (patientService as IFastQueryRepositoryService).FindFast(predicate, offset, count, out totalResults, queryId);
-                            else
-                                retVal = (patientService as IPersistableQueryRepositoryService).Find(predicate, offset, count, out totalResults, queryId);
+                            // Service refactor
+                            //if (search.ContainsKey("_viewModel") && search["_viewModel"][0] != "full")
+                            //    retVal = (patientService as IFastQueryRepositoryService).FindFast(predicate, offset, count, out totalResults, queryId);
+                            //else
+                            //    retVal = (patientService as IPersistableQueryRepositoryService).Find(predicate, offset, count, out totalResults, queryId);
                         }
                     }
                 }
