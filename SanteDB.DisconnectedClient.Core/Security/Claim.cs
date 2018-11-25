@@ -18,44 +18,43 @@
  * Date: 2018-6-28
  */
 using System;
-using System.Security.Principal;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
 
-	/// <summary>
-	/// Represents a single claim made about a user
-	/// </summary>
-	public class Claim
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.Claim"/> class.
-		/// </summary>
-		/// <param name="name">Name.</param>
-		/// <param name="value">Value.</param>
-		public Claim (String type, String value)
-		{
-			this.Type = type;
-			this.Value = value;
-		}
+    /// <summary>
+    /// Represents a single claim made about a user
+    /// </summary>
+    public class Claim
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.Claim"/> class.
+        /// </summary>
+        /// <param name="name">Name.</param>
+        /// <param name="value">Value.</param>
+        public Claim(String type, String value)
+        {
+            this.Type = type;
+            this.Value = value;
+        }
 
-		/// <summary>
-		/// Gets or sets the name.
-		/// </summary>
-		public String Type {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        public String Type
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		public String Value {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        public String Value
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Claim value as date time
@@ -63,7 +62,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public DateTime AsDateTime()
         {
             DateTime value = DateTime.MinValue;
-            if(!DateTime.TryParse(this.Value, out value))
+            if (!DateTime.TryParse(this.Value, out value))
             {
                 int offset = 0;
                 if (Int32.TryParse(this.Value, out offset))
@@ -73,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             }
             return value;
         }
-	}
+    }
 
 
 }

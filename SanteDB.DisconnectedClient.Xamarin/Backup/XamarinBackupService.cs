@@ -18,28 +18,22 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.AMI.Diagnostics;
+using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core.Services;
-using SharpCompress.Archives.Tar;
-using System.IO.Compression;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using SharpCompress.Readers.Tar;
 using SharpCompress.Writers.Tar;
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.AMI.Diagnostics;
 using System.Xml.Serialization;
-using SanteDB.DisconnectedClient.Core.Interop.AMI;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Xamarin.Services.Model;
-using SanteDB.Core.Security;
-using SanteDB.DisconnectedClient.Core.Configuration;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Backup
 {
@@ -104,7 +98,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
         {
 
             // Make a determination that the user is allowed to perform this action
-            if(AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
                 new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.ExportClinicalData).Demand();
 
             // Get the output medium
@@ -138,7 +132,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                     };
 
                     // Output appInfo
-                    using (var ms = new MemoryStream()) {
+                    using (var ms = new MemoryStream())
+                    {
                         XmlSerializer xsz = new XmlSerializer(appInfo.GetType());
                         xsz.Serialize(ms, appInfo);
                         ms.Flush();
@@ -157,7 +152,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                 {
                     int br = 4096;
                     byte[] buffer = new byte[br];
-                    while(br == 4096)
+                    while (br == 4096)
                     {
                         br = fs.Read(buffer, 0, 4096);
                         gzs.Write(buffer, 0, br);
@@ -194,7 +189,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                 using (var gzs = new GZipStream(fs, CompressionMode.Decompress))
                 using (var tr = TarReader.Open(gzs))
                 {
-                                        
+
                     // Move to next entry & copy 
                     while (tr.MoveToNextEntry())
                     {
@@ -204,7 +199,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                         var destDir = Path.Combine(sourceDirectory, tr.Entry.Key.Replace('/', Path.DirectorySeparatorChar));
                         if (!Directory.Exists(Path.GetDirectoryName(destDir)))
                             Directory.CreateDirectory(Path.GetDirectoryName(destDir));
-                        if (!tr.Entry.IsDirectory)  
+                        if (!tr.Entry.IsDirectory)
                             using (var s = tr.OpenEntryStream())
                             using (var ofs = File.Create(Path.Combine(sourceDirectory, tr.Entry.Key)))
                                 s.CopyTo(ofs);

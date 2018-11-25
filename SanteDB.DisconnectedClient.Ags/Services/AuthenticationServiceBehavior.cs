@@ -25,7 +25,6 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Xamarin.Security;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -34,7 +33,6 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -110,7 +108,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     break;
                 case "pin":
                     var pinAuthSvc = sessionService as IPinAuthenticationService;
-                    retVal = sessionService.Authenticate(request["username"], request["pin"].Select(o=>Byte.Parse(o.ToString())).ToArray(), claims.Union(this.ExtractClaims(RestOperationContext.Current.IncomingRequest.Headers)).ToArray());
+                    retVal = sessionService.Authenticate(request["username"], request["pin"].Select(o => Byte.Parse(o.ToString())).ToArray(), claims.Union(this.ExtractClaims(RestOperationContext.Current.IncomingRequest.Headers)).ToArray());
                     break;
             }
 

@@ -28,10 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -54,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Navigate asset
             AppletAsset navigateAsset = null;
             var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
-            
+
             String appletPath = RestOperationContext.Current.IncomingRequest.Url.AbsolutePath.ToLower();
             if (!m_cacheApplets.TryGetValue(appletPath, out navigateAsset))
             {
@@ -102,7 +99,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             // Write asset
             var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
-            return new MemoryStream(content) ;
+            return new MemoryStream(content);
         }
     }
 }

@@ -17,43 +17,40 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Reflection;
-using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
-using System.Diagnostics.Tracing;
-using SanteDB.Core.Diagnostics;
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
 
-	/// <summary>
-	/// Diagnostics configuration
-	/// </summary>
-	[XmlType(nameof(DiagnosticsConfigurationSection), Namespace ="http://santedb.org/mobile/configuration")]
-	public class DiagnosticsConfigurationSection :IConfigurationSection
-	{
+    /// <summary>
+    /// Diagnostics configuration
+    /// </summary>
+    [XmlType(nameof(DiagnosticsConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    public class DiagnosticsConfigurationSection : IConfigurationSection
+    {
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.DiagnosticsConfigurationSection"/> class.
-		/// </summary>
-		public DiagnosticsConfigurationSection ()
-		{
-			this.TraceWriter = new List<TraceWriterConfiguration> ();
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.DiagnosticsConfigurationSection"/> class.
+        /// </summary>
+        public DiagnosticsConfigurationSection()
+        {
+            this.TraceWriter = new List<TraceWriterConfiguration>();
+        }
 
-		/// <summary>
-		/// Trace writers
-		/// </summary>
-		[XmlElement("trace"), JsonProperty("trace")]
-		public List<TraceWriterConfiguration> TraceWriter {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Trace writers
+        /// </summary>
+        [XmlElement("trace"), JsonProperty("trace")]
+        public List<TraceWriterConfiguration> TraceWriter
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets the default log mode
@@ -62,55 +59,60 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public EventLevel Mode { get; set; }
     }
 
-	/// <summary>
-	/// Trace writer configuration
-	/// </summary>
-	[XmlType(nameof(TraceWriterConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
-	public class TraceWriterConfiguration
-	{
+    /// <summary>
+    /// Trace writer configuration
+    /// </summary>
+    [XmlType(nameof(TraceWriterConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    public class TraceWriterConfiguration
+    {
 
-		/// <summary>
-		/// Trace writer
-		/// </summary>
-		/// <value>The trace writer.</value>
-		[XmlIgnore]
-		public TraceWriter TraceWriter {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Trace writer
+        /// </summary>
+        /// <value>The trace writer.</value>
+        [XmlIgnore]
+        public TraceWriter TraceWriter
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the initialization data.
-		/// </summary>
-		/// <value>The initialization data.</value>
-		[XmlAttribute("initializationData"), JsonProperty("initializationData")]
-		public String InitializationData {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the initialization data.
+        /// </summary>
+        /// <value>The initialization data.</value>
+        [XmlAttribute("initializationData"), JsonProperty("initializationData")]
+        public String InitializationData
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the writer implementation
-		/// </summary>
-		[XmlElement("writer")]
-		public String TraceWriterClassXml {
-			get { return this.TraceWriter.GetType ().AssemblyQualifiedName; }
-			set { 
-				this.TraceWriter = Activator.CreateInstance (Type.GetType (value), this.Filter, this.InitializationData) as TraceWriter; 
-			}
-		}
+        /// <summary>
+        /// Gets or sets the writer implementation
+        /// </summary>
+        [XmlElement("writer")]
+        public String TraceWriterClassXml
+        {
+            get { return this.TraceWriter.GetType().AssemblyQualifiedName; }
+            set
+            {
+                this.TraceWriter = Activator.CreateInstance(Type.GetType(value), this.Filter, this.InitializationData) as TraceWriter;
+            }
+        }
 
-		/// <summary>
-		/// Gets or sets the filter of the trace writer
-		/// </summary>
-		/// <value>The filter.</value>
-		[XmlAttribute("filter"), JsonProperty("filter")]
-		public EventLevel Filter {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the filter of the trace writer
+        /// </summary>
+        /// <value>The filter.</value>
+        [XmlAttribute("filter"), JsonProperty("filter")]
+        public EventLevel Filter
+        {
+            get;
+            set;
+        }
 
-	}
+    }
 
 }
 

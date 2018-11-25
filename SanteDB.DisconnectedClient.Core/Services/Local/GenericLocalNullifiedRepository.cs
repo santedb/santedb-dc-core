@@ -17,12 +17,11 @@
  * User: justin
  * Date: 2018-6-22
  */
-using System;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
+using System;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {

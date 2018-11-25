@@ -17,20 +17,15 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model;
-using Newtonsoft.Json;
-using SanteDB.DisconnectedClient.Core.Configuration;
 using System.IO;
 using System.IO.Compression;
 using System.Xml.Serialization;
-using System.Diagnostics;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services
 {
@@ -167,7 +162,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             if (File.Exists(blobPath))
                 File.Delete(blobPath);
             if (this.m_queueCache.ContainsKey(blobPath))
-                lock(this.m_queueCache)
+                lock (this.m_queueCache)
                     this.m_queueCache.Remove(blobPath);
         }
 

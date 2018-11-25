@@ -18,11 +18,7 @@
  * Date: 2018-11-7
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
@@ -48,6 +44,6 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <param name="deviceSecret">The device secret.</param>
         /// <returns>Returns the authenticated device principal.</returns>
         IPrincipal Authenticate(string deviceId, string deviceSecret);
-      
+
     }
 }

@@ -17,17 +17,14 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using System.Threading;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Threading
 {
@@ -37,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
     /// </summary>
     public class SanteDBThreadPool : IThreadPoolService, IDisposable
     {
-        
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SanteDBThreadPool));
         // Number of threads to keep alive
@@ -76,11 +73,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
         /// Non queue threads
         /// </summary>
         public int NonQueueThreads { get { return this.m_nonQueueOperations.Count; } }
-        
+
         /// <summary>
         /// Active threads
         /// </summary>
-        public List<String> Threads {
+        public List<String> Threads
+        {
             get
             {
                 return this.m_threadPool.Select(o => o.Name).Union(this.m_timers.Select(o => "Timer")).Union(this.m_nonQueueOperations.Select(o => $"=>[NQ]=>{o.Name}")).ToList();
@@ -95,7 +93,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
         /// <summary>
         /// Creates a new instance of the wait thread pool
         /// </summary>
-        public SanteDBThreadPool() 
+        public SanteDBThreadPool()
         {
             if (ApplicationContext.Current?.Configuration?.GetSection<ApplicationConfigurationSection>()?.AppSettings?.Find(o => o.Key == "queue_process_concurrency") != null)
                 this.m_concurrencyLevel = Int32.Parse(ApplicationContext.Current?.Configuration?.GetSection<ApplicationConfigurationSection>()?.AppSettings?.Find(o => o.Key == "queue_process_concurrency").Value);
@@ -208,7 +206,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
                         m_queue.Enqueue(wd);
                     else // priority items get inserted at the head so that they are executed first
                         this.m_priorityQueue.Enqueue(wd);
-                                        
+
                     if (m_threadWait > 0)
                         Monitor.Pulse(m_queue);
                 }
@@ -267,7 +265,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
                         else
                             wi = m_queue.Dequeue();
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         this.m_tracer.TraceError("Error in dispatchloop {0}", e);
                     }
@@ -319,14 +317,17 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
             this.m_tracer.TraceVerbose("Starting task on {0} ---> {1}", Thread.CurrentThread.Name, state.Callback.Target.ToString());
             AuthenticationContext.CurrentUIContext = null;
             var worker = (WorkItem)state;
-            try {
+            try
+            {
                 AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.ThreadDefaultPrincipal) ?? new AuthenticationContext(AuthenticationContext.AnonymousPrincipal);
                 worker.Callback(worker.State);
             }
-            catch(Exception e) {
+            catch (Exception e)
+            {
                 this.m_tracer.TraceError("!!!!!! 0118 999 881 999 119 7253 : THREAD DEATH !!!!!!!\r\nUncaught Exception on worker thread: {0}", e);
             }
-            finally {
+            finally
+            {
                 AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.ThreadDefaultPrincipal) ?? new AuthenticationContext(AuthenticationContext.AnonymousPrincipal);
                 DoneWorkItem();
             }

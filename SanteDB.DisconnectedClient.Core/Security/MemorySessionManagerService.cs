@@ -17,15 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {

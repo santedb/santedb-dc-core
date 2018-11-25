@@ -20,18 +20,14 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Security;
 using System.Security.Principal;
 using System.Text;
-using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.Core.Interop;
-using System.Net;
-using System.Security;
-using SanteDB.DisconnectedClient.Xamarin.Exceptions;
-using SanteDB.DisconnectedClient.i18n;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
@@ -135,6 +131,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 return retVal;
             }
         }
-        
+
     }
 }

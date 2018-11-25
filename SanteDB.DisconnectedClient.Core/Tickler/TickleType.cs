@@ -47,6 +47,6 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
         SecurityTask = Task | Security,
         SecurityError = Danger | Security,
         SecurityInformation = Information | Security
-        
+
     }
 }

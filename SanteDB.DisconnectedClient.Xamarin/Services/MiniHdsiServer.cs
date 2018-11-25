@@ -17,41 +17,37 @@
  * User: justin
  * Date: 2018-7-26
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Net;
-using SanteDB.DisconnectedClient.Xamarin.Threading;
-using System.Threading;
-using System.Net.Sockets;
-using System.Globalization;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.IO;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using System.Security;
 using SanteDB.Core.Applets.Model;
-using System.Reflection;
-using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
+using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Applets.ViewModel.Description;
+using SanteDB.Core.Applets.ViewModel.Json;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
-using SanteDB.Core.Applets.ViewModel;
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
-using SanteDB.Core.Applets.ViewModel.Description;
-using System.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.Core.Applets.ViewModel.Json;
-using System.IO.Compression;
-using SanteDB.Core.Applets.Services;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.Core;
-using SanteDB.Core.Exceptions;
-using SanteDB.DisconnectedClient.Xamarin.Services.Model;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core.Security.Audit;
+using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
+using SanteDB.DisconnectedClient.Xamarin.Services.Model;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Security;
+using System.Text;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services
 {
@@ -362,7 +358,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                     // Attempt to find a service which implements the path
                     var rootPath = String.Format("{0}:{1}", request.HttpMethod.ToUpper(), request.Url.AbsolutePath.ToLower());
 
-                    
+
                     InvokationInformation invoke = null;
                     this.m_tracer.TraceVerbose("Performing service matching on {0}", rootPath);
                     if (this.m_services.TryGetValue(rootPath, out invoke))
@@ -629,7 +625,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             {
 
                 if (appletPath == "/") // startup asset
-                    navigateAsset = appletManagerService.Applets.DefaultApplet?.Assets.FirstOrDefault(o=>o.Name == "index.html");
+                    navigateAsset = appletManagerService.Applets.DefaultApplet?.Assets.FirstOrDefault(o => o.Name == "index.html");
                 else
                     navigateAsset = appletManagerService.Applets.ResolveAsset(appletPath);
 

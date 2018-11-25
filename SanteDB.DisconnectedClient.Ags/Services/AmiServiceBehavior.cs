@@ -17,7 +17,8 @@
  * User: justin
  * Date: 2018-11-23
  */
-using SanteDB.DisconnectedClient.Core.Interop;
+using RestSrvr;
+using RestSrvr.Exceptions;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.AMI.Auth;
@@ -26,24 +27,20 @@ using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.AMI.Wcf;
+using SanteDB.Rest.AMI.Resources;
+using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Rest.AMI.Resources;
-using SanteDB.Rest.Common;
-using SanteDB.DisconnectedClient.Core.Services;
-using RestSrvr;
-using SanteDB.DisconnectedClient.Xamarin.Threading;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using RestSrvr.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -251,7 +248,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override ServiceOptions Options()
         {
-            if(RestOperationContext.Current.IncomingRequest.QueryString["_extern"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_extern"] == "true")
             {
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                 return amiClient.Options();
@@ -314,7 +311,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-                    
+
                 else
                     throw new FaultException(502);
             }
@@ -563,7 +560,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 return base.Update(resourceType, key, data);
             }
         }
-        
+
         /// <summary>
         /// Lock the specified object
         /// </summary>

@@ -21,10 +21,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
 {
@@ -69,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
             syncSection.SynchronizationResources.RemoveAll(o => o.ResourceType == typeof(Patient));
 
             // Re-add substance administrations
-            syncSection.SynchronizationResources.AddRange(actTypes.Select(t=>new SynchronizationResource()
+            syncSection.SynchronizationResources.AddRange(actTypes.Select(t => new SynchronizationResource()
             {
                 Always = false,
                 Filters = syncSection.Facilities.SelectMany(o => new String[] {
@@ -102,7 +99,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data.Migrations
                 ResourceType = typeof(Person),
                 Triggers = SynchronizationPullTriggerType.Always
             });
-           
+
             foreach (var ss in syncSection.SynchronizationResources.Where(o => o.Filters.Any(f => f.Contains("relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation]"))))
             {
                 ss.Filters = ss.Filters.Select(o => o.Replace("relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation]", "relationship[DedicatedServiceDeliveryLocation|IncidentalServiceDeliveryLocation|ServiceDeliveryLocation]")).ToList();

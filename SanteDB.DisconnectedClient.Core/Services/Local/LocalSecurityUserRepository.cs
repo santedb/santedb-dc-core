@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 retVal.UserClass = data.UserClass;
                 base.Save(retVal);
             }
-            
+
             return retVal;
         }
 

@@ -17,27 +17,23 @@
  * User: justin
  * Date: 2018-6-22
  */
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
-	/// <summary>
-	/// Represents a service which is responsible for the
-	/// maintenance of concepts.
-	/// </summary>
-	public class LocalConceptRepository : GenericLocalNullifiedRepository<Concept>, IConceptRepositoryService
-	{
+    /// <summary>
+    /// Represents a service which is responsible for the
+    /// maintenance of concepts.
+    /// </summary>
+    public class LocalConceptRepository : GenericLocalNullifiedRepository<Concept>, IConceptRepositoryService
+    {
         protected override string QueryPolicy => PermissionPolicyIdentifiers.ReadMetadata;
         protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadMetadata;
         protected override string WritePolicy => PermissionPolicyIdentifiers.AdministerConceptDictionary;
@@ -51,56 +47,56 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <param name="language">The language of the concept.</param>
         /// <returns>Returns a list of concepts.</returns>
         public IEnumerable<Concept> FindConceptsByName(string name, string language)
-		{
-			return base.Find(o => o.ConceptNames.Any(n => n.Name == name && n.Language == language));
-		}
+        {
+            return base.Find(o => o.ConceptNames.Any(n => n.Name == name && n.Language == language));
+        }
 
-		/// <summary>
-		/// Finds a concept by reference term.
-		/// </summary>
-		/// <param name="code">The code of the reference term.</param>
-		/// <param name="codeSystem">The code system OID of the reference term.</param>
-		/// <returns>Returns a list of concepts.</returns>
+        /// <summary>
+        /// Finds a concept by reference term.
+        /// </summary>
+        /// <param name="code">The code of the reference term.</param>
+        /// <param name="codeSystem">The code system OID of the reference term.</param>
+        /// <returns>Returns a list of concepts.</returns>
         public IEnumerable<Concept> FindConceptsByReferenceTerm(string code, Uri codeSystem)
-		{
-			if ((codeSystem.Scheme == "urn" || codeSystem.Scheme == "oid"))
-			{
-				var csOid = codeSystem.LocalPath;
+        {
+            if ((codeSystem.Scheme == "urn" || codeSystem.Scheme == "oid"))
+            {
+                var csOid = codeSystem.LocalPath;
                 if (csOid.StartsWith("oid"))
                 {
                     csOid = codeSystem.LocalPath.Substring(4);
                     return base.Find(o => o.ReferenceTerms.Any(r => r.ReferenceTerm.CodeSystem.Oid == csOid && r.ReferenceTerm.Mnemonic == code));
                 }
-			}
+            }
 
-			return this.Find(o => o.ReferenceTerms.Any(r => r.ReferenceTerm.CodeSystem.Url == codeSystem.OriginalString && r.ReferenceTerm.Mnemonic == code));
-		}
+            return this.Find(o => o.ReferenceTerms.Any(r => r.ReferenceTerm.CodeSystem.Url == codeSystem.OriginalString && r.ReferenceTerm.Mnemonic == code));
+        }
 
-		/// <summary>
-		/// Find concepts by reference terms
-		/// </summary>
+        /// <summary>
+        /// Find concepts by reference terms
+        /// </summary>
         public IEnumerable<Concept> FindConceptsByReferenceTerm(string code, string codeSystemDomain)
-		{
+        {
             if (codeSystemDomain.StartsWith("urn:oid:"))
                 codeSystemDomain = codeSystemDomain.Substring(8);
             Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
-            if(codeSystemDomain.StartsWith("http:") || codeSystemDomain.StartsWith("urn:"))
+            if (codeSystemDomain.StartsWith("http:") || codeSystemDomain.StartsWith("urn:"))
                 return base.Find(o => o.ReferenceTerms.Any(r => r.ReferenceTerm.CodeSystem.Url == codeSystemDomain && r.ReferenceTerm.Mnemonic == code));
-            else if(oidRegex.IsMatch(codeSystemDomain))
+            else if (oidRegex.IsMatch(codeSystemDomain))
                 return base.Find(o => o.ReferenceTerms.Any(r => r.ReferenceTerm.CodeSystem.Oid == codeSystemDomain && r.ReferenceTerm.Mnemonic == code));
             else
                 return base.Find(o => o.ReferenceTerms.Any(r => r.ReferenceTerm.CodeSystem.Authority == codeSystemDomain && r.ReferenceTerm.Mnemonic == code));
-		}
-        
+        }
+
         /// <summary>
         /// Get a concept by its mnemonic
         /// </summary>
         /// <param name="mnemonic">The concept mnemonic to get.</param>
         /// <returns>Returns the concept.</returns>
-		public Concept GetConcept(string mnemonic)
-		{
-			return base.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
-		}
+        public Concept GetConcept(string mnemonic)
+        {
+            return base.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
+        }
 
         /// <summary>
         /// Get the specified reference term for the specified code system
@@ -131,11 +127,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// Returns a value which indicates whether <paramref name="a"/> implies <paramref name="b"/>
         /// </summary>
         public bool Implies(Concept a, Concept b)
-		{
-			throw new NotImplementedException();
-		}
+        {
+            throw new NotImplementedException();
+        }
 
-      
+
         /// <summary>
         /// Determine if the concept set contains the specified concept
         /// </summary>
@@ -143,17 +139,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <param name="concept">The concept.</param>
         /// <returns><c>true</c> if the specified set is member; otherwise, <c>false</c>.</returns>
         /// <exception cref="System.InvalidOperationException">ConceptSet persistence service not found.</exception>
-		public bool IsMember(ConceptSet set, Concept concept)
-		{
-			var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<ConceptSet>>();
+        public bool IsMember(ConceptSet set, Concept concept)
+        {
+            var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<ConceptSet>>();
 
-			if (persistence == null)
-			{
-				throw new InvalidOperationException($"{nameof(IDataPersistenceService<ConceptSet>)} not found");
-			}
+            if (persistence == null)
+            {
+                throw new InvalidOperationException($"{nameof(IDataPersistenceService<ConceptSet>)} not found");
+            }
 
-			return persistence.Count(o => o.Key == set.Key &&  o.ConceptsXml.Any(c => c == concept.Key)) > 0;
-		}
+            return persistence.Count(o => o.Key == set.Key && o.ConceptsXml.Any(c => c == concept.Key)) > 0;
+        }
 
         /// <summary>
 		/// Determine if the concept set contains the specified concept
@@ -171,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 throw new InvalidOperationException($"{nameof(IDataPersistenceService<ConceptSet>)} not found");
             }
 
-            return persistence.Count(o => o.Key == set &&  o.ConceptsXml.Any(c => c == concept)) > 0;
+            return persistence.Count(o => o.Key == set && o.ConceptsXml.Any(c => c == concept)) > 0;
         }
 
 

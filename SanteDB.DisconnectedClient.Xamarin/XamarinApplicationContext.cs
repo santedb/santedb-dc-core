@@ -17,51 +17,37 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
-using System.Collections.Generic;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.IO;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.Xml.Serialization;
-using System.Security.Cryptography;
-using SanteDB.DisconnectedClient.Core.Security;
-using System.Reflection;
-using System.Diagnostics.Tracing;
-using System.Runtime.InteropServices;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Security;
-using SanteDB.Core.Model.EntityLoader;
-using SanteDB.Core.Applets;
-using SanteDB.Core.Applets.Model;
-using System.Security.Principal;
-using SanteDB.Core.Services;
 using SanteDB.Core.Protocol;
-using SanteDB.Core;
-using SanteDB.DisconnectedClient.Xamarin.Configuration;
-using System.Security.Cryptography.X509Certificates;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Configuration;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin
 {
-	/// <summary>
-	/// Represents an application context for Xamarin Android
-	/// </summary>
-	public abstract class XamarinApplicationContext : ApplicationContext
-	{
+    /// <summary>
+    /// Represents an application context for Xamarin Android
+    /// </summary>
+    public abstract class XamarinApplicationContext : ApplicationContext
+    {
 
         // Tracer
         protected Tracer m_tracer;
 
-		/// <summary>
-		/// Gets the current application context
-		/// </summary>
-		/// <value>The current.</value>
-		public static XamarinApplicationContext Current { get { return ApplicationContext.Current as XamarinApplicationContext; } }
+        /// <summary>
+        /// Gets the current application context
+        /// </summary>
+        /// <value>The current.</value>
+        public static XamarinApplicationContext Current { get { return ApplicationContext.Current as XamarinApplicationContext; } }
 
         /// <summary>
         /// Gets the configuration manager
@@ -77,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Xamarin
             {
                 this.GetService<IClinicalProtocolRepositoryService>().InsertProtocol(pdf.GetProtocolData());
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer?.TraceError("Error installing protocol {0}: {1}", pdf.Id, e);
                 throw;
@@ -88,29 +74,32 @@ namespace SanteDB.DisconnectedClient.Xamarin
         /// Explicitly authenticate the specified user as the domain context
         /// </summary>
         public void Authenticate(String userName, String password)
-		{
-			var identityService = this.GetService<IIdentityProviderService>();
+        {
+            var identityService = this.GetService<IIdentityProviderService>();
             var principal = identityService.Authenticate(userName, password);
             if (principal == null)
                 throw new SecurityException(Strings.err_login_invalidusername);
             AuthenticationContext.Current = new AuthenticationContext(principal);
-		}
+        }
 
-		#region implemented abstract members of ApplicationContext
+        #region implemented abstract members of ApplicationContext
 
-	    /// <summary>
+        /// <summary>
         /// Gets the device information for the currently running device
         /// </summary>
         /// <value>The device.</value>
-        public override SanteDB.Core.Model.Security.SecurityDevice Device {
-			get {
-				// TODO: Load this from configuration
-				return new SanteDB.Core.Model.Security.SecurityDevice () {
-					Name = this.Configuration.GetSection<SecurityConfigurationSection>().DeviceName,
-					DeviceSecret = this.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
-				};
-			}
-		}
+        public override SanteDB.Core.Model.Security.SecurityDevice Device
+        {
+            get
+            {
+                // TODO: Load this from configuration
+                return new SanteDB.Core.Model.Security.SecurityDevice()
+                {
+                    Name = this.Configuration.GetSection<SecurityConfigurationSection>().DeviceName,
+                    DeviceSecret = this.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                };
+            }
+        }
 
         /// <summary>
         /// Loads the user configuration for the specified user key
@@ -194,9 +183,9 @@ namespace SanteDB.DisconnectedClient.Xamarin
             try
             {
                 var asmLoc = Assembly.GetEntryAssembly().Location;
-                if(!String.IsNullOrEmpty(asmLoc))
+                if (!String.IsNullOrEmpty(asmLoc))
                 {
-                    foreach(var f in Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll"))
+                    foreach (var f in Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll"))
                     {
                         try
                         {
@@ -211,7 +200,7 @@ namespace SanteDB.DisconnectedClient.Xamarin
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceWarning("Could not scan startup assembly location: {0}", e);
             }

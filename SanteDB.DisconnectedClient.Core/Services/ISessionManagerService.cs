@@ -19,10 +19,6 @@
  */
 using SanteDB.DisconnectedClient.Core.Security;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
@@ -54,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <param name="password"></param>
         /// <returns></returns>
         SessionInfo Refresh(SessionInfo session, String password);
-       
+
         /// <summary>
         /// Deletes (abandons) the session
         /// </summary>

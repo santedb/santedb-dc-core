@@ -17,12 +17,11 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
 using Newtonsoft.Json;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using System;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
@@ -47,7 +46,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>My property.</value>
         [XmlElement("connectionString"), JsonIgnore]
-        public List<ConnectionString> ConnectionString {
+        public List<ConnectionString> ConnectionString
+        {
             get;
             set;
         }
@@ -57,7 +57,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>The name of the main data source connection string.</value>
         [XmlAttribute("clinicalDataStore"), JsonIgnore]
-        public String MainDataSourceConnectionStringName {
+        public String MainDataSourceConnectionStringName
+        {
             get;
             set;
         }
@@ -67,7 +68,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>The name of the message queue connection string.</value>
         [XmlAttribute("messageQueue"), JsonIgnore]
-        public String MessageQueueConnectionStringName {
+        public String MessageQueueConnectionStringName
+        {
             get;
             set;
         }
@@ -83,15 +85,16 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         }
 
 
-		/// <summary>
-		/// Migration log 
-		/// </summary>
-		/// <value>The migration log.</value>
-		[XmlElement("migration"), JsonProperty("migration")]
-		public DataMigrationLog MigrationLog {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Migration log 
+        /// </summary>
+        /// <value>The migration log.</value>
+        [XmlElement("migration"), JsonProperty("migration")]
+        public DataMigrationLog MigrationLog
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets the data provider
@@ -106,30 +109,32 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public Dictionary<string, object> Options { get; set; }
     }
 
-	/// <summary>
-	/// Represents a single connection string
-	/// </summary>
-	[XmlType(nameof(ConnectionString), Namespace = "http://santedb.org/mobile/configuration")]
-	public class ConnectionString
-	{
+    /// <summary>
+    /// Represents a single connection string
+    /// </summary>
+    [XmlType(nameof(ConnectionString), Namespace = "http://santedb.org/mobile/configuration")]
+    public class ConnectionString
+    {
 
-		/// <summary>
-		/// Gets or sets the name
-		/// </summary>
-		[XmlAttribute("name")]
-		public String Name {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the name
+        /// </summary>
+        [XmlAttribute("name")]
+        public String Name
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the connection string
-		/// </summary>
-		[XmlAttribute("value")]
-		public String Value{
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the connection string
+        /// </summary>
+        [XmlAttribute("value")]
+        public String Value
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// When true instructs the system to encrypt the data

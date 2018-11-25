@@ -84,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    using(GZipStream gz = new GZipStream(ms, CompressionMode.Compress))
+                    using (GZipStream gz = new GZipStream(ms, CompressionMode.Compress))
                         ApplicationContext.Current.Configuration.Save(gz);
 
                     report.Attachments = new List<DiagnosticAttachmentInfo>() {
@@ -112,7 +112,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 });
 
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error filing bug report: {0}", e);
                 throw;
@@ -127,7 +127,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.Json)]
         public List<Tickle> GetTickles()
         {
-            return ApplicationContext.Current.GetService<ITickleService>().GetTickles(o=>o.Target == Guid.Empty || o.Target == AuthenticationContext.Current.Session.SecurityUser.Key).ToList();
+            return ApplicationContext.Current.GetService<ITickleService>().GetTickles(o => o.Target == Guid.Empty || o.Target == AuthenticationContext.Current.Session.SecurityUser.Key).ToList();
         }
 
         /// <summary>
@@ -395,7 +395,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             ApplicationContext.Current.GetService<IUpdateManager>().Install(appId);
         }
 
-        
+
         /// <summary>
         /// Get asset information for locales
         /// </summary>
@@ -405,7 +405,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 
             // Get all locales from the asset manager
             var retVal = new Dictionary<String, String[]>();
-            foreach(var locale in ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o=>o.Locales).GroupBy(o=>o.Code))
+            foreach (var locale in ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.Locales).GroupBy(o => o.Code))
             {
                 retVal.Add(locale.Key, locale.SelectMany(o => o.Assets).ToArray());
             }

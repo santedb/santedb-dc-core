@@ -17,19 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Tickler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-
-using SanteDB.DisconnectedClient.Core.Services;
 using System.Net.NetworkInformation;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Tickler;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Net
 {
@@ -54,32 +48,32 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
                 this.NetworkStatusChanged?.Invoke(this, e);
             };
             // TODO: Discuss the ramifications of this
-			// this.NetworkStatusChanged += NetworkInformationService_NetworkStatusChanged;
+            // this.NetworkStatusChanged += NetworkInformationService_NetworkStatusChanged;
         }
 
-		/// <summary>
-		/// Updates the registered services in the application context when the network status changes.
-		/// </summary>
-		/// <param name="sender">The sender of the event.</param>
-		/// <param name="e">The event arguments.</param>
-		private void NetworkInformationService_NetworkStatusChanged(object sender, EventArgs e)
-		{
-			INetworkInformationService networkInformationService = (INetworkInformationService)sender;
+        /// <summary>
+        /// Updates the registered services in the application context when the network status changes.
+        /// </summary>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="e">The event arguments.</param>
+        private void NetworkInformationService_NetworkStatusChanged(object sender, EventArgs e)
+        {
+            INetworkInformationService networkInformationService = (INetworkInformationService)sender;
 
-   //         // Because we may have network connectivity
-			//if (networkInformationService.IsNetworkAvailable)
-			//{
-			//	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(LocalPolicyInformationService).AssemblyQualifiedName);
-			//	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiPolicyInformationService).AssemblyQualifiedName);
-			//	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthIdentityProvider).AssemblyQualifiedName);
-			//	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiPersistenceService).AssemblyQualifiedName);
-			//}
-			//else
-			//{
-			//	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPersistenceService).AssemblyQualifiedName);
-			//	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalIdentityService).AssemblyQualifiedName);
-			//}
-		}
+            //         // Because we may have network connectivity
+            //if (networkInformationService.IsNetworkAvailable)
+            //{
+            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(LocalPolicyInformationService).AssemblyQualifiedName);
+            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiPolicyInformationService).AssemblyQualifiedName);
+            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthIdentityProvider).AssemblyQualifiedName);
+            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiPersistenceService).AssemblyQualifiedName);
+            //}
+            //else
+            //{
+            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPersistenceService).AssemblyQualifiedName);
+            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalIdentityService).AssemblyQualifiedName);
+            //}
+        }
 
         /// <summary>
         /// Returns true if the network is wifi
@@ -92,27 +86,27 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
                     (o.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || o.NetworkInterfaceType == NetworkInterfaceType.Ethernet));
             }
         }
-		/// <summary>
-		/// Return whether the network is available
-		/// </summary>
-		public virtual bool IsNetworkAvailable
+        /// <summary>
+        /// Return whether the network is available
+        /// </summary>
+        public virtual bool IsNetworkAvailable
         {
             get
             {
                 return NetworkInterface.GetIsNetworkAvailable();
-			}
+            }
         }
 
-		/// <summary>
-		/// Gets whether the network is connected.
-		/// </summary>
-		public bool IsNetworkConnected
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
+        /// <summary>
+        /// Gets whether the network is connected.
+        /// </summary>
+        public bool IsNetworkConnected
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         /// <summary>
         /// Network status has changed
@@ -124,7 +118,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
         /// </summary>
         public virtual IEnumerable<NetworkInterfaceInfo> GetInterfaces()
         {
-     
+
             return NetworkInterface.GetAllNetworkInterfaces().Select(o => new NetworkInterfaceInfo(
                 o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault()?.ToString()
             ));
@@ -138,10 +132,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
         {
             try
             {
-				System.Uri uri = null;
+                System.Uri uri = null;
                 if (System.Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out uri))
                     address = uri.Host;
-                var resolution = System.Net.Dns.GetHostEntry(address); 
+                var resolution = System.Net.Dns.GetHostEntry(address);
                 return resolution.AddressList.First().ToString();
             }
             catch
@@ -157,7 +151,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
         {
             try
             {
-				System.Uri uri = null;
+                System.Uri uri = null;
                 if (System.Uri.TryCreate(hostName, UriKind.RelativeOrAbsolute, out uri))
                     hostName = uri.Host;
                 System.Net.NetworkInformation.Ping p = new System.Net.NetworkInformation.Ping();

@@ -21,7 +21,6 @@ using MARC.HI.EHRS.SVC.Auditing.Data;
 using MARC.HI.EHRS.SVC.Auditing.Services;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
@@ -36,7 +35,6 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
@@ -155,7 +153,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             audit.AuditableObjects.Add(new AuditableObject()
             {
                 IDTypeCode = AuditableObjectIdType.Custom,
-                CustomIdTypeCode = new AuditCode("Device","SanteDBTable"),
+                CustomIdTypeCode = new AuditCode("Device", "SanteDBTable"),
                 ObjectId = securityConfig.DeviceName,
                 Role = AuditableObjectRole.DataRepository,
                 Type = AuditableObjectType.SystemObject,
@@ -167,7 +165,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
 
             // Add auditable object which identifies the facility
             var facilityId = subscriptionConfig.Facilities?.FirstOrDefault();
-            if(!String.IsNullOrEmpty(facilityId))
+            if (!String.IsNullOrEmpty(facilityId))
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -206,7 +204,8 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            audit.AuditableObjects = data.Select(o => {
+            audit.AuditableObjects = data.Select(o =>
+            {
 
                 var idTypeCode = AuditableObjectIdType.Custom;
                 var roleCode = AuditableObjectRole.Resource;
@@ -224,7 +223,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     objType = AuditableObjectType.Person;
                     roleCode = AuditableObjectRole.Provider;
                 }
-                else if (o is Entity) 
+                else if (o is Entity)
                     idTypeCode = AuditableObjectIdType.EnrolleeNumber;
                 else if (o is Act)
                 {
@@ -256,7 +255,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 {
                     IDTypeCode = AuditableObjectIdType.SearchCritereon,
                     LifecycleType = AuditableObjectLifecycle.Access,
-					ObjectId = typeof(TData).Name,
+                    ObjectId = typeof(TData).Name,
                     QueryData = queryPerformed,
                     Role = AuditableObjectRole.Query,
                     Type = AuditableObjectType.SystemObject
@@ -275,7 +274,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             var audit = new AuditData(DateTime.Now, ActionType.Update, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAttributesChanged));
             //AddDeviceActor(audit);
             AddUserActor(audit);
-            
+
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
                 IDTypeCode = AuditableObjectIdType.Custom,
@@ -284,7 +283,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 LifecycleType = AuditableObjectLifecycle.Amendment,
                 ObjectData = changedProperties.Select(
                     kv => new ObjectDataExtension(
-                        kv.Contains("=") ? kv.Substring(0, kv.IndexOf("=")) : kv, 
+                        kv.Contains("=") ? kv.Substring(0, kv.IndexOf("=")) : kv,
                         kv.Contains("=") ? Encoding.UTF8.GetBytes(kv.Substring(kv.IndexOf("=") + 1)) : new byte[0]
                     )
                 ).ToList(),
@@ -343,7 +342,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 }
             });
 
-            
+
         }
 
         /// <summary>
@@ -370,7 +369,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <summary>
         /// Audit a login of a principal
         /// </summary>
-        public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, bool successfulLogin =true)
+        public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, bool successfulLogin = true)
         {
             if ((principal?.Identity?.Name ?? identityName) == ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName) return; // don't worry about this
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
@@ -381,7 +380,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 NetworkAccessPointId = configService.DeviceName,
                 UserName = principal?.Identity?.Name ?? identityName,
                 UserIsRequestor = true,
-                ActorRoleCode = (principal as ClaimsPrincipal)?.Claims.Where(o=>o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o=>new AuditCode(o.Value, "OizRoles")).ToList()
+                ActorRoleCode = (principal as ClaimsPrincipal)?.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => new AuditCode(o.Value, "OizRoles")).ToList()
             });
 
             AddDeviceActor(audit);
@@ -440,7 +439,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 Type = AuditableObjectType.SystemObject
             });
             AddAncillaryObject(audit);
-            
+
             if (ex is PolicyViolationException)
                 audit.AuditableObjects.Add(new AuditableObject()
                 {

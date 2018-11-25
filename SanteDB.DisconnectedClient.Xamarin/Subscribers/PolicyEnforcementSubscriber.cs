@@ -17,22 +17,16 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.Core;
 using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Xamarin.Security;
+using System;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
 {
@@ -95,7 +89,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
                 this.Started?.Invoke(this, EventArgs.Empty);
                 this.m_isRunning = true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error starting policy enformcent point: {0}", e);
             }

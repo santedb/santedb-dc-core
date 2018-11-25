@@ -17,17 +17,13 @@
  * User: justin
  * Date: 2018-11-19
  */
+using SanteDB.DisconnectedClient.Core.Exceptions;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Text;
-using System.Linq;
-using System.Xml;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
@@ -51,18 +47,18 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// Configuration table object
     /// </summary>
     [XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
-	[XmlType(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    [XmlType(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
     public class SanteDBConfiguration : SanteDBBaseConfiguration
-	{
-        
+    {
+
         /// <summary>
         /// SanteDB configuration
         /// </summary>
-        public SanteDBConfiguration ()
-		{
-			this.Sections = new List<Object> ();
-			this.Version = typeof(SanteDBConfiguration).GetTypeInfo ().Assembly.GetName ().Version.ToString ();
-		}
+        public SanteDBConfiguration()
+        {
+            this.Sections = new List<Object>();
+            this.Version = typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version.ToString();
+        }
 
         /// <summary>
         /// Get app setting
@@ -77,23 +73,25 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>The version.</value>
         [XmlAttribute("version")]
-		public String Version {
-			get { return typeof(SanteDBConfiguration).GetTypeInfo ().Assembly.GetName ().Version.ToString (); }
-			set {
+        public String Version
+        {
+            get { return typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version.ToString(); }
+            set
+            {
 
-				Version v = new Version (value),
-					myVersion = typeof(SanteDBConfiguration).GetTypeInfo ().Assembly.GetName ().Version;
-				if(v.Major > myVersion.Major)
-					throw new ConfigurationException(String.Format("Configuration file version {0} is newer than SanteDB version {1}", v, myVersion));
-			}
-		}
+                Version v = new Version(value),
+                    myVersion = typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version;
+                if (v.Major > myVersion.Major)
+                    throw new ConfigurationException(String.Format("Configuration file version {0} is newer than SanteDB version {1}", v, myVersion));
+            }
+        }
 
-		/// <summary>
-		/// Load the specified dataStream.
-		/// </summary>
-		/// <param name="dataStream">Data stream.</param>
-		public static SanteDBConfiguration Load(Stream dataStream)
-		{
+        /// <summary>
+        /// Load the specified dataStream.
+        /// </summary>
+        /// <param name="dataStream">Data stream.</param>
+        public static SanteDBConfiguration Load(Stream dataStream)
+        {
             var configStream = dataStream;
             if (!configStream.CanSeek)
             {
@@ -105,58 +103,59 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
             // Load the base types
             var tbaseConfig = new XmlSerializer(typeof(SanteDBBaseConfiguration)).Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
-            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o=>Type.GetType(o)).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
-		}
+            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => Type.GetType(o)).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
+        }
 
-		/// <summary>
-		/// Save the configuration to the specified data stream
-		/// </summary>
-		/// <param name="dataStream">Data stream.</param>
-		public void Save(Stream dataStream)
-		{
+        /// <summary>
+        /// Save the configuration to the specified data stream
+        /// </summary>
+        /// <param name="dataStream">Data stream.</param>
+        public void Save(Stream dataStream)
+        {
             this.SectionTypes = this.Sections.Select(o => o.GetType().AssemblyQualifiedName).ToList();
-            new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o=>Type.GetType(o)).ToArray()).Serialize(dataStream, this);
-		}
+            new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => Type.GetType(o)).ToArray()).Serialize(dataStream, this);
+        }
 
         /// <summary>
         /// Configuration sections
         /// </summary>
         /// <value>The sections.</value>
         [XmlElement("configure")]
-		public List<Object> Sections {
-			get;
-			set;
-		}
+        public List<Object> Sections
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Get the specified section
-		/// </summary>
-		/// <returns>The section.</returns>
-		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public T GetSection<T>() where T : IConfigurationSection
-		{
-			return (T)this.GetSection (typeof(T));
-		}
+        /// <summary>
+        /// Get the specified section
+        /// </summary>
+        /// <returns>The section.</returns>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public T GetSection<T>() where T : IConfigurationSection
+        {
+            return (T)this.GetSection(typeof(T));
+        }
 
-		/// <summary>
-		/// Gets the section of specified type.
-		/// </summary>
-		/// <returns>The section.</returns>
-		/// <param name="t">T.</param>
-		public object GetSection(Type t)
-		{
-			return this.Sections.Find (o => o.GetType ().Equals (t));
-		}
+        /// <summary>
+        /// Gets the section of specified type.
+        /// </summary>
+        /// <returns>The section.</returns>
+        /// <param name="t">T.</param>
+        public object GetSection(Type t)
+        {
+            return this.Sections.Find(o => o.GetType().Equals(t));
+        }
 
-		/// <summary>
-		/// Get connection string
-		/// </summary>
-		/// <returns>The connection string.</returns>
-		/// <param name="name">Name.</param>
-		public ConnectionString GetConnectionString(String name)
-		{
-			return this.GetSection<DataConfigurationSection> ()?.ConnectionString.Find (o => o.Name == name);
-		}
+        /// <summary>
+        /// Get connection string
+        /// </summary>
+        /// <returns>The connection string.</returns>
+        /// <param name="name">Name.</param>
+        public ConnectionString GetConnectionString(String name)
+        {
+            return this.GetSection<DataConfigurationSection>()?.ConnectionString.Find(o => o.Name == name);
+        }
 
         /// <summary>
         /// Set application setting

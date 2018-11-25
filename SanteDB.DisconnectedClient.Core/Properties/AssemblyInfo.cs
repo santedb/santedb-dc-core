@@ -18,19 +18,18 @@
  * Date: 2018-6-28
  */
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 // Information about this assembly is defined by the following attributes.
 // Change them to the values specific to your project.
 
 [assembly: AssemblyTitle("SanteDB Mobile Core")]
-[assembly: AssemblyDescription ("SanteDB Mobile Core Functions")]
-[assembly: AssemblyConfiguration ("")]
+[assembly: AssemblyDescription("SanteDB Mobile Core Functions")]
+[assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Mohawk College of Applied Arts and Technology")]
 [assembly: AssemblyProduct("Open Immunize Disconnected Client")]
-[assembly: AssemblyCopyright ("(C) 2015-2017")]
-[assembly: AssemblyTrademark ("")]
-[assembly: AssemblyCulture ("")]
+[assembly: AssemblyCopyright("(C) 2015-2017")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
 
 // The assembly version has the format "{Major}.{Minor}.{Build}.{Revision}".
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,

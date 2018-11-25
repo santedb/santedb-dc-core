@@ -17,21 +17,16 @@
  * User: justin
  * Date: 2018-6-22
  */
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
-	/// <summary>
-	/// Place repository that uses local persistence
-	/// </summary>
-	public class LocalPlaceRepository : GenericLocalNullifiedRepository<Place>
-	{
+    /// <summary>
+    /// Place repository that uses local persistence
+    /// </summary>
+    public class LocalPlaceRepository : GenericLocalNullifiedRepository<Place>
+    {
         protected override string QueryPolicy => PermissionPolicyIdentifiers.ReadPlacesAndOrgs;
         protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadPlacesAndOrgs;
         protected override string WritePolicy => PermissionPolicyIdentifiers.WritePlacesAndOrgs;

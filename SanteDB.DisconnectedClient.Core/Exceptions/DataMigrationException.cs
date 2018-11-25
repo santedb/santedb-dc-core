@@ -17,41 +17,42 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using System;
 
 namespace SanteDB.DisconnectedClient.Core.Exceptions
 {
-	/// <summary>
-	/// Data migration exception
-	/// </summary>
-	public class DataMigrationException : Exception
-	{
+    /// <summary>
+    /// Data migration exception
+    /// </summary>
+    public class DataMigrationException : Exception
+    {
 
-		/// <summary>
-		/// Gets or sets the migration id
-		/// </summary>
-		/// <value>The migration identifier.</value>
-		public String MigrationId {
-			get;
-			private set;
-		}
+        /// <summary>
+        /// Gets or sets the migration id
+        /// </summary>
+        /// <value>The migration identifier.</value>
+        public String MigrationId
+        {
+            get;
+            private set;
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.DataMigrationException"/> class.
-		/// </summary>
-		public DataMigrationException (IDbMigration offender) : this(offender, null)
-		{
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.DataMigrationException"/> class.
+        /// </summary>
+        public DataMigrationException(IDbMigration offender) : this(offender, null)
+        {
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.DataMigrationException"/> class.
-		/// </summary>
-		public DataMigrationException (IDbMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
-		{
-			this.MigrationId = offender.Id;
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.DataMigrationException"/> class.
+        /// </summary>
+        public DataMigrationException(IDbMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
+        {
+            this.MigrationId = offender.Id;
+        }
 
-	}
+    }
 }
 

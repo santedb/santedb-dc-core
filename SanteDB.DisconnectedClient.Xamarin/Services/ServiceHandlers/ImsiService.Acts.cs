@@ -170,7 +170,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 }
                 else if (actRepositoryService is IPersistableQueryRepositoryService)
                 {
-                    if(actRepositoryService is IFastQueryRepositoryService)
+                    if (actRepositoryService is IFastQueryRepositoryService)
                         results = (actRepositoryService as IFastQueryRepositoryService).Find<TAct>(QueryExpressionParser.BuildLinqExpression<TAct>(search, null, false), offset, count, out totalResults, queryId);
                     else
                         results = (actRepositoryService as IPersistableQueryRepositoryService).Find<TAct>(QueryExpressionParser.BuildLinqExpression<TAct>(search, null, false), offset, count, out totalResults, queryId);

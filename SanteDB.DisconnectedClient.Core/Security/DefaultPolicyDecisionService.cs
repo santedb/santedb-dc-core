@@ -26,68 +26,68 @@ using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
-	/// <summary>
-	/// Represents the policy decision service
-	/// </summary>
-	public class DefaultPolicyDecisionService : IPolicyDecisionService
-	{
+    /// <summary>
+    /// Represents the policy decision service
+    /// </summary>
+    public class DefaultPolicyDecisionService : IPolicyDecisionService
+    {
 
         // Policy cache
         private Dictionary<String, Dictionary<String, PolicyGrantType>> m_policyCache = new Dictionary<string, Dictionary<string, PolicyGrantType>>();
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.PolicyDecisionService"/> class.
-		/// </summary>
-		public DefaultPolicyDecisionService()
-		{
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.PolicyDecisionService"/> class.
+        /// </summary>
+        public DefaultPolicyDecisionService()
+        {
+        }
 
-		/// <summary>
-		/// Get a policy decision for a particular securable
-		/// </summary>
-		public PolicyGrantType GetPolicyDecision(IPrincipal principal, object securable)
-		{
-			if (principal == null)
-				throw new ArgumentNullException(nameof(principal));
-			else if (securable == null)
-				throw new ArgumentNullException(nameof(securable));
-            
+        /// <summary>
+        /// Get a policy decision for a particular securable
+        /// </summary>
+        public PolicyGrantType GetPolicyDecision(IPrincipal principal, object securable)
+        {
+            if (principal == null)
+                throw new ArgumentNullException(nameof(principal));
+            else if (securable == null)
+                throw new ArgumentNullException(nameof(securable));
+
             // Get the user object from the principal
             var pip = ApplicationContext.Current.PolicyInformationService;
 
-			// Policies
-			var securablePolicies = pip.GetActivePolicies(securable);
+            // Policies
+            var securablePolicies = pip.GetActivePolicies(securable);
 
-			// Most restrictive
-			PolicyGrantType decision = PolicyGrantType.Grant;
-			foreach (var pol in securablePolicies)
-			{
-				var securablePdp = this.GetPolicyOutcome(principal, pol.Policy.Oid);
+            // Most restrictive
+            PolicyGrantType decision = PolicyGrantType.Grant;
+            foreach (var pol in securablePolicies)
+            {
+                var securablePdp = this.GetPolicyOutcome(principal, pol.Policy.Oid);
 
-				if (securablePdp < decision)
-					decision = securablePdp;
-			}
+                if (securablePdp < decision)
+                    decision = securablePdp;
+            }
 
-			return decision;
-		}
+            return decision;
+        }
 
-		/// <summary>
-		/// Get a policy decision outcome (i.e. make a policy decision)
-		/// </summary>
-		public PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
-		{
+        /// <summary>
+        /// Get a policy decision outcome (i.e. make a policy decision)
+        /// </summary>
+        public PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
+        {
             Dictionary<String, PolicyGrantType> grants = null;
             PolicyGrantType rule;
 
-			if (principal == null)
-			{
-				throw new ArgumentNullException(nameof(principal));
-			}
-			else if (String.IsNullOrEmpty(policyId))
-			{
-				throw new ArgumentNullException(nameof(policyId));
-			}
-            else if(this.m_policyCache.TryGetValue(principal.Identity.Name, out grants) &&
+            if (principal == null)
+            {
+                throw new ArgumentNullException(nameof(principal));
+            }
+            else if (String.IsNullOrEmpty(policyId))
+            {
+                throw new ArgumentNullException(nameof(policyId));
+            }
+            else if (this.m_policyCache.TryGetValue(principal.Identity.Name, out grants) &&
                 grants.TryGetValue(policyId, out rule))
             {
                 return rule;
@@ -139,7 +139,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 }
                 else
                     rule = policyInstance.Rule;
-                
+
             } // db lookup
 
             // Add to local policy cache
@@ -158,5 +158,5 @@ namespace SanteDB.DisconnectedClient.Core.Security
             }
             return rule;
         }
-	}
+    }
 }

@@ -32,8 +32,6 @@ using SanteDB.Rest.RISI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags
 {
@@ -53,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Ags
         /// </summary>
         public bool IsRunning =>
             this.m_services.Count > 0 &&
-            this.m_services.All(o=>o.IsRunning);
+            this.m_services.All(o => o.IsRunning);
 
         /// <summary>
         /// Fired when the handler is starting
@@ -206,7 +204,7 @@ namespace SanteDB.DisconnectedClient.Ags
             this.Starting?.Invoke(this, EventArgs.Empty);
 
             // Start up each of the services
-            foreach(var itm in ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>().Services)
+            foreach (var itm in ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>().Services)
             {
                 this.m_tracer.TraceInfo("Starting Application Gateway Service {0}..", itm.Name);
                 // Service Behaviors
@@ -220,7 +218,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     service.AddServiceBehavior(this.CreateBehavior<IServiceBehavior>(bhvr));
                 }
                 // Endpoints
-                foreach(var ep in itm.Endpoints)
+                foreach (var ep in itm.Endpoints)
                 {
                     this.m_tracer.TraceInfo("\tEndpoint: {0}", ep.Address);
                     var serviceEndpoint = service.AddServiceEndpoint(new Uri(ep.Address), ep.Contract, new RestHttpBinding());
@@ -249,7 +247,7 @@ namespace SanteDB.DisconnectedClient.Ags
                 throw new ArgumentException($"Behavior {bhvr.Type.FullName} does not implement {typeof(TBehavior).FullName}");
             if (bhvr.Configuration != null)
                 return (TBehavior)Activator.CreateInstance(bhvr.Type, bhvr.Configuration);
-            else 
+            else
                 return (TBehavior)Activator.CreateInstance(bhvr.Type);
         }
 
@@ -260,7 +258,7 @@ namespace SanteDB.DisconnectedClient.Ags
         {
             this.Stopping?.Invoke(this, EventArgs.Empty);
 
-            foreach(var itm in this.m_services)
+            foreach (var itm in this.m_services)
             {
                 this.m_tracer.TraceInfo("Stopping {0}...", itm.Name);
                 itm.Stop();

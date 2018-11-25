@@ -17,19 +17,12 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.BusinessRules.JavaScript;
+using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Applets.ViewModel.Description;
-using SanteDB.Core;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.BusinessRules;
-using SanteDB.BusinessRules.JavaScript;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Rules
 {
@@ -67,13 +60,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Rules
                 {
                     ApplicationServiceContext.Current = ApplicationContext.Current;
                     ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
-                    
+
                     if (ApplicationContext.Current.GetService<IDataReferenceResolver>() == null)
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletDataReferenceResolver));
                     new AppletBusinessRuleLoader().LoadRules();
-                    
+
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Tracer.GetTracer(typeof(BusinessRulesDaemonService)).TraceError("Error starting up business rules service: {0}", ex);
                 }

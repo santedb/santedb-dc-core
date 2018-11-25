@@ -19,26 +19,21 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using SanteDB.Core.Services;
-using System.Collections;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Security;
-using System.Xml.Serialization;
-using SanteDB.Core.Model.Acts;
 
 namespace SanteDB.DisconnectedClient.Core.Caching
 {

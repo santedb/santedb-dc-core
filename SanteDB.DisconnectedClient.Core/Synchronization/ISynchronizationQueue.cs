@@ -21,9 +21,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Synchronization
 {
@@ -51,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <summary>
         /// Gets the data of the object
         /// </summary>
-        String Data { get; set;  }
+        String Data { get; set; }
 
         /// <summary>
         /// Gets the operation of the object
@@ -72,7 +69,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <summary>
         /// True if the object is a retry 
         /// </summary>
-        String OriginalQueue { get;  }
+        String OriginalQueue { get; }
 
         /// <summary>
         /// Specialized tag data

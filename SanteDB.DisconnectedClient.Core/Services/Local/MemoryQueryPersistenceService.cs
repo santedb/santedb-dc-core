@@ -17,13 +17,11 @@
  * User: justin
  * Date: 2018-11-23
  */
-using SanteDB.Core.Services;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
@@ -144,7 +142,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             if (this.m_queryCache.TryGetValue(queryId, out query))
                 query.Results.AddRange(results);
         }
-        
+
         /// <summary>
         /// Find the query id by the query tag
         /// </summary>

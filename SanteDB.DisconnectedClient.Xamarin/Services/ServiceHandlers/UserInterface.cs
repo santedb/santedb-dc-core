@@ -60,41 +60,41 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
 #if !DEBUG
             if (this.m_routes == null)
 #endif
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (StreamWriter sw = new StreamWriter(ms))
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    sw.WriteLine("SanteDB = SanteDB || {}");
-                    sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
-                    sw.WriteLine("SanteDB.UserInterface.states = [");
-                    // Collect routes
-                    foreach (var itm in appletService.Applets.ViewStateAssets)
+                    using (StreamWriter sw = new StreamWriter(ms))
                     {
-                        var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
-                        var viewState = htmlContent.ViewState;
-                        sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
-                        if (viewState.View.Count > 0)
+                        sw.WriteLine("SanteDB = SanteDB || {}");
+                        sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
+                        sw.WriteLine("SanteDB.UserInterface.states = [");
+                        // Collect routes
+                        foreach (var itm in appletService.Applets.ViewStateAssets)
                         {
-                            sw.Write(", views: {");
-                            foreach (var view in viewState.View)
+                            var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
+                            var viewState = htmlContent.ViewState;
+                            sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
+                            if (viewState.View.Count > 0)
                             {
-                                sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
-                                var dynScripts = appletService.Applets.GetLazyScripts(itm);
-                                if (dynScripts.Any())
+                                sw.Write(", views: {");
+                                foreach (var view in viewState.View)
                                 {
-                                    int i = 0;
-                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
+                                    sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
+                                    var dynScripts = appletService.Applets.GetLazyScripts(itm);
+                                    if (dynScripts.Any())
+                                    {
+                                        int i = 0;
+                                        sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
+                                    }
+                                    sw.WriteLine(" }, ");
                                 }
-                                sw.WriteLine(" }, ");
+                                sw.WriteLine("}");
                             }
-                            sw.WriteLine("}");
+                            sw.WriteLine("} ,");
                         }
-                        sw.WriteLine("} ,");
+                        sw.Write("];");
                     }
-                    sw.Write("];");
+                    this.m_routes = ms.ToArray();
                 }
-                this.m_routes = ms.ToArray();
-            }
             return this.m_routes;
         }
 

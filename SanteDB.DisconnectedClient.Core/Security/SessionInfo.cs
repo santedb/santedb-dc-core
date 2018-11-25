@@ -284,22 +284,23 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 // Attempt to download if the user entity is null
                 // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity 
                 var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
-                if (this.m_entity == null || amiService != null && amiService.IsAvailable() ||  this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
+                if (this.m_entity == null || amiService != null && amiService.IsAvailable() || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     int t = 0;
                     var sid = Guid.Parse((principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, 0, 1, out t, Guid.Empty).FirstOrDefault()?.Key.ToString());
                     this.m_entity = amiService.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
 
-                    ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => {
+                    ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
+                    {
                         var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
                         try
                         {
-                            if(persistence.Get((o as Entity).Key.Value) == null)
+                            if (persistence.Get((o as Entity).Key.Value) == null)
                                 persistence.Insert(o as Entity);
                             else
                                 persistence.Update(o as Entity);
                         }
-                        catch(Exception e)
+                        catch (Exception e)
                         {
                             this.m_tracer.TraceError("Could not create / update user entity for logged in user: {0}", e);
                         }
@@ -319,11 +320,13 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 var isInSubFacility = this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.ToString())) == true;
                 if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {
-                    if (this.m_entity == null) {
+                    if (this.m_entity == null)
+                    {
                         this.m_tracer.TraceError("User facility check could not be done : entity null");
                         errDetail += " entity_null";
                     }
-                    else {
+                    else
+                    {
                         this.m_tracer.TraceError("User is in facility {0} but tablet only allows login from {1}",
                             String.Join(",", this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
                             String.Join(",", subFacl)

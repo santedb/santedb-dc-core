@@ -22,11 +22,7 @@ using SanteDB.Core.Model.RISI;
 using SanteDB.Core.Model.Warehouse;
 using SanteDB.Rest.RISI;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {

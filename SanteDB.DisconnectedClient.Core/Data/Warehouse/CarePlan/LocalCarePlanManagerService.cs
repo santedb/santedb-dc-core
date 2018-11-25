@@ -204,7 +204,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                                     var syncFilter = patientSync?.LastSync ?? new DateTime(1900, 01, 01);
                                     while (ofs < tr)
                                     {
-                                        if(tr > 1)
+                                        if (tr > 1)
                                             ApplicationContext.Current.SetProgress(Strings.locale_calculateImportedCareplan, ofs / (float)tr);
 
                                         var prodPatients = patientPersistence.QueryExplicitLoad(p => p.ObsoletionTime == null && p.StatusConcept.Mnemonic != "OBSOLETE" && p.CreationTime >= syncFilter, ofs, 15, out tr, queryId, new String[] { "Patient.Relationships" });
@@ -416,7 +416,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                     }
                     else
                     {
-                        this.QueueWorkItem(e.Data.Item.Where(i=>i is Act || i is Patient).ToArray());
+                        this.QueueWorkItem(e.Data.Item.Where(i => i is Act || i is Patient).ToArray());
                     }
                 };
 

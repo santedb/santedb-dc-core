@@ -368,7 +368,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                         }
                         else
                             break;
-                        
+
                         if (String.IsNullOrEmpty(eTag))
                             eTag = result?.Item.FirstOrDefault()?.Tag;
 

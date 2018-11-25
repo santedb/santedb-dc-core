@@ -18,21 +18,20 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.Security;
-using System;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
-	/// <summary>
-	/// Represents a policy instance class
-	/// </summary>
-	public interface IPolicyInstance
-	{
+    /// <summary>
+    /// Represents a policy instance class
+    /// </summary>
+    public interface IPolicyInstance
+    {
         /// <summary>
         /// Security policy instance
         /// </summary>
 		IPolicy Policy { get; }
-		PolicyGrantType Rule { get; }
-		object Securable { get; }
-	}
+        PolicyGrantType Rule { get; }
+        object Securable { get; }
+    }
 }
 

@@ -50,7 +50,8 @@ namespace SanteDB.DisconnectedClient.Ags.Configuration
         /// Gets or sets the Contract type
         /// </summary>
         [XmlIgnore, JsonIgnore]
-        public Type Contract {
+        public Type Contract
+        {
             get => Type.GetType(this.ContractXml);
             set => this.ContractXml = value.AssemblyQualifiedName;
         }

@@ -17,39 +17,38 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Security.Principal;
 using SanteDB.Core.Http;
 using SanteDB.DisconnectedClient.Core;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
-	/// <summary>
-	/// Credential providerwhich will identify this application
-	/// </summary>
-	public class OAuth2CredentialProvider : ICredentialProvider
-	{
-		#region ICredentialProvider implementation
-		/// <summary>
-		/// Gets or sets the credentials which are used to authenticate
-		/// </summary>
-		/// <returns>The credentials.</returns>
-		/// <param name="context">Context.</param>
-		public Credentials GetCredentials (IRestClient context)
-		{
-			// return this application's credentials
-			return new OAuthTokenServiceCredentials (AuthenticationContext.Current.Principal);
-		}
+    /// <summary>
+    /// Credential providerwhich will identify this application
+    /// </summary>
+    public class OAuth2CredentialProvider : ICredentialProvider
+    {
+        #region ICredentialProvider implementation
+        /// <summary>
+        /// Gets or sets the credentials which are used to authenticate
+        /// </summary>
+        /// <returns>The credentials.</returns>
+        /// <param name="context">Context.</param>
+        public Credentials GetCredentials(IRestClient context)
+        {
+            // return this application's credentials
+            return new OAuthTokenServiceCredentials(AuthenticationContext.Current.Principal);
+        }
 
-		/// <summary>
-		/// Authentication request is required
-		/// </summary>
-		/// <param name="context">Context.</param>
-		public Credentials Authenticate (IRestClient context)
-		{
-			// return this application's credentials
-			return new OAuthTokenServiceCredentials (AuthenticationContext.Current.Principal);
-		}
+        /// <summary>
+        /// Authentication request is required
+        /// </summary>
+        /// <param name="context">Context.</param>
+        public Credentials Authenticate(IRestClient context)
+        {
+            // return this application's credentials
+            return new OAuthTokenServiceCredentials(AuthenticationContext.Current.Principal);
+        }
 
         /// <summary>
         /// Get oauth credentials

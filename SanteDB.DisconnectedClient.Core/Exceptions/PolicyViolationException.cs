@@ -17,10 +17,10 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model.Security;
+using SanteDB.DisconnectedClient.Core.Security;
 using System;
 using System.Security;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.Core.Model.Security;
 using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Exceptions

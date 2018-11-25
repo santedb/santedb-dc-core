@@ -18,26 +18,19 @@
  * Date: 2018-11-23
  */
 using RestSrvr;
+using RestSrvr.Exceptions;
 using SanteDB.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Patch;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Xamarin;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Xamarin.Security;
-using SanteDB.Messaging.HDSI.Client;
 using SanteDB.Rest.Common;
 using SanteDB.Rest.HDSI;
 using SanteDB.Rest.HDSI.Resources;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Reflection;
-using SanteDB.DisconnectedClient.Core.Services;
-using RestSrvr.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {

@@ -56,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [RestOperation(UriPath = "/refresh", Method = "POST", FaultProvider = nameof(CarePlanFaultProvider))]
         public void Refresh()
         {
-            if(ApplicationContext.Current.Confirm(Strings.locale_truncateCarePlan))
+            if (ApplicationContext.Current.Confirm(Strings.locale_truncateCarePlan))
                 ApplicationContext.Current.GetService<LocalCarePlanManagerService>()?.Truncate();
             ApplicationContext.Current.GetService<LocalCarePlanManagerService>()?.RefreshCarePlan(true);
         }
@@ -83,25 +83,25 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             if (p == null)
                 throw new FileNotFoundException();
 
-    //        if(p.Participations.Count == 0)
-    //        {
-    //            var actService = ApplicationContext.Current.GetService<IActRepositoryService>();
-    //            int tr = 0;
-    //            IEnumerable<Act> acts = null;
-    //            Guid searchState = Guid.Empty;
+            //        if(p.Participations.Count == 0)
+            //        {
+            //            var actService = ApplicationContext.Current.GetService<IActRepositoryService>();
+            //            int tr = 0;
+            //            IEnumerable<Act> acts = null;
+            //            Guid searchState = Guid.Empty;
 
-				//if (actService is IPersistableQueryProvider && search.ContainsKey("_state") && Guid.TryParse(search["_state"][0], out searchState))
-				//	acts = (actService as IPersistableQueryProvider).Query<Act>(o => o.Participations.Any(guard => guard.ParticipationRole.Mnemonic == "RecordTarget" && guard.PlayerEntityKey == p.Key), 0, 200, out tr, searchState);
-				//else
-				//	acts = actService.Find<Act>(o => o.Participations.Any(guard => guard.ParticipationRole.Mnemonic == "RecordTarget" && guard.PlayerEntityKey == p.Key), 0, 200, out tr);
+            //if (actService is IPersistableQueryProvider && search.ContainsKey("_state") && Guid.TryParse(search["_state"][0], out searchState))
+            //	acts = (actService as IPersistableQueryProvider).Query<Act>(o => o.Participations.Any(guard => guard.ParticipationRole.Mnemonic == "RecordTarget" && guard.PlayerEntityKey == p.Key), 0, 200, out tr, searchState);
+            //else
+            //	acts = actService.Find<Act>(o => o.Participations.Any(guard => guard.ParticipationRole.Mnemonic == "RecordTarget" && guard.PlayerEntityKey == p.Key), 0, 200, out tr);
 
-    //            p.Participations = acts.Select(a => new ActParticipation(ActParticipationKey.RecordTarget, p)
-    //            {
-	   //             Act = a,
-				//	ParticipationRole = new Concept { Mnemonic = "RecordTarget" },
-				//	SourceEntity = actService.Get<Act>(a.Key.Value, Guid.Empty)
-    //            }).ToList();
-    //        }
+            //            p.Participations = acts.Select(a => new ActParticipation(ActParticipationKey.RecordTarget, p)
+            //            {
+            //             Act = a,
+            //	ParticipationRole = new Concept { Mnemonic = "RecordTarget" },
+            //	SourceEntity = actService.Get<Act>(a.Key.Value, Guid.Empty)
+            //            }).ToList();
+            //        }
 
             // As appointments
             bool asAppointments = search.ContainsKey("_appointments") && search["_appointments"][0] == "true";
@@ -119,12 +119,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             sw.Stop();
             this.m_tracer.TraceInfo(">>>> CARE PLAN CONSTRUCTED IN {0}", sw.Elapsed);
 
-            
+
             // Assign location to all
             var sdlKey = (AuthenticationContext.Current.Session.UserEntity.Relationships.FirstOrDefault(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation || o.RelationshipType?.Mnemonic == "DedicatedServiceDeliveryLocation") ??
                         p.Relationships.FirstOrDefault(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation || o.RelationshipType?.Mnemonic == "DedicatedServiceDeliveryLocation"))?.TargetEntityKey;
 
-            if(sdlKey.HasValue)
+            if (sdlKey.HasValue)
                 foreach (var itm in plan)
                     if (!itm.Participations.Any(o => o.ParticipationRoleKey == ActParticipationKey.Location || o.ParticipationRole?.Mnemonic == "Location"))
                         itm.Participations.Add(new ActParticipation(ActParticipationKey.Location, sdlKey));

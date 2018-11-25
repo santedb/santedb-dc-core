@@ -21,19 +21,14 @@ using RestSrvr;
 using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
-using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Xamarin;
 using SanteDB.DisconnectedClient.Xamarin.Data;
-using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -43,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     [ServiceBehavior(Name = "APP", InstanceMode = ServiceInstanceMode.PerCall)]
     public partial class ApplicationServiceBehavior : IApplicationServiceContract
     {
-        
+
         /// <summary>
         /// Get storage providers
         /// </summary>
@@ -132,6 +127,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             return ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.SubscriptionDefinition).ToList();
         }
 
-        
+
     }
 }

@@ -17,49 +17,43 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using System.Security.Permissions;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.Security.Principal;
 using SanteDB.Core.Http;
 using SanteDB.DisconnectedClient.Xamarin.Exceptions;
+using System;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
-	/// <summary>
-	/// Represents a Credential which is a token credential
-	/// </summary>
-	public class TokenCredentials : Credentials
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Xamarin.Security.TokenCredentials"/> class.
-		/// </summary>
-		/// <param name="principal">Principal.</param>
-		public TokenCredentials (IPrincipal principal) : base (principal)
-		{
-			
-		}
+    /// <summary>
+    /// Represents a Credential which is a token credential
+    /// </summary>
+    public class TokenCredentials : Credentials
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Xamarin.Security.TokenCredentials"/> class.
+        /// </summary>
+        /// <param name="principal">Principal.</param>
+        public TokenCredentials(IPrincipal principal) : base(principal)
+        {
 
-		#region implemented abstract members of Credentials
-		/// <summary>
-		/// Get HTTP header
-		/// </summary>
-		/// <returns>The http headers.</returns>
-		public override System.Collections.Generic.Dictionary<string, string> GetHttpHeaders ()
-		{
-			if (this.Principal is TokenClaimsPrincipal)
-				return new System.Collections.Generic.Dictionary<string, string> () {
-					{ "Authorization", String.Format ("Bearer {0}", this.Principal.ToString ()) }
-				};
-			else
-				throw new SecurityTokenException (SecurityTokenExceptionType.InvalidTokenType, "Improper principal type");
-		}
-		#endregion
-	}
+        }
+
+        #region implemented abstract members of Credentials
+        /// <summary>
+        /// Get HTTP header
+        /// </summary>
+        /// <returns>The http headers.</returns>
+        public override System.Collections.Generic.Dictionary<string, string> GetHttpHeaders()
+        {
+            if (this.Principal is TokenClaimsPrincipal)
+                return new System.Collections.Generic.Dictionary<string, string>() {
+                    { "Authorization", String.Format ("Bearer {0}", this.Principal.ToString ()) }
+                };
+            else
+                throw new SecurityTokenException(SecurityTokenExceptionType.InvalidTokenType, "Improper principal type");
+        }
+        #endregion
+    }
 
 
 }

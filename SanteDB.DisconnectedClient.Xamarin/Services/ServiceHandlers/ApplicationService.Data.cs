@@ -435,7 +435,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 }
 
                 // Null out data
-                foreach(var r in results)
+                foreach (var r in results)
                     r.Data = null;
 
                 // Results

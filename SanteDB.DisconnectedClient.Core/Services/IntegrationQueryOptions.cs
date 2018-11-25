@@ -20,33 +20,30 @@
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.Query;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
-	/// <summary>
-	/// Query options to control data coming back from the server
-	/// </summary>
-	public class IntegrationQueryOptions
-	{
-		/// <summary>
-		/// Gets or sets the If-Modified-Since header
-		/// </summary>
-		public DateTime? IfModifiedSince { get; set; }
+    /// <summary>
+    /// Query options to control data coming back from the server
+    /// </summary>
+    public class IntegrationQueryOptions
+    {
+        /// <summary>
+        /// Gets or sets the If-Modified-Since header
+        /// </summary>
+        public DateTime? IfModifiedSince { get; set; }
 
-		/// <summary>
-		/// Gets or sets the If-None-Match
-		/// </summary>
-		public String IfNoneMatch { get; set; }
+        /// <summary>
+        /// Gets or sets the If-None-Match
+        /// </summary>
+        public String IfNoneMatch { get; set; }
 
-		/// <summary>
-		/// Gets or sets the timeout
-		/// </summary>
-		public int? Timeout { get; set; }
+        /// <summary>
+        /// Gets or sets the timeout
+        /// </summary>
+        public int? Timeout { get; set; }
 
         /// <summary>
         /// Gets or sets the infrastructure options

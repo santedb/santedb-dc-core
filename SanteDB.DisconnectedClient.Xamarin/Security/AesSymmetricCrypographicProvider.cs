@@ -18,12 +18,7 @@
  * Date: 2018-7-31
  */
 using SanteDB.DisconnectedClient.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
@@ -38,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public byte[] Decrypt(byte[] data, byte[] key, byte[] iv)
         {
-            using(var aes = new AesCryptoServiceProvider())
+            using (var aes = new AesCryptoServiceProvider())
             {
                 var decryptor = aes.CreateDecryptor(key, iv);
                 byte[] outputBuffer = new byte[1024];

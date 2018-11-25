@@ -21,11 +21,7 @@ using RestSrvr;
 using RestSrvr.Message;
 using SharpCompress.Compressors.Deflate;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -58,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             var compressionScheme = RestOperationContext.Current.IncomingRequest.Headers["Accept-Encoding"];
 
             // Compress the body
-            if(!String.IsNullOrEmpty(compressionScheme) && compressionScheme.Contains("deflate"))
+            if (!String.IsNullOrEmpty(compressionScheme) && compressionScheme.Contains("deflate"))
             {
                 var ms = new MemoryStream();
                 using (var dfz = new DeflateStream(ms, SharpCompress.Compressors.CompressionMode.Compress, leaveOpen: true))

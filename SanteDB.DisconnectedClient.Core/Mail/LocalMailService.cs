@@ -17,17 +17,13 @@
  * User: justin
  * Date: 2018-7-31
  */
-using SanteDB.Core.Mail;
-using SanteDB.Core.Model.Map;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Mail;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Core.Mail
 {

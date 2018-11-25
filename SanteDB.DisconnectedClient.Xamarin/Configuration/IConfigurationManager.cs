@@ -25,11 +25,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
     /// Configuration manager for the application
     /// </summary>
     public interface IConfigurationManager
-	{
-		/// <summary>
-		/// Returns true if SanteDB is configured
-		/// </summary>
-		bool IsConfigured { get; }
+    {
+        /// <summary>
+        /// Returns true if SanteDB is configured
+        /// </summary>
+        bool IsConfigured { get; }
 
         /// <summary>
         /// Load the configuration
@@ -46,11 +46,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         /// </summary>
         /// <param name="config">Config.</param>
         void Save(SanteDBConfiguration config);
-					
-		/// <summary>
-		/// Get the configuration
-		/// </summary>
-		SanteDBConfiguration Configuration {get; }
+
+        /// <summary>
+        /// Get the configuration
+        /// </summary>
+        SanteDBConfiguration Configuration { get; }
 
         /// <summary>
         /// Backs up the configuration
@@ -71,6 +71,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         /// Application data directory
         /// </summary>
         string ApplicationDataDirectory { get; }
-	}
+    }
 }
 

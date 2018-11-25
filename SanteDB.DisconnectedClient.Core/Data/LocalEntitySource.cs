@@ -17,15 +17,15 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
-using SanteDB.Core.Model.EntityLoader;
-using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Interfaces;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.DisconnectedClient.Core.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Core.Data
@@ -34,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Core.Data
     /// Entity source which loads local objects
     /// </summary>
     public class LocalEntitySource : IEntitySourceProvider
-	{
+    {
 
 
         #region IEntitySourceProvider implementation
@@ -43,25 +43,25 @@ namespace SanteDB.DisconnectedClient.Core.Data
         /// Get the persistence service source
         /// </summary>
         public TObject Get<TObject>(Guid? key) where TObject : IdentifiedData, new()
-		{
-			var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
+        {
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
                 return persistenceService.Get(key.Value);
-			return default(TObject);
-		}
+            return default(TObject);
+        }
 
-		/// <summary>
-		/// Get the specified version
-		/// </summary>
-		public TObject Get<TObject>(Guid? key, Guid? versionKey) where TObject : IdentifiedData, IVersionedEntity, new()
-		{
-			var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
+        /// <summary>
+        /// Get the specified version
+        /// </summary>
+        public TObject Get<TObject>(Guid? key, Guid? versionKey) where TObject : IdentifiedData, IVersionedEntity, new()
+        {
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
                 return persistenceService.Query(o => o.Key == key).FirstOrDefault();
-            else if(persistenceService != null && key.HasValue && versionKey.HasValue)
-                return persistenceService.Query(o => o.Key == key && o.VersionKey == versionKey).FirstOrDefault ();
-			return default(TObject);
-		}
+            else if (persistenceService != null && key.HasValue && versionKey.HasValue)
+                return persistenceService.Query(o => o.Key == key && o.VersionKey == versionKey).FirstOrDefault();
+            return default(TObject);
+        }
 
         /// <summary>
         /// Get versioned relationships for the object
@@ -83,12 +83,12 @@ namespace SanteDB.DisconnectedClient.Core.Data
         /// Query the specified object
         /// </summary>
         public IEnumerable<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
-		{
-			var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
+        {
+            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null)
             {
                 var tr = 0;
-                if(typeof(Act).GetTypeInfo().IsAssignableFrom(typeof(TObject).GetTypeInfo()) ||
+                if (typeof(Act).GetTypeInfo().IsAssignableFrom(typeof(TObject).GetTypeInfo()) ||
                     typeof(ActParticipation).GetTypeInfo().IsAssignableFrom(typeof(TObject).GetTypeInfo()))
                     return persistenceService.QueryFast(query, 0, null, out tr, Guid.Empty);
                 else
@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Core.Data
 
             }
             return new List<TObject>();
-		}
+        }
 
         #endregion
 

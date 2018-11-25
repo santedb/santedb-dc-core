@@ -18,9 +18,6 @@
  * Date: 2018-6-28
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.Attributes

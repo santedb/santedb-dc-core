@@ -17,31 +17,27 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
+using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Exceptions;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Linq;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.Security.Principal;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Security;
-using Newtonsoft.Json;
-using System.Security;
-using SanteDB.DisconnectedClient.Xamarin.Exceptions;
-using SanteDB.Core.Model.Security;
-using SanteDB.DisconnectedClient.Core.Serices;
-using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Core.Interop;
 using System.Net;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.Core.Services;
-using SanteDB.Core.Model.AMI.Auth;
+using System.Security;
+using System.Security.Principal;
 using System.Text;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model.Constants;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
@@ -153,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             {
 
                                 // Add device credential
-                                if(!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
+                                if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
                                     p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
                                 if (overrideClaim == "true")
                                 {
@@ -242,8 +238,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         // TODO: Clean this up
                         try
                         {
-                            if(!(retVal is IOfflinePrincipal))
-                               ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
+                            if (!(retVal is IOfflinePrincipal))
+                                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
                         }
                         catch (Exception ex)
                         {
@@ -295,7 +291,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, password, false) { Principal = retVal });
@@ -390,7 +386,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     localSu.Email = cprincipal.FindClaim(ClaimTypes.Email)?.Value;
                     localSu.PhoneNumber = cprincipal.FindClaim(ClaimTypes.Telephone)?.Value;
                     ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu);
-                    
+
                     // Add user to roles
                     // TODO: Remove users from specified roles?
                     localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray(), new SystemPrincipal());

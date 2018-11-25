@@ -1,10 +1,5 @@
 ﻿using SanteDB.Core.Model;
 using SanteDB.Core.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
@@ -14,7 +9,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     public class GenericLocalConceptRepository<TModel> : GenericLocalMetadataRepository<TModel>
         where TModel : IdentifiedData
     {
-        
+
         protected override string QueryPolicy => PermissionPolicyIdentifiers.ReadMetadata;
         protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadMetadata;
         protected override string WritePolicy => PermissionPolicyIdentifiers.AdministerConceptDictionary;

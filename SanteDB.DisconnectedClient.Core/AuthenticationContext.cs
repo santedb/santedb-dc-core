@@ -21,13 +21,7 @@ using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core
 {
@@ -46,14 +40,14 @@ namespace SanteDB.DisconnectedClient.Core
         /// ANONYMOUS user's SID
         /// </summary>
         public const String AnonymousUserSid = "C96859F0-043C-4480-8DAB-F69D6E86696C";
-        
+
         /// <summary>
         /// System identity
         /// </summary>
         private static readonly IPrincipal s_system = new ClaimsPrincipal(new ClaimsIdentity("SYSTEM", true, new Claim[] {
             new Claim(ClaimTypes.SanteDBGrantedPolicyClaim, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)
         }));
-        
+
         /// <summary>
         /// Anonymous identity
         /// </summary>

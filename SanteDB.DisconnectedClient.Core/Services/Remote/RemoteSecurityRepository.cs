@@ -17,26 +17,21 @@
  * User: justin
  * Date: 2018-11-23
  */
-using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.Messaging.AMI.Client;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.Core.Exceptions;
-using SanteDB.Messaging.HDSI.Client;
-using SanteDB.Core.Model.AMI.Auth;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Remote
 {
@@ -65,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                foreach(var usr in users)
+                foreach (var usr in users)
                 {
                     var user = this.GetUser(usr);
                     if (user == null)
@@ -79,7 +74,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     });
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not add users to roles", e);
             }
@@ -91,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         public void ChangePassword(string userName, string password)
         {
             this.GetCredentials();
-            
+
             try
             {
                 var user = this.GetUser(userName);
@@ -103,7 +98,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     PasswordOnly = true
                 });
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not change password", e);
             }
@@ -118,7 +113,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         public SecurityUser ChangePassword(Guid userId, string password)
         {
             this.GetCredentials();
-            
+
             try
             {
                 var user = this.GetUser(userId);
@@ -131,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 }).Entity;
                 return user;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not change password", e);
             }
@@ -170,12 +165,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 var retVal = this.m_client.CreateDevice(new SanteDB.Core.Model.AMI.Auth.SecurityDeviceInfo(device)
                 {
-                    Policies = device.Policies.Select(o=> new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
+                    Policies = device.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
                 });
                 retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return retVal.Entity;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not create device", e);
             }
@@ -192,7 +187,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 return this.m_client.CreatePolicy(new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(policy)).Policy;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not create policy", e);
             }
@@ -214,7 +209,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return retVal.Entity;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not create role", e);
             }
@@ -236,7 +231,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 retVal.Entity.Roles = retVal.Roles.Select(o => this.GetRole(o)).ToList();
                 return retVal.Entity;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not create user", e);
             }
@@ -255,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
                 return hdsiClient.Create(userEntity);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not create user entity", e);
             }
@@ -278,12 +273,13 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityApplicationInfo>().Select(o=> {
-                    o.Entity.Policies = o.Policies.Select(p=>p.ToPolicyInstance()).ToList();
+                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
+                {
+                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
                     return o.Entity;
                 });
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not query applications", e);
             }
@@ -306,7 +302,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityDeviceInfo>().Select(o => {
+                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
+                {
                     o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
                     return o.Entity;
                 });
@@ -359,7 +356,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityRoleInfo>().Select(o => {
+                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
+                {
                     o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
                     return o.Entity;
                 });
@@ -419,7 +417,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityUserInfo>().Select(o => {
+                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
+                {
                     o.Entity.Roles = o.Roles.Select(r => this.FindRoles(q => q.Name == r).FirstOrDefault()).ToList();
                     return o.Entity;
                 });
@@ -435,7 +434,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
         {
-            return new AmiPolicyInformationService(this.m_cachedCredential as ClaimsPrincipal).GetActivePolicies(securable).Select(o=>o.ToPolicyInstance());
+            return new AmiPolicyInformationService(this.m_cachedCredential as ClaimsPrincipal).GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
         }
 
         /// <summary>
@@ -507,7 +506,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                return this.m_client.GetPolicies(o=>o.Oid==policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
+                return this.m_client.GetPolicies(o => o.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
             }
             catch (Exception e)
             {
@@ -557,8 +556,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                var role = this.m_client.GetRoles(r=>r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
-                if(role != null)
+                var role = this.m_client.GetRoles(r => r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
+                if (role != null)
                     role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return role?.Entity;
             }
@@ -644,7 +643,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
                 hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
-                return hdsiClient.Query<UserEntity>(o=>o.SecurityUser.UserName == identity.Name, 0, 1, false).Item.FirstOrDefault() as UserEntity;
+                return hdsiClient.Query<UserEntity>(o => o.SecurityUser.UserName == identity.Name, 0, 1, false).Item.FirstOrDefault() as UserEntity;
             }
             catch (Exception e)
             {
@@ -671,7 +670,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 this.m_client.LockUser(userId);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not lock user", e);
             }
@@ -687,7 +686,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 return this.m_client.DeleteApplication(applicationId).Entity;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not delte application", e);
             }
@@ -794,12 +793,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 var retVal = this.m_client.UpdateApplication(application.Key.Value, new SecurityApplicationInfo(application)
                 {
-                    Policies = application.Policies.Select(o=>new SecurityPolicyInfo(o)).ToList()
+                    Policies = application.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
                 });
                 retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return retVal.Entity;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Error saving application", e);
             }
@@ -904,7 +903,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 this.m_client.UnlockUser(userId);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Could not unlock user", e);
             }

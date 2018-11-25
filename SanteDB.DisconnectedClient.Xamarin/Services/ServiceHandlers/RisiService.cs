@@ -94,7 +94,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
         [return: RestMessage(RestMessageFormat.Json)]
         public IEnumerable<dynamic> GetDataset()
         {
-            
+
             String _report = MiniHdsiServer.CurrentContext.Request.QueryString["_report"],
                 _name = MiniHdsiServer.CurrentContext.Request.QueryString["_name"];
             var query = this.GetQueryWithContext();

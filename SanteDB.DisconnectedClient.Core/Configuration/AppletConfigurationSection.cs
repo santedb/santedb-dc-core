@@ -17,32 +17,30 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
 using Newtonsoft.Json;
 using SanteDB.Core.Applets.Model;
+using System;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
 
-	/// <summary>
-	/// Represents configuration related to applets
-	/// </summary>
-	[JsonObject, XmlType(nameof(AppletConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
-	public class AppletConfigurationSection : IConfigurationSection
-	{
-		/// <summary>
-		/// Coniguration section
-		/// </summary>
-		public AppletConfigurationSection ()
-		{
-			this.AppletConfiguration = new List<AppletConfiguration> ();
-			this.Applets = new List<AppletName> ();
+    /// <summary>
+    /// Represents configuration related to applets
+    /// </summary>
+    [JsonObject, XmlType(nameof(AppletConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    public class AppletConfigurationSection : IConfigurationSection
+    {
+        /// <summary>
+        /// Coniguration section
+        /// </summary>
+        public AppletConfigurationSection()
+        {
+            this.AppletConfiguration = new List<AppletConfiguration>();
+            this.Applets = new List<AppletName>();
             this.Security = new AppletSecurityConfiguration();
-		}
+        }
 
         /// <summary>
         /// Gets or sets the applet which is used for authentication requests
@@ -61,31 +59,34 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>The applet directory.</value>
         [XmlAttribute("appletDirectory"), JsonIgnore]
-		public String AppletDirectory {
-			get;
-			set;
-		}
+        public String AppletDirectory
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets configuration data specific to a particular applet
-		/// </summary>
-		/// <remarks>This property is used to store user preferences for a particular applet</remarks>
-		[XmlElement("appletConfig"), JsonProperty("config")]
-		public List<AppletConfiguration> AppletConfiguration {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets configuration data specific to a particular applet
+        /// </summary>
+        /// <remarks>This property is used to store user preferences for a particular applet</remarks>
+        [XmlElement("appletConfig"), JsonProperty("config")]
+        public List<AppletConfiguration> AppletConfiguration
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets a list of applets which are permitted for use and their 
-		/// public key token used for validation
-		/// </summary>
-		/// <value>The applets.</value>
-		[XmlElement("applet"), JsonProperty("applet")]
-		public List<AppletName> Applets {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets a list of applets which are permitted for use and their 
+        /// public key token used for validation
+        /// </summary>
+        /// <value>The applets.</value>
+        [XmlElement("applet"), JsonProperty("applet")]
+        public List<AppletName> Applets
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Auto-update applet
@@ -139,55 +140,59 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// Represents a configuration of an applet
     /// </summary>
     [JsonObject, XmlType(nameof(AppletConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
-	public class AppletConfiguration
-	{
+    public class AppletConfiguration
+    {
 
-		/// <summary>
-		/// Gets or sets the applet id
-		/// </summary>
-		[XmlAttribute("applet"), JsonProperty("applet")]
-		public String AppletId {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the applet id
+        /// </summary>
+        [XmlAttribute("applet"), JsonProperty("applet")]
+        public String AppletId
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Applet configuration entry
-		/// </summary>
-		[XmlElement("appSetting"), JsonProperty("appSetting")]
-		public List<AppletConfigurationEntry> AppSettings {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Applet configuration entry
+        /// </summary>
+        [XmlElement("appSetting"), JsonProperty("appSetting")]
+        public List<AppletConfigurationEntry> AppSettings
+        {
+            get;
+            set;
+        }
 
-	}
+    }
 
-	/// <summary>
-	/// Applet configuration entry
-	/// </summary>
-	[JsonObject, XmlType(nameof(AppletConfigurationEntry), Namespace = "http://santedb.org/mobile/configuration")]
-	public class AppletConfigurationEntry
-	{
-		/// <summary>
-		/// The name of the property
-		/// </summary>
-		/// <value>The name.</value>
-		[XmlAttribute("name"), JsonProperty("name")]
-		public String Name {
-			get;
-			set;
-		}
+    /// <summary>
+    /// Applet configuration entry
+    /// </summary>
+    [JsonObject, XmlType(nameof(AppletConfigurationEntry), Namespace = "http://santedb.org/mobile/configuration")]
+    public class AppletConfigurationEntry
+    {
+        /// <summary>
+        /// The name of the property
+        /// </summary>
+        /// <value>The name.</value>
+        [XmlAttribute("name"), JsonProperty("name")]
+        public String Name
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		/// <value>The value.</value>
-		[XmlAttribute("value"), JsonProperty("value")]
-		public String Value {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        /// <value>The value.</value>
+        [XmlAttribute("value"), JsonProperty("value")]
+        public String Value
+        {
+            get;
+            set;
+        }
+    }
 
 }
 

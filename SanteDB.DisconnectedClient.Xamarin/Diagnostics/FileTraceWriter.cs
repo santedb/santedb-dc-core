@@ -17,15 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
 using SanteDB.Core.Diagnostics;
-using System.IO;
-using System.Diagnostics.Tracing;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using System.Collections.Generic;
-using System.Threading;
 using SanteDB.DisconnectedClient.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.IO;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics
 {
@@ -157,7 +155,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics
         /// </summary>
         public void Dispose()
         {
-            if(this.m_dispatchThread != null)
+            if (this.m_dispatchThread != null)
             {
                 this.m_disposing = true;
                 lock (this.m_logBacklog)

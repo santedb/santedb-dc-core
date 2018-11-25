@@ -17,18 +17,14 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.AMI.Auth;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.Core.Services;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Remote
 {
@@ -82,7 +78,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Remote
                 AuthenticationContext.Current = this.m_authContext;
 
                 // Next I have to request a TFA secret!!
-                amiClient.SendTfaSecret(new  TfaRequestInfo()
+                amiClient.SendTfaSecret(new TfaRequestInfo()
                 {
                     ResetMechanism = mechanism,
                     Verification = challengeResponse,

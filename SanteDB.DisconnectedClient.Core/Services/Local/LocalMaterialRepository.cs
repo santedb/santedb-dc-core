@@ -34,5 +34,5 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         protected override string AlterPolicy => PermissionPolicyIdentifiers.WriteMaterials;
     }
 
-   
+
 }

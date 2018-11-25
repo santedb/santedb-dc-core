@@ -17,12 +17,10 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
@@ -41,14 +39,15 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         {
             this.AppSettings = new List<AppSettingKeyValuePair>();
         }
-        
+
 
         /// <summary>
         /// The location of the directory where user preferences are stored
         /// </summary>
         /// <value>The user preference dir.</value>
         [XmlElement("userPrefDir"), JsonIgnore]
-        public String UserPrefDir {
+        public String UserPrefDir
+        {
             get;
             set;
         }
@@ -59,7 +58,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>The style.</value>
         [XmlElement("style"), JsonProperty("style")]
-        public StyleSchemeType Style {
+        public StyleSchemeType Style
+        {
             get;
             set;
         }
@@ -69,7 +69,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <value>The services.</value>
         [XmlElement("service"), JsonProperty("service")]
-        public List<String> ServiceTypes {
+        public List<String> ServiceTypes
+        {
             get;
             set;
         }
@@ -79,30 +80,31 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// General extended application settings
         /// </summary>
         [XmlElement("setting"), JsonProperty("setting")]
-        public List<AppSettingKeyValuePair> AppSettings {
+        public List<AppSettingKeyValuePair> AppSettings
+        {
             get;
             set;
         }
 
-		///// <summary>
-		///// Sets the services.
-		///// </summary>
-		///// <value>The services.</value>
-		//[XmlIgnore, JsonIgnore]
-		//public List<Object> Services {
-		//	get {
-		//		if (this.m_services == null) {
-		//			this.m_services = new List<object> ();
-		//			foreach (var itm in this.ServiceTypes) {
-		//				Type t = Type.GetType (itm);
-  //                      if (t == null)
-  //                          throw new KeyNotFoundException(itm);
-		//				this.m_services.Add (Activator.CreateInstance (t));
-		//			}
-		//		}
-		//		return this.m_services;
-		//	}
-		//}
+        ///// <summary>
+        ///// Sets the services.
+        ///// </summary>
+        ///// <value>The services.</value>
+        //[XmlIgnore, JsonIgnore]
+        //public List<Object> Services {
+        //	get {
+        //		if (this.m_services == null) {
+        //			this.m_services = new List<object> ();
+        //			foreach (var itm in this.ServiceTypes) {
+        //				Type t = Type.GetType (itm);
+        //                      if (t == null)
+        //                          throw new KeyNotFoundException(itm);
+        //				this.m_services.Add (Activator.CreateInstance (t));
+        //			}
+        //		}
+        //		return this.m_services;
+        //	}
+        //}
 
         /// <summary>
         /// Gets or sets the cache configuration
@@ -165,11 +167,11 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// Style scheme type
     /// </summary>
     [XmlType(nameof(StyleSchemeType), Namespace = "http://santedb.org/mobile/configuration")]
-	public enum StyleSchemeType
-	{
-		Dark,
-		Light
-	}
+    public enum StyleSchemeType
+    {
+        Dark,
+        Light
+    }
 
 }
 

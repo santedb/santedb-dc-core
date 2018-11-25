@@ -88,7 +88,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 search.Remove("_");
                 var results = warehouseSvc.StoredQuery(dataMart.Id, queryName, search, 0, -1, out totalResults);
 
-                
+
                 return results;
             }
         }

@@ -18,18 +18,16 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
-using SanteDB.Messaging.AMI.Client;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.AMI.Auth;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
@@ -100,7 +98,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public IPolicy GetPolicy(string policyOid)
         {
-            return this.m_client.FindPolicy(p=>p.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
+            return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
         }
     }
 }

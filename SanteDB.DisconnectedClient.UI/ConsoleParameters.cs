@@ -17,11 +17,6 @@
  * User: justin
  * Date: 2018-7-23
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MohawkCollege.Util.Console.Parameters;
 
 namespace SanteDB.DisconnectedClient.UI

@@ -17,31 +17,23 @@
  * User: justin
  * Date: 2018-6-22
  */
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Security;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
-using System.Linq;
-using SanteDB.Core.Interfaces;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.Core.Services;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
-	/// <summary>
-	/// Local batch repository service
-	/// </summary>
-	public class LocalBatchRepository :
+    /// <summary>
+    /// Local batch repository service
+    /// </summary>
+    public class LocalBatchRepository :
         GenericLocalRepository<Bundle>
-	{
-       
+    {
+
         /// <summary>
         /// Find the specified bundle (Not supported)
         /// </summary>
@@ -80,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         public override Bundle Insert(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach(var itm in data.Item)
+            foreach (var itm in data.Item)
             {
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
                 var irsi = ApplicationContext.Current.GetService(irst);

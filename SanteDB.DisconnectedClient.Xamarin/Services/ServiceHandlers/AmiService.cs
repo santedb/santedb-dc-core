@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
             //    return Bundle.CreateBundle(securityRepositoryService.FindUsers(predicate), 0, 0);
         }
 
-         /// <summary>
+        /// <summary>
         /// Care plan fault provider
         /// </summary>
         [return: RestMessage(RestMessageFormat.SimpleJson)]

@@ -17,21 +17,16 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {
 
-	/// <summary>
-	/// An interface which represents a configuration section
-	/// </summary>
-	public interface IConfigurationSection
-	{
-	}
+    /// <summary>
+    /// An interface which represents a configuration section
+    /// </summary>
+    public interface IConfigurationSection
+    {
+    }
 
 }
 

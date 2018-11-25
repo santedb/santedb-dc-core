@@ -17,26 +17,23 @@
  * User: justin
  * Date: 2018-11-23
  */
+using MARC.HI.EHRS.SVC.Auditing.Data;
 using MARC.HI.EHRS.SVC.Auditing.Services;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.AMI.Security;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MARC.HI.EHRS.SVC.Auditing.Data;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.Core.Model;
-using System.Xml.Serialization;
-using SanteDB.Core.Model.AMI.Security;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Interfaces;
-using SanteDB.DisconnectedClient.Core.Configuration;
 using System.Threading;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Model.Entities;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
 {

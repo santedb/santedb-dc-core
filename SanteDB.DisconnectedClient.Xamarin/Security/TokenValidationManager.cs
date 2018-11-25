@@ -18,10 +18,6 @@
  * Date: 2018-6-28
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
@@ -48,7 +44,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         internal static bool OnSymmetricKeyValidationCallback(Object source, int keyId, String issuer)
         {
             return SymmetricKeyValidationCallback?.Invoke(source, keyId, issuer) == true;
-        } 
+        }
 
     }
 }

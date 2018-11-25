@@ -21,24 +21,11 @@ using RestSrvr;
 using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Ags.Util;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 using SanteDB.Rest.Common.Fault;
 using System;
-using System.Collections.Generic;
-using System.Data;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Reflection;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -99,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             object fault = new RestServiceFault(error);
 
             if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
-                    fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
+                fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
 
             AgsMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
             return true;

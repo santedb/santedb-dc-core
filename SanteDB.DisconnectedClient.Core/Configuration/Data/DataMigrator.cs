@@ -17,94 +17,100 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using System.Linq;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.i18n;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 {
-	/// <summary>
-	/// Represents a data migrator which is responsible for performing data migrations
-	/// </summary>
-	public class DataMigrator
-	{
+    /// <summary>
+    /// Represents a data migrator which is responsible for performing data migrations
+    /// </summary>
+    public class DataMigrator
+    {
 
-		// Tracer
-		private Tracer m_tracer;
+        // Tracer
+        private Tracer m_tracer;
 
-		// Migrations
-		private List<IDbMigration> m_migrations;
+        // Migrations
+        private List<IDbMigration> m_migrations;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.Data.DataMigrator"/> class.
-		/// </summary>
-		/// <param name="configuration">Configuration.</param>
-		public DataMigrator ()
-		{
-			this.m_tracer = Tracer.GetTracer(this.GetType ());
-			this.m_migrations = new List<IDbMigration> ();
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.Data.DataMigrator"/> class.
+        /// </summary>
+        /// <param name="configuration">Configuration.</param>
+        public DataMigrator()
+        {
+            this.m_tracer = Tracer.GetTracer(this.GetType());
+            this.m_migrations = new List<IDbMigration>();
 
-			this.m_tracer.TraceInfo ("Scanning for data migrations...");
+            this.m_tracer.TraceInfo("Scanning for data migrations...");
 
-			// Scan for migrations 
-			foreach (var dbm in ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes
-                .Select(o=>Type.GetType(o)?.GetTypeInfo().Assembly).Distinct().SelectMany(a=>a.DefinedTypes)) {
-				try {
-					if(dbm.AsType() == typeof(DataMigrator) ||
+            // Scan for migrations 
+            foreach (var dbm in ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes
+                .Select(o => Type.GetType(o)?.GetTypeInfo().Assembly).Distinct().SelectMany(a => a.DefinedTypes))
+            {
+                try
+                {
+                    if (dbm.AsType() == typeof(DataMigrator) ||
                         !typeof(IDbMigration).GetTypeInfo().IsAssignableFrom(dbm))
-						continue;
-					
-					IDbMigration migration = Activator.CreateInstance (dbm.AsType()) as IDbMigration;
-					if (migration != null) {
-						this.m_tracer.TraceVerbose ("Found data migrator {0}...", migration.Id);
-						this.m_migrations.Add (migration);
-					}
-				} catch {
-				}
-			}
-		}
+                        continue;
 
-		/// <summary>
-		/// Assert that all data migrations have occurred
-		/// </summary>
-		public void Ensure ()
-		{
+                    IDbMigration migration = Activator.CreateInstance(dbm.AsType()) as IDbMigration;
+                    if (migration != null)
+                    {
+                        this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
+                        this.m_migrations.Add(migration);
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
 
-			this.m_tracer.TraceInfo ("Ensuring database is up to date");
-			// Migration order
-			foreach (var m in this.GetProposal()) {
+        /// <summary>
+        /// Assert that all data migrations have occurred
+        /// </summary>
+        public void Ensure()
+        {
+
+            this.m_tracer.TraceInfo("Ensuring database is up to date");
+            // Migration order
+            foreach (var m in this.GetProposal())
+            {
                 ApplicationContext.Current.SetProgress(Strings.locale_setting_migration, 0);
-				this.m_tracer.TraceVerbose ("Will Install {0}", m.Id);
-				if (!m.Install ())
-					throw new DataMigrationException (m);
-				else
-					ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection> ().MigrationLog.Entry.Add (new DataMigrationLog.DataMigrationEntry (m));
-			}
+                this.m_tracer.TraceVerbose("Will Install {0}", m.Id);
+                if (!m.Install())
+                    throw new DataMigrationException(m);
+                else
+                    ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
+            }
 
-		}
+        }
 
-		/// <summary>
-		/// Get the list of data migrations that need to occur for the application to be in the most recent state
-		/// </summary>
-		/// <returns>The proposal.</returns>
-		public List<IDbMigration> GetProposal ()
-		{
-			List<IDbMigration> retVal = new List<IDbMigration> ();
+        /// <summary>
+        /// Get the list of data migrations that need to occur for the application to be in the most recent state
+        /// </summary>
+        /// <returns>The proposal.</returns>
+        public List<IDbMigration> GetProposal()
+        {
+            List<IDbMigration> retVal = new List<IDbMigration>();
 
-			this.m_tracer.TraceInfo ("Generating data migration proposal...");
-			foreach (var itm in this.m_migrations.OrderBy(o=>o.Id)) {
-				var migrationLog = ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection> ().MigrationLog.Entry.Find (o => o.Id == itm.Id);
-				this.m_tracer.TraceVerbose ("Migration {0} ... {1}", itm.Id, migrationLog == null ? "Install" : "Skip - Installed on " + migrationLog.Date.ToString ());
-				if (migrationLog == null)
-					retVal.Add (itm);
-			}
-			return retVal;
-		}
-	}
+            this.m_tracer.TraceInfo("Generating data migration proposal...");
+            foreach (var itm in this.m_migrations.OrderBy(o => o.Id))
+            {
+                var migrationLog = ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Find(o => o.Id == itm.Id);
+                this.m_tracer.TraceVerbose("Migration {0} ... {1}", itm.Id, migrationLog == null ? "Install" : "Skip - Installed on " + migrationLog.Date.ToString());
+                if (migrationLog == null)
+                    retVal.Add(itm);
+            }
+            return retVal;
+        }
+    }
 }
 

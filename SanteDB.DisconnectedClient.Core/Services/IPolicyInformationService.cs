@@ -17,32 +17,31 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Collections.Generic;
 using SanteDB.DisconnectedClient.Core.Security;
+using System.Collections.Generic;
 using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
-	/// <summary>
-	/// Represents a contract for a policy information service
-	/// </summary>
-	public interface IPolicyInformationService
-	{
-		/// Get active policies for the specified securable type
-		/// </summary>
-		IEnumerable<IPolicyInstance> GetActivePolicies(object securable);
+    /// <summary>
+    /// Represents a contract for a policy information service
+    /// </summary>
+    public interface IPolicyInformationService
+    {
+        /// Get active policies for the specified securable type
+        /// </summary>
+        IEnumerable<IPolicyInstance> GetActivePolicies(object securable);
 
-		/// <summary>
-		/// Get all policies on the system
-		/// </summary>
-		IEnumerable<IPolicy> GetPolicies();
+        /// <summary>
+        /// Get all policies on the system
+        /// </summary>
+        IEnumerable<IPolicy> GetPolicies();
 
-		/// <summary>
-		/// Get a specific policy
-		/// </summary>
-		IPolicy GetPolicy(string policyOid);
-	}
+        /// <summary>
+        /// Get a specific policy
+        /// </summary>
+        IPolicy GetPolicy(string policyOid);
+    }
 
     /// <summary>
     /// Represents an offline policy information service

@@ -5,12 +5,8 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Core;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -51,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 RestOperationContext.Current.OutgoingResponse.Redirect(hdlr.Asset);
                 return true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Tracer.GetTracer(typeof(AgsWebErrorHandlerServiceBehavior)).TraceError("Could not provide fault: {0}", e.ToString());
                 throw;

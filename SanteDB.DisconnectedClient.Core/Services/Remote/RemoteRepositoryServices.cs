@@ -91,7 +91,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     var pclass = typeof(RemoteRepositoryService<>);
                     pclass = pclass.MakeGenericType(itm);
 
-                    if(ApplicationContext.Current.GetService(idpType) == null)
+                    if (ApplicationContext.Current.GetService(idpType) == null)
                         ApplicationContext.Current.AddServiceProvider(pclass);
                 }
             }
@@ -192,7 +192,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     else if (etag != (existing as IdentifiedData).Tag) // Versions don't match the latest
                         ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(existing.Key.Value);
                 }
-                if (!this.m_missEntity.Contains(key) && (existing == null || 
+                if (!this.m_missEntity.Contains(key) && (existing == null ||
                     (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
                 {
                     existing = this.m_client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
@@ -205,7 +205,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             }
             catch (WebException)
             {
-                lock(this.m_missEntity)
+                lock (this.m_missEntity)
                     this.m_missEntity.Add(key);
                 // Web exceptions should not bubble up
                 return default(TModel);

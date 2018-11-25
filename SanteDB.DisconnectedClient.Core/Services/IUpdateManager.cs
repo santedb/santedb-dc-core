@@ -19,17 +19,13 @@
  */
 using SanteDB.Core.Applets.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
     /// <summary>
     /// Update manager service is responsible for checking for updates and downloading / applying them
     /// </summary>
-    public interface IUpdateManager 
+    public interface IUpdateManager
     {
 
         /// <summary>

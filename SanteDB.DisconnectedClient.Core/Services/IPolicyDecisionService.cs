@@ -17,28 +17,27 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SanteDB.DisconnectedClient.Core.Security;
-using System.Security.Principal;
 using SanteDB.Core.Model.Security;
+using System;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
-	/// <summary>
-	/// Represents a policy decision service
-	/// </summary>
-	public interface IPolicyDecisionService
-	{
+    /// <summary>
+    /// Represents a policy decision service
+    /// </summary>
+    public interface IPolicyDecisionService
+    {
 
-		/// <summary>
-		/// Get a policy decision outcome (i.e. make a policy decision)
-		/// </summary>
-		PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
+        /// <summary>
+        /// Get a policy decision outcome (i.e. make a policy decision)
+        /// </summary>
+        PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
 
         /// <summary>
         /// Get a policy decision
         /// </summary>
         PolicyGrantType GetPolicyDecision(IPrincipal principal, Object securable);
-	}
+    }
 }
 

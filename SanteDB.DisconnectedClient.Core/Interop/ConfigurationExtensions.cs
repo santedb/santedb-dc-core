@@ -20,10 +20,6 @@
 using SanteDB.Core.Http;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Interop
 {
@@ -41,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop
         {
 
             var configSection = me.GetSection<ServiceClientConfigurationSection>();
-            return configSection.Client.Find(o => clientName == o.Name)?.Clone() ;
+            return configSection.Client.Find(o => clientName == o.Name)?.Clone();
 
         }
 

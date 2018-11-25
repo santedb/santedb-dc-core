@@ -23,11 +23,7 @@ using RestSrvr.Message;
 using SanteDB.DisconnectedClient.Core;
 using SharpCompress.Compressors.Deflate;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {

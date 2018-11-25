@@ -17,41 +17,30 @@
  * User: justin
  * Date: 2018-7-23
  */
+using SanteDB.Core;
+using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.UI.Resources;
+using SanteDB.DisconnectedClient.Xamarin;
+using SanteDB.DisconnectedClient.Xamarin.Backup;
+using SanteDB.DisconnectedClient.Xamarin.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.Security;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.IO;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Services.Local;
-using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.Core.Model.EntityLoader;
-using System.Diagnostics;
-using System.Security.Principal;
-using SanteDB.Core.Applets;
-using SanteDB.Core.Diagnostics;
 using System.Diagnostics.Tracing;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Applets.Model;
-using SanteDB.Core;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Xamarin;
-using SanteDB.DisconnectedClient.Xamarin.Configuration;
-using System.Xml.Linq;
+using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Globalization;
-using System.IO.Compression;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Xml.Serialization;
-using System.Security.Cryptography;
-using SanteDB.Core.Applets.Services;
-using SanteDB.DisconnectedClient.UI.Resources;
-using SanteDB.DisconnectedClient.Xamarin.Backup;
-using SanteDB.DisconnectedClient.Xamarin.Security;
+using System.Security.Principal;
+using System.Xml.Linq;
 
 namespace SanteDB.DisconnectedClient.UI
 {
@@ -61,8 +50,8 @@ namespace SanteDB.DisconnectedClient.UI
     public class DcApplicationContext : XamarinApplicationContext
     {
 
-		// Dialog provider
-		private IDialogProvider m_dialogProvider = null;
+        // Dialog provider
+        private IDialogProvider m_dialogProvider = null;
 
         // XSD SanteDB
         private static readonly XNamespace xs_santedb = "http://santedb.org/applet";
@@ -108,7 +97,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public override void ShowToast(string subject)
         {
-            
+
         }
 
         /// <summary>
@@ -152,15 +141,15 @@ namespace SanteDB.DisconnectedClient.UI
 
         }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="DisconnectedClient.DcApplicationContext"/> class.
-		/// </summary>
-		/// <param name="dialogProvider">Dialog provider.</param>
-		public DcApplicationContext (IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
-		{
-			this.m_dialogProvider = dialogProvider;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DisconnectedClient.DcApplicationContext"/> class.
+        /// </summary>
+        /// <param name="dialogProvider">Dialog provider.</param>
+        public DcApplicationContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
+        {
+            this.m_dialogProvider = dialogProvider;
             c_application = applicationId;
-		}
+        }
 
         /// <summary>
 		/// Starts the application context using in-memory default configuration for the purposes of 
@@ -208,7 +197,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                 retVal.Start();
-                
+
                 return true;
             }
             catch (Exception e)
@@ -233,7 +222,7 @@ namespace SanteDB.DisconnectedClient.UI
                 return false;
             }
             else
-            { 
+            {
                 // load configuration
                 try
                 {
@@ -370,7 +359,7 @@ namespace SanteDB.DisconnectedClient.UI
                 {
                     retVal.m_tracer?.TraceError(e.ToString());
                     //ApplicationContext.Current = null;
-                    retVal.m_configurationManager= new DcConfigurationManager(instanceName, DcConfigurationManager.GetDefaultConfiguration(instanceName));
+                    retVal.m_configurationManager = new DcConfigurationManager(instanceName, DcConfigurationManager.GetDefaultConfiguration(instanceName));
                     AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                     throw;
                 }
@@ -494,14 +483,14 @@ namespace SanteDB.DisconnectedClient.UI
             return value?.ToLower().Replace("\\", "/");
         }
 
-        
+
         /// <summary>
         /// Save configuration
         /// </summary>
         public override void SaveConfiguration()
         {
-            if(this.m_configurationManager.IsConfigured)
-                this.m_configurationManager.Save(); 
+            if (this.m_configurationManager.IsConfigured)
+                this.m_configurationManager.Save();
         }
 
         /// <summary>
@@ -517,7 +506,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public override bool Confirm(string confirmText)
         {
-			return this.m_dialogProvider.Confirm(confirmText, String.Empty);
+            return this.m_dialogProvider.Confirm(confirmText, String.Empty);
         }
 
         /// <summary>
@@ -525,7 +514,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public override void Alert(string alertText)
         {
-			this.m_dialogProvider.Alert(alertText);
+            this.m_dialogProvider.Alert(alertText);
         }
 
 
@@ -545,14 +534,15 @@ namespace SanteDB.DisconnectedClient.UI
 #if NOCRYPT
             return null;
 #else
-			if(Environment.OSVersion.Platform == PlatformID.Win32NT) {
-				var sid = WindowsIdentity.GetCurrent().User;
-	            byte[] retVal = new byte[sid.BinaryLength];
-	            WindowsIdentity.GetCurrent().User.GetBinaryForm(retVal, 0);
-	            return retVal;
-			}
-			else // TODO: LINUX ENCRYPTION 
-				return null;
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                var sid = WindowsIdentity.GetCurrent().User;
+                byte[] retVal = new byte[sid.BinaryLength];
+                WindowsIdentity.GetCurrent().User.GetBinaryForm(retVal, 0);
+                return retVal;
+            }
+            else // TODO: LINUX ENCRYPTION 
+                return null;
 #endif
         }
     }

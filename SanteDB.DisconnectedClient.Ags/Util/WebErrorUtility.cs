@@ -9,10 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Util
 {
@@ -48,7 +45,7 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                 }
                 else
                 {
-                    if(enableBehavior)
+                    if (enableBehavior)
                         AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, "HTTP-403");
                     return 403;
                 }
@@ -67,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Ags.Util
             }
             else if (error is SecurityException)
             {
-                if(enableBehavior)
+                if (enableBehavior)
                     AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, "HTTP-403");
                 return 403;
             }
@@ -82,7 +79,7 @@ namespace SanteDB.DisconnectedClient.Ags.Util
             }
             else if (error is UnauthorizedAccessException)
             {
-                if(enableBehavior)
+                if (enableBehavior)
                     AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, "HTTP-403");
                 return 403;
             }
@@ -105,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                 return 405;
             else
                 return 500;
-            
+
         }
     }
 }

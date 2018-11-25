@@ -26,14 +26,10 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.ViewModel.Description;
 using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Http;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Json.Formatter;
 using SanteDB.Core.Model.Serialization;
-using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
-using SanteDB.DisconnectedClient.Ags.Services;
 using SanteDB.DisconnectedClient.Core;
 using System;
 using System.Collections.Generic;
@@ -43,7 +39,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -185,9 +180,9 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     }
                     else if (contentType?.StartsWith("application/json") == true)
                     {
-                        
+
                         using (var sr = new StreamReader(request.Body))
-                        using(var jsr = new JsonTextReader(sr))
+                        using (var jsr = new JsonTextReader(sr))
                         {
                             JsonSerializer jsz = new JsonSerializer()
                             {
@@ -205,7 +200,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     {
                         parameters[pNumber] = request.Body;
                     }
-                    else if(contentType == "application/x-www-urlform-encoded")
+                    else if (contentType == "application/x-www-urlform-encoded")
                     {
                         NameValueCollection nvc = new NameValueCollection();
                         using (var sr = new StreamReader(request.Body))

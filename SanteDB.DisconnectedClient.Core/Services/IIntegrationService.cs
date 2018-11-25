@@ -21,15 +21,10 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
+using System;
+using System.Linq.Expressions;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
@@ -60,50 +55,50 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// </summary>
         Bundle Find<TModel>(NameValueCollection filter, int offset, int? count, IntegrationQueryOptions options = null) where TModel : IdentifiedData;
 
-		/// <summary>
-		/// Instructs the integration service to locate a specified object(s)
-		/// </summary>
-		Bundle Find<TModel>(Expression<Func<TModel, bool>> predicate, int offset, int? count, IntegrationQueryOptions options = null) where TModel : IdentifiedData;
+        /// <summary>
+        /// Instructs the integration service to locate a specified object(s)
+        /// </summary>
+        Bundle Find<TModel>(Expression<Func<TModel, bool>> predicate, int offset, int? count, IntegrationQueryOptions options = null) where TModel : IdentifiedData;
 
-		/// <summary>
-		/// Instructs the integration service to retrieve the specified object
-		/// </summary>
-		IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, IntegrationQueryOptions options = null);
+        /// <summary>
+        /// Instructs the integration service to retrieve the specified object
+        /// </summary>
+        IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, IntegrationQueryOptions options = null);
 
-		/// <summary>
-		/// Gets a specified model.
-		/// </summary>
-		/// <typeparam name="TModel">The type of model data to retrieve.</typeparam>
-		/// <param name="key">The key of the model.</param>
-		/// <param name="versionKey">The version key of the model.</param>
-		/// <param name="options">The integrations query options.</param>
-		/// <returns>Returns a model.</returns>
-		TModel Get<TModel>(Guid key, Guid? versionKey, IntegrationQueryOptions options = null) where TModel : IdentifiedData;
+        /// <summary>
+        /// Gets a specified model.
+        /// </summary>
+        /// <typeparam name="TModel">The type of model data to retrieve.</typeparam>
+        /// <param name="key">The key of the model.</param>
+        /// <param name="versionKey">The version key of the model.</param>
+        /// <param name="options">The integrations query options.</param>
+        /// <returns>Returns a model.</returns>
+        TModel Get<TModel>(Guid key, Guid? versionKey, IntegrationQueryOptions options = null) where TModel : IdentifiedData;
 
-		/// <summary>
-		/// Inserts specified data.
-		/// </summary>
-		/// <param name="data">The data to be inserted.</param>
-		void Insert(IdentifiedData data);
+        /// <summary>
+        /// Inserts specified data.
+        /// </summary>
+        /// <param name="data">The data to be inserted.</param>
+        void Insert(IdentifiedData data);
 
-		/// <summary>
-		/// Determines whether the network is available.
-		/// </summary>
-		/// <returns>Returns true if the network is available.</returns>
-		bool IsAvailable();
+        /// <summary>
+        /// Determines whether the network is available.
+        /// </summary>
+        /// <returns>Returns true if the network is available.</returns>
+        bool IsAvailable();
 
-		/// <summary>
-		/// Obsoletes specified data.
-		/// </summary>
-		/// <param name="data">The data to be obsoleted.</param>
-		void Obsolete(IdentifiedData data, bool forceObsolete = false);
+        /// <summary>
+        /// Obsoletes specified data.
+        /// </summary>
+        /// <param name="data">The data to be obsoleted.</param>
+        void Obsolete(IdentifiedData data, bool forceObsolete = false);
 
-		/// <summary>
-		/// Updates specified data.
-		/// </summary>
-		/// <param name="data">The data to be updated.</param>
+        /// <summary>
+        /// Updates specified data.
+        /// </summary>
+        /// <param name="data">The data to be updated.</param>
         /// <param name="forceUpdate">When true, indicates that update should not do a safety check</param>
-		void Update(IdentifiedData data, bool forceUpdate = false);
+        void Update(IdentifiedData data, bool forceUpdate = false);
     }
 
     /// <summary>
@@ -119,11 +114,11 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// </summary>
     public interface IAdministrationIntegrationService : IIntegrationService
     {
-		/// <summary>
-		/// Gets the security user.
-		/// </summary>
-		/// <param name="key">The key.</param>
-		/// <returns>Returns the security user for the given key or null if no security user is found.</returns>
-		SecurityUser GetSecurityUser(Guid key);
+        /// <summary>
+        /// Gets the security user.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>Returns the security user for the given key or null if no security user is found.</returns>
+        SecurityUser GetSecurityUser(Guid key);
     }
 }

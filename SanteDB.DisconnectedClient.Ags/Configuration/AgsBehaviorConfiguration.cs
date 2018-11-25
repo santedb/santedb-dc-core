@@ -71,6 +71,6 @@ namespace SanteDB.DisconnectedClient.Ags.Configuration
         /// Gets or sets the special configuration for the binding
         /// </summary>
         [XmlElement("configuration"), JsonProperty("configuration")]
-        public XElement Configuration { get; set; } 
+        public XElement Configuration { get; set; }
     }
 }

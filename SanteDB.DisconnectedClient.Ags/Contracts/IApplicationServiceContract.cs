@@ -20,15 +20,10 @@
 using Newtonsoft.Json.Linq;
 using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
-using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Contracts
 {

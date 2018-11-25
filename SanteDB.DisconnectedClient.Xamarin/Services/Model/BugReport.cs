@@ -18,15 +18,7 @@
  * Date: 2018-6-28
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Diagnostics;
-using SanteDB.Core.Model.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.Model
 {

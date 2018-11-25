@@ -17,31 +17,31 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
 using SanteDB.DisconnectedClient.Core.Serices;
+using System;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
-	/// <summary>
-	/// SHA256 password hasher service
-	/// </summary>
-	public class SHA256PasswordHasher : IPasswordHashingService
-	{
-		#region IPasswordHashingService implementation
-		/// <summary>
-		/// Compute hash
-		/// </summary>
-		/// <returns>The hash.</returns>
-		/// <param name="password">Password.</param>
-		public string ComputeHash (string password)
-		{
-			SHA256 hasher = SHA256.Create();
-			return BitConverter.ToString(hasher.ComputeHash(Encoding.UTF8.GetBytes(password))).Replace("-","").ToLower();
-		}
-		#endregion
-	}
+    /// <summary>
+    /// SHA256 password hasher service
+    /// </summary>
+    public class SHA256PasswordHasher : IPasswordHashingService
+    {
+        #region IPasswordHashingService implementation
+        /// <summary>
+        /// Compute hash
+        /// </summary>
+        /// <returns>The hash.</returns>
+        /// <param name="password">Password.</param>
+        public string ComputeHash(string password)
+        {
+            SHA256 hasher = SHA256.Create();
+            return BitConverter.ToString(hasher.ComputeHash(Encoding.UTF8.GetBytes(password))).Replace("-", "").ToLower();
+        }
+        #endregion
+    }
 
     /// <summary>
     /// SHA1 password hasher service
@@ -65,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// <summary>
     /// Plain text password hasher service
     /// </summary>
-    public class PlainTextPasswordHasher  : IPasswordHashingService
+    public class PlainTextPasswordHasher : IPasswordHashingService
     {
         #region IPasswordHashingService implementation
         /// <summary>

@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             this.ValidateWritePermission(entity);
             return base.Insert(entity);
         }
-        
+
         /// <summary>
         /// Obsolete the user entity
         /// </summary>

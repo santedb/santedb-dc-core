@@ -18,11 +18,6 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
@@ -53,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public PolicyGrantType Rule
         {
-            get;private set;
+            get; private set;
         }
 
         /// <summary>
@@ -61,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public object Securable
         {
-            get;private set;
+            get; private set;
         }
     }
 }

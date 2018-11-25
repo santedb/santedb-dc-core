@@ -18,7 +18,6 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
@@ -30,11 +29,10 @@ using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Services;
-using SanteDB.Messaging.HDSI.Client;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Linq;
 using System.Linq.Expressions;

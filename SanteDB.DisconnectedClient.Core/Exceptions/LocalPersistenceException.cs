@@ -17,71 +17,75 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
 using SanteDB.DisconnectedClient.Core.Synchronization;
+using System;
 
 namespace SanteDB.DisconnectedClient.Core.Exceptions
 {
-	/// <summary>
-	/// Local persistence exception.
-	/// </summary>
-	public class LocalPersistenceException : Exception
-	{
+    /// <summary>
+    /// Local persistence exception.
+    /// </summary>
+    public class LocalPersistenceException : Exception
+    {
 
         // Data object
         private Object m_data;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.LocalPersistenceException"/> class.
-		/// </summary>
-		/// <param name="operation">Operation.</param>
-		/// <param name="data">Data.</param>
-		public LocalPersistenceException (SynchronizationOperationType operation, Object data) : this(operation, data, null)
-		{
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.LocalPersistenceException"/> class.
+        /// </summary>
+        /// <param name="operation">Operation.</param>
+        /// <param name="data">Data.</param>
+        public LocalPersistenceException(SynchronizationOperationType operation, Object data) : this(operation, data, null)
+        {
 
-		}
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.LocalPersistenceException"/> class.
-		/// </summary>
-		/// <param name="operation">Operation.</param>
-		/// <param name="data">Data.</param>
-		/// <param name="causedBy">Caused by.</param>
-		public LocalPersistenceException (SynchronizationOperationType operation, Object data, Exception causedBy) : base(null, causedBy)
-		{
-			this.DataObject = data;
-			this.Operation = operation;
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.LocalPersistenceException"/> class.
+        /// </summary>
+        /// <param name="operation">Operation.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="causedBy">Caused by.</param>
+        public LocalPersistenceException(SynchronizationOperationType operation, Object data, Exception causedBy) : base(null, causedBy)
+        {
+            this.DataObject = data;
+            this.Operation = operation;
+        }
 
-		/// <summary>
-		/// Gets a message that describes the current exception.
-		/// </summary>
-		/// <returns>The error message that explains the reason for the exception, or an empty string ("").</returns>
-		/// <filterpriority>1</filterpriority>
-		/// <value>The message.</value>
-		public override string Message {
-			get {
-				return String.Format ("{0} {1}", this.Operation, this.DataObject);
-			}
-		}
+        /// <summary>
+        /// Gets a message that describes the current exception.
+        /// </summary>
+        /// <returns>The error message that explains the reason for the exception, or an empty string ("").</returns>
+        /// <filterpriority>1</filterpriority>
+        /// <value>The message.</value>
+        public override string Message
+        {
+            get
+            {
+                return String.Format("{0} {1}", this.Operation, this.DataObject);
+            }
+        }
 
-		/// <summary>
-		/// Gets or sets the operation.
-		/// </summary>
-		/// <value>The operation.</value>
-		public SynchronizationOperationType Operation {
-			get { return (SynchronizationOperationType)this.Data ["operation"]; }
-			private set { this.Data.Add ("operation", value); }
-		}
+        /// <summary>
+        /// Gets or sets the operation.
+        /// </summary>
+        /// <value>The operation.</value>
+        public SynchronizationOperationType Operation
+        {
+            get { return (SynchronizationOperationType)this.Data["operation"]; }
+            private set { this.Data.Add("operation", value); }
+        }
 
-		/// <summary>
-		/// Gets or sets the data object.
-		/// </summary>
-		/// <value>The data object.</value>
-		public Object DataObject {
-			get { return this.m_data; }
-			private set { this.m_data = value; }
-		}
-	}
+        /// <summary>
+        /// Gets or sets the data object.
+        /// </summary>
+        /// <value>The data object.</value>
+        public Object DataObject
+        {
+            get { return this.m_data; }
+            private set { this.m_data = value; }
+        }
+    }
 }
 

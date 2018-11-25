@@ -17,29 +17,25 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Query;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Reflection;
-using System.Security.Principal;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.AMI.Security;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Model.AMI.Security;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.Messaging.AMI.Client;
+using System;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 {
@@ -84,7 +80,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                 }
                 return client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return null;
             }
@@ -106,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
             }
 
         }
-       
+
         /// <summary>
         /// Find the specified object
         /// </summary>
@@ -131,7 +127,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                         throw new NotSupportedException($"AMI servicing not supported for {typeof(TModel).Name}");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error contacting AMI: {0}", ex);
                 throw;
@@ -249,8 +245,8 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
             }
             catch (Exception e)
             {
-	            this.m_tracer.TraceError($"Unable to determine network state: {e}");
-				return false;
+                this.m_tracer.TraceError($"Unable to determine network state: {e}");
+                return false;
             }
         }
 
@@ -289,26 +285,26 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
             }
         }
 
-		/// <summary>
-		/// Gets the security user.
-		/// </summary>
-		/// <param name="key">The key.</param>
-		/// <returns>Returns the security user for the given key or null if no security user is found.</returns>
-		public SecurityUser GetSecurityUser(Guid key)
-	    {
-		    try
-		    {
-			    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-			    amiClient.Client.Requesting += IntegrationQueryOptions.CreateRequestingHandler(null);
-			    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
+        /// <summary>
+        /// Gets the security user.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>Returns the security user for the given key or null if no security user is found.</returns>
+        public SecurityUser GetSecurityUser(Guid key)
+        {
+            try
+            {
+                var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                amiClient.Client.Requesting += IntegrationQueryOptions.CreateRequestingHandler(null);
+                amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
 
-			    return amiClient.GetUser(key)?.Entity;
-		    }
-		    catch (Exception ex)
-		    {
-			    this.m_tracer.TraceError("Error contacting AMI: {0}", ex);
-			    throw;
-		    }
-		}
+                return amiClient.GetUser(key)?.Entity;
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("Error contacting AMI: {0}", ex);
+                throw;
+            }
+        }
     }
 }

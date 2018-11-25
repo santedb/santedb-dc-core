@@ -621,7 +621,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             // Password hashing
             var pwh = ApplicationContext.Current.GetService<IPasswordHashingService>();
-            if(pwh != null)
+            if (pwh != null)
                 ApplicationContext.Current.RemoveServiceProvider(pwh.GetType());
 
             switch (configuration.Security.Hasher)

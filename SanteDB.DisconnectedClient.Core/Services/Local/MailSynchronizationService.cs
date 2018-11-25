@@ -17,29 +17,24 @@
  * User: justin
  * Date: 2018-11-23
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
+using SanteDB.Core.Mail;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Linq.Expressions;
 using System.Reflection;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Model;
-using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Core.Security;
 using System.Security.Principal;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.Core.Model.AMI.Security;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.Core.Model.AMI.Collections;
-using SanteDB.Core.Mail;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {

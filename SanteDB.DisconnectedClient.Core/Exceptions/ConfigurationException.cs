@@ -21,17 +21,17 @@ using System;
 
 namespace SanteDB.DisconnectedClient.Core.Exceptions
 {
-	/// <summary>
-	/// Configuration exception
-	/// </summary>
-	public class ConfigurationException : Exception
-	{
-		/// <summary>
-		/// Configuration exception
-		/// </summary>
-		public ConfigurationException (String message) : base(message)
-		{
-		}
-	}
+    /// <summary>
+    /// Configuration exception
+    /// </summary>
+    public class ConfigurationException : Exception
+    {
+        /// <summary>
+        /// Configuration exception
+        /// </summary>
+        public ConfigurationException(String message) : base(message)
+        {
+        }
+    }
 }
 

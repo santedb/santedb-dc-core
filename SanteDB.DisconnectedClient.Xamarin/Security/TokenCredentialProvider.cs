@@ -17,43 +17,38 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using System.Security.Permissions;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Http;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services;
+using System;
 using System.Security;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
 {
-	/// <summary>
-	/// Represents a credential provider which provides a token
-	/// </summary>
-	public class TokenCredentialProvider : ICredentialProvider
-	{
-		#region ICredentialProvider implementation
-		/// <summary>
-		/// Gets or sets the credentials which are used to authenticate
-		/// </summary>
-		/// <returns>The credentials.</returns>
-		/// <param name="context">Context.</param>
-		public Credentials GetCredentials (IRestClient context)
-		{
+    /// <summary>
+    /// Represents a credential provider which provides a token
+    /// </summary>
+    public class TokenCredentialProvider : ICredentialProvider
+    {
+        #region ICredentialProvider implementation
+        /// <summary>
+        /// Gets or sets the credentials which are used to authenticate
+        /// </summary>
+        /// <returns>The credentials.</returns>
+        /// <param name="context">Context.</param>
+        public Credentials GetCredentials(IRestClient context)
+        {
             return this.GetCredentials(AuthenticationContext.Current.Principal);
-		}
+        }
 
-		/// <summary>
-		/// Authenticate a user - this occurs when reauth is required
-		/// </summary>
-		/// <param name="context">Context.</param>
-		public Credentials Authenticate (IRestClient context)
-		{
+        /// <summary>
+        /// Authenticate a user - this occurs when reauth is required
+        /// </summary>
+        /// <param name="context">Context.</param>
+        public Credentials Authenticate(IRestClient context)
+        {
 
             // TODO: Determine why we're reauthenticating... if it is an expired token we'll need to get the refresh token
             var tokenCredentials = AuthenticationContext.Current.Principal as TokenClaimsPrincipal;
@@ -75,8 +70,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             }
             else
                 throw new SecurityException();
-                return null;
-		}
+            return null;
+        }
 
         /// <summary>
         /// Get credentials from the specified principal

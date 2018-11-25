@@ -17,28 +17,22 @@
  * User: justin
  * Date: 2018-6-22
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using SanteDB.Core.Model.Entities;
 using System.Linq;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Interfaces;
-using MARC.HI.EHRS.SVC.Auditing.Data;
-using SanteDB.Core.Model.Collection;
-using System.Diagnostics;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.Core.Model.Acts;
+using System.Linq.Expressions;
 using System.Reflection;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.Core.Services;
-using SanteDB.Core.Model.Security;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
@@ -134,7 +128,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Obsolete the specified data
         /// </summary>
-        public virtual TEntity Obsolete(Guid key) 
+        public virtual TEntity Obsolete(Guid key)
         {
             // Demand permission
             this.DemandDelete(key);
@@ -174,7 +168,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Get specified data from persistence
         /// </summary>
-        public virtual TEntity Get(Guid key, Guid versionKey) 
+        public virtual TEntity Get(Guid key, Guid versionKey)
         {
             // Demand permission
             this.DemandRead(key);
@@ -208,7 +202,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<TEntity>)}");
             }
 
-            data=this.Validate(data);
+            data = this.Validate(data);
 
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
 
@@ -234,12 +228,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                     var erd = data as EntityRelationship;
                     old = (TEntity)(persistenceService as IDataPersistenceService<EntityRelationship>).Query(o => o.SourceEntityKey == erd.SourceEntityKey && o.TargetEntityKey == erd.TargetEntityKey, 0, 1, out tr, Guid.Empty).OfType<EntityRelationship>().FirstOrDefault().Clone();
                 }
-                
+
                 data = businessRulesService?.BeforeUpdate(data) ?? data;
                 data = persistenceService.Update(data);
 
                 var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
-                if(diff != null)
+                if (diff != null)
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
                 else
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
@@ -261,7 +255,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Validate a patient before saving
         /// </summary>
-        public virtual TEntity Validate(TEntity p) 
+        public virtual TEntity Validate(TEntity p)
         {
             p = (TEntity)p.Clean(); // clean up messy data
 
@@ -283,7 +277,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                     var itm = bundle.Item[i];
                     var vrst = typeof(IValidatingRepositoryService<>).MakeGenericType(itm.GetType());
                     var vrsi = ApplicationContext.Current.GetService(vrst);
-                    
+
                     if (vrsi != null)
                         bundle.Item[i] = vrsi.GetType().GetRuntimeMethod(nameof(Validate), new Type[] { typeof(TEntity) }).Invoke(vrsi, new object[] { itm }) as IdentifiedData;
                 }
@@ -294,7 +288,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Perform a faster version of the query for an object
         /// </summary>
-        public virtual IEnumerable<TEntity> FindFast(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId) 
+        public virtual IEnumerable<TEntity> FindFast(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
         {
             return this.Find(query, offset, count, out totalResults, queryId);
         }

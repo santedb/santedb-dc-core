@@ -17,35 +17,31 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Net;
-using System.Collections.Generic;
-using System.Linq;
-using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using System.Security;
 using SanteDB.Core.Http;
-using System.IO;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.EntityLoader;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Diagnostics;
 using SanteDB.Core.Model.Query;
-using System.Net.Security;
-using SanteDB.DisconnectedClient.Xamarin.Services.Model;
-using SharpCompress.Compressors.BZip2;
-using SharpCompress.Compressors.LZMA;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Compressors;
-using System.Reflection;
-using System.Xml.Serialization;
-using System.Net.Sockets;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Rest.Common.Fault;
+using SharpCompress.Compressors;
+using SharpCompress.Compressors.BZip2;
+using SharpCompress.Compressors.Deflate;
+using SharpCompress.Compressors.LZMA;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Http
 {

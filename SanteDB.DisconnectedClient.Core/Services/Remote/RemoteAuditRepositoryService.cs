@@ -19,20 +19,12 @@
  */
 using MARC.HI.EHRS.SVC.Auditing.Data;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Http;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Remote
 {
@@ -41,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// </summary>
     public class RemoteAuditRepositoryService : AmiRepositoryBaseService, IAuditRepositoryService
     {
-      
+
         // Get a tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteAuditRepositoryService));
 
@@ -88,6 +80,6 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             return audit;
         }
 
-       
+
     }
 }

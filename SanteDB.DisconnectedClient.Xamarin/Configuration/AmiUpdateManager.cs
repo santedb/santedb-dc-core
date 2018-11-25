@@ -17,24 +17,22 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
+using SanteDB.Core.Model.AMI.Applet;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.Core.Applets.Model;
-using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.Core.Applets.Services;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Core.Model.AMI.Applet;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Configuration
 {

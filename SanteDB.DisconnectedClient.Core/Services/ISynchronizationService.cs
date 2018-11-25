@@ -17,15 +17,10 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
@@ -60,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <summary>
         /// Synchronization type events
         /// </summary>
-        public SynchronizationEventArgs(Type type, NameValueCollection filter, DateTime fromDate, int totalResults) : this(totalResults, fromDate)  
+        public SynchronizationEventArgs(Type type, NameValueCollection filter, DateTime fromDate, int totalResults) : this(totalResults, fromDate)
         {
             this.Type = type;
             this.Filter = filter;
@@ -80,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <summary>
         /// Creates a new initial pull event arg
         /// </summary>
-        public SynchronizationEventArgs(bool isInitial, int totalResults, DateTime fromDate) : this(totalResults, fromDate) 
+        public SynchronizationEventArgs(bool isInitial, int totalResults, DateTime fromDate) : this(totalResults, fromDate)
         {
             this.IsInitial = isInitial;
 

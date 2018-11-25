@@ -22,13 +22,10 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Xamarin.Services;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.UI
 {
@@ -126,7 +123,7 @@ namespace SanteDB.DisconnectedClient.UI
                 tw.WriteLine("}");
 
                 tw.WriteLine("__SanteDBAppService.GetTemplates = function() {");
-                tw.WriteLine("return '[{0}]'", String.Join(",", this.Applets.SelectMany(o=>o.Templates).Where(o=>o.Public).Select(o=>$"\"{o.Mnemonic}\"")));
+                tw.WriteLine("return '[{0}]'", String.Join(",", this.Applets.SelectMany(o => o.Templates).Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
                 tw.WriteLine("}");
 
                 tw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");

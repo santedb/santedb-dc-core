@@ -19,10 +19,6 @@
  */
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Tickler
@@ -41,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
         {
             this.Id = Guid.NewGuid();
         }
-        
+
         /// <summary>
         /// Creates a new tickle
         /// </summary>

@@ -17,25 +17,23 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.Core.Applets.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SanteDB.Core.Applets;
 using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
-using System.Text.RegularExpressions;
-using System.Security.Cryptography;
-using System.Security;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using System.Security.Cryptography.X509Certificates;
-using System.IO;
-using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SharpCompress.Compressors.LZMA;
+using System;
+using System.IO;
+using System.Linq;
+using System.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services
 {
@@ -52,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(LocalAppletManagerService));
-        
+
         /// <summary>
         /// Local applet manager ctor
         /// </summary>
@@ -280,7 +278,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                 // Copy
                 if (!Directory.Exists(appletSection.AppletDirectory))
                     Directory.CreateDirectory(appletSection.AppletDirectory);
-                
+
                 if (File.Exists(appletPath))
                 {
                     if (!isUpgrade)

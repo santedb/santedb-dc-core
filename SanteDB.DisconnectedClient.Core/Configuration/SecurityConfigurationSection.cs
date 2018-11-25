@@ -17,15 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Xml.Serialization;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using System.IO;
 using Newtonsoft.Json;
-using System.Linq;
 using SanteDB.DisconnectedClient.Core.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Configuration
 {

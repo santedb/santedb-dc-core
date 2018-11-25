@@ -17,26 +17,17 @@
  * User: justin
  * Date: 2018-6-22
  */
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using SanteDB.Core.Model;
-using SanteDB.Core.Interfaces;
-using System.Diagnostics;
-using System.Reflection;
-using System.Xml.Serialization;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Services;
+using System;
+using System.Linq;
+using System.Reflection;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
@@ -114,9 +105,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             ApplicationContext.Current.Started += (o, e) =>
             {
                 foreach (var t in typeof(Patient).GetTypeInfo().Assembly.ExportedTypes
-                                    .Where(t => 
-                                        typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()) && 
-                                        !t.GetTypeInfo().IsAbstract && 
+                                    .Where(t =>
+                                        typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()) &&
+                                        !t.GetTypeInfo().IsAbstract &&
                                         t.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>() != null
                                     ))
                 {

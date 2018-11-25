@@ -21,18 +21,18 @@ using System;
 
 namespace SanteDB.DisconnectedClient.Core.Serices
 {
-	/// <summary>
-	/// Password hashing service.
-	/// </summary>
-	public interface IPasswordHashingService
-	{
+    /// <summary>
+    /// Password hashing service.
+    /// </summary>
+    public interface IPasswordHashingService
+    {
 
-		/// <summary>
-		/// Compute the password hash
-		/// </summary>
-		/// <returns>The hash.</returns>
-		/// <param name="password">Password.</param>
-		String ComputeHash(String password);
-	}
+        /// <summary>
+        /// Compute the password hash
+        /// </summary>
+        /// <returns>The hash.</returns>
+        /// <param name="password">Password.</param>
+        String ComputeHash(String password);
+    }
 }
 

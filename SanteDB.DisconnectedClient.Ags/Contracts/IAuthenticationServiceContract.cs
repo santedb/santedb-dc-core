@@ -19,13 +19,7 @@
  */
 using RestSrvr.Attributes;
 using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Xamarin.Security;
-using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Ags.Contracts
 {

@@ -21,8 +21,6 @@ using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Linq.Expressions;
 
 namespace SanteDB.DisconnectedClient.Core.Tickler
@@ -50,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
         /// </summary>
         public IEnumerable<Tickle> GetTickles(Expression<Func<Tickle, bool>> filter)
         {
-            return this.m_tickles.Where(filter.Compile()).Where(o=>o.Expiry > DateTime.Now);
+            return this.m_tickles.Where(filter.Compile()).Where(o => o.Expiry > DateTime.Now);
         }
 
         /// <summary>

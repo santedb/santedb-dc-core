@@ -17,22 +17,19 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using Newtonsoft.Json;
 using SanteDB.Core.Exceptions;
+using System;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Services.Model
 {
-	/// <summary>
-	/// General IMSI error result
-	/// </summary>
-	[JsonObject]
-	public class ErrorResult
-	{
+    /// <summary>
+    /// General IMSI error result
+    /// </summary>
+    [JsonObject]
+    public class ErrorResult
+    {
         public ErrorResult()
         {
 
@@ -48,7 +45,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.Model
             ErrorType = e.GetType().Name;
             if (e.InnerException != null)
                 InnerError = new ErrorResult(e.InnerException);
-            if(e is DetectedIssueException)
+            if (e is DetectedIssueException)
             {
                 this.ErrorDescription = String.Join(";", (e as DetectedIssueException).Issues.Select(o => o.Text));
             }
@@ -57,9 +54,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.Model
         [JsonProperty("type")]
         public String ErrorType { get; set; }
         [JsonProperty("error")]
-		public String Error { get; set; }
-		[JsonProperty("error_description")]
-		public String ErrorDescription { get; set; }
+        public String Error { get; set; }
+        [JsonProperty("error_description")]
+        public String ErrorDescription { get; set; }
 
         [JsonProperty("caused_by")]
         public ErrorResult InnerError { get; set; }

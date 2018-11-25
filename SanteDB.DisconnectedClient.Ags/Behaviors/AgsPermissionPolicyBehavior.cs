@@ -17,16 +17,11 @@
  * User: justin
  * Date: 2018-11-23
  */
-using System.Reflection;
 using RestSrvr;
 using RestSrvr.Message;
-using SanteDB.Rest.Common.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.Rest.Common.Attributes;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
