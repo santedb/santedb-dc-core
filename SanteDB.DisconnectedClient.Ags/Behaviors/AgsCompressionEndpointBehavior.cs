@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             var compressionScheme = RestOperationContext.Current.IncomingRequest.Headers["Accept-Encoding"];
 
             // Compress the body
-            if (!String.IsNullOrEmpty(compressionScheme) && compressionScheme.Contains("deflate"))
+            if (!String.IsNullOrEmpty(compressionScheme) && compressionScheme.Contains("deflate") && response.Body != null)
             {
                 var ms = new MemoryStream();
                 using (var dfz = new DeflateStream(ms, SharpCompress.Compressors.CompressionMode.Compress, leaveOpen: true))

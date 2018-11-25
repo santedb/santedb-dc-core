@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 using System;
 using System.Net;
 using System.Text;
@@ -45,34 +46,6 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         {
             try
             {
-                // Session cookie?
-                if (request.Cookies["_s"] != null)
-                {
-                    var cookie = request.Cookies["_s"];
-                    if (!cookie.Expired)
-                    {
-                        var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-                        var session = smgr.Get(cookie.Value);
-                        if (session != null)
-                        {
-                            try
-                            {
-                                AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(session);
-                                this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
-                            }
-                            catch (SessionExpiredException)
-                            {
-                                this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", cookie.Value);
-                                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
-                            }
-                        }
-                        else // No session found
-                        {
-                            this.m_tracer.TraceWarning("Session {0} is not registered with the session provider", cookie.Value);
-                            RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
-                        }
-                    }
-                }
 
                 // Authorization header
                 if (request.Headers["Authorization"] != null)
@@ -107,11 +80,11 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                                     catch (SessionExpiredException)
                                     {
                                         this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", authHeader[1]);
-                                        throw new UnauthorizedAccessException("Session is expired");
+                                        throw new SecurityTokenException(SecurityTokenExceptionType.TokenExpired, "Session is expired");
                                     }
                                 }
                                 else // Something wrong??? Perhaps it is an issue with the thingy?
-                                    throw new UnauthorizedAccessException("Session is invalid");
+                                    throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Session is invalid");
                                 break;
                             }
 

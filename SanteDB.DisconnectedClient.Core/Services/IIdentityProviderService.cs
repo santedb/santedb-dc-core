@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using System;
+using System.Collections.Generic;
 using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Services
@@ -105,6 +106,42 @@ namespace SanteDB.DisconnectedClient.Core.Services
     }
 
     /// <summary>
+    /// Override event args
+    /// </summary>
+    public class OverrideEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Creates the override event args
+        /// </summary>
+        public OverrideEventArgs(IPrincipal principal, string purposeOfUse, IEnumerable<String> scopes) 
+        {
+            this.Principal = principal;
+            this.PurposeOfUse = purposeOfUse;
+            this.Scopes = scopes;
+        }
+
+        /// <summary>
+        /// Purpose of use
+        /// </summary>
+        public String PurposeOfUse { get; private set; }
+
+        /// <summary>
+        /// Gets the scopes
+        /// </summary>
+        public IEnumerable<String> Scopes { get; private set; }
+
+        /// <summary>
+        /// The principal requesting override
+        /// </summary>
+        public IPrincipal Principal { get; private set; }
+
+        /// <summary>
+        /// Set to true to cancel
+        /// </summary>
+        public bool Cancel { get; set; }
+    }
+
+    /// <summary>
     /// Represents an identity provider
     /// </summary>
     public interface IIdentityProviderService
@@ -119,6 +156,11 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// Occurs when authenticated.
         /// </summary>
         event EventHandler<AuthenticatedEventArgs> Authenticated;
+
+        /// <summary>
+        /// Fired when the user is wishing to override
+        /// </summary>
+        event EventHandler<OverrideEventArgs> Overridding;
 
         /// <summary>
         /// Authenticate the user

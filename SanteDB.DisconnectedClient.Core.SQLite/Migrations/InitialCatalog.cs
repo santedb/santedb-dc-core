@@ -124,12 +124,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 db.CreateTable<DbSecurityDevicePolicy>();
                 db.CreateTable<DbSecurityRolePolicy>();
                 db.CreateTable<DbActSecurityPolicy>();
-                //db.CreateTable<DbEntitySecurityPolicy>();
+                db.CreateTable<DbEntitySecurityPolicy>();
                 db.CreateTable<DbSecurityRole>();
                 db.CreateTable<DbSecurityUser>();
                 db.CreateTable<DbSecurityUserRole>();
                 db.CreateTable<DbSecurityApplicationPolicy>();
                 db.CreateTable<DbSecurityDevicePolicy>();
+
                 // Anonymous user
                 db.Insert(new DbSecurityUser()
                 {

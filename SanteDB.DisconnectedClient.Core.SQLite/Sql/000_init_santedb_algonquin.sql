@@ -1,1 +1,1 @@
-﻿
+﻿create unique index security_user_lcase on security_user(lower(username));

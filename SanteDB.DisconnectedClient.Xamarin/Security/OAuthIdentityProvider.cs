@@ -65,6 +65,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
+        public event EventHandler<OverrideEventArgs> Overridding;
 
         /// <summary>
         /// Authenticate the user

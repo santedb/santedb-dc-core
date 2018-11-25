@@ -160,7 +160,6 @@
     <Compile Include="Services\IDaemonService.cs" />
     <Compile Include="Services\IIdentityProviderService.cs" />
     <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" />
-    <Compile Include="Services\Local\LocalSecurityService.cs" />
     <Compile Include="Services\INetworkInformationService.cs" />
     <Compile Include="Services\IPolicyDecisionService.cs" />
     <Compile Include="Services\IPolicyInformationService.cs" />

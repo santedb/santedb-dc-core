@@ -25,6 +25,7 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core.Serices;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
@@ -69,6 +70,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
+        public event EventHandler<OverrideEventArgs> Overridding;
 
         /// <summary>
         /// Authenticate the user
@@ -82,7 +84,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             if (String.IsNullOrEmpty(password))
                 throw new ArgumentNullException(nameof(password));
 
-            return this.AuthenticateInternal(userName, password, null);
+            return this.AuthenticateInternal(new SQLitePrincipal(new SQLiteIdentity(userName, false), new string[0]), password, null);
         }
 
         /// <summary>
@@ -120,7 +122,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new ArgumentNullException(nameof(password));
             }
 
-            return this.AuthenticateInternal(principal.Identity.Name, password, null);
+            return this.AuthenticateInternal(principal, password, null);
         }
 
         /// <summary>
@@ -130,16 +132,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <param name="password">The password of the user</param>
         /// <param name="pin">The PIN number for PIN based authentication</param>
         /// <returns>The authenticated principal</returns>
-        private IPrincipal AuthenticateInternal(String userName, string password, byte[] pin)
+        private IPrincipal AuthenticateInternal(IPrincipal principal, string password, byte[] pin)
         {
             var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
             // Pre-event
-            AuthenticatingEventArgs e = new AuthenticatingEventArgs(userName, password) { };
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(principal.Identity.Name, password) { };
             this.Authenticating?.Invoke(this, e);
             if (e.Cancel)
             {
-                this.m_tracer.TraceWarning("Pre-Event hook indicates cancel {0}", userName);
+                this.m_tracer.TraceWarning("Pre-Event hook indicates cancel {0}", principal.Identity.Name);
                 return e.Principal;
             }
 
@@ -153,7 +155,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     // Password service
                     IPasswordHashingService passwordHash = ApplicationContext.Current.GetService(typeof(IPasswordHashingService)) as IPasswordHashingService;
 
-                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower());
+                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == principal.Identity.Name.ToLower());
                     if (dbs == null)
                         throw new SecurityException(Strings.locale_invalidUserNamePassword);
                     else if (config?.MaxInvalidLogins.HasValue == true && dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
@@ -179,22 +181,69 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbs.InvalidLoginAttempts = 0;
                         connection.Update(dbs);
 
-                        // Create the principal
-                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))),
-                            connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE security_user_role.user_id = ?",
-                            dbs.Uuid).Select(o => o.Name).ToArray());
+                        // Elevation?
+                        var cprincipal = principal as ClaimsPrincipal;
+                        List<Claim> additionalClaims = new List<Claim>();
+                        if(cprincipal != null)
+                        {
+                            additionalClaims.AddRange(cprincipal.Claims);
 
+                            IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+                            IPolicyInformationService pip = ApplicationContext.Current.GetService<IPolicyInformationService>();
+                            
+                            // Scope? 
+                            var scopes = additionalClaims.Where(o => o.Type == ClaimTypes.SanteDBScopeClaim).Select(o => o.Value);
+                            if(scopes.Count() == 1 && scopes.First() == "*")
+                            {
+                                additionalClaims.RemoveAll(o => o.Type == ClaimTypes.SanteDBScopeClaim);
+                                scopes = pip.GetPolicies().Select(o=>o.Oid);
+                            }
+
+                            // Ensure we are not explicitly denied access to the scope
+                            foreach (var scp in scopes)
+                                if (pdp.GetPolicyOutcome(cprincipal, scp) == PolicyGrantType.Grant)
+                                    additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
+
+                            // Override
+                            if (additionalClaims.Any(o=>o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true"))
+                            {
+                                var pou = additionalClaims.FirstOrDefault(o => o.Type == ClaimTypes.XspaPurposeOfUseClaim)?.Value;
+
+                                // First ensure that the prinicpal has ability to override
+                                if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Deny)
+                                    throw new PolicyViolationException(PermissionPolicyIdentifiers.OverridePolicyPermission, PolicyGrantType.Deny);
+
+                                // Next ensure that the scoped policies are allowed to be overridden
+                                foreach(var scp in scopes)
+                                {
+                                    if (scp == "*") throw new SecurityException("Cannot override ALL policies");
+                                    else if (pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Grant ||
+                                            pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Elevate && pip.GetPolicy(scp).CanOverride)
+                                        additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
+                                }
+
+                                var overrideArgs = new OverrideEventArgs(principal, pou, scopes);
+                                this.Overridding?.Invoke(this, overrideArgs);
+                                if (overrideArgs.Cancel)
+                                    throw new SecurityException("Override was denied / cancelled");
+                            }
+                        }
+                        // Create the principal
+                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims),
+                            connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
+                            dbs.Uuid).Select(o => o.Name).ToArray());
+                        
                     }
                 }
 
                 // Post-event
-                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, password, true) { Principal = retVal });
+                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(principal.Identity.Name, password, true) { Principal = retVal });
 
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error establishing session: {0}", ex);
-                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, password, false) { Principal = retVal });
+                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(principal.Identity.Name, password, false) { Principal = retVal });
 
                 throw;
             }
@@ -226,7 +275,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o > 9 || o < 0))
                 throw new ArgumentOutOfRangeException(nameof(pin));
 
-            return this.AuthenticateInternal(userName, null, pin);
+            return this.AuthenticateInternal(new SQLitePrincipal(new SQLiteIdentity(userName, false), new string[0]), null, pin);
         }
 
         /// <summary>
@@ -474,7 +523,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
         public IPrincipal Authenticate(IPrincipal principal, string password, string tfaSecret)
         {
-            throw new NotImplementedException();
+            return this.AuthenticateInternal(principal, password, null);
         }
 
         /// <summary>
@@ -482,7 +531,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         public IPrincipal Authenticate(IPrincipal principal, byte[] pin)
         {
-            return this.AuthenticateInternal(principal.Identity.Name, null, pin);
+            return this.AuthenticateInternal(principal, null, pin);
 
         }
 
@@ -500,13 +549,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="authenticated">If set to <c>true</c> authenticated.</param>
-        public SQLiteIdentity(String userName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null) : base(userName, authenticated, new Claim[] {
-            new Claim(ClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
-            new Claim(ClaimTypes.Expiration, expiry?.ToString("o")),
-            new Claim(ClaimTypes.AuthenticationMethod, "LOCAL")
-        })
+        public SQLiteIdentity(String userName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<Claim> additionalClaims = null) : base(userName, authenticated, 
+            new Claim[] {
+                new Claim(ClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
+                new Claim(ClaimTypes.Expiration, expiry?.ToString("o")),
+                new Claim(ClaimTypes.AuthenticationMethod, "LOCAL")
+            }.Union(additionalClaims ?? new List<Claim>()))
         {
-
         }
 
     }
@@ -548,13 +597,26 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             }
         }
 
+        // Unique token
+        private Guid m_token = Guid.NewGuid();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLitePrincipal"/> class.
         /// </summary>
         public SQLitePrincipal(SQLiteIdentity identity, String[] roles) : base(identity)
         {
+            this.m_token = Guid.NewGuid();
             this.m_roles = roles;
             this.Identity = identity;
+        }
+
+        /// <summary>
+        /// Get the principal token
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return BitConverter.ToString(this.m_token.ToByteArray()).Replace("-", "");
         }
 
         #region IPrincipal implementation

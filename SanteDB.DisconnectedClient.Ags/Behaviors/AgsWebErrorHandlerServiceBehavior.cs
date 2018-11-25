@@ -7,6 +7,7 @@ using SanteDB.DisconnectedClient.Core;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -20,7 +21,8 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         public void ApplyServiceBehavior(RestService service, ServiceDispatcher dispatcher)
         {
-            dispatcher.ErrorHandlers.Insert(0, this);
+            dispatcher.ErrorHandlers.Clear();
+            dispatcher.ErrorHandlers.Add(this);
         }
 
         /// <summary>
@@ -28,8 +30,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         public bool HandleError(Exception error)
         {
-            var errCode = WebErrorUtility.ClassifyException(error, false);
-            return ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.ErrorAssets).Any(o => o.ErrorCode == errCode);
+            return true;
         }
 
         /// <summary>
@@ -43,8 +44,26 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             // Grab the asset handler
             try
             {
-                response.Body = new MemoryStream(new byte[0]);
-                RestOperationContext.Current.OutgoingResponse.Redirect(hdlr.Asset);
+                if (hdlr != null)
+                {
+                    response.Body = new MemoryStream(new byte[0]);
+                    RestOperationContext.Current.OutgoingResponse.Redirect(hdlr.Asset);
+                }
+                else
+                {
+                    RestOperationContext.Current.OutgoingResponse.StatusCode = errCode;
+                    using (var sr = new StreamReader(typeof(AgsWebErrorHandlerServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.GenericError.html")))
+                    {
+                        string errRsp = sr.ReadToEnd().Replace("{status}", response.StatusCode.ToString())
+                            .Replace("{description}", response.StatusDescription)
+                            .Replace("{type}", error.GetType().Name)
+                            .Replace("{message}", error.Message)
+                            .Replace("{details}", error.ToString())
+                            .Replace("{trace}", error.StackTrace);
+                        RestOperationContext.Current.OutgoingResponse.ContentType = "text/html";
+                        response.Body = new MemoryStream(Encoding.UTF8.GetBytes(errRsp));
+                    }
+                }
                 return true;
             }
             catch (Exception e)

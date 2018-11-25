@@ -49,6 +49,7 @@ using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services.Local;
 using SanteDB.DisconnectedClient.Core.Services.Remote;
 using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Core.Tickler;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin;
 using SanteDB.DisconnectedClient.Xamarin.Data;
@@ -83,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
         }
-
+        
         /// <summary>
         /// Get the configuration for the specified user
         /// </summary>
@@ -94,6 +95,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             return new ConfigurationViewModel(XamarinApplicationContext.Current.GetUserConfiguration(AuthenticationContext.Current.Principal.Identity.Name));
         }
+
 
         [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public ConfigurationViewModel JoinRealm(JObject configData)
@@ -549,7 +551,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
@@ -676,6 +678,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             };
 
 
+            foreach (var i in configuration.Application.AppSettings)
+                ApplicationContext.Current.Configuration.SetAppSetting(i.Key, i.Value);
             this.m_tracer.TraceInfo("Saving configuration options {0}", JsonConvert.SerializeObject(configuration));
             XamarinApplicationContext.Current.ConfigurationManager.Save();
 

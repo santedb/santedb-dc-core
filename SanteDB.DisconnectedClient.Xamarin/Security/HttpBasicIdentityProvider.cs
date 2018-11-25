@@ -33,6 +33,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
+        public event EventHandler<OverrideEventArgs> Overridding;
 
         public IPrincipal Authenticate(IPrincipal principal, string password)
         {

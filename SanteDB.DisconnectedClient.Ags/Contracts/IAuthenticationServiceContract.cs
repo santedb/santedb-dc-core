@@ -19,6 +19,7 @@
  */
 using RestSrvr.Attributes;
 using SanteDB.DisconnectedClient.Core.Security;
+using System;
 using System.Collections.Specialized;
 
 namespace SanteDB.DisconnectedClient.Ags.Contracts
@@ -47,5 +48,11 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Delete("session")]
         void AbandonSession();
+
+        /// <summary>
+        /// Gets an policy decision for the specified policy
+        /// </summary>
+        [Get("pdp/{policyId}")]
+        void AclPreCheck(String policyId);
     }
 }

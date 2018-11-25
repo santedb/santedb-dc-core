@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -42,6 +43,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         private static Dictionary<String, AppletAsset> m_cacheApplets = new Dictionary<string, AppletAsset>();
         // Lock object
         private static object m_lockObject = new object();
+        
 
         /// <summary>
         /// Get the asset

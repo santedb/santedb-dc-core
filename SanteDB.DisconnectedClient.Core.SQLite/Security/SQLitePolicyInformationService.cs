@@ -99,7 +99,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var identity = (securable as IPrincipal)?.Identity ?? securable as IIdentity;
 
                 // Is the identity a claims identity? If yes, we just use the claims made in the policy
-                if (identity is ClaimsIdentity && (identity as ClaimsIdentity).Claim.Any(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
+                if (identity is ClaimsIdentity && (identity as ClaimsIdentity).Claim.Any(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim && o.Value != "*"))
                     return (identity as ClaimsIdentity).Claim.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(
                         o => new GenericPolicyInstance(new GenericPolicy(o.Value, "ClaimPolicy", false), PolicyGrantType.Grant)
                         );
@@ -107,7 +107,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                    var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_user_role INNER JOIN security_role_policy ON (security_role_policy.role_id = security_user_role.role_id) INNER JOIN security_policy ON (security_policy.uuid = security_role_policy.policy_id) INNER JOIN security_user ON (security_user_role.user_id = security_user.uuid) WHERE security_user.username = ?",
+                    var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_user_role INNER JOIN security_role_policy ON (security_role_policy.role_id = security_user_role.role_id) INNER JOIN security_policy ON (security_policy.uuid = security_role_policy.policy_id) INNER JOIN security_user ON (security_user_role.user_id = security_user.uuid) WHERE lower(security_user.username) = lower(?)",
                         identity.Name).ToList();
                     return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                 }
@@ -144,7 +144,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         public IEnumerable<IPolicy> GetPolicies()
         {
-            return null;
+            var conn = this.CreateConnection();
+            using (conn.Lock())
+            {
+                var tbl = conn.Table<DbSecurityPolicy>();
+                return tbl.ToList().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride));
+            }
         }
 
         /// <summary>

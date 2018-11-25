@@ -41,6 +41,7 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                         AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, authHeader);
                         RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", authHeader);
                     }
+                    
                     return 401;
                 }
                 else

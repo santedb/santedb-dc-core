@@ -98,7 +98,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public IPolicy GetPolicy(string policyOid)
         {
-            return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
+            return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
         }
     }
 }

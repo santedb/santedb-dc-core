@@ -18,6 +18,7 @@
  * Date: 2018-11-23
  */
 using RestSrvr.Attributes;
+using System;
 using System.IO;
 
 namespace SanteDB.DisconnectedClient.Ags.Contracts

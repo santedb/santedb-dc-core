@@ -77,15 +77,14 @@ namespace SanteDB.DisconnectedClient.Ags
         public static AgsConfigurationSection GetDefaultConfiguration()
         {
             // Behaviors for a secured endpoint
-            var unsecuredBehaviors = new List<AgsBehaviorConfiguration>()
+            var webBehaviors = new List<AgsBehaviorConfiguration>()
             {
                 new AgsBehaviorConfiguration(typeof(AgsWebErrorHandlerServiceBehavior))
             };
 
-            var securedBehaviors = new List<AgsBehaviorConfiguration>()
+            var apiBehaviors = new List<AgsBehaviorConfiguration>()
             {
-                new AgsBehaviorConfiguration(typeof(AgsErrorHandlerServiceBehavior)),
-                new AgsBehaviorConfiguration(typeof(AgsAuthorizationServiceBehavior))
+                new AgsBehaviorConfiguration(typeof(AgsErrorHandlerServiceBehavior))
             };
 
             var endpointBehaviors = new List<AgsBehaviorConfiguration>()
@@ -104,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     // Default Configuration for HDSI
                     new AgsServiceConfiguration(typeof(HdsiServiceBehavior))
                     {
-                        Behaviors = securedBehaviors,
+                        Behaviors = apiBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -118,7 +117,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     // Default Configuration for AMI
                     new AgsServiceConfiguration(typeof(AmiServiceBehavior))
                     {
-                        Behaviors = securedBehaviors,
+                        Behaviors = apiBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -132,7 +131,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     // Default Configuration for Report Services
                     new AgsServiceConfiguration(typeof(RisiServiceBehavior))
                     {
-                        Behaviors = securedBehaviors,
+                        Behaviors = apiBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -146,7 +145,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     // Default Configuration for Security service
                     new AgsServiceConfiguration(typeof(AuthenticationServiceBehavior))
                     {
-                        Behaviors = securedBehaviors,
+                        Behaviors = apiBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -160,7 +159,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     // Default configuration for Application service
                     new AgsServiceConfiguration(typeof(ApplicationServiceBehavior))
                     {
-                        Behaviors = securedBehaviors,
+                        Behaviors = apiBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -173,7 +172,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     },
                     new AgsServiceConfiguration(typeof(WwwServiceBehavior))
                     {
-                        Behaviors = unsecuredBehaviors,
+                        Behaviors = webBehaviors,
                         Endpoints = new List<AgsEndpointConfiguration>()
                         {
                             new AgsEndpointConfiguration()
@@ -210,8 +209,10 @@ namespace SanteDB.DisconnectedClient.Ags
                 // Service Behaviors
                 RestService service = new RestService(itm.ServiceType);
 
+                service.AddServiceBehavior(new AgsAuthorizationServiceBehavior());
                 service.AddServiceBehavior(new AgsMagicServiceBehavior());
                 service.AddServiceBehavior(new AgsPermissionPolicyBehavior());
+
                 foreach (var bhvr in itm.Behaviors)
                 {
                     this.m_tracer.TraceVerbose("AGS Service {0} has behavior {1}", itm.Name, bhvr.XmlType);

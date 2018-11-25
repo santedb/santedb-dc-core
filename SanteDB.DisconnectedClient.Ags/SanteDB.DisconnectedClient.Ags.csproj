@@ -52,9 +52,12 @@
     <Compile Include="Behaviors\AgsPermissionPolicyBehavior.cs" />
     <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsWebErrorHandlerServiceBehavior.cs" />
+    <Compile Include="Model\ApplicationHealthInfo.cs" />
     <Compile Include="Model\ConfigurationViewModel.cs" />
+    <Compile Include="Model\MenuInformation.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
     <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" />
+    <Compile Include="Services\ApplicationServiceBehavior.Tickles.cs" />
     <Compile Include="Services\WwwServiceBehavior.cs" />
     <Compile Include="Configuration\AgsBehaviorConfiguration.cs" />
     <Compile Include="Configuration\AgsConfigurationSection.cs" />

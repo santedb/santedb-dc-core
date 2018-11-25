@@ -148,7 +148,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// </summary>
         public SecurityProvenance GetProvenance(Guid provenanceId)
         {
-            return ApplicationContext.Current.GetService<IDataPersistenceService<SecurityProvenance>>().Get(provenanceId);
+            // On the mobile we don't store provenance only attribution
+            // This is a shim to fill out the provenance object with the identity of the user
+            var user = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(provenanceId);
+            if (user == null)
+                return null;
+            else
+                return new SecurityProvenance()
+                {
+                    User = user,
+                    Key = provenanceId
+                };
         }
 
         /// <summary>

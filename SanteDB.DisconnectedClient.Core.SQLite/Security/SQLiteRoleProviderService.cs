@@ -237,7 +237,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             var conn = this.CreateReadonlyConnection();
             using (conn.Lock())
             {
-                return conn.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) INNER JOIN security_user ON (security_user.uuid = security_user_role.user_id) WHERE security_user.username = ?", userName)
+                return conn.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) INNER JOIN security_user ON (security_user.uuid = security_user_role.user_id) WHERE lower(security_user.username) = lower(?)", userName)
                     .Select(p => p.Name)
                     .ToArray();
             }

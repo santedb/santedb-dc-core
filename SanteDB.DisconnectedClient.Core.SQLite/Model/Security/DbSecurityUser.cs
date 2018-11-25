@@ -105,7 +105,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         /// Gets or sets the name of the user.
         /// </summary>
         /// <value>The name of the user.</value>
-        [Column("username"), Unique, NotNull, Collation("NOCASE")]
+        [Column("username"), NotNull]
         public String UserName
         {
             get;

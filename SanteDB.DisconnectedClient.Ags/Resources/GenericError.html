@@ -1,13 +1,44 @@
-﻿<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>Service Error</title>
-    <link rel="stylesheet" href="/org.santedb.uicore/css/bootstrap.min.css"/>
+    <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0px;
+        }
+
+        div.header {
+            width: 100%;
+            background-color: #0026ff;
+            padding: 10px 5px;
+            color: #fff;
+            border-bottom: solid #808080 2px;
+        }
+
+        h1, h2 {
+            margin: 2px;
+            padding: 0px;
+        }
+
+        pre {
+            background-color: #ddd;
+            padding: 4px;
+        }
+
+        p {
+            padding: 4px;
+        }
+    </style>
 </head>
 <body>
 
-    <h1>Service Error - {status}</h1>
-    <p>{message}</p>
-    <h2>Stack Trace:</h2>
-    <pre>{trace}</pre>
+    <div class="header">
+        <h1>Service Error - {status}</h1>
+    </div>
+    <p class="message">{type} : {message}</p>
+    <h2>Details:</h2>
+    <pre>{details}</pre>
 </body>
 </html>

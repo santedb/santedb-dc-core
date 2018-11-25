@@ -61,19 +61,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public void AbandonSession()
         {
-            var cookie = RestOperationContext.Current.IncomingRequest.Cookies["_s"];
-
-            var value = Guid.Empty;
-
-            if (cookie != null && Guid.TryParse(cookie.Value, out value))
-            {
-                ISessionManagerService sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
-                var sessionInfo = sessionService.Delete(value);
-                if (RestOperationContext.Current.IncomingRequest.Cookies["_s"] == null)
-                    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", Guid.Empty.ToString(), "/") { Expired = true, Expires = DateTime.Now.AddSeconds(-20) });
-
-                if (sessionInfo != null)
-                    AuditUtil.AuditLogout(sessionInfo.Principal);
+            // Get the session
+            if (AuthenticationContext.Current.Session != null) { 
+                ApplicationContext.Current.GetService<ISessionManagerService>().Delete(AuthenticationContext.Current.Session.Key.Value);
+                AuditUtil.AuditLogout(AuthenticationContext.Current.Principal);
             }
 
         }
@@ -142,6 +133,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public SessionInfo GetSession()
         {
             return AuthenticationContext.Current.Session;
+        }
+
+        /// <summary>
+        /// Perform a pre-check
+        /// </summary>
+        public void AclPreCheck(string policyId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -276,33 +276,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
 
                     contentType = "application/json+sdb-viewmodel";
                 }
-                else if (accepts?.StartsWith("application/json") == true ||
-                    contentType?.StartsWith("application/json") == true)
-                {
-                    // Prepare the serializer
-                    JsonSerializer jsz = new JsonSerializer();
-                    jsz.Converters.Add(new StringEnumConverter());
-
-                    // Write json data
-                    using (MemoryStream ms = new MemoryStream())
-                    using (StreamWriter sw = new StreamWriter(ms, Encoding.UTF8))
-                    using (JsonWriter jsw = new JsonTextWriter(sw))
-                    {
-                        jsz.DateFormatHandling = DateFormatHandling.IsoDateFormat;
-                        jsz.NullValueHandling = NullValueHandling.Ignore;
-                        jsz.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-                        jsz.TypeNameHandling = TypeNameHandling.Auto;
-                        jsz.Converters.Add(new StringEnumConverter());
-                        jsz.Serialize(jsw, result);
-                        jsw.Flush();
-                        sw.Flush();
-                        response.Body = new MemoryStream(ms.ToArray());
-
-                    }
-
-                    // Prepare reply for the WCF pipeline
-                    contentType = "application/json";
-                }
                 // The request was in XML and/or the accept is JSON
                 else if ((accepts?.StartsWith("application/xml") == true ||
                     contentType?.StartsWith("application/xml") == true) &&
@@ -335,10 +308,31 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     contentType = "text/xml";
                     response.Body = ms;
                 }
-                else
+                else 
                 {
-                    contentType = "text/plain";
-                    response.Body = new MemoryStream(Encoding.UTF8.GetBytes(result.ToString()));
+                    // Prepare the serializer
+                    JsonSerializer jsz = new JsonSerializer();
+                    jsz.Converters.Add(new StringEnumConverter());
+
+                    // Write json data
+                    using (MemoryStream ms = new MemoryStream())
+                    using (StreamWriter sw = new StreamWriter(ms, Encoding.UTF8))
+                    using (JsonWriter jsw = new JsonTextWriter(sw))
+                    {
+                        jsz.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+                        jsz.NullValueHandling = NullValueHandling.Ignore;
+                        jsz.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                        jsz.TypeNameHandling = TypeNameHandling.Auto;
+                        jsz.Converters.Add(new StringEnumConverter());
+                        jsz.Serialize(jsw, result);
+                        jsw.Flush();
+                        sw.Flush();
+                        response.Body = new MemoryStream(ms.ToArray());
+
+                    }
+
+                    // Prepare reply for the WCF pipeline
+                    contentType = "application/json";
                 }
 
                 RestOperationContext.Current.OutgoingResponse.ContentType = RestOperationContext.Current.OutgoingResponse.ContentType ?? contentType;
