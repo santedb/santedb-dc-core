@@ -17,32 +17,31 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
 {
-	/// <summary>
-	/// Identifier type table.
-	/// </summary>
-	[Table("identifier_type")]
-	public class DbIdentifierType : DbIdentified
-	{
-		
-		/// <summary>
-		/// Gets or sets the type concept identifier.
-		/// </summary>
-		/// <value>The type concept identifier.</value>
-		[Column("typeConcept"), NotNull, MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] TypeConceptUuid {
-			get;
-			set;
-		}
+    /// <summary>
+    /// Identifier type table.
+    /// </summary>
+    [Table("identifier_type")]
+    public class DbIdentifierType : DbIdentified
+    {
+
+        /// <summary>
+        /// Gets or sets the type concept identifier.
+        /// </summary>
+        /// <value>The type concept identifier.</value>
+        [Column("typeConcept"), NotNull, MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] TypeConceptUuid
+        {
+            get;
+            set;
+        }
 
 
-	}
+    }
 }
 

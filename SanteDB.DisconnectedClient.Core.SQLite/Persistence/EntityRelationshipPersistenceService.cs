@@ -17,20 +17,14 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
 using System.Collections;
-using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SanteDB.Core.Model.Constants;
+using System.Collections.Generic;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -51,7 +45,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         public string GetRelationshipMnemonic(SQLiteDataContext context, Guid id)
         {
             if (this.m_relationshipMnemonicDictionary.Count == 0)
-                lock(this.m_relationshipMnemonicDictionary)
+                lock (this.m_relationshipMnemonicDictionary)
                     if (this.m_relationshipMnemonicDictionary.Count == 0)
                         foreach (var itm in context.Connection.Query<DbConcept>("select concept.uuid, mnemonic from concept_concept_set inner join concept on (concept.uuid = concept_concept_set.concept_uuid) where concept_concept_set.concept_set_uuid = ?", ConceptSetKeys.EntityRelationshipType.ToByteArray()))
                             this.m_relationshipMnemonicDictionary.Add(itm.Key, itm.Mnemonic);
@@ -113,11 +107,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override EntityRelationship InsertInternal(SQLiteDataContext context, EntityRelationship data)
         {
-            
+
             // Ensure we haven't already persisted this
-            if(data.TargetEntity != null && !data.InversionIndicator) data.TargetEntity = data.TargetEntity.EnsureExists(context);
+            if (data.TargetEntity != null && !data.InversionIndicator) data.TargetEntity = data.TargetEntity.EnsureExists(context);
             data.TargetEntityKey = data.TargetEntity?.Key ?? data.TargetEntityKey;
-            if(data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context);
+            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context);
             data.RelationshipTypeKey = data.RelationshipType?.Key ?? data.RelationshipTypeKey;
 
             //byte[] target = data.TargetEntityKey.Value.ToByteArray(),
@@ -182,7 +176,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 return x.SourceEntityKey == y.SourceEntityKey &&
                     x.TargetEntityKey == y.TargetEntityKey &&
-                    (x.RelationshipTypeKey == y.RelationshipTypeKey ||  x.RelationshipType?.Mnemonic == y.RelationshipType?.Mnemonic);
+                    (x.RelationshipTypeKey == y.RelationshipTypeKey || x.RelationshipType?.Mnemonic == y.RelationshipType?.Mnemonic);
             }
 
             /// <summary>

@@ -17,38 +17,39 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
 using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
 {
-	/// <summary>
-	/// Represents storage entity for concept class
-	/// </summary>
-	[Table("concept_class")]
-	public class DbConceptClass : DbIdentified
-	{
+    /// <summary>
+    /// Represents storage entity for concept class
+    /// </summary>
+    [Table("concept_class")]
+    public class DbConceptClass : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the name.
-		/// </summary>
-		/// <value>The name.</value>
-		[Column("name")]
-		public string Name {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        [Column("name")]
+        public string Name
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the mnemonic.
-		/// </summary>
-		/// <value>The mnemonic.</value>
-		[Column("mnemonic"), Indexed(Unique = true), NotNull]
-		public String Mnemonic {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the mnemonic.
+        /// </summary>
+        /// <value>The mnemonic.</value>
+        [Column("mnemonic"), Indexed(Unique = true), NotNull]
+        public String Mnemonic
+        {
+            get;
+            set;
+        }
+    }
 }
 

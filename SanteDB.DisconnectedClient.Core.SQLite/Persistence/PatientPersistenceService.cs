@@ -21,12 +21,8 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Roles;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -97,7 +93,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Patient InsertInternal(SQLiteDataContext context, Patient data)
         {
-            if(data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
+            if (data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
             data.GenderConceptKey = data.GenderConcept?.Key ?? data.GenderConceptKey;
 
             var inserted = this.m_personPersister.Insert(context, data);
@@ -110,7 +106,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override Patient UpdateInternal(SQLiteDataContext context, Patient data)
         {
             // Ensure exists
-            if(data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
+            if (data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
             data.GenderConceptKey = data.GenderConcept?.Key ?? data.GenderConceptKey;
 
             this.m_personPersister.Update(context, data);

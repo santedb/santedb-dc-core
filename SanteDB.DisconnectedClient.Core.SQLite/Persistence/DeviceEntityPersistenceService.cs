@@ -20,11 +20,6 @@
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -54,7 +49,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override DeviceEntity InsertInternal(SQLiteDataContext context, DeviceEntity data)
         {
-            if(data.SecurityDevice != null) data.SecurityDevice = data.SecurityDevice?.EnsureExists(context);
+            if (data.SecurityDevice != null) data.SecurityDevice = data.SecurityDevice?.EnsureExists(context);
             data.SecurityDeviceKey = data.SecurityDevice?.Key ?? data.SecurityDeviceKey;
 
             return base.InsertInternal(context, data);

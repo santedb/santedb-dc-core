@@ -20,14 +20,9 @@
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SQLite.Net;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -159,7 +154,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 ActUuid = modelInstance.ActKey?.ToByteArray(),
                 EntityUuid = modelInstance.PlayerEntityKey?.ToByteArray(),
                 ParticipationRoleUuid = modelInstance.ParticipationRoleKey?.ToByteArray(),
-                Uuid = modelInstance.Key?.ToByteArray() ,
+                Uuid = modelInstance.Key?.ToByteArray(),
                 Quantity = modelInstance.Quantity.GetValueOrDefault()
             };
         }

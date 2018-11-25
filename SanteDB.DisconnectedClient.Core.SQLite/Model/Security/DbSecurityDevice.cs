@@ -17,32 +17,32 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
-	/// <summary>
-	/// Represents a security device. This table should only have one row (the current device)
-	/// </summary>
-	[Table("security_device")]
+    /// <summary>
+    /// Represents a security device. This table should only have one row (the current device)
+    /// </summary>
+    [Table("security_device")]
     [AssociativeTable(typeof(DbSecurityPolicy), typeof(DbSecurityDevicePolicy))]
-	public class DbSecurityDevice : DbBaseData
-	{
-		
-		/// <summary>
-		/// Gets or sets the public identifier.
-		/// </summary>
-		/// <value>The public identifier.</value>
-		[Column("public_id"), Unique]
-		public String PublicId {
-			get;
-			set;
-		}
+    public class DbSecurityDevice : DbBaseData
+    {
+
+        /// <summary>
+        /// Gets or sets the public identifier.
+        /// </summary>
+        /// <value>The public identifier.</value>
+        [Column("public_id"), Unique]
+        public String PublicId
+        {
+            get;
+            set;
+        }
 
 
-	}
+    }
 }
 

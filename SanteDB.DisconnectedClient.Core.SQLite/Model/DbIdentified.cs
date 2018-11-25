@@ -17,47 +17,42 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SanteDB.Core.Model;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model
 {
-	/// <summary>
-	/// Represents data that is identified in some way
-	/// </summary>
-	public class DbIdentified
-	{
+    /// <summary>
+    /// Represents data that is identified in some way
+    /// </summary>
+    public class DbIdentified
+    {
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.SQLite.Model.Model.DbIdentified"/> class.
-		/// </summary>
-		public DbIdentified ()
-		{
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.SQLite.Model.Model.DbIdentified"/> class.
+        /// </summary>
+        public DbIdentified()
+        {
+        }
 
-		/// <summary>
-		/// Gets or sets the universal identifier for the object
-		/// </summary>
-		[PrimaryKey, Column("uuid"), MaxLength(16), NotNull]
-		public virtual byte[] Uuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the universal identifier for the object
+        /// </summary>
+        [PrimaryKey, Column("uuid"), MaxLength(16), NotNull]
+        public virtual byte[] Uuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the key (GUID) on the persistence item
-		/// </summary>
-		/// <value>The key.</value>
-		[Ignore]
+        /// <summary>
+        /// Gets or sets the key (GUID) on the persistence item
+        /// </summary>
+        /// <value>The key.</value>
+        [Ignore]
         public Guid Key
         {
             get { return this.Uuid.ToGuid() ?? Guid.Empty; }

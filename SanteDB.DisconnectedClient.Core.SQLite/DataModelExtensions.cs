@@ -25,19 +25,14 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.SQLite;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -225,7 +220,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         var type = pi.PropertyType.StripGeneric();
                         while (type != typeof(Object) && ci == null)
                         {
-                            ci = pi.PropertyType.GetTypeInfo().DeclaredConstructors.FirstOrDefault(o=> o.GetParameters().Length == 1 && o.GetParameters()[0].ParameterType == typeof(IEnumerable<>).MakeGenericType(type));
+                            ci = pi.PropertyType.GetTypeInfo().DeclaredConstructors.FirstOrDefault(o => o.GetParameters().Length == 1 && o.GetParameters()[0].ParameterType == typeof(IEnumerable<>).MakeGenericType(type));
                             type = type.GetTypeInfo().BaseType;
                         }
                         if (ci != null)
@@ -296,7 +291,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             if (existing != null) return existing;
             else if (!context.Connection.IsInTransaction)
                 existing = context.TryGetData(me.Key.Value.ToString()) as IdentifiedData;
-            else if(me.Key.HasValue)
+            else if (me.Key.HasValue)
                 existing = context.FindTransactedItem(me.Key.Value);
 
             if (forceDbSearch && me.Key.HasValue)

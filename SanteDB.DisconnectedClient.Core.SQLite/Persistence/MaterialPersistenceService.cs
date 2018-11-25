@@ -20,12 +20,7 @@
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -56,11 +51,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             retVal.ExpiryDate = dataInstance.ExpiryDate;
             retVal.IsAdministrative = dataInstance.IsAdministrative;
             retVal.Quantity = dataInstance.Quantity;
-            if(dataInstance.QuantityConceptUuid != null)
+            if (dataInstance.QuantityConceptUuid != null)
                 retVal.QuantityConceptKey = new Guid(dataInstance.QuantityConceptUuid);
-            if(dataInstance.FormConceptUuid != null)
+            if (dataInstance.FormConceptUuid != null)
                 retVal.FormConceptKey = new Guid(dataInstance.FormConceptUuid);
-           // retVal.LoadAssociations(context);
+            // retVal.LoadAssociations(context);
             return retVal;
 
         }
@@ -70,8 +65,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Material InsertInternal(SQLiteDataContext context, Material data)
         {
-            if(data.FormConcept != null) data.FormConcept = data.FormConcept?.EnsureExists(context);
-            if(data.QuantityConcept != null) data.QuantityConcept = data.QuantityConcept?.EnsureExists(context);
+            if (data.FormConcept != null) data.FormConcept = data.FormConcept?.EnsureExists(context);
+            if (data.QuantityConcept != null) data.QuantityConcept = data.QuantityConcept?.EnsureExists(context);
             data.FormConceptKey = data.FormConcept?.Key ?? data.FormConceptKey;
             data.QuantityConceptKey = data.QuantityConcept?.Key ?? data.QuantityConceptKey;
             return base.InsertInternal(context, data);

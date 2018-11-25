@@ -20,11 +20,7 @@
 using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -48,7 +44,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override TModel InsertInternal(SQLiteDataContext context, TModel data)
         {
-            if(data.VersionKey.GetValueOrDefault() == Guid.Empty)
+            if (data.VersionKey.GetValueOrDefault() == Guid.Empty)
                 data.VersionKey = Guid.NewGuid();
             return base.InsertInternal(context, data);
         }

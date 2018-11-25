@@ -22,7 +22,6 @@ using SanteDB.Core.Mail;
 using SanteDB.DisconnectedClient.Core;
 using SQLite.Net.Attributes;
 using System;
-using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.SQLite.Mail
@@ -63,7 +62,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
             return new MailMessage(this.From, this.To, this.Subject, this.Body, (MailMessageFlags)this.Flags)
             {
                 Key = new Guid(this.Id),
-				CreationTime = this.TimeStamp.GetValueOrDefault(),
+                CreationTime = this.TimeStamp.GetValueOrDefault(),
                 UpdatedTime = this.TimeStamp
             };
         }

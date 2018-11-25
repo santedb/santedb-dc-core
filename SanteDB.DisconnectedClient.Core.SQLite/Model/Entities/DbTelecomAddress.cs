@@ -17,41 +17,42 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents a telecommunications address
-	/// </summary>
-	[Table("entity_telecom")]
-	public class DbTelecomAddress : DbEntityLink
-	{
+    /// <summary>
+    /// Represents a telecommunications address
+    /// </summary>
+    [Table("entity_telecom")]
+    public class DbTelecomAddress : DbEntityLink
+    {
 
-		/// <summary>
-		/// Gets or sets the telecom use.
-		/// </summary>
-		/// <value>The telecom use.</value>
-		[Column("use"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] TelecomUseUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the telecom use.
+        /// </summary>
+        /// <value>The telecom use.</value>
+        [Column("use"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] TelecomUseUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		/// <value>The value.</value>
-		[Column("value"), NotNull, Indexed]
-		public String Value {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        /// <value>The value.</value>
+        [Column("value"), NotNull, Indexed]
+        public String Value
+        {
+            get;
+            set;
+        }
 
-	}
+    }
 }
 

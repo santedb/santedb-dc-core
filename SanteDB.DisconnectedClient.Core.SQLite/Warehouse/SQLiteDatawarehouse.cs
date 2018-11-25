@@ -17,27 +17,23 @@
  * User: justin
  * Date: 2018-8-25
  */
-using SanteDB.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 using Mono.Data.Sqlite;
-using System.IO;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core;
-using System.Dynamic;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Reflection;
-using System.Collections;
-using System.Linq.Expressions;
-using SanteDB.Core.Model.Query;
 using Newtonsoft.Json;
-using System.Data;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Warehouse;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Services;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
+using System.Dynamic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 {

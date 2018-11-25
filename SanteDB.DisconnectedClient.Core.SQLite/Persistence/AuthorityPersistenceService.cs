@@ -19,12 +19,8 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -41,7 +37,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             var dataAA = dataInstance as DbAssigningAuthority;
             var retVal = base.ToModelInstance(dataInstance, context);
-            retVal.AuthorityScopeXml = context.Connection.Table<DbAuthorityScope>().Where(o => o.AssigningAuthorityUuid == dataAA.Uuid).ToList().Select(o=>new Guid(o.ScopeConceptUuid)).ToList();
+            retVal.AuthorityScopeXml = context.Connection.Table<DbAuthorityScope>().Where(o => o.AssigningAuthorityUuid == dataAA.Uuid).ToList().Select(o => new Guid(o.ScopeConceptUuid)).ToList();
             return retVal;
         }
 

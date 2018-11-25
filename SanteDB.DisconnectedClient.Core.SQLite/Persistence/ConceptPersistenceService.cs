@@ -17,15 +17,12 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.Core.Model.Constants;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -64,8 +61,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override Concept InsertInternal(SQLiteDataContext context, Concept data)
         {
             // Ensure exists
-            if(data.Class != null) data.Class = data.Class?.EnsureExists(context);
-            if(data.StatusConcept != null) data.StatusConcept?.EnsureExists(context);
+            if (data.Class != null) data.Class = data.Class?.EnsureExists(context);
+            if (data.StatusConcept != null) data.StatusConcept?.EnsureExists(context);
             data.ClassKey = data.Class?.Key ?? data.ClassKey;
             data.StatusConceptKey = data.StatusConcept?.Key ?? data.StatusConceptKey;
 
@@ -88,24 +85,24 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (retVal.ConceptSetsXml != null)
                 foreach (var r in retVal.ConceptSetsXml)
                 {
-					// HACK: SQL lite has decided that there is no such function as "ToByteArray()"
-					var conceptSetUuid = r.ToByteArray();
-					var conceptUuid = retVal.Key.Value.ToByteArray();
+                    // HACK: SQL lite has decided that there is no such function as "ToByteArray()"
+                    var conceptSetUuid = r.ToByteArray();
+                    var conceptUuid = retVal.Key.Value.ToByteArray();
 
                     if (context.Connection.Table<DbConceptSetConceptAssociation>().Where(o => o.ConceptSetUuid == conceptSetUuid &&
                      o.ConceptUuid == conceptUuid).Any())
                         continue;
-					else
-					{
-						// HACK: SQL lite has decided that there is no such function as "ToByteArray()"
-						var key = Guid.NewGuid().ToByteArray();
-						context.Connection.Insert(new DbConceptSetConceptAssociation()
-						{
-							Uuid = key,
-							ConceptSetUuid = conceptSetUuid,
-							ConceptUuid = conceptUuid
-						});
-					}
+                    else
+                    {
+                        // HACK: SQL lite has decided that there is no such function as "ToByteArray()"
+                        var key = Guid.NewGuid().ToByteArray();
+                        context.Connection.Insert(new DbConceptSetConceptAssociation()
+                        {
+                            Uuid = key,
+                            ConceptSetUuid = conceptSetUuid,
+                            ConceptUuid = conceptUuid
+                        });
+                    }
                 }
 
             return retVal;
@@ -116,8 +113,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Concept UpdateInternal(SQLiteDataContext context, Concept data)
         {
-            if(data.Class != null) data.Class = data.Class?.EnsureExists(context);
-            if(data.StatusConcept != null) data.StatusConcept = data.StatusConcept?.EnsureExists(context);
+            if (data.Class != null) data.Class = data.Class?.EnsureExists(context);
+            if (data.StatusConcept != null) data.StatusConcept = data.StatusConcept?.EnsureExists(context);
             data.ClassKey = data.Class?.Key ?? data.ClassKey;
             data.StatusConceptKey = data.StatusConcept?.Key ?? data.StatusConceptKey;
 

@@ -18,19 +18,13 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Search;
-using SanteDB.DisconnectedClient.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SanteDB.DisconnectedClient.SQLite.Search.Model;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {

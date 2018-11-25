@@ -17,22 +17,21 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Services;
-using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -160,7 +159,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
 
                 this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(userNames.Select(o => new SecurityUser() { UserName = o }), $"roles=[{String.Join(",", roleNames.Select(o => $"{o}"))}]") { Success = false });
-                
+
                 throw;
             }
         }
@@ -186,9 +185,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         conn.Insert(new DbSecurityRole() { Name = value, Key = pk });
                         this.DataCreated?.Invoke(this, new AuditDataEventArgs(new SecurityRole() { Key = pk, Name = value }));
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
-						this.m_tracer.TraceError($"Unable to create role: {e}");
+                        this.m_tracer.TraceError($"Unable to create role: {e}");
                     }
                 }
             }

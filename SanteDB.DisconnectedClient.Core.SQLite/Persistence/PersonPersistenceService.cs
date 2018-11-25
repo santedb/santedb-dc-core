@@ -17,16 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.Entities;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -64,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 DateOfBirth = modelInstance.DateOfBirth,
                 DateOfBirthPrecision = modelInstance.DateOfBirthPrecision.HasValue ? PrecisionMap[modelInstance.DateOfBirthPrecision.Value] : null,
-                Uuid = modelInstance.Key?.ToByteArray() 
+                Uuid = modelInstance.Key?.ToByteArray()
             };
         }
 
@@ -99,16 +96,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var retVal = base.InsertInternal(context, data);
             byte[] sourceKey = retVal.Key.Value.ToByteArray();
 
-			// Insert language communication
-	        context.Connection.InsertAll(data.LanguageCommunication.Select(l => new DbPersonLanguageCommunication()
-	        {
-		        IsPreferred = l.IsPreferred,
-		        Uuid = l.Key?.ToByteArray() ?? Guid.NewGuid().ToByteArray(),
-		        LanguageCode = l.LanguageCode,
-		        SourceUuid = sourceKey
-	        }));
+            // Insert language communication
+            context.Connection.InsertAll(data.LanguageCommunication.Select(l => new DbPersonLanguageCommunication()
+            {
+                IsPreferred = l.IsPreferred,
+                Uuid = l.Key?.ToByteArray() ?? Guid.NewGuid().ToByteArray(),
+                LanguageCode = l.LanguageCode,
+                SourceUuid = sourceKey
+            }));
 
-			return retVal;
+            return retVal;
         }
 
         /// <summary>
@@ -122,7 +119,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Language communication
             if (data.LanguageCommunication != null)
                 base.UpdateAssociatedItems<PersonLanguageCommunication, Entity>(
-                    context.Connection.Table<DbPersonLanguageCommunication>().Where(o=>o.SourceUuid == sourceKey).ToList().Select(o=>m_mapper.MapDomainInstance<DbPersonLanguageCommunication, PersonLanguageCommunication>(o)).ToList(),
+                    context.Connection.Table<DbPersonLanguageCommunication>().Where(o => o.SourceUuid == sourceKey).ToList().Select(o => m_mapper.MapDomainInstance<DbPersonLanguageCommunication, PersonLanguageCommunication>(o)).ToList(),
                     data.LanguageCommunication,
                     retVal.Key,
                     context);

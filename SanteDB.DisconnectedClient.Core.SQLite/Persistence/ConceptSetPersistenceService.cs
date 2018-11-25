@@ -17,26 +17,25 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SQLite.Net;
+using System;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
-	/// <summary>
-	/// Persistence service for ConceptSets
-	/// </summary>
-	public class ConceptSetPersistenceService : IdentifiedPersistenceService<ConceptSet, DbConceptSet>
-	{
+    /// <summary>
+    /// Persistence service for ConceptSets
+    /// </summary>
+    public class ConceptSetPersistenceService : IdentifiedPersistenceService<ConceptSet, DbConceptSet>
+    {
 
         /// <summary>
         /// Convert the concept set to model
         /// </summary>
         public override ConceptSet ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
-            
+
             var modelInstance = base.ToModelInstance(dataInstance, context);
 
             // Set the concepts
@@ -44,10 +43,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             ConceptPersistenceService cps = new ConceptPersistenceService();
 
             modelInstance.Concepts = context.Connection.Query<DbConcept>("SELECT concept.* FROM concept_concept_set INNER JOIN concept ON (concept_concept_set.concept_uuid = concept.uuid) WHERE concept_concept_set.concept_set_uuid = ?", dbInstance.Uuid).Select(
-                o=>cps.ToModelInstance(o, context)
+                o => cps.ToModelInstance(o, context)
             ).ToList();
 
-                //modelInstance.LoadAssociations(context);
+            //modelInstance.LoadAssociations(context);
 
             return modelInstance;
         }

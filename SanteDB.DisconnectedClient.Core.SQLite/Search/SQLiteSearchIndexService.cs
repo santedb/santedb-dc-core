@@ -17,30 +17,25 @@
  * User: justin
  * Date: 2018-7-4
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Search.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SQLite.Net;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.SQLite.Search.Model;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Services;
-using SanteDB.Core.Model.Constants;
 using System.Threading;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Core.Model.DataTypes;
-using SQLite.Net.Interop;
-using SanteDB.DisconnectedClient.SQLite;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Search
 {
@@ -159,7 +154,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error performing search: {0}", e);
                 throw;
@@ -355,8 +350,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         this.m_tracer.TraceInfo("Starting complete full-text indexing of the primary datastore");
                         try
                         {
-                                // Load all entities in database and index them
-                                int tr = 101, ofs = 0;
+                            // Load all entities in database and index them
+                            int tr = 101, ofs = 0;
                             var patientService = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>();
                             Guid queryId = Guid.NewGuid();
 
@@ -366,11 +361,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                                 if (patientService == null) break;
                                 var entities = patientService.Query(e => e.StatusConceptKey != StatusKeys.Obsolete, ofs, 50, out tr, queryId);
 
-                                    // Index 
-                                    this.IndexEntity(entities.ToArray());
+                                // Index 
+                                this.IndexEntity(entities.ToArray());
 
-                                    // Let user know the status
-                                    ofs += 50;
+                                // Let user know the status
+                                ofs += 50;
                                 ApplicationContext.Current.SetProgress(Strings.locale_indexing, (float)ofs / tr);
                             }
                             if (patientService != null)

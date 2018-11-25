@@ -17,59 +17,59 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
-using SQLite.Net;
-using System.Collections.Generic;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
 {
-	/// <summary>
-	/// Physical data layer implemntation of concept
-	/// </summary>
-	[Table("concept")]
+    /// <summary>
+    /// Physical data layer implemntation of concept
+    /// </summary>
+    [Table("concept")]
     [AssociativeTable(typeof(DbConceptSet), typeof(DbConceptSetConceptAssociation))]
-	public class DbConcept : DbVersionedData
-	{
+    public class DbConcept : DbVersionedData
+    {
 
-		/// <summary>
-		/// Gets or sets whether the object is a system concept or not
-		/// </summary>
-		[Column("isReadonly")]
-		public bool IsSystemConcept {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets whether the object is a system concept or not
+        /// </summary>
+        [Column("isReadonly")]
+        public bool IsSystemConcept
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the object mnemonic
-		/// </summary>
-		/// <value>The mnemonic.</value>
-		[Column("mnemonic"), Indexed(Unique = true), NotNull]
-		public string Mnemonic {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the object mnemonic
+        /// </summary>
+        /// <value>The mnemonic.</value>
+        [Column("mnemonic"), Indexed(Unique = true), NotNull]
+        public string Mnemonic
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the status concept id
-		/// </summary>
-		[Column("statusConcept"), NotNull, MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] StatusUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the status concept id
+        /// </summary>
+        [Column("statusConcept"), NotNull, MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] StatusUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the concept classification
-		/// </summary>
-		[Column("class"), NotNull, MaxLength(16), ForeignKey(typeof(DbConceptClass), nameof(DbConceptClass.Uuid))]
-		public byte[] ClassUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the concept classification
+        /// </summary>
+        [Column("class"), NotNull, MaxLength(16), ForeignKey(typeof(DbConceptClass), nameof(DbConceptClass.Uuid))]
+        public byte[] ClassUuid
+        {
+            get;
+            set;
+        }
 
     }
 }

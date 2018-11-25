@@ -18,13 +18,8 @@
  * Date: 2018-8-25
  */
 using SanteDB.DisconnectedClient.Core.Synchronization;
-using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
 {

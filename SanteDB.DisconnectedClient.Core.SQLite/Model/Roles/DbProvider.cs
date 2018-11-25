@@ -17,31 +17,30 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Roles
 {
-	/// <summary>
-	/// Represents a health care provider in the database
-	/// </summary>
-	[Table("provider")]
-	public class DbProvider : DbPersonSubTable
+    /// <summary>
+    /// Represents a health care provider in the database
+    /// </summary>
+    [Table("provider")]
+    public class DbProvider : DbPersonSubTable
     {
 
-		/// <summary>
-		/// Gets or sets the specialty.
-		/// </summary>
-		/// <value>The specialty.</value>
-		[Column("specialty"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] Specialty {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the specialty.
+        /// </summary>
+        /// <value>The specialty.</value>
+        [Column("specialty"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] Specialty
+        {
+            get;
+            set;
+        }
 
         public class QueryResult : DbPerson.QueryResult
         {

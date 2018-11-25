@@ -20,11 +20,6 @@
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -54,11 +49,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override ApplicationEntity InsertInternal(SQLiteDataContext context, ApplicationEntity data)
         {
-            if(data.SecurityApplication != null) data.SecurityApplication = data.SecurityApplication?.EnsureExists(context);
+            if (data.SecurityApplication != null) data.SecurityApplication = data.SecurityApplication?.EnsureExists(context);
             data.SecurityApplicationKey = data.SecurityApplication?.Key ?? data.SecurityApplicationKey;
             return base.InsertInternal(context, data);
         }
-        
+
         /// <summary>
         /// Update the application entity
         /// </summary>

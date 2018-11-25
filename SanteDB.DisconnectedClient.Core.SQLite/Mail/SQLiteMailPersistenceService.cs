@@ -17,9 +17,9 @@
  * User: justin
  * Date: 2018-7-31
  */
-using SanteDB.Core.Mail;
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Mail;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
@@ -32,8 +32,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Mail
 {
@@ -129,8 +127,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                 {
                     if (!data.Key.HasValue) data.Key = Guid.NewGuid();
                     var dbData = new DbMailMessage(data);
-                
-                    if(String.IsNullOrEmpty(dbData.CreatedBy))
+
+                    if (String.IsNullOrEmpty(dbData.CreatedBy))
                         dbData.CreatedBy = AuthenticationContext.Current.Principal?.Identity?.Name;
 
                     // Create table if not exists
@@ -144,7 +142,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                     return data;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error inserting alert message: {0}", e);
                 throw;

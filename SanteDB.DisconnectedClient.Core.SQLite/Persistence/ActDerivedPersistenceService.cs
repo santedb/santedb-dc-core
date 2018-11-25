@@ -19,12 +19,6 @@
  */
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model;
-using SQLite.Net;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {

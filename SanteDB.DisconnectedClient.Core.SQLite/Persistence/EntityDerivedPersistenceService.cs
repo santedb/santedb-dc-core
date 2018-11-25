@@ -19,7 +19,6 @@
  */
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model;
-using SQLite.Net;
 using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
@@ -62,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override TModel UpdateInternal(SQLiteDataContext context, TModel data)
         {
-            if(typeof(TModel).GetTypeInfo().BaseType == typeof(Entity))
+            if (typeof(TModel).GetTypeInfo().BaseType == typeof(Entity))
                 this.m_entityPersister.UpdateCoreProperties(context, data);
             return base.UpdateInternal(context, data);
         }

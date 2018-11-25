@@ -17,29 +17,28 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents an organization in the data store
-	/// </summary>
-	[Table("organization")]
-	public class DbOrganization : DbEntitySubTable
-	{
-		/// <summary>
-		/// Gets or sets the industry concept.
-		/// </summary>
-		/// <value>The industry concept.</value>
-		[Column("industryConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] IndustryConceptUuid {
-			get;
-			set;
-		}
+    /// <summary>
+    /// Represents an organization in the data store
+    /// </summary>
+    [Table("organization")]
+    public class DbOrganization : DbEntitySubTable
+    {
+        /// <summary>
+        /// Gets or sets the industry concept.
+        /// </summary>
+        /// <value>The industry concept.</value>
+        [Column("industryConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] IndustryConceptUuid
+        {
+            get;
+            set;
+        }
 
         public class QueryResult : DbEntity
         {
@@ -55,6 +54,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
             }
         }
 
-	}
+    }
 }
 

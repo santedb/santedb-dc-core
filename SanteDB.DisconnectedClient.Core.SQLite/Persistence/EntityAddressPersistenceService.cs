@@ -19,18 +19,12 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SQLite.Net;
-using SQLite.Net.Interop;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -156,7 +150,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 AddressUuid = modelInstance.SourceEntityKey?.ToByteArray(),
                 ComponentTypeUuid = modelInstance.ComponentTypeKey?.ToByteArray(),
-                Uuid = modelInstance.Key?.ToByteArray() 
+                Uuid = modelInstance.Key?.ToByteArray()
             };
 
             // Address component already exists?

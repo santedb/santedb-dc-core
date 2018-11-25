@@ -17,13 +17,8 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
 {
@@ -66,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
         /// <summary>
         /// Query result
         /// </summary>
-        public class QueryResult :DbAct
+        public class QueryResult : DbAct
         {
             /// <summary>
             /// Gets or sets the route of administration

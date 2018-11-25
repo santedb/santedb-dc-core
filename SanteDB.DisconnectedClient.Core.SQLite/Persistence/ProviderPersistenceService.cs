@@ -21,13 +21,8 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Roles;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -46,7 +41,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         public override Provider ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
-            var provider = dataInstance as DbProvider ?? dataInstance.GetInstanceOf<DbProvider>()?? context.Connection.Table<DbProvider>().Where(o => o.Uuid == iddat.Uuid).First();
+            var provider = dataInstance as DbProvider ?? dataInstance.GetInstanceOf<DbProvider>() ?? context.Connection.Table<DbProvider>().Where(o => o.Uuid == iddat.Uuid).First();
             var dbe = dataInstance.GetInstanceOf<DbEntity>() ?? dataInstance as DbEntity ?? context.Connection.Table<DbEntity>().Where(o => o.Uuid == provider.Uuid).First();
             var dbp = context.Connection.Table<DbPerson>().Where(o => o.Uuid == provider.Uuid).First();
             var retVal = m_entityPersister.ToModelInstance<Provider>(dbe, context);
@@ -67,7 +62,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Provider InsertInternal(SQLiteDataContext context, Provider data)
         {
-            if(data.ProviderSpecialty != null) data.ProviderSpecialty?.EnsureExists(context);
+            if (data.ProviderSpecialty != null) data.ProviderSpecialty?.EnsureExists(context);
             data.ProviderSpecialtyKey = data.ProviderSpecialty?.Key ?? data.ProviderSpecialtyKey;
 
             var inserted = this.m_personPersister.Insert(context, data);
@@ -80,7 +75,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override Provider UpdateInternal(SQLiteDataContext context, Provider data)
         {
             // Ensure exists
-            if(data.ProviderSpecialty != null) data.ProviderSpecialty = data.ProviderSpecialty?.EnsureExists(context);
+            if (data.ProviderSpecialty != null) data.ProviderSpecialty = data.ProviderSpecialty?.EnsureExists(context);
             data.ProviderSpecialtyKey = data.ProviderSpecialty?.Key ?? data.ProviderSpecialtyKey;
 
             this.m_personPersister.Update(context, data);

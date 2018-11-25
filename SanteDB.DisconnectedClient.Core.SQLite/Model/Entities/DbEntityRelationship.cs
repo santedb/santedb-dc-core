@@ -19,20 +19,14 @@
  */
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SQLite.Net;
 using SQLite.Net.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
     /// <summary>
     /// Represents a relationship between two entities
     /// </summary>
-    [Table("entity_relationship")] 
+    [Table("entity_relationship")]
     public class DbEntityRelationship : DbIdentified
     {
 

@@ -21,10 +21,7 @@ using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -69,7 +66,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
 
                 Monitor.Enter(lockObject);
 
-                if(this.m_connection.m_lockCount == 0)
+                if (this.m_connection.m_lockCount == 0)
                     Monitor.Enter(this.m_connection);
 
                 SQLiteConnectionManager.Current.RegisterWriteConnection(this.m_connection);
@@ -95,7 +92,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
 
                 var lockObject = m_lockBox[this.m_connection.DatabasePath];
                 Monitor.Exit(lockObject);
-                
+
 
             }
         }

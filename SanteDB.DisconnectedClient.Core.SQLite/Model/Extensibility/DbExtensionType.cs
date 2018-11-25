@@ -17,38 +17,39 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
 using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
-	/// <summary>
-	/// Extension types
-	/// </summary>
-	[Table("extension_type")]
-	public class DbExtensionType: DbIdentified
-	{
+    /// <summary>
+    /// Extension types
+    /// </summary>
+    [Table("extension_type")]
+    public class DbExtensionType : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the name.
-		/// </summary>
-		/// <value>The name.</value>
-		[Column("name")]
-		public String Name {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        [Column("name")]
+        public String Name
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the extension handler.
-		/// </summary>
-		/// <value>The extension handler.</value>
-		[Column("extensionHandler")]
-		public String ExtensionHandler {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the extension handler.
+        /// </summary>
+        /// <value>The extension handler.</value>
+        [Column("extensionHandler")]
+        public String ExtensionHandler
+        {
+            get;
+            set;
+        }
+    }
 }
 

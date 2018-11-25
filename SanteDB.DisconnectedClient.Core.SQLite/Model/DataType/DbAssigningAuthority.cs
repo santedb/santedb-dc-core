@@ -20,13 +20,8 @@
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
 {

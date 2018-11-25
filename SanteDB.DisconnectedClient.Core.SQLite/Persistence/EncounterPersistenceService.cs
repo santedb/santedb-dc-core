@@ -20,7 +20,6 @@
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SQLite.Net;
 using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
@@ -49,7 +48,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         public override PatientEncounter ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
-            var iddat = dataInstance as DbIdentified ;
+            var iddat = dataInstance as DbIdentified;
             var dbEnc = dataInstance as DbPatientEncounter ?? dataInstance.GetInstanceOf<DbPatientEncounter>() ?? context.Connection.Table<DbPatientEncounter>().Where(o => o.Uuid == iddat.Uuid).FirstOrDefault();
             var dba = dataInstance.GetInstanceOf<DbAct>() ?? dataInstance as DbAct ?? context.Connection.Table<DbAct>().Where(a => a.Uuid == dbEnc.Uuid).First();
             var retVal = m_actPersister.ToModelInstance<PatientEncounter>(dba, context);
@@ -64,7 +63,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override PatientEncounter InsertInternal(SQLiteDataContext context, PatientEncounter data)
         {
-            if(data.DischargeDisposition != null) data.DischargeDisposition = data.DischargeDisposition?.EnsureExists(context);
+            if (data.DischargeDisposition != null) data.DischargeDisposition = data.DischargeDisposition?.EnsureExists(context);
             data.DischargeDispositionKey = data.DischargeDisposition?.Key ?? data.DischargeDispositionKey;
             return base.InsertInternal(context, data);
         }

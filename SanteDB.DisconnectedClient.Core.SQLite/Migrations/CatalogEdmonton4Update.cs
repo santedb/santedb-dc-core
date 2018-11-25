@@ -24,10 +24,6 @@ using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -88,7 +84,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     db.Commit();
                     return true;
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     db.Rollback();
                     tracer.TraceError("Error installing CTP5 update: {0}", e);

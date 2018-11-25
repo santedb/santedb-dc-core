@@ -17,31 +17,31 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents an entity name related to an entity
-	/// </summary>
-	[Table("entity_name")]
-	public class DbEntityName : DbEntityLink
-	{
-		
-		/// <summary>
-		/// Gets or sets the use concept.
-		/// </summary>
-		/// <value>The use concept.</value>
-		[Column("use"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] UseConceptUuid {
-			get;
-			set;
-		}
-	}
+    /// <summary>
+    /// Represents an entity name related to an entity
+    /// </summary>
+    [Table("entity_name")]
+    public class DbEntityName : DbEntityLink
+    {
+
+        /// <summary>
+        /// Gets or sets the use concept.
+        /// </summary>
+        /// <value>The use concept.</value>
+        [Column("use"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] UseConceptUuid
+        {
+            get;
+            set;
+        }
+    }
 
     /// <summary>
     /// Represents a component of a name
@@ -55,7 +55,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
         /// </summary>
         /// <value>The name identifier.</value>
         [Column("name_uuid"), MaxLength(16), NotNull, Indexed, ForeignKey(typeof(DbEntityName), nameof(DbEntityName.Uuid))]
-        public byte[] NameUuid {
+        public byte[] NameUuid
+        {
             get;
             set;
         }
@@ -97,25 +98,27 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
     public class DbPhoneticValue : DbIdentified
     {
 
-		/// <summary>
-		/// Gets or sets the phonetic code.
-		/// </summary>
-		/// <value>The phonetic code.</value>
-		[Column("phoneticCode")]
-		public String PhoneticCode {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the phonetic code.
+        /// </summary>
+        /// <value>The phonetic code.</value>
+        [Column("phoneticCode")]
+        public String PhoneticCode
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the phonetic algorithm identifier.
-		/// </summary>
-		/// <value>The phonetic algorithm identifier.</value>
-		[Column("phoneticAlgorithm")]
-		public byte[] PhoneticAlgorithmUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the phonetic algorithm identifier.
+        /// </summary>
+        /// <value>The phonetic algorithm identifier.</value>
+        [Column("phoneticAlgorithm")]
+        public byte[] PhoneticAlgorithmUuid
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Value of the phonetic table

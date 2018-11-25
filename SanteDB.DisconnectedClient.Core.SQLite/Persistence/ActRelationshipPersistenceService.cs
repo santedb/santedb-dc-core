@@ -19,15 +19,9 @@
  */
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Collections;
-using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.DisconnectedClient.SQLite.Model;
+using System.Collections.Generic;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -133,7 +127,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 return x.SourceEntityKey == y.SourceEntityKey &&
                     x.TargetActKey == y.TargetActKey &&
-                    (x.RelationshipTypeKey == y.RelationshipTypeKey ||  x.RelationshipType?.Mnemonic == y.RelationshipType?.Mnemonic);
+                    (x.RelationshipTypeKey == y.RelationshipTypeKey || x.RelationshipType?.Mnemonic == y.RelationshipType?.Mnemonic);
             }
 
             /// <summary>

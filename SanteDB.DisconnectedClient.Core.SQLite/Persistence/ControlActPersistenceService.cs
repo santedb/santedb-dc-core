@@ -20,7 +20,6 @@
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SQLite.Net;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {

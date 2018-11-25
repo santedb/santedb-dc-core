@@ -17,20 +17,17 @@
  * User: justin
  * Date: 2018-8-25
  */
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
-using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Synchronization;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -140,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 try
                 {
                     var qid = queryId.ToByteArray();
-                    var currentQuery = conn.Table<SynchronizationQuery>().Where(o=>o.Uuid == qid).FirstOrDefault();
+                    var currentQuery = conn.Table<SynchronizationQuery>().Where(o => o.Uuid == qid).FirstOrDefault();
                     if (currentQuery == null)
                     {
                         var modelAqn = modelType.GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>().TypeName;
@@ -180,7 +177,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 try
                 {
                     var qid = queryId.ToByteArray();
-                    conn.Table<SynchronizationQuery>().Delete(o=>o.Uuid == qid);
+                    conn.Table<SynchronizationQuery>().Delete(o => o.Uuid == qid);
                 }
                 catch (Exception e)
                 {
@@ -201,7 +198,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 try
                 {
                     var modelAqn = modelType.GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>().TypeName;
-                    return conn.Table<SynchronizationQuery>().Where(o=>o.ResourceType == modelAqn && o.Filter == filter).FirstOrDefault();
+                    return conn.Table<SynchronizationQuery>().Where(o => o.ResourceType == modelAqn && o.Filter == filter).FirstOrDefault();
                 }
                 catch (Exception e)
                 {

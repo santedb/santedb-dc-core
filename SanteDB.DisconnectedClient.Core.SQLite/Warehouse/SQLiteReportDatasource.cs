@@ -20,15 +20,14 @@
 using Mono.Data.Sqlite;
 using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core;
-using SanteDB.ReportR.Model;
 using SanteDB.ReportR;
+using SanteDB.ReportR.Model;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 {
@@ -125,7 +124,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 
 #if DEBUG
                             var filledSql = cmd.CommandText;
-                            for(int i = 0; i < cmd.Parameters.Count; i++)
+                            for (int i = 0; i < cmd.Parameters.Count; i++)
                             {
                                 object cmdVal = cmd.Parameters[i].Value;
                                 var idx = filledSql.IndexOf("?");
@@ -142,7 +141,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                             try
                             {
                                 var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
-                                if(securityKey != null)
+                                if (securityKey != null)
                                     conn.SetPassword(Encoding.UTF8.GetString(securityKey, 0, securityKey.Length));
                                 conn.Open();
                                 // Attach further connection strings
@@ -181,7 +180,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error executing dataset {0}({1}) : {2}", sql, String.Join(",", sqlParms), ex);
                 throw;
@@ -213,7 +212,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                 }
                 return (TModel)retVal;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error mapping data reader to expando object: {0}", e);
                 throw;

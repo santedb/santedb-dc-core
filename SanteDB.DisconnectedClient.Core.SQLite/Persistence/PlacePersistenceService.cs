@@ -18,14 +18,10 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Model;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -40,7 +36,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         public override Place ToModelInstance(object dataInstance, SQLiteDataContext context)
         {
             var iddat = dataInstance as DbVersionedData;
-            var place = dataInstance as DbPlace?? dataInstance.GetInstanceOf<DbPlace>() ?? context.Connection.Table<DbPlace>().Where(o => o.Uuid == iddat.Uuid).FirstOrDefault();
+            var place = dataInstance as DbPlace ?? dataInstance.GetInstanceOf<DbPlace>() ?? context.Connection.Table<DbPlace>().Where(o => o.Uuid == iddat.Uuid).FirstOrDefault();
             var dbe = dataInstance.GetInstanceOf<DbEntity>() ?? dataInstance as DbEntity ?? context.Connection.Table<DbEntity>().Where(o => o.Uuid == place.Uuid).First();
 
             var retVal = m_entityPersister.ToModelInstance<Place>(dbe, context);

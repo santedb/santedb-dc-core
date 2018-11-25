@@ -17,17 +17,12 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SQLite.Net;
+using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net.Interop;
-using SanteDB.Core.Data.QueryBuilder;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -110,19 +105,19 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         internal void AddTransactedItem<TModel>(TModel data) where TModel : IdentifiedData
         {
-            lock(this.m_transactionItems)
-                if(!this.m_transactionItems.ContainsKey(data.Key.Value))
+            lock (this.m_transactionItems)
+                if (!this.m_transactionItems.ContainsKey(data.Key.Value))
                     this.m_transactionItems.Add(data.Key.Value, data);
         }
 
         /// <summary>
         /// Add an item to the list of items which are being about to be committed
         /// </summary>
-        internal IdentifiedData FindTransactedItem(Guid key) 
+        internal IdentifiedData FindTransactedItem(Guid key)
         {
             IdentifiedData retVal = null;
             this.m_transactionItems.TryGetValue(key, out retVal);
-            return retVal; 
+            return retVal;
         }
 
         /// <summary>
@@ -167,7 +162,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         internal IDbStatement GetOrCreatePrepared(string cmdText)
         {
             IDbStatement prepared = null;
-            if(!this.m_prepared.TryGetValue(cmdText, out prepared))
+            if (!this.m_prepared.TryGetValue(cmdText, out prepared))
             {
                 prepared = this.Connection.Prepare(cmdText);
                 lock (this.m_prepared)
@@ -194,7 +189,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             return query.ToString();
         }
 
-      
+
         /// <summary>
         /// Add a cached set of query results
         /// </summary>

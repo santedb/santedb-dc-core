@@ -20,12 +20,7 @@
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -35,7 +30,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
     public class OrganizationPersistenceService : EntityDerivedPersistenceService<Organization, DbOrganization, DbOrganization.QueryResult>
     {
 
-       
+
         /// <summary>
         /// Model instance
         /// </summary>
@@ -45,7 +40,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var organization = dataInstance as DbOrganization ?? dataInstance.GetInstanceOf<DbOrganization>() ?? context.Connection.Table<DbOrganization>().Where(o => o.Uuid == iddat.Uuid).First();
             var dbe = dataInstance.GetInstanceOf<DbEntity>() ?? dataInstance as DbEntity ?? context.Connection.Table<DbEntity>().Where(o => o.Uuid == organization.Uuid).First();
             var retVal = m_entityPersister.ToModelInstance<Organization>(dbe, context);
-            retVal.IndustryConceptKey = organization.IndustryConceptUuid  != null ? (Guid?)new Guid(organization.IndustryConceptUuid) : null;
+            retVal.IndustryConceptKey = organization.IndustryConceptUuid != null ? (Guid?)new Guid(organization.IndustryConceptUuid) : null;
             return retVal;
         }
 
@@ -55,7 +50,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override Organization InsertInternal(SQLiteDataContext context, Organization data)
         {
             // ensure industry concept exists
-            if(data.IndustryConcept != null) data.IndustryConcept = data.IndustryConcept?.EnsureExists(context);
+            if (data.IndustryConcept != null) data.IndustryConcept = data.IndustryConcept?.EnsureExists(context);
             data.IndustryConceptKey = data.IndustryConcept?.Key ?? data.IndustryConceptKey;
 
             return base.InsertInternal(context, data);
@@ -66,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Organization UpdateInternal(SQLiteDataContext context, Organization data)
         {
-            if(data.IndustryConcept != null) data.IndustryConcept = data.IndustryConcept?.EnsureExists(context);
+            if (data.IndustryConcept != null) data.IndustryConcept = data.IndustryConcept?.EnsureExists(context);
             data.IndustryConceptKey = data.IndustryConcept?.Key ?? data.IndustryConceptKey;
             return base.UpdateInternal(context, data);
         }

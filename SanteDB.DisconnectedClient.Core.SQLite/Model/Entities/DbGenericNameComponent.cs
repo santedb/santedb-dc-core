@@ -19,9 +19,7 @@
  */
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SQLite.Net;
 using SQLite.Net.Attributes;
-using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {

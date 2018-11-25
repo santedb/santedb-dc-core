@@ -17,58 +17,60 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
 {
-	/// <summary>
-	/// Represents an identifier
-	/// </summary>
-	public abstract class DbIdentifier : DbIdentified
-	{
+    /// <summary>
+    /// Represents an identifier
+    /// </summary>
+    public abstract class DbIdentifier : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		[Column("value"), Indexed, NotNull]
-		public String Value {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        [Column("value"), Indexed, NotNull]
+        public String Value
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the type identifier.
-		/// </summary>
-		/// <value>The type identifier.</value>
-		[Column("type"), MaxLength(16), ForeignKey(typeof(DbIdentifierType), nameof(DbIdentifierType.Uuid))]
-		public byte[] TypeUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the type identifier.
+        /// </summary>
+        /// <value>The type identifier.</value>
+        [Column("type"), MaxLength(16), ForeignKey(typeof(DbIdentifierType), nameof(DbIdentifierType.Uuid))]
+        public byte[] TypeUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the authority identifier.
-		/// </summary>
-		/// <value>The authority identifier.</value>
-		[Column("authority"), NotNull, MaxLength(16), ForeignKey(typeof(DbAssigningAuthority), nameof(DbAssigningAuthority.Uuid))]
-		public byte[] AuthorityUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the authority identifier.
+        /// </summary>
+        /// <value>The authority identifier.</value>
+        [Column("authority"), NotNull, MaxLength(16), ForeignKey(typeof(DbAssigningAuthority), nameof(DbAssigningAuthority.Uuid))]
+        public byte[] AuthorityUuid
+        {
+            get;
+            set;
+        }
 
-	}
+    }
 
-	/// <summary>
-	/// Entity identifier storage.
-	/// </summary>
-	[Table("entity_identifier")]
-	public class DbEntityIdentifier : DbIdentifier
-	{
+    /// <summary>
+    /// Entity identifier storage.
+    /// </summary>
+    [Table("entity_identifier")]
+    public class DbEntityIdentifier : DbIdentifier
+    {
         /// <summary>
         /// Gets or sets the source identifier.
         /// </summary>
@@ -81,12 +83,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.DataType
         }
     }
 
-	/// <summary>
-	/// Act identifier storage.
-	/// </summary>
-	[Table("act_identifier")]
-	public class DbActIdentifier : DbIdentifier
-	{
+    /// <summary>
+    /// Act identifier storage.
+    /// </summary>
+    [Table("act_identifier")]
+    public class DbActIdentifier : DbIdentifier
+    {
         /// <summary>
         /// Gets or sets the source identifier.
         /// </summary>

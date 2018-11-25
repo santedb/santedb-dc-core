@@ -20,7 +20,6 @@
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SQLite.Net;
 using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
@@ -44,7 +43,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 RouteConceptUuid = modelInstance.RouteKey?.ToByteArray(),
                 SequenceId = modelInstance.SequenceId,
                 SiteConceptUuid = modelInstance.SiteKey?.ToByteArray(),
-                Uuid = modelInstance.Key?.ToByteArray() 
+                Uuid = modelInstance.Key?.ToByteArray()
             };
         }
 
@@ -64,7 +63,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 retVal.RouteKey = new Guid(dbSbadm.RouteConceptUuid);
             retVal.DoseQuantity = dbSbadm.DoseQuantity;
             retVal.SequenceId = (int)dbSbadm.SequenceId;
-            if(dbSbadm.SiteConceptUuid != null)
+            if (dbSbadm.SiteConceptUuid != null)
                 retVal.SiteKey = new Guid(dbSbadm.SiteConceptUuid);
             return retVal;
         }
@@ -74,8 +73,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override SubstanceAdministration InsertInternal(SQLiteDataContext context, SubstanceAdministration data)
         {
-            if(data.DoseUnit != null) data.DoseUnit = data.DoseUnit?.EnsureExists(context);
-            if(data.Route != null) data.Route = data.Route?.EnsureExists(context);
+            if (data.DoseUnit != null) data.DoseUnit = data.DoseUnit?.EnsureExists(context);
+            if (data.Route != null) data.Route = data.Route?.EnsureExists(context);
             data.DoseUnitKey = data.DoseUnit?.Key ?? data.DoseUnitKey;
             data.RouteKey = data.Route?.Key ?? data.RouteKey;
             return base.InsertInternal(context, data);
@@ -87,8 +86,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override SubstanceAdministration UpdateInternal(SQLiteDataContext context, SubstanceAdministration data)
         {
-            if(data.DoseUnit != null) data.DoseUnit = data.DoseUnit?.EnsureExists(context);
-            if(data.Route != null) data.Route = data.Route?.EnsureExists(context);
+            if (data.DoseUnit != null) data.DoseUnit = data.DoseUnit?.EnsureExists(context);
+            if (data.Route != null) data.Route = data.Route?.EnsureExists(context);
             data.DoseUnitKey = data.DoseUnit?.Key ?? data.DoseUnitKey;
             data.RouteKey = data.Route?.Key ?? data.RouteKey;
             return base.UpdateInternal(context, data);

@@ -17,49 +17,50 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
-	/// <summary>
-	/// Represents a simpe tag (version independent)
-	/// </summary>
-	public abstract class DbTag : DbIdentified
-	{
+    /// <summary>
+    /// Represents a simpe tag (version independent)
+    /// </summary>
+    public abstract class DbTag : DbIdentified
+    {
 
 
-		/// <summary>
-		/// Gets or sets the key.
-		/// </summary>
-		/// <value>The key.</value>
-		[Column("key"),  NotNull]
-		public String TagKey {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the key.
+        /// </summary>
+        /// <value>The key.</value>
+        [Column("key"), NotNull]
+        public String TagKey
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		/// <value>The value.</value>
-		[Column("value"), NotNull]
-		public String Value {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        /// <value>The value.</value>
+        [Column("value"), NotNull]
+        public String Value
+        {
+            get;
+            set;
+        }
+    }
 
-	/// <summary>
-	/// Represents a tag associated with an enttiy
-	/// </summary>
-	[Table("entity_tag")]
-	public class DbEntityTag : DbTag
-	{
+    /// <summary>
+    /// Represents a tag associated with an enttiy
+    /// </summary>
+    [Table("entity_tag")]
+    public class DbEntityTag : DbTag
+    {
         /// <summary>
         /// Gets or sets the source.
         /// </summary>
@@ -72,12 +73,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
         }
     }
 
-	/// <summary>
-	/// Represents a tag associated with an act
-	/// </summary>
-	[Table("act_tag")]
-	public class DbActTag : DbTag
-	{
+    /// <summary>
+    /// Represents a tag associated with an act
+    /// </summary>
+    [Table("act_tag")]
+    public class DbActTag : DbTag
+    {
         /// <summary>
         /// Gets or sets the source.
         /// </summary>

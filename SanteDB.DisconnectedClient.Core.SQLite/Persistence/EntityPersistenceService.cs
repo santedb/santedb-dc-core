@@ -17,30 +17,23 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
+using SanteDB.DisconnectedClient.SQLite.Model.Roles;
+using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.SQLite.Model.DataType;
-using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.Acts;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.DisconnectedClient.SQLite.Model.Roles;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using System.Reflection;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -209,7 +202,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 StatusConceptUuid = modelInstance.StatusConceptKey?.ToByteArray(),
                 TemplateUuid = modelInstance.TemplateKey?.ToByteArray(),
                 TypeConceptUuid = modelInstance.TypeConceptKey?.ToByteArray(),
-                Uuid = modelInstance.Key?.ToByteArray() ,
+                Uuid = modelInstance.Key?.ToByteArray(),
                 VersionSequenceId = (int)modelInstance.VersionSequence.GetValueOrDefault(),
                 VersionUuid = modelInstance.VersionKey?.ToByteArray()
             };
@@ -235,7 +228,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             Entity retVal = null;
             IDataCachingService cache = ApplicationContext.Current.GetService<IDataCachingService>();
 
-            if(dbEntity != null)
+            if (dbEntity != null)
                 switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToUpper())
                 {
                     case Device:
@@ -246,7 +239,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         break;
                     case Person:
                         retVal = cache?.GetCacheItem<UserEntity>(dbEntity.Key);
-                        if(retVal == null)
+                        if (retVal == null)
                             retVal = cache?.GetCacheItem<Person>(dbEntity.Key);
                         break;
                     case Patient:
@@ -325,7 +318,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
 
             // Ensure FK exists
-            if(data.ClassConcept != null) data.ClassConcept = data.ClassConcept.EnsureExists(context);
+            if (data.ClassConcept != null) data.ClassConcept = data.ClassConcept.EnsureExists(context);
             if (data.DeterminerConcept != null) data.DeterminerConcept = data.DeterminerConcept.EnsureExists(context);
             if (data.StatusConcept != null) data.StatusConcept = data.StatusConcept.EnsureExists(context);
             if (data.TypeConcept != null) data.TypeConcept = data.TypeConcept.EnsureExists(context);
@@ -343,18 +336,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Identifiers
             if (data.Identifiers != null)
             {
-				// Validate unique values for IDs
-				var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>().Get(o.AuthorityKey.Value)?.IsUnique == true);
-				byte[] entId = data.Key.Value.ToByteArray();
+                // Validate unique values for IDs
+                var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>().Get(o.AuthorityKey.Value)?.IsUnique == true);
+                byte[] entId = data.Key.Value.ToByteArray();
 
-				foreach (var itm in uniqueIds)
-				{
-					byte[] authId = itm.Authority.Key.Value.ToByteArray();
-					if (context.Connection.Table<DbEntityIdentifier>().Count(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value) > 0)
-						throw new DuplicateKeyException(itm.Value);
-				}
+                foreach (var itm in uniqueIds)
+                {
+                    byte[] authId = itm.Authority.Key.Value.ToByteArray();
+                    if (context.Connection.Table<DbEntityIdentifier>().Count(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value) > 0)
+                        throw new DuplicateKeyException(itm.Value);
+                }
 
-				base.UpdateAssociatedItems<EntityIdentifier, Entity>(
+                base.UpdateAssociatedItems<EntityIdentifier, Entity>(
                     new List<EntityIdentifier>(),
                     data.Identifiers,
                     retVal.Key,
@@ -368,7 +361,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 data.Relationships.RemoveAll(o => o.IsEmpty());
                 base.UpdateAssociatedItems<EntityRelationship, Entity>(
                     new List<EntityRelationship>(),
-                    data.Relationships.Where(o => o.SourceEntityKey == null || o.SourceEntityKey == data.Key || o.TargetEntityKey == data.Key || !o.TargetEntityKey.HasValue ).Distinct(new EntityRelationshipPersistenceService.Comparer()).ToList(),
+                    data.Relationships.Where(o => o.SourceEntityKey == null || o.SourceEntityKey == data.Key || o.TargetEntityKey == data.Key || !o.TargetEntityKey.HasValue).Distinct(new EntityRelationshipPersistenceService.Comparer()).ToList(),
                     retVal.Key,
                     context);
             }
@@ -469,7 +462,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (data.Identifiers != null)
             {
                 // Validate unique values for IDs
-                if (this.m_uniqueAssigningAuthorites == null) {
+                if (this.m_uniqueAssigningAuthorites == null)
+                {
                     this.m_uniqueAssigningAuthorites = new HashSet<Guid>(context.Connection.Table<DbAssigningAuthority>().Where(o => o.IsUnique).ToArray().Select(o => new Guid(o.Uuid)));
                 }
 
@@ -568,7 +562,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             //        context, 
             //        true);
             //}
-          
+
 
             return retVal;
         }

@@ -17,26 +17,17 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using System.Collections;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Services;
-using SanteDB.Core.Interfaces;
-using SQLite.Net.Interop;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.Core.Data.QueryBuilder;
-using System.Threading;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -254,9 +245,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override DbEntityNameComponent BeforeInsertDomainObject(SQLiteDataContext context, DbEntityNameComponent domain)
         {
-            lock(m_lockObject)
+            lock (m_lockObject)
             {
-                if(m_nameSequence < 0)
+                if (m_nameSequence < 0)
                     m_nameSequence = context.Connection.ExecuteScalar<Int32>("SELECT COALESCE(MAX(sequence), 0) + 1 FROM entity_name_comp");
                 domain.Sequence = m_nameSequence++;
             }

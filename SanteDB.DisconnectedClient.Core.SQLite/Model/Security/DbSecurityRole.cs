@@ -17,40 +17,41 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
-	/// <summary>
-	/// Represents a security role
-	/// </summary>
-	[Table("security_role")]
+    /// <summary>
+    /// Represents a security role
+    /// </summary>
+    [Table("security_role")]
     [AssociativeTable(typeof(DbSecurityPolicy), typeof(DbSecurityRolePolicy))]
-	public class DbSecurityRole : DbIdentified
-	{
-		/// <summary>
-		/// Gets or sets the name.
-		/// </summary>
-		/// <value>The name.</value>
-		[Column("name"), NotNull, Unique, Collation("NOCASE")]
-		public String Name {
-			get;
-			set;
-		}
+    public class DbSecurityRole : DbIdentified
+    {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        [Column("name"), NotNull, Unique, Collation("NOCASE")]
+        public String Name
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the description.
-		/// </summary>
-		/// <value>The description.</value>
-		[Column("description")]
-		public String Description {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the description.
+        /// </summary>
+        /// <value>The description.</value>
+        [Column("description")]
+        public String Description
+        {
+            get;
+            set;
+        }
 
-	}
+    }
 }
 

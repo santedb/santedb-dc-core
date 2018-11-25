@@ -19,12 +19,8 @@
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SQLite.Net;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -79,8 +75,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
             if (retVal.Roles != null)
             {
-                var existingRoles = context.Connection.Table<DbSecurityUserRole>().Where(o => o.UserUuid == keyuuid).Select(o=>o.RoleUuid);
-                foreach (var r in retVal.Roles.Where(r=>!existingRoles.Any(o=>new Guid(o) == r.Key)))
+                var existingRoles = context.Connection.Table<DbSecurityUserRole>().Where(o => o.UserUuid == keyuuid).Select(o => o.RoleUuid);
+                foreach (var r in retVal.Roles.Where(r => !existingRoles.Any(o => new Guid(o) == r.Key)))
                 {
                     r.EnsureExists(context);
                     context.Connection.Insert(new DbSecurityUserRole()
@@ -167,7 +163,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             var retVal = base.ToModelInstance(dataInstance, context);
             var dbDevice = dataInstance as DbSecurityDevice;
-            retVal.Policies = context.Connection.Table<DbSecurityDevicePolicy>().Where(o=>o.DeviceId == dbDevice.Uuid).ToList().Select(o => m_mapper.MapDomainInstance<DbSecurityDevicePolicy, SecurityPolicyInstance>(o)).ToList();
+            retVal.Policies = context.Connection.Table<DbSecurityDevicePolicy>().Where(o => o.DeviceId == dbDevice.Uuid).ToList().Select(o => m_mapper.MapDomainInstance<DbSecurityDevicePolicy, SecurityPolicyInstance>(o)).ToList();
             return retVal;
         }
 

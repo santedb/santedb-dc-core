@@ -17,24 +17,20 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
+using SQLite.Net;
+using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Reflection;
 using System.Linq.Expressions;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.i18n;
-using System.Diagnostics;
-using SQLite.Net.Interop;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.SQLite.Connection;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -188,7 +184,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 #if SHOW_STATUS || PERFMON
                 itmSw.Stop();
 #endif
-                if(i % 100 == 0 && data.Item.Count > 500)
+                if (i % 100 == 0 && data.Item.Count > 500)
                     ApplicationContext.Current.SetProgress(String.Format(Strings.locale_processBundle, itm.GetType().Name, i, data.Item.Count), i / (float)data.Item.Count);
 #if PERFMON
                 ApplicationContext.Current.PerformanceLog(nameof(BundlePersistenceService), nameof(InsertInternal), $"Insert{itm.GetType().Name}", itmSw.Elapsed);

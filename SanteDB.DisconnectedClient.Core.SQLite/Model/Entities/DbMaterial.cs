@@ -17,70 +17,74 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents a material in the database
-	/// </summary>
-	[Table("material")]
-	public class DbMaterial : DbEntitySubTable
+    /// <summary>
+    /// Represents a material in the database
+    /// </summary>
+    [Table("material")]
+    public class DbMaterial : DbEntitySubTable
     {
 
-		/// <summary>
-		/// Gets or sets the quantity of an entity within its container.
-		/// </summary>
-		/// <value>The quantity.</value>
-		[Column("quantity")]
-		public decimal Quantity {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the quantity of an entity within its container.
+        /// </summary>
+        /// <value>The quantity.</value>
+        [Column("quantity")]
+        public decimal Quantity
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the form concept.
-		/// </summary>
-		/// <value>The form concept.</value>
-		[Column("form_concept_uuid"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] FormConceptUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the form concept.
+        /// </summary>
+        /// <value>The form concept.</value>
+        [Column("form_concept_uuid"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] FormConceptUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the quantity concept.
-		/// </summary>
-		/// <value>The quantity concept.</value>
-		[Column("quantity_concept_uuid"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] QuantityConceptUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the quantity concept.
+        /// </summary>
+        /// <value>The quantity concept.</value>
+        [Column("quantity_concept_uuid"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] QuantityConceptUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the expiry date.
-		/// </summary>
-		/// <value>The expiry date.</value>
-		[Column("expiry")]
-		public DateTime ExpiryDate {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the expiry date.
+        /// </summary>
+        /// <value>The expiry date.</value>
+        [Column("expiry")]
+        public DateTime ExpiryDate
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether this instance is administrative.
-		/// </summary>
-		/// <value><c>true</c> if this instance is administrative; otherwise, <c>false</c>.</value>
-		[Column("isAdministrative")]
-		public bool IsAdministrative {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is administrative.
+        /// </summary>
+        /// <value><c>true</c> if this instance is administrative; otherwise, <c>false</c>.</value>
+        [Column("isAdministrative")]
+        public bool IsAdministrative
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Query result
@@ -142,24 +146,25 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
                 set;
             }
         }
-	}
+    }
 
-	/// <summary>
-	/// Manufactured material.
-	/// </summary>
-	[Table("manufactured_material")]
-	public class DbManufacturedMaterial : DbMaterialSubTable
-	{
+    /// <summary>
+    /// Manufactured material.
+    /// </summary>
+    [Table("manufactured_material")]
+    public class DbManufacturedMaterial : DbMaterialSubTable
+    {
 
-		/// <summary>
-		/// Gets or sets the lot number.
-		/// </summary>
-		/// <value>The lot number.</value>
-		[Column("lotNumber"), Collation("NOCASE")]
-		public String LotNumber {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the lot number.
+        /// </summary>
+        /// <value>The lot number.</value>
+        [Column("lotNumber"), Collation("NOCASE")]
+        public String LotNumber
+        {
+            get;
+            set;
+        }
 
         public class QueryResult : DbMaterial.QueryResult
         {
@@ -174,7 +179,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
                 set;
             }
         }
-	}
+    }
 
 }
 

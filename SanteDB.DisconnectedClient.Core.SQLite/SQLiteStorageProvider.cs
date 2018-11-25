@@ -21,18 +21,14 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Mail;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using SanteDB.DisconnectedClient.SQLite.Synchronization;
 using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.SQLite.Mail;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -68,7 +64,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         public bool Configure(SanteDBConfiguration configuration, String dataDirectory, Dictionary<String, Object> options)
         {
-            
+
             // Connection Strings
             DataConfigurationSection dataSection = new DataConfigurationSection()
             {

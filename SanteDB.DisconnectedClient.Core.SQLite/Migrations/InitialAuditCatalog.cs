@@ -18,15 +18,11 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -80,7 +76,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     db.CreateTable<DbAuditObject>();
                     return true;
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     tracer.TraceError("Error deploying Audit repository: {0}", e);
                     return false;

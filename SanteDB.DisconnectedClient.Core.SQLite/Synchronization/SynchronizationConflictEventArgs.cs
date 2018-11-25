@@ -19,26 +19,22 @@
  */
 using SanteDB.Core.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
-	/// <summary>
-	/// Represents conflict event args
-	/// </summary>
-	public class SynchronizationConflictEventArgs : EventArgs
-	{
-		/// <summary>
-		/// Represents the local resource
-		/// </summary>
-		public IdentifiedData LocalResource { get; set; }
+    /// <summary>
+    /// Represents conflict event args
+    /// </summary>
+    public class SynchronizationConflictEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Represents the local resource
+        /// </summary>
+        public IdentifiedData LocalResource { get; set; }
 
-		/// <summary>
-		/// Represents the remote resource
-		/// </summary>
-		public IdentifiedData RemoteResource { get; set; }
-	}
+        /// <summary>
+        /// Represents the remote resource
+        /// </summary>
+        public IdentifiedData RemoteResource { get; set; }
+    }
 }

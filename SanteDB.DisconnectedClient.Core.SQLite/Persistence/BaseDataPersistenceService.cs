@@ -17,16 +17,12 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
+using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.SQLite.Model;
-using SQLite.Net;
+using System;
 using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Linq.Expressions;
-using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Data.QueryBuilder;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -42,10 +38,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
     /// Base data persistence service
     /// </summary>
     public abstract class BaseDataPersistenceService<TModel, TDomain, TQueryResult> : IdentifiedPersistenceService<TModel, TDomain, TQueryResult>
-		where TModel : BaseEntityData, new()
-		where TDomain : DbBaseData, new()
+        where TModel : BaseEntityData, new()
+        where TDomain : DbBaseData, new()
         where TQueryResult : DbIdentified
-	{
+    {
 
         protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
         {
@@ -57,37 +53,37 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel InsertInternal (SQLiteDataContext context, TModel data)
-		{
-			var domainObject = this.FromModelInstance (data, context) as TDomain;
+        protected override TModel InsertInternal(SQLiteDataContext context, TModel data)
+        {
+            var domainObject = this.FromModelInstance(data, context) as TDomain;
 
-			if (data.Key == Guid.Empty || !data.Key.HasValue)
-				data.Key = domainObject.Key = Guid.NewGuid ();
+            if (data.Key == Guid.Empty || !data.Key.HasValue)
+                data.Key = domainObject.Key = Guid.NewGuid();
 
             // Ensure created by exists
-            if(data.CreatedBy != null) data.CreatedBy = data.CreatedBy?.EnsureExists(context);
-			data.CreatedByKey = domainObject.CreatedByKey = domainObject.CreatedByKey == Guid.Empty ? base.CurrentUserUuid (context) : domainObject.CreatedByKey;
-			domainObject.CreationTime = domainObject.CreationTime == DateTimeOffset.MinValue || domainObject.CreationTime == null || domainObject.CreationTime.Value.DateTime == DateTime.MinValue ? DateTimeOffset.Now : domainObject.CreationTime;
-			data.CreationTime = (DateTimeOffset)domainObject.CreationTime;
+            if (data.CreatedBy != null) data.CreatedBy = data.CreatedBy?.EnsureExists(context);
+            data.CreatedByKey = domainObject.CreatedByKey = domainObject.CreatedByKey == Guid.Empty ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
+            domainObject.CreationTime = domainObject.CreationTime == DateTimeOffset.MinValue || domainObject.CreationTime == null || domainObject.CreationTime.Value.DateTime == DateTime.MinValue ? DateTimeOffset.Now : domainObject.CreationTime;
+            data.CreationTime = (DateTimeOffset)domainObject.CreationTime;
 
             if (!context.Connection.Table<TDomain>().Where(o => o.Uuid == domainObject.Uuid).Any())
-				context.Connection.Insert(domainObject);
-			else
+                context.Connection.Insert(domainObject);
+            else
                 context.Connection.Update(domainObject);
 
             context.AddTransactedItem(data);
-			return data;
-		}
+            return data;
+        }
 
         /// <summary>
         /// Perform the actual update.
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel UpdateInternal (SQLiteDataContext context, TModel data)
-		{
-			var domainObject = this.FromModelInstance (data, context) as TDomain;
-            var existing = context.Connection.Table<TDomain>().Where(o=>o.Uuid == domainObject.Uuid).FirstOrDefault();
+        protected override TModel UpdateInternal(SQLiteDataContext context, TModel data)
+        {
+            var domainObject = this.FromModelInstance(data, context) as TDomain;
+            var existing = context.Connection.Table<TDomain>().Where(o => o.Uuid == domainObject.Uuid).FirstOrDefault();
             if (existing == null)
                 throw new KeyNotFoundException(data.Key.ToString());
 
@@ -95,30 +91,30 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             existing.CopyObjectData(domainObject);
             domainObject = existing;
             domainObject.CreatedByUuid = existing.CreatedByUuid;
-            if(data.CreatedBy != null) data.CreatedBy = data.CreatedBy?.EnsureExists(context);
-			domainObject.UpdatedByKey = domainObject.CreatedByKey == Guid.Empty || domainObject.CreatedByKey == null ? base.CurrentUserUuid (context) : domainObject.CreatedByKey;
-			domainObject.UpdatedTime = DateTime.Now;
-			context.Connection.Update(domainObject);
+            if (data.CreatedBy != null) data.CreatedBy = data.CreatedBy?.EnsureExists(context);
+            domainObject.UpdatedByKey = domainObject.CreatedByKey == Guid.Empty || domainObject.CreatedByKey == null ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
+            domainObject.UpdatedTime = DateTime.Now;
+            context.Connection.Update(domainObject);
             context.AddTransactedItem(data);
 
             return data;
-		}
+        }
 
         /// <summary>
         /// Performs the actual obsoletion
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="data">Data.</param>
-        protected override TModel ObsoleteInternal (SQLiteDataContext context, TModel data)
-		{
-			var domainObject = this.FromModelInstance (data, context) as TDomain;
-            if(data.ObsoletedBy != null) data.ObsoletedBy = data.ObsoletedBy?.EnsureExists(context);
+        protected override TModel ObsoleteInternal(SQLiteDataContext context, TModel data)
+        {
+            var domainObject = this.FromModelInstance(data, context) as TDomain;
+            if (data.ObsoletedBy != null) data.ObsoletedBy = data.ObsoletedBy?.EnsureExists(context);
             data.ObsoletedByKey = domainObject.ObsoletedByKey = data.ObsoletedBy?.Key ?? domainObject.ObsoletedByKey ?? base.CurrentUserUuid(context);
             domainObject.ObsoletionTime = domainObject.ObsoletionTime ?? DateTime.Now;
-			data.ObsoletionTime = (DateTimeOffset)domainObject.ObsoletionTime;
-			context.Connection.Update (domainObject);
-			return data;
-		}
+            data.ObsoletionTime = (DateTimeOffset)domainObject.ObsoletionTime;
+            context.Connection.Update(domainObject);
+            return data;
+        }
 
 
     }

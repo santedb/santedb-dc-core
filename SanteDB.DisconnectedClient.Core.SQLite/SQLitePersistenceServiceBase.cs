@@ -17,32 +17,25 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Linq;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.Core.Model.Map;
-using System.Reflection;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Map;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Hacks;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using System.Linq;
 using System.Linq.Expressions;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.EntityLoader;
-using System.Threading;
-using SanteDB.DisconnectedClient.Core.Caching;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using System.Diagnostics;
-using SanteDB.Core.Services;
-using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.DisconnectedClient.SQLite.Hacks;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -52,7 +45,7 @@ namespace SanteDB.DisconnectedClient.SQLite
     public abstract class SQLitePersistenceServiceBase<TData> : IDataPersistenceService<TData>, ISQLitePersistenceService where TData : IdentifiedData, new()
     {
 
-       
+
 
         // Get tracer
         protected Tracer m_tracer; //= Tracer.GetTracer(typeof(LocalPersistenceServiceBase<TData>));
@@ -177,7 +170,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                     {
                         try
                         {
-                            
+
                             this.m_tracer.TraceVerbose("INSERT {0}", data);
 
                             context.Connection.BeginTransaction();
@@ -345,7 +338,8 @@ namespace SanteDB.DisconnectedClient.SQLite
         {
             if (key == Guid.Empty) return null;
             var existing = ApplicationContext.Current.GetService<IDataCachingService>().GetCacheItem(key);
-            if ((existing as IdentifiedData)?.LoadState <= LoadState.FullLoad) {
+            if ((existing as IdentifiedData)?.LoadState <= LoadState.FullLoad)
+            {
                 using (var context = this.CreateReadonlyConnection())
                     try
                     {
@@ -500,7 +494,7 @@ namespace SanteDB.DisconnectedClient.SQLite
 
         }
 
- 
+
         /// <summary>
         /// Query this instance.
         /// </summary>

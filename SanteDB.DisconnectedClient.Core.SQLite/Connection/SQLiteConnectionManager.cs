@@ -18,19 +18,16 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.i18n;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
-using System.Diagnostics;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -138,7 +135,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         {
             var mre = this.GetOrRegisterResetEvent(conn.DatabasePath);
             mre.Set();
-           
+
         }
 
         /// <summary>
@@ -254,7 +251,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
                 var retVal = this.GetOrCreatePooledConnection(dataSource, true);
                 this.m_tracer.TraceVerbose("Readonly connection to {0} established, {1} active connections", dataSource, this.m_connections.Count + this.m_readonlyConnections.Count);
-                
+
 #if DEBUG_SQL
                 conn.TraceListener = new TracerTraceListener();
 #endif
@@ -284,15 +281,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                 if (conn != null) return conn;
             }
 
-           
+
             ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
-            
-            lock(s_lockObject)
+
+            lock (s_lockObject)
             {
                 LockableSQLiteConnection retVal = null;
                 if (isReadonly)
                     retVal = this.m_connectionPool.OfType<ReadonlySQLiteConnection>().FirstOrDefault(o => o.DatabasePath == dataSource);
-                else {
+                else
+                {
                     if (!this.m_writeConnections.TryGetValue(dataSource, out writeConnection)) // Writeable connection can only have one in the pool so if it isn't there make sure it isn't in the current 
                     {
                         writeConnection = new WriteableSQLiteConnection(platform, dataSource, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex | SQLiteOpenFlags.Create) { Persistent = true };
@@ -326,7 +324,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         {
             if (!this.IsRunning)
                 throw new InvalidOperationException("Cannot get connection before daemon is started");
-            
+
             try
             {
                 ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
@@ -383,7 +381,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                 while (itm.Value.Count > 0)
                     Task.Delay(100).Wait();
             }
-            foreach(var itm in this.m_connectionPool)
+            foreach (var itm in this.m_connectionPool)
             {
                 this.m_tracer.TraceInfo("Shutting down {0}...", itm.DatabasePath);
                 itm.Close();
@@ -424,7 +422,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                         conn.Execute("ANALYZE");
                     }
                 }
-                
+
             }
             finally
             {

@@ -17,48 +17,49 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
-	/// <summary>
-	/// Represents note storage
-	/// </summary>
-	public abstract class DbNote : DbIdentified
-	{
+    /// <summary>
+    /// Represents note storage
+    /// </summary>
+    public abstract class DbNote : DbIdentified
+    {
 
         /// <summary>
 		/// Gets or sets the author identifier.
 		/// </summary>
 		/// <value>The author identifier.</value>
 		[Column("author"), MaxLength(16), NotNull, ForeignKey(typeof(DbPerson), nameof(DbPerson.Uuid))]
-		public byte[] AuthorUuid {
-			get;
-			set;
-		}
+        public byte[] AuthorUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the text.
-		/// </summary>
-		/// <value>The text.</value>
-		[Column("text")]
-		public String Text {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the text.
+        /// </summary>
+        /// <value>The text.</value>
+        [Column("text")]
+        public String Text
+        {
+            get;
+            set;
+        }
+    }
 
-	/// <summary>
-	/// Entity note.
-	/// </summary>
-	[Table("entity_note")]
-	public class DbEntityNote : DbNote
-	{
+    /// <summary>
+    /// Entity note.
+    /// </summary>
+    [Table("entity_note")]
+    public class DbEntityNote : DbNote
+    {
         /// <summary>
         /// Gets or sets the source identifier.
         /// </summary>
@@ -76,8 +77,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
     /// Act note.
     /// </summary>
     [Table("act_note")]
-	public class DbActNote : DbNote
-	{
+    public class DbActNote : DbNote
+    {
         /// <summary>
         /// Gets or sets the source identifier.
         /// </summary>

@@ -17,21 +17,19 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents an entity in the database
-	/// </summary>
-	[Table("entity")]
-	public class DbEntity : DbVersionedData
-	{
+    /// <summary>
+    /// Represents an entity in the database
+    /// </summary>
+    [Table("entity")]
+    public class DbEntity : DbVersionedData
+    {
         /// <summary>
         /// Gets or sets the template
         /// </summary>
@@ -43,42 +41,46 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
         /// </summary>
         /// <value>The class concept identifier.</value>
         [Column("classConcept"), MaxLength(16), NotNull, Indexed, ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] ClassConceptUuid {
-			get;
-			set;
-		}
+        public byte[] ClassConceptUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the determiner concept identifier.
-		/// </summary>
-		/// <value>The determiner concept identifier.</value>
-		[Column("determinerConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] DeterminerConceptUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the determiner concept identifier.
+        /// </summary>
+        /// <value>The determiner concept identifier.</value>
+        [Column("determinerConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] DeterminerConceptUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the status concept identifier.
-		/// </summary>
-		/// <value>The status concept identifier.</value>
-		[Column("statusConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] StatusConceptUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the status concept identifier.
+        /// </summary>
+        /// <value>The status concept identifier.</value>
+        [Column("statusConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] StatusConceptUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the type concept identifier.
-		/// </summary>
-		/// <value>The type concept identifier.</value>
-		[Column("typeConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] TypeConceptUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the type concept identifier.
+        /// </summary>
+        /// <value>The type concept identifier.</value>
+        [Column("typeConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] TypeConceptUuid
+        {
+            get;
+            set;
+        }
 
 
-	}
+    }
 }
 

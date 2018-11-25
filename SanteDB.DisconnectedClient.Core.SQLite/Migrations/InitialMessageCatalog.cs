@@ -21,14 +21,10 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.SQLite.Mail;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Mail;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
@@ -73,11 +69,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                     }
                     else
                         tracer.TraceInfo("Installing initial alerts catalog");
-                        db.Insert(new DbMigrationLog()
-                        {
-                            MigrationId = this.Id,
-                            InstallationDate = DateTime.Now
-                        });
+                    db.Insert(new DbMigrationLog()
+                    {
+                        MigrationId = this.Id,
+                        InstallationDate = DateTime.Now
+                    });
 
                     db.CreateTable<DbMailMessage>();
 
@@ -86,7 +82,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                     return true;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 db.Rollback();
                 tracer.TraceError("Error installing initial alerts catalog: {0}", e);

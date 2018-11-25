@@ -17,39 +17,40 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
 {
-	/// <summary>
-	/// Concept set
-	/// </summary>
-	[Table("concept_set")]
+    /// <summary>
+    /// Concept set
+    /// </summary>
+    [Table("concept_set")]
     [AssociativeTable(typeof(DbConcept), typeof(DbConceptSetConceptAssociation))]
-	public class DbConceptSet : DbIdentified
-	{
-		/// <summary>
-		/// Gets or sets the name.
-		/// </summary>
-		/// <value>The name.</value>
-		[Column("name")]
-		public String Name {
-			get;
-			set;
-		}
+    public class DbConceptSet : DbIdentified
+    {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        [Column("name")]
+        public String Name
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the mnemonic.
-		/// </summary>
-		/// <value>The mnemonic.</value>
-		[Column("mnemonic"), Indexed, NotNull]
-		public String Mnemonic {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the mnemonic.
+        /// </summary>
+        /// <value>The mnemonic.</value>
+        [Column("mnemonic"), Indexed, NotNull]
+        public String Mnemonic
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets the oid of the concept set
@@ -65,32 +66,34 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
 
     }
 
-	/// <summary>
-	/// Concept set concept association.
-	/// </summary>
-	[Table("concept_concept_set")]
-	public class DbConceptSetConceptAssociation : DbIdentified
-	{
+    /// <summary>
+    /// Concept set concept association.
+    /// </summary>
+    [Table("concept_concept_set")]
+    public class DbConceptSetConceptAssociation : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the concept identifier.
-		/// </summary>
-		/// <value>The concept identifier.</value>
-		[Column("concept_uuid"), NotNull, Indexed(Name = "concept_concept_set_concept_set", Unique = true), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] ConceptUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the concept identifier.
+        /// </summary>
+        /// <value>The concept identifier.</value>
+        [Column("concept_uuid"), NotNull, Indexed(Name = "concept_concept_set_concept_set", Unique = true), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] ConceptUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the concept set identifier.
-		/// </summary>
-		/// <value>The concept set identifier.</value>
-		[Column("concept_set_uuid"), Indexed(Name = "concept_concept_set_concept_set", Unique = true), MaxLength(16), ForeignKey(typeof(DbConceptSet), nameof(DbConceptSet.Uuid))]
-		public byte[] ConceptSetUuid {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the concept set identifier.
+        /// </summary>
+        /// <value>The concept set identifier.</value>
+        [Column("concept_set_uuid"), Indexed(Name = "concept_concept_set_concept_set", Unique = true), MaxLength(16), ForeignKey(typeof(DbConceptSet), nameof(DbConceptSet.Uuid))]
+        public byte[] ConceptSetUuid
+        {
+            get;
+            set;
+        }
+    }
 }
 

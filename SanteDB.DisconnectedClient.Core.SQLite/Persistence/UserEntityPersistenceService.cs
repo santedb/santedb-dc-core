@@ -18,14 +18,10 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Model;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -39,7 +35,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         private PersonPersistenceService m_personPersister = new PersonPersistenceService();
         protected EntityPersistenceService m_entityPersister = new EntityPersistenceService();
 
-      
+
         /// <summary>
         /// To model instance
         /// </summary>
@@ -56,17 +52,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (!String.IsNullOrEmpty(dbp.DateOfBirthPrecision))
                 retVal.DateOfBirthPrecision = PersonPersistenceService.PrecisionMap.Where(o => o.Value == dbp.DateOfBirthPrecision).Select(o => o.Key).First();
 
-           // retVal.LoadAssociations(context);
+            // retVal.LoadAssociations(context);
 
             return retVal;
         }
-        
+
         /// <summary>
         /// Inserts the user entity
         /// </summary>
         protected override UserEntity InsertInternal(SQLiteDataContext context, UserEntity data)
         {
-            if(data.SecurityUser != null) data.SecurityUser = data.SecurityUser?.EnsureExists(context);
+            if (data.SecurityUser != null) data.SecurityUser = data.SecurityUser?.EnsureExists(context);
             data.SecurityUserKey = data.SecurityUser?.Key ?? data.SecurityUserKey;
             var inserted = this.m_personPersister.Insert(context, data);
 
@@ -78,8 +74,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override UserEntity UpdateInternal(SQLiteDataContext context, UserEntity data)
         {
-//            data.SecurityUser?.EnsureExists(context);
-//            data.SecurityUserKey = data.SecurityUser?.Key ?? data.SecurityUserKey;
+            //            data.SecurityUser?.EnsureExists(context);
+            //            data.SecurityUserKey = data.SecurityUser?.Key ?? data.SecurityUserKey;
             this.m_personPersister.Update(context, data);
             return base.UpdateInternal(context, data);
         }

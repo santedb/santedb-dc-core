@@ -17,22 +17,19 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Data.QueryBuilder.Attributes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model;
-using System.Collections;
 using System.Text.RegularExpressions;
-using SanteDB.Core.Model.Attributes;
 using System.Xml.Serialization;
-using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.Core.Data.QueryBuilder
 {
@@ -115,7 +112,7 @@ namespace SanteDB.Core.Data.QueryBuilder
             if ((parts & QueryPredicatePart.Cast) != 0 && !String.IsNullOrEmpty(this.CastAs))
                 sb.AppendFormat("@{0}", this.CastAs);
             if ((parts & QueryPredicatePart.SubPath) != 0 && !String.IsNullOrEmpty(this.SubPath))
-                sb.AppendFormat("{0}{1}", sb.Length > 0 ? "." : "",  this.SubPath);
+                sb.AppendFormat("{0}{1}", sb.Length > 0 ? "." : "", this.SubPath);
 
             return sb.ToString();
         }
@@ -522,7 +519,7 @@ namespace SanteDB.Core.Data.QueryBuilder
             PropertyInfo domainProperty = scopedTables.Select(o => { tableMapping = o; return m_mapper.MapModelProperty(tmodel, o.OrmType, propertyInfo); }).FirstOrDefault(o => o != null);
 
             // Now map the property path
-            if(String.IsNullOrEmpty(tableAlias))
+            if (String.IsNullOrEmpty(tableAlias))
                 tableAlias = $"{tablePrefix}{tableMapping.TableName}";
             if (domainProperty == null)
                 throw new ArgumentException($"Can't find SQL based property for {propertyPath} on {tableMapping.TableName}");
@@ -567,7 +564,7 @@ namespace SanteDB.Core.Data.QueryBuilder
                             break;
                         case '~':
                             if (sValue.Contains("*") || sValue.Contains("?"))
-                                retVal.Append(" LIKE ? ", CreateParameterValue(sValue.Substring(1).Replace("*","%"), propertyInfo.PropertyType));
+                                retVal.Append(" LIKE ? ", CreateParameterValue(sValue.Substring(1).Replace("*", "%"), propertyInfo.PropertyType));
                             else
                                 retVal.Append(" LIKE '%' || ? || '%'", CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType));
                             break;

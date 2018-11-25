@@ -17,34 +17,26 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Map;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Persistence;
 using System;
-
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Map;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.SQLite.Persistence;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SQLite.Net;
-using System.Collections.Generic;
-using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.Attributes;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Exceptions;
-using System.Linq.Expressions;
-using System.Collections;
-using SanteDB.Core.Services;
-using System.Diagnostics;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
 
-    
+
     /// <summary>
     /// Represents a dummy service which just adds the persistence services to the context
     /// </summary>

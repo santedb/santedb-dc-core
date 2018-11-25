@@ -17,49 +17,50 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents one or more entity addresses linked to an Entity
-	/// </summary>
-	[Table("entity_address")]
-	public class DbEntityAddress : DbEntityLink
-	{
-		
-		/// <summary>
-		/// Gets or sets the use concept identifier.
-		/// </summary>
-		/// <value>The use concept identifier.</value>
-		[Column("use"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
-		public byte[] UseConceptUuid {
-			get;
-			set;
-		}
+    /// <summary>
+    /// Represents one or more entity addresses linked to an Entity
+    /// </summary>
+    [Table("entity_address")]
+    public class DbEntityAddress : DbEntityLink
+    {
 
-	}
+        /// <summary>
+        /// Gets or sets the use concept identifier.
+        /// </summary>
+        /// <value>The use concept identifier.</value>
+        [Column("use"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] UseConceptUuid
+        {
+            get;
+            set;
+        }
 
-	/// <summary>
-	/// Represents an identified address component
-	/// </summary>
-	[Table("entity_address_comp")]
-	public class DbEntityAddressComponent : DbGenericNameComponent
-	{
+    }
 
-		/// <summary>
-		/// Gets or sets the address identifier.
-		/// </summary>
-		/// <value>The address identifier.</value>
-		[Column("address_uuid"), MaxLength(16), Indexed, ForeignKey(typeof(DbEntityAddress), nameof(DbEntityAddress.Uuid))]
-		public byte[] AddressUuid {
-			get;
-			set;
-		}
+    /// <summary>
+    /// Represents an identified address component
+    /// </summary>
+    [Table("entity_address_comp")]
+    public class DbEntityAddressComponent : DbGenericNameComponent
+    {
+
+        /// <summary>
+        /// Gets or sets the address identifier.
+        /// </summary>
+        /// <value>The address identifier.</value>
+        [Column("address_uuid"), MaxLength(16), Indexed, ForeignKey(typeof(DbEntityAddress), nameof(DbEntityAddress.Uuid))]
+        public byte[] AddressUuid
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets or sets the value identifier of the name value

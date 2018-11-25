@@ -36,19 +36,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// Initial queue catalog migration.
     /// </summary>
     public class InitialQueueCatalog : IDbMigration
-	{
-		private Tracer tracer = Tracer.GetTracer(typeof(InitialQueueCatalog));
+    {
+        private Tracer tracer = Tracer.GetTracer(typeof(InitialQueueCatalog));
 
-		#region IDbMigration implementation
-		/// <summary>
-		/// Install the migration package
-		/// </summary>
-		public bool Install ()
-		{
-			var tracer = Tracer.GetTracer (this.GetType ());
+        #region IDbMigration implementation
+        /// <summary>
+        /// Install the migration package
+        /// </summary>
+        public bool Install()
+        {
+            var tracer = Tracer.GetTracer(this.GetType());
             // Database for the SQL Lite connection
             var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.Configuration.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).Value);
-                using(db.Lock())
+            using (db.Lock())
             {
 
                 // Migration log create and check
@@ -74,49 +74,53 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                 db.CreateTable<SynchronizationLogEntry>();
                 db.CreateTable<SynchronizationQuery>();
 
-				var securityRepository = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
+                var securityRepository = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
-				try
-				{
-					new LocalMailService()?.Save(new MailMessage()
-					{
-						Body = Strings.locale_welcomeMessageBody,
-						From = "SanteDB Team",
-						Flags = MailMessageFlags.None,
-						Subject = Strings.locale_welcomeMessageSubject,
-						TimeStamp = DateTime.Now
-					});
-				}
-				catch (Exception e)
-				{
+                try
+                {
+                    new LocalMailService()?.Save(new MailMessage()
+                    {
+                        Body = Strings.locale_welcomeMessageBody,
+                        From = "SanteDB Team",
+                        Flags = MailMessageFlags.None,
+                        Subject = Strings.locale_welcomeMessageSubject,
+                        TimeStamp = DateTime.Now
+                    });
+                }
+                catch (Exception e)
+                {
 #if DEBUG
-					this.tracer.TraceError("Unable to generate welcome message: {0}", e.StackTrace);
+                    this.tracer.TraceError("Unable to generate welcome message: {0}", e.StackTrace);
 #endif
-					this.tracer.TraceError("Unable to generate welcome message: {0}", e.Message);
-				}
+                    this.tracer.TraceError("Unable to generate welcome message: {0}", e.Message);
+                }
             }
 
             return true;
-		}
-		/// <summary>
-		/// Gets the identifier of the migration
-		/// </summary>
-		/// <value>The identifier.</value>
-		public string Id {
-			get {
-				return "000-init-santedb-algonquin-queue";
-			}
-		}
-		/// <summary>
-		/// A human readable description of the migration
-		/// </summary>
-		/// <value>The description.</value>
-		public string Description {
-			get {
-				return "SanteDB offline sync queue catalog";
-			}
-		}
-		#endregion
-	}
+        }
+        /// <summary>
+        /// Gets the identifier of the migration
+        /// </summary>
+        /// <value>The identifier.</value>
+        public string Id
+        {
+            get
+            {
+                return "000-init-santedb-algonquin-queue";
+            }
+        }
+        /// <summary>
+        /// A human readable description of the migration
+        /// </summary>
+        /// <value>The description.</value>
+        public string Description
+        {
+            get
+            {
+                return "SanteDB offline sync queue catalog";
+            }
+        }
+        #endregion
+    }
 }
 

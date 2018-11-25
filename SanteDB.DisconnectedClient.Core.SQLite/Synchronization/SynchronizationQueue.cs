@@ -17,52 +17,51 @@
  * User: justin
  * Date: 2018-8-25
  */
-using System;
-using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
-using System.Collections.Generic;
-using System.Reflection;
-using SQLite.Net;
-using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
-using System.IO;
-using System.Xml.Serialization;
-using SanteDB.DisconnectedClient.Core.Services;
-using System.Linq.Expressions;
-using System.Linq;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.DisconnectedClient.Core;
 using SanteDB.Core.Model.Query;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
-	/// <summary>
-	/// Synchronization queue helper.
-	/// </summary>
-	public static class SynchronizationQueue
-	{
-        
-		/// <summary>
-		/// Gets the current inbound queue
-		/// </summary>
-		/// <value>The inbound.</value>
-		public static SynchronizationQueue<InboundQueueEntry> Inbound {
-			get {
-				return SynchronizationQueue<InboundQueueEntry>.Current;
-			}
-		}
+    /// <summary>
+    /// Synchronization queue helper.
+    /// </summary>
+    public static class SynchronizationQueue
+    {
 
-		/// <summary>
-		/// Gets the current outbound queue
-		/// </summary>
-		/// <value>The inbound.</value>
-		public static SynchronizationQueue<OutboundQueueEntry> Outbound {
-			get {
-				return SynchronizationQueue<OutboundQueueEntry>.Current;
-			}
-		}
+        /// <summary>
+        /// Gets the current inbound queue
+        /// </summary>
+        /// <value>The inbound.</value>
+        public static SynchronizationQueue<InboundQueueEntry> Inbound
+        {
+            get
+            {
+                return SynchronizationQueue<InboundQueueEntry>.Current;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current outbound queue
+        /// </summary>
+        /// <value>The inbound.</value>
+        public static SynchronizationQueue<OutboundQueueEntry> Outbound
+        {
+            get
+            {
+                return SynchronizationQueue<OutboundQueueEntry>.Current;
+            }
+        }
 
         /// <summary>
         /// Gets the current admin outbound queue
@@ -80,29 +79,31 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// Gets the current deadletter queue
         /// </summary>
         /// <value>The inbound.</value>
-        public static SynchronizationQueue<DeadLetterQueueEntry> DeadLetter {
-			get {
-				return SynchronizationQueue<DeadLetterQueueEntry>.Current;
-			}
-		}
+        public static SynchronizationQueue<DeadLetterQueueEntry> DeadLetter
+        {
+            get
+            {
+                return SynchronizationQueue<DeadLetterQueueEntry>.Current;
+            }
+        }
 
-	}
+    }
 
-	/// <summary>
-	/// Represents a generic synchronization queue
-	/// </summary>
-	public class SynchronizationQueue<TQueueEntry> : ISynchronizationQueue
+    /// <summary>
+    /// Represents a generic synchronization queue
+    /// </summary>
+    public class SynchronizationQueue<TQueueEntry> : ISynchronizationQueue
         where TQueueEntry : SynchronizationQueueEntry, new()
-	{
+    {
 
-		// Get the tracer
-		private Tracer m_tracer = Tracer.GetTracer(typeof(SynchronizationQueue<TQueueEntry>));
+        // Get the tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(SynchronizationQueue<TQueueEntry>));
 
-		// Object sync
-		private Object m_syncObject = new object ();
+        // Object sync
+        private Object m_syncObject = new object();
 
-		// The queue instance
-		private static SynchronizationQueue<TQueueEntry> s_instance;
+        // The queue instance
+        private static SynchronizationQueue<TQueueEntry> s_instance;
 
         /// <summary>
         /// Fired when the data is about to be enqueued
@@ -113,63 +114,65 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// </summary>
         public event EventHandler<DataPersistenceEventArgs<TQueueEntry>> Enqueued;
 
-		/// <summary>
-		/// Singleton
-		/// </summary>
-		/// <value>The current.</value>
-		public static SynchronizationQueue<TQueueEntry> Current
-		{
-			get {
-				if (s_instance == null)
-					s_instance = new SynchronizationQueue<TQueueEntry> ();
-				return s_instance;
-			}
-		}
+        /// <summary>
+        /// Singleton
+        /// </summary>
+        /// <value>The current.</value>
+        public static SynchronizationQueue<TQueueEntry> Current
+        {
+            get
+            {
+                if (s_instance == null)
+                    s_instance = new SynchronizationQueue<TQueueEntry>();
+                return s_instance;
+            }
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.SQLite.Synchronization.SynchronizationQueue`1"/> class.
-		/// </summary>
-		private SynchronizationQueue ()
-		{
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.SQLite.Synchronization.SynchronizationQueue`1"/> class.
+        /// </summary>
+        private SynchronizationQueue()
+        {
+        }
 
-		/// <summary>
-		/// Create a connection
-		/// </summary>
-		/// <returns>The connection.</returns>
-		private LockableSQLiteConnection CreateConnection()
-		{
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString (
-				ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection> ().MessageQueueConnectionStringName
-			).Value);
-		}
+        /// <summary>
+        /// Create a connection
+        /// </summary>
+        /// <returns>The connection.</returns>
+        private LockableSQLiteConnection CreateConnection()
+        {
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(
+                ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName
+            ).Value);
+        }
 
 
 
-		/// <summary>
-		/// Enqueue the specified entry data
-		/// </summary>
-		public TQueueEntry Enqueue(IdentifiedData data, SynchronizationOperationType operation)
-		{
+        /// <summary>
+        /// Enqueue the specified entry data
+        /// </summary>
+        public TQueueEntry Enqueue(IdentifiedData data, SynchronizationOperationType operation)
+        {
 
             // Serialize object
-            TQueueEntry queueEntry = new TQueueEntry() {
+            TQueueEntry queueEntry = new TQueueEntry()
+            {
                 Data = ApplicationContext.Current.GetService<IQueueFileProvider>().SaveQueueData(data),
-				CreationTime = DateTime.Now,
-				Operation = operation,
-				Type = data.GetType ().AssemblyQualifiedName
-			};
+                CreationTime = DateTime.Now,
+                Operation = operation,
+                Type = data.GetType().AssemblyQualifiedName
+            };
 
-			// Enqueue the object
-			return this.EnqueueRaw (queueEntry);
-		}
+            // Enqueue the object
+            return this.EnqueueRaw(queueEntry);
+        }
 
-		/// <summary>
-		/// Enqueue the specified entry
-		/// </summary>
-		/// <param name="entry">Entry.</param>
-		public TQueueEntry EnqueueRaw(TQueueEntry entry)
-		{
+        /// <summary>
+        /// Enqueue the specified entry
+        /// </summary>
+        /// <param name="entry">Entry.</param>
+        public TQueueEntry EnqueueRaw(TQueueEntry entry)
+        {
             // Fire pre-event args
             var preEventArgs = new DataPersistencePreEventArgs<TQueueEntry>(entry);
             this.Enqueuing?.Invoke(this, preEventArgs);
@@ -180,7 +183,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             }
 
             var conn = this.CreateConnection();
-            using(conn.Lock())
+            using (conn.Lock())
             {
                 try
                 {
@@ -205,36 +208,37 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 }
 
             }
-		}
+        }
 
-		/// <summary>
-		/// Deserialize the object
-		/// </summary>
-		public IdentifiedData DeserializeObject(TQueueEntry entry)
-		{
+        /// <summary>
+        /// Deserialize the object
+        /// </summary>
+        public IdentifiedData DeserializeObject(TQueueEntry entry)
+        {
             return ApplicationContext.Current.GetService<IQueueFileProvider>().GetQueueData(entry.Data, Type.GetType(entry.Type));
-		}
+        }
 
-		/// <summary>
-		/// Peeks at the next item in the stack
-		/// </summary>
-		public IdentifiedData Peek()
-		{
-			return this.DeserializeObject (this.PeekRaw ());
-		}
+        /// <summary>
+        /// Peeks at the next item in the stack
+        /// </summary>
+        public IdentifiedData Peek()
+        {
+            return this.DeserializeObject(this.PeekRaw());
+        }
 
-		/// <summary>
-		/// Pop an item from the queue.
-		/// </summary>
-		public IdentifiedData Dequeue() {
-			return this.DeserializeObject (this.DequeueRaw());
-		}
+        /// <summary>
+        /// Pop an item from the queue.
+        /// </summary>
+        public IdentifiedData Dequeue()
+        {
+            return this.DeserializeObject(this.DequeueRaw());
+        }
 
-		/// <summary>
-		/// Pops the item off the stack
-		/// </summary>
-		public TQueueEntry DequeueRaw()
-		{
+        /// <summary>
+        /// Pops the item off the stack
+        /// </summary>
+        public TQueueEntry DequeueRaw()
+        {
             var conn = this.CreateConnection();
             using (conn.Lock())
             {
@@ -260,7 +264,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     throw;
                 }
             }
-		}
+        }
 
         /// <summary>
         /// Provides a mechanism for a queue entry to be udpated
@@ -286,7 +290,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// Peeks a raw row entry from the database.
         /// </summary>
         /// <returns>The raw.</returns>
-        public TQueueEntry PeekRaw(int skip = 0){
+        public TQueueEntry PeekRaw(int skip = 0)
+        {
             var conn = this.CreateConnection();
             using (conn.Lock())
             {
@@ -301,7 +306,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     throw;
                 }
             }
-		}
+        }
 
         /// <summary>
         /// Query the specified object
@@ -342,8 +347,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 try
                 {
-                    
-                    using(conn.Lock())
+
+                    using (conn.Lock())
                         return conn.ExecuteScalar<Int32>($"SELECT COUNT(*) FROM {conn.GetMapping<TQueueEntry>().TableName}");
                 }
                 catch (Exception e)

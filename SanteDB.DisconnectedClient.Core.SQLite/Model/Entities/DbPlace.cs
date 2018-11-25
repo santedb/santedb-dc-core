@@ -17,17 +17,15 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
 using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents a place in the local database
-	/// </summary>
-	[Table("place")]
-	public class DbPlace : DbEntitySubTable
+    /// <summary>
+    /// Represents a place in the local database
+    /// </summary>
+    [Table("place")]
+    public class DbPlace : DbEntitySubTable
     {
         /// <summary>
         /// Identifies whether the place is mobile
@@ -47,7 +45,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
         [Column("lng")]
         public float Lng { get; set; }
 
-        public class QueryResult :DbEntity
+        public class QueryResult : DbEntity
         {
             /// <summary>
             /// Identifies whether the place is mobile

@@ -17,30 +17,30 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
-	/// <summary>
-	/// Security application data. Should only be one entry here as well
-	/// </summary>
-	[Table("security_application")]
+    /// <summary>
+    /// Security application data. Should only be one entry here as well
+    /// </summary>
+    [Table("security_application")]
     [AssociativeTable(typeof(DbSecurityPolicy), typeof(DbSecurityApplicationPolicy))]
-	public class DbSecurityApplication : DbBaseData
-	{
+    public class DbSecurityApplication : DbBaseData
+    {
 
-		/// <summary>
-		/// Gets or sets the public identifier.
-		/// </summary>
-		/// <value>The public identifier.</value>
-		[Column("public_id"), Unique]
-		public String PublicId {
-			get;
-			set;
-		}
-	}
+        /// <summary>
+        /// Gets or sets the public identifier.
+        /// </summary>
+        /// <value>The public identifier.</value>
+        [Column("public_id"), Unique]
+        public String PublicId
+        {
+            get;
+            set;
+        }
+    }
 }
 

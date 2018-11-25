@@ -17,41 +17,38 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model
 {
-	/// <summary>
-	/// Versioned data
-	/// </summary>
-	public abstract class DbVersionedData : DbBaseData
-	{
-		/// <summary>
-		/// Gets or sets the server version UUID, this is used to ensure that the version on a server
-		/// equals the version here
-		/// </summary>
-		/// <value>The version UUID.</value>
-		[Column("version_uuid"), MaxLength(16), NotNull]
-		public byte[] VersionUuid
-		{
-			get;
-			set;
-		}
+    /// <summary>
+    /// Versioned data
+    /// </summary>
+    public abstract class DbVersionedData : DbBaseData
+    {
+        /// <summary>
+        /// Gets or sets the server version UUID, this is used to ensure that the version on a server
+        /// equals the version here
+        /// </summary>
+        /// <value>The version UUID.</value>
+        [Column("version_uuid"), MaxLength(16), NotNull]
+        public byte[] VersionUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the version key.
-		/// </summary>
-		/// <value>The version key.</value>
-		[Ignore]
-		public Guid VersionKey
-		{
-			get { return this.VersionUuid == null ? Guid.Empty : new Guid (this.VersionUuid); }
-			set { this.VersionUuid = value.ToByteArray (); }
-		}
+        /// <summary>
+        /// Gets or sets the version key.
+        /// </summary>
+        /// <value>The version key.</value>
+        [Ignore]
+        public Guid VersionKey
+        {
+            get { return this.VersionUuid == null ? Guid.Empty : new Guid(this.VersionUuid); }
+            set { this.VersionUuid = value.ToByteArray(); }
+        }
 
         /// <summary>
         /// Replace previous version uuid

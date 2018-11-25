@@ -17,30 +17,26 @@
  * User: justin
  * Date: 2018-8-25
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -192,7 +188,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                             //    }
                             //}
                             //else
-                                this.ImportElement(dpe);
+                            this.ImportElement(dpe);
                         }
                         catch (Exception e)
                         {
@@ -265,7 +261,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 while (SynchronizationQueue.Admin.Count() > 0)
                 {
 
-                    
+
                     // Exhaust the outbound queue
                     // Is there more than one item on the queue?
                     var syncItm = SynchronizationQueue.Admin.PeekRaw();

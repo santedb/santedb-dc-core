@@ -325,7 +325,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         }
 
 
-       
+
         /// <summary>
         /// represent as a string
         /// </summary>
@@ -505,6 +505,6 @@ namespace SanteDB.Core.Data.QueryBuilder
             throw new NotImplementedException();
         }
 
-        
+
     }
 }

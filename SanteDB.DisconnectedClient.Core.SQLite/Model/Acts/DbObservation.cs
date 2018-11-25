@@ -19,13 +19,8 @@
  */
 using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SQLite.Net;
 using SQLite.Net.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
 {
@@ -137,7 +132,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
         /// <summary>
         /// Gets or sets the concept representing the value of this
         /// </summary>
-        [Column("value"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))] 
+        [Column("value"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
         public byte[] Value { get; set; }
 
         /// <summary>

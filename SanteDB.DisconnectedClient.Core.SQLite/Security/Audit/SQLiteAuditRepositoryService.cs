@@ -17,22 +17,20 @@
  * User: justin
  * Date: 2018-6-28
  */
+using MARC.HI.EHRS.SVC.Auditing.Data;
+using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Map;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
+using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MARC.HI.EHRS.SVC.Auditing.Data;
 using System.Linq.Expressions;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.Core.Model.Map;
 using System.Reflection;
-using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
-using SanteDB.Core.Data.QueryBuilder;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
 {
@@ -59,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 {
                     this.Prune();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     this.m_tracer.TraceError("Error pruning audit repository: {0}", ex);
                 }
@@ -113,7 +111,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error pruning audit database: {0}", e);
                 throw;
@@ -146,10 +144,10 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
 
                 // Fetch 
                 var conn = this.CreateConnection();
-                using(conn.Lock())
+                using (conn.Lock())
                 {
                     var builder = new QueryBuilder(this.m_mapper);
-                    var sql = builder.CreateQuery<AuditData>(o=>o.CorrelationToken == pk).Limit(1).Build();
+                    var sql = builder.CreateQuery<AuditData>(o => o.CorrelationToken == pk).Limit(1).Build();
 
                     var res = conn.Query<DbAuditData.QueryResult>(sql.SQL, sql.Arguments.ToArray()).FirstOrDefault();
                     AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.Success, sql.ToString(), pk);
@@ -157,7 +155,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     return this.ToModelInstance(conn, res, false);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.EpicFail, id.ToString());
                 this.m_tracer.TraceError("Error retrieving audit {0} : {1}", id, e);
@@ -182,23 +180,24 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             if (res.EventTypeCode != null)
             {
                 var concept = ApplicationContext.Current.GetService<IConceptRepositoryService>().GetConcept(res.Code);
-                retVal.EventTypeCode = new AuditCode(res.Code, res.CodeSystem) {
+                retVal.EventTypeCode = new AuditCode(res.Code, res.CodeSystem)
+                {
                     DisplayName = concept?.ConceptNames.First()?.Name ?? res.Code
                 };
             }
 
             // Get actors and objects
-            if(!summary)
+            if (!summary)
             {
 
                 // Actors
                 var sql = new SqlStatement<DbAuditActorAssociation>().SelectFrom()
-                        .InnerJoin<DbAuditActorAssociation, DbAuditActor>(o=>o.TargetUuid, o=>o.Id)
+                        .InnerJoin<DbAuditActorAssociation, DbAuditActor>(o => o.TargetUuid, o => o.Id)
                         .Join<DbAuditActor, DbAuditCode>("LEFT", o => o.ActorRoleCode, o => o.Id)
                         .Where<DbAuditActorAssociation>(o => o.SourceUuid == res.Id)
                         .Build();
 
-                foreach(var itm in context.Query<DbAuditActor.QueryResult>(sql.SQL, sql.Arguments.ToArray()))
+                foreach (var itm in context.Query<DbAuditActor.QueryResult>(sql.SQL, sql.Arguments.ToArray()))
                     retVal.Actors.Add(new AuditActorData()
                     {
                         UserName = itm.UserName,
@@ -211,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     });
 
                 // Objects
-                foreach(var itm in context.Table<DbAuditObject>().Where(o=>o.AuditId == res.Id))
+                foreach (var itm in context.Table<DbAuditObject>().Where(o => o.AuditId == res.Id))
                 {
                     retVal.AuditableObjects.Add(new AuditableObject()
                     {
@@ -225,13 +224,13 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     });
                 }
             }
-           else
+            else
             {
                 // Actors
                 var sql = new SqlStatement<DbAuditActorAssociation>().SelectFrom()
                         .InnerJoin<DbAuditActorAssociation, DbAuditActor>(o => o.TargetUuid, o => o.Id)
                         .Join<DbAuditActor, DbAuditCode>("LEFT", o => o.ActorRoleCode, o => o.Id)
-                        .Where<DbAuditActorAssociation>(o => o.SourceUuid == res.Id).And<DbAuditActor>(p=>p.UserIsRequestor == true)
+                        .Where<DbAuditActorAssociation>(o => o.SourceUuid == res.Id).And<DbAuditActor>(p => p.UserIsRequestor == true)
                         .Build();
 
                 foreach (var itm in context.Query<DbAuditActor.QueryResult>(sql.SQL, sql.Arguments.ToArray()))
@@ -297,7 +296,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         public AuditData Insert(AuditData audit)
         {
             var conn = this.CreateConnection();
-            using(conn.Lock())
+            using (conn.Lock())
             {
                 try
                 {
@@ -326,11 +325,11 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     conn.Insert(dbAudit);
 
                     // Insert secondary properties
-                    if(audit.Actors != null)
-                        foreach(var act in audit.Actors)
+                    if (audit.Actors != null)
+                        foreach (var act in audit.Actors)
                         {
                             var dbAct = conn.Table<DbAuditActor>().Where(o => o.UserName == act.UserName).FirstOrDefault();
-                            if(dbAct == null)
+                            if (dbAct == null)
                             {
                                 dbAct = this.m_mapper.MapModelInstance<AuditActorData, DbAuditActor>(act);
                                 dbAct.Id = Guid.NewGuid().ToByteArray();
@@ -358,8 +357,8 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                         }
 
                     // Audit objects
-                    if(audit.AuditableObjects != null)
-                        foreach(var ao in audit.AuditableObjects)
+                    if (audit.AuditableObjects != null)
+                        foreach (var ao in audit.AuditableObjects)
                         {
                             var dbAo = this.m_mapper.MapModelInstance<AuditableObject, DbAuditObject>(ao);
                             dbAo.IDTypeCode = (int)(ao.IDTypeCode ?? 0);

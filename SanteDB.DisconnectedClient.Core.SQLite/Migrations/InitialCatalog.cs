@@ -17,30 +17,27 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using System.Reflection;
-using System.Linq;
-using SQLite.Net;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.SQLite.Model.DataType;
-using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using System.IO;
-using SanteDB.DisconnectedClient.SQLite.Model.Roles;
-using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Serices;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.SQLite;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
+using SanteDB.DisconnectedClient.SQLite.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Security;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SQLite.Net;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -92,7 +89,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                         InstallationDate = DateTime.Now
                     });
 
-                if(!silent)
+                if (!silent)
                     ApplicationContext.Current.SetProgress(Strings.locale_setting_table, 0);
 
                 // Create tables
@@ -219,11 +216,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 db.CreateTable<DbActTag>();
                 db.CreateTable<DbActParticipation>();
 
-                if (!silent) { 
-                tracer.TraceInfo("Initializing Data & Views...");
+                if (!silent)
+                {
+                    tracer.TraceInfo("Initializing Data & Views...");
 
-                // Run SQL Script
-                string[] resourceSql = {
+                    // Run SQL Script
+                    string[] resourceSql = {
                     "SanteDB.DisconnectedClient.SQLite.Sql.000_init_santedb_algonquin.sql",
                     "SanteDB.DisconnectedClient.SQLite.Sql.001_init_santedb_core_data.sql"
                 };

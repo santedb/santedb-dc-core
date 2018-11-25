@@ -17,16 +17,10 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using SQLite.Net;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Data.QueryBuilder;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -42,7 +36,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             return domainQuery.OrderBy<DbMaterial>(o => o.ExpiryDate, SanteDB.Core.Model.Map.SortOrderType.OrderByDescending);
         }
-        
+
         /// <summary>
         /// Material persister
         /// </summary>
@@ -54,8 +48,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
 
             var iddat = dataInstance as DbIdentified;
-            var domainMmat = dataInstance as DbManufacturedMaterial ?? dataInstance.GetInstanceOf<DbManufacturedMaterial>() ?? context.Connection.Table<DbManufacturedMaterial>().Where(o=>o.Uuid == iddat.Uuid).First();
-            var domainMat = dataInstance as DbMaterial ?? dataInstance.GetInstanceOf<DbMaterial>() ?? context.Connection.Table<DbMaterial>().Where(o=>o.Uuid == iddat.Uuid).First();
+            var domainMmat = dataInstance as DbManufacturedMaterial ?? dataInstance.GetInstanceOf<DbManufacturedMaterial>() ?? context.Connection.Table<DbManufacturedMaterial>().Where(o => o.Uuid == iddat.Uuid).First();
+            var domainMat = dataInstance as DbMaterial ?? dataInstance.GetInstanceOf<DbMaterial>() ?? context.Connection.Table<DbMaterial>().Where(o => o.Uuid == iddat.Uuid).First();
             //var dbm = domainMat ?? context.Table<DbMaterial>().Where(o => o.Uuid == domainMmat.Uuid).First();
             var retVal = this.m_materialPersister.ToModelInstance<ManufacturedMaterial>(domainMat, context);
             retVal.LotNumber = domainMmat.LotNumber;

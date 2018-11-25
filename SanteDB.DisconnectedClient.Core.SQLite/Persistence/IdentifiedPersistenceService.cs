@@ -17,29 +17,22 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SanteDB.Core.Model.Security;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SQLite.Net;
-using System.Linq.Expressions;
-using System.Linq;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using System.Text;
-using System.Collections.Generic;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.Core.Model.Interfaces;
-using System.Collections;
-using SanteDB.Core.Services;
-using System.Diagnostics;
-using System.Reflection;
-using SQLite.Net.Attributes;
-using SanteDB.DisconnectedClient.Core.Caching;
 using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.SQLite.Model;
+using SQLite.Net.Attributes;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -125,7 +118,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
 
             PropertyInfo[] properties = null;
-            if(!this.m_requiredProperties.TryGetValue(typeof(TDomain), out properties))
+            if (!this.m_requiredProperties.TryGetValue(typeof(TDomain), out properties))
             {
                 properties = typeof(TDomain).GetRuntimeProperties().Where(o => o.GetCustomAttribute<NotNullAttribute>() != null).ToArray();
                 lock (this.m_requiredProperties)
@@ -202,7 +195,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                     var tableMap = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(TDomain));
                     var resultMap = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(TQueryResult));
-                    queryStatement = new SqlStatement<TDomain>().SelectFrom(resultMap.Columns.Select(o=>$"{(typeof(TDomain).GetRuntimeProperty(o.SourceProperty.Name) != null? tableMap.TableName + "." : "")}{o.Name}").ToArray());
+                    queryStatement = new SqlStatement<TDomain>().SelectFrom(resultMap.Columns.Select(o => $"{(typeof(TDomain).GetRuntimeProperty(o.SourceProperty.Name) != null ? tableMap.TableName + "." : "")}{o.Name}").ToArray());
 
                     var fkStack = new Stack<SanteDB.Core.Data.QueryBuilder.TableMapping>();
                     fkStack.Push(tableMap);
@@ -570,7 +563,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     itm.SourceEntityKey = sourceKey;
                     itm.Key = null;
                 }
-                
+
 
             // Remove old
             var obsoleteRecords = existing.Where(o => !storage.Any(ecn => ecn.Key == o.Key));
@@ -587,7 +580,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             foreach (var ins in insertRecords)
             {
                 if (ins.IsEmpty()) continue;
-                if(!ins.SourceEntityKey.HasValue)
+                if (!ins.SourceEntityKey.HasValue)
                     ins.SourceEntityKey = sourceKey;
                 persistenceService.Insert(dataContext, ins);
             }

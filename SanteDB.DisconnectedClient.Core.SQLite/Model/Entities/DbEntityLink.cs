@@ -17,28 +17,27 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
 {
-	/// <summary>
-	/// Represents a class which is linked to an entity
-	/// </summary>
-	public abstract class DbEntityLink : DbIdentified
-	{
+    /// <summary>
+    /// Represents a class which is linked to an entity
+    /// </summary>
+    public abstract class DbEntityLink : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the entity identifier.
-		/// </summary>
-		/// <value>The entity identifier.</value>
-		[Column("entity_uuid"), Indexed, MaxLength(16), NotNull, ForeignKey(typeof(DbEntity), nameof(DbEntity.Uuid))]
-		public byte[] SourceUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the entity identifier.
+        /// </summary>
+        /// <value>The entity identifier.</value>
+        [Column("entity_uuid"), Indexed, MaxLength(16), NotNull, ForeignKey(typeof(DbEntity), nameof(DbEntity.Uuid))]
+        public byte[] SourceUuid
+        {
+            get;
+            set;
+        }
 
 
 

@@ -17,11 +17,10 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
 using SanteDB.Core.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SQLite.Net;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -55,7 +54,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             var retVal = m_actPersister.ToModelInstance<TObservation>(actInstance, context);
 
-            if(obsInstance.InterpretationConceptUuid != null)
+            if (obsInstance.InterpretationConceptUuid != null)
                 retVal.InterpretationConceptKey = new Guid(obsInstance.InterpretationConceptUuid);
 
             return retVal;
@@ -66,9 +65,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override TObservation InsertInternal(SQLiteDataContext context, TObservation data)
         {
-            if(data.InterpretationConcept != null) data.InterpretationConcept = data.InterpretationConcept?.EnsureExists(context);
+            if (data.InterpretationConcept != null) data.InterpretationConcept = data.InterpretationConcept?.EnsureExists(context);
             data.InterpretationConceptKey = data.InterpretationConcept?.Key ?? data.InterpretationConceptKey;
-            
+
             var inserted = base.InsertInternal(context, data);
 
             // Not pure observation
@@ -176,7 +175,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         public override CodedObservation ToModelInstance(DbCodedObservation dataInstance, DbAct actInstance, DbObservation obsInstance, SQLiteDataContext context)
         {
             var retVal = base.ToModelInstance(dataInstance, actInstance, obsInstance, context);
-            if(dataInstance.Value != null)
+            if (dataInstance.Value != null)
                 retVal.ValueKey = new Guid(dataInstance.Value);
             return retVal;
         }
@@ -198,7 +197,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override CodedObservation InsertInternal(SQLiteDataContext context, CodedObservation data)
         {
-            if(data.Value != null) data.Value = data.Value?.EnsureExists(context);
+            if (data.Value != null) data.Value = data.Value?.EnsureExists(context);
             data.ValueKey = data.Value?.Key ?? data.ValueKey;
             return base.InsertInternal(context, data);
         }
@@ -208,7 +207,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override CodedObservation UpdateInternal(SQLiteDataContext context, CodedObservation data)
         {
-            if(data.Value != null) data.Value = data.Value?.EnsureExists(context);
+            if (data.Value != null) data.Value = data.Value?.EnsureExists(context);
             data.ValueKey = data.Value?.Key ?? data.ValueKey;
             return base.UpdateInternal(context, data);
         }
@@ -263,7 +262,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override QuantityObservation InsertInternal(SQLiteDataContext context, QuantityObservation data)
         {
-            if(data.UnitOfMeasure != null) data.UnitOfMeasure = data.UnitOfMeasure?.EnsureExists(context);
+            if (data.UnitOfMeasure != null) data.UnitOfMeasure = data.UnitOfMeasure?.EnsureExists(context);
             data.UnitOfMeasureKey = data.UnitOfMeasure?.Key ?? data.UnitOfMeasureKey;
             return base.InsertInternal(context, data);
         }
@@ -273,7 +272,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override QuantityObservation UpdateInternal(SQLiteDataContext context, QuantityObservation data)
         {
-            if(data.UnitOfMeasure != null) data.UnitOfMeasure = data.UnitOfMeasure?.EnsureExists(context);
+            if (data.UnitOfMeasure != null) data.UnitOfMeasure = data.UnitOfMeasure?.EnsureExists(context);
             data.UnitOfMeasureKey = data.UnitOfMeasure?.Key ?? data.UnitOfMeasureKey;
             return base.UpdateInternal(context, data);
         }

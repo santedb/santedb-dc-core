@@ -17,23 +17,20 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Map;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
+using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLite.Net;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
-using SanteDB.DisconnectedClient.SQLite.Model.DataType;
-using SanteDB.Core.Model.Map;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.Core.Services;
-using SanteDB.Core.Data.QueryBuilder;
-using SanteDB.DisconnectedClient.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {

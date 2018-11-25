@@ -17,17 +17,14 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.DisconnectedClient.Core;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -130,7 +127,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         // Negative PTR
         public static readonly IntPtr NEGATIVE_PTR = new IntPtr(-1);
 
-       
+
         /// <summary>
         /// Creates a prepared statmeent
         /// </summary>
@@ -167,7 +164,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             return me.Prepare(SQLiteCommandBuilder.Delete<T>(whereProperties));
 
         }
-        
+
         /// <summary>
         /// Prepare a insert statement
         /// </summary>

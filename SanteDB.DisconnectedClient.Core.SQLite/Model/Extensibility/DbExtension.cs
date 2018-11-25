@@ -17,40 +17,41 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 {
-	/// <summary>
-	/// Extension.
-	/// </summary>
-	public abstract class DbExtension : DbIdentified
-	{
+    /// <summary>
+    /// Extension.
+    /// </summary>
+    public abstract class DbExtension : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the extension identifier.
-		/// </summary>
-		/// <value>The extension identifier.</value>
-		[Column ("extensionType"), NotNull, MaxLength(16), ForeignKey(typeof(DbExtensionType), nameof(DbExtensionType.Uuid))]
-		public byte[] ExtensionTypeUuid {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the extension identifier.
+        /// </summary>
+        /// <value>The extension identifier.</value>
+        [Column("extensionType"), NotNull, MaxLength(16), ForeignKey(typeof(DbExtensionType), nameof(DbExtensionType.Uuid))]
+        public byte[] ExtensionTypeUuid
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Gets or sets the value.
-		/// </summary>
-		/// <value>The value.</value>
-		[Column ("value")]
-		public byte[] Value {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the value.
+        /// </summary>
+        /// <value>The value.</value>
+        [Column("value")]
+        public byte[] Value
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Gets the display value of the object
@@ -60,12 +61,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
 
     }
 
-	/// <summary>
-	/// Entity extension.
-	/// </summary>
-	[Table ("entity_extension")]
-	public class DbEntityExtension : DbExtension
-	{
+    /// <summary>
+    /// Entity extension.
+    /// </summary>
+    [Table("entity_extension")]
+    public class DbEntityExtension : DbExtension
+    {
 
         /// <summary>
         /// Gets or sets the source identifier.
@@ -83,9 +84,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Extensibility
     /// <summary>
     /// Act extensions
     /// </summary>
-    [Table ("act_extension")]
-	public class DbActExtension : DbExtension
-	{
+    [Table("act_extension")]
+    public class DbActExtension : DbExtension
+    {
         /// <summary>
         /// Gets or sets the source identifier.
         /// </summary>

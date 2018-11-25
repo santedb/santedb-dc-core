@@ -17,26 +17,26 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Serices;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Tickler;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Tickler;
 using System.Text;
-using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -130,7 +130,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <param name="password">The password of the user</param>
         /// <param name="pin">The PIN number for PIN based authentication</param>
         /// <returns>The authenticated principal</returns>
-        private IPrincipal AuthenticateInternal(String userName, string password, byte[] pin) {
+        private IPrincipal AuthenticateInternal(String userName, string password, byte[] pin)
+        {
             var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
             // Pre-event
@@ -222,7 +223,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             if (String.IsNullOrEmpty(userName))
                 throw new ArgumentNullException(nameof(userName));
-            if (pin.Length < 4 || pin.Length > 8 || pin.Any(o=>o > 9 || o < 0))
+            if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o > 9 || o < 0))
                 throw new ArgumentOutOfRangeException(nameof(pin));
 
             return this.AuthenticateInternal(userName, null, pin);
@@ -441,7 +442,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 if (userName != AuthenticationContext.Current.Principal.Identity.Name)
                     throw new SecurityException("Can only change PIN number of your own account");
-                else if (pin.Length < 4 || pin.Length > 8 || pin.Any(o=>o < 0 || o > 9))
+                else if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o < 0 || o > 9))
                     throw new ArgumentOutOfRangeException("PIN numbers must be between 4 and 8 digits");
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -452,7 +453,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     else
                     {
                         IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
-                        dbu.PinHash = hash.ComputeHash(Encoding.UTF8.GetString(pin.Select(o=>(byte)(o + 48)).ToArray(), 0, pin.Length));
+                        dbu.PinHash = hash.ComputeHash(Encoding.UTF8.GetString(pin.Select(o => (byte)(o + 48)).ToArray(), 0, pin.Length));
                         dbu.SecurityHash = Guid.NewGuid().ToString();
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == AuthenticationContext.Current.Principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;
@@ -485,7 +486,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
         }
 
- 
+
         #endregion IIdentityProviderService implementation
     }
 
@@ -505,7 +506,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             new Claim(ClaimTypes.AuthenticationMethod, "LOCAL")
         })
         {
-            
+
         }
 
     }
@@ -520,7 +521,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// The time that the principal was issued
         /// </summary>
-        public DateTime IssueTime {
+        public DateTime IssueTime
+        {
             get
             {
                 return this.FindClaim(ClaimTypes.AuthenticationInstant).AsDateTime();
@@ -534,7 +536,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Expiration time
         /// </summary>
-        public DateTime Expires {
+        public DateTime Expires
+        {
             get
             {
                 return this.FindClaim(ClaimTypes.Expiration).AsDateTime();

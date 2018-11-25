@@ -17,33 +17,32 @@
  * User: justin
  * Date: 2018-6-28
  */
-using System;
-using SQLite.Net;
-using SQLite.Net.Attributes;
 using SanteDB.Core.Data.QueryBuilder.Attributes;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
+using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
-	/// <summary>
-	/// Represents a security policy instance which includes a link to a policy and
-	/// to a decision
-	/// </summary>
-	public abstract class DbSecurityPolicyInstance : DbIdentified
-	{
+    /// <summary>
+    /// Represents a security policy instance which includes a link to a policy and
+    /// to a decision
+    /// </summary>
+    public abstract class DbSecurityPolicyInstance : DbIdentified
+    {
 
-		/// <summary>
-		/// Gets or sets the type of the grant.
-		/// </summary>
-		/// <value>The type of the grant.</value>
-		[Column("grant_type"), NotNull]
-		public int GrantType {
-			get;
-			set;
-		}
+        /// <summary>
+        /// Gets or sets the type of the grant.
+        /// </summary>
+        /// <value>The type of the grant.</value>
+        [Column("grant_type"), NotNull]
+        public int GrantType
+        {
+            get;
+            set;
+        }
 
-	}
+    }
 
     /// <summary>
     /// Represents a security policy applied to an act
@@ -79,8 +78,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
     /// Represents a security policy applied to an act
     /// </summary>
     [Table("act_security_policy")]
-	public class DbActSecurityPolicy : DbSecurityPolicyInstance
-	{
+    public class DbActSecurityPolicy : DbSecurityPolicyInstance
+    {
         /// <summary>
         /// Gets or sets the source
         /// </summary>
@@ -109,8 +108,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
     /// Represents a security policy applied to a role
     /// </summary>
     [Table("security_role_policy")]
-	public class DbSecurityRolePolicy : DbSecurityPolicyInstance
-	{
+    public class DbSecurityRolePolicy : DbSecurityPolicyInstance
+    {
         /// <summary>
         /// Gets or sets the source
         /// </summary>
@@ -134,12 +133,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         }
     }
 
-	/// <summary>
-	/// Represents a security policy applied to an application (this is "my" data)
-	/// </summary>
-	[Table("security_application_policy")]
-	public class DbSecurityApplicationPolicy : DbSecurityPolicyInstance
-	{
+    /// <summary>
+    /// Represents a security policy applied to an application (this is "my" data)
+    /// </summary>
+    [Table("security_application_policy")]
+    public class DbSecurityApplicationPolicy : DbSecurityPolicyInstance
+    {
         /// <summary>
         /// Gets or sets the source
         /// </summary>
@@ -163,12 +162,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         }
     }
 
-	/// <summary>
-	/// Represents a security policy applied to a device
-	/// </summary>
-	[Table("security_device_policy")]
-	public class DbSecurityDevicePolicy : DbSecurityPolicyInstance
-	{
+    /// <summary>
+    /// Represents a security policy applied to a device
+    /// </summary>
+    [Table("security_device_policy")]
+    public class DbSecurityDevicePolicy : DbSecurityPolicyInstance
+    {
         /// <summary>
         /// Gets or sets the source
         /// </summary>
