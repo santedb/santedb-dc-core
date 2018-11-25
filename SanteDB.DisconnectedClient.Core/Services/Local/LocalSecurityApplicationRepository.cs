@@ -1,5 +1,9 @@
-﻿using SanteDB.Core.Model.Security;
+﻿using SanteDB.Core;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Core.Serices;
+using System;
+
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
     /// <summary>
@@ -11,5 +15,25 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         protected override string DeletePolicy => PermissionPolicyIdentifiers.CreateApplication;
         protected override string AlterPolicy => PermissionPolicyIdentifiers.CreateApplication;
 
+
+        /// <summary>
+        /// Insert the device
+        /// </summary>
+        public override SecurityApplication Insert(SecurityApplication data)
+        {
+            if (!String.IsNullOrEmpty(data.ApplicationSecret))
+                data.ApplicationSecret = ApplicationServiceContext.Current.GetService<IPasswordHashingService>().ComputeHash(data.ApplicationSecret);
+            return base.Insert(data);
+        }
+
+        /// <summary>
+        /// Save the security device
+        /// </summary>
+        public override SecurityApplication Save(SecurityApplication data)
+        {
+            if (!String.IsNullOrEmpty(data.ApplicationSecret))
+                data.ApplicationSecret = ApplicationServiceContext.Current.GetService<IPasswordHashingService>().ComputeHash(data.ApplicationSecret);
+            return base.Save(data);
+        }
     }
 }

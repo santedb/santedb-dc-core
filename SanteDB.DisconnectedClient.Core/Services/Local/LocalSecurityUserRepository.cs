@@ -1,12 +1,7 @@
-﻿using SanteDB.DisconnectedClient.Core;
-using SanteDB.Core.Model.Security;
+﻿using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
@@ -67,6 +62,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             }
             
             return retVal;
+        }
+
+        /// <summary>
+        /// Save the user credential
+        /// </summary>
+        public override SecurityUser Save(SecurityUser data)
+        {
+            if (!String.IsNullOrEmpty(data.Password))
+                ApplicationContext.Current.GetService<IIdentityProviderService>().ChangePassword(data.UserName, data.Password, AuthenticationContext.Current.Principal);
+            return base.Save(data);
         }
     }
 }
