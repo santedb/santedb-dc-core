@@ -18,12 +18,14 @@
  * Date: 2018-11-23
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Warehouse;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -175,7 +177,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                     //}
 
                     // Stage 2. Ensure consistency with existing patient dataset
-                    var patientPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>();
+                    var patientPersistence = ApplicationContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
                     var remoteSyncService = ApplicationContext.Current.GetService<ISynchronizationService>();
                     var queueService = ApplicationContext.Current.GetService<IQueueManagerService>();
                     var lastRefresh = DateTime.Parse(ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("santedb.mobile.core.protocol.plan.lastRun") ?? "0001-01-01");
@@ -208,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                                         if (tr > 1)
                                             ApplicationContext.Current.SetProgress(Strings.locale_calculateImportedCareplan, ofs / (float)tr);
 
-                                        var prodPatients = patientPersistence.QueryExplicitLoad(p => p.ObsoletionTime == null && p.StatusConcept.Mnemonic != "OBSOLETE" && p.CreationTime >= syncFilter, ofs, 15, out tr, queryId, new String[] { "Patient.Relationships" });
+                                        var prodPatients = patientPersistence.Query(p => p.ObsoletionTime == null && p.StatusConcept.Mnemonic != "OBSOLETE" && p.CreationTime >= syncFilter, queryId, ofs, 15, out tr, AuthenticationContext.SystemPrincipal);
                                         this.QueueWorkItem(prodPatients);
                                         ofs += 15;
                                     }
@@ -319,7 +321,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                 this.m_tracer.TraceWarning("Care planner is already busy aborting...");
                 return;
             }
-            var patientPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>();
+            var patientPersistence = ApplicationContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
             var remoteSyncService = ApplicationContext.Current.GetService<ISynchronizationService>();
             var queueService = ApplicationContext.Current.GetService<IQueueManagerService>();
             var lastRefresh = DateTime.Parse(ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("santedb.mobile.core.protocol.plan.lastRun") ?? "0001-01-01");
@@ -342,7 +344,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                 while (ofs < tr)
                 {
                     ApplicationContext.Current.SetProgress(Strings.locale_refreshCarePlan, ofs / (float)tr);
-                    var prodPatients = patientPersistence.QueryExplicitLoad(o => o.StatusConcept.Mnemonic != "OBSOLETE", ofs, 15, out tr, queryId, new String[] { "Patient.Relationships" });
+                    var prodPatients = patientPersistence.Query(o => o.StatusConcept.Mnemonic != "OBSOLETE", queryId, ofs, 15, out tr, AuthenticationContext.SystemPrincipal);
                     ofs += 15;
 
                     //if (queueService.IsBusy ||
@@ -432,7 +434,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
 
                 // Create a delegate which calls UpdateCarePlan
                 // Construct the delegate
-                var ppeArgType = typeof(DataPersistenceEventArgs<>).MakeGenericType(t);
+                var ppeArgType = typeof(DataPersistedEventArgs<>).MakeGenericType(t);
                 var evtHdlrType = typeof(EventHandler<>).MakeGenericType(ppeArgType);
                 var senderParm = Expression.Parameter(typeof(Object), "o");
                 var eventParm = Expression.Parameter(ppeArgType, "e");
@@ -493,7 +495,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                     return;
                 }
 
-                var patient = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>().Get(patientId.Value);
+                var patient = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>().Get(patientId.Value, null, true, AuthenticationContext.SystemPrincipal);
 
                 // Is there a protocol for this act?
                 if (act.Protocols.Count() == 0)

@@ -18,8 +18,10 @@
  * Date: 2018-8-25
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -109,11 +111,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// <summary>
         /// Fired when the data is about to be enqueued
         /// </summary>
-        public event EventHandler<DataPersistencePreEventArgs<TQueueEntry>> Enqueuing;
+        public event EventHandler<DataPersistingEventArgs<TQueueEntry>> Enqueuing;
         /// <summary>
         /// Fired after the data has been enqueued
         /// </summary>
-        public event EventHandler<DataPersistenceEventArgs<TQueueEntry>> Enqueued;
+        public event EventHandler<DataPersistedEventArgs<TQueueEntry>> Enqueued;
 
         /// <summary>
         /// Singleton
@@ -175,7 +177,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         public TQueueEntry EnqueueRaw(TQueueEntry entry)
         {
             // Fire pre-event args
-            var preEventArgs = new DataPersistencePreEventArgs<TQueueEntry>(entry);
+            var preEventArgs = new DataPersistingEventArgs<TQueueEntry>(entry, AuthenticationContext.Current.Principal);
             this.Enqueuing?.Invoke(this, preEventArgs);
             if (preEventArgs.Cancel)
             {
@@ -196,7 +198,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         conn.Commit();
                     }
 
-                    var postEventArgs = new DataPersistenceEventArgs<TQueueEntry>(entry);
+                    var postEventArgs = new DataPersistedEventArgs<TQueueEntry>(entry, AuthenticationContext.Current.Principal);
                     this.Enqueued?.Invoke(this, postEventArgs);
                     return postEventArgs.Data;
 

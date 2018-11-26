@@ -18,6 +18,8 @@
  * Date: 2018-11-23
  */
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -45,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Get a policy decision for a particular securable
         /// </summary>
-        public PolicyGrantType GetPolicyDecision(IPrincipal principal, object securable)
+        public PolicyDecision GetPolicyDecision(IPrincipal principal, object securable)
         {
             if (principal == null)
                 throw new ArgumentNullException(nameof(principal));
@@ -59,16 +61,15 @@ namespace SanteDB.DisconnectedClient.Core.Security
             var securablePolicies = pip.GetActivePolicies(securable);
 
             // Most restrictive
-            PolicyGrantType decision = PolicyGrantType.Grant;
+            List<PolicyDecisionDetail> dtls = new List<PolicyDecisionDetail>();
+            var retVal = new PolicyDecision(securable, dtls);
             foreach (var pol in securablePolicies)
             {
                 var securablePdp = this.GetPolicyOutcome(principal, pol.Policy.Oid);
-
-                if (securablePdp < decision)
-                    decision = securablePdp;
+                dtls.Add(new PolicyDecisionDetail(pol.Policy.Oid, securablePdp));
             }
 
-            return decision;
+            return retVal;
         }
 
         /// <summary>

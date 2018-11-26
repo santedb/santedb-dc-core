@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Services;
@@ -32,6 +33,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -63,15 +65,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// Bundles are special, they may be written on the current connection
         /// or in memory
         /// </summary>
-        public override Bundle Insert(Bundle data)
+        public override Bundle Insert(Bundle data, TransactionMode mode, IPrincipal principal)
         {
             // first, are we just doing a normal insert?
             if (data.Item.Count <= 250)
-                return base.Insert(data);
+                return base.Insert(data, mode, principal);
             else
             { // It is cheaper to open a mem-db and let other threads access the main db for the time being
 
-                base.FireInserting(new DataPersistencePreEventArgs<Bundle>(data));
+                base.FireInserting(new DataPersistingEventArgs<Bundle>(data, principal));
 
                 // Memory connection
                 using (var memConnection = new WriteableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), ":memory:", SQLiteOpenFlags.ReadWrite))
@@ -110,13 +112,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         memConnection.Execute("DETACH DATABASE file_db");
 
                         // We insert in the memcontext now
-                        using (var memContext = new SQLiteDataContext(memConnection))
+                        using (var memContext = new SQLiteDataContext(memConnection, principal))
                             this.InsertInternal(memContext, data);
 
                         var columnMapping = memConnection.TableMappings.Where(o => o.MappedType.Namespace.StartsWith("SanteDB")).ToList();
 
                         // Now we attach our local file based DB by requesting a lock so nobody else touches it!
-                        using (var fileContext = this.CreateConnection())
+                        using (var fileContext = this.CreateConnection(principal))
                         using (fileContext.LockConnection())
                         {
                             if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
@@ -150,13 +152,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     catch (Exception e)
                     {
                         this.m_tracer.TraceError("Error inserting bundle: {0}", e);
-                        return base.Insert(data); // Attempt to do a slow insert 
+                        return base.Insert(data, mode, principal); // Attempt to do a slow insert 
                         // TODO: Figure out why the copy command sometimes is missing UUIDs
                         //throw new LocalPersistenceException(Synchronization.Model.DataOperationType.Insert, data, e);
                     }
                 }
 
-                base.FireInserted(new DataPersistenceEventArgs<Bundle>(data));
+                base.FireInserted(new DataPersistedEventArgs<Bundle>(data, principal));
                 return data;
             }
         }

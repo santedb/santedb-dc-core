@@ -66,11 +66,13 @@
     <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
     <Compile Include="Security\HeaderTypes.cs" />
+    <Compile Include="Security\IOfflineIdentityProviderService.cs" />
+    <Compile Include="Security\IOfflinePolicyInformationService.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
+    <Compile Include="Security\IOfflineRoleProviderService.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\DefaultPolicyDecisionService.cs" />
     <Compile Include="Security\SecurityExtensions.cs" />
-    <Compile Include="Services\IDeviceIdentityProviderService.cs" />
     <Compile Include="Services\IGeoTaggingService.cs" />
     <Compile Include="Services\Local\GenericLocalActRepository.cs" />
     <Compile Include="Services\Local\GenericLocalClinicalDataRepository.cs" />
@@ -114,7 +116,6 @@
     <Compile Include="Services\IQueueManagerService.cs" />
     <Compile Include="Services\ITickleService.cs" />
     <Compile Include="Services\IUpdateManager.cs" />
-    <Compile Include="AuthenticationContext.cs" />
     <Compile Include="Caching\CacheEntry.cs" />
     <Compile Include="Caching\MemoryCache.cs" />
     <Compile Include="Caching\MemoryCacheService.cs" />
@@ -140,7 +141,6 @@
     <Compile Include="Configuration\Data\DataMigrationLog.cs" />
     <Compile Include="Configuration\Data\DataMigrator.cs" />
     <Compile Include="Exceptions\DataMigrationException.cs" />
-    <Compile Include="Configuration\IConfigurationSection.cs" />
     <Compile Include="Configuration\AppletConfigurationSection.cs" />
     <Compile Include="Configuration\DataConfigurationSection.cs" />
     <Compile Include="Configuration\SecurityConfigurationSection.cs" />
@@ -148,28 +148,18 @@
     <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Security\GenericPolicy.cs" />
     <Compile Include="Security\GenericPolicyInstance.cs" />
-    <Compile Include="Security\IPolicyInstance.cs" />
-    <Compile Include="Security\IPolicy.cs" />
     <Compile Include="Security\ClaimsPrincipal.cs" />
     <Compile Include="Security\ClaimsIdentity.cs" />
     <Compile Include="Security\Claim.cs" />
     <Compile Include="Security\ClaimTypes.cs" />
-    <Compile Include="Exceptions\PolicyViolationException.cs" />
     <Compile Include="ApplicationContext.cs" />
     <Compile Include="Security\Remote\AmiPolicyInformationService.cs" />
-    <Compile Include="Services\IDaemonService.cs" />
-    <Compile Include="Services\IIdentityProviderService.cs" />
     <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" />
     <Compile Include="Services\INetworkInformationService.cs" />
-    <Compile Include="Services\IPolicyDecisionService.cs" />
-    <Compile Include="Services\IPolicyInformationService.cs" />
     <Compile Include="Services\IPushNotificationService.cs" />
-    <Compile Include="Services\IRoleProviderService.cs" />
     <Compile Include="Services\ISynchronizationService.cs" />
     <Compile Include="Services\IIntegrationService.cs" />
-    <Compile Include="Services\IDataPersistenceService.cs" />
     <Compile Include="Exceptions\LocalPersistenceException.cs" />
-    <Compile Include="Services\IPasswordHashingService.cs" />
     <Compile Include="Configuration\ServiceClientDescriptionConfigurationSection.cs" />
     <Compile Include="Data\LocalEntitySource.cs" />
     <Compile Include="Synchronization\IQueueFileProvider.cs" />
@@ -226,13 +216,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.1.8" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>1.9.9</Version>
+      <Version>1.9.11</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>1.9.9</Version>
+      <Version>1.9.11</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.18.2" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />

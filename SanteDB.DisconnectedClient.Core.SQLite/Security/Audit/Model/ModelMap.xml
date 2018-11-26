@@ -20,7 +20,7 @@
 <modelMap xmlns="http://santedb.org/model/map">
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
 		domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditData, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
-    <property modelName="CorrelationToken" domainName="Id"/>
+    <property modelName="Key" domainName="Id"/>
   </class>
 
   <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditActorData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"

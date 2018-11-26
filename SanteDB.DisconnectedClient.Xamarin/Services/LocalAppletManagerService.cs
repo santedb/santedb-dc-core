@@ -21,6 +21,8 @@ using SanteDB.Core.Applets;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -299,7 +301,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         Type idpType = typeof(IDataPersistenceService<>);
                         idpType = idpType.MakeGenericType(new Type[] { itm.Element.GetType() });
                         var svc = ApplicationContext.Current.GetService(idpType);
-                        idpType.GetMethod(itm.ActionName).Invoke(svc, new object[] { itm.Element });
+                        idpType.GetMethod(itm.ActionName).Invoke(svc, new object[] { itm.Element, TransactionMode.Commit, AuthenticationContext.SystemPrincipal  });
                     }
                 }
 

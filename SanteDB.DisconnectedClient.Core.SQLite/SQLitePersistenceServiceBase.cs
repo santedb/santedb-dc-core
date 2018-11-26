@@ -19,9 +19,11 @@
  */
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -36,6 +38,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -77,40 +80,48 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Occurs when inserted.
         /// </summary>
-        public event EventHandler<DataPersistenceEventArgs<TData>> Inserted;
+        public event EventHandler<DataPersistedEventArgs<TData>> Inserted;
         /// <summary>
         /// Occurs when inserting.
         /// </summary>
-        public event EventHandler<DataPersistencePreEventArgs<TData>> Inserting;
+        public event EventHandler<DataPersistingEventArgs<TData>> Inserting;
         /// <summary>
         /// Occurs when updated.
         /// </summary>
-        public event EventHandler<DataPersistenceEventArgs<TData>> Updated;
+        public event EventHandler<DataPersistedEventArgs<TData>> Updated;
         /// <summary>
         /// Occurs when updating.
         /// </summary>
-        public event EventHandler<DataPersistencePreEventArgs<TData>> Updating;
+        public event EventHandler<DataPersistingEventArgs<TData>> Updating;
         /// <summary>
         /// Occurs when obsoleted.
         /// </summary>
-        public event EventHandler<DataPersistenceEventArgs<TData>> Obsoleted;
+        public event EventHandler<DataPersistedEventArgs<TData>> Obsoleted;
         /// <summary>
         /// Occurs when obsoleting.
         /// </summary>
-        public event EventHandler<DataPersistencePreEventArgs<TData>> Obsoleting;
+        public event EventHandler<DataPersistingEventArgs<TData>> Obsoleting;
         /// <summary>
         /// Occurs when queried.
         /// </summary>
-        public event EventHandler<DataQueryEventArgsBase<TData>> Queried;
+        public event EventHandler<QueryResultEventArgs<TData>> Queried;
         /// <summary>
         /// Occurs when querying.
         /// </summary>
-        public event EventHandler<DataQueryEventArgsBase<TData>> Querying;
+        public event EventHandler<QueryRequestEventArgs<TData>> Querying;
+        /// <summary>
+        /// Data has been retrieved
+        /// </summary>
+        public event EventHandler<DataRetrievingEventArgs<TData>> Retrieving;
+        /// <summary>
+        /// Occurs when querying.
+        /// </summary>
+        public event EventHandler<DataRetrievedEventArgs<TData>> Retrieved;
 
         /// <summary>
         /// Fire inserting event
         /// </summary>
-        protected void FireInserting(DataPersistencePreEventArgs<TData> evt)
+        protected void FireInserting(DataPersistingEventArgs<TData> evt)
         {
             this.Inserting?.Invoke(this, evt);
         }
@@ -118,7 +129,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Fire inserting event
         /// </summary>
-        protected void FireInserted(DataPersistenceEventArgs<TData> evt)
+        protected void FireInserted(DataPersistedEventArgs<TData> evt)
         {
             this.Inserted?.Invoke(this, evt);
         }
@@ -127,29 +138,29 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// Creates the connection.
         /// </summary>
         /// <returns>The connection.</returns>
-        protected SQLiteDataContext CreateConnection()
+        protected SQLiteDataContext CreateConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString));
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
         }
 
         /// <summary>
         /// Create readonly connection
         /// </summary>
-        private SQLiteDataContext CreateReadonlyConnection()
+        private SQLiteDataContext CreateReadonlyConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString));
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
         }
 
         /// <summary>
         /// Insert the specified data.
         /// </summary>
         /// <param name="data">Data.</param>
-        public virtual TData Insert(TData data)
+        public virtual TData Insert(TData data, TransactionMode mode, IPrincipal principal)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
 
-            DataPersistencePreEventArgs<TData> preArgs = new DataPersistencePreEventArgs<TData>(data);
+            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, principal);
             this.Inserting?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -162,8 +173,8 @@ namespace SanteDB.DisconnectedClient.SQLite
             sw.Start();
 #endif
 
-            // Persist object
-            using (var context = this.CreateConnection())
+            // Persist objectel
+            using (var context = this.CreateConnection(principal))
                 try
                 {
                     using (context.LockConnection())
@@ -175,7 +186,11 @@ namespace SanteDB.DisconnectedClient.SQLite
 
                             context.Connection.BeginTransaction();
                             data = this.Insert(context, data);
-                            context.Connection.Commit();
+
+                            if (mode == TransactionMode.Commit)
+                                context.Connection.Commit();
+                            else
+                                context.Connection.Rollback();
                             // Remove from the cache
                             foreach (var itm in context.CacheOnCommit.AsParallel())
                                 ApplicationContext.Current.GetService<IDataCachingService>().Add(itm);
@@ -188,7 +203,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         }
 
                     }
-                    this.Inserted?.Invoke(this, new DataPersistenceEventArgs<TData>(data));
+                    this.Inserted?.Invoke(this, new DataPersistedEventArgs<TData>(data, principal));
                     return data;
                 }
                 catch { throw; }
@@ -207,14 +222,14 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// Update the specified data
         /// </summary>
         /// <param name="data">Data.</param>
-        public virtual TData Update(TData data)
+        public virtual TData Update(TData data, TransactionMode mode, IPrincipal principal)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
             else if (!data.Key.HasValue || data.Key == Guid.Empty)
                 throw new InvalidOperationException("Data missing key");
 
-            DataPersistencePreEventArgs<TData> preArgs = new DataPersistencePreEventArgs<TData>(data);
+            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, principal);
             this.Updating?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -226,7 +241,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             sw.Start();
 #endif
             // Persist object
-            using (var context = this.CreateConnection())
+            using (var context = this.CreateConnection(principal))
                 try
                 {
                     using (context.LockConnection())
@@ -238,7 +253,10 @@ namespace SanteDB.DisconnectedClient.SQLite
 
                             data = this.Update(context, data);
 
-                            context.Connection.Commit();
+                            if (mode == TransactionMode.Commit)
+                                context.Connection.Commit();
+                            else
+                                context.Connection.Rollback();
 
                             // Remove from the cache
                             foreach (var itm in context.CacheOnCommit.AsParallel())
@@ -253,7 +271,7 @@ namespace SanteDB.DisconnectedClient.SQLite
 
                         }
                     }
-                    this.Updated?.Invoke(this, new DataPersistenceEventArgs<TData>(data));
+                    this.Updated?.Invoke(this, new DataPersistedEventArgs<TData>(data,principal));
                     return data;
                 }
                 catch { throw; }
@@ -270,7 +288,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// Obsolete the specified identified data
         /// </summary>
         /// <param name="data">Data.</param>
-        public virtual TData Obsolete(TData data)
+        public virtual TData Obsolete(TData data, TransactionMode mode, IPrincipal principal)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
@@ -280,7 +298,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             Stopwatch sw = new Stopwatch();
             sw.Start();
 #endif
-            DataPersistencePreEventArgs<TData> preArgs = new DataPersistencePreEventArgs<TData>(data);
+            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, principal);
             this.Obsoleting?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -289,7 +307,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             }
 
             // Obsolete object
-            using (var context = this.CreateConnection())
+            using (var context = this.CreateConnection(principal))
                 try
                 {
                     using (context.LockConnection())
@@ -301,7 +319,10 @@ namespace SanteDB.DisconnectedClient.SQLite
 
                             data = this.Obsolete(context, data);
 
-                            context.Connection.Commit();
+                            if (mode == TransactionMode.Commit)
+                                context.Connection.Commit();
+                            else
+                                context.Connection.Rollback();
 
                             // Remove from the cache
                             foreach (var itm in context.CacheOnCommit.AsParallel())
@@ -315,7 +336,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                             throw new LocalPersistenceException(SynchronizationOperationType.Obsolete, data, e);
                         }
                     }
-                    this.Obsoleted?.Invoke(this, new DataPersistenceEventArgs<TData>(data));
+                    this.Obsoleted?.Invoke(this, new DataPersistedEventArgs<TData>(data, principal));
 
                     return data;
                 }
@@ -334,13 +355,13 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// Get the specified key.
         /// </summary>
         /// <param name="key">Key.</param>
-        public virtual TData Get(Guid key)
+        public virtual TData Get(Guid key, Guid? versionKey, bool loadFast, IPrincipal principal)
         {
             if (key == Guid.Empty) return null;
             var existing = ApplicationContext.Current.GetService<IDataCachingService>().GetCacheItem(key);
             if ((existing as IdentifiedData)?.LoadState <= LoadState.FullLoad)
             {
-                using (var context = this.CreateReadonlyConnection())
+                using (var context = this.CreateReadonlyConnection(principal))
                     try
                     {
                         using (context.LockConnection())
@@ -357,55 +378,46 @@ namespace SanteDB.DisconnectedClient.SQLite
                 return existing as TData;
             int toss = 0;
             this.m_tracer.TraceInfo("GET: {0}", key);
-            return this.Query(o => o.Key == key, 0, 1, out toss, Guid.Empty, false, false)?.SingleOrDefault();
+            return this.Query(o => o.Key == key, null, 0, 1, out toss, false, false, principal)?.SingleOrDefault();
         }
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query)
+        public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, IPrincipal principal)
         {
             int totalResults = 0;
-            return this.Query(query, 0, null, out totalResults, Guid.Empty, false, false);
+            return this.Query(query, null, 0, null, out totalResults, false, false, principal);
         }
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
+        public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal)
         {
-            return this.Query(query, offset, count, out totalResults, queryId, true, false);
+            return this.Query(query, null, offset, count, out totalResults, true, false, principal);
         }
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        public virtual System.Collections.Generic.IEnumerable<TData> QueryFast(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
+        public virtual System.Collections.Generic.IEnumerable<TData> QueryFast(System.Linq.Expressions.Expression<Func<TData, bool>> query, Guid queryId, int offset, int? count, out int totalResults, IPrincipal principal)
         {
-            return this.Query(query, offset, count, out totalResults, queryId, true, true);
+            return this.Query(query, queryId, offset, count, out totalResults, true, true, principal);
         }
-
-        /// <summary>
-        /// Query the specified data
-        /// </summary>
-        /// <param name="query">Query.</param>
-        public virtual System.Collections.Generic.IEnumerable<TData> QueryExplicitLoad(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, Guid queryId, IEnumerable<String> expandProperties)
-        {
-            return this.Query(query, offset, count, out totalResults, queryId, true, true, expandProperties);
-        }
-
+        
         /// <summary>
         /// Query function returning results and count control
         /// </summary>
-        private IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, Guid queryId, bool countResults, bool fastQuery, IEnumerable<String> expandProperties = null)
+        private IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, Guid? queryId, int offset, int? count, out int totalResults, bool countResults, bool fastQuery, IPrincipal principal)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
-            DataQueryPreEventArgs<TData> preArgs = new DataQueryPreEventArgs<TData>(query, offset, count);
+            QueryRequestEventArgs<TData> preArgs = new QueryRequestEventArgs<TData>(query, offset, count, queryId, principal);
             this.Querying?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -419,7 +431,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             sw.Start();
 #endif
             // Query object
-            using (var context = this.CreateReadonlyConnection())
+            using (var context = this.CreateReadonlyConnection(principal))
                 try
                 {
                     IEnumerable<TData> results = null;
@@ -431,14 +443,11 @@ namespace SanteDB.DisconnectedClient.SQLite
                             context.DelayLoadMode = LoadState.PartialLoad;
                         else
                             context.DelayLoadMode = LoadState.FullLoad;
-
-                        if (expandProperties != null)
-                            context.LoadAssociations = expandProperties.ToArray();
-
-                        results = this.Query(context, query, offset, count ?? -1, out totalResults, queryId, countResults);
+                        
+                        results = this.Query(context, query, queryId.GetValueOrDefault(), offset, count ?? -1, out totalResults, countResults);
                     }
 
-                    var postData = new DataQueryResultEventArgs<TData>(query, results, offset, count, totalResults);
+                    var postData = new QueryResultEventArgs<TData>(query, results, offset, count, totalResults, queryId, principal);
                     this.Queried?.Invoke(this, postData);
 
                     totalResults = postData.TotalResults;
@@ -450,33 +459,6 @@ namespace SanteDB.DisconnectedClient.SQLite
                     return postData.Results;
 
 
-                }
-                catch (NotSupportedException e)
-                {
-                    this.m_tracer.TraceVerbose("Cannot perform LINQ query, switching to stored query sqp_{0}", typeof(TData).Name, e);
-
-                    // Build dictionary
-                    var httpValues = QueryExpressionBuilder.BuildQuery<TData>(query, true);
-                    var filter = new Dictionary<String, Object>();
-
-                    foreach (var f in httpValues)
-                    {
-                        object existing = null;
-                        if (filter.TryGetValue(f.Key, out existing))
-                        {
-                            if (!(existing is IList))
-                            {
-                                existing = new List<Object>() { existing };
-                                filter[f.Key] = existing;
-                            }
-                            (existing as IList).Add(f.Value);
-                        }
-                        else
-                            filter.Add(f.Key, f.Value);
-
-                    }
-                    // Query
-                    return this.Query(String.Format("sqp_{0}", typeof(TData).Name), filter, offset, count, out totalResults, queryId);
                 }
                 catch (Exception e)
                 {
@@ -494,84 +476,17 @@ namespace SanteDB.DisconnectedClient.SQLite
 
         }
 
-
-        /// <summary>
-        /// Query this instance.
-        /// </summary>
-        public virtual IEnumerable<TData> Query(String storedQueryName, IDictionary<String, Object> parms)
-        {
-            int totalResults = 0;
-            return this.Query(storedQueryName, parms, 0, null, out totalResults, Guid.Empty, false);
-        }
-
         /// <summary>
         /// Perform a count
         /// </summary>
-        public virtual int Count(Expression<Func<TData, bool>> query)
+        public virtual long Count(Expression<Func<TData, bool>> query, IPrincipal principal)
         {
             var tr = 0;
-            this.Query(query, 0, null, out tr, Guid.Empty);
+            this.Query(query, null, 0, 0, out tr, true, true, principal);
             return tr;
         }
 
-        /// <summary>
-        /// Query this instance.
-        /// </summary>
-        public virtual IEnumerable<TData> Query(String storedQueryName, IDictionary<String, Object> parms, int offset, int? count, out int totalResults, Guid queryId)
-        {
-            return this.Query(storedQueryName, parms, offset, count, out totalResults, queryId, true);
-        }
-
-        /// <summary>
-        /// Perform query with control
-        /// </summary>
-        private IEnumerable<TData> Query(String storedQueryName, IDictionary<String, Object> parms, int offset, int? count, out int totalResults, Guid queryId, bool countResults)
-        {
-            if (String.IsNullOrEmpty(storedQueryName))
-                throw new ArgumentNullException(nameof(storedQueryName));
-            else if (parms == null)
-                throw new ArgumentNullException(nameof(parms));
-
-            DataStoredQueryPreEventArgs<TData> preArgs = new DataStoredQueryPreEventArgs<TData>(storedQueryName, parms, offset, count);
-            this.Querying?.Invoke(this, preArgs);
-            if (preArgs.Cancel)
-            {
-                this.m_tracer.TraceWarning("Pre-Event handler indicates abort query {0}", storedQueryName);
-                totalResults = preArgs.TotalResults;
-                return preArgs.Results;
-            }
-
-            // Query object
-            using (var context = this.CreateConnection())
-                try
-                {
-                    List<TData> results = null;
-                    using (context.LockConnection())
-                    {
-                        this.m_tracer.TraceVerbose("STORED QUERY {0}", storedQueryName);
-
-                        results = this.Query(context, storedQueryName, parms, offset, count ?? -1, out totalResults, queryId, countResults).ToList();
-                    }
-
-                    var postArgs = new DataStoredQueryResultEventArgs<TData>(storedQueryName, parms, results, offset, count, totalResults);
-                    this.Queried?.Invoke(this, postArgs);
-
-                    totalResults = postArgs.TotalResults;
-
-
-                    // Remove from the cache
-                    foreach (var itm in context.CacheOnCommit.AsParallel())
-                        ApplicationContext.Current.GetService<IDataCachingService>().Add(itm);
-
-                    return postArgs.Results;
-                }
-                catch (Exception e)
-                {
-                    this.m_tracer.TraceError("Error : {0}", e);
-                    throw;
-                }
-        }
-
+      
         #endregion
 
         /// <summary>
@@ -580,10 +495,8 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <returns>The user UUID.</returns>
         protected Guid CurrentUserUuid(SQLiteDataContext context)
         {
-            if (AuthenticationContext.Current.Principal == null)
-                return Guid.Empty;
-            String name = AuthenticationContext.Current.Principal.Identity.Name;
-            var securityUser = context.Connection.Table<DbSecurityUser>().Where(o => o.UserName == name).ToList().SingleOrDefault();
+            String name = context.Principal.Identity.Name ?? AuthenticationContext.Current.Principal.Identity.Name;
+            var securityUser = context.Connection.Table<DbSecurityUser>().Where(o => o.UserName.ToLower() == name.ToLower()).ToList().SingleOrDefault();
             if (securityUser == null)
             {
                 this.m_tracer.TraceWarning("User doesn't exist locally, using GUID.EMPTY");
@@ -647,7 +560,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="query">Query.</param>
-        public IEnumerable<TData> Query(SQLiteDataContext context, Expression<Func<TData, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        public IEnumerable<TData> Query(SQLiteDataContext context, Expression<Func<TData, bool>> query, Guid queryId, int offset, int count, out int totalResults, bool countResults)
         {
             var retVal = this.QueryInternal(context, query, offset, count, out totalResults, queryId, countResults);
 
@@ -657,21 +570,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             return retVal;
 
         }
-        /// <summary>
-        /// Performs the actual query
-        /// </summary>
-        /// <param name="context">Context.</param>
-        /// <param name="query">Query.</param>
-        public IEnumerable<TData> Query(SQLiteDataContext context, String storedQueryName, IDictionary<String, Object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
-        {
-            var retVal = this.QueryInternal(context, storedQueryName, parms, offset, count, out totalResults, queryId, countResults);
-
-            foreach (var i in retVal.Where(i => i != null))
-                context.AddCacheCommit(i);
-
-            return retVal;
-
-        }
+     
 
 
         /// <summary>
@@ -765,7 +664,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         public virtual object Obsolete(object data)
         {
-            return this.Obsolete(data as TData);
+            return this.Obsolete(data as TData, TransactionMode.Commit, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -773,7 +672,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         object IDataPersistenceService.Get(Guid id)
         {
-            return this.Get(id);
+            return this.Get(id, null, false, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -781,7 +680,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         public IEnumerable Query(Expression query, int offset, int? count, out int totalResults)
         {
-            return this.Query((Expression<Func<TData, bool>>)query, offset, count, out totalResults, Guid.Empty);
+            return this.Query((Expression<Func<TData, bool>>)query, null, offset, count, out totalResults, true, false, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -823,6 +722,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         {
             return this.ToModelInstance(domainInstance, context);
         }
+
     }
 }
 

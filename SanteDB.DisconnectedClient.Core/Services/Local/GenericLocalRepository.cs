@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Synchronization;
@@ -92,7 +93,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
 
             IEnumerable<TEntity> results = null;
-            results = persistenceService.Query(query, offset, count, out totalResults, queryId);
+            if(persistenceService is IStoredQueryDataPersistenceService<TEntity>)
+                results = (persistenceService as IStoredQueryDataPersistenceService<TEntity>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal);
+            else
+                results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal);
 
             var retVal = businessRulesService != null ? businessRulesService.AfterQuery(results) : results;
 
@@ -118,7 +122,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
 
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
             data = businessRulesService?.BeforeInsert(data) ?? data;
-            data = persistenceService.Insert(data);
+            data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
             businessRulesService?.AfterInsert(data);
 
@@ -140,7 +144,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<TEntity>)}");
             }
 
-            var entity = persistenceService.Get(key);
+            var entity = persistenceService.Get(key, null, false, AuthenticationContext.SystemPrincipal);
 
             if (entity == null)
             {
@@ -150,7 +154,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
 
             entity = businessRulesService?.BeforeObsolete(entity) ?? entity;
-            entity = persistenceService.Obsolete(entity);
+            entity = persistenceService.Obsolete(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
             ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Enqueue(entity, SynchronizationOperationType.Obsolete);
 
@@ -181,7 +185,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
 
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
 
-            var result = persistenceService.Get(key);
+            var result = persistenceService.Get(key, null, false, AuthenticationContext.Current.Principal);
 
             var retVal = businessRulesService?.AfterRetrieve(result) ?? result;
             return retVal;
@@ -214,7 +218,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 // Data key
                 if (data.Key.HasValue)
                 {
-                    old = persistenceService.Get(data.Key.Value) as TEntity;
+                    old = persistenceService.Get(data.Key.Value, null, false, AuthenticationContext.SystemPrincipal) as TEntity;
                     if (old is Entity)
                         old = (TEntity)(old as Entity)?.Copy();
                     else if (old is Act)
@@ -226,11 +230,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 {
                     var tr = 0;
                     var erd = data as EntityRelationship;
-                    old = (TEntity)(persistenceService as IDataPersistenceService<EntityRelationship>).Query(o => o.SourceEntityKey == erd.SourceEntityKey && o.TargetEntityKey == erd.TargetEntityKey, 0, 1, out tr, Guid.Empty).OfType<EntityRelationship>().FirstOrDefault().Clone();
+                    old = (TEntity)(persistenceService as IDataPersistenceService<EntityRelationship>).Query(o => o.SourceEntityKey == erd.SourceEntityKey && o.TargetEntityKey == erd.TargetEntityKey, 0, 1, out tr, AuthenticationContext.SystemPrincipal).OfType<EntityRelationship>().FirstOrDefault().Clone();
                 }
 
                 data = businessRulesService?.BeforeUpdate(data) ?? data;
-                data = persistenceService.Update(data);
+                data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
                 var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
                 if (diff != null)
@@ -245,7 +249,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             catch (KeyNotFoundException)
             {
                 data = businessRulesService?.BeforeInsert(data) ?? data;
-                data = persistenceService.Insert(data);
+                data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
                 businessRulesService?.AfterInsert(data);
                 return data;
@@ -318,7 +322,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
             var outcome = pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, policyId);
             if (outcome != PolicyGrantType.Grant)
-                throw new PolicyViolationException(policyId, outcome ?? PolicyGrantType.Deny);
+                throw new PolicyViolationException(AuthenticationContext.Current.Principal, policyId, outcome ?? PolicyGrantType.Deny);
 
         }
 

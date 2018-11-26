@@ -18,10 +18,12 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -49,6 +51,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLitePolicyInformationService));
 
         /// <summary>
+        /// Add the specified policies to the specified securable
+        /// </summary>
+        public void AddPolicies(object securable, PolicyGrantType rule, IPrincipal principal, params string[] policyOids)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
         /// Create the policy locally
         /// </summary>
         public void CreatePolicy(IPolicy policy, IPrincipal principal)
@@ -56,7 +66,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             // Demand local admin
             var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
             if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
 
             var conn = this.CreateConnection();
             using (conn.Lock())

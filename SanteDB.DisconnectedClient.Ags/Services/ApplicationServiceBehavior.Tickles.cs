@@ -1,5 +1,6 @@
 ﻿using RestSrvr;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
@@ -40,8 +41,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public List<Tickle> GetTickles()
         {
-            var session = AuthenticationContext.Current.Session;
-            return ApplicationContext.Current.GetService<ITickleService>()?.GetTickles(o => o.Expiry > DateTime.Now && (o.Target == Guid.Empty || o.Target == session.SecurityUser.Key)).ToList();
+            var suser = ApplicationContext.Current.GetService<ISecurityRepositoryService>().GetUser(AuthenticationContext.Current.Principal.Identity);
+            return ApplicationContext.Current.GetService<ITickleService>()?.GetTickles(o => o.Expiry > DateTime.Now && (o.Target == Guid.Empty || o.Target == suser.Key)).ToList();
         }
 
     }

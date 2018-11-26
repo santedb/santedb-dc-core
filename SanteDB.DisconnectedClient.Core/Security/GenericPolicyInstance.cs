@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {

@@ -22,6 +22,8 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Interop;
@@ -152,16 +154,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         private Credentials GetCredentials()
         {
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-
             AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
-
-            // TODO: Clean this up - Login as device account
-            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                ((AuthenticationContext.Current.Principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
-            {
-                AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                this.m_cachedCredential = AuthenticationContext.Current.Principal;
-            }
             return this.m_client.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
         }
 

@@ -20,6 +20,8 @@
 using RestSrvr;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -61,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                                 if (principal == null)
                                     throw new UnauthorizedAccessException();
                                 else
-                                    AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(principal);
+                                    AuthenticationContext.Current = new AuthenticationContext(principal);
                                 this.m_tracer.TraceVerbose("Performed BASIC auth for {0}", AuthenticationContext.Current.Principal.Identity.Name);
 
                                 break;
@@ -74,7 +76,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                                 {
                                     try
                                     {
-                                        AuthenticationContext.Current = AuthenticationContext.CurrentUIContext = new AuthenticationContext(session);
+                                        AuthenticationContext.Current = new AuthenticationContext(session.Principal);
                                         this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
                                     }
                                     catch (SessionExpiredException)

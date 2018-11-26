@@ -19,6 +19,7 @@
  */
 using SanteDB.DisconnectedClient.Core.Security;
 using System;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
@@ -31,12 +32,12 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <summary>
         /// Authenticates the specified username/password pair
         /// </summary>
-        SessionInfo Authenticate(String userName, String password, params Claim[] claims);
+        SessionInfo Authenticate(String userName, String password);
 
         /// <summary>
         /// Authenticates the specified username/password/tfasecret pair
         /// </summary>
-        SessionInfo Authenticate(String userName, String password, String tfaSecret, params Claim[] claims);
+        SessionInfo Authenticate(String userName, String password, String tfaSecret);
 
         /// <summary>
         /// Authenticate with PIN (offline local context only)
@@ -49,17 +50,17 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <param name="principal"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        SessionInfo Refresh(SessionInfo session, String password);
+        SessionInfo Refresh(SessionInfo session);
 
         /// <summary>
         /// Deletes (abandons) the session
         /// </summary>
-        SessionInfo Delete(Guid sessionId);
+        SessionInfo Delete(IPrincipal sessionPrincipal);
 
         /// <summary>
         /// Gets the session
         /// </summary>
-        SessionInfo Get(Guid sessionId);
+        SessionInfo Get(IPrincipal sessionId);
 
         /// <summary>
         /// Gets the session from the specified session token

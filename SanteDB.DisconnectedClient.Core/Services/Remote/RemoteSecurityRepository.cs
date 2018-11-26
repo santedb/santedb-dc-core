@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// <summary>
     /// Represents a remote security repository
     /// </summary>
-    public class RemoteSecurityRepository : AmiRepositoryBaseService, ISecurityInformationService,
+    public class RemoteSecurityRepository : AmiRepositoryBaseService,
         ISecurityRepositoryService,
         IRepositoryService<SecurityUser>,
         IRepositoryService<SecurityApplication>,

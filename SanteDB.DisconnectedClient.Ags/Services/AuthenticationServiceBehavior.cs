@@ -20,6 +20,7 @@
 using RestSrvr;
 using RestSrvr.Attributes;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -62,8 +63,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public void AbandonSession()
         {
             // Get the session
-            if (AuthenticationContext.Current.Session != null) { 
-                ApplicationContext.Current.GetService<ISessionManagerService>().Delete(AuthenticationContext.Current.Session.Key.Value);
+            if (AuthenticationContext.Current.Principal != null) { 
+                ApplicationContext.Current.GetService<ISessionManagerService>().Delete(AuthenticationContext.Current.Principal);
                 AuditUtil.AuditLogout(AuthenticationContext.Current.Principal);
             }
 
@@ -87,20 +88,24 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 case "password":
                     var tfa = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpTfaSecret];
                     if (!String.IsNullOrEmpty(tfa))
-                        retVal = sessionService.Authenticate(request["username"], request["password"], tfa, claims.Union(this.ExtractClaims(RestOperationContext.Current.IncomingRequest.Headers)).ToArray());
+                        retVal = sessionService.Authenticate(request["username"], request["password"], tfa);
                     else
-                        retVal = sessionService.Authenticate(request["username"], request["password"], claims.Union(this.ExtractClaims(RestOperationContext.Current.IncomingRequest.Headers)).ToArray());
+                        retVal = sessionService.Authenticate(request["username"], request["password"]);
                     break;
                 case "refresh":
-                    if (AuthenticationContext.Current.Session.RefreshToken == request["refresh_token"])
-                        retVal = sessionService.Refresh(AuthenticationContext.Current.Session, null); // Force a re-issue
-                    else
-                        throw new SecurityException("Invalid refresh token");
+                    var ses = sessionService.Get(AuthenticationContext.Current.Principal);
+                    if (ses.RefreshToken == request["refresh_token"])
+                        retVal = ses.Extend(request["refresh_token"]); // Force a re-issue
                     break;
                 case "pin":
                     var pinAuthSvc = sessionService as IPinAuthenticationService;
                     retVal = sessionService.Authenticate(request["username"], request["pin"].Select(o => Byte.Parse(o.ToString())).ToArray(), claims.Union(this.ExtractClaims(RestOperationContext.Current.IncomingRequest.Headers)).ToArray());
                     break;
+            }
+
+            // override
+            if (claims.Any(o => o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true")) {
+                throw new NotImplementedException(); // TODO:
             }
 
             if (retVal == null)
@@ -132,7 +137,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public SessionInfo GetSession()
         {
-            return AuthenticationContext.Current.Session;
+            return ApplicationContext.Current.GetService<ISessionManagerService>().Get(AuthenticationContext.Current.Principal.ToString());
         }
 
         /// <summary>

@@ -21,6 +21,8 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Messaging.AMI.Client;
@@ -53,6 +55,14 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public AmiPolicyInformationService(ClaimsPrincipal cprincipal)
         {
             this.m_client.Client.Credentials = this.m_client.Client?.Description?.Binding?.Security?.CredentialProvider?.GetCredentials(cprincipal);
+        }
+
+        /// <summary>
+        /// Note supported
+        /// </summary>
+        public void AddPolicies(object securable, PolicyGrantType rule, IPrincipal principal, params string[] policyOids)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

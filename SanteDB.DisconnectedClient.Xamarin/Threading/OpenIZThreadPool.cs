@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -315,7 +316,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
         private void DoWorkItem(WorkItem state)
         {
             this.m_tracer.TraceVerbose("Starting task on {0} ---> {1}", Thread.CurrentThread.Name, state.Callback.Target.ToString());
-            AuthenticationContext.CurrentUIContext = null;
             var worker = (WorkItem)state;
             try
             {

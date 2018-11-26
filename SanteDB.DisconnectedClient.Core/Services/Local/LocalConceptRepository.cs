@@ -115,12 +115,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             Uri uri = null;
             if (oidRegex.IsMatch(codeSystem))
-                refTermEnt = refTermService.Query(o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntityKey == conceptId, 0, 1, out tr, Guid.Empty).FirstOrDefault();
+                refTermEnt = refTermService.Query(o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntityKey == conceptId, 0, 1, out tr, AuthenticationContext.Current.Principal).FirstOrDefault();
             else if (Uri.TryCreate(codeSystem, UriKind.Absolute, out uri))
-                refTermEnt = refTermService.Query(o => (o.ReferenceTerm.CodeSystem.Url == codeSystem) && o.SourceEntityKey == conceptId, 0, 1, out tr, Guid.Empty).FirstOrDefault();
+                refTermEnt = refTermService.Query(o => (o.ReferenceTerm.CodeSystem.Url == codeSystem) && o.SourceEntityKey == conceptId, 0, 1, out tr, AuthenticationContext.Current.Principal).FirstOrDefault();
             else
-                refTermEnt = refTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId, 0, 1, out tr, Guid.Empty).FirstOrDefault();
+                refTermEnt = refTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId, 0, 1, out tr, AuthenticationContext.Current.Principal).FirstOrDefault();
             return refTermEnt.LoadProperty<ReferenceTerm>("ReferenceTerm");
+        }
+
+        /// <summary>
+        /// Get members of the concept set
+        /// </summary>
+        public IEnumerable<Concept> GetConceptSetMembers(string mnemonic)
+        {
+            return this.Find(o => o.ConceptSets.Any(s => s.Mnemonic == mnemonic));
         }
 
         /// <summary>

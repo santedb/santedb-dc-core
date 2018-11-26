@@ -337,7 +337,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (data.Identifiers != null)
             {
                 // Validate unique values for IDs
-                var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>().Get(o.AuthorityKey.Value)?.IsUnique == true);
+                var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => ((ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>() as ISQLitePersistenceService).Get(context, o.AuthorityKey.Value) as AssigningAuthority)?.IsUnique == true);
                 byte[] entId = data.Key.Value.ToByteArray();
 
                 foreach (var itm in uniqueIds)

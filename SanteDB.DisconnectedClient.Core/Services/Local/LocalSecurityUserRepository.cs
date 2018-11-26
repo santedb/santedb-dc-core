@@ -1,5 +1,6 @@
 ﻿using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Linq;
 
@@ -35,7 +36,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var iids = ApplicationContext.Current.GetService<IIdentityProviderService>();
 
             // Create the identity
-            var id = iids.CreateIdentity(data.UserName, data.Password);
+            var id = iids.CreateIdentity(data.UserName, data.Password, AuthenticationContext.Current.Principal);
 
             // Now ensure local db record exists
             int tr = 0;

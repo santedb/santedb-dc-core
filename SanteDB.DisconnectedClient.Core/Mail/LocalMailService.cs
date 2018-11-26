@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Mail;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
@@ -80,7 +81,7 @@ namespace SanteDB.DisconnectedClient.Core.Mail
             if (persistenceService == null)
                 throw new InvalidOperationException("Cannot find alert persistence service");
 
-            return persistenceService.Query(predicate, offset, count, out totalCount, Guid.Empty);
+            return persistenceService.Query(predicate, offset, count, out totalCount, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -91,7 +92,7 @@ namespace SanteDB.DisconnectedClient.Core.Mail
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<MailMessage>>();
             if (persistenceService == null)
                 throw new InvalidOperationException("Cannot find alert persistence service");
-            return persistenceService.Get(id);
+            return persistenceService.Get(id, null, false, AuthenticationContext.Current.Principal);
 
         }
 
@@ -109,7 +110,7 @@ namespace SanteDB.DisconnectedClient.Core.Mail
                 throw new InvalidOperationException(string.Format("{0} not found", nameof(IDataPersistenceService<MailMessage>)));
             }
 
-            MailMessage alert = persistenceService.Insert(message);
+            MailMessage alert = persistenceService.Insert(message, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             this.Received?.Invoke(this, new MailMessageEventArgs(alert));
 
             return alert;
@@ -141,11 +142,11 @@ namespace SanteDB.DisconnectedClient.Core.Mail
 
                 if (existingAlert == null)
                 {
-                    persistenceService.Insert(alert);
+                    persistenceService.Insert(alert, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
                 else
                 {
-                    persistenceService.Update(alert);
+                    persistenceService.Update(alert, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
                 this.Committed?.Invoke(this, new MailMessageEventArgs(alert));
             }

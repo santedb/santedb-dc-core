@@ -21,6 +21,8 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -46,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Core.Data
         {
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
-                return persistenceService.Get(key.Value);
+                return persistenceService.Get(key.Value, null, false, AuthenticationContext.SystemPrincipal);
             return default(TObject);
         }
 
@@ -57,9 +59,9 @@ namespace SanteDB.DisconnectedClient.Core.Data
         {
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
-                return persistenceService.Query(o => o.Key == key).FirstOrDefault();
+                return persistenceService.Query(o => o.Key == key, AuthenticationContext.SystemPrincipal).FirstOrDefault();
             else if (persistenceService != null && key.HasValue && versionKey.HasValue)
-                return persistenceService.Query(o => o.Key == key && o.VersionKey == versionKey).FirstOrDefault();
+                return persistenceService.Query(o => o.Key == key && o.VersionKey == versionKey, AuthenticationContext.SystemPrincipal).FirstOrDefault();
             return default(TObject);
         }
 
@@ -84,15 +86,15 @@ namespace SanteDB.DisconnectedClient.Core.Data
         /// </summary>
         public IEnumerable<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
         {
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TObject>>();
+            var persistenceService = ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<TObject>>();
             if (persistenceService != null)
             {
                 var tr = 0;
                 if (typeof(Act).GetTypeInfo().IsAssignableFrom(typeof(TObject).GetTypeInfo()) ||
                     typeof(ActParticipation).GetTypeInfo().IsAssignableFrom(typeof(TObject).GetTypeInfo()))
-                    return persistenceService.QueryFast(query, 0, null, out tr, Guid.Empty);
+                    return persistenceService.QueryFast(query, Guid.Empty, 0, null, out tr, AuthenticationContext.SystemPrincipal);
                 else
-                    return persistenceService.Query(query, 0, null, out tr, Guid.Empty);
+                    return persistenceService.Query(query, Guid.Empty, 0, null, out tr, AuthenticationContext.SystemPrincipal);
 
             }
             return new List<TObject>();

@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Http;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Core;
 using System.Security.Principal;
 

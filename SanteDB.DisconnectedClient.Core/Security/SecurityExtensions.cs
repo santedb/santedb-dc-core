@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {

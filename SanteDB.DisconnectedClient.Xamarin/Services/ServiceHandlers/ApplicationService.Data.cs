@@ -22,7 +22,7 @@ using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
 using SanteDB.DisconnectedClient.Xamarin.Services.Model;
-using SanteDB.DisconnectedClient.Core.Serices;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
@@ -133,7 +134,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 old = (dataService.Get(data.EntryKey.Value) as IdentifiedData).Clone();
             }
 
-            data = persistenceService.Update(data);
+            data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
             // Patch
             if (old != null)

@@ -22,7 +22,7 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Serices;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model;
@@ -39,6 +39,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using SanteDB.Core.Security.Services;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {

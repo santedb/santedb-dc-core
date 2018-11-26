@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Security;
 using System;
 
 namespace SanteDB.DisconnectedClient.Core.Security

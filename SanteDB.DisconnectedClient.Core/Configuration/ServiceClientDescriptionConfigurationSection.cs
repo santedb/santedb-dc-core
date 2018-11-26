@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Http;
 using SanteDB.Core.Http.Description;
 using System;

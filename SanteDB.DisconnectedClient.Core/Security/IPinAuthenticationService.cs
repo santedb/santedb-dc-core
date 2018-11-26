@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-7-26
  */
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Security.Principal;
@@ -36,14 +37,6 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <param name="pin">The PIN number digits</param>
         /// <returns>The authenticated principal</returns>
         IPrincipal Authenticate(String username, byte[] pin);
-
-        /// <summary>
-        /// Authenticate with a numeric PIN
-        /// </summary>
-        /// <param name="principal">The user being authenticated</param>
-        /// <param name="pin">The PIN number digits</param>
-        /// <returns>The authenticated principal</returns>
-        IPrincipal Authenticate(IPrincipal principal, byte[] pin);
 
         /// <summary>
         /// Change the user's PIN number

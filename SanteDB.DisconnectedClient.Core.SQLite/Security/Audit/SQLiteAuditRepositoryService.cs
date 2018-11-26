@@ -17,10 +17,12 @@
  * User: justin
  * Date: 2018-6-28
  */
-using MARC.HI.EHRS.SVC.Auditing.Data;
+using SanteDB.Core.Security;
+using SanteDB.Core.Auditing;
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.SQLite.Connection;
@@ -147,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 using (conn.Lock())
                 {
                     var builder = new QueryBuilder(this.m_mapper);
-                    var sql = builder.CreateQuery<AuditData>(o => o.CorrelationToken == pk).Limit(1).Build();
+                    var sql = builder.CreateQuery<AuditData>(o => o.Key == pk).Limit(1).Build();
 
                     var res = conn.Query<DbAuditData.QueryResult>(sql.SQL, sql.Arguments.ToArray()).FirstOrDefault();
                     AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.Success, sql.ToString(), pk);
@@ -174,7 +176,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 EventIdentifier = (EventIdentifierType)res.EventIdentifier,
                 Outcome = (OutcomeIndicator)res.Outcome,
                 Timestamp = res.Timestamp,
-                CorrelationToken = new Guid(res.Id)
+                Key = new Guid(res.Id)
             };
 
             if (res.EventTypeCode != null)
@@ -320,8 +322,8 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     }
 
                     dbAudit.CreationTime = DateTime.Now;
-                    audit.CorrelationToken = Guid.NewGuid();
-                    dbAudit.Id = audit.CorrelationToken.ToByteArray();
+                    audit.Key = Guid.NewGuid();
+                    dbAudit.Id = audit.Key.Value.ToByteArray();
                     conn.Insert(dbAudit);
 
                     // Insert secondary properties

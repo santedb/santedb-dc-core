@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -148,7 +149,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
                     totalResults = results.Count();
 
-                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().Select(o => persistence.Get(new Guid(o.Key)));
+                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal));
 
                     this.DataDisclosed?.Invoke(this, new AuditDataDisclosureEventArgs("FTS:" + String.Join(":", tokens), retVal));
                     return retVal;
@@ -352,14 +353,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         {
                             // Load all entities in database and index them
                             int tr = 101, ofs = 0;
-                            var patientService = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>();
+                            var patientService = ApplicationContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
                             Guid queryId = Guid.NewGuid();
 
                             while (tr > ofs + 50)
                             {
 
                                 if (patientService == null) break;
-                                var entities = patientService.Query(e => e.StatusConceptKey != StatusKeys.Obsolete, ofs, 50, out tr, queryId);
+                                var entities = patientService.Query(e => e.StatusConceptKey != StatusKeys.Obsolete, queryId, ofs, 50, out tr, AuthenticationContext.SystemPrincipal);
 
                                 // Index 
                                 this.IndexEntity(entities.ToArray());

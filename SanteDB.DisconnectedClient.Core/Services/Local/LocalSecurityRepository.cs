@@ -18,10 +18,12 @@
  * Date: 2018-6-22
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -36,8 +38,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     /// Represents a security repository service that uses the direct local services
     /// </summary>
     public class LocalSecurityRepository : ISecurityRepositoryService,
-        ISecurityAuditEventSource,
-        ISecurityInformationService
+        ISecurityAuditEventSource
     {
         private Tracer m_traceSource = Tracer.GetTracer(typeof(LocalSecurityRepository));
 
@@ -56,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
             var outcome = pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, policyId);
             if (outcome != PolicyGrantType.Grant)
-                throw new PolicyViolationException(policyId, outcome ?? PolicyGrantType.Deny);
+                throw new PolicyViolationException(AuthenticationContext.Current.Principal, policyId, outcome ?? PolicyGrantType.Deny);
 
         }
 
@@ -91,17 +92,6 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             iids.ChangePassword(securityUser.UserName, password, AuthenticationContext.Current.Principal);
             this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(securityUser, "Password"));
             return securityUser;
-        }
-
-        /// <summary>
-        /// Change password
-        /// </summary>
-        public void ChangePassword(string userName, string password)
-        {
-            if (!userName.Equals(AuthenticationContext.Current.Principal.Identity.Name, StringComparison.OrdinalIgnoreCase))
-                this.Demand(PermissionPolicyIdentifiers.ChangePassword);
-            ApplicationContext.Current.GetService<IIdentityProviderService>().ChangePassword(userName, password, AuthenticationContext.Current.Principal);
-            this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(userName, "Password"));
         }
 
         /// <summary>
@@ -150,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         {
             // On the mobile we don't store provenance only attribution
             // This is a shim to fill out the provenance object with the identity of the user
-            var user = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(provenanceId);
+            var user = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(provenanceId, null, false, AuthenticationContext.Current.Principal);
             if (user == null)
                 return null;
             else

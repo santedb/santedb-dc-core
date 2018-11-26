@@ -18,10 +18,12 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Xamarin.Security;
@@ -130,11 +132,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
             persister.Queried += (o, e) =>
             {
                 new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.ReadClinicalData).Demand();
-                DataQueryResultEventArgs<TData> dqre = e as DataQueryResultEventArgs<TData>;
+                QueryResultEventArgs<TData> dqre = e as QueryResultEventArgs<TData>;
                 // Filter dataset
                 if (dqre != null)
                 {
-                    dqre.Results = dqre.Results.Where(i => ApplicationContext.Current.PolicyDecisionService.GetPolicyDecision(AuthenticationContext.Current.Principal, i) == SanteDB.Core.Model.Security.PolicyGrantType.Grant);
+                    dqre.Results = dqre.Results.Where(i => ApplicationContext.Current.PolicyDecisionService.GetPolicyDecision(AuthenticationContext.Current.Principal, i).Outcome == SanteDB.Core.Model.Security.PolicyGrantType.Grant);
                 }
             };
         }

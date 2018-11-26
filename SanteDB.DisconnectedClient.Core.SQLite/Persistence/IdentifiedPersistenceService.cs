@@ -32,6 +32,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence

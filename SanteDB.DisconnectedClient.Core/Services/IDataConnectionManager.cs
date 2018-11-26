@@ -18,6 +18,8 @@
  * Date: 2018-6-28
  */
 
+using SanteDB.Core.Services;
+
 namespace SanteDB.DisconnectedClient.Core.Services
 {
     /// <summary>

@@ -17,9 +17,10 @@
  * User: justin
  * Date: 2018-11-23
  */
-using MARC.HI.EHRS.SVC.Auditing.Data;
+using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;

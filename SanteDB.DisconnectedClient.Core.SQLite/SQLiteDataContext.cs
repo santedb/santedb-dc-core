@@ -23,6 +23,7 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -35,9 +36,10 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Partial load mode
         /// </summary>
-        public SQLiteDataContext()
+        public SQLiteDataContext(IPrincipal principal)
         {
             this.DelayLoadMode = LoadState.PartialLoad;
+            this.Principal = principal;
         }
 
         // Prepared
@@ -65,8 +67,9 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Local data context
         /// </summary>
-        public SQLiteDataContext(LockableSQLiteConnection connection)
+        public SQLiteDataContext(LockableSQLiteConnection connection, IPrincipal principal)
         {
+            this.Principal = principal;
             this.Connection = connection;
             this.m_cacheCommit = new Dictionary<Guid, IdentifiedData>();
         }
@@ -124,6 +127,11 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// The data loading mode
         /// </summary>
         public SanteDB.Core.Model.LoadState DelayLoadMode { get; set; }
+
+        /// <summary>
+        /// Gets the principal associated with the context
+        /// </summary>
+        public IPrincipal Principal { get; }
 
         /// <summary>
         /// Add cache commit

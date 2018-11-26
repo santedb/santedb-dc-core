@@ -17,7 +17,8 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.DisconnectedClient.Core.Serices;
+using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.Security.Cryptography;
 using System.Text;

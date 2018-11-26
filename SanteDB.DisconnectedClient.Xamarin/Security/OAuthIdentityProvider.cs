@@ -23,6 +23,8 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -65,7 +67,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
-        public event EventHandler<OverrideEventArgs> Overridding;
 
         /// <summary>
         /// Authenticate the user
@@ -93,7 +94,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         public System.Security.Principal.IPrincipal Authenticate(System.Security.Principal.IPrincipal principal, string password, String tfaSecret)
         {
 
-            AuthenticatingEventArgs e = new AuthenticatingEventArgs(principal.Identity.Name, password) { Principal = principal };
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(principal.Identity.Name) { Principal = principal };
             this.Authenticating?.Invoke(this, e);
             if (e.Cancel)
             {
@@ -106,7 +107,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             // Get the scope being requested
             String scope = "*";
             if (principal is IOfflinePrincipal && password == null)
-                return localIdp.Authenticate(principal, password);
+                return localIdp.ReAuthenticate(principal);
 
             // Authenticate
             IPrincipal retVal = null;
@@ -181,7 +182,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                 {
                                     if (localIdp == null)
                                         throw new SecurityException(Strings.err_offline_no_local_available);
-                                    retVal = localIdp.Authenticate(principal, password);
+
+                                    if (!String.IsNullOrEmpty(password))
+                                        retVal = localIdp.Authenticate(principal.Identity.Name, password);
+                                    else
+                                        retVal = localIdp.ReAuthenticate(principal);
                                 }
                                 catch (Exception ex2)
                                 {
@@ -189,7 +194,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                     throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
                                 }
                             }
-                            this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, password, true) { Principal = retVal });
+                            this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, retVal, true));
 
                         }
                         catch (WebException ex) // Raw level web exception
@@ -203,7 +208,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             {
                                 if (localIdp == null)
                                     throw new SecurityException(Strings.err_offline_no_local_available);
-                                retVal = localIdp?.Authenticate(principal, password);
+                                if (!String.IsNullOrEmpty(password))
+                                    retVal = localIdp.Authenticate(principal.Identity.Name, password);
+                                else
+                                    retVal = localIdp.ReAuthenticate(principal);
                             }
                             catch (Exception ex2)
                             {
@@ -224,7 +232,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                 if (localIdp == null)
                                     throw new SecurityException(Strings.err_offline_no_local_available);
 
-                                retVal = localIdp?.Authenticate(principal, password);
+                                if (!String.IsNullOrEmpty(password))
+                                    retVal = localIdp.Authenticate(principal.Identity.Name, password);
+                                else
+                                    retVal = localIdp.ReAuthenticate(principal);
                             }
                             catch (Exception ex2)
                             {
@@ -251,7 +262,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                 if (localIdp == null)
                                     throw new SecurityException(Strings.err_offline_no_local_available);
 
-                                retVal = localIdp?.Authenticate(principal, password);
+                                if (!String.IsNullOrEmpty(password))
+                                    retVal = localIdp.Authenticate(principal.Identity.Name, password);
+                                else
+                                    retVal = localIdp.ReAuthenticate(principal);
                             }
                             catch (Exception ex2)
                             {
@@ -295,7 +309,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
-                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, password, false) { Principal = retVal });
+                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, retVal, false));
                 throw;
             }
 
@@ -331,7 +345,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         try
                         {
                             var policy = amiPip.GetPolicy(itm.Value);
-                            localPip.CreatePolicy(policy, new SystemPrincipal());
+                            localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
                         }
                         catch (Exception e)
                         {
@@ -352,15 +366,15 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             if (localPip.GetPolicy(pol.Policy.Oid) == null)
                             {
                                 var policy = amiPip.GetPolicy(pol.Policy.Oid);
-                                localPip.CreatePolicy(policy, new SystemPrincipal());
+                                localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
                             }
 
                         // Local role doesn't exist
                         if (!localRoles.Contains(itm.Value))
                         {
-                            localRp.CreateRole(itm.Value, new SystemPrincipal());
+                            localRp.CreateRole(itm.Value, AuthenticationContext.SystemPrincipal);
                         }
-                        localRp.AddPoliciesToRoles(amiPolicies, new String[] { itm.Value }, new SystemPrincipal());
+                        localRp.AddPoliciesToRoles(amiPolicies, new String[] { itm.Value }, AuthenticationContext.SystemPrincipal);
                     }
                     catch (Exception e)
                     {
@@ -375,22 +389,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     Guid sid = Guid.Parse(cprincipal.FindClaim(ClaimTypes.Sid).Value);
                     if (localUser == null)
                     {
-                        localIdp.CreateIdentity(sid, principal.Identity.Name, password, new SystemPrincipal());
+                        localIdp.CreateIdentity(sid, principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
                     }
                     else
                     {
-                        localIdp.ChangePassword(principal.Identity.Name, password, principal);
+                        localIdp.ChangePassword(principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
                     }
 
                     // Copy security attributes
-                    var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid);
+                    var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.Current.Principal);
                     localSu.Email = cprincipal.FindClaim(ClaimTypes.Email)?.Value;
                     localSu.PhoneNumber = cprincipal.FindClaim(ClaimTypes.Telephone)?.Value;
-                    ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu);
+                    ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
                     // Add user to roles
                     // TODO: Remove users from specified roles?
-                    localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray(), new SystemPrincipal());
+                    localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
                     // Unlock the account
                     localIdp.SetLockout(principal.Identity.Name, false);
 
@@ -486,7 +500,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
                     // Change locally
-                    localIdp.ChangePassword(userName, newPassword);
+                    localIdp.ChangePassword(userName, newPassword, principal);
 
                     // Audit - Local IDP has alerted this already
                     if (!(localIdp is ISecurityAuditEventSource))
@@ -512,10 +526,19 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             this.ChangePassword(userName, password, AuthenticationContext.Current.Principal);
         }
 
+
+        /// <summary>
+        /// Perform re-auth
+        /// </summary>
+        public IPrincipal ReAuthenticate(IPrincipal principal)
+        {
+            return this.Authenticate(principal, null);
+        }
+
         /// <summary>
         /// Creates an identity
         /// </summary>
-        public IIdentity CreateIdentity(string userName, string password)
+        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
         {
             throw new NotImplementedException();
         }
@@ -538,6 +561,21 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         public IIdentity CreateIdentity(Guid sid, string userName, string password)
         {
             throw new NotImplementedException();
+        }
+
+        public string GenerateTfaSecret(string userName)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddClaim(string userName, IClaim claim)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void RemoveClaim(string userName, string claimType)
+        {
+            throw new NotSupportedException();
         }
 
         #endregion

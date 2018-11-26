@@ -29,6 +29,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Json.Formatter;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Core;
 using System;

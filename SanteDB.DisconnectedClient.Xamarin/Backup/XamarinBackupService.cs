@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Security;

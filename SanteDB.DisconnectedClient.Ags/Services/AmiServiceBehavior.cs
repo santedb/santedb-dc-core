@@ -25,6 +25,8 @@ using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Interop;
@@ -124,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     CreationTime = DateTime.Now,
                     Attachments = attachments,
                     Note = report.Note,
-                    Submitter = AuthenticationContext.Current.Session.UserEntity
+                    Submitter = ApplicationContext.Current.GetService<ISecurityRepositoryService>().GetUserEntity(AuthenticationContext.Current.Principal.Identity)
                 });
 
             }

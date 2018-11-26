@@ -17,6 +17,8 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using System;
@@ -36,27 +38,27 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Sessions 
         /// </summary>
-        private Dictionary<Guid, SessionInfo> m_session = new Dictionary<Guid, SessionInfo>();
+        private Dictionary<String, SessionInfo> m_session = new Dictionary<String, SessionInfo>();
 
         /// <summary>
         /// Authentication with the user and establish a session
         /// </summary>
-        public SessionInfo Authenticate(string userName, string password, params Claim[] claims)
+        public SessionInfo Authenticate(string userName, string password)
         {
-            return this.Authenticate(userName, password, null, claims);
+            return this.Authenticate(userName, password, null);
         }
 
         /// <summary>
         /// Authenticate the user and establish a sessions
         /// </summary>
-        public SessionInfo Authenticate(string userName, string password, string tfaSecret, params Claim[] claims)
+        public SessionInfo Authenticate(string userName, string password, string tfaSecret)
         {
             var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
-            IPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(userName, false, claims));
+            IPrincipal principal = null;
             if (String.IsNullOrEmpty(tfaSecret))
-                principal = idp.Authenticate(principal, password);
+                principal = idp.Authenticate(userName, password);
             else
-                principal = idp.Authenticate(principal, password, tfaSecret);
+                principal = idp.Authenticate(userName, password, tfaSecret);
 
             if (principal == null)
                 throw new SecurityException(Strings.locale_sessionError);
@@ -65,7 +67,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 AuthenticationContext.Current = new AuthenticationContext(principal);
                 var session = new SessionInfo(principal);
                 session.Key = Guid.NewGuid();
-                this.m_session.Add(session.Key.Value, session);
+                this.m_session.Add(session.Token, session);
                 return session;
             }
         }
@@ -80,13 +82,13 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 throw new NotSupportedException("Authentication provide does not support PIN logins");
             else
             {
-                var principal = idp.Authenticate(new ClaimsPrincipal(new ClaimsIdentity(userName, false, claims)), pin);
+                var principal = idp.Authenticate(userName, pin);
                 if (principal == null)
                     throw new SecurityException(Strings.locale_sessionError);
                 else
                 {
                     var session = new SessionInfo(principal) { Key = Guid.NewGuid() };
-                    this.m_session.Add(session.Key.Value, session);
+                    this.m_session.Add(session.Token, session);
                     return session;
                 }
 
@@ -96,21 +98,21 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Deletes the specified session
         /// </summary>
-        public SessionInfo Delete(Guid sessionId)
+        public SessionInfo Delete(IPrincipal principal)
         {
             SessionInfo ses = null;
-            if (this.m_session.TryGetValue(sessionId, out ses))
-                this.m_session.Remove(sessionId);
+            if (this.m_session.TryGetValue(principal.ToString(), out ses))
+                this.m_session.Remove(principal.ToString());
             return ses;
         }
 
         /// <summary>
         /// Get the specified session
         /// </summary>
-        public SessionInfo Get(Guid sessionId)
+        public SessionInfo Get(IPrincipal principal)
         {
             SessionInfo ses = null;
-            if (!this.m_session.TryGetValue(sessionId, out ses))
+            if (!this.m_session.TryGetValue(principal.ToString(), out ses))
                 return null;
             return ses;
         }
@@ -128,31 +130,33 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Refreshes the specified session
         /// </summary>
-        public SessionInfo Refresh(SessionInfo session, String password)
+        public SessionInfo Refresh(SessionInfo session)
         {
 
             if (session == null) return session;
             var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
 
             // First is this a valid session?
-            if (!this.m_session.ContainsKey(session.Key.Value))
+            if (!this.m_session.ContainsKey(session.Token))
                 throw new KeyNotFoundException();
 
-            var principal = idp.Authenticate(session.Principal, password);
+            var principal = idp.ReAuthenticate(session.Principal);
             if (principal == null)
                 throw new SecurityException(Strings.locale_sessionError);
             else
             {
                 var newSession = new SessionInfo(principal);
-                if (!this.m_session.ContainsKey(session.Key.Value))
+                if (!this.m_session.ContainsKey(session.Token))
                 {
+                    this.m_session.Remove(session.Token);
                     newSession.Key = Guid.NewGuid();
-                    this.m_session.Add(newSession.Key.Value, newSession);
+                    this.m_session.Add(newSession.Token, newSession);
+
                 }
                 else
                 {
                     newSession.Key = session.Key;
-                    this.m_session[session.Key.Value] = newSession;
+                    this.m_session[newSession.Token] = newSession;
                 }
                 return session;
             }

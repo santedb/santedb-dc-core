@@ -44,7 +44,7 @@ using SanteDB.DisconnectedClient.Core.Interop.HDSI;
 using SanteDB.DisconnectedClient.Core.Mail;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Remote;
-using SanteDB.DisconnectedClient.Core.Serices;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services.Local;
 using SanteDB.DisconnectedClient.Core.Services.Remote;
@@ -65,6 +65,9 @@ using System.Data;
 using System.Linq;
 using System.Security.Permissions;
 using System.Text;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Security.Services;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -392,12 +395,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         ApplicationContext.Current.RemoveServiceProvider(typeof(OAuthIdentityProvider), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(OAuthDeviceIdentityProvider), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(HttpBasicIdentityProvider), true);
-                        ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
+                        //ApplicationContext.Current.AddServiceProvider(typeof(HttpBasicIdentityProvider), true);
+                        //ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HttpBasicIdentityProvider).AssemblyQualifiedName);
                     }
                     else
                     {
-                        ApplicationContext.Current.RemoveServiceProvider(typeof(HttpBasicIdentityProvider), true);
+                       // ApplicationContext.Current.RemoveServiceProvider(typeof(HttpBasicIdentityProvider), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(OAuthDeviceIdentityProvider), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(OAuthIdentityProvider), true);
 
@@ -441,7 +444,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         PreemptiveAuthentication = option.Capabilities != ServiceEndpointCapabilities.None
                     };
 
-                    throw new PolicyViolationException(ex.PolicyId, SanteDB.Core.Model.Security.PolicyGrantType.Deny);
+                    throw new PolicyViolationException(AuthenticationContext.Current.Principal, ex.PolicyId, SanteDB.Core.Model.Security.PolicyGrantType.Deny);
 
                 }
                 finally

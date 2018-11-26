@@ -19,6 +19,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Mail;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Core;
 using SQLite.Net.Attributes;
 using System;

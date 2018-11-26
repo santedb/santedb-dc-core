@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
@@ -39,32 +40,32 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             if (tag is EntityTag)
             {
                 var idp = ApplicationContext.Current.GetService<IDataPersistenceService<EntityTag>>();
-                var existing = idp.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tag.TagKey).FirstOrDefault();
+                var existing = idp.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tag.TagKey, AuthenticationContext.Current.Principal).FirstOrDefault();
                 if (existing != null)
                 {
                     existing.Value = tag.Value;
                     if (existing.Value == null)
-                        idp.Obsolete(existing);
+                        idp.Obsolete(existing, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     else
-                        idp.Update(existing as EntityTag);
+                        idp.Update(existing as EntityTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 }
                 else
-                    idp.Insert(tag as EntityTag);
+                    idp.Insert(tag as EntityTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
             else if (tag is ActTag)
             {
                 var idp = ApplicationContext.Current.GetService<IDataPersistenceService<ActTag>>();
-                var existing = idp.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tag.TagKey).FirstOrDefault();
+                var existing = idp.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tag.TagKey, AuthenticationContext.Current.Principal).FirstOrDefault();
                 if (existing != null)
                 {
                     existing.Value = tag.Value;
                     if (existing.Value == null)
-                        idp.Obsolete(existing);
+                        idp.Obsolete(existing, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     else
-                        idp.Update(existing as ActTag);
+                        idp.Update(existing as ActTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 }
                 else
-                    idp.Insert(tag as ActTag);
+                    idp.Insert(tag as ActTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
         }
     }

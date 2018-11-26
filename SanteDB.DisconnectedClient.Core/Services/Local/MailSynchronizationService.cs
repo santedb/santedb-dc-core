@@ -23,6 +23,8 @@ using SanteDB.Core.Mail;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Interop;
@@ -144,7 +146,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                             Expression userNameFilter = Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(this.m_securityConfiguration.DeviceName));
 
                             // Or eith other users which have logged into this tablet
-                            foreach (var user in ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Query(u => u.LastLoginTime != null && u.UserName != this.m_securityConfiguration.DeviceName))
+                            foreach (var user in ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Query(u => u.LastLoginTime != null && u.UserName != this.m_securityConfiguration.DeviceName, AuthenticationContext.SystemPrincipal))
                                 userNameFilter = Expression.OrElse(userNameFilter,
                                     Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(user.UserName))
                                     );

@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-11-19
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using System;
@@ -61,7 +62,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <returns>The section.</returns>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public T GetSection<T>()
+        public T GetSection<T>() where T : IConfigurationSection
         {
             return this.Configuration.GetSection<T>();
         }

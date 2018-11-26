@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -54,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public IPrincipal Authenticate(string deviceId, string deviceSecret)
         {
-            AuthenticatingEventArgs e = new AuthenticatingEventArgs(deviceId, deviceSecret);
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(deviceId);
             this.Authenticating?.Invoke(this, e);
             if (e.Cancel)
             {
@@ -89,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
                         OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
                         retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
-                        this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, deviceSecret, true) { Principal = retVal });
+                        this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, retVal, true) { Principal = retVal });
                     }
                     else
                     {

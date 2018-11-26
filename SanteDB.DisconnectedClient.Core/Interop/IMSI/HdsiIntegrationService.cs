@@ -28,6 +28,8 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -155,12 +157,6 @@ namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
         {
             var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
             retVal.Client.Accept = "application/xml";
-            retVal.Client.Requesting += (o, e) =>
-            {
-                if (AuthenticationContext.CurrentUIContext.Principal != AuthenticationContext.AnonymousPrincipal &&
-                    AuthenticationContext.CurrentUIContext.Principal != AuthenticationContext.Current.Principal)
-                    e.AdditionalHeaders["X-SanteDB-OnBehalfOf"] = AuthenticationContext.CurrentUIContext.Principal.Identity.Name;
-            };
             return retVal;
         }
 

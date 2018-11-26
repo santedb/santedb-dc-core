@@ -20,6 +20,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.DisconnectedClient.Core;

@@ -18,6 +18,7 @@
  * Date: 2018-7-23
  */
 using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Configuration;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Xamarin.Services;

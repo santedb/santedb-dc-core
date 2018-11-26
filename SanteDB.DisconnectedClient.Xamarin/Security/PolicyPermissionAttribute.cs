@@ -18,7 +18,9 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using System;
@@ -111,7 +113,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
             // Non system principals must be authenticated
             if (this.m_principal?.Identity?.IsAuthenticated == false || this.m_principal == null)
-                throw new PolicyViolationException(this.m_policyId, PolicyGrantType.Deny);
+                throw new PolicyViolationException(this.m_principal, this.m_policyId, PolicyGrantType.Deny);
 
             PolicyGrantType action = PolicyGrantType.Deny;
             if (pdp == null) // No way to verify 
@@ -122,7 +124,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             this.m_traceSource.TraceInfo("Policy Enforce: {0}({1}) = {2}", this.m_principal?.Identity?.Name, this.m_policyId, action);
 
             if (action != PolicyGrantType.Grant)
-                throw new PolicyViolationException(this.m_policyId, action);
+                throw new PolicyViolationException(this.m_principal, this.m_policyId, action);
         }
 
         /// <summary>

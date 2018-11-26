@@ -24,6 +24,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -116,12 +117,12 @@ namespace SanteDB.DisconnectedClient.Core.Caching
                      //ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>().Query(q => true);
 
                      foreach (var i in ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().Facilities)
-                         ApplicationContext.Current.GetService<IDataPersistenceService<Place>>().Get(Guid.Parse(i));
+                         ApplicationContext.Current.GetService<IDataPersistenceService<Place>>().Get(Guid.Parse(i), null, false, AuthenticationContext.SystemPrincipal);
 
                      // Seed cache
                      this.m_tracer.TraceInfo("Loading materials dictionary...");
-                     ApplicationContext.Current.GetService<IDataPersistenceService<Material>>().Query(q => q.StatusConceptKey == StatusKeys.Active);
-                     ApplicationContext.Current.GetService<IDataPersistenceService<ManufacturedMaterial>>().Query(q => q.StatusConceptKey == StatusKeys.Active);
+                     ApplicationContext.Current.GetService<IDataPersistenceService<Material>>().Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
+                     ApplicationContext.Current.GetService<IDataPersistenceService<ManufacturedMaterial>>().Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
 
                      // handles when a item is being mapped
                      if (this.m_mappingHandler == null)

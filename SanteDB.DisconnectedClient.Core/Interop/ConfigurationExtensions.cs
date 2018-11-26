@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Http;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;

@@ -20,6 +20,7 @@
 using SanteDB.BusinessRules.JavaScript;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;

@@ -17,9 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Data;
@@ -53,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Core
     /// <summary>
     /// Application context.
     /// </summary>
-    public abstract class ApplicationContext : IServiceProvider, IServiceManager
+    public abstract class ApplicationContext : IServiceProvider, IServiceManager, IApplicationServiceContext
     {
 
         // Execution uuid
@@ -253,6 +257,12 @@ namespace SanteDB.DisconnectedClient.Core
         /// Gets the default thread principal
         /// </summary>
         public IPrincipal ThreadDefaultPrincipal { get; protected set; }
+
+        /// <summary>
+        /// Returns true if service is running
+        /// </summary>
+        public bool IsRunning => this.m_running;
+
         /// <summary>
         /// Start the daemon services
         /// </summary>

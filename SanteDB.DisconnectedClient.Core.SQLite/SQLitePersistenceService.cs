@@ -23,6 +23,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Model;
@@ -248,7 +249,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             public IEnumerable GetFromSource(SQLiteDataContext context, Guid sourceId, decimal? versionSequenceId)
             {
                 int tr = 0;
-                return this.Query(context, o => o.SourceEntityKey == sourceId, 0, 100, out tr, Guid.Empty, false);
+                return this.Query(context, o => o.SourceEntityKey == sourceId, Guid.Empty, 0, 100, out tr, false);
             }
         }
 

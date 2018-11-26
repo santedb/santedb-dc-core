@@ -27,7 +27,7 @@ using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.DisconnectedClient.Core.Serices;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using SanteDB.DisconnectedClient.i18n;
@@ -39,6 +39,11 @@ using System.Linq;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using SanteDB.Core.Security.Services;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core;
+using SanteDB.Core.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -71,60 +76,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
-        public event EventHandler<OverrideEventArgs> Overridding;
 
-        /// <summary>
-        /// Authenticate the user
-        /// </summary>
-        /// <param name="userName">User name.</param>
-        /// <param name="password">Password.</param>
-        public System.Security.Principal.IPrincipal Authenticate(string userName, string password)
-        {
-            if (String.IsNullOrEmpty(userName))
-                throw new ArgumentNullException(nameof(userName));
-            if (String.IsNullOrEmpty(password))
-                throw new ArgumentNullException(nameof(password));
 
-            return this.AuthenticateInternal(new SQLitePrincipal(new SQLiteIdentity(userName, false), new string[0]), password, null);
-        }
 
-        /// <summary>
-        /// Authenticate the user
-        /// </summary>
-        /// <param name="principal">Principal.</param>
-        /// <param name="password">Password.</param>
-        public IPrincipal Authenticate(IPrincipal principal, String password)
-        {
-            var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            if (principal == null)
-                throw new ArgumentNullException(nameof(principal));
-            else if (String.IsNullOrEmpty(password))
-            {
-                if (principal.Identity.IsAuthenticated)
-                {
-                    // Refresh
-                    if (principal is SQLitePrincipal) /// extend the existing session 
-                        (principal as SQLitePrincipal).Expires = DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0));
-                    else if (principal is ClaimsPrincipal) // switch them to a SQLitePrincipal
-                    {
-                        var sid = (principal as ClaimsPrincipal).FindClaim(ClaimTypes.Sid)?.Value;
-                        var uname = (principal as ClaimsPrincipal).FindClaim(ClaimsIdentity.DefaultNameClaimType)?.Value;
-                        if (!String.IsNullOrEmpty(uname))
-                        {
-                            ApplicationContext.Current.GetService<ITickleService>()?.SendTickle(new Tickle(Guid.Parse(sid), TickleType.SecurityInformation | TickleType.Toast, Strings.locale_securitySwitchedMode, DateTime.Now.AddSeconds(10)));
-                            return new SQLitePrincipal(new SQLiteIdentity(uname, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))), (principal as ClaimsPrincipal).Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray());
-                        }
-                        else
-                            throw new SecurityException(Strings.locale_sessionError);
-                    }
-                    return principal;
-                }
-                else
-                    throw new ArgumentNullException(nameof(password));
-            }
-
-            return this.AuthenticateInternal(principal, password, null);
-        }
 
         /// <summary>
         /// Authenticate this user with a local PIN number
@@ -133,16 +87,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <param name="password">The password of the user</param>
         /// <param name="pin">The PIN number for PIN based authentication</param>
         /// <returns>The authenticated principal</returns>
-        private IPrincipal AuthenticateInternal(IPrincipal principal, string password, byte[] pin)
+        private IPrincipal AuthenticateInternal(String userName, string password, byte[] pin)
         {
             var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
             // Pre-event
-            AuthenticatingEventArgs e = new AuthenticatingEventArgs(principal.Identity.Name, password) { };
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(userName) { };
             this.Authenticating?.Invoke(this, e);
             if (e.Cancel)
             {
-                this.m_tracer.TraceWarning("Pre-Event hook indicates cancel {0}", principal.Identity.Name);
+                this.m_tracer.TraceWarning("Pre-Event hook indicates cancel {0}", userName);
                 return e.Principal;
             }
 
@@ -156,7 +110,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     // Password service
                     IPasswordHashingService passwordHash = ApplicationContext.Current.GetService(typeof(IPasswordHashingService)) as IPasswordHashingService;
 
-                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == principal.Identity.Name.ToLower());
+                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower());
                     if (dbs == null)
                         throw new SecurityException(Strings.locale_invalidUserNamePassword);
                     else if (config?.MaxInvalidLogins.HasValue == true && dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
@@ -182,69 +136,56 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbs.InvalidLoginAttempts = 0;
                         connection.Update(dbs);
 
-                        // Elevation?
-                        var cprincipal = principal as ClaimsPrincipal;
+                        IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+                        IPolicyInformationService pip = ApplicationContext.Current.GetService<IPolicyInformationService>();
+
+                        var roles = connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
+                            dbs.Uuid).Select(o => o.Name).ToArray();
+                        var tPrincipal = new GenericPrincipal(new GenericIdentity(userName, true, "LOCAL"), roles);
                         List<Claim> additionalClaims = new List<Claim>();
-                        if(cprincipal != null)
-                        {
-                            additionalClaims.AddRange(cprincipal.Claims);
+                        // Ensure we are not explicitly denied access to the scope
+                        foreach (var scp in pip.GetPolicies())
+                            if (pdp.GetPolicyOutcome(tPrincipal, scp.Oid) == PolicyGrantType.Grant)
+                                additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp.Oid));
 
-                            IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                            IPolicyInformationService pip = ApplicationContext.Current.GetService<IPolicyInformationService>();
-                            
-                            // Scope? 
-                            var scopes = additionalClaims.Where(o => o.Type == ClaimTypes.SanteDBScopeClaim).Select(o => o.Value);
-                            if(scopes.Count() == 1 && scopes.First() == "*")
-                            {
-                                additionalClaims.RemoveAll(o => o.Type == ClaimTypes.SanteDBScopeClaim);
-                                scopes = pip.GetPolicies().Select(o=>o.Oid);
-                            }
+                        //// Override
+                        //if (additionalClaims.Any(o=>o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true"))
+                        //{
+                        //    var pou = additionalClaims.FirstOrDefault(o => o.Type == ClaimTypes.XspaPurposeOfUseClaim)?.Value;
 
-                            // Ensure we are not explicitly denied access to the scope
-                            foreach (var scp in scopes)
-                                if (pdp.GetPolicyOutcome(cprincipal, scp) == PolicyGrantType.Grant)
-                                    additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
+                        //    // First ensure that the prinicpal has ability to override
+                        //    if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Deny)
+                        //        throw new PolicyViolationException(PermissionPolicyIdentifiers.OverridePolicyPermission, PolicyGrantType.Deny);
 
-                            // Override
-                            if (additionalClaims.Any(o=>o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true"))
-                            {
-                                var pou = additionalClaims.FirstOrDefault(o => o.Type == ClaimTypes.XspaPurposeOfUseClaim)?.Value;
+                        //    // Next ensure that the scoped policies are allowed to be overridden
+                        //    foreach(var scp in scopes)
+                        //    {
+                        //        if (scp == "*") throw new SecurityException("Cannot override ALL policies");
+                        //        else if (pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Grant ||
+                        //                pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Elevate && pip.GetPolicy(scp).CanOverride)
+                        //            additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
+                        //    }
 
-                                // First ensure that the prinicpal has ability to override
-                                if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Deny)
-                                    throw new PolicyViolationException(PermissionPolicyIdentifiers.OverridePolicyPermission, PolicyGrantType.Deny);
+                        //    var overrideArgs = new OverrideEventArgs(principal, pou, scopes);
+                        //    this.Overridding?.Invoke(this, overrideArgs);
+                        //    if (overrideArgs.Cancel)
+                        //        throw new SecurityException("Override was denied / cancelled");
+                        //}
 
-                                // Next ensure that the scoped policies are allowed to be overridden
-                                foreach(var scp in scopes)
-                                {
-                                    if (scp == "*") throw new SecurityException("Cannot override ALL policies");
-                                    else if (pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Grant ||
-                                            pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Elevate && pip.GetPolicy(scp).CanOverride)
-                                        additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
-                                }
-
-                                var overrideArgs = new OverrideEventArgs(principal, pou, scopes);
-                                this.Overridding?.Invoke(this, overrideArgs);
-                                if (overrideArgs.Cancel)
-                                    throw new SecurityException("Override was denied / cancelled");
-                            }
-                        }
                         // Create the principal
-                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims),
-                            connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
-                            dbs.Uuid).Select(o => o.Name).ToArray());
-                        
+                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), roles);
+
                     }
                 }
 
                 // Post-event
-                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(principal.Identity.Name, password, true) { Principal = retVal });
+                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, retVal, true));
 
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error establishing session: {0}", ex);
-                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(principal.Identity.Name, password, false) { Principal = retVal });
+                this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, retVal, false));
 
                 throw;
             }
@@ -264,6 +205,22 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         }
 
         /// <summary>
+        /// Authenticates a user with usernae and password
+        /// </summary>
+        /// <param name="userName">The user to authenticate</param>
+        /// <param name="password">The password for that user</param>
+        /// <returns>The authenticated user</returns>
+        public IPrincipal Authenticate(string userName, string password)
+        {
+            if (String.IsNullOrEmpty(userName))
+                throw new ArgumentNullException(nameof(userName));
+            if (String.IsNullOrEmpty(password))
+                throw new ArgumentNullException(nameof(password));
+
+            return this.AuthenticateInternal(userName, password, null);
+
+        }
+        /// <summary>
         /// Authenticates a user with a local device PIN
         /// </summary>
         /// <param name="userName">The user to authenticate</param>
@@ -276,7 +233,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o > 9 || o < 0))
                 throw new ArgumentOutOfRangeException(nameof(pin));
 
-            return this.AuthenticateInternal(new SQLitePrincipal(new SQLiteIdentity(userName, false), new string[0]), null, pin);
+            return this.AuthenticateInternal(userName, null, pin);
         }
 
         /// <summary>
@@ -336,9 +293,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Create specified identity
         /// </summary>
-        public IIdentity CreateIdentity(String userName, String password)
+        public IIdentity CreateIdentity(String userName, String password, IPrincipal principal)
         {
-            return this.CreateIdentity(Guid.NewGuid(), userName, password, AuthenticationContext.Current.Principal);
+            return this.CreateIdentity(Guid.NewGuid(), userName, password, principal);
         }
 
         /// <summary>
@@ -375,7 +332,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
                 if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
 
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
@@ -522,18 +479,50 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             }
         }
 
-        public IPrincipal Authenticate(IPrincipal principal, string password, string tfaSecret)
+        public string GenerateTfaSecret(string userName)
         {
-            return this.AuthenticateInternal(principal, password, null);
+            throw new NotImplementedException();
+        }
+
+        public void AddClaim(string userName, IClaim claim)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveClaim(string userName, string claimType)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Authenticate the user with pin
+        /// Re-authenticate
         /// </summary>
-        public IPrincipal Authenticate(IPrincipal principal, byte[] pin)
+        /// <param name="principal"></param>
+        /// <returns></returns>
+        public IPrincipal ReAuthenticate(IPrincipal principal)
         {
-            return this.AuthenticateInternal(principal, null, pin);
-
+            if (principal.Identity.IsAuthenticated)
+            {
+                var config = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+                // Refresh
+                if (principal is SQLitePrincipal) /// extend the existing session 
+                    (principal as SQLitePrincipal).Expires = DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0));
+                else if (principal is ClaimsPrincipal) // switch them to a SQLitePrincipal
+                {
+                    var sid = (principal as ClaimsPrincipal).FindClaim(ClaimTypes.Sid)?.Value;
+                    var uname = (principal as ClaimsPrincipal).FindClaim(ClaimsIdentity.DefaultNameClaimType)?.Value;
+                    if (!String.IsNullOrEmpty(uname))
+                    {
+                        ApplicationContext.Current.GetService<ITickleService>()?.SendTickle(new Tickle(Guid.Parse(sid), TickleType.SecurityInformation | TickleType.Toast, Strings.locale_securitySwitchedMode, DateTime.Now.AddSeconds(10)));
+                        return new SQLitePrincipal(new SQLiteIdentity(uname, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))), (principal as ClaimsPrincipal).Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray());
+                    }
+                    else
+                        throw new SecurityException(Strings.locale_sessionError);
+                }
+                return principal;
+            }
+            else
+                throw new SecurityException("Cannot extend a session that wasn't authenticated");
         }
 
 
@@ -550,7 +539,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="authenticated">If set to <c>true</c> authenticated.</param>
-        public SQLiteIdentity(String userName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<Claim> additionalClaims = null) : base(userName, authenticated, 
+        public SQLiteIdentity(String userName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<Claim> additionalClaims = null) : base(userName, authenticated,
             new Claim[] {
                 new Claim(ClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
                 new Claim(ClaimTypes.Expiration, expiry?.ToString("o")),

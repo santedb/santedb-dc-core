@@ -18,9 +18,11 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -65,7 +67,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
                 if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -111,7 +113,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Add the specified users to the specified roles
         /// </summary>
-        public void AddUsersToRoles(string[] userNames, string[] roleNames, IPrincipal principal = null)
+        public void AddUsersToRoles(string[] userNames, string[] roleNames, IPrincipal principal)
         {
             try
             {
@@ -125,7 +127,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
                 if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {
-                    throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
                 }
 
                 var conn = this.CreateConnection();
@@ -168,14 +170,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Create the specified role
         /// </summary>
-        public void CreateRole(string value, IPrincipal principal = null)
+        public void CreateRole(string value, IPrincipal principal)
         {
             try
             {
                 // Demand local admin
                 var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
                 if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -256,6 +258,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// Determine if the principle in the role
         /// </summary>
         public bool IsUserInRole(IPrincipal principal, string roleName)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Remove users from roles
+        /// </summary>
+        public void RemoveUsersFromRoles(string[] users, string[] roles, IPrincipal principal)
         {
             throw new NotImplementedException();
         }

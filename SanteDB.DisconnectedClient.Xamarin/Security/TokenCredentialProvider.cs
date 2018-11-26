@@ -18,6 +18,8 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Http;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -59,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     expiryTime < DateTime.Now)
                 {
                     var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
-                    var principal = idp.Authenticate(AuthenticationContext.Current.Principal, null);   // Force a re-issue
+                    var principal = idp.ReAuthenticate(AuthenticationContext.Current.Principal);   // Force a re-issue
                     AuthenticationContext.Current = new AuthenticationContext(principal);
                     //XamarinApplicationContext.Current.SetDefaultPrincipal(principal);
                 }

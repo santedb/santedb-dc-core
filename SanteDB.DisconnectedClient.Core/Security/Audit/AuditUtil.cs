@@ -17,14 +17,17 @@
  * User: justin
  * Date: 2018-6-28
  */
-using MARC.HI.EHRS.SVC.Auditing.Data;
-using MARC.HI.EHRS.SVC.Auditing.Services;
+using SanteDB.Core;
+using SanteDB.Core.Auditing;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Exceptions;
@@ -300,7 +303,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// </summary>
         public static void SendAudit(AuditData audit)
         {
-            ApplicationContext.Current.GetService<IAuditorService>()?.SendAudit(audit);
+            ApplicationContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
         }
 
         /// <summary>
@@ -311,13 +314,15 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             var configService = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
             // For the user
+            var ses = ApplicationServiceContext.Current.GetService<ISessionManagerService>().Get(AuthenticationContext.Current.Principal);
+
             audit.Actors.Add(new AuditActorData()
             {
                 NetworkAccessPointId = configService.DeviceName,
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 UserName = AuthenticationContext.Current.Principal.Identity.Name,
-                AlternativeUserId = AuthenticationContext.Current.Session?.Key?.ToString(),
-                UserIdentifier = AuthenticationContext.Current.Session?.SecurityUser?.Key?.ToString(),
+                AlternativeUserId = AuthenticationContext.Current.Principal.ToString(),
+                UserIdentifier = ses?.SecurityUser?.Key?.ToString(),
                 UserIsRequestor = true
             });
         }

@@ -20,6 +20,7 @@
 using SanteDB.Core.Services;
 using System;
 using System.Collections;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {

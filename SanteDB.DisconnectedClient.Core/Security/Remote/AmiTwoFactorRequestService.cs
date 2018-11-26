@@ -18,6 +18,8 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Interop;

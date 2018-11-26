@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -205,22 +206,22 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Extends the session
         /// </summary>
-        public bool Extend()
+        public SessionInfo Extend(String refreshEvidence)
         {
             try
             {
                 lock (this.m_syncLock)
                 {
                     if (this.Expiry > DateTime.Now.AddMinutes(5)) // session will still be valid in 5 mins so no auth
-                        return true;
-                    this.ProcessPrincipal(ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticate(this.Principal, null));
-                    return this.Principal != null;
+                        return null;
+                    this.ProcessPrincipal(ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticate(this.Principal.Identity.Name, null));
+                    return this;
                 }
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error extending session: {0}", e);
-                return false;
+                return null;
             }
         }
 
@@ -287,7 +288,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 if (this.m_entity == null || amiService != null && amiService.IsAvailable() || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     int t = 0;
-                    var sid = Guid.Parse((principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, 0, 1, out t, Guid.Empty).FirstOrDefault()?.Key.ToString());
+                    var sid = Guid.Parse((principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
                     this.m_entity = amiService.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
 
                     ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
@@ -295,10 +296,10 @@ namespace SanteDB.DisconnectedClient.Core.Security
                         var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
                         try
                         {
-                            if (persistence.Get((o as Entity).Key.Value) == null)
-                                persistence.Insert(o as Entity);
+                            if (persistence.Get((o as Entity).Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                                persistence.Insert(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                             else
-                                persistence.Update(o as Entity);
+                                persistence.Update(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                         }
                         catch (Exception e)
                         {

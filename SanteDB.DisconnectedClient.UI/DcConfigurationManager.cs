@@ -18,6 +18,7 @@
  * Date: 2018-7-23
  */
 using SanteDB.Cdss.Xml;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Services;

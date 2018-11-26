@@ -17,8 +17,7 @@
  * User: justin
  * Date: 2018-11-23
  */
-using MARC.HI.EHRS.SVC.Auditing.Data;
-using MARC.HI.EHRS.SVC.Auditing.Services;
+using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
@@ -26,6 +25,8 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -40,7 +41,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
     /// <summary>
     /// Local auditing service
     /// </summary>
-    public class LocalAuditService : IAuditorService, IDaemonService
+    public class LocalAuditService : IAuditDispatchService, IDaemonService
     {
 
         /// <summary>
@@ -93,7 +94,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <summary>
         /// Send an audit (which stores the audit locally in the audit file and then queues it for sending)
         /// </summary>
-        public bool SendAudit(AuditData audit)
+        public void SendAudit(AuditData audit)
         {
             // Check duplicate guard
             Guid objId = Guid.Empty;
@@ -103,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 // prevent duplicate sending
                 DateTime lastAuditObj = default(DateTime);
                 if (this.m_duplicateGuard.TryGetValue(objId, out lastAuditObj) && DateTime.Now.Subtract(lastAuditObj).TotalSeconds < 2)
-                    return true; // duplicate
+                    return; // duplicate
                 else
                     lock (this.m_duplicateGuard)
                     {
@@ -117,7 +118,6 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             lock (this.m_auditQueue)
                 this.m_auditQueue.Enqueue(audit);
             this.m_resetEvent.Set();
-            return true;
         }
 
         /// <summary>
@@ -273,5 +273,6 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
+        
     }
 }

@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
@@ -303,8 +304,8 @@ namespace SanteDB.DisconnectedClient.Core.Caching
 
             // We want to subscribe when this object is changed so we can keep the cache fresh
             var idpType = typeof(IDataPersistenceService<>).MakeGenericType(t);
-            var ppeArgType = typeof(DataPersistenceEventArgs<>).MakeGenericType(t);
-            var pqeArgType = typeof(DataQueryEventArgsBase<>).MakeGenericType(t);
+            var ppeArgType = typeof(DataPersistedEventArgs<>).MakeGenericType(t);
+            var pqeArgType = typeof(QueryResultEventArgs<>).MakeGenericType(t);
             var evtHdlrType = typeof(EventHandler<>).MakeGenericType(ppeArgType);
             var qevtHdlrType = typeof(EventHandler<>).MakeGenericType(pqeArgType);
             var svcInstance = ApplicationContext.Current.GetService(idpType);
