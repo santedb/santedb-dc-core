@@ -129,7 +129,7 @@
           <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Api">
-          <Version>1.9.10</Version>
+          <Version>1.9.11</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Applets">
           <Version>1.9.10</Version>
