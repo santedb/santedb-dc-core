@@ -126,10 +126,10 @@
           <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Cdss.Xml">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Api">
-          <Version>1.9.10</Version>
+          <Version>1.9.11</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Applets">
           <Version>1.9.10</Version>
@@ -138,10 +138,10 @@
           <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model.RISI">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model.AMI">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.ReportR">
           <Version>1.9.0</Version>
@@ -159,9 +159,6 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core">
-      <Version>2.0.1.8</Version>
-    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>11.0.2</Version>
     </PackageReference>

@@ -95,7 +95,7 @@
         <PackageReference Include="RestSrvr">
           <Version>1.9.10</Version>
         </PackageReference>
-        <PackageReference Include="SanteDB.Core.Api" Version="1.9.10" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.9.11" />
         <PackageReference Include="SanteDB.Core.Applets" Version="1.9.10" />
         <PackageReference Include="SanteDB.Core.Model" Version="1.9.10" />
         <PackageReference Include="SanteDB.ReportR">
@@ -108,12 +108,11 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.1.8" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Portable.BouncyCastle">
       <Version>1.8.2</Version>
     </PackageReference>
-    <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="1.9.9" />
+    <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="1.9.10" />
     <PackageReference Include="SharpCompress" Version="0.18.2" />
     <Reference Include="SanteDB.Core.Model.ViewModelSerializers">
       <HintPath>..\Solution Items\SanteDB.Core.Model.ViewModelSerializers.dll</HintPath>
