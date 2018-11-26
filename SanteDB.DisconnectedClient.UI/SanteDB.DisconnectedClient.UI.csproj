@@ -105,7 +105,6 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        
         <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
           <Project>{F1A82A4F-4A57-47D7-AE76-444C8A4FF54A}</Project>
           <Name>SanteDB.Core.Model</Name>
@@ -130,9 +129,9 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Api" Version="1.9.9" />
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.9.9" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.9.9" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.9.10" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.9.10" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.9.10" />
         <PackageReference Include="SanteDB.ReportR" Version="1.9.0" />
         <PackageReference Include="SanteDB.Cdss.Xml">
           <Version>1.9.9</Version>

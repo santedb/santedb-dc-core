@@ -16,16 +16,16 @@
     <tags>santedb core</tags>
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
-      <dependency id="SanteDB.Core.Api" version="1.9.9.0"/>
-      <dependency id="SanteDB.BusinessRules.JavaScript" version="1.9.9.0"/>
-      <dependency id="SanteDB.Core.Applets" version="1.9.9.0"/>
-      <dependency id="SanteDB.Messaging.AMI.Client" version="1.9.9.0" />
-      <dependency id="SanteDB.ReportR" version="1.9.9.0"/>
+      <dependency id="SanteDB.Core.Api" version="1.9.10.0"/>
+      <dependency id="SanteDB.BusinessRules.JavaScript" version="1.9.10.0"/>
+      <dependency id="SanteDB.Core.Applets" version="1.9.10.0"/>
+      <dependency id="SanteDB.Messaging.AMI.Client" version="1.9.10.0" />
+      <dependency id="SanteDB.ReportR" version="1.9.10.0"/>
       <dependency id="SharpCompress" version="0.18.2"/>
-      <dependency id="SanteDB.DisconnectedClient.Core" version="1.9.9.0"/>
-      <dependency id="SanteDB.DisconnectedClient.SQLite" version="1.9.9.0"/>
-      <dependency id="SanteDB.DisconnectedClient.SQLite.Synchronization" version="1.9.9.0"/>
-      <dependency id="SanteDB.DisconnectedClient.SQLite.Warehouse" version="1.9.9.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Core" version="1.9.10.0"/>
+      <dependency id="SanteDB.DisconnectedClient.SQLite" version="1.9.10.0"/>
+      <dependency id="SanteDB.DisconnectedClient.SQLite.Synchronization" version="1.9.10.0"/>
+      <dependency id="SanteDB.DisconnectedClient.SQLite.Warehouse" version="1.9.10.0"/>
     </dependencies>
     <references>
       <group targetFramework="portable45-net45+win8">

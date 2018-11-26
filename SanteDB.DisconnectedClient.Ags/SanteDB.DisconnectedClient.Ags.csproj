@@ -123,19 +123,19 @@
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="RestSrvr">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Cdss.Xml">
           <Version>1.9.9</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Api">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Applets">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model">
-          <Version>1.9.9</Version>
+          <Version>1.9.10</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model.RISI">
           <Version>1.9.9</Version>
