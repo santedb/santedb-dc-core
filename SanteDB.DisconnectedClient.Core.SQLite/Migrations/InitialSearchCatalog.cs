@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -66,7 +67,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
             try
             {
 
-                var connStr = ApplicationContext.Current.Configuration.GetConnectionString("santeDbSearch")?.Value;
+                var connStr = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString("santeDbSearch")?.ConnectionString;
 
                 // Is the search service registered?
                 if (!String.IsNullOrEmpty(connStr) && ApplicationContext.Current.GetService<IFreetextSearchService>() == null)

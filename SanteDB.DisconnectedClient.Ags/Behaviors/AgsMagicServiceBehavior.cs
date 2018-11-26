@@ -20,6 +20,7 @@
 using RestSrvr;
 using RestSrvr.Exceptions;
 using RestSrvr.Message;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SharpCompress.Compressors.Deflate;
 using System;
@@ -39,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         {
             if (request.Headers["X-OIZMagic"] == ApplicationContext.Current.ExecutionUuid.ToString() &&
                 request.UserAgent == $"SanteDB-DC {ApplicationContext.Current.ExecutionUuid}" ||
-                ApplicationContext.Current.ExecutionUuid.ToString() == ApplicationContext.Current.Configuration.GetAppSetting("http.bypassMagic"))
+                ApplicationContext.Current.ExecutionUuid.ToString() == ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("http.bypassMagic"))
                 ;
             else
             {

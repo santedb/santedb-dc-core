@@ -315,7 +315,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
             if (!String.IsNullOrEmpty(password) && principal is ClaimsPrincipal &&
-                            XamarinApplicationContext.Current.ConfigurationManager.IsConfigured)
+                            XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
                 ClaimsPrincipal cprincipal = principal as ClaimsPrincipal;
                 var amiPip = new AmiPolicyInformationService(cprincipal);
@@ -368,7 +368,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     }
                 }
 
-                var localUser = XamarinApplicationContext.Current.ConfigurationManager.IsConfigured ? localIdp.GetIdentity(principal.Identity.Name) : null;
+                var localUser = XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured ? localIdp.GetIdentity(principal.Identity.Name) : null;
 
                 try
                 {

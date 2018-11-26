@@ -20,6 +20,7 @@
 using RestSrvr;
 using RestSrvr.Bindings;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Contracts;

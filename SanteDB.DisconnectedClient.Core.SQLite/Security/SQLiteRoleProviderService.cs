@@ -21,6 +21,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Exceptions;
@@ -265,7 +266,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).Value);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
         }
 
         /// <summary>
@@ -274,7 +275,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateReadonlyConnection()
         {
-            return SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.Configuration.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).Value);
+            return SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
         }
     }
 }

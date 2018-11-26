@@ -91,7 +91,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// </summary>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString("santeDbSearch").Value);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString("santeDbSearch").ConnectionString);
         }
 
         /// <summary>
@@ -309,7 +309,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     try
                     {
                         // Not Indexed
-                        if (ApplicationContext.Current.Configuration.GetAppSetting("santedb.mobile.core.search.lastIndex") == null)
+                        if (ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("santedb.mobile.core.search.lastIndex") == null)
                             this.Index();
                     }
                     catch { }
@@ -369,7 +369,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                                 ApplicationContext.Current.SetProgress(Strings.locale_indexing, (float)ofs / tr);
                             }
                             if (patientService != null)
-                                ApplicationContext.Current.Configuration.SetAppSetting("santedb.mobile.core.search.lastIndex", DateTime.Now);
+                                ApplicationContext.Current.GetService<IConfigurationManager>().SetAppSetting("santedb.mobile.core.search.lastIndex", DateTime.Now.ToString("o"));
                         }
                         catch (Exception e)
                         {

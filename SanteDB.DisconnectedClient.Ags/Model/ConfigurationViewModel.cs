@@ -18,6 +18,7 @@
  * Date: 2018-11-23
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Xamarin;
@@ -46,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Return true if configured
         /// </summary>
         [JsonProperty("isConfigured")]
-        public bool IsConfigured { get => (XamarinApplicationContext.Current as XamarinApplicationContext).ConfigurationManager.IsConfigured; }
+        public bool IsConfigured { get => XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured; }
 
         /// <summary>
         /// Configuation

@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.i18n;
 using System;

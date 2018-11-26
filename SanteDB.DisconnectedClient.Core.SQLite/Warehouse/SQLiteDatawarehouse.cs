@@ -1099,9 +1099,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            var connectionString = ApplicationContext.Current.Configuration.GetConnectionString("santeDbWarehouse");
+            var connectionString = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString("santeDbWarehouse");
 
-            this.InitializeDatabase(connectionString.Value);
+            this.InitializeDatabase(connectionString.ConnectionString);
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;

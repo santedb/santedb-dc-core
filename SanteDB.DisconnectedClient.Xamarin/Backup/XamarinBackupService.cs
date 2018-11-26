@@ -119,7 +119,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                 this.m_tracer.TraceInfo("Beginning backup to {0}..", fileName);
                 ApplicationContext.Current?.SetProgress(Strings.locale_backup, 0.25f);
                 // Backup folders first
-                var sourceDirectory = XamarinApplicationContext.Current.ConfigurationManager.ApplicationDataDirectory;
+                var sourceDirectory = XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory;
 
                 using (var fs = File.Create(fileName))
                 using (var writer = new SharpCompress.Writers.Tar.TarWriter(fs, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None)))
@@ -183,7 +183,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
             {
                 this.m_tracer.TraceInfo("Beginning restore of {0}...", lastBackup);
                 ApplicationContext.Current?.SetProgress(Strings.locale_backup_restore, 0.0f);
-                var sourceDirectory = XamarinApplicationContext.Current.ConfigurationManager.ApplicationDataDirectory;
+                var sourceDirectory = XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory;
 
                 using (var fs = File.OpenRead(lastBackup))
                 using (var gzs = new GZipStream(fs, CompressionMode.Decompress))

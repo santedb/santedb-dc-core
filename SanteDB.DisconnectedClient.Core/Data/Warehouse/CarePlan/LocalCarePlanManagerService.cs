@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Warehouse;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using System;
@@ -177,7 +178,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                     var patientPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>();
                     var remoteSyncService = ApplicationContext.Current.GetService<ISynchronizationService>();
                     var queueService = ApplicationContext.Current.GetService<IQueueManagerService>();
-                    var lastRefresh = DateTime.Parse(ApplicationContext.Current.Configuration.GetAppSetting("santedb.mobile.core.protocol.plan.lastRun") ?? "0001-01-01");
+                    var lastRefresh = DateTime.Parse(ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("santedb.mobile.core.protocol.plan.lastRun") ?? "0001-01-01");
 
                     // Should we ?
                     var patientSync = ApplicationContext.Current.GetService<ISynchronizationService>().Log.FirstOrDefault(o => o.ResourceType == "Person");
@@ -290,8 +291,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                         if (promiseCount > 0 && this.m_actCarePlanPromise.Count == 0)
                         {
                             ApplicationContext.Current.SetProgress(String.Format(Strings.locale_calculatingCarePlan, 0), 1.0f);
-                            ApplicationContext.Current.Configuration.SetAppSetting("santedb.mobile.core.protocol.plan.lastRun", DateTime.Now);
-                            ApplicationContext.Current.SaveConfiguration();
+                            ApplicationContext.Current.GetService<IConfigurationManager>().SetAppSetting("santedb.mobile.core.protocol.plan.lastRun", DateTime.Now.ToString("o"));
                         }
 
                         this.m_resetEvent.Reset();
@@ -322,7 +322,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
             var patientPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<Patient>>();
             var remoteSyncService = ApplicationContext.Current.GetService<ISynchronizationService>();
             var queueService = ApplicationContext.Current.GetService<IQueueManagerService>();
-            var lastRefresh = DateTime.Parse(ApplicationContext.Current.Configuration.GetAppSetting("santedb.mobile.core.protocol.plan.lastRun") ?? "0001-01-01");
+            var lastRefresh = DateTime.Parse(ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("santedb.mobile.core.protocol.plan.lastRun") ?? "0001-01-01");
 
             // Should we ?
             var patientSync = remoteSyncService.Log.FirstOrDefault(o => o.ResourceType == "Person");

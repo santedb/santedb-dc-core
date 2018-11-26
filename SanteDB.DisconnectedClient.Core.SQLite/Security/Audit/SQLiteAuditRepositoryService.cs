@@ -70,9 +70,9 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(
                 "santeDbAudit"
-            ).Value);
+            ).ConnectionString);
         }
 
         /// <summary>

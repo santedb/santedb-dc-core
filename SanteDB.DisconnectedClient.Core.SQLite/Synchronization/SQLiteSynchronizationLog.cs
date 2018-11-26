@@ -18,6 +18,7 @@
  * Date: 2018-8-25
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Synchronization;
@@ -58,9 +59,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(
                 ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName
-            ).Value);
+            ).ConnectionString);
         }
 
         /// <summary>

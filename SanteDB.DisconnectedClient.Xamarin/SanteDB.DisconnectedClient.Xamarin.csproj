@@ -130,7 +130,6 @@
   <ItemGroup>
     <Compile Include="Backup\XamarinBackupService.cs" />
     <Compile Include="Configuration\AmiUpdateManager.cs" />
-    <Compile Include="Configuration\IConfigurationManager.cs" />
     <Compile Include="Data\StorageProviderUtil.cs" />
     <Compile Include="Diagnostics\FileTraceWriter.cs" />
     <Compile Include="Diagnostics\LogTraceWriter.cs" />
@@ -161,7 +160,6 @@
     <Compile Include="Services\Attributes\RestMessageAttribute.cs" />
     <Compile Include="Services\Attributes\RestOperationAttribute.cs" />
     <Compile Include="Services\Attributes\RestServiceAttribute.cs" />
-    <Compile Include="Services\MiniHdsiServer.cs" />
     <Content Include="Services\ServiceHandlers\ApplicationService.cs" />
     <Content Include="Services\ServiceHandlers\CarePlanService.cs" />
     <Content Include="Services\ServiceHandlers\ImsiService.cs" />

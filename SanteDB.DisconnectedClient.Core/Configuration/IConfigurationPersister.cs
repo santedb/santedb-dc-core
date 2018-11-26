@@ -17,14 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.DisconnectedClient.Core.Configuration;
 
-namespace SanteDB.DisconnectedClient.Xamarin.Configuration
+namespace SanteDB.DisconnectedClient.Core.Configuration
 {
     /// <summary>
     /// Configuration manager for the application
     /// </summary>
-    public interface IConfigurationManager
+    public interface IConfigurationPersister
     {
         /// <summary>
         /// Returns true if SanteDB is configured
@@ -34,28 +33,17 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         /// <summary>
         /// Load the configuration
         /// </summary>
-        void Load();
+        SanteDBConfiguration Load();
 
         /// <summary>
         /// Save the configuration to the default location
         /// </summary>
-        void Save();
-
-        /// <summary>
-        /// Save the specified configuration
-        /// </summary>
-        /// <param name="config">Config.</param>
-        void Save(SanteDBConfiguration config);
-
-        /// <summary>
-        /// Get the configuration
-        /// </summary>
-        SanteDBConfiguration Configuration { get; }
-
+        void Save(SanteDBConfiguration configuration);
+        
         /// <summary>
         /// Backs up the configuration
         /// </summary>
-        void Backup();
+        void Backup(SanteDBConfiguration configuration);
 
         /// <summary>
         /// Has a backup?
@@ -65,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         /// <summary>
         /// Restore a backup
         /// </summary>
-        void Restore();
+        SanteDBConfiguration Restore();
 
         /// <summary>
         /// Application data directory

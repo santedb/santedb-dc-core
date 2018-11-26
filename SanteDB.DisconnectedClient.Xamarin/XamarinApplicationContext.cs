@@ -44,16 +44,19 @@ namespace SanteDB.DisconnectedClient.Xamarin
         protected Tracer m_tracer;
 
         /// <summary>
+        /// Default ctor for Xamarin Application context
+        /// </summary>
+        public XamarinApplicationContext(IConfigurationPersister configurationPersister) : base(configurationPersister)
+        {
+
+        }
+
+        /// <summary>
         /// Gets the current application context
         /// </summary>
         /// <value>The current.</value>
-        public static XamarinApplicationContext Current { get { return ApplicationContext.Current as XamarinApplicationContext; } }
-
-        /// <summary>
-        /// Gets the configuration manager
-        /// </summary>
-        public abstract IConfigurationManager ConfigurationManager { get; }
-
+        public static new XamarinApplicationContext Current { get { return ApplicationContext.Current as XamarinApplicationContext; } }
+        
         /// <summary>
         /// Install protocol
         /// </summary>

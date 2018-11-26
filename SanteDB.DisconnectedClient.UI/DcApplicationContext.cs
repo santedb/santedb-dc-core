@@ -62,8 +62,10 @@ namespace SanteDB.DisconnectedClient.UI
         // Applet bas directory
         private Dictionary<AppletManifest, String> m_appletBaseDir = new Dictionary<AppletManifest, string>();
 
-        // Configuration Manager
-        private DcConfigurationManager m_configurationManager;
+        /// <summary>
+        /// Gets the instance name
+        /// </summary>
+        public String InstanceName { get; private set; }
 
         /// <summary>
         /// Gets the operating system identifier
@@ -80,18 +82,7 @@ namespace SanteDB.DisconnectedClient.UI
                     return OperatingSystemID.Win32;
             }
         }
-
-        /// <summary>
-        /// Configuration manager
-        /// </summary>
-        public override IConfigurationManager ConfigurationManager
-        {
-            get
-            {
-                return this.m_configurationManager;
-            }
-        }
-
+        
         /// <summary>
         /// Show toast
         /// </summary>
@@ -100,16 +91,6 @@ namespace SanteDB.DisconnectedClient.UI
 
         }
 
-        /// <summary>
-        /// Get the configuration
-        /// </summary>
-        public override SanteDBConfiguration Configuration
-        {
-            get
-            {
-                return this.ConfigurationManager.Configuration;
-            }
-        }
 
         /// <summary>
         /// Get the application
@@ -146,9 +127,11 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         /// <param name="dialogProvider">Dialog provider.</param>
         public DcApplicationContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
+            : base(new DcConfigurationManager(instanceName))
         {
             this.m_dialogProvider = dialogProvider;
             c_application = applicationId;
+            this.InstanceName = instanceName;
         }
 
         /// <summary>
@@ -162,8 +145,7 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
                 retVal.SetProgress("Run setup", 0);
-
-                retVal.m_configurationManager = new DcConfigurationManager(instanceName, DcConfigurationManager.GetDefaultConfiguration(instanceName));
+                retVal.AddServiceProvider(typeof(ConfigurationManager));
 
                 ApplicationContext.Current = retVal;
                 ApplicationServiceContext.Current = ApplicationContext.Current;
@@ -215,9 +197,9 @@ namespace SanteDB.DisconnectedClient.UI
         {
 
             var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
-            retVal.m_configurationManager = new DcConfigurationManager(instanceName);
+            
             // Not configured
-            if (!retVal.ConfigurationManager.IsConfigured)
+            if (!retVal.GetService<IConfigurationPersister>().IsConfigured)
             {
                 return false;
             }
@@ -228,18 +210,17 @@ namespace SanteDB.DisconnectedClient.UI
                 {
                     // Set master application context
                     ApplicationContext.Current = retVal;
-
                     try
                     {
-                        retVal.ConfigurationManager.Load();
-                        retVal.ConfigurationManager.Backup();
+                        retVal.AddServiceProvider(typeof(ConfigurationManager));
+                        retVal.GetService<IConfigurationPersister>().Backup(retVal.Configuration);
                     }
                     catch
                     {
-                        if (retVal.ConfigurationManager.HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))
+                        if (retVal.GetService<IConfigurationPersister>().HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))
                         {
-                            retVal.ConfigurationManager.Restore();
-                            retVal.ConfigurationManager.Load();
+                            retVal.GetService<IConfigurationPersister>().Restore();
+                            retVal.GetService<IConfigurationManager>().Reload();
                         }
                         else
                             throw;
@@ -249,7 +230,7 @@ namespace SanteDB.DisconnectedClient.UI
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();
                     if (backupSvc.HasBackup(BackupMedia.Public) &&
-                        retVal.Configuration.GetAppSetting("ignore.restore") == null &&
+                        retVal.GetService<IConfigurationManager>().GetAppSetting("ignore.restore") == null &&
                         retVal.Confirm(Strings.locale_confirm_restore))
                     {
                         backupSvc.Restore(BackupMedia.Public);
@@ -314,7 +295,7 @@ namespace SanteDB.DisconnectedClient.UI
                     try
                     {
                         // If the DB File doesn't exist we have to clear the migrations
-                        if (!File.Exists(retVal.Configuration.GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).Value))
+                        if (!File.Exists(retVal.GetService<IConfigurationManager>().GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).ConnectionString))
                         {
                             retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
                             retVal.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Clear();
@@ -340,7 +321,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
                     finally
                     {
-                        retVal.ConfigurationManager.Save();
+                        retVal.GetService<IConfigurationPersister>().Save(retVal.Configuration);
                     }
 
                     // Set the tracer writers for the PCL goodness!
@@ -359,7 +340,6 @@ namespace SanteDB.DisconnectedClient.UI
                 {
                     retVal.m_tracer?.TraceError(e.ToString());
                     //ApplicationContext.Current = null;
-                    retVal.m_configurationManager = new DcConfigurationManager(instanceName, DcConfigurationManager.GetDefaultConfiguration(instanceName));
                     AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                     throw;
                 }
@@ -482,17 +462,7 @@ namespace SanteDB.DisconnectedClient.UI
 
             return value?.ToLower().Replace("\\", "/");
         }
-
-
-        /// <summary>
-        /// Save configuration
-        /// </summary>
-        public override void SaveConfiguration()
-        {
-            if (this.m_configurationManager.IsConfigured)
-                this.m_configurationManager.Save();
-        }
-
+        
         /// <summary>
         /// Exit the application
         /// </summary>

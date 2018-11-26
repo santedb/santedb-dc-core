@@ -139,7 +139,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         RestClientType = typeof(RestClient)
                     };
-                    XamarinApplicationContext.Current.Configuration.Sections.Add(serviceClientSection);
+                    XamarinApplicationContext.Current.Configuration.AddSection(serviceClientSection);
                 }
 
                 // TODO: Actually contact the AMI for this information
@@ -342,7 +342,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         RestClientType = typeof(RestClient)
                     };
-                    XamarinApplicationContext.Current.Configuration.Sections.Add(serviceClientSection);
+                    XamarinApplicationContext.Current.Configuration.AddSection(serviceClientSection);
                 }
 
                 // TODO: Actually contact the AMI for this information
@@ -488,8 +488,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public ConfigurationViewModel UpdateConfiguration(ConfigurationViewModel configuration)
         {
             // We will be rewriting the configuration
-            if (!(ApplicationContext.Current as XamarinApplicationContext).ConfigurationManager.IsConfigured)
-                ApplicationContext.Current.Configuration.Sections.RemoveAll(o => o is SynchronizationConfigurationSection);
+            if (!(ApplicationContext.Current as XamarinApplicationContext).ConfigurationPersister.IsConfigured)
+                ApplicationContext.Current.Configuration.RemoveSection<SynchronizationConfigurationSection>();
 
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution = configuration.Applet.AppletSolution;
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = configuration.Applet.AutoUpdateApplets;
@@ -531,7 +531,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                         // Configure the selected storage provider
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, XamarinApplicationContext.Current.ConfigurationManager.ApplicationDataDirectory, configuration.Data.Options);
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory, configuration.Data.Options);
 
                         // Remove all data persistence services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
@@ -614,7 +614,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             .ToList();
                         if (configuration.Synchronization.PollIntervalXml != "00:00:00")
                             syncConfig.PollIntervalXml = configuration.Synchronization.PollIntervalXml;
-                        ApplicationContext.Current.Configuration.Sections.Add(syncConfig);
+                        ApplicationContext.Current.Configuration.AddSection(syncConfig);
 
                         break;
                     }
@@ -679,9 +679,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
 
             foreach (var i in configuration.Application.AppSettings)
-                ApplicationContext.Current.Configuration.SetAppSetting(i.Key, i.Value);
+                ApplicationContext.Current.GetService<IConfigurationManager>().SetAppSetting(i.Key, i.Value);
             this.m_tracer.TraceInfo("Saving configuration options {0}", JsonConvert.SerializeObject(configuration));
-            XamarinApplicationContext.Current.ConfigurationManager.Save();
+            ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
             return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
         }

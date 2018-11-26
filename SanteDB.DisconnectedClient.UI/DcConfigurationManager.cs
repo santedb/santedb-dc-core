@@ -20,7 +20,10 @@
 using SanteDB.Cdss.Xml;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
+using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
+using SanteDB.DisconnectedClient.Ags;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Caching;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -47,15 +50,12 @@ namespace SanteDB.DisconnectedClient.UI
     /// <summary>
     /// Configuration manager
     /// </summary>
-    internal class DcConfigurationManager : IConfigurationManager
+    internal class DcConfigurationManager : IConfigurationPersister
     {
         private const int PROVIDER_RSA_FULL = 1;
 
         // Tracer
         private Tracer m_tracer;
-
-        // Configuration
-        private SanteDBConfiguration m_configuration;
 
         // Configuration path
         private readonly String m_configPath;
@@ -78,7 +78,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Get a bare bones configuration
         /// </summary>
-        public static SanteDBConfiguration GetDefaultConfiguration(String instanceName)
+        public SanteDBConfiguration GetDefaultConfiguration()
         {
             // TODO: Bring up initial settings dialog and utility
             var retVal = new SanteDBConfiguration();
@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.UI
             // Initial Applet configuration
             AppletConfigurationSection appletSection = new AppletConfigurationSection()
             {
-                AppletDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", instanceName, "applets"),
+                AppletDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName, "applets"),
                 StartupAsset = "org.santedb.uicore",
                 Security = new AppletSecurityConfiguration()
                 {
@@ -100,14 +100,14 @@ namespace SanteDB.DisconnectedClient.UI
             ApplicationConfigurationSection appSection = new ApplicationConfigurationSection()
             {
                 Style = StyleSchemeType.Dark,
-                UserPrefDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", instanceName, "userpref"),
+                UserPrefDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName, "userpref"),
                 ServiceTypes = new List<string>() {
                     typeof(AesSymmetricCrypographicProvider).AssemblyQualifiedName,
                     typeof(MemoryTickleService).AssemblyQualifiedName,
                     typeof(DefaultPolicyDecisionService).AssemblyQualifiedName,
                     typeof(NetworkInformationService).AssemblyQualifiedName,
                     typeof(BusinessRulesDaemonService).AssemblyQualifiedName,
-                    typeof(MiniHdsiServer).AssemblyQualifiedName,
+                    typeof(AgsService).AssemblyQualifiedName,
                     typeof(MemoryCacheService).AssemblyQualifiedName,
                     typeof(SanteDBThreadPool).AssemblyQualifiedName,
                     typeof(SimpleCarePlanService).AssemblyQualifiedName,
@@ -183,6 +183,7 @@ namespace SanteDB.DisconnectedClient.UI
             retVal.Sections.Add(appSection);
             retVal.Sections.Add(secSection);
             retVal.Sections.Add(serviceSection);
+            retVal.AddSection(AgsService.GetDefaultConfiguration());
             retVal.Sections.Add(new SynchronizationConfigurationSection()
             {
                 PollInterval = new TimeSpan(0, 5, 0)
@@ -201,35 +202,18 @@ namespace SanteDB.DisconnectedClient.UI
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Android.Configuration.ConfigurationManager"/> class.
-        /// </summary>
-        /// <param name="config">Config.</param>
-        public DcConfigurationManager(String instanceName, SanteDBConfiguration config) : this(instanceName)
-        {
-            this.m_configuration = config;
-        }
-
-        /// <summary>
         /// Load the configuration
         /// </summary>
-        public void Load()
+        public SanteDBConfiguration Load()
         {
             // Configuration exists?
             if (this.IsConfigured)
                 using (var fs = File.OpenRead(this.m_configPath))
                 {
-                    this.m_configuration = SanteDBConfiguration.Load(fs);
+                    return SanteDBConfiguration.Load(fs);
                 }
-
-        }
-
-
-        /// <summary>
-        /// Save the configuration to the default location
-        /// </summary>
-        public void Save()
-        {
-            this.Save(this.m_configuration);
+            else
+                return this.GetDefaultConfiguration();
         }
 
         /// <summary>
@@ -257,17 +241,6 @@ namespace SanteDB.DisconnectedClient.UI
         }
 
         /// <summary>
-        /// Get the configuration
-        /// </summary>
-        public SanteDBConfiguration Configuration
-        {
-            get
-            {
-                return this.m_configuration;
-            }
-        }
-
-        /// <summary>
         /// Application data directory
         /// </summary>
         public string ApplicationDataDirectory
@@ -282,10 +255,10 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Backup the configuration
         /// </summary>
-        public void Backup()
+        public void Backup(SanteDBConfiguration configuration)
         {
             using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress))
-                this.m_configuration.Save(lzs);
+                configuration.Save(lzs);
         }
 
         /// <summary>
@@ -299,11 +272,15 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Restore the configuration
         /// </summary>
-        public void Restore()
+        public SanteDBConfiguration Restore()
         {
             using (var lzs = new BZip2Stream(File.OpenRead(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Decompress))
-                this.m_configuration = SanteDBConfiguration.Load(lzs);
-            this.Save();
+            {
+                var retVal = SanteDBConfiguration.Load(lzs);
+                this.Save(retVal);
+                ApplicationContext.Current.GetService<IConfigurationManager>().Reload();
+                return retVal;
+            }
         }
 
     }

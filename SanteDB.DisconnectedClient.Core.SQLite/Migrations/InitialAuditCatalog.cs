@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.SQLite.Connection;
@@ -60,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
             var tracer = Tracer.GetTracer(this.GetType());
             // Database for the SQL Lite connection
-            var connStr = ApplicationContext.Current?.Configuration.GetConnectionString("santeDbAudit")?.Value;
+            var connStr = ApplicationContext.Current?.GetService<IConfigurationManager>().GetConnectionString("santeDbAudit")?.ConnectionString;
             if (String.IsNullOrEmpty(connStr))
                 return true;
             var db = SQLiteConnectionManager.Current.GetConnection(connStr);

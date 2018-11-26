@@ -110,8 +110,14 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.ApplicationContext"/> class.
         /// </summary>
-        public ApplicationContext()
+        public ApplicationContext(IConfigurationPersister configPersister)
         {
+            this.m_providers = new List<object>()
+            {
+                configPersister,
+                new ConfigurationManager()
+            };
+            this.ConfigurationPersister = configPersister;
             this.ThreadDefaultPrincipal = AuthenticationContext.AnonymousPrincipal;
         }
 
@@ -171,6 +177,11 @@ namespace SanteDB.DisconnectedClient.Core
         public abstract void Alert(String alertText);
 
         /// <summary>
+        /// Gets the configuration persister
+        /// </summary>
+        public IConfigurationPersister ConfigurationPersister { get; private set; }
+
+        /// <summary>
         /// Gets the current application context
         /// </summary>
         /// <value>The current.</value>
@@ -190,12 +201,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         /// <value>The policy information service.</value>
         public IPolicyInformationService PolicyInformationService { get { return this.GetService(typeof(IPolicyInformationService)) as IPolicyInformationService; } }
-
-        /// <summary>
-        /// Save configuration
-        /// </summary>
-        public abstract void SaveConfiguration();
-
+       
         /// <summary>
         /// Gets user preference application
         /// </summary>
@@ -222,10 +228,9 @@ namespace SanteDB.DisconnectedClient.Core
         /// <value>The role provider service.</value>
         public IRoleProviderService RoleProviderService { get { return this.GetService(typeof(IRoleProviderService)) as IRoleProviderService; } }
         /// <summary>
-        /// Gets the configuration.
+        /// Gets the configuration manager
         /// </summary>
-        /// <value>The configuration.</value>
-        public abstract SanteDBConfiguration Configuration { get; }
+        public SanteDBConfiguration Configuration { get { return this.GetService<IConfigurationManager>()?.Configuration; } }
         /// <summary>
         /// Gets the application information for the currently running application.
         /// </summary>

@@ -18,6 +18,7 @@
  * Date: 2018-7-31
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
@@ -52,7 +53,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
             // Database for the SQL Lite connection
             var tracer = Tracer.GetTracer(typeof(InitialMessageCatalog));
 
-            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.Configuration.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MailDataStore).Value);
+            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.GetService<IConfigurationManager>().GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MailDataStore).ConnectionString);
             try
             {
                 using (db.Lock())

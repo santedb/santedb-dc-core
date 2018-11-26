@@ -149,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                                 else
                                 {
                                     ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().Security.TrustedPublishers.Add(cert[0].Thumbprint);
-                                    ApplicationContext.Current.SaveConfiguration();
+                                    ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
                                 }
                             }
                         }
@@ -240,7 +240,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
             // Delete the applet registration data
             appletConfig.Applets.RemoveAll(o => o.Id == applet.Info.Id);
-            ApplicationContext.Current.SaveConfiguration();
+            ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
             if (File.Exists(Path.Combine(appletConfig.AppletDirectory, applet.Info.Id)))
                 File.Delete(Path.Combine(appletConfig.AppletDirectory, applet.Info.Id));
@@ -352,7 +352,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 
                 ApplicationContext.Current.SetProgress(package.Meta.GetName("en"), 0.98f);
 
-                ApplicationContext.Current.SaveConfiguration();
+                ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
                 this.LoadApplet(mfst);
             }

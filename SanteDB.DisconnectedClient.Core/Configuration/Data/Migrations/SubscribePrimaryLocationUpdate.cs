@@ -20,6 +20,7 @@
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
 using System;
 using System.Linq;
 

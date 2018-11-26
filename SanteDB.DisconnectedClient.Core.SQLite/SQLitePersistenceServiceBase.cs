@@ -129,7 +129,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.Configuration.GetConnectionString(m_configuration.MainDataSourceConnectionStringName).Value));
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString));
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         private SQLiteDataContext CreateReadonlyConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.Configuration.GetConnectionString(m_configuration.MainDataSourceConnectionStringName).Value));
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString));
         }
 
         /// <summary>
