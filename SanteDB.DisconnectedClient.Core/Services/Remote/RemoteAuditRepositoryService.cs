@@ -35,6 +35,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     public class RemoteAuditRepositoryService : AmiRepositoryBaseService, IAuditRepositoryService
     {
 
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Remote Audit Submission Repository";
+
         // Get a tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteAuditRepositoryService));
 

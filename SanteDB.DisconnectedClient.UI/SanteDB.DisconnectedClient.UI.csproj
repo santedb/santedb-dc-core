@@ -146,6 +146,9 @@
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
       <Version>1.9.12</Version>
     </PackageReference>
+    <PackageReference Include="SanteDB.Core.Model.AMI">
+      <Version>1.9.12</Version>
+    </PackageReference>
     <PackageReference Include="SQLite.Net-PCL.MEDIC">
       <Version>3.1.1</Version>
     </PackageReference>

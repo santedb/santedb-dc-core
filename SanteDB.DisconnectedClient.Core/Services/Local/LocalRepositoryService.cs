@@ -36,6 +36,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     /// </summary>
     public class LocalRepositoryService : IDaemonService
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Local Repository Registration Service";
+
         // Trace source
         private Tracer m_tracer = Tracer.GetTracer(typeof(LocalRepositoryService));
 

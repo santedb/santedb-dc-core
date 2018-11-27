@@ -69,6 +69,9 @@ namespace SanteDB.DisconnectedClient.Core
         // Context singleton
         private static ApplicationContext s_context;
 
+        // configuration maanger
+        private IConfigurationManager m_configManager = null;
+
         // Providers
         private List<Object> m_providers;
 
@@ -116,11 +119,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         public ApplicationContext(IConfigurationPersister configPersister)
         {
-            this.m_providers = new List<object>()
-            {
-                configPersister,
-                new ConfigurationManager()
-            };
+            this.m_configManager = new ConfigurationManager(configPersister);
             this.ConfigurationPersister = configPersister;
             this.ThreadDefaultPrincipal = AuthenticationContext.AnonymousPrincipal;
         }
@@ -150,13 +149,23 @@ namespace SanteDB.DisconnectedClient.Core
         public object GetService(Type serviceType)
         {
 
-
-
             Object candidateService = null;
             if (!this.m_cache.TryGetValue(serviceType, out candidateService))
             {
                 ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
                 candidateService = this.GetServices().FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
+                // Candidate service not found? Look in configuration
+                if (candidateService == null)
+                {
+                    lock (this.m_lockObject)
+                    {
+                        var cserviceType = this.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Select(o => Type.GetType(o)).FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
+                        if (cserviceType == null)
+                            return null;
+                        else
+                            candidateService = Activator.CreateInstance(cserviceType);
+                    }
+                }
                 if (candidateService != null)
                     lock (this.m_lockObject)
                         if (!this.m_cache.ContainsKey(serviceType))
@@ -234,7 +243,11 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Gets the configuration manager
         /// </summary>
-        public SanteDBConfiguration Configuration { get { return this.GetService<IConfigurationManager>()?.Configuration; } }
+        public SanteDBConfiguration Configuration { get { return this.m_configManager.Configuration; } }
+        /// <summary>
+        /// Gets the configuration manager
+        /// </summary>
+        public IConfigurationManager ConfigurationManager { get { return this.m_configManager; } }
         /// <summary>
         /// Gets the application information for the currently running application.
         /// </summary>

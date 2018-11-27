@@ -40,6 +40,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     public class LocalSecurityRepository : ISecurityRepositoryService,
         ISecurityAuditEventSource
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Local Security Repository";
+
         private Tracer m_traceSource = Tracer.GetTracer(typeof(LocalSecurityRepository));
 
         /// <summary>
@@ -215,7 +221,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var securityUser = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>()?.Get(userId);
             if (securityUser == null)
                 throw new KeyNotFoundException(userId.ToString());
-            iids.SetLockout(securityUser.UserName, true);
+            iids.SetLockout(securityUser.UserName, true, AuthenticationContext.Current.Principal);
             this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(securityUser, "Lockout=True"));
         }
 
@@ -244,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var securityUser = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>()?.Get(userId);
             if (securityUser == null)
                 throw new KeyNotFoundException(userId.ToString());
-            iids.SetLockout(securityUser.UserName, false);
+            iids.SetLockout(securityUser.UserName, false, AuthenticationContext.Current.Principal);
             this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(securityUser, "Lockout=False"));
 
         }

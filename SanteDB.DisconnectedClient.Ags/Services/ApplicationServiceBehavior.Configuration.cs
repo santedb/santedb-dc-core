@@ -68,6 +68,7 @@ using System.Text;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Data;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -556,7 +557,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalEntitySource), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
 
                         // Sync settings
@@ -682,7 +683,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
 
             foreach (var i in configuration.Application.AppSettings)
-                ApplicationContext.Current.GetService<IConfigurationManager>().SetAppSetting(i.Key, i.Value);
+                ApplicationContext.Current.ConfigurationManager.SetAppSetting(i.Key, i.Value);
             this.m_tracer.TraceInfo("Saving configuration options {0}", JsonConvert.SerializeObject(configuration));
             ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 

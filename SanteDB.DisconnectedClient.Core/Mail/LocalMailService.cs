@@ -33,6 +33,12 @@ namespace SanteDB.DisconnectedClient.Core.Mail
     /// </summary>
     public class LocalMailService : IMailMessageRepositoryService
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Local Mail Storage Service";
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(LocalMailService));
 

@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
+using System;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Local
 {
@@ -9,6 +10,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     /// </summary>
     public class LocalRepositoryFactoryService : IRepositoryServiceFactory
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Local Data Repository Service Factory";
+
         /// <summary>
         /// Create the specified resource service factory
         /// </summary>

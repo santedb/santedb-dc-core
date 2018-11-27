@@ -43,6 +43,6 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         /// <param name="userName">The name of the user to change PIN for</param>
         /// <param name="pin">The PIN to change to</param>
-        void ChangePin(String userName, byte[] pin);
+        void ChangePin(String userName, byte[] pin, IPrincipal principal);
     }
 }

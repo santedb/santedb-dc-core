@@ -35,6 +35,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
     /// </summary>
     public class SanteDBThreadPool : IThreadPoolService, IDisposable
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Default PCL Thread Pool";
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SanteDBThreadPool));

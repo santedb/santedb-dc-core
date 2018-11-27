@@ -279,7 +279,7 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 var retVal = SanteDBConfiguration.Load(lzs);
                 this.Save(retVal);
-                ApplicationContext.Current.GetService<IConfigurationManager>().Reload();
+                ApplicationContext.Current.ConfigurationManager.Reload();
                 return retVal;
             }
         }

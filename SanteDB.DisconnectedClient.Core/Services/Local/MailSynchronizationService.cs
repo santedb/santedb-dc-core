@@ -45,6 +45,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     /// </summary>
     public class MailSynchronizationService : IDaemonService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Mail Synchronization Service";
 
         // Cached credetials
         private IPrincipal m_cachedCredential = null;

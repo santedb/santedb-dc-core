@@ -37,6 +37,11 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     {
 
         /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Default Disconnected Client Configuration Manager";
+
+        /// <summary>
         /// Gets the configuration object
         /// </summary>
         public SanteDBConfiguration Configuration { get; private set; }
@@ -44,9 +49,9 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// SanteDB configuration
         /// </summary>
-        public ConfigurationManager()
+        public ConfigurationManager(IConfigurationPersister defaultPersister = null)
         {
-            this.Configuration = ApplicationContext.Current.GetService<IConfigurationPersister>().Load();
+            this.Configuration = (defaultPersister  ?? ApplicationContext.Current.ConfigurationPersister).Load();
         }
 
         /// <summary>
@@ -102,7 +107,9 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
                 this.GetSection<ApplicationConfigurationSection>()?.AppSettings.Add(new AppSettingKeyValuePair() { Key = key, Value = value.ToString() });
             else
                 setting.Value = value.ToString();
-            ApplicationContext.Current.ConfigurationPersister.Save(this.Configuration);
+
+            if(ApplicationContext.Current.ConfigurationPersister.IsConfigured)
+                ApplicationContext.Current.ConfigurationPersister.Save(this.Configuration);
         }
 
         /// <summary>

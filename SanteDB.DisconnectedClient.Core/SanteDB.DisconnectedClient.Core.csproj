@@ -60,7 +60,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Configuration\IConfigurationPersister.cs" />
-    <Compile Include="Data\RepositoryEntitySource.cs" />
     <Compile Include="Mail\LocalMailService.cs" />
     <Compile Include="Configuration\Data\Migrations\SubscribePrimaryLocationUpdate.cs" />
     <Compile Include="Data\IStorageProvider.cs" />
@@ -161,7 +160,6 @@
     <Compile Include="Services\IIntegrationService.cs" />
     <Compile Include="Exceptions\LocalPersistenceException.cs" />
     <Compile Include="Configuration\ServiceClientDescriptionConfigurationSection.cs" />
-    <Compile Include="Data\LocalEntitySource.cs" />
     <Compile Include="Synchronization\IQueueFileProvider.cs" />
     <Compile Include="Synchronization\ISynchronizationLogEntry.cs" />
     <Compile Include="Synchronization\ISynchronizationQueue.cs" />

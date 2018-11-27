@@ -37,6 +37,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Subscribers
     /// </summary>
     public class PolicyEnforcementSubscriber : IDaemonService
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Policy Enforcement Point Subscriber";
+
         // Running flag
         private bool m_isRunning = false;
 

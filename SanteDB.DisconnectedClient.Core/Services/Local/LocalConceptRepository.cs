@@ -34,6 +34,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     /// </summary>
     public class LocalConceptRepository : GenericLocalNullifiedRepository<Concept>, IConceptRepositoryService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Local Concept Repository Service";
+
         protected override string QueryPolicy => PermissionPolicyIdentifiers.ReadMetadata;
         protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadMetadata;
         protected override string WritePolicy => PermissionPolicyIdentifiers.AdministerConceptDictionary;

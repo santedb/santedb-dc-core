@@ -48,6 +48,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
     public class SQLiteQueueManagerService : IQueueManagerService, IDaemonService
     {
 
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Queue Manager";
+
         private Object m_inboundLock = new object();
         private Object m_outboundLock = new object();
         private Object m_adminLock = new object();

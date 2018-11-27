@@ -42,6 +42,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
     /// </summary>
     public class SQLiteDatawarehouse : IAdHocDatawarehouseService, IDaemonService, IDisposable
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Data Warehouse";
+
         // Epoch
         private readonly DateTime m_epoch = new DateTime(621355968000000000, DateTimeKind.Utc);
 
@@ -1099,7 +1104,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            var connectionString = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString("santeDbWarehouse");
+            var connectionString = ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbWarehouse");
 
             this.InitializeDatabase(connectionString.ConnectionString);
 

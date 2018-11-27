@@ -200,7 +200,7 @@ namespace SanteDB.DisconnectedClient.UI
             var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
             
             // Not configured
-            if (!retVal.GetService<IConfigurationPersister>().IsConfigured)
+            if (!retVal.ConfigurationPersister.IsConfigured)
             {
                 return false;
             }
@@ -214,14 +214,14 @@ namespace SanteDB.DisconnectedClient.UI
                     try
                     {
                         retVal.AddServiceProvider(typeof(ConfigurationManager));
-                        retVal.GetService<IConfigurationPersister>().Backup(retVal.Configuration);
+                        retVal.ConfigurationPersister.Backup(retVal.Configuration);
                     }
                     catch
                     {
-                        if (retVal.GetService<IConfigurationPersister>().HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))
+                        if (retVal.ConfigurationPersister.HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))
                         {
-                            retVal.GetService<IConfigurationPersister>().Restore();
-                            retVal.GetService<IConfigurationManager>().Reload();
+                            retVal.ConfigurationPersister.Restore();
+                            retVal.ConfigurationManager.Reload();
                         }
                         else
                             throw;
@@ -231,7 +231,7 @@ namespace SanteDB.DisconnectedClient.UI
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();
                     if (backupSvc.HasBackup(BackupMedia.Public) &&
-                        retVal.GetService<IConfigurationManager>().GetAppSetting("ignore.restore") == null &&
+                        retVal.ConfigurationManager.GetAppSetting("ignore.restore") == null &&
                         retVal.Confirm(Strings.locale_confirm_restore))
                     {
                         backupSvc.Restore(BackupMedia.Public);
@@ -296,7 +296,7 @@ namespace SanteDB.DisconnectedClient.UI
                     try
                     {
                         // If the DB File doesn't exist we have to clear the migrations
-                        if (!File.Exists(retVal.GetService<IConfigurationManager>().GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).ConnectionString))
+                        if (!File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).ConnectionString))
                         {
                             retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
                             retVal.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Clear();
@@ -322,7 +322,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
                     finally
                     {
-                        retVal.GetService<IConfigurationPersister>().Save(retVal.Configuration);
+                        retVal.ConfigurationPersister.Save(retVal.Configuration);
                     }
 
                     // Set the tracer writers for the PCL goodness!

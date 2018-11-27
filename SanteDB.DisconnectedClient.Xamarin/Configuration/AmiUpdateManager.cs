@@ -44,6 +44,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
     /// </summary>
     public class AmiUpdateManager : IUpdateManager, IDaemonService
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "AMI Update Manager";
+
         // Cached credential
         private IPrincipal m_cachedCredential = null;
 

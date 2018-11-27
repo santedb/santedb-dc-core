@@ -43,6 +43,10 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
     /// </summary>
     public class LocalAuditService : IAuditDispatchService, IDaemonService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Local Audit Dispatch Service";
 
         /// <summary>
         /// Dummy identiifed wrapper

@@ -37,6 +37,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// </summary>
     public class OAuthDeviceIdentityProvider : IDeviceIdentityProviderService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "OAUTH 2.0 Device Identity Provider";
+
         // Log tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(OAuthIdentityProvider));
 

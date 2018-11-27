@@ -41,6 +41,12 @@ namespace SanteDB.DisconnectedClient.Ags
     /// </summary>
     public class AgsService : IDaemonService
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Offline Application Gateway Service";
+
         // Backing for HDSI service
         private List<RestService> m_services = new List<RestService>();
 

@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
         /// </summary>
         public string CopyQueueData(string data)
         {
-            var sqlitePath = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
+            var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
 
             // Create blob path
             var blobPath = Path.Combine(Path.GetDirectoryName(sqlitePath), "blob");
@@ -80,7 +80,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         this.m_serializers.Add(typeSpec, xsz);
             }
 
-            var sqlitePath = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
+            var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
 
             // Create blob path
             var blobPath = Path.Combine(Path.GetDirectoryName(sqlitePath), "blob");
@@ -122,7 +122,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
 #endif
 
 
-            var sqlitePath = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
+            var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
 
             // Create blob path
             var blobPath = Path.Combine(Path.GetDirectoryName(sqlitePath), "blob");
@@ -153,7 +153,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
         /// </summary>
         public void RemoveQueueData(String pathSpec)
         {
-            var sqlitePath = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
+            var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
 
             var blobPath = Path.Combine(Path.GetDirectoryName(sqlitePath), "blob");
             if (!Directory.Exists(blobPath))
@@ -187,7 +187,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         this.m_serializers.Add(data.GetType(), xsz);
             }
 
-            var sqlitePath = ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
+            var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().MessageQueueConnectionStringName).ConnectionString;
 
             // Create blob path
             var blobPath = Path.Combine(Path.GetDirectoryName(sqlitePath), "blob");

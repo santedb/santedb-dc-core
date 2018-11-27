@@ -43,6 +43,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// </summary>
     public class SQLiteRoleProviderService : IOfflineRoleProviderService, ISecurityAuditEventSource
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Role Provider Service";
+
         // Configuration
         private DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
 
@@ -276,7 +281,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
         }
 
         /// <summary>
@@ -285,7 +290,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateReadonlyConnection()
         {
-            return SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
         }
     }
 }

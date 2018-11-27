@@ -44,6 +44,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// </summary>
     public class SQLitePolicyInformationService : IOfflinePolicyInformationService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Policy Information Service";
+
         // Configuration
         private DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
 
@@ -183,7 +188,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
         }
     }
 }

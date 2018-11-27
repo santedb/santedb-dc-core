@@ -45,6 +45,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// </summary>
     public class RemoteRepositoryService : IDaemonService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Remote Data Repository Service";
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteRepositoryService));
@@ -126,6 +130,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     internal class RemoteRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData, new()
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => $"Remote repository for {typeof(TModel).FullName}";
+
         // Service client
         private HdsiServiceClient m_client = null;
 

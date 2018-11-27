@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
             var tracer = Tracer.GetTracer(this.GetType());
             // Database for the SQL Lite connection
-            var connStr = ApplicationContext.Current?.GetService<IConfigurationManager>().GetConnectionString("santeDbAudit")?.ConnectionString;
+            var connStr = ApplicationContext.Current?.ConfigurationManager.GetConnectionString("santeDbAudit")?.ConnectionString;
             if (String.IsNullOrEmpty(connStr))
                 return true;
             var db = SQLiteConnectionManager.Current.GetConnection(connStr);

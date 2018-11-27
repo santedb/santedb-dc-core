@@ -48,6 +48,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// </summary>
     public class OAuthIdentityProvider : IIdentityProviderService, ISecurityAuditEventSource
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "OAuth 2.0 Identity Provider Service";
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(OAuthIdentityProvider));
 
@@ -406,7 +411,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     // TODO: Remove users from specified roles?
                     localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
                     // Unlock the account
-                    localIdp.SetLockout(principal.Identity.Name, false);
+                    localIdp.SetLockout(principal.Identity.Name, false, principal);
 
 
                 }
@@ -515,18 +520,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             }
 
         }
-
-        /// <summary>
-        /// Changes the users password.
-        /// </summary>
-        /// <param name="userName">The username of the user.</param>
-        /// <param name="password">The new password of the user.</param>
-        public void ChangePassword(string userName, string password)
-        {
-            this.ChangePassword(userName, password, AuthenticationContext.Current.Principal);
-        }
-
-
+        
         /// <summary>
         /// Perform re-auth
         /// </summary>
@@ -545,7 +539,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <summary>
         /// Sets the user's lockout status
         /// </summary>
-        public void SetLockout(string userName, bool v)
+        public void SetLockout(string userName, bool v, IPrincipal prinicpal)
         {
             throw new NotImplementedException();
         }
@@ -553,27 +547,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <summary>
         /// Deletes the specified identity
         /// </summary>
-        public void DeleteIdentity(string userName)
+        public void DeleteIdentity(string userName, IPrincipal prinicpal)
         {
             throw new NotImplementedException();
         }
-
-        public IIdentity CreateIdentity(Guid sid, string userName, string password)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         public string GenerateTfaSecret(string userName)
         {
             throw new NotSupportedException();
         }
 
-        public void AddClaim(string userName, IClaim claim)
+        public void AddClaim(string userName, IClaim claim, IPrincipal prinicpal)
         {
             throw new NotSupportedException();
         }
 
-        public void RemoveClaim(string userName, string claimType)
+        public void RemoveClaim(string userName, string claimType, IPrincipal prinicpal)
         {
             throw new NotSupportedException();
         }

@@ -32,6 +32,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     public class LocalTagPersistenceService : ITagPersistenceService
     {
         /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Default Tag Persistence Service";
+
+        /// <summary>
         /// Save tag
         /// </summary>
         public void Save(Guid sourceKey, ITag tag)

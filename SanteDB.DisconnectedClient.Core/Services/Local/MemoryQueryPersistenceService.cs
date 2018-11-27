@@ -31,6 +31,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     public class MemoryQueryPersistenceService : IQueryPersistenceService
     {
 
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Memory Query Persistence Service";
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(MemoryQueryPersistenceService));
 

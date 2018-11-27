@@ -52,6 +52,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// </summary>
     public class SQLiteIdentityService : IOfflineIdentityProviderService, ISecurityAuditEventSource, IPinAuthenticationService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Identity Provider Service";
+
         // Configuration
         private DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
 
@@ -76,9 +81,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
         public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
-
-
-
 
         /// <summary>
         /// Authenticate this user with a local PIN number
@@ -281,16 +283,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         }
 
         /// <summary>
-        /// Change the user's password
-        /// </summary>
-        /// <param name="userName"></param>
-        /// <param name="password"></param>
-        public void ChangePassword(string userName, string password)
-        {
-            this.ChangePassword(userName, password, AuthenticationContext.Current.Principal);
-        }
-
-        /// <summary>
         /// Create specified identity
         /// </summary>
         public IIdentity CreateIdentity(String userName, String password, IPrincipal principal)
@@ -363,7 +355,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         }
 
 
-        public void DeleteIdentity(string userName)
+        public void DeleteIdentity(string userName, IPrincipal principal)
         {
             throw new NotImplementedException();
         }
@@ -397,10 +389,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Set the lockout 
         /// </summary>
-        public void SetLockout(string userName, bool v)
+        public void SetLockout(string userName, bool v, IPrincipal principal)
         {
+            
             try
             {
+                IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+
+                if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AlterIdentity) == SanteDB.Core.Model.Security.PolicyGrantType.Deny)
+                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AlterIdentity, PolicyGrantType.Deny);
+
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -433,7 +431,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
         }
 
         /// <summary>
@@ -442,12 +440,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <param name="userName">The name of the user to change the PIN for</param>
         /// <param name="pin">The PIN to change to</param>
         /// <remarks>Only the currently logged in credential can change a PIN number for themselves</remarks>
-        public void ChangePin(string userName, byte[] pin)
+        public void ChangePin(string userName, byte[] pin, IPrincipal principal)
         {
             // We must demand the change password permission
             try
             {
-                if (userName != AuthenticationContext.Current.Principal.Identity.Name)
+                if (userName != principal.Identity.Name)
                     throw new SecurityException("Can only change PIN number of your own account");
                 else if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o < 0 || o > 9))
                     throw new ArgumentOutOfRangeException("PIN numbers must be between 4 and 8 digits");
@@ -484,12 +482,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             throw new NotImplementedException();
         }
 
-        public void AddClaim(string userName, IClaim claim)
+        public void AddClaim(string userName, IClaim claim, IPrincipal principal)
         {
             throw new NotImplementedException();
         }
 
-        public void RemoveClaim(string userName, string claimType)
+        public void RemoveClaim(string userName, string claimType, IPrincipal principal)
         {
             throw new NotImplementedException();
         }
@@ -503,7 +501,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             if (principal.Identity.IsAuthenticated)
             {
-                var config = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+                var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
                 // Refresh
                 if (principal is SQLitePrincipal) /// extend the existing session 
                     (principal as SQLitePrincipal).Expires = DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0));

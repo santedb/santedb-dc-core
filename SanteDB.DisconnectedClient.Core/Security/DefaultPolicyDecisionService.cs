@@ -33,6 +33,10 @@ namespace SanteDB.DisconnectedClient.Core.Security
     /// </summary>
     public class DefaultPolicyDecisionService : IPolicyDecisionService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Default Policy Decision Service";
 
         // Policy cache
         private Dictionary<String, Dictionary<String, PolicyGrantType>> m_policyCache = new Dictionary<string, Dictionary<string, PolicyGrantType>>();

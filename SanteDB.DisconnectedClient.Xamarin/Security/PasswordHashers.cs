@@ -30,6 +30,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// </summary>
     public class SHA256PasswordHasher : IPasswordHashingService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SHA256 Password Encoding Service";
+
         #region IPasswordHashingService implementation
         /// <summary>
         /// Compute hash
@@ -49,6 +54,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// </summary>
     public class SHAPasswordHasher : IPasswordHashingService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SHA1 Password Encoding Service";
+
         #region IPasswordHashingService implementation
         /// <summary>
         /// Compute hash
@@ -68,6 +78,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// </summary>
     public class PlainTextPasswordHasher : IPasswordHashingService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Plain Text Password Encoding Service";
+
         #region IPasswordHashingService implementation
         /// <summary>
         /// Compute hash

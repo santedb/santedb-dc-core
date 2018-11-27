@@ -41,6 +41,10 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
     /// </summary>
     public class SQLiteAuditRepositoryService : IAuditRepositoryService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Audit Repository Service";
 
         // Model mapper
         private ModelMapper m_mapper = new ModelMapper(typeof(SQLiteAuditRepositoryService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.ModelMap.xml"));
@@ -72,7 +76,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(
                 "santeDbAudit"
             ).ConnectionString);
         }

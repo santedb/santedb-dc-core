@@ -41,6 +41,10 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
     /// </summary>
     public class RemoteSynchronizationService : ISynchronizationService, IDaemonService
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Remote Data Synchronization Service";
 
         // Lock
         private object m_lock = new object();

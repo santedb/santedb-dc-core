@@ -10,6 +10,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     /// </summary>
     public class LocalExtensionTypeRepository : GenericLocalMetadataRepository<ExtensionType>, IExtensionTypeRepository
     {
+
         /// <summary>
         /// Get the xtension type by uri
         /// </summary>

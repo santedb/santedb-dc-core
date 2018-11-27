@@ -38,6 +38,12 @@ namespace SanteDB.DisconnectedClient.Core.Security
     /// </summary>
     public class AmiPolicyInformationService : IPolicyInformationService
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "AMI Remote Policy Information Service";
+
         // Service client
         private AmiServiceClient m_client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 

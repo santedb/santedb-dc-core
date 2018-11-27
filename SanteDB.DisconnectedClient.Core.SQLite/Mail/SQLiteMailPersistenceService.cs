@@ -43,6 +43,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
     /// </summary>
     public class SQLiteMailPersistenceService : IDataPersistenceService<MailMessage>
     {
+
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Mail Storage Service";
+
         public event EventHandler<DataPersistedEventArgs<MailMessage>> Inserted;
         public event EventHandler<DataPersistingEventArgs<MailMessage>> Inserting;
         public event EventHandler<DataPersistedEventArgs<MailMessage>> Updated;
@@ -80,7 +86,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MailDataStore).ConnectionString), AuthenticationContext.SystemPrincipal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore).ConnectionString), AuthenticationContext.SystemPrincipal);
         }
 
         /// <summary>
@@ -88,7 +94,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         private SQLiteDataContext CreateReadonlyConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MailDataStore).ConnectionString), AuthenticationContext.SystemPrincipal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore).ConnectionString), AuthenticationContext.SystemPrincipal);
         }
 
         /// <summary>

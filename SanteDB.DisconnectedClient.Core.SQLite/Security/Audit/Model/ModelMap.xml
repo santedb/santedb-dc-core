@@ -18,20 +18,20 @@
  - Date: 2018-6-28
  -->
 <modelMap xmlns="http://santedb.org/model/map">
-  <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
+  <class modelClass="SanteDB.Core.Auditing.AuditData, SanteDB.Core.Model, Version=1.0.1.0"
 		domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditData, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
     <property modelName="Key" domainName="Id"/>
   </class>
 
-  <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditActorData, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
+  <class modelClass="SanteDB.Core.Auditing.AuditActorData, SanteDB.Core.Model, Version=1.0.1.0"
   domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditActor, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
 
-  <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditableObject, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
+  <class modelClass="SanteDB.Core.Auditing.AuditableObject, SanteDB.Core.Model, Version=1.0.1.0"
 domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditObject, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
 
-  <class modelClass="MARC.HI.EHRS.SVC.Auditing.Data.AuditCode, MARC.HI.EHRS.SVC.Auditing.Core, Version=1.0.1.0"
+  <class modelClass="SanteDB.Core.Auditing.AuditCode, SanteDB.Core.Model, Version=1.0.1.0"
 domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditCode, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
   

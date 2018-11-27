@@ -34,6 +34,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Rules
     {
 
         /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Business Rules Daemon Service";
+
+        /// <summary>
         /// Indicates whether the service is running
         /// </summary>
         public bool IsRunning

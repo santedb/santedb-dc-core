@@ -49,6 +49,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
     {
 
         /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => $"Local Data Storage Repository for {typeof(TEntity).FullName}";
+
+
+        /// <summary>
         /// Trace source
         /// </summary>
         protected Tracer m_traceSource = Tracer.GetTracer(typeof(GenericLocalRepository<TEntity>));

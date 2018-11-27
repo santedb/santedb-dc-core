@@ -49,6 +49,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         IRepositoryService<SecurityProvenance>
     {
 
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Remote Security Repository Service";
+
         // Get a tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteSecurityRepository));
 

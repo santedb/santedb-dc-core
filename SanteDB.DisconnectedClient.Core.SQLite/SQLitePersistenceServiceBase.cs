@@ -48,7 +48,10 @@ namespace SanteDB.DisconnectedClient.SQLite
     public abstract class SQLitePersistenceServiceBase<TData> : IDataPersistenceService<TData>, ISQLitePersistenceService where TData : IdentifiedData, new()
     {
 
-
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => $"SQLite Data Persistence Service for {typeof(TData).FullName}";
 
         // Get tracer
         protected Tracer m_tracer; //= Tracer.GetTracer(typeof(LocalPersistenceServiceBase<TData>));
@@ -140,7 +143,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
         }
 
         /// <summary>
@@ -148,7 +151,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         private SQLiteDataContext CreateReadonlyConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.GetService<IConfigurationManager>().GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
         }
 
         /// <summary>
@@ -648,7 +651,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         public virtual object Insert(object data)
         {
-            return this.Insert(data as TData);
+            return this.Insert(data as TData, TransactionMode.Commit, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -656,7 +659,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         public virtual object Update(object data)
         {
-            return this.Update(data as TData);
+            return this.Update(data as TData, TransactionMode.Commit, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>

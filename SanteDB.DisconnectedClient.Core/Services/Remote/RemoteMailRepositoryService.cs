@@ -31,6 +31,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// </summary>
     public class RemoteMailRepositoryService : AmiRepositoryBaseService, IMailMessageRepositoryService, IRepositoryService<MailMessage>
     {
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Remote Mail Repository";
 
         /// <summary>
         /// Fired when a mail message was committed to the server

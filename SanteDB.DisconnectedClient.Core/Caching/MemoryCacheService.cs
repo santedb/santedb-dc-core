@@ -40,6 +40,11 @@ namespace SanteDB.DisconnectedClient.Core.Caching
     {
 
         /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "Memory Caching Service";
+
+        /// <summary>
         /// Cache of data
         /// </summary>
         private EventHandler<ModelMapEventArgs> m_mappingHandler = null;

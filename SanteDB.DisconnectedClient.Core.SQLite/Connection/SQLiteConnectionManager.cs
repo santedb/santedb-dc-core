@@ -38,6 +38,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
     public class SQLiteConnectionManager : IDataConnectionManager
     {
 
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public String ServiceName => "SQLite Data Connection Pool Service";
+
         // Connection pool
         private List<LockableSQLiteConnection> m_connectionPool = new List<LockableSQLiteConnection>();
 
