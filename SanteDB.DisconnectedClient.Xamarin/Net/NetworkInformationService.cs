@@ -17,12 +17,15 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Net
@@ -108,6 +111,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
             }
         }
 
+        public string ServiceName => throw new NotImplementedException();
+
         /// <summary>
         /// Network status has changed
         /// </summary>
@@ -162,6 +167,21 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
             {
                 return -1;
             }
+        }
+        /// <summary>
+        /// Get the hostname
+        /// </summary>
+        public virtual string GetHostName()
+        {
+            return Dns.GetHostName();
+        }
+
+        /// <summary>
+        /// Get machine name
+        /// </summary>
+        public virtual string GetMachineName()
+        {
+            return ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName;
         }
     }
 }

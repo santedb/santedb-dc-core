@@ -37,6 +37,7 @@ using System.Globalization;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Core.Security
@@ -45,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
     /// Session information
     /// </summary>
     [JsonObject("SessionInfo"), XmlType("SessionInfo", Namespace = "http://santedb.org/model")]
-    public class SessionInfo : IdentifiedData
+    public class SessionInfo : IdentifiedData, ISession
     {
 
         // The entity 
@@ -68,9 +69,9 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Create the session object from the principal
         /// </summary>
-        public SessionInfo(IPrincipal principal)
+        public SessionInfo(IPrincipal principal, DateTime? expiry)
         {
-            this.ProcessPrincipal(principal);
+            this.ProcessPrincipal(principal, expiry);
         }
 
         private object ApplicationContextIDataPersistenceService<T>()
@@ -204,6 +205,26 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
+        /// Gets the session ID
+        /// </summary>
+        byte[] ISession.Id => Encoding.UTF8.GetBytes(this.Token);
+
+        /// <summary>
+        /// Not before
+        /// </summary>
+        DateTimeOffset ISession.NotBefore => this.Issued;
+
+        /// <summary>
+        /// Not after
+        /// </summary>
+        DateTimeOffset ISession.NotAfter => this.Expiry;
+
+        /// <summary>
+        /// Refresh token
+        /// </summary>
+        byte[] ISession.RefreshToken => Encoding.UTF8.GetBytes(this.RefreshToken);
+
+        /// <summary>
         /// Extends the session
         /// </summary>
         public SessionInfo Extend(String refreshEvidence)
@@ -214,7 +235,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 {
                     if (this.Expiry > DateTime.Now.AddMinutes(5)) // session will still be valid in 5 mins so no auth
                         return null;
-                    this.ProcessPrincipal(ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticate(this.Principal.Identity.Name, null));
+                    this.ProcessPrincipal(ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticate(this.Principal.Identity.Name, null), null);
                     return this;
                 }
             }
@@ -229,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// Process a principal
         /// </summary>
         /// <param name="principal"></param>
-        private void ProcessPrincipal(IPrincipal principal)
+        private void ProcessPrincipal(IPrincipal principal, DateTime? expiry)
         {
             this.UserName = principal.Identity.Name;
             this.IsAuthenticated = principal.Identity.IsAuthenticated;
@@ -244,7 +265,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 var cp = principal as ClaimsPrincipal;
 
                 this.Issued = (cp.FindClaim(ClaimTypes.AuthenticationInstant)?.AsDateTime().ToLocalTime() ?? DateTime.Now);
-                this.Expiry = (cp.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
+                this.Expiry = expiry ?? (cp.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
                 this.Roles = cp.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
                 this.AuthenticationType = cp.FindClaim(ClaimTypes.AuthenticationMethod)?.Value;
 
@@ -258,7 +279,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 IRoleProviderService rps = ApplicationContext.Current.GetService<IRoleProviderService>();
                 this.Roles = rps.GetAllRoles(this.UserName).ToList();
                 this.Issued = DateTime.Now;
-                this.Expiry = DateTime.MaxValue;
+                this.Expiry = expiry ?? DateTime.MaxValue;
             }
 
 

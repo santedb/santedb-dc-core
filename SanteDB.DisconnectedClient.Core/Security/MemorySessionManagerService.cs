@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using System;
@@ -26,19 +27,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
     /// <summary>
     /// Memory session manager service
     /// </summary>
-    public class MemorySessionManagerService : ISessionManagerService
+    public class MemorySessionManagerService : ISessionManagerService, ISessionProviderService, ISessionIdentityProviderService
     {
 
         /// <summary>
         /// Sessions 
         /// </summary>
         private Dictionary<String, SessionInfo> m_session = new Dictionary<String, SessionInfo>();
+
+        /// <summary>
+        /// Get th service name
+        /// </summary>
+        public string ServiceName => "Memory based session manager";
 
         /// <summary>
         /// Authentication with the user and establish a session
@@ -64,11 +71,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 throw new SecurityException(Strings.locale_sessionError);
             else
             {
-                AuthenticationContext.Current = new AuthenticationContext(principal);
-                var session = new SessionInfo(principal);
-                session.Key = Guid.NewGuid();
-                this.m_session.Add(session.Token, session);
-                return session;
+                return this.Establish(principal, DateTimeOffset.MaxValue, null) as SessionInfo;
             }
         }
 
@@ -86,13 +89,17 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 if (principal == null)
                     throw new SecurityException(Strings.locale_sessionError);
                 else
-                {
-                    var session = new SessionInfo(principal) { Key = Guid.NewGuid() };
-                    this.m_session.Add(session.Token, session);
-                    return session;
-                }
+                    return this.Establish(principal, DateTimeOffset.MaxValue, null) as SessionInfo;
 
             }
+        }
+
+        /// <summary>
+        /// Authenticate via session
+        /// </summary>
+        public IPrincipal Authenticate(ISession session)
+        {
+            return this.Get(Encoding.UTF8.GetString(session.Id, 0, session.Id.Length))?.Principal;
         }
 
         /// <summary>
@@ -104,6 +111,27 @@ namespace SanteDB.DisconnectedClient.Core.Security
             if (this.m_session.TryGetValue(principal.ToString(), out ses))
                 this.m_session.Remove(principal.ToString());
             return ses;
+        }
+
+        /// <summary>
+        /// Establish the session
+        /// </summary>
+        public ISession Establish(IPrincipal principal, DateTimeOffset expiry, string aud)
+        {
+            AuthenticationContext.Current = new AuthenticationContext(principal);
+            var session = new SessionInfo(principal, null);
+            session.Key = Guid.NewGuid();
+            this.m_session.Add(session.Token, session);
+            return session;
+        }
+
+        /// <summary>
+        /// Extend the session
+        /// </summary>
+        public ISession Extend(byte[] refreshToken)
+        {
+            String tokenStr = Encoding.UTF8.GetString(refreshToken, 0, refreshToken.Length);
+            return this.Refresh(this.m_session.FirstOrDefault(o => o.Value.RefreshToken == tokenStr).Value);
         }
 
         /// <summary>
@@ -128,6 +156,14 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
+        /// Get the specified session
+        /// </summary>
+        public ISession Get(byte[] sessionToken)
+        {
+            return this.Get(Encoding.UTF8.GetString(sessionToken, 0, sessionToken.Length));
+        }
+
+        /// <summary>
         /// Refreshes the specified session
         /// </summary>
         public SessionInfo Refresh(SessionInfo session)
@@ -145,7 +181,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 throw new SecurityException(Strings.locale_sessionError);
             else
             {
-                var newSession = new SessionInfo(principal);
+                var newSession = new SessionInfo(principal, null);
                 if (!this.m_session.ContainsKey(session.Token))
                 {
                     this.m_session.Remove(session.Token);

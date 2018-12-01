@@ -154,7 +154,6 @@
     <Compile Include="ApplicationContext.cs" />
     <Compile Include="Security\Remote\AmiPolicyInformationService.cs" />
     <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" />
-    <Compile Include="Services\INetworkInformationService.cs" />
     <Compile Include="Services\IPushNotificationService.cs" />
     <Compile Include="Services\ISynchronizationService.cs" />
     <Compile Include="Services\IIntegrationService.cs" />
@@ -207,9 +206,9 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.9.15" />
-        <PackageReference Include="SanteDB.Core.Api" Version="1.9.15" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.9.15" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.9.14" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.9.14" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.9.14" />
       </ItemGroup>
     </Otherwise>
   </Choose>
