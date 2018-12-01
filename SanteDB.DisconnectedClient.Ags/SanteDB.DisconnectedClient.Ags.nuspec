@@ -10,14 +10,14 @@
     <projectUrl>http://santedb.org</projectUrl>
     <iconUrl>http://santedb.org/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Disconnected client PCL core library, used by all projects which to use the DisconnectedClient hosting</description>
-    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <description>Disconnected client PCL Application Gateway core library, used by all projects which to use the DisconnectedClient hosting</description>
+    <releaseNotes>Initial Version</releaseNotes>
     <copyright>Copyright (C) 2018, Mohawk College of Applied Arts and Technology</copyright>
-    <tags>santedb core</tags>
+    <tags>santedb core ags</tags>
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
-      <dependency id="SanteDB.Core.Api" version="1.9.15.0"/>
-      <dependency id="SanteDB.Core.Model" version="1.9.15.0"/>
+      <dependency id="SanteDB.Core.Api" version="1.9.14.0"/>
+      <dependency id="SanteDB.Core.Model" version="1.9.14.0"/>
       <dependency id="SharpCompress" version="0.18.2"/>
     </dependencies>
   </metadata>
