@@ -18,11 +18,13 @@
  * Date: 2018-11-23
  */
 using Newtonsoft.Json;
+using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -32,6 +34,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {
@@ -68,6 +71,32 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                 catch { }
 
             this.Assemblies = AppDomain.CurrentDomain.GetAssemblies().Select(o => new DiagnosticVersionInfo(o)).ToList();
+
+            this.ServiceInfo = new List<DiagnosticServiceInfo>();
+
+            // Assembly load file
+            foreach (var f in Directory.GetFiles(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "*.dll"))
+            {
+                try
+                {
+                    var asmL = Assembly.ReflectionOnlyLoadFrom(f);
+                    foreach(var t in (asmL.GetExportedTypes().Where(o => o.GetInterfaces().Any(i => i.FullName == typeof(IServiceImplementation).FullName) && !o.IsGenericTypeDefinition && !o.IsAbstract && !o.IsInterface)))
+                    {
+                        this.ServiceInfo.Add(new DiagnosticServiceInfo()
+                        {
+                            IsRunning = (ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) as IDaemonService)?.IsRunning ?? false,
+                            Active = ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) != null,
+                            Description = t.CustomAttributes.FirstOrDefault(o=>o.AttributeType.FullName == typeof(ServiceProviderAttribute).FullName)?.ConstructorArguments[0].Value?.ToString() ?? t.FullName,
+                            Class =  t.GetInterfaces().Any(o => o.Name.Contains("IDaemonService")) ? ServiceClass.Daemon :
+                                    t.GetInterfaces().Any(o => o.Name.Contains("IDataPersistenceService")) ? ServiceClass.Data :
+                                    t.GetInterfaces().Any(o => o.Name.Contains("IRepositoryService")) ? ServiceClass.Repository :
+                                    ServiceClass.Passive,
+                            Type = t.AssemblyQualifiedName
+                        });
+                    }
+                }
+                catch (Exception e) { }
+            }
 
             this.Configuration = ApplicationContext.Current.Configuration;
             this.EnvironmentInfo = new DiagnosticEnvironmentInfo()

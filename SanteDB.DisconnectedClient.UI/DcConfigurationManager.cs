@@ -83,8 +83,7 @@ namespace SanteDB.DisconnectedClient.UI
         {
             // TODO: Bring up initial settings dialog and utility
             var retVal = new SanteDBConfiguration();
-
-
+            
             // Initial Applet configuration
             AppletConfigurationSection appletSection = new AppletConfigurationSection()
             {

@@ -148,6 +148,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// <param name="serviceType">Service type.</param>
         public object GetService(Type serviceType)
         {
+            if (serviceType == null) return null;
 
             Object candidateService = null;
             if (!this.m_cache.TryGetValue(serviceType, out candidateService))

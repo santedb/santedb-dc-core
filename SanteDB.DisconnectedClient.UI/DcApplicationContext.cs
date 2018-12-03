@@ -146,7 +146,7 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
                 retVal.SetProgress("Run setup", 0);
-                retVal.AddServiceProvider(typeof(ConfigurationManager));
+                //retVal.AddServiceProvider(typeof(ConfigurationManager));
 
                 ApplicationContext.Current = retVal;
                 ApplicationServiceContext.Current = ApplicationContext.Current;
@@ -197,23 +197,24 @@ namespace SanteDB.DisconnectedClient.UI
         public static bool StartContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
         {
 
-            var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
             
             // Not configured
-            if (!retVal.ConfigurationPersister.IsConfigured)
+            if (!new DcConfigurationManager(instanceName).IsConfigured)
             {
                 return false;
             }
             else
             {
-                // load configuration
+                // Set master application context
+                DcApplicationContext retVal = null;
                 try
                 {
-                    // Set master application context
-                    ApplicationContext.Current = retVal;
+                   
                     try
                     {
-                        retVal.AddServiceProvider(typeof(ConfigurationManager));
+                        retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
+                        ApplicationContext.Current = retVal;
+                        //retVal.AddServiceProvider(typeof(ConfigurationManager));
                         retVal.ConfigurationPersister.Backup(retVal.Configuration);
                     }
                     catch
