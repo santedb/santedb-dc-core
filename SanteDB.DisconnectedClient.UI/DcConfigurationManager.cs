@@ -44,6 +44,7 @@ using SharpCompress.Compressors.BZip2;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -188,6 +189,9 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 PollInterval = new TimeSpan(0, 5, 0)
             });
+
+            foreach (var t in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes).Where(t => typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface))
+                retVal = (Activator.CreateInstance(t) as IInitialConfigurationProvider).Provide(retVal);
             return retVal;
         }
 

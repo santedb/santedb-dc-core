@@ -24,6 +24,9 @@ using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Xamarin;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {
@@ -33,6 +36,9 @@ namespace SanteDB.DisconnectedClient.Ags.Model
     [JsonObject("Configuration")]
     public class ConfigurationViewModel
     {
+        /// <summary>
+        /// Configuration view model
+        /// </summary>
         public ConfigurationViewModel()
         {
 
@@ -66,7 +72,10 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             this.Network = config.GetSection<ServiceClientConfigurationSection>();
             this.Synchronization = config.GetSection<SynchronizationConfigurationSection>();
             this.Ags = config.GetSection<AgsConfigurationSection>();
+
+            this.OtherSections = config.Sections.Where(o => !typeof(ConfigurationViewModel).GetRuntimeProperties().Any(p => p.PropertyType.IsAssignableFrom(o.GetType()))).ToList();
         }
+
         /// <summary>
         /// Security section
         /// </summary>
@@ -112,6 +121,12 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// </summary>
         [JsonProperty("ags")]
         public AgsConfigurationSection Ags { get; set; }
+
+        /// <summary>
+        /// Represents other sections
+        /// </summary>
+        [JsonProperty("others")]
+        public List<object> OtherSections { get; set; }
     }
 
 
