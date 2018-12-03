@@ -131,6 +131,18 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Post("/Update/{appId}")]
         void PerformUpdate(String appId);
+
+        /// <summary>
+        /// Gets the widgets 
+        /// </summary>
+        [Get("/Widgets")]
+        List<AppletWidget> GetWidgets();
+
+        /// <summary>
+        /// Get a widget
+        /// </summary>
+        [Get("/Widgets/{widgetId}")]
+        Stream GetWidget(String widgetId);
         
     }
 }

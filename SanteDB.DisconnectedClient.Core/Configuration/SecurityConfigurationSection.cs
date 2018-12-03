@@ -174,7 +174,10 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
                         {
                             var iv = cryptoService.GenerateIV();
                             var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(value), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
-                            this.DeviceSecretXml = iv.Union(res).ToArray();
+                            byte[] b = new byte[iv.Length + res.Length];
+                            Array.Copy(iv, b, iv.Length);
+                            Array.Copy(res, 0, b, iv.Length, res.Length);
+                            this.DeviceSecretXml = b;
                         }
                         else
                             this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
@@ -237,7 +240,10 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
                         {
                             var iv = cryptoService.GenerateIV();
                             var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(value), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
-                            this.ApplicationSecretXml = iv.Union(res).ToArray();
+                            byte[] b = new byte[iv.Length + res.Length];
+                            Array.Copy(iv, b, iv.Length);
+                            Array.Copy(res, 0, b, iv.Length, res.Length);
+                            this.DeviceSecretXml = b;
                         }
                         else
                             this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);

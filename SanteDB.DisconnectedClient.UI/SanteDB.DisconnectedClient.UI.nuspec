@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>1.9.17.2</version>
+    <version>1.9.17.5</version>
     <title>$title$</title>
     <authors>Mohawk College of Applied Arts and Technology</authors>
     <owners>Mohawk College of Applied Arts and Technology</owners>
@@ -31,7 +31,7 @@
       <dependency id="SharpCompress" version="0.18.2"/>
       <dependency id="SanteDB.DisconnectedClient.Core" version="1.9.17.0"/>
       <dependency id="SanteDB.DisconnectedClient.Ags" version="1.9.17.0"/>
-      <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.9.17.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.9.17.8"/>
     </dependencies>
     <references>
       <group targetFramework="net452">

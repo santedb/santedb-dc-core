@@ -39,6 +39,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Security.Principal;
 using System.Xml.Linq;
@@ -511,7 +512,7 @@ namespace SanteDB.DisconnectedClient.UI
                 var sid = WindowsIdentity.GetCurrent().User;
                 byte[] retVal = new byte[sid.BinaryLength];
                 WindowsIdentity.GetCurrent().User.GetBinaryForm(retVal, 0);
-                return retVal;
+                return retVal.Where(o=>o != 0).ToArray();
             }
             else // TODO: LINUX ENCRYPTION 
                 return null;

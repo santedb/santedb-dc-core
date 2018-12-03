@@ -56,6 +56,7 @@
     <Compile Include="Model\ConfigurationViewModel.cs" />
     <Compile Include="Model\MenuInformation.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
+    <Compile Include="Services\ApplicationServiceBehavior.Widgets.cs" />
     <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" />
     <Compile Include="Services\ApplicationServiceBehavior.Tickles.cs" />
     <Compile Include="Services\WwwServiceBehavior.cs" />

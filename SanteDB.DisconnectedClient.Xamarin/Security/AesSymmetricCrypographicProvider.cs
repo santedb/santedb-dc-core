@@ -18,6 +18,8 @@
  * Date: 2018-7-31
  */
 using SanteDB.DisconnectedClient.Core.Services;
+using System;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace SanteDB.DisconnectedClient.Xamarin.Security
@@ -33,6 +35,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public byte[] Decrypt(byte[] data, byte[] key, byte[] iv)
         {
+            key = this.CorrectKey(key);
             using (var aes = new AesCryptoServiceProvider())
             {
                 var decryptor = aes.CreateDecryptor(key, iv);
@@ -42,10 +45,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         }
 
         /// <summary>
+        /// Ensure the key is the right length
+        /// </summary>
+        private byte[] CorrectKey(byte[] key)
+        {
+            byte[] retVal = new byte[key.Length * 3];
+            for(int i = 0; i < 32; i += key.Length)
+                Array.Copy(key, 0, retVal, i, key.Length);
+            return retVal.Take(32).ToArray();
+        }
+
+        /// <summary>
         /// Encrypt the specified data using the specified key and iv
         /// </summary>
         public byte[] Encrypt(byte[] data, byte[] key, byte[] iv)
         {
+            key = this.CorrectKey(key);
             using (var aes = new AesCryptoServiceProvider())
             {
                 var encryptor = aes.CreateEncryptor(key, iv);
