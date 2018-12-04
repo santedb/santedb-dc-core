@@ -45,6 +45,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         IValidatingRepositoryService<TEntity>,
         IPersistableQueryRepositoryService<TEntity>,
         IFastQueryRepositoryService<TEntity>,
+        IRepositoryService<TEntity>,
         ISecuredRepositoryService
         where TEntity : IdentifiedData
     {

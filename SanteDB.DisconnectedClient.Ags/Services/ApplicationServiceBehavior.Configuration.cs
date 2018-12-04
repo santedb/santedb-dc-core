@@ -495,6 +495,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             if (!(ApplicationContext.Current as XamarinApplicationContext).ConfigurationPersister.IsConfigured)
                 ApplicationContext.Current.Configuration.RemoveSection<SynchronizationConfigurationSection>();
 
+            // Did the user add any other service definitions?
+            foreach (var svc in configuration.Application.ServiceTypes.Where(st => !ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Any(ct => Type.GetType(ct) == Type.GetType(st)) && ApplicationContext.Current.GetService(Type.GetType(st)) == null))
+                ApplicationContext.Current.AddServiceProvider(Type.GetType(svc), true);
+
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution = configuration.Applet.AppletSolution;
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = configuration.Applet.AutoUpdateApplets;
 
@@ -684,6 +688,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             foreach (var i in configuration.Application.AppSettings)
                 ApplicationContext.Current.ConfigurationManager.SetAppSetting(i.Key, i.Value);
+
+            // Other sections
+            foreach(var oth in configuration.OtherSections)
+            {
+                if(ApplicationContext.Current.ConfigurationManager.Configuration.GetSection(oth.GetType()) != null)
+                    ApplicationContext.Current.ConfigurationManager.Configuration.Sections.RemoveAll(o => o.GetType() == oth.GetType());
+                ApplicationContext.Current.ConfigurationManager.Configuration.AddSection(oth);
+            }
             this.m_tracer.TraceInfo("Saving configuration options {0}", JsonConvert.SerializeObject(configuration));
             ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 

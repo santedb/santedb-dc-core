@@ -52,6 +52,7 @@
     <Compile Include="ISQLitePersistenceService.cs" />
     <Compile Include="Migrations\InitialMessageCatalog.cs" />
     <Compile Include="Migrations\InitialQueueCatalog.cs" />
+    <Compile Include="Security\SQLiteDeviceIdentityProviderService.cs" />
     <Compile Include="SQLiteDataContext.cs" />
     <Compile Include="SQLitePersistenceService.cs" />
     <Compile Include="SQLitePersistenceServiceBase.cs" />

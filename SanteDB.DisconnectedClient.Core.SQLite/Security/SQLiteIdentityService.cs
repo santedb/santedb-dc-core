@@ -155,27 +155,29 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         //{
                         //    var pou = additionalClaims.FirstOrDefault(o => o.Type == ClaimTypes.XspaPurposeOfUseClaim)?.Value;
 
-                        //    // First ensure that the prinicpal has ability to override
-                        //    if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Deny)
-                        //        throw new PolicyViolationException(PermissionPolicyIdentifiers.OverridePolicyPermission, PolicyGrantType.Deny);
+                            //    // First ensure that the prinicpal has ability to override
+                            //    if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Deny)
+                            //        throw new PolicyViolationException(PermissionPolicyIdentifiers.OverridePolicyPermission, PolicyGrantType.Deny);
 
-                        //    // Next ensure that the scoped policies are allowed to be overridden
-                        //    foreach(var scp in scopes)
-                        //    {
-                        //        if (scp == "*") throw new SecurityException("Cannot override ALL policies");
-                        //        else if (pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Grant ||
-                        //                pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Elevate && pip.GetPolicy(scp).CanOverride)
-                        //            additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
-                        //    }
+                            //    // Next ensure that the scoped policies are allowed to be overridden
+                            //    foreach(var scp in scopes)
+                            //    {
+                            //        if (scp == "*") throw new SecurityException("Cannot override ALL policies");
+                            //        else if (pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Grant ||
+                            //                pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Elevate && pip.GetPolicy(scp).CanOverride)
+                            //            additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
+                            //    }
 
-                        //    var overrideArgs = new OverrideEventArgs(principal, pou, scopes);
-                        //    this.Overridding?.Invoke(this, overrideArgs);
-                        //    if (overrideArgs.Cancel)
-                        //        throw new SecurityException("Override was denied / cancelled");
-                        //}
+                            //    var overrideArgs = new OverrideEventArgs(principal, pou, scopes);
+                            //    this.Overridding?.Invoke(this, overrideArgs);
+                            //    if (overrideArgs.Cancel)
+                            //        throw new SecurityException("Override was denied / cancelled");
+                            //}
 
-                        // Create the principal
-                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), roles);
+                            // Create the principal
+                            retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), roles);
+                        if (pdp.GetPolicyOutcome(retVal, PermissionPolicyIdentifiers.Login) != PolicyGrantType.Grant)
+                            throw new PolicyViolationException(retVal, PermissionPolicyIdentifiers.Login, PolicyGrantType.Deny);
 
                     }
                 }
@@ -591,7 +593,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLitePrincipal"/> class.
         /// </summary>
-        public SQLitePrincipal(SQLiteIdentity identity, String[] roles) : base(identity)
+        public SQLitePrincipal(ClaimsIdentity identity, String[] roles) : base(identity)
         {
             this.m_token = Guid.NewGuid();
             this.m_roles = roles;

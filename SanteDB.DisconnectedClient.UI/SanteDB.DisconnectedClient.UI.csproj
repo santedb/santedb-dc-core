@@ -101,7 +101,9 @@
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>
-    <None Include="SanteDB.DisconnectedClient.UI.nuspec" />
+    <None Include="SanteDB.DisconnectedClient.UI.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">

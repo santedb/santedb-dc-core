@@ -42,7 +42,39 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
             set;
         }
 
+        /// <summary>
+        /// Gets the secret 
+        /// </summary>
+        [Column("secret")]
+        public String Secret { get; set; }
 
+        /// <summary>
+        /// Gets or sets the invalid authentication attempts.
+        /// </summary>
+        /// <value>The invalid authentication attempts.</value>
+        [Column("invalid_auth")]
+        public int InvalidAuthAttempts
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this object is ocked
+        /// </summary>
+        /// <value><c>true</c> if lockout enabled; otherwise, <c>false</c>.</value>
+        [Column("locked")]
+        public DateTime? Lockout
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Last authentication time
+        /// </summary>
+        [Column("last_auth")]
+        public DateTime? LastAuthTime { get; set; }
     }
 }
 

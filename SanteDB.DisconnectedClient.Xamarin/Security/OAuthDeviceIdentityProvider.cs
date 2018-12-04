@@ -19,14 +19,18 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 using System;
+using System.Linq;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
@@ -96,12 +100,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
                         OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
                         retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
+                        this.SynchronizeSecurity(deviceSecret, retVal);
                         this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, retVal, true) { Principal = retVal });
                     }
                     else
                     {
-                        this.m_tracer.TraceWarning("Network unavailable, skipping authentication");
-                        throw new SecurityException(Strings.err_network_securityNotAvailable);
+                        // Is this another device authenticating against me?
+                        if (deviceId != ApplicationContext.Current.Device.Name)
+                        {
+                            this.m_tracer.TraceWarning("Network unavailable falling back to local");
+                            return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);
+                        }
+                        else
+                        {
+                            this.m_tracer.TraceWarning("Network unavailable, skipping authentication");
+                            throw new SecurityException(Strings.err_network_securityNotAvailable);
+                        }
                     }
                 }
 
@@ -131,13 +145,77 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 catch (Exception ex) // Raw level web exception
                 {
                     // Not network related, but a protocol level error
-                    this.m_tracer.TraceWarning("Original OAuth2 request failed: {0}", ex.Message);
-                    throw new SecurityException(Strings.err_authentication_exception, ex);
+                    if (deviceId != ApplicationContext.Current.Device.Name)
+                    {
+                        this.m_tracer.TraceWarning("Network unavailable falling back to local");
+                        return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);
+                    }
+                    else
+                    {
+                        this.m_tracer.TraceWarning("Original OAuth2 request failed: {0}", ex.Message);
+                        throw new SecurityException(Strings.err_authentication_exception, ex);
+                    }
                 }
 
                 return retVal;
             }
         }
 
+        /// <summary>
+        /// Synchronize security locally 
+        /// </summary>
+        private void SynchronizeSecurity(string deviceSecret, IPrincipal principal)
+        {
+            // Create a security user and ensure they exist!
+            var localPip = ApplicationContext.Current.GetService<IOfflinePolicyInformationService>();
+            var localIdp = ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>();
+            var sdPersistence = ApplicationContext.Current.GetService<IRepositoryService<SecurityDevice>>();
+            
+            if (!String.IsNullOrEmpty(deviceSecret) && principal is ClaimsPrincipal &&
+                            XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
+            {
+                ClaimsPrincipal cprincipal = principal as ClaimsPrincipal;
+                var amiPip = new AmiPolicyInformationService(cprincipal);
+
+                // Local device
+                int tr = 0;
+                var localDevice = sdPersistence.Find(o => o.Name == principal.Identity.Name, 0, 1, out tr);
+                try
+                {
+                    Guid sid = Guid.Parse(cprincipal.FindClaim(ClaimTypes.Sid).Value);
+                    if (localDevice == null)
+                    {
+                        localIdp.CreateIdentity(sid, principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                    }
+                    else
+                    {
+                        localIdp.ChangeSecret(principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
+                }
+
+                // Ensure policies exist from the claim
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
+                {
+                    if (localPip.GetPolicy(itm.Value) == null)
+                    {
+                        try
+                        {
+                            var policy = amiPip.GetPolicy(itm.Value);
+                            localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceWarning("Cannot update local policy information : {0}", e.Message);
+                        }
+                    }
+                }
+                localPip.AddPolicies(localDevice, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
+
+            }
+        }
     }
 }

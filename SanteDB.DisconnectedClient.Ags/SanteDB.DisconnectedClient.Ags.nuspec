@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>1.9.18.5</version>
+    <version>1.9.18.9</version>
     <title>$title$</title>
     <authors>Mohawk College of Applied Arts and Technology</authors>
     <owners>Mohawk College of Applied Arts and Technology</owners>
@@ -16,7 +16,7 @@
     <tags>santedb core ags</tags>
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
-      <dependency id="SanteDB.DisconnectedClient.Core" version="1.9.18.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Core" version="1.9.18.6"/>
       <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.9.18.9"/>
       <dependency id="SanteDB.Core.Api" version="1.9.18.0"/>
       <dependency id="SanteDB.Core.Model" version="1.9.18.0"/>

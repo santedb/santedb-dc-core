@@ -375,7 +375,11 @@ namespace SanteDB.DisconnectedClient.Core
             {
                 lock (this.m_lockObject)
                 {
-                    this.m_providers = new List<object>();
+                    this.m_providers = new List<object>()
+                    {
+                        this.ConfigurationManager,
+                        this.ConfigurationPersister
+                    };
                     Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
                     foreach (var itm in this.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes)
                     {
