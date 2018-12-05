@@ -104,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
                         OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
                         retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
-                        this.SynchronizeSecurity(deviceSecret, retVal);
+                        this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
                         this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, retVal, true) { Principal = retVal });
                     }
                     else
@@ -168,7 +168,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <summary>
         /// Synchronize security locally 
         /// </summary>
-        private void SynchronizeSecurity(string deviceSecret, IPrincipal principal)
+        private void SynchronizeSecurity(string deviceSecret, string deviceName, IPrincipal principal)
         {
             // Create a security user and ensure they exist!
             var localPip = ApplicationContext.Current.GetService<IOfflinePolicyInformationService>();
@@ -189,12 +189,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 {
                     try
                     {
-                        localDeviceIdentity = localIdp.GetIdentity(principal.Identity.Name);
+                        localDeviceIdentity = localIdp.GetIdentity(deviceName);
                         Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value);
                         if (localDeviceIdentity == null)
-                            localDeviceIdentity = localIdp.CreateIdentity(sid, principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                            localDeviceIdentity = localIdp.CreateIdentity(sid, deviceName, deviceSecret, AuthenticationContext.SystemPrincipal);
                         else
-                            localIdp.ChangeSecret(principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                            localIdp.ChangeSecret(deviceName, deviceSecret, AuthenticationContext.SystemPrincipal);
                     }
                     catch (Exception ex)
                     {
