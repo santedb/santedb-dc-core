@@ -26,6 +26,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -75,7 +76,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 
                 // TODO: Clean this up - Login as device account
                 if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                    ((AuthenticationContext.Current.Principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                    ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
                 {
                     AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
                     this.m_cachedCredential = AuthenticationContext.Current.Principal;

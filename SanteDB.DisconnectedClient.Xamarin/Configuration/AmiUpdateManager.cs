@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.AMI.Applet;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
@@ -86,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
 
             // TODO: Clean this up - Login as device account
             if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                ((AuthenticationContext.Current.Principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
             {
                 AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
                 this.m_cachedCredential = AuthenticationContext.Current.Principal;

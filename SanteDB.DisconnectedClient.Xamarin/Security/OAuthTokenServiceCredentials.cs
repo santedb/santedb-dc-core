@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Http;
+using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using System;
@@ -54,13 +55,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 ApplicationContext.Current.Application.ApplicationSecret);
 
             // TODO: Add claims
-            List<Claim> claims = new List<Claim>()
+            List<IClaim> claims = new List<IClaim>()
             {
             };
 
             //// Additional claims?
-            //if (this.Principal is ClaimsPrincipal) {
-            //	claims.AddRange ((this.Principal as ClaimsPrincipal).Claims);
+            //if (this.Principal is IClaimsPrincipal) {
+            //	claims.AddRange ((this.Principal as IClaimsPrincipal).Claims);
             //}
 
             // Build the claim string

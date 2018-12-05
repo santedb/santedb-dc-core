@@ -20,6 +20,8 @@
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using System;
 
 namespace SanteDB.DisconnectedClient.Core.Security
 {
@@ -50,6 +52,23 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 me.Policy,
                 (PolicyGrantType)(int)me.Grant
             );
+        }
+
+        /// <summary>
+        /// As date time
+        /// </summary>
+        public static DateTime AsDateTime(this IClaim me)
+        {
+            DateTime value = DateTime.MinValue;
+            if(!DateTime.TryParse(me.Value, out value))
+            {
+                int offset = 0;
+                if (Int32.TryParse(me.Value, out offset))
+                    value = new DateTime(1970, 1, 1).AddSeconds(offset).ToLocalTime();
+                else
+                    throw new ArgumentOutOfRangeException(nameof(IClaim.Value));
+            }
+            return value;
         }
     }
 }

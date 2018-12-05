@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using System;
@@ -57,8 +58,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public Credentials GetCredentials(IPrincipal principal)
         {
-            if (principal is ClaimsPrincipal)
-                return new HttpBasicCredentials(principal, (principal as ClaimsPrincipal)?.FindClaim("passwd")?.Value);
+            if (principal is IClaimsPrincipal)
+                return new HttpBasicCredentials(principal, (principal as IClaimsPrincipal)?.FindFirst("passwd")?.Value);
             else
                 throw new InvalidOperationException("Cannot create basic principal from non-claims principal");
         }

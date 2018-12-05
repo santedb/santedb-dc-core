@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
@@ -99,7 +100,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             }
 
             // Can we make this decision based on the claims?
-            if (principal is ClaimsPrincipal && (principal as ClaimsPrincipal).HasClaim(c => c.Type == ClaimTypes.SanteDBGrantedPolicyClaim && (c.Value == policyId || policyId.StartsWith(String.Format("{0}.", c.Value)))))
+            if (principal is IClaimsPrincipal && (principal as IClaimsPrincipal).HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && (c.Value == policyId || policyId.StartsWith(String.Format("{0}.", c.Value)))))
             {
                 rule = PolicyGrantType.Grant;
             }

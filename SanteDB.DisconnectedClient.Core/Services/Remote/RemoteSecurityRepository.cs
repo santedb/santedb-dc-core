@@ -23,6 +23,7 @@ using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -439,7 +440,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
         {
-            return new AmiPolicyInformationService(this.m_cachedCredential as ClaimsPrincipal).GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
+            return new AmiPolicyInformationService(this.m_cachedCredential as IClaimsPrincipal).GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
         }
 
         /// <summary>

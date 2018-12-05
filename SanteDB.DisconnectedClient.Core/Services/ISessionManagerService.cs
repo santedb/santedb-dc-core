@@ -21,6 +21,7 @@ using SanteDB.DisconnectedClient.Core.Security;
 using System;
 using System.Security.Principal;
 using SanteDB.Core.Services;
+using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
@@ -43,7 +44,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <summary>
         /// Authenticate with PIN (offline local context only)
         /// </summary>
-        SessionInfo Authenticate(String userName, byte[] pin, params Claim[] claims);
+        SessionInfo Authenticate(String userName, byte[] pin, params IClaim[] claims);
         
         /// <summary>
         /// Refreshes the specified session

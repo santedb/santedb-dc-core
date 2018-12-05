@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -256,22 +257,22 @@ namespace SanteDB.DisconnectedClient.Core.Security
             this.IsAuthenticated = principal.Identity.IsAuthenticated;
             this.AuthenticationType = principal.Identity.AuthenticationType;
             this.Principal = principal;
-            if (principal is ClaimsPrincipal)
+            if (principal is IClaimsPrincipal)
                 this.Token = principal.ToString();
 
             // Expiry / etc
-            if (principal is ClaimsPrincipal)
+            if (principal is IClaimsPrincipal)
             {
-                var cp = principal as ClaimsPrincipal;
+                var cp = principal as IClaimsPrincipal;
 
-                this.Issued = (cp.FindClaim(ClaimTypes.AuthenticationInstant)?.AsDateTime().ToLocalTime() ?? DateTime.Now);
-                this.Expiry = expiry ?? (cp.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
-                this.Roles = cp.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
-                this.AuthenticationType = cp.FindClaim(ClaimTypes.AuthenticationMethod)?.Value;
+                this.Issued = (cp.FindFirst(SanteDBClaimTypes.AuthenticationInstant)?.AsDateTime().ToLocalTime() ?? DateTime.Now);
+                this.Expiry = expiry ?? (cp.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
+                this.Roles = cp.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
+                this.AuthenticationType = cp.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value;
 
                 var subKey = Guid.Empty;
-                if (cp.HasClaim(o => o.Type == ClaimTypes.Sid))
-                    Guid.TryParse(cp.FindClaim(ClaimTypes.Sid)?.Value, out subKey);
+                if (cp.HasClaim(o => o.Type == SanteDBClaimTypes.Sid))
+                    Guid.TryParse(cp.FindFirst(SanteDBClaimTypes.Sid)?.Value, out subKey);
 
             }
             else
@@ -294,7 +295,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 if (securityUser == null) // Not yet persisted, get from server
                     this.SecurityUser = new SecurityUser()
                     {
-                        Key = Guid.Parse((principal as ClaimsPrincipal).FindClaim(ClaimTypes.Sid).Value),
+                        Key = Guid.Parse((principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid).Value),
                         UserName = principal.Identity.Name
                     };
                 else
@@ -309,7 +310,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 if (this.m_entity == null || amiService != null && amiService.IsAvailable() || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     int t = 0;
-                    var sid = Guid.Parse((principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
+                    var sid = Guid.Parse((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
                     this.m_entity = amiService.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
 
                     ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>

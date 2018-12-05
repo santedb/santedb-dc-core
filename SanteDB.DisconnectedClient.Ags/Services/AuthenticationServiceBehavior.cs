@@ -21,6 +21,7 @@ using RestSrvr;
 using RestSrvr.Attributes;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -48,13 +49,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Extract claims
         /// </summary>
-        public List<Claim> ExtractClaims(NameValueCollection headers)
+        public List<IClaim> ExtractClaims(NameValueCollection headers)
         {
             var claimsHeaders = headers[HeaderTypes.HttpClaims];
             if (claimsHeaders == null)
-                return new List<Claim>();
+                return new List<IClaim>();
             else
-                return claimsHeaders.Split(',').Select(o => Encoding.UTF8.GetString(Convert.FromBase64String(o)).Split('=')).Select(c => new Claim(c[0], c[1])).ToList();
+                return claimsHeaders.Split(',').Select(o => Encoding.UTF8.GetString(Convert.FromBase64String(o)).Split('=')).Select(c => new SanteDBClaim(c[0], c[1])).OfType<IClaim>().ToList();
         }
 
         /// <summary>
@@ -78,9 +79,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             ISessionManagerService sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
             SessionInfo retVal = null;
 
-            List<Claim> claims = new List<Claim>()
+            List<IClaim> claims = new List<IClaim>()
             {
-                new Claim("scope", request["scope"] ?? "*")
+                new SanteDBClaim("scope", request["scope"] ?? "*")
             };
 
             switch (request["grant_type"])
@@ -104,7 +105,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
 
             // override
-            if (claims.Any(o => o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true")) {
+            if (claims.Any(o => o.Type == SanteDBClaimTypes.SanteDBOverrideClaim && o.Value == "true")) {
                 throw new NotImplementedException(); // TODO:
             }
 

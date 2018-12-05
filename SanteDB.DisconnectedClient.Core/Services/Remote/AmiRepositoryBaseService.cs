@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -49,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
 
             if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                ((AuthenticationContext.Current.Principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
             {
                 AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
                 this.m_cachedCredential = AuthenticationContext.Current.Principal;

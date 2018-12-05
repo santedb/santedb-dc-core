@@ -144,11 +144,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         var roles = connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
                             dbs.Uuid).Select(o => o.Name).ToArray();
                         var tPrincipal = new GenericPrincipal(new GenericIdentity(userName, true, "LOCAL"), roles);
-                        List<Claim> additionalClaims = new List<Claim>();
+                        List<IClaim> additionalClaims = new List<IClaim>();
                         // Ensure we are not explicitly denied access to the scope
                         foreach (var scp in pip.GetPolicies())
                             if (pdp.GetPolicyOutcome(tPrincipal, scp.Oid) == PolicyGrantType.Grant)
-                                additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp.Oid));
+                                additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, scp.Oid));
 
                         //// Override
                         //if (additionalClaims.Any(o=>o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true"))
@@ -507,14 +507,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 // Refresh
                 if (principal is SQLitePrincipal) /// extend the existing session 
                     (principal as SQLitePrincipal).Expires = DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0));
-                else if (principal is ClaimsPrincipal) // switch them to a SQLitePrincipal
+                else if (principal is IClaimsPrincipal) // switch them to a SQLitePrincipal
                 {
-                    var sid = (principal as ClaimsPrincipal).FindClaim(ClaimTypes.Sid)?.Value;
-                    var uname = (principal as ClaimsPrincipal).FindClaim(ClaimsIdentity.DefaultNameClaimType)?.Value;
+                    var sid = (principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid)?.Value;
+                    var uname = (principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.DefaultNameClaimType)?.Value;
                     if (!String.IsNullOrEmpty(uname))
                     {
                         ApplicationContext.Current.GetService<ITickleService>()?.SendTickle(new Tickle(Guid.Parse(sid), TickleType.SecurityInformation | TickleType.Toast, Strings.locale_securitySwitchedMode, DateTime.Now.AddSeconds(10)));
-                        return new SQLitePrincipal(new SQLiteIdentity(uname, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))), (principal as ClaimsPrincipal).Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray());
+                        return new SQLitePrincipal(new SQLiteIdentity(uname, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))), (principal as IClaimsPrincipal).Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray());
                     }
                     else
                         throw new SecurityException(Strings.locale_sessionError);
@@ -532,19 +532,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// <summary>
     /// SQLite identity
     /// </summary>
-    public class SQLiteIdentity : ClaimsIdentity
+    public class SQLiteIdentity : SanteDBClaimsIdentity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLiteIdentity"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="authenticated">If set to <c>true</c> authenticated.</param>
-        public SQLiteIdentity(String userName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<Claim> additionalClaims = null) : base(userName, authenticated,
-            new Claim[] {
-                new Claim(ClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
-                new Claim(ClaimTypes.Expiration, expiry?.ToString("o")),
-                new Claim(ClaimTypes.AuthenticationMethod, "LOCAL")
-            }.Union(additionalClaims ?? new List<Claim>()))
+        public SQLiteIdentity(String userName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<IClaim> additionalClaims = null) : base(userName, authenticated, "LOCAL_AUTHORITY",
+            new IClaim[] {
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
+                new SanteDBClaim(SanteDBClaimTypes.Expiration, expiry?.ToString("o")),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationMethod, "LOCAL")
+            }.Union(additionalClaims ?? new List<IClaim>()))
         {
         }
 
@@ -553,7 +553,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// <summary>
     /// SQLite principal.
     /// </summary>
-    public class SQLitePrincipal : ClaimsPrincipal, IPrincipal, IOfflinePrincipal
+    public class SQLitePrincipal : SanteDBClaimsPrincipal, IPrincipal, IOfflinePrincipal
     {
         private String[] m_roles;
 
@@ -564,11 +564,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             get
             {
-                return this.FindClaim(ClaimTypes.AuthenticationInstant).AsDateTime();
+                return this.FindFirst(SanteDBClaimTypes.AuthenticationInstant).AsDateTime();
             }
             set
             {
-                this.FindClaim(ClaimTypes.AuthenticationInstant).Value = value.ToString("o");
+                (this.Identity as IClaimsIdentity).RemoveClaim(this.FindFirst(SanteDBClaimTypes.AuthenticationInstant));
+                (this.Identity as IClaimsIdentity).AddClaim(new SanteDBClaim(SanteDBClaimTypes.AuthenticationInstant, value.ToString("o")));
             }
         }
 
@@ -579,11 +580,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             get
             {
-                return this.FindClaim(ClaimTypes.Expiration).AsDateTime();
+                return this.FindFirst(SanteDBClaimTypes.Expiration).AsDateTime();
             }
             set
             {
-                this.FindClaim(ClaimTypes.Expiration).Value = value.ToString("o");
+                (this.Identity as IClaimsIdentity).RemoveClaim(this.FindFirst(SanteDBClaimTypes.Expiration));
+                (this.Identity as IClaimsIdentity).AddClaim(new SanteDBClaim(SanteDBClaimTypes.Expiration, value.ToString("o")));
             }
         }
 
@@ -593,7 +595,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLitePrincipal"/> class.
         /// </summary>
-        public SQLitePrincipal(ClaimsIdentity identity, String[] roles) : base(identity)
+        public SQLitePrincipal(SanteDBClaimsIdentity identity, String[] roles) : base(identity)
         {
             this.m_token = Guid.NewGuid();
             this.m_roles = roles;

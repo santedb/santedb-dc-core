@@ -125,9 +125,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     try
                     {
                         // TODO: Add claims for elevation!
-                        var scopeClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.SanteDBScopeClaim)?.Value;
-                        var overrideClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.SanteDBOverrideClaim)?.Value;
-                        var purposeOfUseClaim = (principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.XspaPurposeOfUseClaim)?.Value;
+                        var scopeClaim = (principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBScopeClaim)?.Value;
+                        var overrideClaim = (principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBOverrideClaim)?.Value;
+                        var purposeOfUseClaim = (principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.XspaPurposeOfUseClaim)?.Value;
 
                         if (!String.IsNullOrEmpty(scopeClaim))
                             scope = scopeClaim;
@@ -161,7 +161,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                 if (overrideClaim == "true")
                                 {
                                     p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
-                                            $"{ClaimTypes.SanteDBOverrideClaim}=true;{ClaimTypes.XspaPurposeOfUseClaim}={purposeOfUseClaim}"
+                                            $"{SanteDBClaimTypes.SanteDBOverrideClaim}=true;{SanteDBClaimTypes.XspaPurposeOfUseClaim}={purposeOfUseClaim}"
                                         )));
                                 }
 
@@ -333,17 +333,17 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             var localPip = ApplicationContext.Current.GetService<IOfflinePolicyInformationService>();
             var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
-            if (!String.IsNullOrEmpty(password) && principal is ClaimsPrincipal &&
+            if (!String.IsNullOrEmpty(password) && principal is IClaimsPrincipal &&
                             XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
-                ClaimsPrincipal cprincipal = principal as ClaimsPrincipal;
+                IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
                 var amiPip = new AmiPolicyInformationService(cprincipal);
 
                 // We want to impersonate SYSTEM
                 //AndroidApplicationContext.Current.SetPrincipal(cprincipal);
 
                 // Ensure policies exist from the claim
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim))
                 {
                     if (localPip.GetPolicy(itm.Value) == null)
                     {
@@ -361,7 +361,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 // Ensure roles exist from the claim
                 var localRoles = localRp.GetAllRoles();
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType))
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType))
                 {
                     // Ensure policy exists
                     try
@@ -391,7 +391,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 try
                 {
-                    Guid sid = Guid.Parse(cprincipal.FindClaim(ClaimTypes.Sid).Value);
+                    Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.Sid).Value);
                     if (localUser == null)
                     {
                         localIdp.CreateIdentity(sid, principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
@@ -403,13 +403,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                     // Copy security attributes
                     var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.Current.Principal);
-                    localSu.Email = cprincipal.FindClaim(ClaimTypes.Email)?.Value;
-                    localSu.PhoneNumber = cprincipal.FindClaim(ClaimTypes.Telephone)?.Value;
+                    localSu.Email = cprincipal.FindFirst(SanteDBClaimTypes.Email)?.Value;
+                    localSu.PhoneNumber = cprincipal.FindFirst(SanteDBClaimTypes.Telephone)?.Value;
                     ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
                     // Add user to roles
                     // TODO: Remove users from specified roles?
-                    localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
+                    localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
                     // Unlock the account
                     localIdp.SetLockout(principal.Identity.Name, false, principal);
 
@@ -463,9 +463,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     client.Client.Accept = "application/xml";
 
                     Guid userId = Guid.Empty;
-                    if (principal is ClaimsPrincipal)
+                    if (principal is IClaimsPrincipal)
                     {
-                        var subjectClaim = (principal as ClaimsPrincipal).FindClaim(ClaimTypes.Sid);
+                        var subjectClaim = (principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid);
                         if (subjectClaim != null)
                             userId = Guid.Parse(subjectClaim.Value);
                     }

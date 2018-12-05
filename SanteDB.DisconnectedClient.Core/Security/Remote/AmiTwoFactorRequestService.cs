@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -48,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Remote
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
             if (this.m_authContext == null ||
-                ((this.m_authContext.Principal as ClaimsPrincipal)?.FindClaim(ClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                ((this.m_authContext.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
                 this.m_authContext = new AuthenticationContext(ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
         }
 

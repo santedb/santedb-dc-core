@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -78,7 +79,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Authenticate the user with PIN
         /// </summary>
-        public SessionInfo Authenticate(string userName, byte[] pin, params Claim[] claims)
+        public SessionInfo Authenticate(string userName, byte[] pin, params IClaim[] claims)
         {
             var idp = ApplicationContext.Current.GetService<IPinAuthenticationService>();
             if (idp == null)
