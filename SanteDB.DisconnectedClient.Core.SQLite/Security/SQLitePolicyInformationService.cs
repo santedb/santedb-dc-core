@@ -24,6 +24,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -169,8 +170,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var identity = (securable as IPrincipal)?.Identity ?? securable as IIdentity;
 
                 // Is the identity a claims identity? If yes, we just use the claims made in the policy
-                if (identity is ClaimsIdentity && (identity as ClaimsIdentity).Claim.Any(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim && o.Value != "*"))
-                    return (identity as ClaimsIdentity).Claim.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(
+                if (identity is SanteDBClaimsIdentity && (identity as IClaimsIdentity).Claims.Any(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && o.Value != "*"))
+                    return (identity as IClaimsIdentity).Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(
                         o => new GenericPolicyInstance(new GenericPolicy(o.Value, "ClaimPolicy", false), PolicyGrantType.Grant)
                         );
 

@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using Newtonsoft.Json.Linq;
+using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -32,19 +33,19 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// <summary>
     /// Token claims principal.
     /// </summary>
-    public class TokenClaimsPrincipal : ClaimsPrincipal
+    public class TokenClaimsPrincipal : SanteDBClaimsPrincipal
     {
 
         // Claim map
         private readonly Dictionary<String, String> claimMap = new Dictionary<string, string>() {
-            { "unique_name", ClaimsIdentity.DefaultNameClaimType },
-            { "role", ClaimsIdentity.DefaultRoleClaimType },
-            { "sub", ClaimTypes.Sid },
-            { "authmethod", ClaimTypes.AuthenticationMethod },
-            { "exp", ClaimTypes.Expiration },
-            { "nbf", ClaimTypes.AuthenticationInstant },
-            { "email", ClaimTypes.Email },
-            { "tel", ClaimTypes.Telephone }
+            { "unique_name", SanteDBClaimTypes.DefaultNameClaimType },
+            { "role", SanteDBClaimTypes.DefaultRoleClaimType },
+            { "sub", SanteDBClaimTypes.Sid },
+            { "authmethod", SanteDBClaimTypes.AuthenticationMethod },
+            { "exp", SanteDBClaimTypes.Expiration },
+            { "nbf", SanteDBClaimTypes.AuthenticationInstant },
+            { "email", SanteDBClaimTypes.Email },
+            { "tel", SanteDBClaimTypes.Telephone }
         };
 
         // The token
@@ -66,7 +67,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         /// <param name="idToken">Token.</param>
         /// <param name="tokenType">Token type.</param>
-        public TokenClaimsPrincipal(String accessToken, String idToken, String tokenType, String refreshToken) : base(null)
+        public TokenClaimsPrincipal(String accessToken, String idToken, String tokenType, String refreshToken) : base()
         {
             if (String.IsNullOrEmpty(idToken))
                 throw new ArgumentNullException(nameof(idToken));
@@ -108,7 +109,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             }
 
             // Parse the jwt
-            List<Claim> claims = new List<Claim>();
+            List<IClaim> claims = new List<IClaim>();
 
             foreach (var kf in body)
             {
@@ -119,8 +120,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     claims.AddRange(this.ProcessClaim(kf, claimName));
             }
 
-            Claim expiryClaim = claims.Find(o => o.Type == ClaimTypes.Expiration),
-                notBeforeClaim = claims.Find(o => o.Type == ClaimTypes.AuthenticationInstant);
+            IClaim expiryClaim = claims.Find(o => o.Type == SanteDBClaimTypes.Expiration),
+                notBeforeClaim = claims.Find(o => o.Type == SanteDBClaimTypes.AuthenticationInstant);
 
             if (expiryClaim == null || notBeforeClaim == null)
                 throw new SecurityTokenException(SecurityTokenExceptionType.InvalidClaim, "Missing NBF or EXP claim");
@@ -128,8 +129,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             {
                 DateTime expiry = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     notBefore = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                expiry = expiry.AddSeconds(Int32.Parse(expiryClaim.Value)).ToLocalTime();
-                notBefore = notBefore.AddSeconds(Int32.Parse(notBeforeClaim.Value)).ToLocalTime();
+                expiry = expiryClaim.AsDateTime();
+                notBefore = notBeforeClaim.AsDateTime();
 
                 if (expiry == null || expiry < DateTime.Now)
                     throw new SecurityTokenException(SecurityTokenExceptionType.TokenExpired, "Token expired");
@@ -139,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             this.RefreshToken = refreshToken;
 
             this.m_identities.Clear();
-            this.m_identities.Add(new ClaimsIdentity(body["unique_name"]?.Value<String>() ?? body["sub"]?.Value<String>(), true, claims));
+            this.m_identities.Add(new SanteDBClaimsIdentity(body["unique_name"]?.Value<String>() ?? body["sub"]?.Value<String>(), true, "OAUTH2", claims));
         }
 
 
@@ -148,14 +149,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         /// <returns>The claim.</returns>
         /// <param name="jwtClaim">Jwt claim.</param>
-        public IEnumerable<Claim> ProcessClaim(KeyValuePair<String, JToken> jwtClaim, String claimType)
+        public IEnumerable<IClaim> ProcessClaim(KeyValuePair<String, JToken> jwtClaim, String claimType)
         {
-            List<Claim> retVal = new List<Claim>();
+            List<IClaim> retVal = new List<IClaim>();
             if (jwtClaim.Value is JArray)
                 foreach (var val in jwtClaim.Value as JArray)
-                    retVal.Add(new Claim(claimType, (String)val));
+                    retVal.Add(new SanteDBClaim(claimType, (String)val));
             else
-                retVal.Add(new Claim(claimType, jwtClaim.Value.ToString()));
+                retVal.Add(new SanteDBClaim(claimType, jwtClaim.Value.ToString()));
             return retVal;
         }
 

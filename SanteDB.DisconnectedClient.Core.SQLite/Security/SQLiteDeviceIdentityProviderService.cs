@@ -27,19 +27,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// <summary>
     /// SQLite identity
     /// </summary>
-    public class SQLiteDeviceIdentity : ClaimsIdentity, IDeviceIdentity
+    public class SQLiteDeviceIdentity : SanteDBClaimsIdentity, IDeviceIdentity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLiteIdentity"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="authenticated">If set to <c>true</c> authenticated.</param>
-        public SQLiteDeviceIdentity(String deviceName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<Claim> additionalClaims = null) : base(deviceName, authenticated,
-            new Claim[] {
-                new Claim(ClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
-                new Claim(ClaimTypes.Expiration, expiry?.ToString("o")),
-                new Claim(ClaimTypes.AuthenticationMethod, "LOCAL")
-            }.Union(additionalClaims ?? new List<Claim>()))
+        public SQLiteDeviceIdentity(String deviceName, bool authenticated, DateTime? issueTime = null, DateTime? expiry = null, IEnumerable<IClaim> additionalClaims = null) : base(deviceName, authenticated, "LOCAL_AUTHORITY",
+            new IClaim[] {
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationInstant, issueTime?.ToString("o")),
+                new SanteDBClaim(SanteDBClaimTypes.Expiration, expiry?.ToString("o"))
+            }.Union(additionalClaims ?? new List<IClaim>()))
         {
         }
 
@@ -137,8 +136,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
                         IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
                         IPolicyInformationService pip = ApplicationContext.Current.GetService<IPolicyInformationService>();
-                        List<Claim> additionalClaims = new List<Claim>();
-                        additionalClaims.AddRange(pip.GetActivePolicies(dbd).Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new Claim(SanteDBClaimTypes.SanteDBGrantedPolicyClaim, o.Policy.Oid)));
+                        List<IClaim> additionalClaims = new List<IClaim>();
+                        additionalClaims.AddRange(pip.GetActivePolicies(dbd).Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBGrantedPolicyClaim, o.Policy.Oid)));
                         
                         // Create the principal
                         retVal = new SQLitePrincipal(new SQLiteDeviceIdentity(dbd.PublicId, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), new string[] { });

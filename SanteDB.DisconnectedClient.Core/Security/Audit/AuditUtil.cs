@@ -27,6 +27,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -385,7 +386,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 NetworkAccessPointId = configService.DeviceName,
                 UserName = principal?.Identity?.Name ?? identityName,
                 UserIsRequestor = true,
-                ActorRoleCode = (principal as ClaimsPrincipal)?.Claims.Where(o => o.Type == ClaimsIdentity.DefaultRoleClaimType).Select(o => new AuditCode(o.Value, "OizRoles")).ToList()
+                ActorRoleCode = (principal as IClaimsPrincipal)?.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(o => new AuditCode(o.Value, "OizRoles")).ToList()
             });
 
             AddDeviceActor(audit);

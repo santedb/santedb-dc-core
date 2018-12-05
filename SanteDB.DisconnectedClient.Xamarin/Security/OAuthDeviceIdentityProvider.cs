@@ -21,6 +21,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
@@ -174,10 +175,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             var localIdp = ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>();
             var sdPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityDevice>>();
 
-            if (!String.IsNullOrEmpty(deviceSecret) && principal is ClaimsPrincipal &&
+            if (!String.IsNullOrEmpty(deviceSecret) && principal is IClaimsPrincipal &&
                             XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
-                ClaimsPrincipal cprincipal = principal as ClaimsPrincipal;
+                IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
                 var amiPip = new AmiPolicyInformationService(cprincipal);
 
                 // Local device
@@ -188,7 +189,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     try
                     {
                         localDeviceIdentity = localIdp.GetIdentity(principal.Identity.Name);
-                        Guid sid = Guid.Parse(cprincipal.FindClaim(ClaimTypes.SanteDBDeviceIdentifierClaim).Value);
+                        Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value);
                         if (localDeviceIdentity == null)
                             localDeviceIdentity = localIdp.CreateIdentity(sid, principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
                         else
@@ -200,7 +201,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     }
 
                 // Ensure policies exist from the claim
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim))
                 {
                     if (localPip.GetPolicy(itm.Value) == null)
                     {
@@ -218,7 +219,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 // Re-lock to add policies
                 lock(this.m_lockObject)
-                    localPip.AddPolicies(localDeviceIdentity, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
+                    localPip.AddPolicies(localDeviceIdentity, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
 
             }
         }
