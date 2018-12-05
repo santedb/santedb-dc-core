@@ -52,6 +52,12 @@
     <Compile Include="ISQLitePersistenceService.cs" />
     <Compile Include="Migrations\InitialMessageCatalog.cs" />
     <Compile Include="Migrations\InitialQueueCatalog.cs" />
+    <Compile Include="Model\Concepts\DbCodeSystem.cs" />
+    <Compile Include="Model\Concepts\DbConceptReferenceTerm.cs" />
+    <Compile Include="Model\Concepts\DbReferenceTerm.cs" />
+    <Compile Include="Model\Concepts\DbReferenceTermName.cs" />
+    <Compile Include="Persistence\ReferenceTermNamePersister.cs" />
+    <Compile Include="Persistence\ReferenceTermPersistenceService.cs" />
     <Compile Include="Security\SQLiteDeviceIdentityProviderService.cs" />
     <Compile Include="SQLiteDataContext.cs" />
     <Compile Include="SQLitePersistenceService.cs" />

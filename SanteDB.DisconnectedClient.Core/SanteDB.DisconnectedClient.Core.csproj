@@ -148,7 +148,6 @@
     <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Security\GenericPolicy.cs" />
     <Compile Include="Security\GenericPolicyInstance.cs" />
-    <Compile Include="Security\ClaimsPrincipal.cs" />
     <Compile Include="Security\ClaimsIdentity.cs" />
     <Compile Include="Security\Claim.cs" />
     <Compile Include="Security\ClaimTypes.cs" />

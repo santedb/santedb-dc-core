@@ -105,6 +105,31 @@
     <property modelName="SourceEntityKey" domainName="ConceptUuid"/>
   </class>
 
+  <!-- Reference Terms -->
+  <class modelClass="SanteDB.Core.Model.DataTypes.ConceptReferenceTerm, SanteDB.Core.Model, Version=1.0.1.0"
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbConceptReferenceTerm, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    <property modelName="SourceEntityKey" domainName="ConceptUuid"/>
+    <property modelName="ReferenceTermKey" domainName="ReferenceTermUuid"/>
+  </class>
+  <class modelClass="SanteDB.Core.Model.DataTypes.ReferenceTerm, SanteDB.Core.Model, Version=1.0.1.0"
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbReferenceTerm, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    <property modelName="CodeSystemKey" domainName="CodeSystemUuid"/>
+  </class>
+  <class modelClass="SanteDB.Core.Model.DataTypes.ReferenceTermName, SanteDB.Core.Model, Version=1.0.1.0"
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbReferenceTermName, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    <property modelName="SourceEntityKey" domainName="ReferenceTermUuid"/>
+  </class>
+  <class modelClass="SanteDB.Core.Model.DataTypes.CodeSystem, SanteDB.Core.Model, Version=1.0.1.0"
+         domainClass="SanteDB.DisconnectedClient.SQLite.Model.Concepts.DbCodeSystem, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    
+  </class>
+
+
+
   <!-- Entity Maps -->
   <class modelClass="SanteDB.Core.Model.Entities.Entity, SanteDB.Core.Model, Version=1.0.1.0"
          domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbEntity, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
@@ -414,4 +439,6 @@
     <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
     <property modelName="ObsoletedByKey" domainName="ObsoletedByUuid"/>
   </class>
+
+
 </modelMap>
