@@ -66,17 +66,30 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             var conn = this.CreateConnection();
             using (conn.Lock())
             {
+
+                // First resolve identities 
+                if (securable is IDeviceIdentity) {
+                    var did = securable as IDeviceIdentity;
+                    var dbd = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == did.Name).ToList();
+                    securable = dbd.Select(o=>new SecurityDevice() {
+                        Key = o.Key,
+                        Name = o.PublicId
+                    }).FirstOrDefault();
+                    if (securable == null)
+                        throw new KeyNotFoundException($"Device identity {did.Name} not found");
+                }
                 // Drop existing policies
                 IEnumerable delObjects = null;
-                Guid? key = (securable as IdentifiedData)?.Key.Value;
+                byte[] key = (securable as IdentifiedData)?.Key.Value.ToByteArray();
 
                 if (securable is SecurityDevice)
-                    delObjects = conn.Table<DbSecurityDevicePolicy>().Where(o => o.DeviceId == key.Value.ToByteArray());
+                    conn.Table<DbSecurityDevicePolicy>().Delete(o => o.DeviceId == key);
                 else if (securable is SecurityRole)
-                    delObjects = conn.Table<DbSecurityRolePolicy>().Where(o => o.RoleId == key.Value.ToByteArray());
+                    conn.Table<DbSecurityRolePolicy>().Delete(o => o.RoleId == key);
                 else
                     throw new ArgumentOutOfRangeException("Invalid type", nameof(securable));
 
+                // Delete existing policy oids
                 foreach (var oid in policyOids)
                 {
                     // Get the policy
@@ -87,7 +100,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     if (securable is SecurityDevice)
                         conn.Insert(new DbSecurityDevicePolicy()
                         {
-                            DeviceId = key.Value.ToByteArray(),
+                            DeviceId = key,
                             GrantType = (int)rule,
                             PolicyId = policy.Key.ToByteArray(),
                             Key = Guid.NewGuid()
@@ -95,7 +108,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     else if (securable is SecurityRole)
                         conn.Insert(new DbSecurityRolePolicy()
                         {
-                            RoleId = key.Value.ToByteArray(),
+                            RoleId = key,
                             GrantType = (int)rule,
                             PolicyId = policy.Key.ToByteArray(),
                             Key = Guid.NewGuid()

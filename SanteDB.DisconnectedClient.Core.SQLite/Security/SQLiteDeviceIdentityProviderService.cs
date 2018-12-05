@@ -237,5 +237,28 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 throw;
             }
         }
+
+        /// <summary>
+        /// Get the specified identity
+        /// </summary>
+        public IIdentity GetIdentity(string name)
+        {
+            try
+            {
+                var conn = this.CreateConnection();
+                using(conn.Lock())
+                {
+                    var dbd = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == name).FirstOrDefault();
+                    if(dbd != null)
+                        return new SQLiteDeviceIdentity(name, false);
+                    return null;
+                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Error retrieving identity {0} : {1}", name, e);
+                throw;
+            }
+        }
     }
 }

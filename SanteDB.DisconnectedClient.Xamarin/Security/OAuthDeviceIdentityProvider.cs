@@ -50,6 +50,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         // Log tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(OAuthIdentityProvider));
 
+        // Lock object
+        private Object m_lockObject = new object();
+
         /// <summary>
         /// Device is authenticated
         /// </summary>
@@ -169,8 +172,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             // Create a security user and ensure they exist!
             var localPip = ApplicationContext.Current.GetService<IOfflinePolicyInformationService>();
             var localIdp = ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>();
-            var sdPersistence = ApplicationContext.Current.GetService<IRepositoryService<SecurityDevice>>();
-            
+            var sdPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityDevice>>();
+
             if (!String.IsNullOrEmpty(deviceSecret) && principal is ClaimsPrincipal &&
                             XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
@@ -179,23 +182,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 // Local device
                 int tr = 0;
-                var localDevice = sdPersistence.Find(o => o.Name == principal.Identity.Name, 0, 1, out tr);
-                try
-                {
-                    Guid sid = Guid.Parse(cprincipal.FindClaim(ClaimTypes.Sid).Value);
-                    if (localDevice == null)
+
+                IIdentity localDeviceIdentity = null;
+                lock (this.m_lockObject)
+                    try
                     {
-                        localIdp.CreateIdentity(sid, principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                        localDeviceIdentity = localIdp.GetIdentity(principal.Identity.Name);
+                        Guid sid = Guid.Parse(cprincipal.FindClaim(ClaimTypes.SanteDBDeviceIdentifierClaim).Value);
+                        if (localDeviceIdentity == null)
+                            localDeviceIdentity = localIdp.CreateIdentity(sid, principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                        else
+                            localIdp.ChangeSecret(principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        localIdp.ChangeSecret(principal.Identity.Name, deviceSecret, AuthenticationContext.SystemPrincipal);
+                        this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
                     }
-                }
-                catch (Exception ex)
-                {
-                    this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
-                }
 
                 // Ensure policies exist from the claim
                 foreach (var itm in cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim))
@@ -213,7 +215,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         }
                     }
                 }
-                localPip.AddPolicies(localDevice, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
+
+                // Re-lock to add policies
+                lock(this.m_lockObject)
+                    localPip.AddPolicies(localDeviceIdentity, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == ClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
 
             }
         }
