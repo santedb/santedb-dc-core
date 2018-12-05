@@ -6,13 +6,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
     /// <summary>
     /// Represents a code system 
     /// </summary>
-    [Table("cd_sys_tbl")]
+    [Table("code_system")]
     public class DbCodeSystem : DbBaseData
     {
         /// <summary>
         /// Gets or sets the name of the code system
         /// </summary>
-        [Column("cs_name")]
+        [Column("name")]
         public String Name { get; set; }
 
         /// <summary>

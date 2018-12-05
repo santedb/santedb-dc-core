@@ -105,6 +105,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     }
                 }
 
+            // Reference terms
+            if(retVal.ReferenceTerms != null)
+            {
+                foreach (var r in retVal.ReferenceTerms)
+                    context.Connection.Insert(new DbConceptReferenceTerm()
+                    {
+                        Key = Guid.NewGuid(),
+                        ConceptUuid = retVal.Key.Value.ToByteArray(),
+                        ReferenceTermUuid = r.ReferenceTermKey.Value.ToByteArray(),
+                        RelationshipTypeUuid = r.RelationshipTypeKey.Value.ToByteArray()
+                    });
+            }
+
             return retVal;
         }
 
@@ -144,6 +157,20 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 }
 
             }
+
+            // Reference terms
+            if (retVal.ReferenceTerms != null)
+            {
+                context.Connection.Table<DbConceptReferenceTerm>().Delete(o => o.ConceptUuid == sourceKey);
+                foreach (var r in retVal.ReferenceTerms)
+                    context.Connection.Insert(new DbConceptReferenceTerm()
+                    {
+                        ConceptUuid = retVal.Key.Value.ToByteArray(),
+                        ReferenceTermUuid = r.ReferenceTermKey.Value.ToByteArray(),
+                        RelationshipTypeUuid = r.RelationshipTypeKey.Value.ToByteArray()
+                    });
+            }
+
             return retVal;
         }
 

@@ -103,6 +103,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 db.CreateTable<DbConceptRelationshipType>();
                 db.CreateTable<DbConceptSet>();
                 db.CreateTable<DbConceptSetConceptAssociation>();
+                db.CreateTable<DbReferenceTerm>();
+                db.CreateTable<DbReferenceTermName>();
+                db.CreateTable<DbConceptReferenceTerm>();
+                db.CreateTable<DbCodeSystem>();
 
                 tracer.TraceInfo("Installing Identifiers Tables...");
                 db.CreateTable<DbEntityIdentifier>();

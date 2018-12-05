@@ -45,7 +45,11 @@ namespace SanteDB.DisconnectedClient.SQLite
     /// <summary>
     /// Represents a data persistence service which stores data in the local SQLite data store
     /// </summary>
-    public abstract class SQLitePersistenceServiceBase<TData> : IDataPersistenceService<TData>, ISQLitePersistenceService where TData : IdentifiedData, new()
+    public abstract class SQLitePersistenceServiceBase<TData> : 
+        IDataPersistenceService<TData>, 
+        IStoredQueryDataPersistenceService<TData>,
+        ISQLitePersistenceService 
+    where TData : IdentifiedData, new()
     {
 
         /// <summary>
@@ -726,6 +730,14 @@ namespace SanteDB.DisconnectedClient.SQLite
             return this.ToModelInstance(domainInstance, context);
         }
 
+        /// <summary>
+        /// Perform a stored query
+        /// </summary>
+        public IEnumerable<TData> Query(Expression<Func<TData, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext)
+        {
+            return this.Query((Expression<Func<TData, bool>>)query, queryId, offset, count, out totalCount, true, false, AuthenticationContext.Current.Principal);
+
+        }
     }
 }
 

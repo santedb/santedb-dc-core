@@ -80,6 +80,24 @@
     <Compile Include="Services\RisiServiceBehavior.cs" />
     <Compile Include="Util\WebErrorUtility.cs" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>11.0.2</Version>
+    </PackageReference>
+    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
+      <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
+      <Name>SanteDB.DisconnectedClient.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
+      <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
+      <Name>SanteDB.DisconnectedClient.i18n</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SanteDB.DisconnectedClient.Xamarin\SanteDB.DisconnectedClient.Xamarin.csproj">
+      <Project>{9a06acc9-4d6f-4eab-8a8a-9652bc6a70ae}</Project>
+      <Name>SanteDB.DisconnectedClient.Xamarin</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
@@ -159,23 +177,6 @@
       </ItemGroup>
     </Otherwise>
   </Choose>
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.2</Version>
-    </PackageReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
-      <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
-      <Name>SanteDB.DisconnectedClient.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
-      <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
-      <Name>SanteDB.DisconnectedClient.i18n</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Xamarin\SanteDB.DisconnectedClient.Xamarin.csproj">
-      <Project>{9a06acc9-4d6f-4eab-8a8a-9652bc6a70ae}</Project>
-      <Name>SanteDB.DisconnectedClient.Xamarin</Name>
-    </ProjectReference>
-  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\ViewModel.xml" />
   </ItemGroup>

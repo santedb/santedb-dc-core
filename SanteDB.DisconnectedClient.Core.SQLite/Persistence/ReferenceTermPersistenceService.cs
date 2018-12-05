@@ -27,7 +27,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (referenceTerm.DisplayNames != null)
             {
                 base.UpdateAssociatedItems<ReferenceTermName, ReferenceTerm>(
-                    null, 
+                    new List<ReferenceTermName>(), 
                     referenceTerm.DisplayNames, 
                     data.Key, 
                     context);
