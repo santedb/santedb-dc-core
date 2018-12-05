@@ -257,7 +257,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
 
             // Total count
-            if (countResults && queryId == Guid.Empty)
+            if ((countResults && queryId == Guid.Empty) || this.m_queryPersistence?.IsRegistered(queryId) == false)
                 totalResults = context.Connection.ExecuteScalar<Int32>("SELECT COUNT(*) FROM (" + queryStatement.SQL + ")", args);
             else if (countResults)
             {

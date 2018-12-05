@@ -95,7 +95,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     restClient.Requesting += (o, p) =>
                     {
                         // Add device credential
-                        p.AdditionalHeaders.Add("X-Device-Authorization", $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
+                        p.AdditionalHeaders.Add("X-Device-Authorization", $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{deviceId}:{deviceSecret}"))}");
                     };
 
                     // Invoke

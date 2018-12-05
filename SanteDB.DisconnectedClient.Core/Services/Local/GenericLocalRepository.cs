@@ -291,7 +291,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                     var vrsi = ApplicationContext.Current.GetService(vrst);
 
                     if (vrsi != null)
-                        bundle.Item[i] = vrsi.GetType().GetRuntimeMethod(nameof(Validate), new Type[] { typeof(TEntity) }).Invoke(vrsi, new object[] { itm }) as IdentifiedData;
+                        bundle.Item[i] = vrsi.GetType().GetRuntimeMethod(nameof(Validate), new Type[] { itm.GetType() }).Invoke(vrsi, new object[] { itm }) as IdentifiedData;
                 }
             }
             return p;
