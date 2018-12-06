@@ -24,6 +24,8 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -502,15 +504,31 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <returns>The user UUID.</returns>
         protected Guid CurrentUserUuid(SQLiteDataContext context)
         {
+            // Is there a preferred SID on the context claim?
+            if (context.Principal is IClaimsPrincipal)
+            {
+                var cprincipal = context.Principal as IClaimsPrincipal;
+                var sid = cprincipal.FindFirst(SanteDBClaimTypes.Sid)?.Value;
+                Guid uuid = Guid.Empty;
+                if (sid != null && Guid.TryParse(sid, out uuid))
+                    return uuid;
+            }
+
             String name = context.Principal.Identity.Name ?? AuthenticationContext.Current.Principal.Identity.Name;
+
             var securityUser = context.Connection.Table<DbSecurityUser>().Where(o => o.UserName.ToLower() == name.ToLower()).ToList().SingleOrDefault();
             if (securityUser == null)
             {
-                this.m_tracer.TraceWarning("User doesn't exist locally, using GUID.EMPTY");
-                return Guid.Empty;
-                //throw new InvalidOperationException("Constraint Violation: User doesn't exist locally");
+                var securityDevice = context.Connection.Table<DbSecurityDevice>().Where(o => o.PublicId.ToLower() == name.ToLower()).ToList().SingleOrDefault();
+                if (securityDevice == null)
+                {
+                    this.m_tracer.TraceWarning("Device doesn't exist locally, using GUID.EMPTY");
+                    return Guid.Empty;
+                }
+                return securityDevice.Key;
             }
-            return securityUser.Key;
+            else
+                return securityUser.Key;
         }
 
         /// <summary>

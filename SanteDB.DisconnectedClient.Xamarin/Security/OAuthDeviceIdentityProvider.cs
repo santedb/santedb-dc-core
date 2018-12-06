@@ -104,6 +104,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
                         OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
                         retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
+                        
+                        // HACK: Set preferred sid to device SID
+                        var cprincipal = retVal as IClaimsPrincipal;
+                        cprincipal.Identities.First().RemoveClaim(cprincipal.FindFirst(SanteDBClaimTypes.Sid));
+                        cprincipal.Identities.First().AddClaim(new SanteDBClaim(SanteDBClaimTypes.Sid, cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value));
+
                         this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
                         this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, retVal, true) { Principal = retVal });
                     }
