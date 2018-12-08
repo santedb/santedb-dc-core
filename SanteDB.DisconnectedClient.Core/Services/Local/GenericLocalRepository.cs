@@ -46,7 +46,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         IPersistableQueryRepositoryService<TEntity>,
         IFastQueryRepositoryService<TEntity>,
         IRepositoryService<TEntity>,
-        ISecuredRepositoryService
+        ISecuredRepositoryService,
+        INotifyRepositoryService<TEntity>
         where TEntity : IdentifiedData
     {
 
@@ -60,6 +61,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// Trace source
         /// </summary>
         protected Tracer m_traceSource = Tracer.GetTracer(typeof(GenericLocalRepository<TEntity>));
+
+        public event EventHandler<RepositoryEventArgs<TEntity>> Inserted;
+        public event EventHandler<RepositoryEventArgs<TEntity>> Saved;
+        public event EventHandler<RepositoryEventArgs<TEntity>> Retrieved;
+        public event EventHandler<RepositoryEventArgs<IEnumerable<TEntity>>> Queried;
 
         /// <summary>
         /// Gets the policy required for querying
@@ -107,7 +113,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal);
 
             var retVal = businessRulesService != null ? businessRulesService.AfterQuery(results) : results;
-
+            this.Queried?.Invoke(this, new RepositoryEventArgs<IEnumerable<TEntity>>(retVal));
             return retVal;
         }
 
@@ -132,8 +138,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             data = businessRulesService?.BeforeInsert(data) ?? data;
             data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
-            businessRulesService?.AfterInsert(data);
-
+            data = businessRulesService?.AfterInsert(data) ?? data;
+            this.Inserted?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
             return data;
         }
 
@@ -166,7 +172,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
 
             ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Enqueue(entity, SynchronizationOperationType.Obsolete);
 
-            return businessRulesService?.AfterObsolete(entity) ?? entity;
+            entity = businessRulesService?.AfterObsolete(entity) ?? entity;
+            this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(entity));
+            return entity;
         }
 
         /// <summary>
@@ -196,6 +204,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var result = persistenceService.Get(key, null, false, AuthenticationContext.Current.Principal);
 
             var retVal = businessRulesService?.AfterRetrieve(result) ?? result;
+            this.Retrieved?.Invoke(this, new RepositoryEventArgs<TEntity>(result));
             return retVal;
         }
 
@@ -251,7 +260,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
 
 
-                businessRulesService?.AfterUpdate(data);
+                data = businessRulesService?.AfterUpdate(data) ?? data;
+                this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
                 return data;
             }
             catch (KeyNotFoundException)
@@ -259,7 +269,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                 data = businessRulesService?.BeforeInsert(data) ?? data;
                 data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
-                businessRulesService?.AfterInsert(data);
+                data = businessRulesService?.AfterInsert(data) ?? data;
+                this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
                 return data;
             }
         }
