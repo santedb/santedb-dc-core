@@ -306,7 +306,8 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             {
                 try
                 {
-                    conn.BeginTransaction();
+                    if(!conn.IsInTransaction)
+                        conn.BeginTransaction();
 
                     // Insert core
                     var dbAudit = this.m_mapper.MapModelInstance<AuditData, DbAuditData>(audit);
