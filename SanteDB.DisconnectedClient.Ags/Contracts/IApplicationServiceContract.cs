@@ -181,7 +181,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// Perform a patch / resolution
         /// </summary>
         [RestInvoke("PATCH", "/Queue/dead/{id}")]
-        IdentifiedData ResolveConflict(String queueName, int id, Patch resolution);
+        IdentifiedData ResolveConflict(int id, Patch resolution);
 
         /// <summary>
         /// Remove a queue item
