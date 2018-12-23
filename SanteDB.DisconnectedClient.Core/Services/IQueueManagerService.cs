@@ -53,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a queue manager service
     /// </summary>
-    public interface IQueueManagerService
+    public interface IQueueManagerService 
     {
 
         /// <summary>
