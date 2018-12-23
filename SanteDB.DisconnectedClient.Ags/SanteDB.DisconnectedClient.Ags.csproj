@@ -80,7 +80,6 @@
     <Compile Include="Services\RisiServiceBehavior.cs" />
     <Compile Include="Util\WebErrorUtility.cs" />
   </ItemGroup>
-  
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">
       <Version>11.0.2</Version>
@@ -191,6 +190,7 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="SanteDB.DisconnectedClient.Ags.nuspec" />
+    <Compile Include="Services\ApplicationServiceBehavior.Queue.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

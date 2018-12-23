@@ -20,7 +20,10 @@
 using Newtonsoft.Json.Linq;
 using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Patch;
 using SanteDB.DisconnectedClient.Ags.Model;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using System;
 using System.Collections.Generic;
@@ -143,6 +146,48 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Get("/Widgets/{widgetId}")]
         Stream GetWidget(String widgetId);
-        
+
+        /// <summary>
+        /// Force re-sync of all queue
+        /// </summary>
+        [Post("/Queue/All/Retry")]
+        void RetryAll();
+
+        /// <summary>
+        /// Gets the queue entries
+        /// </summary>
+        [Get("/Queue/{queueName}")]
+        List<ISynchronizationQueueEntry> GetQueue(String queueName);
+
+        /// <summary>
+        /// Get the specific queue entry
+        /// </summary>
+        [Get("/Queue/{queueName}/{id}")]
+        IdentifiedData GetQueueData(String queueName, int id);
+
+        /// <summary>
+        /// Gets the conflict data a patch representing the difference between the server version and the local version being 
+        /// </summary>
+        [Get("/Queue/dead/{id}/diff")]
+        Patch GetConflict(int id);
+
+        /// <summary>
+        /// Force a retry on the conflicted queue item
+        /// </summary>
+        [Put("/Queue/dead/{id}")]
+        void Retry(int id);
+
+        /// <summary>
+        /// Perform a patch / resolution
+        /// </summary>
+        [RestInvoke("PATCH", "/Queue/dead/{id}")]
+        IdentifiedData ResolveConflict(String queueName, int id, Patch resolution);
+
+        /// <summary>
+        /// Remove a queue item
+        /// </summary>
+        [Delete("/Queue/{queueName}/{id}")]
+        void DeleteQueueItem(String queueName, int id);
+
     }
 }
