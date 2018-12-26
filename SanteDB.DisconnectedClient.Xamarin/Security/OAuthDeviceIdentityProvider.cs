@@ -67,7 +67,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <summary>
         /// Authenticate the specified device
         /// </summary>
-        public IPrincipal Authenticate(string deviceId, string deviceSecret)
+        public IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any)
         {
             AuthenticatingEventArgs e = new AuthenticatingEventArgs(deviceId);
             this.Authenticating?.Invoke(this, e);
@@ -99,21 +99,24 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     };
 
                     // Invoke
-                    if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    if (authMethod.HasFlag(AuthenticationMethod.Online) &&
+                        ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable &&
+                        ApplicationContext.Current.GetService<IAdministrationIntegrationService>().IsAvailable()) // Network may be on but internet is not available
                     {
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.333f);
                         OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
                         retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
-                        
+
                         // HACK: Set preferred sid to device SID
                         var cprincipal = retVal as IClaimsPrincipal;
                         cprincipal.Identities.First().RemoveClaim(cprincipal.FindFirst(SanteDBClaimTypes.Sid));
                         cprincipal.Identities.First().AddClaim(new SanteDBClaim(SanteDBClaimTypes.Sid, cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value));
 
+                        // Synchronize the security devices
                         this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
                         this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, retVal, true) { Principal = retVal });
                     }
-                    else
+                    else if (authMethod.HasFlag(AuthenticationMethod.Local))
                     {
                         // Is this another device authenticating against me?
                         if (deviceId != ApplicationContext.Current.Device.Name)
@@ -127,6 +130,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             throw new SecurityException(Strings.err_network_securityNotAvailable);
                         }
                     }
+                    else
+                        throw new InvalidOperationException("Cannot determine authentication method");
                 }
 
                 catch (SecurityTokenException ex)
@@ -145,17 +150,23 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 catch (RestClientException<OAuthTokenResponse> ex)
                 {
                     this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-                    var se = new SecurityException(
-                        String.Format("err_oauth2_{0}", ex.Result.Error),
-                        ex
-                    );
-                    se.Data.Add("detail", ex.Result);
-                    throw new SecurityException(Strings.err_authentication_exception, ex);
+
+                    // Not network related, but a protocol level error
+                    if (authMethod.HasFlag(AuthenticationMethod.Local) && deviceId != ApplicationContext.Current.Device.Name)
+                    {
+                        this.m_tracer.TraceWarning("Network unavailable falling back to local");
+                        return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);
+                    }
+                    else
+                    {
+                        this.m_tracer.TraceWarning("Original OAuth2 request failed: {0}", ex.Message);
+                        throw new SecurityException(Strings.err_authentication_exception, ex);
+                    }
                 }
                 catch (Exception ex) // Raw level web exception
                 {
                     // Not network related, but a protocol level error
-                    if (deviceId != ApplicationContext.Current.Device.Name)
+                    if (authMethod.HasFlag(AuthenticationMethod.Local) && deviceId != ApplicationContext.Current.Device.Name)
                     {
                         this.m_tracer.TraceWarning("Network unavailable falling back to local");
                         return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);

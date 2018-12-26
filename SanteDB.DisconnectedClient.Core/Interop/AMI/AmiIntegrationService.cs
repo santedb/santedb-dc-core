@@ -240,7 +240,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                 {
                     var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                     amiClient.Client.Credentials = new NullCredentials();
-                    amiClient.Client.Description.Endpoint[0].Timeout = 10000;
+                    amiClient.Client.Description.Endpoint[0].Timeout = 5000;
                     return amiClient.Ping();
                 }
                 else

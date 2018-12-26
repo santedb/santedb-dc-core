@@ -86,9 +86,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Authenticate the device
         /// </summary>
-        public IPrincipal Authenticate(string deviceId, string deviceSecret)
+        public IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any)
         {
             var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
+
+            if (authMethod.HasFlag(AuthenticationMethod.Local))
+                throw new InvalidOperationException("Identity provider only supports local auth");
 
             // Pre-event
             AuthenticatingEventArgs e = new AuthenticatingEventArgs(deviceId) { };
