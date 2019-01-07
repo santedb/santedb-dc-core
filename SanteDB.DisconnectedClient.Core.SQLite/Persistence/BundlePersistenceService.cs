@@ -20,6 +20,7 @@
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -45,7 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <summary>
         /// Cannot query for bundles
         /// </summary>
-        protected override IEnumerable<Bundle> QueryInternal(SQLiteDataContext context, Expression<Func<Bundle, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override IEnumerable<Bundle> QueryInternal(SQLiteDataContext context, Expression<Func<Bundle, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults, ModelSort<Bundle>[] orderBy)
         {
             totalResults = 0;
             return new List<Bundle>();
@@ -54,7 +55,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <summary>
         /// Connot query bundles
         /// </summary>
-        protected override IEnumerable<Bundle> QueryInternal(SQLiteDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override IEnumerable<Bundle> QueryInternal(SQLiteDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults, ModelSort<Bundle>[] orderBy)
         {
             totalResults = 0;
             return new List<Bundle>();

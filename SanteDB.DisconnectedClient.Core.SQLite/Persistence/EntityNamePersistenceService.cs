@@ -22,6 +22,7 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
@@ -170,7 +171,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <summary>
         /// Order by statement
         /// </summary>
-        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
+        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery, ModelSort<EntityNameComponent>[] orderBy)
         {
             return domainQuery.OrderBy<DbEntityNameComponent>(o => o.Sequence);
         }
@@ -281,7 +282,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
         {
             int tr = 0;
-            return this.QueryInternal(context, o => o.SourceEntityKey == id, 0, -1, out tr, Guid.Empty, false);
+            return this.QueryInternal(context, o => o.SourceEntityKey == id, 0, -1, out tr, Guid.Empty, false, null);
         }
 
     }

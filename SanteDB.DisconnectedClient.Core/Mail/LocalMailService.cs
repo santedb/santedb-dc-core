@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Mail;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -81,13 +82,13 @@ namespace SanteDB.DisconnectedClient.Core.Mail
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount)
+        public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy)
         {
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<MailMessage>>();
             if (persistenceService == null)
                 throw new InvalidOperationException("Cannot find alert persistence service");
 
-            return persistenceService.Query(predicate, offset, count, out totalCount, AuthenticationContext.Current.Principal);
+            return persistenceService.Query(predicate, offset, count, out totalCount, AuthenticationContext.Current.Principal, orderBy);
         }
 
         /// <summary>

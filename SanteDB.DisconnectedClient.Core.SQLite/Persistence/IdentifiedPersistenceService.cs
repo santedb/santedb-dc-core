@@ -20,6 +20,7 @@
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -67,8 +68,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <summary>
         /// Append order by statement
         /// </summary>
-        protected virtual SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
+        protected virtual SqlStatement AppendOrderByStatement(SqlStatement domainQuery, ModelSort<TModel>[] orderBy)
         {
+            if (orderBy != null)
+                foreach (var ob in orderBy)
+                {
+                    var sorter = m_mapper.MapModelExpression<TModel, TDomain, dynamic>(ob.SortProperty, false);
+                    if (sorter != null)
+                        domainQuery = domainQuery.OrderBy(sorter, ob.SortOrder);
+                }
             return domainQuery;
         }
 
@@ -177,7 +185,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="query">Query.</param>
-        protected override System.Collections.Generic.IEnumerable<TModel> QueryInternal(SQLiteDataContext context, Expression<Func<TModel, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override System.Collections.Generic.IEnumerable<TModel> QueryInternal(SQLiteDataContext context, Expression<Func<TModel, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults, ModelSort<TModel>[] orderBy)
         {
 
             // Query has been registered?
@@ -188,7 +196,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }
 
             SqlStatement queryStatement = null;
-            var expression = m_mapper.MapModelExpression<TModel, TDomain>(query, false);
+            var expression = m_mapper.MapModelExpression<TModel, TDomain, bool>(query, false);
             if (expression != null)
             {
                 if (typeof(TQueryResult) != typeof(TDomain))
@@ -226,10 +234,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }
             else
             {
-                queryStatement = m_builder.CreateQuery(query);
+                queryStatement = m_builder.CreateQuery(query, orderBy);
             }
 
-            queryStatement = this.AppendOrderByStatement(queryStatement).Build();
+            queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();
             m_tracer.TraceVerbose("Built Query: {0}", queryStatement.SQL);
 
             // Is this a cached query?
@@ -317,7 +325,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <param name="query">Query.</param>
         /// <param name="storedQueryName">Stored query name.</param>
         /// <param name="parms">Parms.</param>
-        protected override IEnumerable<TModel> QueryInternal(SQLiteDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults)
+        protected override IEnumerable<TModel> QueryInternal(SQLiteDataContext context, string storedQueryName, IDictionary<string, object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults, ModelSort<TModel>[] orderBy)
         {
 
 
@@ -524,7 +532,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 int t = 0;
                 if (typeof(TQueryResult) != typeof(TDomain)) // faster to join
-                    return this.QueryInternal(context, o => o.Key == key, 0, 1, out t, Guid.Empty, false).FirstOrDefault();
+                    return this.QueryInternal(context, o => o.Key == key, 0, 1, out t, Guid.Empty, false, null).FirstOrDefault();
                 else
                 {
                     var kuuid = key.ToByteArray();

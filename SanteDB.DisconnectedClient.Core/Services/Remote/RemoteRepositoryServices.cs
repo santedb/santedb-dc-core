@@ -22,6 +22,7 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -249,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Query the specifie data
         /// </summary>
-        public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults)
+        public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy)
         {
             this.GetCredentials();
 

@@ -249,7 +249,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             public IEnumerable GetFromSource(SQLiteDataContext context, Guid sourceId, decimal? versionSequenceId)
             {
                 int tr = 0;
-                return this.Query(context, o => o.SourceEntityKey == sourceId, Guid.Empty, 0, 100, out tr, false);
+                return this.Query(context, o => o.SourceEntityKey == sourceId, Guid.Empty, 0, 100, out tr, false, null);
             }
         }
 
@@ -361,7 +361,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error initializing local persistence: {0}", e);
-                throw e;
+                throw;
             }
         }
     }

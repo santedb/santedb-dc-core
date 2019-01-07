@@ -22,6 +22,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Mail;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
@@ -198,9 +199,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <summary>
         /// Query for alerts with restrictions
         /// </summary>
-        public IEnumerable<MailMessage> Query(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, IPrincipal authContext = null)
+        public IEnumerable<MailMessage> Query(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, IPrincipal authContext, params ModelSort<MailMessage>[] orderBy)
         {
-            return this.Query(query, offset, count, out totalResults, Guid.Empty, authContext);
+            return this.Query(query, offset, count, out totalResults, Guid.Empty, authContext, orderBy);
         }
 
         /// <summary>
@@ -215,14 +216,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <param name="mode"></param>
         /// <param name="authContext"></param>
         /// <returns></returns>
-        public IEnumerable<MailMessage> Query(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId, IPrincipal authContext = null)
+        public IEnumerable<MailMessage> Query(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId, IPrincipal authContext, params ModelSort<MailMessage>[] orderBy)
         {
             try
             {
                 var conn = this.CreateReadonlyConnection();
                 using (conn.LockConnection())
                 {
-                    var dbPredicate = m_mapper.MapModelExpression<MailMessage, DbMailMessage>(query, false);
+                    var dbPredicate = m_mapper.MapModelExpression<MailMessage, DbMailMessage, bool>(query, false);
 
                     if (dbPredicate == null)
                     {
@@ -232,9 +233,22 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                     }
                     else
                     {
-                        var results = conn.Connection.Table<DbMailMessage>().Where(dbPredicate).Skip(offset).Take(count ?? 100).OrderByDescending(o => o.TimeStamp).ToList().Select(o => o.ToAlert());
+                        var results = conn.Connection.Table<DbMailMessage>().Where(dbPredicate);
+
+                        if (orderBy != null && orderBy.Length > 0)
+                        {
+                            foreach (var itm in orderBy)
+                                if (itm.SortOrder == SortOrderType.OrderBy)
+                                    results = results.OrderBy(m_mapper.MapModelExpression<MailMessage, DbMailMessage, dynamic>(itm.SortProperty));
+                                else
+                                    results = results.OrderByDescending(m_mapper.MapModelExpression<MailMessage, DbMailMessage, dynamic>(itm.SortProperty));
+                        }
+                        else
+                            results = results.OrderByDescending(o => o.TimeStamp);
+
+                        results = results.Skip(offset).Take(count ?? 100);
                         totalResults = results.Count();
-                        return results;
+                        return results.ToList().Select(o => o.ToAlert());
                     }
                 }
             }
@@ -250,7 +264,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         public IEnumerable Query(Expression query, int offset, int? count, out int totalResults)
         {
-            return this.Query((Expression<Func<MailMessage, bool>>)query, offset, count, out totalResults, Guid.Empty);
+            return this.Query((Expression<Func<MailMessage, bool>>)query, offset, count, out totalResults, Guid.Empty, null);
         }
 
         /// <summary>
@@ -258,7 +272,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         public IEnumerable<MailMessage> QueryFast(Expression<Func<MailMessage, bool>> query, int offset, int? count, out int totalResults, Guid queryId, IPrincipal authContext = null)
         {
-            return this.Query(query, offset, count, out totalResults, Guid.Empty);
+            return this.Query(query, offset, count, out totalResults, Guid.Empty, null);
         }
 
         /// <summary>

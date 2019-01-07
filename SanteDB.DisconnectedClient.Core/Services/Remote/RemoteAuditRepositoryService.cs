@@ -20,6 +20,7 @@
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Security;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -56,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find the specified audits
         /// </summary>
-        public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults)
+        public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy)
         {
             this.GetCredentials();
             return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<AuditData>();

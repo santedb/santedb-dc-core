@@ -32,11 +32,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         // Material persister
         private MaterialPersistenceService m_materialPersister = new MaterialPersistenceService();
 
-        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
-        {
-            return domainQuery.OrderBy<DbMaterial>(o => o.ExpiryDate, SanteDB.Core.Model.Map.SortOrderType.OrderByDescending);
-        }
-
         /// <summary>
         /// Material persister
         /// </summary>

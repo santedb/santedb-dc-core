@@ -1,5 +1,6 @@
 ﻿using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -36,9 +37,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Find the specified act
         /// </summary>
-        public override IEnumerable<TAct> Find(Expression<Func<TAct, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
+        public override IEnumerable<TAct> Find(Expression<Func<TAct, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<TAct>[] orderBy)
         {
-            return base.Find(query, offset, count, out totalResults, queryId);
+            return base.Find(query, offset, count, out totalResults, queryId, orderBy);
         }
 
         /// <summary>
@@ -52,9 +53,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Find the specified act
         /// </summary>
-        public override IEnumerable<TAct> Find(Expression<Func<TAct, bool>> query, int offset, int? count, out int totalResults)
+        public override IEnumerable<TAct> Find(Expression<Func<TAct, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TAct>[] orderBy)
         {
-            return base.Find(query, offset, count, out totalResults);
+            return base.Find(query, offset, count, out totalResults, orderBy);
         }
 
         /// <summary>

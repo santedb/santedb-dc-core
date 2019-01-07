@@ -21,6 +21,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -926,7 +927,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find user entity
         /// </summary>
-        IEnumerable<UserEntity> IRepositoryService<UserEntity>.Find(Expression<Func<UserEntity, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<UserEntity> IRepositoryService<UserEntity>.Find(Expression<Func<UserEntity, bool>> query, int offset, int? count, out int totalResults, params ModelSort<UserEntity>[] orderBy)
         {
             return this.FindUserEntity(query, offset, count, out totalResults);
         }
@@ -947,7 +948,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <param name="count">The number of records to return</param>
         /// <param name="totalResults">The total results </param>
         /// <returns>The matching security applications</returns>
-        IEnumerable<SecurityApplication> IRepositoryService<SecurityApplication>.Find(Expression<Func<SecurityApplication, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<SecurityApplication> IRepositoryService<SecurityApplication>.Find(Expression<Func<SecurityApplication, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityApplication>[] orderBy)
         {
             return this.FindApplications(query, offset, count, out totalResults);
         }
@@ -963,7 +964,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find security devices matching the query
         /// </summary>
-        IEnumerable<SecurityDevice> IRepositoryService<SecurityDevice>.Find(Expression<Func<SecurityDevice, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<SecurityDevice> IRepositoryService<SecurityDevice>.Find(Expression<Func<SecurityDevice, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityDevice>[] orderBy)
         {
             return this.FindDevices(query, offset, count, out totalResults);
         }
@@ -979,7 +980,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find specified security roles
         /// </summary>
-        IEnumerable<SecurityRole> IRepositoryService<SecurityRole>.Find(Expression<Func<SecurityRole, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<SecurityRole> IRepositoryService<SecurityRole>.Find(Expression<Func<SecurityRole, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityRole>[] orderBy)
         {
             return this.FindRoles(query, offset, count, out totalResults);
         }
@@ -995,7 +996,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find specified security users with limits
         /// </summary>
-        IEnumerable<SecurityUser> IRepositoryService<SecurityUser>.Find(Expression<Func<SecurityUser, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<SecurityUser> IRepositoryService<SecurityUser>.Find(Expression<Func<SecurityUser, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityUser>[] orderBy)
         {
             return this.FindUsers(query, offset, count, out totalResults);
         }
@@ -1012,7 +1013,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find policy
         /// </summary>
-        IEnumerable<SecurityPolicy> IRepositoryService<SecurityPolicy>.Find(Expression<Func<SecurityPolicy, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<SecurityPolicy> IRepositoryService<SecurityPolicy>.Find(Expression<Func<SecurityPolicy, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityPolicy>[] orderBy)
         {
             return this.FindPolicies(query, offset, count, out totalResults);
         }
@@ -1281,7 +1282,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             throw new NotImplementedException();
         }
 
-        IEnumerable<SecurityProvenance> IRepositoryService<SecurityProvenance>.Find(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults)
+        IEnumerable<SecurityProvenance> IRepositoryService<SecurityProvenance>.Find(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityProvenance>[] orderBy)
         {
             throw new NotImplementedException();
         }

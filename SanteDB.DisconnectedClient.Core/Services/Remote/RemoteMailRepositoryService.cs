@@ -18,6 +18,7 @@
  * Date: 2018-11-23
  */
 using SanteDB.Core.Mail;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Find the specified mail messages
         /// </summary>
-        public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount)
+        public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy)
         {
             this.GetCredentials();
             return this.m_client.Query<MailMessage>(predicate, offset, count, out totalCount).CollectionItem.OfType<MailMessage>();

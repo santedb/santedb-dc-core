@@ -104,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         ApplicationContext.Current.GetService<IAdministrationIntegrationService>().IsAvailable()) // Network may be on but internet is not available
                     {
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.333f);
-                        OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-urlform-encoded", request);
+                        OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
                         retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
 
                         // HACK: Set preferred sid to device SID

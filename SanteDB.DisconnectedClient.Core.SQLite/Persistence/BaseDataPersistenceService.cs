@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
 using System.Collections.Generic;
@@ -44,8 +45,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         where TQueryResult : DbIdentified
     {
 
-        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
+        /// <summary>
+        /// Append order by statement
+        /// </summary>
+        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery, ModelSort<TModel>[] orderBy)
         {
+            domainQuery = base.AppendOrderByStatement(domainQuery, orderBy);
             return domainQuery.OrderBy<TDomain>(o => o.CreationTime, SanteDB.Core.Model.Map.SortOrderType.OrderByDescending);
         }
 

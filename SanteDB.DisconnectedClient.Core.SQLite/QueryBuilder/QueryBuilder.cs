@@ -184,33 +184,33 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// <summary>
         /// Create a query 
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(Expression<Func<TModel, bool>> predicate)
+        public SqlStatement CreateQuery<TModel>(Expression<Func<TModel, bool>> predicate, ModelSort<TModel>[] orderBy)
         {
             var nvc = QueryExpressionBuilder.BuildQuery(predicate, true);
-            return CreateQuery<TModel>(nvc);
+            return CreateQuery<TModel>(nvc, orderBy);
         }
 
         /// <summary>
         /// Create query
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
         {
-            return CreateQuery<TModel>(query, null, selector);
+            return CreateQuery<TModel>(query, null, orderBy, selector);
         }
 
         /// <summary>
         /// Create query 
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
         {
-            return CreateQuery<TModel>(query, null, false, selector);
+            return CreateQuery<TModel>(query, null, false, orderBy, selector);
         }
 
         /// <summary>
         /// Query query 
         /// </summary>
         /// <param name="query"></param>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, bool skipJoins, params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, bool skipJoins, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
         {
             var tableType = m_mapper.MapModelType(typeof(TModel));
             var tableMap = TableMapping.Get(tableType);
@@ -384,7 +384,7 @@ namespace SanteDB.Core.Data.QueryBuilder
 
                                 // Generate method
                                 var prefix = IncrementSubQueryAlias(tablePrefix);
-                                var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { propertyType }, new Type[] { subQuery.GetType(), typeof(String), typeof(bool), typeof(ColumnMapping[]) });
+                                var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { propertyType }, new Type[] { subQuery.GetType(), typeof(String), typeof(bool), typeof(ModelSort<>).MakeGenericType(propertyType).MakeArrayType(), typeof(ColumnMapping[]) });
 
                                 // Sub path is specified
                                 if (String.IsNullOrEmpty(propertyPredicate.SubPath) && "null".Equals(parm.Value))
@@ -443,14 +443,14 @@ namespace SanteDB.Core.Data.QueryBuilder
 
                             if (String.IsNullOrEmpty(propertyPredicate.CastAs))
                             {
-                                var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { subProp.PropertyType }, new Type[] { subQuery.GetType(), typeof(string), typeof(bool), typeof(ColumnMapping[]) });
+                                var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { subProp.PropertyType }, new Type[] { subQuery.GetType(), typeof(string), typeof(bool), typeof(ModelSort<>).MakeGenericType(subProp.PropertyType).MakeArrayType(), typeof(ColumnMapping[]) });
                                 subQueryStatement = genMethod.Invoke(this, new Object[] { subQuery, null, subSkipJoins, new ColumnMapping[] { fkColumnDef } }) as SqlStatement;
                             }
                             else // we need to cast!
                             {
                                 var castAsType = new SanteDB.Core.Model.Serialization.ModelSerializationBinder().BindToType("SanteDB.Core.Model", propertyPredicate.CastAs);
 
-                                var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { castAsType }, new Type[] { subQuery.GetType(), typeof(String), typeof(bool), typeof(ColumnMapping[]) });
+                                var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { castAsType }, new Type[] { subQuery.GetType(), typeof(String), typeof(bool), typeof(ModelSort<>).MakeGenericType(castAsType).MakeArrayType(), typeof(ColumnMapping[]) });
                                 subQueryStatement = genMethod.Invoke(this, new Object[] { subQuery, null, false, new ColumnMapping[] { fkColumnDef } }) as SqlStatement;
                             }
 
@@ -483,7 +483,53 @@ namespace SanteDB.Core.Data.QueryBuilder
                 }
             }
             retVal.Append(selectStatement.Where(whereClause));
+
+            // TODO: Order by?
+            if (orderBy != null && orderBy.Length > 0)
+            {
+                retVal.Append("ORDER BY");
+                foreach (var ob in orderBy)
+                {
+                    // Query property path 
+                    var orderStatement = this.CreateOrderBy(typeof(TModel), tablePrefix, scopedTables, ob.SortProperty.Body, ob.SortOrder);
+                    retVal.Append(orderStatement).Append(",");
+                }
+                retVal.RemoveLast();
+            }
             return retVal;
+        }
+
+        /// <summary>
+        /// Create the order by clause
+        /// </summary>
+        /// <param name="tmodel">The type of model</param>
+        /// <param name="tablePrefix">The prefix that the table has</param>
+        /// <param name="scopedTables">The tables which are scoped</param>
+        /// <param name="sortExpression">The sorting expression</param>
+        private SqlStatement CreateOrderBy(Type tmodel, string tablePrefix, List<TableMapping> scopedTables, Expression sortExpression, SortOrderType order)
+        {
+            switch (sortExpression.NodeType)
+            {
+                case ExpressionType.Convert:
+                case ExpressionType.ConvertChecked:
+                    return this.CreateOrderBy(tmodel, tablePrefix, scopedTables, ((UnaryExpression)sortExpression).Operand, order);
+                case ExpressionType.MemberAccess:
+                    var mexpr = (MemberExpression)sortExpression;
+
+                    // Determine the parameter type 
+                    if (mexpr.Expression.NodeType != ExpressionType.Parameter)
+                        throw new InvalidOperationException("OrderBy can only be performed on primary properties of the object");
+
+                    // Determine the map
+                    var tableMapping = scopedTables.First();
+                    var propertyInfo = mexpr.Member as PropertyInfo;
+                    PropertyInfo domainProperty = scopedTables.Select(o => { tableMapping = o; return m_mapper.MapModelProperty(tmodel, o.OrmType, propertyInfo); }).FirstOrDefault(o => o != null);
+                    var columnData = tableMapping.GetColumn(domainProperty);
+                    return new SqlStatement($" {columnData.Name} {(order == SortOrderType.OrderBy ? "ASC" : "DESC")}");
+
+                default:
+                    throw new InvalidOperationException("Cannot sort by this property expression");
+            }
         }
 
         /// <summary>

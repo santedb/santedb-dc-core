@@ -22,6 +22,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.SQLite.Model;
@@ -56,8 +57,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <summary>
         /// Get the order by
         /// </summary>
-        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
+        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery, ModelSort<Act>[] orderBy)
         {
+            domainQuery = base.AppendOrderByStatement(domainQuery, orderBy);
             return domainQuery.OrderBy<DbAct>(o => o.CreationTime, SortOrderType.OrderByDescending);
         }
 

@@ -24,6 +24,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
@@ -91,7 +92,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Find with stored query parameters
         /// </summary>
-        public virtual IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId)
+        public virtual IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<TEntity>[] orderBy)
         {
 
             // Demand permission
@@ -328,7 +329,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// <summary>
         /// Perform a normal find
         /// </summary>
-        public virtual IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults)
+        public virtual IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TEntity>[] orderBy)
         {
             return this.Find(query, offset, count, out totalResults, Guid.Empty);
         }

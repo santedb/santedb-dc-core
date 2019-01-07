@@ -33,6 +33,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using SanteDB.Core.Model.Query;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
 {
@@ -130,7 +131,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query)
         {
             int tr = 0;
-            return this.Find(query, 0, null, out tr);
+            return this.Find(query, 0, null, out tr, null);
         }
 
         /// <summary>
@@ -153,7 +154,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 using (conn.Lock())
                 {
                     var builder = new QueryBuilder(this.m_mapper);
-                    var sql = builder.CreateQuery<AuditData>(o => o.Key == pk).Limit(1).Build();
+                    var sql = builder.CreateQuery<AuditData>(o => o.Key == pk, null).Limit(1).Build();
 
                     var res = conn.Query<DbAuditData.QueryResult>(sql.SQL, sql.Arguments.ToArray()).FirstOrDefault();
                     AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.Success, sql.ToString(), pk);
@@ -258,7 +259,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         /// <summary>
         /// Fids the specified audit in the local repository
         /// </summary>
-        public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults)
+        public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy)
         {
             try
             {
@@ -266,8 +267,10 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 using (conn.Lock())
                 {
                     var builder = new QueryBuilder(this.m_mapper);
-                    var sql = builder.CreateQuery(query).Build();
-                    sql = sql.OrderBy<DbAuditData>(o => o.Timestamp, SortOrderType.OrderByDescending);
+                    var sql = builder.CreateQuery(query, orderBy).Build();
+
+                    if(orderBy == null || orderBy.Length == 0)
+                        sql = sql.OrderBy<DbAuditData>(o => o.Timestamp, SortOrderType.OrderByDescending);
 
                     // Total results
                     totalResults = conn.ExecuteScalar<Int32>($"SELECT COUNT(*) FROM ({sql.SQL})", sql.Arguments.ToArray());

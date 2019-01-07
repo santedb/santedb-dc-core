@@ -387,7 +387,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                 return existing as TData;
             int toss = 0;
             this.m_tracer.TraceInfo("GET: {0}", key);
-            return this.Query(o => o.Key == key, null, 0, 1, out toss, false, false, principal)?.SingleOrDefault();
+            return this.Query(o => o.Key == key, null, 0, 1, out toss, false, false, principal, null)?.SingleOrDefault();
         }
 
         /// <summary>
@@ -397,16 +397,16 @@ namespace SanteDB.DisconnectedClient.SQLite
         public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, IPrincipal principal)
         {
             int totalResults = 0;
-            return this.Query(query, null, 0, null, out totalResults, false, false, principal);
+            return this.Query(query, null, 0, null, out totalResults, false, false, principal, null);
         }
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal)
+        public virtual System.Collections.Generic.IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy)
         {
-            return this.Query(query, null, offset, count, out totalResults, true, false, principal);
+            return this.Query(query, null, offset, count, out totalResults, true, false, principal, orderBy);
         }
 
         /// <summary>
@@ -415,13 +415,13 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <param name="query">Query.</param>
         public virtual System.Collections.Generic.IEnumerable<TData> QueryFast(System.Linq.Expressions.Expression<Func<TData, bool>> query, Guid queryId, int offset, int? count, out int totalResults, IPrincipal principal)
         {
-            return this.Query(query, queryId, offset, count, out totalResults, true, true, principal);
+            return this.Query(query, queryId, offset, count, out totalResults, true, true, principal, null);
         }
         
         /// <summary>
         /// Query function returning results and count control
         /// </summary>
-        private IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, Guid? queryId, int offset, int? count, out int totalResults, bool countResults, bool fastQuery, IPrincipal principal)
+        private IEnumerable<TData> Query(System.Linq.Expressions.Expression<Func<TData, bool>> query, Guid? queryId, int offset, int? count, out int totalResults, bool countResults, bool fastQuery, IPrincipal principal, ModelSort<TData>[] orderBy)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
@@ -453,7 +453,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         else
                             context.DelayLoadMode = LoadState.FullLoad;
                         
-                        results = this.Query(context, query, queryId.GetValueOrDefault(), offset, count ?? -1, out totalResults, countResults);
+                        results = this.Query(context, query, queryId.GetValueOrDefault(), offset, count ?? -1, out totalResults, countResults, orderBy);
                     }
 
                     var postData = new QueryResultEventArgs<TData>(query, results, offset, count, totalResults, queryId, principal);
@@ -491,7 +491,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         public virtual long Count(Expression<Func<TData, bool>> query, IPrincipal principal)
         {
             var tr = 0;
-            this.Query(query, null, 0, 0, out tr, true, true, principal);
+            this.Query(query, null, 0, 0, out tr, true, true, principal, null);
             return tr;
         }
 
@@ -585,9 +585,9 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="query">Query.</param>
-        public IEnumerable<TData> Query(SQLiteDataContext context, Expression<Func<TData, bool>> query, Guid queryId, int offset, int count, out int totalResults, bool countResults)
+        public IEnumerable<TData> Query(SQLiteDataContext context, Expression<Func<TData, bool>> query, Guid queryId, int offset, int count, out int totalResults, bool countResults, ModelSort<TData>[] orderBy)
         {
-            var retVal = this.QueryInternal(context, query, offset, count, out totalResults, queryId, countResults);
+            var retVal = this.QueryInternal(context, query, offset, count, out totalResults, queryId, countResults, orderBy);
 
             foreach (var i in retVal.Where(i => i != null))
                 context.AddCacheCommit(i);
@@ -635,13 +635,13 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="query">Query.</param>
-        protected abstract IEnumerable<TData> QueryInternal(SQLiteDataContext context, Expression<Func<TData, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults);
+        protected abstract IEnumerable<TData> QueryInternal(SQLiteDataContext context, Expression<Func<TData, bool>> query, int offset, int count, out int totalResults, Guid queryId, bool countResults, ModelSort<TData>[] orderBy);
         /// <summary>
         /// Performs the actual query
         /// </summary>
         /// <param name="context">Context.</param>
         /// <param name="query">Query.</param>
-        protected abstract IEnumerable<TData> QueryInternal(SQLiteDataContext context, String storedQueryName, IDictionary<String, Object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults);
+        protected abstract IEnumerable<TData> QueryInternal(SQLiteDataContext context, String storedQueryName, IDictionary<String, Object> parms, int offset, int count, out int totalResults, Guid queryId, bool countResults, ModelSort<TData>[] orderBy);
 
         /// <summary>
         /// Query internal without caring about limiting
@@ -652,7 +652,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         public IEnumerable<TData> Query(SQLiteDataContext context, Expression<Func<TData, bool>> expr)
         {
             int t;
-            return this.QueryInternal(context, expr, 0, -1, out t, Guid.Empty, false);
+            return this.QueryInternal(context, expr, 0, -1, out t, Guid.Empty, false, null);
         }
 
         /// <summary>
@@ -665,7 +665,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             var existing = ApplicationContext.Current.GetService<IDataCachingService>().GetCacheItem(key);
             if (existing != null)
                 return existing as TData;
-            return this.QueryInternal(context, o => o.Key == key, 0, 1, out totalResults, Guid.Empty, false)?.SingleOrDefault();
+            return this.QueryInternal(context, o => o.Key == key, 0, 1, out totalResults, Guid.Empty, false, null)?.SingleOrDefault();
         }
 
         /// <summary>
@@ -705,7 +705,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         public IEnumerable Query(Expression query, int offset, int? count, out int totalResults)
         {
-            return this.Query((Expression<Func<TData, bool>>)query, null, offset, count, out totalResults, true, false, AuthenticationContext.Current.Principal);
+            return this.Query((Expression<Func<TData, bool>>)query, null, offset, count, out totalResults, true, false, AuthenticationContext.Current.Principal, null);
         }
 
         /// <summary>
@@ -751,9 +751,9 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Perform a stored query
         /// </summary>
-        public IEnumerable<TData> Query(Expression<Func<TData, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext)
+        public IEnumerable<TData> Query(Expression<Func<TData, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext, params ModelSort<TData>[] orderBy)
         {
-            return this.Query((Expression<Func<TData, bool>>)query, queryId, offset, count, out totalCount, true, false, AuthenticationContext.Current.Principal);
+            return this.Query((Expression<Func<TData, bool>>)query, queryId, offset, count, out totalCount, true, false, AuthenticationContext.Current.Principal, orderBy);
 
         }
     }

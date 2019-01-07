@@ -20,6 +20,7 @@
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using System;
 using System.Collections.Generic;
@@ -113,7 +114,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <summary>
         /// Order by statement
         /// </summary>
-        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery)
+        protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery, ModelSort<ActParticipation>[] orderBy)
         {
             return domainQuery.OrderBy<DbActParticipation>(o => o.Sequence);
         }
