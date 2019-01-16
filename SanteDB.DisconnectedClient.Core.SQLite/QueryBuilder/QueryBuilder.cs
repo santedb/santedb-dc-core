@@ -568,7 +568,10 @@ namespace SanteDB.Core.Data.QueryBuilder
             if (String.IsNullOrEmpty(tableAlias))
                 tableAlias = $"{tablePrefix}{tableMapping.TableName}";
             if (domainProperty == null)
-                throw new ArgumentException($"Can't find SQL based property for {propertyPath} on {tableMapping.TableName}");
+            {
+                return new SqlStatement("1");
+                //throw new ArgumentException($"Can't find SQL based property for {propertyPath} on {tableMapping.TableName}");
+            }
             var columnData = tableMapping.GetColumn(domainProperty);
 
             // List of parameters
