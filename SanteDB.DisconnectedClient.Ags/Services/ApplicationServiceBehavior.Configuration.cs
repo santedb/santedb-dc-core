@@ -514,7 +514,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is ITwoFactorRequestService
                                 || o is IAuditRepositoryService
                                 || o is ISynchronizationService
-                                || o is IMailMessageRepositoryService))
+                                || o is IMailMessageRepositoryService).ToArray())
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService), true);

@@ -101,7 +101,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     // Invoke
                     if (authMethod.HasFlag(AuthenticationMethod.Online) &&
                         ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable &&
-                        ApplicationContext.Current.GetService<IAdministrationIntegrationService>().IsAvailable()) // Network may be on but internet is not available
+                        ApplicationContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() != false) // Network may be on but internet is not available
                     {
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.333f);
                         OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
@@ -192,7 +192,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             var localIdp = ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>();
             var sdPersistence = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityDevice>>();
 
-            if (!String.IsNullOrEmpty(deviceSecret) && principal is IClaimsPrincipal &&
+            if (localIdp != null &&
+                !String.IsNullOrEmpty(deviceSecret) && principal is IClaimsPrincipal &&
                             XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
                 IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;

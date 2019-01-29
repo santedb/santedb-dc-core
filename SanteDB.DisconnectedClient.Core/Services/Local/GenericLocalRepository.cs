@@ -109,9 +109,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
 
             IEnumerable<TEntity> results = null;
             if(persistenceService is IStoredQueryDataPersistenceService<TEntity>)
-                results = (persistenceService as IStoredQueryDataPersistenceService<TEntity>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal);
+                results = (persistenceService as IStoredQueryDataPersistenceService<TEntity>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
             else
-                results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal);
+                results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
 
             var retVal = businessRulesService != null ? businessRulesService.AfterQuery(results) : results;
             this.Queried?.Invoke(this, new RepositoryEventArgs<IEnumerable<TEntity>>(retVal));
@@ -331,7 +331,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// </summary>
         public virtual IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TEntity>[] orderBy)
         {
-            return this.Find(query, offset, count, out totalResults, Guid.Empty);
+            return this.Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
         }
 
         /// <summary>

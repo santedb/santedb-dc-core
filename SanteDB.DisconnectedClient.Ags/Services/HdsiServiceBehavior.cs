@@ -43,7 +43,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// HDSI service behavior
         /// </summary>
-        public HdsiServiceBehavior() : base(new Rest.Common.ResourceHandlerTool(typeof(PatientResourceHandler).Assembly.ExportedTypes.Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))))
+        public HdsiServiceBehavior() : base(
+            new Rest.Common.ResourceHandlerTool(
+                typeof(PatientResourceHandler).Assembly.ExportedTypes
+                .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a=>!a.IsDynamic).SelectMany(a=>a.ExportedTypes))
+                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))))
         {
         }
 

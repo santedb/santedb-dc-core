@@ -396,9 +396,9 @@ namespace SanteDB.Core.Data.QueryBuilder
                                 existsClause = $"{prefix}{subTableColumn.Table.TableName}.{subTableColumn.Name}";
 
                                 if (subQuery.Count(p => !p.Key.Contains(".")) == 0)
-                                    subQueryStatement.Append(genMethod.Invoke(this, new Object[] { subQuery, prefix, true, new ColumnMapping[] { subTableColumn } }) as SqlStatement);
+                                    subQueryStatement.Append(genMethod.Invoke(this, new Object[] { subQuery, prefix, true, null, new ColumnMapping[] { subTableColumn } }) as SqlStatement);
                                 else
-                                    subQueryStatement.Append(genMethod.Invoke(this, new Object[] { subQuery, prefix, false, new ColumnMapping[] { subTableColumn } }) as SqlStatement);
+                                    subQueryStatement.Append(genMethod.Invoke(this, new Object[] { subQuery, prefix, false, null, new ColumnMapping[] { subTableColumn } }) as SqlStatement);
 
 
                                 //// TODO: Check if limiting the the query is better
@@ -444,14 +444,14 @@ namespace SanteDB.Core.Data.QueryBuilder
                             if (String.IsNullOrEmpty(propertyPredicate.CastAs))
                             {
                                 var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { subProp.PropertyType }, new Type[] { subQuery.GetType(), typeof(string), typeof(bool), typeof(ModelSort<>).MakeGenericType(subProp.PropertyType).MakeArrayType(), typeof(ColumnMapping[]) });
-                                subQueryStatement = genMethod.Invoke(this, new Object[] { subQuery, null, subSkipJoins, new ColumnMapping[] { fkColumnDef } }) as SqlStatement;
+                                subQueryStatement = genMethod.Invoke(this, new Object[] { subQuery, null, subSkipJoins, null, new ColumnMapping[] { fkColumnDef } }) as SqlStatement;
                             }
                             else // we need to cast!
                             {
                                 var castAsType = new SanteDB.Core.Model.Serialization.ModelSerializationBinder().BindToType("SanteDB.Core.Model", propertyPredicate.CastAs);
 
                                 var genMethod = typeof(QueryBuilder).GetGenericMethod("CreateQuery", new Type[] { castAsType }, new Type[] { subQuery.GetType(), typeof(String), typeof(bool), typeof(ModelSort<>).MakeGenericType(castAsType).MakeArrayType(), typeof(ColumnMapping[]) });
-                                subQueryStatement = genMethod.Invoke(this, new Object[] { subQuery, null, false, new ColumnMapping[] { fkColumnDef } }) as SqlStatement;
+                                subQueryStatement = genMethod.Invoke(this, new Object[] { subQuery, null, false, null, new ColumnMapping[] { fkColumnDef } }) as SqlStatement;
                             }
 
                             cteStatements.Add(new SqlStatement($"{tablePrefix}cte{cteStatements.Count} AS (").Append(subQueryStatement).Append(")"));

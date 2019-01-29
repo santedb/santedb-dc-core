@@ -55,7 +55,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// AMI service behavior
         /// </summary>
-        public AmiServiceBehavior() : base(new Rest.Common.ResourceHandlerTool(typeof(SecurityUserResourceHandler).Assembly.ExportedTypes.Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))))
+        public AmiServiceBehavior() : base(
+            new Rest.Common.ResourceHandlerTool(
+                typeof(SecurityUserResourceHandler).Assembly.ExportedTypes
+                .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes))
+                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))))
         {
         }
 

@@ -338,7 +338,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
-                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityPolicyInfo>().Select(o => o.Policy);
+                return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<SecurityPolicy>();
             }
             catch (Exception e)
             {

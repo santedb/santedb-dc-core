@@ -26,6 +26,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Core.Services.Remote;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
@@ -37,16 +38,13 @@ namespace SanteDB.DisconnectedClient.Core.Security
     /// <summary>
     /// Policy information service which feeds from AMI
     /// </summary>
-    public class AmiPolicyInformationService : IPolicyInformationService
+    public class AmiPolicyInformationService : AmiRepositoryBaseService, IPolicyInformationService
     {
 
         /// <summary>
         /// Get the service name
         /// </summary>
         public String ServiceName => "AMI Remote Policy Information Service";
-
-        // Service client
-        private AmiServiceClient m_client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 
         /// <summary>
         /// Remote policies only
@@ -57,11 +55,11 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
-        /// Policy as a specific principal
+        /// Creates a new AMI PIP
         /// </summary>
-        public AmiPolicyInformationService(IClaimsPrincipal cprincipal)
+        public AmiPolicyInformationService(IPrincipal principal)
         {
-            this.m_client.Client.Credentials = this.m_client.Client?.Description?.Binding?.Security?.CredentialProvider?.GetCredentials(cprincipal);
+            this.m_cachedCredential = principal;
         }
 
         /// <summary>
@@ -77,6 +75,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public IEnumerable<IPolicyInstance> GetActivePolicies(object securable)
         {
+            this.GetCredentials();
             // Security device
             if (securable is SecurityDevice)
                 throw new NotImplementedException();

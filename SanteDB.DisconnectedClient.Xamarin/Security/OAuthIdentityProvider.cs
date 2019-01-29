@@ -429,8 +429,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public System.Security.Principal.IIdentity GetIdentity(string userName)
         {
-            throw new NotImplementedException();
+            // Get identity from the local synchronized provider
+            return new GenericIdentity(userName, "OAUTH");
         }
+
         /// <summary>
         /// Authenticates the specified user
         /// </summary>

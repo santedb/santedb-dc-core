@@ -70,7 +70,12 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             this.Application = config.GetSection<ApplicationConfigurationSection>();
             this.Log = config.GetSection<DiagnosticsConfigurationSection>();
             this.Network = config.GetSection<ServiceClientConfigurationSection>();
-            this.Synchronization = config.GetSection<SynchronizationConfigurationSection>();
+
+            try
+            {
+                this.Synchronization = config.GetSection<SynchronizationConfigurationSection>();
+            }
+            catch { }
             this.Ags = config.GetSection<AgsConfigurationSection>();
 
             this.OtherSections = config.Sections.Where(o => !typeof(ConfigurationViewModel).GetRuntimeProperties().Any(p => p.PropertyType.IsAssignableFrom(o.GetType()))).ToList();

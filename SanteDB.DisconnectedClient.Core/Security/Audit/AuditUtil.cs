@@ -151,7 +151,6 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         {
             // Add audit actors for this device and for the current user
             var securityConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            var subscriptionConfig = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>();
 
             // Add auditable object which identifies the device
             audit.AuditableObjects.Add(new AuditableObject()
@@ -168,17 +167,21 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             });
 
             // Add auditable object which identifies the facility
-            var facilityId = subscriptionConfig.Facilities?.FirstOrDefault();
-            if (!String.IsNullOrEmpty(facilityId))
-                audit.AuditableObjects.Add(new AuditableObject()
-                {
-                    IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode("Place", "SanteDBTable"),
-                    ObjectId = facilityId,
-                    Role = AuditableObjectRole.Location,
-                    Type = AuditableObjectType.Organization
-                });
-
+            try
+            {
+                var subscriptionConfig = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>();
+                var facilityId = subscriptionConfig.Facilities?.FirstOrDefault();
+                if (!String.IsNullOrEmpty(facilityId))
+                    audit.AuditableObjects.Add(new AuditableObject()
+                    {
+                        IDTypeCode = AuditableObjectIdType.Custom,
+                        CustomIdTypeCode = new AuditCode("Place", "SanteDBTable"),
+                        ObjectId = facilityId,
+                        Role = AuditableObjectRole.Location,
+                        Type = AuditableObjectType.Organization
+                    });
+            }
+            catch { }
         }
 
         /// <summary>
