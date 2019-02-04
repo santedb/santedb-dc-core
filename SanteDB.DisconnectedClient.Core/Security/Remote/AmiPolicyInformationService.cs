@@ -78,7 +78,10 @@ namespace SanteDB.DisconnectedClient.Core.Security
             this.GetCredentials();
             // Security device
             if (securable is SecurityDevice)
-                throw new NotImplementedException();
+            {
+                string name = (securable as SecurityDevice).Name;
+                return this.m_client.GetDevices(o => o.Name == name).CollectionItem.OfType<SecurityDeviceInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
+            }
             else if (securable is SecurityRole)
             {
                 string name = (securable as SecurityRole).Name;
@@ -86,7 +89,10 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
             }
             else if (securable is SecurityApplication)
-                throw new NotImplementedException();
+            {
+                string name = (securable as SecurityApplication).Name;
+                return this.m_client.GetApplications(o => o.Name == name).CollectionItem.OfType<SecurityApplicationInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
+            }
             else if (securable is IPrincipal || securable is IIdentity)
             {
                 var userInfo = this.m_client.GetUsers(o => o.UserName == (securable as IPrincipal).Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
