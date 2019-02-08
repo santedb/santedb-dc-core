@@ -85,7 +85,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
                             var viewState = htmlContent.ViewState;
                             sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
-                            if(itm.Policies.Count > 0)
+                            var displayName = htmlContent.GetTitle(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+                            if(!String.IsNullOrEmpty(displayName))
+                                sw.Write($", displayName: '{displayName }'");
+                            if (itm.Policies.Count > 0)
                                 sw.Write($", demand: [{String.Join(",", itm.Policies.Select(o=>$"'{o}'"))}] ");
                             if (viewState.View.Count > 0)
                             {

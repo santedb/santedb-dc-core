@@ -142,9 +142,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         {
                             // Attempt to load
                             cert = new X509Certificate2Collection(new X509Certificate2(package.PublicKey));
+                            // Build the certificate chain
+                            var chain = new X509Chain();
+                            chain.Build(cert[0]);
 
-                            // The embedded certificate is not in trusted publisher store and/or not valid
-                            if (!ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().Security.TrustedPublishers.Contains(cert[0].Thumbprint) && !cert[0].Verify())
+                            // Validate the chain elements
+                            bool isTrusted = false;
+                            foreach (var itm in chain.ChainElements)
+                                isTrusted |= ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().Security.TrustedPublishers.Contains(itm.Certificate.Thumbprint);
+
+                            if (!isTrusted || chain.ChainStatus.Any(o => o.Status != X509ChainStatusFlags.RevocationStatusUnknown))
                             {
                                 if (!ApplicationContext.Current.Confirm(String.Format(Strings.locale_untrustedPublisherPrompt, package.Meta.Names.First().Value, this.ExtractDNPart(cert[0].Subject, "CN"))))
                                     return false;
