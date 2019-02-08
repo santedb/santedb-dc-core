@@ -124,7 +124,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 case "Inline":
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Inline;
                     break;
-
+                case "Peer":
+                    ApplicationContext.Current.RemoveServiceProvider(typeof(OAuthIdentityProvider));
+                    break;
             }
             this.m_tracer.TraceInfo("Joining {0}", realmUri);
 

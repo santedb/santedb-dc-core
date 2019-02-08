@@ -70,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Create the session object from the principal
         /// </summary>
-        public SessionInfo(IPrincipal principal, DateTime? expiry)
+        internal SessionInfo(IPrincipal principal, DateTime? expiry)
         {
             this.ProcessPrincipal(principal, expiry);
         }
@@ -179,13 +179,13 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Gets or sets the access token
         /// </summary>
-        [JsonProperty("token")]
+        [JsonProperty("access_token")]
         public String Token { get; set; }
 
         /// <summary>
         /// Gets or sets the JWT token
         /// </summary>
-        [JsonProperty("idToken")]
+        [JsonProperty("id_token")]
         public string IdentityToken { get; set; }
 
         /// <summary>
@@ -224,29 +224,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// Refresh token
         /// </summary>
         byte[] ISession.RefreshToken => Encoding.UTF8.GetBytes(this.RefreshToken);
-
-        /// <summary>
-        /// Extends the session
-        /// </summary>
-        public SessionInfo Extend(String refreshEvidence)
-        {
-            try
-            {
-                lock (this.m_syncLock)
-                {
-                    if (this.Expiry > DateTime.Now.AddMinutes(5)) // session will still be valid in 5 mins so no auth
-                        return null;
-                    this.ProcessPrincipal(ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticate(this.Principal.Identity.Name, null), null);
-                    return this;
-                }
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Error extending session: {0}", e);
-                return null;
-            }
-        }
-
+        
         /// <summary>
         /// Process a principal
         /// </summary>
@@ -259,6 +237,9 @@ namespace SanteDB.DisconnectedClient.Core.Security
             this.Principal = principal;
             if (principal is IClaimsPrincipal)
                 this.Token = principal.ToString();
+            this.RefreshToken = BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", ""); // TODO: Sign this
+
+            Guid sid = Guid.Empty;
 
             // Expiry / etc
             if (principal is IClaimsPrincipal)
@@ -269,11 +250,8 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 this.Expiry = expiry ?? (cp.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
                 this.Roles = cp.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
                 this.AuthenticationType = cp.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value;
-
-                var subKey = Guid.Empty;
                 if (cp.HasClaim(o => o.Type == SanteDBClaimTypes.Sid))
-                    Guid.TryParse(cp.FindFirst(SanteDBClaimTypes.Sid)?.Value, out subKey);
-
+                    Guid.TryParse(cp.FindFirst(SanteDBClaimTypes.Sid)?.Value, out sid);
             }
             else
             {
@@ -283,6 +261,17 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 this.Expiry = expiry ?? DateTime.MaxValue;
             }
 
+            /// Identity token (not signed by this class)
+            this.IdentityToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new
+            {
+                nbf = this.Issued,
+                exp = this.Expiry,
+                role = this.Roles.FirstOrDefault(),
+                authmethod = this.AuthenticationType,
+                unique_name = this.UserName,
+                scope = (principal as IClaimsIdentity)?.Claims.Where(o=>o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim),
+                sub = sid.ToString()
+            })));
 
             // Grab the user entity
             String errDetail = String.Empty;
@@ -310,7 +299,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 if (this.m_entity == null || amiService != null && amiService.IsAvailable() || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     int t = 0;
-                    var sid = Guid.Parse((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
+                    sid = Guid.Parse((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
                     this.m_entity = amiService.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
 
                     ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>

@@ -93,7 +93,7 @@ namespace SanteDB.DisconnectedClient.UI
                 Security = new AppletSecurityConfiguration()
                 {
                     AllowUnsignedApplets = true,
-                    TrustedPublishers = new List<string>() { "84BD51F0584A1F708D604CF0B8074A68D3BEB973" }
+                    TrustedPublishers = new List<string>() { "82C63E1E9B87578D0727E871D7613F2F0FAF683B" }
                 }
             };
 

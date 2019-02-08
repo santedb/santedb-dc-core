@@ -165,6 +165,18 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
+        /// Perform a refresh using the refresh token
+        /// </summary>
+        public SessionInfo Refresh(String refreshToken)
+        {
+            var session = this.m_session.Values.FirstOrDefault(o => o.RefreshToken == refreshToken && o.Expiry > DateTime.Now);
+            if (session == null)
+                throw new SecurityException(Strings.locale_session_expired);
+            else
+                return this.Refresh(session);
+        }
+
+        /// <summary>
         /// Refreshes the specified session
         /// </summary>
         public SessionInfo Refresh(SessionInfo session)

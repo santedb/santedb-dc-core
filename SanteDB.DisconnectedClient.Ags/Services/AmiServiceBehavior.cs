@@ -19,7 +19,9 @@
  */
 using RestSrvr;
 using RestSrvr.Exceptions;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
@@ -27,6 +29,7 @@ using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Interop;
@@ -260,7 +263,55 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 return amiClient.Options();
             }
             else
-                throw new NotImplementedException();
+            {
+                RestOperationContext.Current.OutgoingResponse.StatusCode = (int)200;
+                RestOperationContext.Current.OutgoingResponse.Headers.Add("Allow", $"GET, PUT, POST, OPTIONS, HEAD, DELETE{(ApplicationServiceContext.Current.GetService<IPatchService>() != null ? ", PATCH" : null)}");
+
+                if (ApplicationServiceContext.Current.GetService<IPatchService>() != null)
+                {
+                    RestOperationContext.Current.OutgoingResponse.Headers.Add("Accept-Patch", "application/xml+oiz-patch");
+                }
+
+                var serviceOptions = new ServiceOptions
+                {
+                    InterfaceVersion = "1.0.0.0",
+                    Services = new List<ServiceResourceOptions>
+                {
+                    new ServiceResourceOptions
+                    {
+                        ResourceName = "time",
+                        Capabilities = ResourceCapability.Get
+                    }
+                },
+                    Endpoints = (ApplicationServiceContext.Current as IServiceManager).GetServices().OfType<IApiEndpointProvider>().Select(o =>
+                        new ServiceEndpointOptions
+                        {
+                            BaseUrl = o.Url,
+                            ServiceType = o.ApiType,
+                            Capabilities = o.Capabilities
+                        }
+                    ).ToList()
+                };
+
+                serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.AdministrationIntegrationService);
+                serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.HealthDataService);
+                serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.AuthenticationService);
+                
+                serviceOptions.Endpoints.AddRange(ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>().Services.Select(s => new ServiceEndpointOptions()
+                {
+                    BaseUrl = s.Endpoints.Select(o=> {
+                        var configHost = new Uri(o.Address);
+                        this.m_traceSource.TraceVerbose("Rewriting OPTION {0}:{1} > {2}", configHost.Host, configHost.Port, RestOperationContext.Current.IncomingRequest.UserHostAddress);
+                        return o.Address.Replace(configHost.Host + ":" + configHost.Port, RestOperationContext.Current.IncomingRequest.UserHostAddress);
+                    }).ToArray(),
+                    Capabilities = ServiceEndpointCapabilities.BearerAuth | ServiceEndpointCapabilities.Compression,
+                    ServiceType = s.ServiceType == typeof(AmiServiceBehavior) ? ServiceEndpointType.AdministrationIntegrationService :
+                    s.ServiceType == typeof(HdsiServiceBehavior) ? ServiceEndpointType.HealthDataService :
+                    s.ServiceType == typeof(AuthenticationServiceBehavior) ? ServiceEndpointType.AuthenticationService :
+                    (ServiceEndpointType)0
+                }).Where(o=>o.ServiceType > 0));
+                return serviceOptions;
+            }
         }
 
         /// <summary>

@@ -73,7 +73,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 throw new ArgumentNullException(nameof(idToken));
             else if (String.IsNullOrEmpty(tokenType))
                 throw new ArgumentNullException(nameof(tokenType));
-            else if (tokenType != "urn:ietf:params:oauth:token-type:jwt" &&
+            else if (
+                tokenType != "urn:santedb:session-info" &&
+                tokenType != "urn:ietf:params:oauth:token-type:jwt" &&
                 tokenType != "bearer")
                 throw new ArgumentOutOfRangeException(nameof(tokenType), "expected urn:ietf:params:oauth:token-type:jwt");
 
@@ -81,37 +83,44 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             this.m_idToken = idToken;
             this.m_accessToken = accessToken;
 
-            String[] tokenObjects = idToken.Split('.');
-            // Correct each token to be proper B64 encoding
-            for (int i = 0; i < tokenObjects.Length; i++)
-                tokenObjects[i] = tokenObjects[i].PadRight(tokenObjects[i].Length + (tokenObjects[i].Length % 4), '=').Replace("===", "=");
-            JObject headers = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(tokenObjects[0]))),
-                body = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(tokenObjects[1])));
+            JObject tokenBody = null;
 
-            // Algorithm is valid?
-            if (this.m_configuration.TokenAlgorithms?.Contains((String)headers["alg"]) == false)
-                throw new SecurityTokenException(SecurityTokenExceptionType.InvalidTokenType, String.Format("Token algorithm {0} not permitted", headers["alg"]));
+            if (tokenType != "urn:santedb:session-info")
+                tokenBody = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(idToken)));
+            else
+            {
+                String[] tokenObjects = idToken.Split('.');
+                // Correct each token to be proper B64 encoding
+                for (int i = 0; i < tokenObjects.Length; i++)
+                    tokenObjects[i] = tokenObjects[i].PadRight(tokenObjects[i].Length + (tokenObjects[i].Length % 4), '=').Replace("===", "=");
+                JObject headers = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(tokenObjects[0])));
+                tokenBody = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(tokenObjects[1])));
 
-            // Attempt to get the certificate
-            if (((String)headers["alg"]).StartsWith("RS"))
-            {
-                var cert = X509CertificateUtils.FindCertificate(X509FindType.FindByThumbprint, StoreLocation.CurrentUser, StoreName.My, headers["x5t"].ToString());
-                //if (cert == null)
-                //	throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, String.Format ("Cannot find certificate {0}", headers ["x5t"]));
-                // TODO: Verify signature
-            }
-            else if (((String)headers["alg"]).StartsWith("HS"))
-            {
-                var keyId = headers["keyid"].Value<Int32>();
-                if (keyId > this.m_configuration?.TokenSymmetricSecrets?.Count && !TokenValidationManager.OnSymmetricKeyValidationCallback(this, keyId, body["iss"].Value<String>()))
-                    throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Symmetric key not found");
-                // TODO: Verfiy signature
+                // Algorithm is valid?
+                if (this.m_configuration.TokenAlgorithms?.Contains((String)headers["alg"]) == false)
+                    throw new SecurityTokenException(SecurityTokenExceptionType.InvalidTokenType, String.Format("Token algorithm {0} not permitted", headers["alg"]));
+
+                // Attempt to get the certificate
+                if (((String)headers["alg"]).StartsWith("RS"))
+                {
+                    var cert = X509CertificateUtils.FindCertificate(X509FindType.FindByThumbprint, StoreLocation.CurrentUser, StoreName.My, headers["x5t"].ToString());
+                    //if (cert == null)
+                    //	throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, String.Format ("Cannot find certificate {0}", headers ["x5t"]));
+                    // TODO: Verify signature
+                }
+                else if (((String)headers["alg"]).StartsWith("HS"))
+                {
+                    var keyId = headers["keyid"].Value<Int32>();
+                    if (keyId > this.m_configuration?.TokenSymmetricSecrets?.Count && !TokenValidationManager.OnSymmetricKeyValidationCallback(this, keyId, tokenBody["iss"].Value<String>()))
+                        throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Symmetric key not found");
+                    // TODO: Verfiy signature
+                }
             }
 
             // Parse the jwt
             List<IClaim> claims = new List<IClaim>();
 
-            foreach (var kf in body)
+            foreach (var kf in tokenBody)
             {
                 String claimName = kf.Key;
                 if (!claimMap.TryGetValue(kf.Key, out claimName))
@@ -140,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             this.RefreshToken = refreshToken;
 
             this.m_identities.Clear();
-            this.m_identities.Add(new SanteDBClaimsIdentity(body["unique_name"]?.Value<String>() ?? body["sub"]?.Value<String>(), true, "OAUTH2", claims));
+            this.m_identities.Add(new SanteDBClaimsIdentity(tokenBody["unique_name"]?.Value<String>() ?? tokenBody["sub"]?.Value<String>(), true, "OAUTH2", claims));
         }
 
 

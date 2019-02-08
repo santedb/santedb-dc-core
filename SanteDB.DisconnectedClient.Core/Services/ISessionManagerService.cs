@@ -45,14 +45,11 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// Authenticate with PIN (offline local context only)
         /// </summary>
         SessionInfo Authenticate(String userName, byte[] pin, params IClaim[] claims);
-        
+
         /// <summary>
         /// Refreshes the specified session
         /// </summary>
-        /// <param name="principal"></param>
-        /// <param name="password"></param>
-        /// <returns></returns>
-        SessionInfo Refresh(SessionInfo session);
+        SessionInfo Refresh(string refreshToken);
 
         /// <summary>
         /// Deletes (abandons) the session

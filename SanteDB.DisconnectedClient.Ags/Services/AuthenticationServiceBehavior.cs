@@ -17,16 +17,19 @@
  * User: justin
  * Date: 2018-11-23
  */
+using Newtonsoft.Json;
 using RestSrvr;
 using RestSrvr.Attributes;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -72,11 +75,39 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         }
 
         /// <summary>
+        /// Authenticate OAUTH
+        /// </summary>
+        public OAuthTokenResponse AuthenticateOAuth(NameValueCollection request)
+        {
+            try
+            {
+                var session = this.Authenticate(request);
+                return new OAuthTokenResponse()
+                {
+                    IdToken = session.IdentityToken,
+                    AccessToken = session.Token,
+                    RefreshToken = session.RefreshToken,
+                    ExpiresIn = (int)DateTime.Now.Subtract(session.Expiry).TotalSeconds,
+                    TokenType = "urn:santedb:session-info"
+                };
+            }
+            catch(Exception e)
+            {
+                RestOperationContext.Current.OutgoingResponse.StatusCode = 400;
+                return new OAuthTokenResponse()
+                {
+                    Error = "invalid_grant",
+                    ErrorDescription = e.Message
+                };
+            }
+        }
+
+        /// <summary>
         /// Authenticate the user
         /// </summary>
         public SessionInfo Authenticate(NameValueCollection request)
         {
-            ISessionManagerService sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
+            var sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
             SessionInfo retVal = null;
 
             List<IClaim> claims = new List<IClaim>()
@@ -94,9 +125,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         retVal = sessionService.Authenticate(request["username"], request["password"]);
                     break;
                 case "refresh":
-                    var ses = sessionService.Get(AuthenticationContext.Current.Principal);
-                    if (ses.RefreshToken == request["refresh_token"])
-                        retVal = ses.Extend(request["refresh_token"]); // Force a re-issue
+                    var ses = sessionService.Refresh(request["refresh_token"]);
                     break;
                 case "pin":
                     var pinAuthSvc = sessionService as IPinAuthenticationService;

@@ -19,6 +19,7 @@
  */
 using RestSrvr.Attributes;
 using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using System;
 using System.Collections.Specialized;
 
@@ -32,9 +33,17 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
     {
 
         /// <summary>
-        /// Authenticate the user
+        /// Authenticate the request
         /// </summary>
         [Post("oauth2_token")]
+        OAuthTokenResponse AuthenticateOAuth(NameValueCollection request);
+
+        /// <summary>
+        /// Authenticate the request
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [Post("session")]
         SessionInfo Authenticate(NameValueCollection request);
 
         /// <summary>
