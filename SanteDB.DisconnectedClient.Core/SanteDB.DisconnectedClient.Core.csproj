@@ -60,6 +60,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Configuration\IConfigurationPersister.cs" />
+    <Compile Include="Configuration\IInitialConfigurationProvider.cs" />
     <Compile Include="Mail\LocalMailService.cs" />
     <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
