@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.UI
+namespace SanteDB.DisconnectedClient.Core.Configuration
 {
     /// <summary>
     /// Represents a provider that can add additional initial settings
