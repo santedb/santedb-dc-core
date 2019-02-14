@@ -269,7 +269,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 role = this.Roles.FirstOrDefault(),
                 authmethod = this.AuthenticationType,
                 unique_name = this.UserName,
-                scope = (principal as IClaimsIdentity)?.Claims.Where(o=>o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim),
+                scope = (principal as IClaimsPrincipal)?.Claims.Where(o=>o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o=>o.Value).ToArray(),
                 sub = sid.ToString()
             })));
 

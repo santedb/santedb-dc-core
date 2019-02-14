@@ -150,6 +150,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                             if (pdp.GetPolicyOutcome(tPrincipal, scp.Oid) == PolicyGrantType.Grant)
                                 additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, scp.Oid));
 
+                        // Add SID
+                        additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.Sid, dbs.Key.ToString()));
                         //// Override
                         //if (additionalClaims.Any(o=>o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true"))
                         //{
@@ -600,6 +602,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             this.m_token = Guid.NewGuid();
             this.m_roles = roles;
             this.Identity = identity;
+            identity.AddClaims(roles.Select(o => new SanteDBClaim(SanteDBClaimTypes.DefaultRoleClaimType, o)));
         }
 
         /// <summary>

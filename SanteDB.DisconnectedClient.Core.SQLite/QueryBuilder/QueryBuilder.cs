@@ -487,7 +487,7 @@ namespace SanteDB.Core.Data.QueryBuilder
             // TODO: Order by?
             if (orderBy != null && orderBy.Length > 0)
             {
-                retVal.Append("ORDER BY");
+                retVal.Append(" ORDER BY");
                 foreach (var ob in orderBy)
                 {
                     // Query property path 

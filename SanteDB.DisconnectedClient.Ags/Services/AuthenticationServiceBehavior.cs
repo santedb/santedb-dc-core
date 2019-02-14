@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     IdToken = session.IdentityToken,
                     AccessToken = session.Token,
                     RefreshToken = session.RefreshToken,
-                    ExpiresIn = (int)DateTime.Now.Subtract(session.Expiry).TotalSeconds,
+                    ExpiresIn = (int)session.Expiry.Subtract(DateTime.Now).TotalSeconds,
                     TokenType = "urn:santedb:session-info"
                 };
             }

@@ -69,10 +69,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
 
                 // First resolve identities 
-                if (securable is IDeviceIdentity) {
+                if (securable is IDeviceIdentity)
+                {
                     var did = securable as IDeviceIdentity;
                     var dbd = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == did.Name).ToList();
-                    securable = dbd.Select(o=>new SecurityDevice() {
+                    securable = dbd.Select(o => new SecurityDevice()
+                    {
                         Key = o.Key,
                         Name = o.PublicId
                     }).FirstOrDefault();
@@ -160,11 +162,39 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             // Security device
             if (securable is SecurityDevice)
-                throw new NotImplementedException();
+            {
+                var secDev = securable as SecurityDevice;
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    return conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_device_policy INNER JOIN security_policy ON (policy_id = security_policy.uuid) WHERE device_id = ?", secDev.Key.Value.ToByteArray())
+                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
+                        .ToList();
+                }
+            }
             else if (securable is SecurityRole)
-                throw new NotImplementedException();
+            {
+                var secRole = securable as SecurityRole;
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    return conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_role_policy INNER JOIN security_policy ON (policy_id = security_policy.uuid) WHERE role_id = ?", secRole.Key.Value.ToByteArray())
+                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
+                        .ToList();
+
+                }
+            }
             else if (securable is SecurityApplication)
-                throw new NotImplementedException();
+            {
+                var secApp = securable as SecurityApplication;
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    return conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_application_policy INNER JOIN security_policy ON (policy_id = security_policy.uuid) WHERE application_id = ?", secApp.Key.Value.ToByteArray())
+                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
+                        .ToList();
+                }
+            }
             else if (securable is IPrincipal || securable is IIdentity)
             {
                 var identity = (securable as IPrincipal)?.Identity ?? securable as IIdentity;

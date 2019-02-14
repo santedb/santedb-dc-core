@@ -67,6 +67,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public void AddPolicies(object securable, PolicyGrantType rule, IPrincipal principal, params string[] policyOids)
         {
+            this.GetCredentials();
             throw new NotImplementedException();
         }
 
@@ -112,6 +113,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
         public IEnumerable<IPolicy> GetPolicies()
         {
+            this.GetCredentials();
             throw new NotImplementedException();
         }
 
@@ -120,6 +122,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public IPolicy GetPolicy(string policyOid)
         {
+            this.GetCredentials();
             return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
         }
     }

@@ -85,7 +85,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
             JObject tokenBody = null;
 
-            if (tokenType != "urn:santedb:session-info")
+            if (tokenType == "urn:santedb:session-info")
                 tokenBody = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(idToken)));
             else
             {

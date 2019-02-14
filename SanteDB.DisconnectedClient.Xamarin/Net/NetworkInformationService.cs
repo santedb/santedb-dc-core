@@ -125,7 +125,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
         {
 
             return NetworkInterface.GetAllNetworkInterfaces().Select(o => new NetworkInterfaceInfo(
-                o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault()?.ToString()
+                o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault()?.ToString(), o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString()
             ));
 
         }
