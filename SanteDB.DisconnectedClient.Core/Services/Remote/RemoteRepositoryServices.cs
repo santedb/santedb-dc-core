@@ -256,7 +256,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
 
             try
             {
-                var data = this.m_client.Query(query, offset, count, false);
+                var data = this.m_client.Query(query, offset, count, false, orderBy: orderBy);
                 (data as Bundle)?.Reconstitute();
                 offset = (data as Bundle)?.Offset ?? offset;
                 count = (data as Bundle)?.Count ?? count;
