@@ -64,9 +64,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void AddUsersToRoles(string[] users, string[] roles)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
+
                 foreach (var usr in users)
                 {
                     var user = this.GetUser(usr);
@@ -92,7 +93,6 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void ChangePassword(string userName, string password)
         {
-            this.GetCredentials();
 
             try
             {
@@ -100,6 +100,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 if (user == null)
                     throw new KeyNotFoundException($"{userName} not found");
                 user.Password = password;
+                this.m_client.Client.Credentials = this.GetCredentials();
                 this.m_client.UpdateUser(user.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(user)
                 {
                     PasswordOnly = true
@@ -119,10 +120,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <returns></returns>
         public SecurityUser ChangePassword(Guid userId, string password)
         {
-            this.GetCredentials();
 
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var user = ((IRepositoryService<SecurityUser>)this).Get(userId);
                 if (user == null)
                     throw new KeyNotFoundException($"{userId} not found");
@@ -144,10 +145,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityUser CreateUser(SecurityUser userInfo, string password)
         {
-            this.GetCredentials();
 
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.CreateUser(new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(userInfo)
                 {
                     Roles = userInfo.Roles.Select(o => o.Name).ToList()
@@ -194,9 +195,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityPolicy GetPolicy(string policyOid)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.GetPolicies(o => o.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
             }
             catch (Exception e)
@@ -210,9 +211,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityProvenance GetProvenance(Guid provenanceId)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.GetProvenance(provenanceId);
             }
             catch (Exception e)
@@ -227,9 +228,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityRole GetRole(string roleName)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var role = this.m_client.GetRoles(r => r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
                 if (role != null)
                     role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
@@ -246,9 +247,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityUser GetUser(string userName)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var user = this.m_client.GetUsers(u => u.UserName == userName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
                 if (user != null)
                     user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
@@ -292,9 +293,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void LockUser(Guid userId)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 this.m_client.LockUser(userId);
             }
             catch (Exception e)
@@ -317,9 +318,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void UnlockUser(Guid userId)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 this.m_client.UnlockUser(userId);
             }
             catch (Exception e)
@@ -342,12 +343,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<UserEntity> IRepositoryService<UserEntity>.Find(Expression<Func<UserEntity, bool>> query, int offset, int? count, out int totalResults, params ModelSort<UserEntity>[] orderBy)
         {
-            this.GetCredentials();
-
+            
             try
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
+                hdsiClient.Client.Credentials = this.GetCredentials();
                 var retVal = hdsiClient.Query<UserEntity>(query, offset, count, false, orderBy: orderBy);
                 totalResults = retVal.TotalResults;
                 return retVal.Item.OfType<UserEntity>();
@@ -378,9 +378,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <returns>The matching security applications</returns>
         IEnumerable<SecurityApplication> IRepositoryService<SecurityApplication>.Find(Expression<Func<SecurityApplication, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityApplication>[] orderBy)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
                 {
                     o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
@@ -408,9 +408,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityDevice> IRepositoryService<SecurityDevice>.Find(Expression<Func<SecurityDevice, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityDevice>[] orderBy)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
                 {
                     o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
@@ -437,9 +437,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityRole> IRepositoryService<SecurityRole>.Find(Expression<Func<SecurityRole, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityRole>[] orderBy)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
                 {
                     o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
@@ -467,10 +467,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityUser> IRepositoryService<SecurityUser>.Find(Expression<Func<SecurityUser, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityUser>[] orderBy)
         {
-            this.GetCredentials();
             try
             {
                 Dictionary<String, SecurityRole> cachedRoles = new Dictionary<string, SecurityRole>();
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
                 {
                     o.Entity.Roles = o.Roles.Select(r => {
@@ -487,7 +487,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             }
             catch (Exception e)
             {
-                throw new DataPersistenceException("Could not query devices", e);
+                throw new DataPersistenceException("Could not query users", e);
             }
         }
 
@@ -505,9 +505,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityPolicy> IRepositoryService<SecurityPolicy>.Find(Expression<Func<SecurityPolicy, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityPolicy>[] orderBy)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityPolicy>();
             }
             catch (Exception e)
@@ -529,12 +529,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
+            
 
             try
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
+                hdsiClient.Client.Credentials = this.GetCredentials();
                 return hdsiClient.Get<UserEntity>(key, versionKey != Guid.Empty ? (Guid?)versionKey: null) as UserEntity;
             }
             catch (Exception e)
@@ -556,9 +556,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var application = this.m_client.GetApplication(key);
                 application.Entity.Policies = application.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return application.Entity;
@@ -583,9 +583,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var device = this.m_client.GetDevice(key);
                 device.Entity.Policies = device.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return device.Entity;
@@ -609,9 +609,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var role = this.m_client.GetRole(key);
                 role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return role.Entity;
@@ -635,9 +635,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityUser IRepositoryService<SecurityUser>.Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var user = this.m_client.GetUser(key);
                 if (user != null)
                     user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
@@ -663,9 +663,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.GetPolicy(key)?.Policy;
             }
             catch (Exception e)
@@ -679,12 +679,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Insert(UserEntity userEntity)
         {
-            this.GetCredentials();
 
             try
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
+                hdsiClient.Client.Credentials = this.GetCredentials();
                 return hdsiClient.Create(userEntity);
             }
             catch (Exception e)
@@ -698,10 +697,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Insert(SecurityApplication data)
         {
-            this.GetCredentials();
 
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.CreateApplication(new SanteDB.Core.Model.AMI.Auth.SecurityApplicationInfo(data)
                 {
                     Policies = data.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
@@ -720,10 +719,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Insert(SecurityDevice device)
         {
-            this.GetCredentials();
-
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.CreateDevice(new SanteDB.Core.Model.AMI.Auth.SecurityDeviceInfo(device)
                 {
                     Policies = device.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
@@ -742,10 +740,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Insert(SecurityRole roleInfo)
         {
-            this.GetCredentials();
-
+            
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.CreateRole(new SanteDB.Core.Model.AMI.Auth.SecurityRoleInfo(roleInfo)
                 {
                     Policies = roleInfo.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
@@ -774,10 +772,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Insert(SecurityPolicy policy)
         {
-            this.GetCredentials();
 
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.CreatePolicy(new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(policy)).Policy;
             }
             catch (Exception e)
@@ -791,11 +789,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Obsolete(Guid key)
         {
-            this.GetCredentials();
             try
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
+                hdsiClient.Client.Credentials = this.GetCredentials();
                 return hdsiClient.Obsolete(new UserEntity() { Key = key }) as UserEntity;
             }
             catch (Exception e)
@@ -810,9 +807,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Obsolete(Guid key)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.DeleteApplication(key).Entity;
             }
             catch (Exception e)
@@ -826,9 +823,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Obsolete(Guid key)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.DeleteDevice(key).Entity;
             }
             catch (Exception e)
@@ -842,9 +839,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Obsolete(Guid key)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.DeleteRole(key).Entity;
             }
             catch (Exception e)
@@ -858,9 +855,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityUser IRepositoryService<SecurityUser>.Obsolete(Guid key)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.DeleteUser(key).Entity;
             }
             catch (Exception e)
@@ -874,9 +871,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Obsolete(Guid key)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.DeletePolicy(key).Policy;
             }
             catch (Exception e)
@@ -890,11 +887,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Save(UserEntity data)
         {
-            this.GetCredentials();
             try
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.m_client.Client.Credentials;
+                hdsiClient.Client.Credentials = this.GetCredentials();
                 return hdsiClient.Update(data) as UserEntity;
             }
             catch (Exception e)
@@ -908,9 +904,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Save(SecurityApplication data)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.UpdateApplication(data.Key.Value, new SecurityApplicationInfo(data)
                 {
                     Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
@@ -929,9 +925,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Save(SecurityDevice data)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.UpdateDevice(data.Key.Value, new SecurityDeviceInfo(data)
                 {
                     Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
@@ -950,9 +946,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Save(SecurityRole data)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.UpdateRole(data.Key.Value, new SecurityRoleInfo(data)
                 {
                     Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
@@ -971,9 +967,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityUser IRepositoryService<SecurityUser>.Save(SecurityUser data)
         {
-            this.GetCredentials();
             try
             {
+                this.m_client.Client.Credentials = this.GetCredentials();
                 var retVal = this.m_client.UpdateUser(data.Key.Value, new SecurityUserInfo(data)
                 {
                     Roles = data.Roles.Select(o => o.Name).ToList()

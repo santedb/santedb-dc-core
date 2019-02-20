@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query)
         {
-            this.GetCredentials();
+            this.m_client.Client.Credentials = this.GetCredentials();
             int tr = 0;
             return this.Find(query, 0, null, out tr);
         }
@@ -59,7 +59,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy)
         {
-            this.GetCredentials();
+            this.m_client.Client.Credentials = this.GetCredentials();
             return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<AuditData>();
         }
 
@@ -68,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public AuditData Get(object correlationKey)
         {
-            this.GetCredentials();
+            this.m_client.Client.Credentials = this.GetCredentials();
             if (correlationKey is Guid || correlationKey is Guid?)
                 return this.m_client.GetAudit((Guid)correlationKey);
             else if (correlationKey is String)
@@ -82,7 +82,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public AuditData Insert(AuditData audit)
         {
-            this.GetCredentials();
+            this.m_client.Client.Credentials = this.GetCredentials();
             this.m_client.SubmitAudit(new AuditSubmission(audit));
             return audit;
         }

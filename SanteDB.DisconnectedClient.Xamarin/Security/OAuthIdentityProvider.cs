@@ -202,6 +202,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, retVal, true));
 
                         }
+                        catch (RestClientException<OAuthTokenResponse> ex)
+                        {
+                            this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
+                            var se = new SecurityException(
+                                String.Format("err_oauth2_{0}", ex.Result.Error),
+                                ex
+                            );
+                            se.Data.Add("oauth_result", ex.Result);
+                            throw se;
+                        }
                         catch (WebException ex) // Raw level web exception
                         {
                             // Not network related, but a protocol level error
@@ -278,16 +288,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                                 throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message));
                             }
                         }
-                    }
-                    catch (RestClientException<OAuthTokenResponse> ex)
-                    {
-                        this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-                        var se = new SecurityException(
-                            String.Format("err_oauth2_{0}", ex.Result.Error),
-                            ex
-                        );
-                        se.Data.Add("detail", ex.Result);
-                        throw se;
                     }
                     catch (SecurityTokenException ex)
                     {

@@ -47,13 +47,30 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         {
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
-            AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
-
-            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+            // Authentication
+            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated)
             {
-                AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                this.m_cachedCredential = AuthenticationContext.Current.Principal;
+                if (this.m_cachedCredential != null)
+                    AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential);
+                else
+                {
+                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
+                    this.m_cachedCredential = AuthenticationContext.Current.Principal;
+                }
+            }
+            
+        
+            // Extend?
+            if (((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+            {
+                // Is a device and expired so re-auth
+                if (this.m_cachedCredential != null)
+                {
+                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
+                    this.m_cachedCredential = AuthenticationContext.Current.Principal;
+                }
+                else
+                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IIdentityProviderService>().ReAuthenticate(AuthenticationContext.Current.Principal));
             }
             return this.m_client.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
         }
