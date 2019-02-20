@@ -503,7 +503,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution = configuration.Applet.AppletSolution;
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = configuration.Applet.AutoUpdateApplets;
-
             // Data mode
             switch (configuration.Synchronization.Mode)
             {
@@ -649,6 +648,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     break;
             }
 
+            // Repository service provider
+            ApplicationContext.Current.AddServiceProvider(typeof(RepositoryEntitySource), true);
             // Override application secret
             ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret = configuration.Security.ApplicationSecret;
 
