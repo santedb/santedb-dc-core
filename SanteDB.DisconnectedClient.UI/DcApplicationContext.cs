@@ -84,7 +84,7 @@ namespace SanteDB.DisconnectedClient.UI
                     return OperatingSystemID.Win32;
             }
         }
-        
+
         /// <summary>
         /// Show toast
         /// </summary>
@@ -198,7 +198,7 @@ namespace SanteDB.DisconnectedClient.UI
         public static bool StartContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
         {
 
-            
+
             // Not configured
             if (!new DcConfigurationManager(instanceName).IsConfigured)
             {
@@ -210,7 +210,7 @@ namespace SanteDB.DisconnectedClient.UI
                 DcApplicationContext retVal = null;
                 try
                 {
-                   
+
                     try
                     {
                         retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
@@ -294,38 +294,41 @@ namespace SanteDB.DisconnectedClient.UI
                         }
 
 
+                    // Set the entity source
+                    EntitySource.Current = new EntitySource(retVal.GetService<IEntitySourceProvider>());
+
                     // Ensure data migration exists
-                    try
-                    {
-                        // If the DB File doesn't exist we have to clear the migrations
-                        if (!File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).ConnectionString))
+                    if (retVal.ConfigurationManager.Configuration.GetSection<DataConfigurationSection>().ConnectionString.Count > 0)
+                        try
                         {
-                            retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
-                            retVal.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Clear();
+                            // If the DB File doesn't exist we have to clear the migrations
+                            if (!File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).ConnectionString))
+                            {
+                                retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
+                                retVal.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Clear();
+                            }
+                            retVal.SetProgress("Migrating databases", 0.6f);
+
+                            DataMigrator migrator = new DataMigrator();
+                            migrator.Ensure();
+
+
+                            // Prepare clinical protocols
+                            //retVal.GetService<ICarePlanService>().Repository = retVal.GetService<IClinicalProtocolRepositoryService>();
+
                         }
-                        retVal.SetProgress("Migrating databases", 0.6f);
+                        catch (Exception e)
+                        {
+                            retVal.m_tracer.TraceError(e.ToString());
+                            throw;
+                        }
+                        finally
+                        {
+                            retVal.ConfigurationPersister.Save(retVal.Configuration);
+                        }
 
-                        DataMigrator migrator = new DataMigrator();
-                        migrator.Ensure();
-
-                        // Set the entity source
-                        EntitySource.Current = new EntitySource(retVal.GetService<IEntitySourceProvider>());
-
-                        // Prepare clinical protocols
-                        //retVal.GetService<ICarePlanService>().Repository = retVal.GetService<IClinicalProtocolRepositoryService>();
-                        ApplicationServiceContext.Current = ApplicationContext.Current;
-                        ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
-
-                    }
-                    catch (Exception e)
-                    {
-                        retVal.m_tracer.TraceError(e.ToString());
-                        throw;
-                    }
-                    finally
-                    {
-                        retVal.ConfigurationPersister.Save(retVal.Configuration);
-                    }
+                    ApplicationServiceContext.Current = ApplicationContext.Current;
+                    ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
 
                     // Set the tracer writers for the PCL goodness!
                     foreach (var itm in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
@@ -465,7 +468,7 @@ namespace SanteDB.DisconnectedClient.UI
 
             return value?.ToLower().Replace("\\", "/");
         }
-        
+
         /// <summary>
         /// Exit the application
         /// </summary>
@@ -512,7 +515,7 @@ namespace SanteDB.DisconnectedClient.UI
                 var sid = WindowsIdentity.GetCurrent().User;
                 byte[] retVal = new byte[sid.BinaryLength];
                 WindowsIdentity.GetCurrent().User.GetBinaryForm(retVal, 0);
-                return retVal.Where(o=>o != 0).ToArray();
+                return retVal.Where(o => o != 0).ToArray();
             }
             else // TODO: LINUX ENCRYPTION 
                 return null;

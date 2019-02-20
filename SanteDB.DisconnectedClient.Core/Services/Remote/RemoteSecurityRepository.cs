@@ -470,9 +470,18 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
             try
             {
+                Dictionary<String, SecurityRole> cachedRoles = new Dictionary<string, SecurityRole>();
                 return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
                 {
-                    o.Entity.Roles = o.Roles.Select(r => this.FindRoles(q => q.Name == r).FirstOrDefault()).ToList();
+                    o.Entity.Roles = o.Roles.Select(r => {
+                        SecurityRole rol = null;
+                        if (!cachedRoles.TryGetValue(r, out rol))
+                        {
+                            rol = this.FindRoles(q => q.Name == r).FirstOrDefault();
+                            cachedRoles.Add(r, rol);
+                        }
+                        return rol;
+                        }).ToList();
                     return o.Entity;
                 });
             }
