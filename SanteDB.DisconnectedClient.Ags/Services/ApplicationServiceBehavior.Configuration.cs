@@ -540,7 +540,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                         // Configure the selected storage provider
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
-                        storageProvider.Configure(ApplicationContext.Current.Configuration, XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory, configuration.Data.Options);
+                            configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
+                            storageProvider.Configure(ApplicationContext.Current.Configuration, configuration.Data.Options);
 
                         // Remove all data persistence services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService

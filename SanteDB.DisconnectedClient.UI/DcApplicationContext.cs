@@ -20,6 +20,7 @@
 using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
@@ -151,12 +152,9 @@ namespace SanteDB.DisconnectedClient.UI
 
                 ApplicationContext.Current = retVal;
                 ApplicationServiceContext.Current = ApplicationContext.Current;
-                ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
-                {
                     Tracer.AddWriter(tr.TraceWriter, tr.Filter);
-                }
                 retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
 
                 var appletService = retVal.GetService<IAppletManagerService>();
@@ -298,14 +296,14 @@ namespace SanteDB.DisconnectedClient.UI
                     EntitySource.Current = new EntitySource(retVal.GetService<IEntitySourceProvider>());
 
                     // Ensure data migration exists
-                    if (retVal.ConfigurationManager.Configuration.GetSection<DataConfigurationSection>().ConnectionString.Count > 0)
+                    if (retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0)
                         try
                         {
                             // If the DB File doesn't exist we have to clear the migrations
-                            if (!File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DataConfigurationSection>().MainDataSourceConnectionStringName).ConnectionString))
+                            if (!File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName).GetComponent("dbfile")))
                             {
                                 retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
-                                retVal.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Clear();
+                                retVal.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Clear();
                             }
                             retVal.SetProgress("Migrating databases", 0.6f);
 
@@ -328,7 +326,6 @@ namespace SanteDB.DisconnectedClient.UI
                         }
 
                     ApplicationServiceContext.Current = ApplicationContext.Current;
-                    ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
 
                     // Set the tracer writers for the PCL goodness!
                     foreach (var itm in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)

@@ -18,7 +18,9 @@
  * Date: 2018-11-19
  */
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -87,14 +89,14 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         /// <returns>The connection string.</returns>
         /// <param name="name">Name.</param>
-        public ConnectionStringInfo GetConnectionString(String name)
+        public ConnectionString GetConnectionString(String name)
         {
-            var dcs = this.GetSection<DataConfigurationSection>();
+            var dcs = this.GetSection<DcDataConfigurationSection>();
             var cs = dcs?.ConnectionString.Find(o => o.Name == name);
             if (cs == null)
                 return null;
             else
-                return new ConnectionStringInfo(dcs.Provider, cs.Value);
+                return cs.Clone();
         }
 
         /// <summary>

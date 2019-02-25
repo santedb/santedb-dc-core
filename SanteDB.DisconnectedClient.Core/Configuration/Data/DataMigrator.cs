@@ -89,7 +89,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
                 if (!m.Install())
                     throw new DataMigrationException(m);
                 else
-                    ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
+                    ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
             }
 
         }
@@ -105,7 +105,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
             this.m_tracer.TraceInfo("Generating data migration proposal...");
             foreach (var itm in this.m_migrations.OrderBy(o => o.Id))
             {
-                var migrationLog = ApplicationContext.Current?.Configuration.GetSection<DataConfigurationSection>().MigrationLog.Entry.Find(o => o.Id == itm.Id);
+                var migrationLog = ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Find(o => o.Id == itm.Id);
                 this.m_tracer.TraceVerbose("Migration {0} ... {1}", itm.Id, migrationLog == null ? "Install" : "Skip - Installed on " + migrationLog.Date.ToString());
                 if (migrationLog == null)
                     retVal.Add(itm);

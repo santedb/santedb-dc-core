@@ -19,6 +19,7 @@
  */
 using Mono.Data.Sqlite;
 using Newtonsoft.Json;
+using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Warehouse;
@@ -100,16 +101,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
         /// <summary>
         /// Initialize the database connection
         /// </summary>
-        private void InitializeConnection(String dbFile)
+        private void InitializeConnection(ConnectionString dbFile)
         {
             try
             {
                 this.m_tracer.TraceInfo("Connecting datawarehouse to {0}", dbFile);
-                this.m_connection = new SqliteConnection("Data Source=" + dbFile);
+                this.m_connection = new SqliteConnection("Data Source=" + dbFile.GetComponent("dbfile"));
 
-                var key = ApplicationContext.Current.GetCurrentContextSecurityKey();
-                if (key != null)
-                    (this.m_connection as SqliteConnection).SetPassword(Encoding.UTF8.GetString(key, 0, key.Length));
+                if (dbFile.GetComponent("encrypt") == "true")
+                {
+                    var key = ApplicationContext.Current.GetCurrentContextSecurityKey();
+                    if (key != null)
+                        (this.m_connection as SqliteConnection).SetPassword(Encoding.UTF8.GetString(key, 0, key.Length));
+                }
                 this.m_connection.Open();
             }
             catch (Exception e)
@@ -121,7 +125,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
         /// <summary>
         /// Initialize the specified warehouse database
         /// </summary>
-        private void InitializeDatabase(string dbFile)
+        private void InitializeDatabase(ConnectionString dbFile)
         {
             try
             {
@@ -1106,7 +1110,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 
             var connectionString = ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbWarehouse");
 
-            this.InitializeDatabase(connectionString.ConnectionString);
+            this.InitializeDatabase(connectionString);
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;

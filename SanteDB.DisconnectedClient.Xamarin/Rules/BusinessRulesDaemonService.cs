@@ -65,7 +65,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Rules
                 try
                 {
                     ApplicationServiceContext.Current = ApplicationContext.Current;
-                    ApplicationServiceContext.HostType = SanteDBHostType.OtherClient;
 
                     if (ApplicationContext.Current.GetService<IDataReferenceResolver>() == null)
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletDataReferenceResolver));

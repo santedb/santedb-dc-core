@@ -17,9 +17,13 @@
  * User: justin
  * Date: 2018-8-25
  */
+using SanteDB.Core;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite.Connection;
@@ -36,7 +40,7 @@ namespace SanteDB.DisconnectedClient.SQLite
     /// <summary>
     /// A storage provider for SQLite
     /// </summary>
-    public class SQLiteStorageProvider : IStorageProvider
+    public class SQLiteStorageProvider : IDataProvider
     {
         /// <summary>
         /// Get the invariant name
@@ -54,20 +58,39 @@ namespace SanteDB.DisconnectedClient.SQLite
         public OperatingSystemID Platform => OperatingSystemID.Android | OperatingSystemID.MacOS | OperatingSystemID.Win32 | OperatingSystemID.Linux;
 
         /// <summary>
+        /// Client only
+        /// </summary>
+        public SanteDBHostType HostType => SanteDBHostType.Client;
+
+        /// <summary>
         /// Configuration options
         /// </summary>
-        public Dictionary<String, ConfigurationOptionType> Options => new Dictionary<string, ConfigurationOptionType>() {
-            { "encrypt", ConfigurationOptionType.Boolean }
-        };
+        public Dictionary<String, ConfigurationOptionType> Options
+        {
+            get
+            {
+                var retVal = new Dictionary<string, ConfigurationOptionType>();
+                if (ApplicationContext.Current.GetCurrentContextSecurityKey() != null)
+                    retVal.Add("encrypt", ConfigurationOptionType.Boolean);
+                return retVal;
+            }
+        }
+
+        /// <summary>
+        /// Progress has changed
+        /// </summary>
+        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <summary>
         /// Configure
         /// </summary>
-        public bool Configure(SanteDBConfiguration configuration, String dataDirectory, Dictionary<String, Object> options)
+        public bool Configure(SanteDBConfiguration configuration, Dictionary<String, Object> options)
         {
 
+            string dataDirectory = options["DataDirectory"].ToString();
+
             // Connection Strings
-            DataConfigurationSection dataSection = new DataConfigurationSection()
+            DcDataConfigurationSection dataSection = new DcDataConfigurationSection()
             {
                 MainDataSourceConnectionStringName = "santeDbData",
                 MessageQueueConnectionStringName = "santeDbQueue",
@@ -75,27 +98,33 @@ namespace SanteDB.DisconnectedClient.SQLite
                 ConnectionString = new System.Collections.Generic.List<ConnectionString>() {
                     new ConnectionString () {
                         Name = "santeDbData",
-                        Value = Path.Combine (dataDirectory, "SanteDB.sqlite")
+                        Value = $"dbfile={Path.Combine(dataDirectory, "SanteDB.sqlite")};encrypt={options["encrypt"].ToString().ToLower()}",
+                        Provider = "sqlite"
                     },
                     new ConnectionString () {
                         Name = "santeDbMail",
-                        Value = Path.Combine (dataDirectory, "SanteDB.mail.sqlite")
+                        Value = $"dbfile={Path.Combine(dataDirectory, "SanteDB.mail.sqlite")};encrypt={options["encrypt"].ToString().ToLower()}",
+                        Provider = "sqlite"
                     },
                     new ConnectionString () {
                         Name = "santeDbSearch",
-                        Value = Path.Combine (dataDirectory, "SanteDB.ftsearch.sqlite")
+                        Value = $"dbfile={Path.Combine(dataDirectory, "SanteDB.ftsearch.sqlite")};encrypt={options["encrypt"].ToString().ToLower()}",
+                        Provider = "sqlite"
                     },
                     new ConnectionString () {
                         Name = "santeDbQueue",
-                        Value = Path.Combine (dataDirectory, "SanteDB.MessageQueue.sqlite")
+                        Value = $"dbfile={Path.Combine(dataDirectory, "SanteDB.queue.sqlite")};encrypt={options["encrypt"].ToString().ToLower()}",
+                        Provider = "sqlite"
                     },
                     new ConnectionString () {
                         Name = "santeDbWarehouse",
-                        Value = Path.Combine (dataDirectory, "SanteDB.warehouse.sqlite")
+                        Value = $"dbfile={Path.Combine(dataDirectory, "SanteDB.warehouse.sqlite")};encrypt={options["encrypt"].ToString().ToLower()}",
+                        Provider = "sqlite"
                     },
                     new ConnectionString () {
                         Name = "santeDbAudit",
-                        Value = Path.Combine (dataDirectory, "SanteDB.audit.sqlite")
+                        Value = $"dbfile={Path.Combine(dataDirectory, "SanteDB.audit.sqlite")};encrypt={options["encrypt"].ToString().ToLower()}",
+                        Provider = "sqlite"
                     }
                 }
             };
@@ -138,6 +167,30 @@ namespace SanteDB.DisconnectedClient.SQLite
 #endif
 
             return true;
+        }
+
+        /// <summary>
+        /// Deploy the identified feature
+        /// </summary>
+        public bool Deploy(IDataFeature feature, string connectionStringName, SanteDBConfiguration configuration)
+        {
+            throw new NotSupportedException("This provider cannot be used in the Server Environment");
+        }
+
+        /// <summary>
+        /// Get databases
+        /// </summary>
+        public IEnumerable<string> GetDatabases(string connectionStringName)
+        {
+            return new String[] { "$$main$$" };
+        }
+
+        /// <summary>
+        /// Get data features
+        /// </summary>
+        public IEnumerable<IDataFeature> GetDataFeatures()
+        {
+            return new List<IDataFeature>();
         }
     }
 }

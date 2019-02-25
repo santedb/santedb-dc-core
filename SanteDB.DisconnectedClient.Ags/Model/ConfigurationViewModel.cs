@@ -22,6 +22,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Xamarin;
 using System;
 using System.Collections.Generic;
@@ -65,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             if (config == null) return;
             this.RealmName = config.GetSection<SecurityConfigurationSection>()?.Domain;
             this.Security = config.GetSection<SecurityConfigurationSection>();
-            this.Data = config.GetSection<DataConfigurationSection>();
+            this.Data = config.GetSection<DcDataConfigurationSection>();
             this.Applet = config.GetSection<AppletConfigurationSection>();
             this.Application = config.GetSection<ApplicationConfigurationSection>();
             this.Log = config.GetSection<DiagnosticsConfigurationSection>();
@@ -95,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Data config
         /// </summary>
         [JsonProperty("data")]
-        public DataConfigurationSection Data { get; set; }
+        public DcDataConfigurationSection Data { get; set; }
         /// <summary>
         /// Gets or sets applet
         /// </summary>

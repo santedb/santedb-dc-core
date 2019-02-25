@@ -18,6 +18,7 @@
  * Date: 2018-11-23
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Data;
 using System;
 using System.Collections.Generic;

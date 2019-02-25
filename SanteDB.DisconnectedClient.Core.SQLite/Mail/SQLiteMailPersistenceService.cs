@@ -27,6 +27,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using System;
@@ -66,7 +67,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         protected Tracer m_tracer; //= Tracer.GetTracer(typeof(LocalPersistenceServiceBase<TData>));
 
         // Configuration
-        protected static DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
+        protected static DcDataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>();
 
         // Mapper
         protected static ModelMapper m_mapper = new ModelMapper(typeof(SQLiteMailPersistenceService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.SQLite.Mail.ModelMap.xml"));
@@ -87,7 +88,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore).ConnectionString), AuthenticationContext.SystemPrincipal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore)), AuthenticationContext.SystemPrincipal);
         }
 
         /// <summary>
@@ -95,7 +96,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         private SQLiteDataContext CreateReadonlyConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore).ConnectionString), AuthenticationContext.SystemPrincipal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore)), AuthenticationContext.SystemPrincipal);
         }
 
         /// <summary>

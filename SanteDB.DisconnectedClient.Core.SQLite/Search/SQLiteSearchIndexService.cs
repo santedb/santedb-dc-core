@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// </summary>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbSearch").ConnectionString);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbSearch"));
         }
 
         /// <summary>

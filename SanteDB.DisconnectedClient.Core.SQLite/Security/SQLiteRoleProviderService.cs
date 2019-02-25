@@ -26,6 +26,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -49,7 +50,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public String ServiceName => "SQLite Role Provider Service";
 
         // Configuration
-        private DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
+        private DcDataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>();
 
         // Local tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteRoleProviderService));
@@ -281,7 +282,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
         }
 
         /// <summary>
@@ -290,7 +291,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateReadonlyConnection()
         {
-            return SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
         }
     }
 }

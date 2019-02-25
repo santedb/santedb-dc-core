@@ -29,6 +29,7 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
@@ -63,7 +64,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         protected Tracer m_tracer; //= Tracer.GetTracer(typeof(LocalPersistenceServiceBase<TData>));
 
         // Configuration
-        protected static DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
+        protected static DcDataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>();
 
         // Mapper
         protected static ModelMapper m_mapper;
@@ -149,7 +150,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName)), principal);
         }
 
         /// <summary>
@@ -157,7 +158,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// </summary>
         private SQLiteDataContext CreateReadonlyConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName).ConnectionString), principal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName)), principal);
         }
 
         /// <summary>

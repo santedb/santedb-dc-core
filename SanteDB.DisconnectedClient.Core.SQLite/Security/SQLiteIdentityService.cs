@@ -44,6 +44,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core;
 using SanteDB.Core.Security.Principal;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -58,7 +59,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public String ServiceName => "SQLite Identity Provider Service";
 
         // Configuration
-        private DataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>();
+        private DcDataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>();
 
         // Local tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteIdentityService));
@@ -435,7 +436,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName).ConnectionString);
+            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
         }
 
         /// <summary>

@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-7-23
  */
+using SanteDB.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Data;
 using System;
 using System.Collections.Generic;
@@ -34,22 +35,18 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
         /// <summary>
         /// Gets providers for the specified platform
         /// </summary>
-        public static IEnumerable<IStorageProvider> GetProviders() => AppDomain.CurrentDomain.GetAssemblies()
+        public static IEnumerable<IDataProvider> GetProviders() => AppDomain.CurrentDomain.GetAssemblies()
                         .Where(a => !a.IsDynamic)
                         .SelectMany(a => a.ExportedTypes)
-                        .Where(o => typeof(IStorageProvider).IsAssignableFrom(o) && !o.GetTypeInfo().IsInterface && !o.GetTypeInfo().IsAbstract)
-                        .Select(t => Activator.CreateInstance(t) as IStorageProvider);
+                        .Where(o => typeof(IDataProvider).IsAssignableFrom(o) && !o.GetTypeInfo().IsInterface && !o.GetTypeInfo().IsAbstract)
+                        .Select(t => Activator.CreateInstance(t) as IDataProvider);
 
         /// <summary>
         /// Gets the specified storage provider
         /// </summary>
         /// <param name="invariantName">The name of the storage provider to retrieve</param>
         /// <returns>The registered storage provider</returns>
-        public static IStorageProvider GetProvider(String invariantName) => GetProviders().First(o => o.Invariant == invariantName);
+        public static IDataProvider GetProvider(String invariantName) => GetProviders().First(o => o.Invariant == invariantName);
 
-        public static object GetProvider(object provider, string v)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

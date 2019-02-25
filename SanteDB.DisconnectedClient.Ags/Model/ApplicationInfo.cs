@@ -27,6 +27,7 @@ using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
@@ -123,9 +124,9 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     new DiagnosticAttachmentInfo() { FileDescription = "Log File", FileSize = logFile.Length, FileName = logFile.Name, Id = "log", LastWriteDate = logFile.LastWriteTime }
                 };
 
-                foreach (var con in ApplicationContext.Current.Configuration.GetSection<DataConfigurationSection>().ConnectionString)
+                foreach (var con in ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString)
                 {
-                    var fi = new FileInfo(con.Value);
+                    var fi = new FileInfo(con.GetComponent("dbfile"));
                     this.FileInfo.Add(new DiagnosticAttachmentInfo() { FileDescription = con.Name, FileName = fi.FullName, LastWriteDate = fi.LastWriteTime, FileSize = fi.Length, Id = "db" });
 
                     // Existing path

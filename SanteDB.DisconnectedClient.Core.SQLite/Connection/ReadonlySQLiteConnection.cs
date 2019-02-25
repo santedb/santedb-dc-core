@@ -17,6 +17,8 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
@@ -32,8 +34,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
     public class ReadonlySQLiteConnection : LockableSQLiteConnection
     {
 
-        public ReadonlySQLiteConnection(ISQLitePlatform sqlitePlatform, String databasePath, SQLiteOpenFlags openFlags, bool storeDateTimeAsTicks = true, IBlobSerializer serializer = null, IDictionary<String, TableMapping> tableMappings = null, IDictionary<Type, String> extraTypeMappings = null, IContractResolver resolver = null) :
-            base(sqlitePlatform, databasePath, openFlags, storeDateTimeAsTicks, serializer, tableMappings, extraTypeMappings, resolver)
+        public ReadonlySQLiteConnection(ISQLitePlatform sqlitePlatform, ConnectionString connectionString, SQLiteOpenFlags openFlags, bool storeDateTimeAsTicks = true, IBlobSerializer serializer = null, IDictionary<String, TableMapping> tableMappings = null, IDictionary<Type, String> extraTypeMappings = null, IContractResolver resolver = null) :
+            base(sqlitePlatform, connectionString, openFlags, storeDateTimeAsTicks, serializer, tableMappings, extraTypeMappings, resolver)
         {
         }
 

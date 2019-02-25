@@ -19,6 +19,7 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
@@ -263,6 +264,10 @@ namespace SanteDB.DisconnectedClient.Core
         /// Gets the operating system of the current application context
         /// </summary>
         public abstract OperatingSystemID OperatingSystem { get; }
+        /// <summary>
+        /// Gets the host type
+        /// </summary>
+        public SanteDBHostType HostType => SanteDBHostType.Client;
         /// <summary>
         /// Execution UUID
         /// </summary>

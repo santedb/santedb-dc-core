@@ -59,10 +59,10 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Configuration\DataConfigurationSection.cs" />
     <Compile Include="Configuration\IConfigurationPersister.cs" />
     <Compile Include="Configuration\IInitialConfigurationProvider.cs" />
     <Compile Include="Mail\LocalMailService.cs" />
-    <Compile Include="Data\IStorageProvider.cs" />
     <Compile Include="Exceptions\DuplicateKeyException.cs" />
     <Compile Include="Security\HeaderTypes.cs" />
     <Compile Include="Security\IOfflineDeviceIdentityProviderService.cs" />
@@ -142,10 +142,8 @@
     <Compile Include="Configuration\Data\DataMigrator.cs" />
     <Compile Include="Exceptions\DataMigrationException.cs" />
     <Compile Include="Configuration\AppletConfigurationSection.cs" />
-    <Compile Include="Configuration\DataConfigurationSection.cs" />
     <Compile Include="Configuration\SecurityConfigurationSection.cs" />
     <Compile Include="Configuration\ApplicationConfigurationSection.cs" />
-    <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Security\GenericPolicy.cs" />
     <Compile Include="Security\GenericPolicyInstance.cs" />
     <Compile Include="ApplicationContext.cs" />

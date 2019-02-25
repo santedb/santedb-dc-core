@@ -79,7 +79,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
         {
             return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(
                 "santeDbAudit"
-            ).ConnectionString);
+            ));
         }
 
         /// <summary>

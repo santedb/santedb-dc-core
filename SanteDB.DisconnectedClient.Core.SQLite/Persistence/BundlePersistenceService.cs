@@ -75,9 +75,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             { // It is cheaper to open a mem-db and let other threads access the main db for the time being
 
                 base.FireInserting(new DataPersistingEventArgs<Bundle>(data, principal));
-
+                var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData");
                 // Memory connection
-                using (var memConnection = new WriteableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), ":memory:", SQLiteOpenFlags.ReadWrite))
+                using (var memConnection = new WriteableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), new SanteDB.Core.Configuration.Data.ConnectionString()
+                {
+                    Value = "dbfile=:memory:"
+                }, SQLiteOpenFlags.ReadWrite))
                 {
                     try
                     {
@@ -87,10 +90,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
 
                         // Copy the name component and address component values
-                        if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
-                            memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData").ConnectionString}' AS file_db KEY ''");
+                        if (cstr.GetComponent("encrypt") != "true")
+                            memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY ''");
                         else
-                            memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData").ConnectionString}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
+                            memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
 
                         try
                         {
@@ -122,10 +125,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         using (var fileContext = this.CreateConnection(principal))
                         using (fileContext.LockConnection())
                         {
-                            if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
-                                memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData").ConnectionString}' AS file_db KEY ''");
+                            if (cstr.GetComponent("encrypt") != "true")
+                                memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY ''");
                             else
-                                memConnection.Execute($"ATTACH DATABASE '{ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData").ConnectionString}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
+                                memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
 
                             try
                             {

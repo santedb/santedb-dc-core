@@ -17,7 +17,9 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
@@ -40,12 +42,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         public bool Persistent { get; set; }
 
         /// <summary>
+        /// Get the connection string
+        /// </summary>
+        public ConnectionString ConnectionString { get; }
+
+        /// <summary>
         /// Constructor for locable sqlite connection
         /// </summary>
-        public LockableSQLiteConnection(ISQLitePlatform sqlitePlatform, String databasePath, SQLiteOpenFlags openFlags, bool storeDateTimeAsTicks = true, IBlobSerializer serializer = null, IDictionary<String, TableMapping> tableMappings = null, IDictionary<Type, String> extraTypeMappings = null, IContractResolver resolver = null) :
-            base(sqlitePlatform, databasePath, openFlags, storeDateTimeAsTicks, serializer, tableMappings, extraTypeMappings, resolver, ApplicationContext.Current.GetCurrentContextSecurityKey())
+        public LockableSQLiteConnection(ISQLitePlatform sqlitePlatform, ConnectionString connectionString, SQLiteOpenFlags openFlags, bool storeDateTimeAsTicks = true, IBlobSerializer serializer = null, IDictionary<String, TableMapping> tableMappings = null, IDictionary<Type, String> extraTypeMappings = null, IContractResolver resolver = null) :
+            base(sqlitePlatform, connectionString.GetComponent("dbfile"), openFlags, storeDateTimeAsTicks, serializer, tableMappings, extraTypeMappings, resolver, connectionString.GetComponent("encrypt")?.ToLower() == "true" ? ApplicationContext.Current.GetCurrentContextSecurityKey() : null)
         {
-
+            this.ConnectionString = connectionString;
         }
 
         /// <summary>

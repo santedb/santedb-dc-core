@@ -17,8 +17,11 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SQLite.Net;
@@ -62,7 +65,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         private void UnregisterConnection(LockableSQLiteConnection conn)
         {
-            List<LockableSQLiteConnection> connections = this.GetOrRegisterConnections(conn.DatabasePath);
+            List<LockableSQLiteConnection> connections = this.GetOrRegisterConnections(conn.ConnectionString);
             lock (s_lockObject)
             {
                 Monitor.Exit(conn);
@@ -82,7 +85,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         internal void RegisterReadonlyConnection(ReadonlySQLiteConnection conn)
         {
-            List<LockableSQLiteConnection> connections = this.GetOrRegisterConnections(conn.DatabasePath);
+            List<LockableSQLiteConnection> connections = this.GetOrRegisterConnections(conn.ConnectionString);
 
             // Are there other connections that this thread owns?
             bool skipTrafficStop = false;
@@ -92,7 +95,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                     connections.Any(o => Monitor.IsEntered(o));
             if (!skipTrafficStop) // then we must adhere to traffic jams
             {
-                var mre = this.GetOrRegisterResetEvent(conn.DatabasePath);
+                var mre = this.GetOrRegisterResetEvent(conn);
                 mre.WaitOne();
                 this.RegisterConnection(conn);
             }
@@ -103,7 +106,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         private void RegisterConnection(LockableSQLiteConnection conn)
         {
-            List<LockableSQLiteConnection> connections = this.GetOrRegisterConnections(conn.DatabasePath);
+            List<LockableSQLiteConnection> connections = this.GetOrRegisterConnections(conn.ConnectionString);
             lock (s_lockObject)
             {
                 connections.Add(conn);
@@ -118,17 +121,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// <summary>
         /// Gets or registers a connection pool
         /// </summary>
-        private List<LockableSQLiteConnection> GetOrRegisterConnections(String databasePath)
+        private List<LockableSQLiteConnection> GetOrRegisterConnections(ConnectionString connectionString)
         {
             List<LockableSQLiteConnection> retVal = null;
-            if (!this.m_readonlyConnections.TryGetValue(databasePath, out retVal))
+            if (!this.m_readonlyConnections.TryGetValue(connectionString.Name, out retVal))
             {
                 retVal = new List<LockableSQLiteConnection>();
                 lock (s_lockObject)
-                    if (!this.m_readonlyConnections.ContainsKey(databasePath))
-                        this.m_readonlyConnections.Add(databasePath, retVal);
+                    if (!this.m_readonlyConnections.ContainsKey(connectionString.Name))
+                        this.m_readonlyConnections.Add(connectionString.Name, retVal);
                     else
-                        retVal = this.m_readonlyConnections[databasePath];
+                        retVal = this.m_readonlyConnections[connectionString.Name];
             }
             return retVal;
         }
@@ -138,7 +141,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         internal void UnregisterWriteConnection(WriteableSQLiteConnection conn)
         {
-            var mre = this.GetOrRegisterResetEvent(conn.DatabasePath);
+            var mre = this.GetOrRegisterResetEvent(conn);
             mre.Set();
 
         }
@@ -148,8 +151,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         internal void RegisterWriteConnection(WriteableSQLiteConnection conn)
         {
-            var mre = this.GetOrRegisterResetEvent(conn.DatabasePath);
-            var connections = this.GetOrRegisterConnections(conn.DatabasePath);
+            var mre = this.GetOrRegisterResetEvent(conn);
+            var connections = this.GetOrRegisterConnections(conn.ConnectionString);
             mre.Reset();
             // Wait for readonly connections to go to 0
             while (connections.Count > 0)
@@ -160,17 +163,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// <summary>
         /// Gets or sets the reset event for the particular database
         /// </summary>
-        private ManualResetEvent GetOrRegisterResetEvent(string databasePath)
+        private ManualResetEvent GetOrRegisterResetEvent(LockableSQLiteConnection connection)
         {
             ManualResetEvent retVal = null;
-            if (!this.m_connections.TryGetValue(databasePath, out retVal))
+            if (!this.m_connections.TryGetValue(connection.ConnectionString.Name, out retVal))
             {
                 retVal = new ManualResetEvent(true);
                 lock (s_lockObject)
-                    if (!this.m_connections.ContainsKey(databasePath))
-                        this.m_connections.Add(databasePath, retVal);
+                    if (!this.m_connections.ContainsKey(connection.ConnectionString.Name))
+                        this.m_connections.Add(connection.ConnectionString.Name, retVal);
                     else
-                        retVal = this.m_connections[databasePath];
+                        retVal = this.m_connections[connection.ConnectionString.Name];
             }
             return retVal;
         }
@@ -244,7 +247,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// <summary>
         /// Get a readonly connection
         /// </summary>
-        public LockableSQLiteConnection GetReadonlyConnection(String dataSource)
+        public LockableSQLiteConnection GetReadonlyConnection(ConnectionString dataSource)
         {
             //return this.GetConnection(dataSource);
 
@@ -273,14 +276,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// <summary>
         /// Get or create a pooled connection
         /// </summary>
-        private LockableSQLiteConnection GetOrCreatePooledConnection(string dataSource, bool isReadonly)
+        private LockableSQLiteConnection GetOrCreatePooledConnection(ConnectionString dataSource, bool isReadonly)
         {
             // First is there a connection already?
             var connections = this.GetOrRegisterConnections(dataSource);
             WriteableSQLiteConnection writeConnection = null;
             lock (s_lockObject)
             {
-                if (this.m_writeConnections.TryGetValue(dataSource, out writeConnection))
+                if (this.m_writeConnections.TryGetValue(dataSource.Name, out writeConnection))
                     if (Monitor.IsEntered(writeConnection)) return writeConnection;
                 var conn = connections.FirstOrDefault(o => Monitor.IsEntered(o));
                 if (conn != null) return conn;
@@ -293,16 +296,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
                 LockableSQLiteConnection retVal = null;
                 if (isReadonly)
-                    retVal = this.m_connectionPool.OfType<ReadonlySQLiteConnection>().FirstOrDefault(o => o.DatabasePath == dataSource);
+                    retVal = this.m_connectionPool.OfType<ReadonlySQLiteConnection>().FirstOrDefault(o => o.ConnectionString.Name == dataSource.Name);
                 else
                 {
-                    if (!this.m_writeConnections.TryGetValue(dataSource, out writeConnection)) // Writeable connection can only have one in the pool so if it isn't there make sure it isn't in the current 
+                    if (!this.m_writeConnections.TryGetValue(dataSource.Name, out writeConnection)) // Writeable connection can only have one in the pool so if it isn't there make sure it isn't in the current 
                     {
                         writeConnection = new WriteableSQLiteConnection(platform, dataSource, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex | SQLiteOpenFlags.Create) { Persistent = true };
                         writeConnection.Execute("PRAGMA synchronous = 1");
                         //writeConnection.Execute("PRAGMA automatic_index = true");
                         //writeConnection.Execute("PRAGMA journal_mode = WAL");
-                        this.m_writeConnections.Add(dataSource, writeConnection);
+                        this.m_writeConnections.Add(dataSource.Name, writeConnection);
                     }
 
                     retVal = writeConnection;
@@ -325,7 +328,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// <summary>
         /// Get connection to the datafile
         /// </summary>
-        public LockableSQLiteConnection GetConnection(String dataSource)
+        public LockableSQLiteConnection GetConnection(ConnectionString dataSource)
         {
             if (!this.IsRunning)
                 throw new InvalidOperationException("Cannot get connection before daemon is started");
@@ -416,7 +419,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                 for (var i = 0; i < this.m_connections.Count; i++)
                 {
                     var itm = this.m_connections.ElementAt(i);
-                    var conn = this.GetConnection(itm.Key);
+                    var conn = this.GetConnection((ApplicationContext.Current.GetService<IConfigurationManager>()).GetConnectionString(itm.Key));
                     using (conn.Lock())
                     {
                         ApplicationContext.Current.SetProgress(Strings.locale_compacting, (i * 3 + 0) / (this.m_connections.Count * 3.0f));

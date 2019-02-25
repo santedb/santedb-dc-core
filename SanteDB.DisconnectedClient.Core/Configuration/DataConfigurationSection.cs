@@ -19,40 +19,29 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration
+namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 {
     /// <summary>
     /// Data configuration section
     /// </summary>
-    [XmlType(nameof(DataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
-    public class DataConfigurationSection : IConfigurationSection
+    [XmlType(nameof(DcDataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    public class DcDataConfigurationSection : SanteDB.Core.Configuration.Data.DataConfigurationSection
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.DataConfigurationSection"/> class.
+        /// Initializes a new instance of the data configuration section
         /// </summary>
-        public DataConfigurationSection()
+        public DcDataConfigurationSection()
         {
             this.MigrationLog = new DataMigrationLog();
-            this.ConnectionString = new List<SanteDB.DisconnectedClient.Core.Configuration.ConnectionString>();
         }
 
-        /// <summary>
-        /// Gets or sets connection strings
-        /// </summary>
-        /// <value>My property.</value>
-        [XmlElement("connectionString"), JsonIgnore]
-        public List<ConnectionString> ConnectionString
-        {
-            get;
-            set;
-        }
-
+        
         /// <summary>
         /// Gets or sets the name of the main data source connection string.
         /// </summary>
@@ -98,51 +87,19 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the data provider
+        /// Gets the configuration view model provider
         /// </summary>
         [XmlIgnore, JsonProperty("provider")]
-        public string Provider { get; set; }
+        public String Provider { get; set; }
 
         /// <summary>
-        /// Gets or sets the options object
+        /// Gets or sets the options
         /// </summary>
         [XmlIgnore, JsonProperty("options")]
-        public Dictionary<string, object> Options { get; set; }
+        public Dictionary<String, Object> Options { get; set; }
+
     }
-
-    /// <summary>
-    /// Represents a single connection string
-    /// </summary>
-    [XmlType(nameof(ConnectionString), Namespace = "http://santedb.org/mobile/configuration")]
-    public class ConnectionString
-    {
-
-        /// <summary>
-        /// Gets or sets the name
-        /// </summary>
-        [XmlAttribute("name")]
-        public String Name
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets the connection string
-        /// </summary>
-        [XmlAttribute("value")]
-        public String Value
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// When true instructs the system to encrypt the data
-        /// </summary>
-        [XmlAttribute("encrypt")]
-        public bool EncryptData { get; set; }
-    }
+    
 
 }
 

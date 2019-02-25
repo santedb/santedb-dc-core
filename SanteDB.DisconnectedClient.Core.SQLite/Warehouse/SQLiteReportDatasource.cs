@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             try
             {
                 // Lock the main database
-                var connectionStringPath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(connectionString.First(o => String.IsNullOrEmpty(o.Identifier)).Value).ConnectionString;
+                var connectionStringPath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(connectionString.First(o => String.IsNullOrEmpty(o.Identifier)).Value);
                 //var connection = SanteDB.DisconnectedClient.Core.Data.Connection.SQLiteConnectionManager.Current.GetConnection(connectionStringPath);
                 //using (connection.Lock())
                 using (var conn = new SqliteConnection($"Data Source={connectionStringPath}"))
@@ -150,10 +150,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                                 {
                                     using (var attcmd = conn.CreateCommand())
                                     {
-                                        if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
-                                            attcmd.CommandText = $"ATTACH DATABASE '{ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.Value).ConnectionString}' AS {itm.Identifier} KEY ''";
+
+                                        var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.Value);
+                                        if (cstr.GetComponent("encrypt") == "true")
+                                            attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY ''";
                                         else
-                                            attcmd.CommandText = $"ATTACH DATABASE '{ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.Value).ConnectionString}' AS {itm.Identifier} KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'";
+                                            attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'";
 
                                         attcmd.CommandType = System.Data.CommandType.Text;
                                         attcmd.ExecuteNonQuery();
