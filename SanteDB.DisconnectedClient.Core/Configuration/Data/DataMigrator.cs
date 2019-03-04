@@ -17,6 +17,8 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Exceptions;
@@ -52,8 +54,8 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
             this.m_tracer.TraceInfo("Scanning for data migrations...");
 
             // Scan for migrations 
-            foreach (var dbm in ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes
-                .Select(o => Type.GetType(o)?.GetTypeInfo().Assembly).Distinct().SelectMany(a => a.DefinedTypes))
+            foreach (var dbm in ApplicationContext.Current.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders
+                .Select(o => o.Type?.GetTypeInfo().Assembly).Distinct().SelectMany(a => a.DefinedTypes))
             {
                 try
                 {

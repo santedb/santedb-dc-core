@@ -23,6 +23,7 @@ using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
@@ -56,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// <summary>
         /// Application information
         /// </summary>
-        public ApplicationInfo(bool checkForUpdates) : base(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(o => o.DefinedTypes.Any(t => t.Name == "SplashActivity")) ?? typeof(SanteDBConfiguration).Assembly)
+        public ApplicationInfo(bool checkForUpdates) : base(ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes().FirstOrDefault(t => t.Name == "SplashActivity")?.Assembly ?? typeof(SanteDBConfiguration).Assembly)
         {
             this.SanteDB = new DiagnosticVersionInfo(typeof(SanteDB.DisconnectedClient.Core.ApplicationContext).Assembly);
 

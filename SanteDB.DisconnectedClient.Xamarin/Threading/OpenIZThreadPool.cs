@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -100,8 +101,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Threading
         /// </summary>
         public SanteDBThreadPool()
         {
-            if (ApplicationContext.Current?.Configuration?.GetSection<ApplicationConfigurationSection>()?.AppSettings?.Find(o => o.Key == "queue_process_concurrency") != null)
-                this.m_concurrencyLevel = Int32.Parse(ApplicationContext.Current?.Configuration?.GetSection<ApplicationConfigurationSection>()?.AppSettings?.Find(o => o.Key == "queue_process_concurrency").Value);
+            this.m_concurrencyLevel = ApplicationContext.Current?.Configuration?.GetSection<ApplicationServiceContextConfigurationSection>()?.ThreadPoolSize ?? Environment.ProcessorCount;
             this.m_queue = new Queue<WorkItem>(this.m_concurrencyLevel);
             this.m_priorityQueue = new Queue<WorkItem>();
         }

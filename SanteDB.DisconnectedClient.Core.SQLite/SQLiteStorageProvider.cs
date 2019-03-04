@@ -34,13 +34,14 @@ using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
     /// <summary>
     /// A storage provider for SQLite
     /// </summary>
-    public class SQLiteStorageProvider : IDataProvider
+    public class SQLiteStorageProvider : IDataConfigurationProvider
     {
         /// <summary>
         /// Get the invariant name
@@ -75,6 +76,16 @@ namespace SanteDB.DisconnectedClient.SQLite
                 return retVal;
             }
         }
+
+        /// <summary>
+        /// No option groups
+        /// </summary>
+        public Dictionary<string, string[]> OptionGroups => null;
+
+        /// <summary>
+        /// Get the provider type
+        /// </summary>
+        public Type DbProviderType => Type.GetType("SanteDB.OrmLite.Providers.SqliteProvider, SanteDB.OrmLite, Version=1.0.0.0");
 
         /// <summary>
         /// Progress has changed
@@ -131,18 +142,18 @@ namespace SanteDB.DisconnectedClient.SQLite
             configuration.Sections.RemoveAll(o => o is DataConfigurationSection);
             configuration.Sections.Add(dataSection);
             // Services
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Insert(0, typeof(SQLiteConnectionManager).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePersistenceService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteMailPersistenceService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteQueueManagerService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteSynchronizationLog).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteDatawarehouse).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteReportDatasource).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteRoleProviderService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteIdentityService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLitePolicyInformationService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteAuditRepositoryService).AssemblyQualifiedName);
-            configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(SQLiteDeviceIdentityProviderService).AssemblyQualifiedName);
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Insert(0, new TypeReferenceConfiguration(typeof(SQLiteConnectionManager)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLitePersistenceService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteMailPersistenceService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteQueueManagerService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteSynchronizationLog)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteDatawarehouse)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteReportDatasource)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteRoleProviderService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteIdentityService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLitePolicyInformationService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteAuditRepositoryService)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteDeviceIdentityProviderService)));
             
             // SQLite provider
 #if NOCRYPT
@@ -152,22 +163,53 @@ namespace SanteDB.DisconnectedClient.SQLite
             {
                 case OperatingSystemID.Win32:
                     if (options.ContainsKey("encrypt") && options["encrypt"].Equals(true))
-                        configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add("SQLite.Net.Platform.SqlCipher.SQLitePlatformSqlCipher, SQLite.Net.Platform.SqlCipher");
+                        configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.SqlCipher.SQLitePlatformSqlCipher, SQLite.Net.Platform.SqlCipher"));
                     else
-                        configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic");
+                        configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic"));
                     break;
                 case OperatingSystemID.MacOS:
                 case OperatingSystemID.Linux:
-                    configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic");
+                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic"));
                     break;
                 case OperatingSystemID.Android:
-                    configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add("SQLite.Net.Platform.XamarinAndroid.SQLitePlatformAndroid, SQLite.Net.Platform.XamarinAndroid");
+                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.XamarinAndroid.SQLitePlatformAndroid, SQLite.Net.Platform.XamarinAndroid"));
                     break;
             }
 #endif
 
             return true;
         }
+
+        /// <summary>
+        /// Create a connection string to be inserted into the connection string section
+        /// </summary>
+        public ConnectionString CreateConnectionString(Dictionary<string, object> options)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            Object dbFile = null;
+            if (!options.TryGetValue("Data Source", out dbFile))
+                options.TryGetValue("dbfile", out dbFile);
+            if (dbFile != null)
+                sb.AppendFormat("dbfile={0}", dbFile);
+            if (options.ContainsKey("encrypt"))
+                sb.AppendFormat(";encrypt={0}", options["encrypt"].ToString().ToLower());
+            return new ConnectionString()
+            {
+                Provider = this.Invariant,
+                Name = $"conn{Guid.NewGuid().ToString().Substring(0, 8)}",
+                Value = sb.ToString()
+            };
+        }
+
+        /// <summary>
+        /// Create a database
+        /// </summary>
+        public ConnectionString CreateDatabase(ConnectionString connectionString, string databaseName, string databaseOwner)
+        {
+            throw new NotSupportedException("This provider cannot create databases");
+        }
+
 
         /// <summary>
         /// Deploy the identified feature
@@ -178,19 +220,51 @@ namespace SanteDB.DisconnectedClient.SQLite
         }
 
         /// <summary>
-        /// Get databases
+        /// Get all databases
         /// </summary>
-        public IEnumerable<string> GetDatabases(string connectionStringName)
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
+        public IEnumerable<string> GetDatabases(ConnectionString connectionString)
         {
             return new String[] { "$$main$$" };
         }
 
         /// <summary>
-        /// Get data features
+        /// Get the features available for the connection string
         /// </summary>
-        public IEnumerable<IDataFeature> GetDataFeatures()
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
+        public IEnumerable<IDataFeature> GetFeatures(ConnectionString connectionString)
         {
             return new List<IDataFeature>();
+        }
+
+        /// <summary>
+        /// Parse the specified connection string to known components
+        /// </summary>
+        public Dictionary<string, object> ParseConnectionString(ConnectionString connectionString)
+        {
+            return new Dictionary<string, object>()
+            {
+                { "dbfile", connectionString.GetComponent("dbfile") },
+                { "encrypt", Boolean.Parse(connectionString.GetComponent("encrypt")) }
+            };
+        }
+
+        /// <summary>
+        /// Test the specified connection string
+        /// </summary>
+        public bool TestConnectionString(ConnectionString connectionString)
+        {
+            try
+            {
+                using (var conn = SQLiteConnectionManager.Current.GetConnection(connectionString))
+                    return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

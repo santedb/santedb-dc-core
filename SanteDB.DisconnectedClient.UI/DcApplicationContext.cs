@@ -238,7 +238,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                     // Ignore restoration
-                    retVal.Configuration.GetSection<ApplicationConfigurationSection>().AppSettings.Add(new AppSettingKeyValuePair()
+                    retVal.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.Add(new AppSettingKeyValuePair()
                     {
                         Key = "ignore.restore",
                         Value = "true"
@@ -517,6 +517,14 @@ namespace SanteDB.DisconnectedClient.UI
             else // TODO: LINUX ENCRYPTION 
                 return null;
 #endif
+        }
+
+        /// <summary>
+        /// Get all types
+        /// </summary>
+        public override IEnumerable<Type> GetAllTypes()
+        {
+            return AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes);
         }
     }
 }

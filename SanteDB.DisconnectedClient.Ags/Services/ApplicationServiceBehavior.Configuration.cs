@@ -498,8 +498,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 ApplicationContext.Current.Configuration.RemoveSection<SynchronizationConfigurationSection>();
 
             // Did the user add any other service definitions?
-            foreach (var svc in configuration.Application.ServiceTypes.Where(st => !ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Any(ct => Type.GetType(ct) == Type.GetType(st)) && ApplicationContext.Current.GetService(Type.GetType(st)) == null))
-                ApplicationContext.Current.AddServiceProvider(Type.GetType(svc), true);
+            foreach (var svc in configuration.Application.ServiceProviders.Where(st => !ApplicationContext.Current.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(ct => ct.Type == st.Type) && ApplicationContext.Current.GetService(st.Type) == null))
+                ApplicationContext.Current.AddServiceProvider(svc.Type, true);
 
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution = configuration.Applet.AppletSolution;
             ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets = configuration.Applet.AutoUpdateApplets;

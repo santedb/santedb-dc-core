@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         public string GetAppSetting(string key)
         {
-            return this.GetSection<ApplicationConfigurationSection>()?.AppSettings?.Find(o => o.Key == key)?.Value;
+            return this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings?.Find(o => o.Key == key)?.Value;
         }
         
         /// <summary>
@@ -104,9 +104,9 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         public void SetAppSetting(string key, String value)
         {
-            var setting = this.GetSection<ApplicationConfigurationSection>()?.AppSettings?.Find(o => o.Key == key);
+            var setting = this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings?.Find(o => o.Key == key);
             if (setting == null)
-                this.GetSection<ApplicationConfigurationSection>()?.AppSettings.Add(new AppSettingKeyValuePair() { Key = key, Value = value.ToString() });
+                this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings.Add(new AppSettingKeyValuePair() { Key = key, Value = value.ToString() });
             else
                 setting.Value = value.ToString();
 

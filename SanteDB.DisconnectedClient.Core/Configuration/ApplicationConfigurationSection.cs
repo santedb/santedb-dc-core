@@ -38,7 +38,6 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         public ApplicationConfigurationSection()
         {
-            this.AppSettings = new List<AppSettingKeyValuePair>();
         }
 
 
@@ -60,28 +59,6 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <value>The style.</value>
         [XmlElement("style"), JsonProperty("style")]
         public StyleSchemeType Style
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets the services.
-        /// </summary>
-        /// <value>The services.</value>
-        [XmlElement("service"), JsonProperty("service")]
-        public List<String> ServiceTypes
-        {
-            get;
-            set;
-        }
-
-
-        /// <summary>
-        /// General extended application settings
-        /// </summary>
-        [XmlElement("setting"), JsonProperty("setting")]
-        public List<AppSettingKeyValuePair> AppSettings
         {
             get;
             set;
@@ -143,26 +120,6 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public long MaxPressureAge { get; set; }
     }
 
-    /// <summary>
-    /// Application key/value pair setting
-    /// </summary>
-    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://santedb.org/mobile/configuration")]
-    public class AppSettingKeyValuePair
-    {
-
-        /// <summary>
-        /// The key of the setting
-        /// </summary>
-        [XmlAttribute("key"), JsonProperty("key")]
-        public String Key { get; set; }
-
-        /// <summary>
-        /// The value of the setting
-        /// </summary>
-        [XmlAttribute("value"), JsonProperty("value")]
-        public String Value { get; set; }
-
-    }
 
     /// <summary>
     /// Style scheme type

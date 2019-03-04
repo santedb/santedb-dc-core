@@ -68,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             this.Security = config.GetSection<SecurityConfigurationSection>();
             this.Data = config.GetSection<DcDataConfigurationSection>();
             this.Applet = config.GetSection<AppletConfigurationSection>();
-            this.Application = config.GetSection<ApplicationConfigurationSection>();
+            this.Application = config.GetSection<ApplicationServiceContextConfigurationSection>();
             this.Log = config.GetSection<DiagnosticsConfigurationSection>();
             this.Network = config.GetSection<ServiceClientConfigurationSection>();
 
@@ -106,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Gets or sets application
         /// </summary>
         [JsonProperty("application")]
-        public ApplicationConfigurationSection Application { get; set; }
+        public ApplicationServiceContextConfigurationSection Application { get; set; }
         /// <summary>
         /// Log
         /// </summary>

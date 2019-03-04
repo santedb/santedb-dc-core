@@ -154,14 +154,14 @@ namespace SanteDB.DisconnectedClient.Core
             Object candidateService = null;
             if (!this.m_cache.TryGetValue(serviceType, out candidateService))
             {
-                ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
+                ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
                 candidateService = this.GetServices().FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
                 // Candidate service not found? Look in configuration
                 if (candidateService == null)
                 {
                     lock (this.m_lockObject)
                     {
-                        var cserviceType = this.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Select(o => Type.GetType(o)).FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
+                        var cserviceType = appSection.ServiceProviders.Select(o => o.Type).FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
                         if (cserviceType == null)
                             return null;
                         else
@@ -362,12 +362,12 @@ namespace SanteDB.DisconnectedClient.Core
         public void AddServiceProvider(Type serviceType, bool addToConfiguration)
         {
 
-            ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
+            ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             if (!this.GetServices().Any(o => o.GetType() == serviceType))
                 lock (this.m_lockObject)
                     this.m_providers.Add(Activator.CreateInstance(serviceType));
-            if (addToConfiguration && !appSection.ServiceTypes.Any(o => Type.GetType(o) == serviceType))
-                appSection.ServiceTypes.Add(serviceType.AssemblyQualifiedName);
+            if (addToConfiguration && !appSection.ServiceProviders.Any(o => o.Type == serviceType))
+                appSection.ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
         }
 
         /// <summary>
@@ -386,15 +386,14 @@ namespace SanteDB.DisconnectedClient.Core
                         this.ConfigurationPersister
                     };
                     Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
-                    foreach (var itm in this.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes)
+                    foreach (var itm in this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders)
                     {
-                        Type t = Type.GetType(itm);
-                        if (t == null)
+                        if (itm.Type == null)
                             tracer.TraceWarning("Could not find provider {0}...", itm);
                         else
                         {
-                            tracer.TraceInfo("Adding service provider {0}...", t.FullName);
-                            this.m_providers.Add(Activator.CreateInstance(t));
+                            tracer.TraceInfo("Adding service provider {0}...", itm.TypeXml);
+                            this.m_providers.Add(Activator.CreateInstance(itm.Type));
                         }
                     }
                 }
@@ -411,7 +410,7 @@ namespace SanteDB.DisconnectedClient.Core
             if (serviceType == null)
                 throw new ArgumentNullException(nameof(serviceType));
 
-            ApplicationConfigurationSection appSection = this.Configuration.GetSection<ApplicationConfigurationSection>();
+            ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             if (this.GetServices().Any(o => o.GetType() == serviceType))
                 lock (this.m_lockObject)
                     this.m_providers.RemoveAll(o =>
@@ -428,7 +427,7 @@ namespace SanteDB.DisconnectedClient.Core
                 this.m_cache.Remove(p.Key);
 
             if (updateConfiguration)
-                appSection.ServiceTypes.RemoveAll(t => Type.GetType(t) == serviceType);
+                appSection.ServiceProviders.RemoveAll(t => t.Type == serviceType);
         }
 
         /// <summary>
@@ -452,6 +451,11 @@ namespace SanteDB.DisconnectedClient.Core
         {
             this.RemoveServiceProvider(serviceType, false);
         }
+
+        /// <summary>
+        /// Get all types
+        /// </summary>
+        public abstract IEnumerable<Type> GetAllTypes();
     }
 }
 

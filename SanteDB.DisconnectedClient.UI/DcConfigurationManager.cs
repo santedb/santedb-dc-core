@@ -102,27 +102,6 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 Style = StyleSchemeType.Dark,
                 UserPrefDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName, "userpref"),
-                ServiceTypes = new List<string>() {
-                    typeof(AesSymmetricCrypographicProvider).AssemblyQualifiedName,
-                    typeof(MemoryTickleService).AssemblyQualifiedName,
-                    typeof(DefaultPolicyDecisionService).AssemblyQualifiedName,
-                    typeof(NetworkInformationService).AssemblyQualifiedName,
-                    typeof(BusinessRulesDaemonService).AssemblyQualifiedName,
-                    typeof(AgsService).AssemblyQualifiedName,
-                    typeof(MemoryCacheService).AssemblyQualifiedName,
-                    typeof(SanteDBThreadPool).AssemblyQualifiedName,
-                    typeof(SimpleCarePlanService).AssemblyQualifiedName,
-                    typeof(MemorySessionManagerService).AssemblyQualifiedName,
-                    typeof(AmiUpdateManager).AssemblyQualifiedName,
-                    typeof(AppletClinicalProtocolRepository).AssemblyQualifiedName,
-                    typeof(MemoryQueryPersistenceService).AssemblyQualifiedName,
-                    typeof(SimpleQueueFileProvider).AssemblyQualifiedName,
-                    typeof(SimplePatchService).AssemblyQualifiedName,
-                    typeof(XamarinBackupService).AssemblyQualifiedName,
-                    typeof(DcAppletManagerService).AssemblyQualifiedName,
-                    typeof(ReportExecutor).AssemblyQualifiedName,
-                    typeof(AppletReportRepository).AssemblyQualifiedName
-                },
                 Cache = new CacheConfiguration()
                 {
                     MaxAge = new TimeSpan(0, 5, 0).Ticks,
@@ -132,6 +111,32 @@ namespace SanteDB.DisconnectedClient.UI
                 }
             };
 
+            // App service 
+            var appServiceSection = new ApplicationServiceContextConfigurationSection()
+            {
+                ThreadPoolSize = Environment.ProcessorCount * 2,
+                ServiceProviders = new List<TypeReferenceConfiguration>() {
+                    new TypeReferenceConfiguration(typeof(AesSymmetricCrypographicProvider)),
+                    new TypeReferenceConfiguration(typeof(MemoryTickleService)),
+                    new TypeReferenceConfiguration(typeof(DefaultPolicyDecisionService)),
+                    new TypeReferenceConfiguration(typeof(NetworkInformationService)),
+                    new TypeReferenceConfiguration(typeof(BusinessRulesDaemonService)),
+                    new TypeReferenceConfiguration(typeof(AgsService)),
+                    new TypeReferenceConfiguration(typeof(MemoryCacheService)),
+                    new TypeReferenceConfiguration(typeof(SanteDBThreadPool)),
+                    new TypeReferenceConfiguration(typeof(SimpleCarePlanService)),
+                    new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),
+                    new TypeReferenceConfiguration(typeof(AmiUpdateManager)),
+                    new TypeReferenceConfiguration(typeof(AppletClinicalProtocolRepository)),
+                    new TypeReferenceConfiguration(typeof(MemoryQueryPersistenceService)),
+                    new TypeReferenceConfiguration(typeof(SimpleQueueFileProvider)),
+                    new TypeReferenceConfiguration(typeof(SimplePatchService)),
+                    new TypeReferenceConfiguration(typeof(XamarinBackupService)),
+                    new TypeReferenceConfiguration(typeof(DcAppletManagerService)),
+                    new TypeReferenceConfiguration(typeof(ReportExecutor)),
+                    new TypeReferenceConfiguration(typeof(AppletReportRepository))
+                }
+            };
 
             // Security configuration
             SecurityConfigurationSection secSection = new SecurityConfigurationSection()
@@ -179,6 +184,7 @@ namespace SanteDB.DisconnectedClient.UI
                 }
             };
 #endif
+            retVal.Sections.Add(appServiceSection);
             retVal.Sections.Add(appletSection);
             retVal.Sections.Add(diagSection);
             retVal.Sections.Add(appSection);
