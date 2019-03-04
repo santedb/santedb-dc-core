@@ -45,7 +45,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// The location of the directory where user preferences are stored
         /// </summary>
         /// <value>The user preference dir.</value>
-        [XmlElement("userPrefDir"), JsonIgnore]
+        [XmlElement("userPrefDir"), JsonProperty("userPrefDir")]
         public String UserPrefDir
         {
             get;

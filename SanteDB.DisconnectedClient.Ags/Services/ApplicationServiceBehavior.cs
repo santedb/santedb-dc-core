@@ -51,12 +51,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public List<StorageProviderViewModel> GetDataStorageProviders()
         {
-            return StorageProviderUtil.GetProviders().Select(o => new StorageProviderViewModel()
-            {
-                Invariant = o.Invariant,
-                Name = o.Name,
-                Options = o.Options
-            }).ToList();
+            return StorageProviderUtil.GetProviders().Select(o => new StorageProviderViewModel(o)).ToList();
         }
 
         /// <summary>

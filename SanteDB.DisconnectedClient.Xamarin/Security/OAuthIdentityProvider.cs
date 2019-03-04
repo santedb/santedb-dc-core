@@ -333,6 +333,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             var localPip = ApplicationContext.Current.GetService<IOfflinePolicyInformationService>();
             var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
+            if (localRp == null || localPip == null || localIdp == null)
+                return;
+
             if (!String.IsNullOrEmpty(password) && principal is IClaimsPrincipal &&
                             XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {

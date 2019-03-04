@@ -33,6 +33,24 @@ namespace SanteDB.DisconnectedClient.Ags.Model
     [JsonObject]
     public class StorageProviderViewModel
     {
+
+        /// <summary>
+        /// Default ctor for serialization
+        /// </summary>
+        public StorageProviderViewModel()
+        {
+
+        }
+        /// <summary>
+        /// Creates a new storage provider
+        /// </summary>
+        public StorageProviderViewModel(IDataConfigurationProvider o)
+        {
+            this.Invariant = o.Invariant;
+            this.Name = o.Name;
+            this.Options = o.Options;
+        }
+
         /// <summary>
         /// The invariant name
         /// </summary>

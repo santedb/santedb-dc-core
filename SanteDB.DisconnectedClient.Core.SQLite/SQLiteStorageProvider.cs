@@ -99,7 +99,9 @@ namespace SanteDB.DisconnectedClient.SQLite
         {
 
             string dataDirectory = options["DataDirectory"].ToString();
-
+            if (!options.ContainsKey("encrypt"))
+                options.Add("encrypt", false);
+            
             // Connection Strings
             DcDataConfigurationSection dataSection = new DcDataConfigurationSection()
             {
