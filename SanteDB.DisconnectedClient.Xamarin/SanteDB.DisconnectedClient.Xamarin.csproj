@@ -186,7 +186,7 @@
     <Compile Include="Security\TokenCredentials.cs" />
     <Compile Include="Security\X509CertificateUtils.cs" />
     <Compile Include="Subscribers\PolicyEnforcementSubscriber.cs" />
-    <Compile Include="Threading\OpenIZThreadPool.cs" />
+    <Compile Include="Threading\SanteDBThreadPool.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\ViewModel.xml" />
