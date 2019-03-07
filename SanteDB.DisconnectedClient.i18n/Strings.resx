@@ -357,7 +357,7 @@ Sincerely,
     <value>The applet {0} is not signed or contains an invalid header. Your security settings do not allow for unsigned applets to be executed.</value>
   </data>
   <data name="locale_untrustedPublisherPrompt" xml:space="preserve">
-    <value>The applet {0} published by {1} is not trusted. Do you want to continue to load / install this applet?</value>
+    <value>The applet {0} published by {1} is not trusted. Do you want to continue to trust applets published by {1}?</value>
   </data>
   <data name="locale_updateCheck" xml:space="preserve">
     <value>Checking for updates...</value>

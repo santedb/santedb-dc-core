@@ -775,7 +775,7 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The applet {0} published by {1} is not trusted. Do you want to continue to load / install this applet?.
+        ///   Looks up a localized string similar to The applet {0} published by {1} is not trusted. Do you want to continue to trust applets published by {1}?.
         /// </summary>
         public static string locale_untrustedPublisherPrompt {
             get {

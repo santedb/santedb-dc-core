@@ -26,6 +26,7 @@ using SanteDB.DisconnectedClient.Core;
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors

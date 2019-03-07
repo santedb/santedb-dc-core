@@ -142,24 +142,28 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         {
                             // Attempt to load
                             cert = new X509Certificate2Collection(new X509Certificate2(package.PublicKey));
+                            var config = ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>();
                             // Build the certificate chain
-                            var chain = new X509Chain();
-                            chain.Build(cert[0]);
-
-                            // Validate the chain elements
-                            bool isTrusted = false;
-                            foreach (var itm in chain.ChainElements)
-                                isTrusted |= ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().Security.TrustedPublishers.Contains(itm.Certificate.Thumbprint);
-
-                            if (!isTrusted || chain.ChainStatus.Any(o => o.Status != X509ChainStatusFlags.RevocationStatusUnknown))
+                            if (!config.Security.TrustedPublishers.Contains(cert[0].Thumbprint))
                             {
-                                if (!ApplicationContext.Current.Confirm(String.Format(Strings.locale_untrustedPublisherPrompt, package.Meta.Names.First().Value, this.ExtractDNPart(cert[0].Subject, "CN"))))
-                                    return false;
-                                else
+                                var chain = new X509Chain();
+                                chain.Build(cert[0]);
+
+                                // Validate the chain elements
+                                bool isTrusted = false;
+                                foreach (var itm in chain.ChainElements)
+                                    isTrusted |= config.Security.TrustedPublishers.Contains(itm.Certificate.Thumbprint);
+
+                                if (!isTrusted || chain.ChainStatus.Any(o => o.Status != X509ChainStatusFlags.RevocationStatusUnknown))
                                 {
-                                    ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().Security.TrustedPublishers.Add(cert[0].Thumbprint);
-                                    if(ApplicationContext.Current.ConfigurationPersister.IsConfigured)
-                                        ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
+                                    if (!ApplicationContext.Current.Confirm(String.Format(Strings.locale_untrustedPublisherPrompt, package.Meta.Names.First().Value, this.ExtractDNPart(cert[0].Subject, "CN"))))
+                                        return false;
+                                    else
+                                    {
+                                        ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().Security.TrustedPublishers.Add(cert[0].Thumbprint);
+                                        if (ApplicationContext.Current.ConfigurationPersister.IsConfigured)
+                                            ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
+                                    }
                                 }
                             }
                         }

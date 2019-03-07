@@ -62,57 +62,56 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             this.SanteDB = new DiagnosticVersionInfo(typeof(SanteDB.DisconnectedClient.Core.ApplicationContext).Assembly);
 
             var appService = ApplicationContext.Current.GetService<IAppletManagerService>();
-            this.Applets = appService.Applets.Select(o => o.Info).ToList();
-
-            if (checkForUpdates)
-                try
-                {
-                    this.Updates = appService.Applets.Select(o => ApplicationContext.Current.GetService<IUpdateManager>().GetServerVersion(o.Info.Id)).ToList();
-                    this.Updates.RemoveAll(o => new Version(appService.GetApplet(o.Id).Info.Version).CompareTo(new Version(o.Version)) >= 0);
-                }
-                catch { }
-
-            this.Assemblies = AppDomain.CurrentDomain.GetAssemblies().Select(o => new DiagnosticVersionInfo(o)).ToList();
-
-            this.ServiceInfo = new List<DiagnosticServiceInfo>();
-
-            // Assembly load file
-            foreach (var f in Directory.GetFiles(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "*.dll"))
-            {
-                try
-                {
-                    var asmL = Assembly.ReflectionOnlyLoadFrom(f);
-                    foreach(var t in (asmL.GetExportedTypes().Where(o => o.GetInterfaces().Any(i => i.FullName == typeof(IServiceImplementation).FullName) && !o.IsGenericTypeDefinition && !o.IsAbstract && !o.IsInterface)))
-                    {
-                        this.ServiceInfo.Add(new DiagnosticServiceInfo()
-                        {
-                            IsRunning = (ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) as IDaemonService)?.IsRunning ?? false,
-                            Active = ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) != null,
-                            Description = t.CustomAttributes.FirstOrDefault(o=>o.AttributeType.FullName == typeof(ServiceProviderAttribute).FullName)?.ConstructorArguments[0].Value?.ToString() ?? t.FullName,
-                            Class =  t.GetInterfaces().Any(o => o.Name.Contains("IDaemonService")) ? ServiceClass.Daemon :
-                                    t.GetInterfaces().Any(o => o.Name.Contains("IDataPersistenceService")) ? ServiceClass.Data :
-                                    t.GetInterfaces().Any(o => o.Name.Contains("IRepositoryService")) ? ServiceClass.Repository :
-                                    ServiceClass.Passive,
-                            Type = t.AssemblyQualifiedName
-                        });
-                    }
-                }
-                catch (Exception e) { }
-            }
-
-            this.Configuration = ApplicationContext.Current.Configuration;
-            this.EnvironmentInfo = new DiagnosticEnvironmentInfo()
-            {
-                OSVersion = String.Format("{0} v{1}", System.Environment.OSVersion.Platform, System.Environment.OSVersion.Version),
-                Is64Bit = System.Environment.Is64BitOperatingSystem,
-                ProcessorCount = System.Environment.ProcessorCount,
-                Version = System.Environment.Version.ToString(),
-                UsedMemory = GC.GetTotalMemory(false)
-            };
-
-            // Files of interest
             try
             {
+                this.Applets = appService?.Applets?.Select(o => o.Info).ToList();
+
+                if (checkForUpdates)
+                    try
+                    {
+                        this.Updates = appService.Applets.Select(o => ApplicationContext.Current.GetService<IUpdateManager>().GetServerVersion(o.Info.Id)).ToList();
+                        this.Updates.RemoveAll(o => new Version(appService.GetApplet(o.Id).Info.Version).CompareTo(new Version(o.Version)) >= 0);
+                    }
+                    catch { }
+
+                this.Assemblies = AppDomain.CurrentDomain.GetAssemblies().Select(o => new DiagnosticVersionInfo(o)).ToList();
+
+                this.ServiceInfo = new List<DiagnosticServiceInfo>();
+                IEnumerable<Type> types = null;
+                var asmLoc = Assembly.GetEntryAssembly()?.Location;
+                // Assembly load file
+                if (!String.IsNullOrEmpty(asmLoc))
+                    types = Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll").Select(o => Assembly.Load(o)).Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes).ToList();
+                else
+                    types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
+
+
+                foreach (var t in types.Where(o => o.GetInterfaces().Any(i => i.FullName == typeof(IServiceImplementation).FullName) && !o.IsGenericTypeDefinition && !o.IsAbstract && !o.IsInterface))
+                {
+                    this.ServiceInfo.Add(new DiagnosticServiceInfo()
+                    {
+                        IsRunning = (ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) as IDaemonService)?.IsRunning ?? false,
+                        Active = ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) != null,
+                        Description = t.CustomAttributes.FirstOrDefault(o => o.AttributeType.FullName == typeof(ServiceProviderAttribute).FullName)?.ConstructorArguments[0].Value?.ToString() ?? t.FullName,
+                        Class = t.GetInterfaces().Any(o => o.Name.Contains("IDaemonService")) ? ServiceClass.Daemon :
+                                t.GetInterfaces().Any(o => o.Name.Contains("IDataPersistenceService")) ? ServiceClass.Data :
+                                t.GetInterfaces().Any(o => o.Name.Contains("IRepositoryService")) ? ServiceClass.Repository :
+                                ServiceClass.Passive,
+                        Type = t.AssemblyQualifiedName
+                    });
+                }
+
+                this.Configuration = ApplicationContext.Current.Configuration;
+                this.EnvironmentInfo = new DiagnosticEnvironmentInfo()
+                {
+                    OSVersion = String.Format("{0} v{1}", System.Environment.OSVersion.Platform, System.Environment.OSVersion.Version),
+                    Is64Bit = System.Environment.Is64BitOperatingSystem,
+                    ProcessorCount = System.Environment.ProcessorCount,
+                    Version = System.Environment.Version.ToString(),
+                    UsedMemory = GC.GetTotalMemory(false)
+                };
+
+
                 // Configuration files
                 var logFileName = ApplicationContext.Current.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter.FirstOrDefault(o => o.TraceWriter.GetType() == typeof(FileTraceWriter)).InitializationData;
 
