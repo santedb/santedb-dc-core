@@ -44,6 +44,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
     public class XamarinBackupService : IBackupService
     {
 
+        /// <summary>
+        /// Configuration backup service
+        /// </summary>
+        public String ServiceName => "Default Configuration Backup Service";
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(XamarinBackupService));
 

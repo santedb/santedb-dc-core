@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
@@ -26,7 +27,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Free text search service
     /// </summary>
-    public interface IFreetextSearchService
+    public interface IFreetextSearchService : IServiceImplementation
     {
 
         /// <summary>

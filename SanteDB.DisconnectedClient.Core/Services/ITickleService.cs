@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Tickler;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a service which provides tickles for the user (popup messages)
     /// </summary>
-    public interface ITickleService
+    public interface ITickleService : IServiceImplementation
     {
 
         /// <summary>

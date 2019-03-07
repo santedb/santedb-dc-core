@@ -47,6 +47,12 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
     /// </summary>
 	public class AmiIntegrationService : IAdministrationIntegrationService
     {
+
+        /// <summary>
+        /// AMI Integration Service
+        /// </summary>
+        public String ServiceName => "AMI Integration Service";
+
         // Cached credential
         private IPrincipal m_cachedCredential = null;
 

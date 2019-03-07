@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.DisconnectedClient.Core.Services
@@ -34,7 +35,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a service that can back-up data to/from another location
     /// </summary>
-    public interface IBackupService
+    public interface IBackupService : IServiceImplementation
     {
 
         /// <summary>

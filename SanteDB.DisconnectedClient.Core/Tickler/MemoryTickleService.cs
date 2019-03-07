@@ -31,6 +31,11 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
     public class MemoryTickleService : ITickleService
     {
 
+        /// <summary>
+        /// Gets the name of the service 
+        /// </summary>
+        public String ServiceName => "Default Tickle Service";
+
         // Tickles
         private List<Tickle> m_tickles = new List<Tickle>();
 

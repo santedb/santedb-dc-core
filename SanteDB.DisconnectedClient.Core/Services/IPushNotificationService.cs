@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.DisconnectedClient.Core.Services
@@ -25,7 +26,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a service which can initiate a remote synchronization
     /// </summary>
-    public interface IPushNotificationService
+    public interface IPushNotificationService : IServiceImplementation
     {
         /// <summary>
         /// Push has been received

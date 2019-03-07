@@ -17,12 +17,14 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Services;
+
 namespace SanteDB.DisconnectedClient.Core.Services
 {
     /// <summary>
     /// Represents a crypto service provider that encrypts things using symmetric encryption
     /// </summary>
-    public interface ISymmetricCryptographicProvider
+    public interface ISymmetricCryptographicProvider : IServiceImplementation
     {
 
         /// <summary>

@@ -35,6 +35,9 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
     /// </summary>
     public class AgsWebErrorHandlerServiceBehavior : IServiceBehavior, IServiceErrorHandler
     {
+
+        private Tracer m_tracer = Tracer.GetTracer(typeof(AgsWebErrorHandlerServiceBehavior));
+
         /// <summary>
         /// Apply the service behavior
         /// </summary>
@@ -59,6 +62,22 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         {
             var errCode = WebErrorUtility.ClassifyException(error, true);
             var hdlr = ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.ErrorAssets).FirstOrDefault(o => o.ErrorCode == errCode);
+
+#if DEBUG
+            var ie = error;
+            while (ie != null)
+            {
+                this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
+                    RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
+                    ie.GetType().FullName, ie.Message);
+                ie = ie.InnerException;
+            }
+#else
+            if (error is TargetInvocationException)
+                this.m_tracer.TraceError("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
+            else
+                this.m_tracer.TraceError("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
+#endif
 
             // Grab the asset handler
             try

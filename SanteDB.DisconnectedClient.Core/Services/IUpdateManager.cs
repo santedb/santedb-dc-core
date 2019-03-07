@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.DisconnectedClient.Core.Services
@@ -25,7 +26,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Update manager service is responsible for checking for updates and downloading / applying them
     /// </summary>
-    public interface IUpdateManager
+    public interface IUpdateManager : IServiceImplementation
     {
 
         /// <summary>

@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// Represents an integration service which is responsible for sending and
     /// pulling data to/from remote sources
     /// </summary>
-    public interface IIntegrationService
+    public interface IIntegrationService : IServiceImplementation
     {
 
         /// <summary>

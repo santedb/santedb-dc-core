@@ -52,6 +52,11 @@ namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
     {
 
         /// <summary>
+        /// Service name
+        /// </summary>
+        public String ServiceName => "HDSI Clinical Integration Service";
+
+        /// <summary>
         /// Fired on response
         /// </summary>
         public event EventHandler<RestResponseEventArgs> Responding;

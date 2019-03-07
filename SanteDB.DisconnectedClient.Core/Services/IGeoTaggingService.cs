@@ -18,15 +18,15 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Services;
 
 namespace SanteDB.DisconnectedClient.Core.Services
 {
 
-
     /// <summary>
     /// Represents a geo-tagging service to get device and position
     /// </summary>
-    public interface IGeoTaggingService
+    public interface IGeoTaggingService : IServiceImplementation
     {
 
         /// <summary>

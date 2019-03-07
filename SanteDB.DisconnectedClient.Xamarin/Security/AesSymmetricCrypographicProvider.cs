@@ -31,6 +31,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     {
 
         /// <summary>
+        /// Service name
+        /// </summary>
+        public String ServiceName => "AES Symmetric Cryptographic Provider";
+
+        /// <summary>
         /// Decrypt the specified data using the specified key and iv
         /// </summary>
         public byte[] Decrypt(byte[] data, byte[] key, byte[] iv)

@@ -244,11 +244,11 @@ namespace SanteDB.DisconnectedClient.UI
                         Value = "true"
                     });
 
+                    // Add tracers
                     retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                     foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
-                    {
                         Tracer.AddWriter(tr.TraceWriter, tr.Filter);
-                    }
+
                     retVal.SetProgress("Loading configuration", 0.2f);
                     // Load all user-downloaded applets in the data directory
                     var configuredApplets = retVal.Configuration.GetSection<AppletConfigurationSection>().Applets;
@@ -291,9 +291,9 @@ namespace SanteDB.DisconnectedClient.UI
                             }
                         }
 
-
                     // Set the entity source
                     EntitySource.Current = new EntitySource(retVal.GetService<IEntitySourceProvider>());
+                    ApplicationServiceContext.Current = ApplicationContext.Current;
 
                     // Ensure data migration exists
                     if (retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0)
@@ -325,15 +325,8 @@ namespace SanteDB.DisconnectedClient.UI
                             retVal.ConfigurationPersister.Save(retVal.Configuration);
                         }
 
-                    ApplicationServiceContext.Current = ApplicationContext.Current;
-
-                    // Set the tracer writers for the PCL goodness!
-                    foreach (var itm in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
-                    {
-                        SanteDB.Core.Diagnostics.Tracer.AddWriter(itm.TraceWriter, itm.Filter);
-                    }
-
                     // Start daemons
+                    ApplicationContext.Current.GetService<IUpdateManager>().AutoUpdate();
                     retVal.GetService<IThreadPoolService>().QueueUserWorkItem(o => { retVal.Start(); });
 
                     //retVal.Start();
@@ -363,99 +356,7 @@ namespace SanteDB.DisconnectedClient.UI
             { ".png", "image/png" },
             { ".bmp", "image/bmp" },
             { ".json", "application/json" }
-
         };
-
-        /// <summary>
-        /// Process the specified directory
-        /// </summary>
-        private IEnumerable<AppletAsset> ProcessDirectory(string source, String path)
-        {
-            List<AppletAsset> retVal = new List<AppletAsset>();
-            foreach (var itm in Directory.GetFiles(source))
-            {
-                Console.WriteLine("\t Processing {0}...", itm);
-
-                if (Path.GetFileName(itm).ToLower() == "manifest.xml")
-                    continue;
-                else
-                    switch (Path.GetExtension(itm))
-                    {
-                        case ".html":
-                        case ".htm":
-                        case ".xhtml":
-                            XElement xe = XElement.Load(itm);
-                            // Now we have to iterate throuh and add the asset\
-
-                            var demand = xe.DescendantNodes().OfType<XElement>().Where(o => o.Name == xs_santedb + "demand").Select(o => o.Value).ToList();
-
-                            var includes = xe.DescendantNodes().OfType<XComment>().Where(o => o?.Value?.Trim().StartsWith("#include virtual=\"") == true).ToList();
-                            foreach (var inc in includes)
-                            {
-                                String assetName = inc.Value.Trim().Substring(18); // HACK: Should be a REGEX
-                                if (assetName.EndsWith("\""))
-                                    assetName = assetName.Substring(0, assetName.Length - 1);
-                                if (assetName == "content")
-                                    continue;
-                                var includeAsset = ResolveName(assetName);
-                                inc.AddAfterSelf(new XComment(String.Format("#include virtual=\"{0}\"", includeAsset)));
-                                inc.Remove();
-
-                            }
-
-
-                            var xel = xe.Descendants().OfType<XElement>().Where(o => o.Name.Namespace == xs_santedb).ToList();
-                            if (xel != null)
-                                foreach (var x in xel)
-                                    x.Remove();
-                            retVal.Add(new AppletAsset()
-                            {
-                                Name = ResolveName(itm.Replace(path, "")),
-                                MimeType = "text/html",
-                                Content = null,
-                                Policies = demand
-
-                            });
-                            break;
-                        case ".css":
-                            retVal.Add(new AppletAsset()
-                            {
-                                Name = ResolveName(itm.Replace(path, "")),
-                                MimeType = "text/css",
-                                Content = null
-                            });
-                            break;
-                        case ".js":
-                        case ".json":
-                            retVal.Add(new AppletAsset()
-                            {
-                                Name = ResolveName(itm.Replace(path, "")),
-                                MimeType = "text/javascript",
-                                Content = null
-                            });
-                            break;
-                        default:
-                            string mt = null;
-                            retVal.Add(new AppletAsset()
-                            {
-                                Name = ResolveName(itm.Replace(path, "")),
-                                MimeType = mime.TryGetValue(Path.GetExtension(itm), out mt) ? mt : "application/octet-stream",
-                                Content = null
-                            });
-                            break;
-
-                    }
-            }
-
-            // Process sub directories
-            foreach (var dir in Directory.GetDirectories(source))
-                if (!Path.GetFileName(dir).StartsWith("."))
-                    retVal.AddRange(ProcessDirectory(dir, path));
-                else
-                    Console.WriteLine("Skipping directory {0}", dir);
-
-            return retVal;
-        }
 
         /// <summary>
         /// Resolve the specified applet name

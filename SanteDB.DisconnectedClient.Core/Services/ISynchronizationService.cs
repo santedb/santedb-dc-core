@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
@@ -85,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a synchronization service 
     /// </summary>
-    public interface ISynchronizationService
+    public interface ISynchronizationService : IServiceImplementation
     {
 
         /// <summary>
