@@ -161,7 +161,7 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Accept header is not understood.
+        ///   Looks up a localized string similar to Accept header is not understood .
         /// </summary>
         public static string err_invalid_accept {
             get {
@@ -178,7 +178,6 @@ namespace SanteDB.DisconnectedClient.i18n {
             }
         }
         
-<<<<<<< HEAD
         /// <summary>
         ///   Looks up a localized string similar to Local users are not permitted on this device.
         /// </summary>
@@ -188,8 +187,6 @@ namespace SanteDB.DisconnectedClient.i18n {
             }
         }
         
-=======
->>>>>>> 61d17feebfe9e92adda0959f8a493e59a543c807
         /// <summary>
         ///   Looks up a localized string similar to Invalid Username/Password.
         /// </summary>

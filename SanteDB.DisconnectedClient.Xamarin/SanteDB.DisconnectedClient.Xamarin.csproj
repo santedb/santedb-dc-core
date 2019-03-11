@@ -119,11 +119,7 @@
     <PackageReference Include="Portable.BouncyCastle">
       <Version>1.8.2</Version>
     </PackageReference>
-<<<<<<< HEAD
-    <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="1.20.0" />
-=======
     <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="1.26.0" />
->>>>>>> 61d17feebfe9e92adda0959f8a493e59a543c807
     <PackageReference Include="SharpCompress" Version="0.18.2" />
     <Reference Include="SanteDB.Core.Model.ViewModelSerializers">
       <HintPath>..\Solution Items\SanteDB.Core.Model.ViewModelSerializers.dll</HintPath>

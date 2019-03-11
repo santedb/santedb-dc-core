@@ -270,7 +270,7 @@ Sincerely,
     <value>Package is already installed</value>
   </data>
   <data name="err_invalid_accept" xml:space="preserve">
-    <value>Accept header is not understood</value>
+    <value>Accept header is not understood </value>
   </data>
   <data name="err_invalid_argumentType" xml:space="preserve">
     <value>Argument is of wrong type</value>
