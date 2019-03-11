@@ -178,6 +178,7 @@ namespace SanteDB.DisconnectedClient.i18n {
             }
         }
         
+<<<<<<< HEAD
         /// <summary>
         ///   Looks up a localized string similar to Local users are not permitted on this device.
         /// </summary>
@@ -187,6 +188,8 @@ namespace SanteDB.DisconnectedClient.i18n {
             }
         }
         
+=======
+>>>>>>> 61d17feebfe9e92adda0959f8a493e59a543c807
         /// <summary>
         ///   Looks up a localized string similar to Invalid Username/Password.
         /// </summary>
@@ -784,7 +787,7 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The applet {0} published by {1} is not trusted. Do you want to continue to load / install this applet?.
+        ///   Looks up a localized string similar to The applet {0} published by {1} is not trusted. Do you want to continue to trust applets published by {1}?.
         /// </summary>
         public static string locale_untrustedPublisherPrompt {
             get {

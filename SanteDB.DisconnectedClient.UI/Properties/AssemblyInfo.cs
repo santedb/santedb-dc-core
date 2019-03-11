@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-7-23
+ * User: justi
+ * Date: 2019-1-12
  */
 using System.Reflection;
 
@@ -35,9 +35,9 @@ using System.Reflection;
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
 
-[assembly: AssemblyVersion("1.20.0.*")]
+[assembly: AssemblyVersion("1.26.0.*")]
 [assembly: AssemblyInformationalVersion("Gananoque")]
-[assembly: AssemblyFileVersion("1.20.0.0")]
+[assembly: AssemblyFileVersion("1.26.0.0")]
 // The following attributes are used to specify the signing key for the assembly,
 // if desired. See the Mono documentation for more information about signing.
 
