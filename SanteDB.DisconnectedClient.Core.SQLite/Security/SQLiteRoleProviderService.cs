@@ -257,7 +257,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         public bool IsUserInRole(string userName, string roleName)
         {
-            throw new NotImplementedException();
+            var conn = this.CreateReadonlyConnection();
+            using(conn.Lock())
+                return conn.ExecuteScalar<Int32>("SELECT 1 FROM security_user_role INNER JOIN security_user ON(security_user.uuid = security_user_role.user_id) INNER JOIN security_role ON(security_role.uuid = security_user_role.role_id) WHERE security_user.username = ? AND security_role.name = ?", userName, roleName) > 0;
         }
 
         /// <summary>

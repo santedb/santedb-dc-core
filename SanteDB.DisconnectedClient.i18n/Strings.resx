@@ -377,4 +377,7 @@ Sincerely,
   <data name="err_notInitialized" xml:space="preserve">
     <value>Not Initialized</value>
   </data>
+  <data name="err_local_users_prohibited" xml:space="preserve">
+    <value>Local users are not permitted on this device</value>
+  </data>
 </root>

@@ -21,6 +21,7 @@ using RestSrvr;
 using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
 using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.Rest.Common.Fault;
@@ -83,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
             faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
-            object fault = new RestServiceFault(error);
+            object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
             if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
                 fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);

@@ -34,6 +34,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var dbUser = dataInstance as DbSecurityUser;
             var retVal = base.ToModelInstance(dataInstance, context);
             retVal.Roles = context.Connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE security_user_role.user_id = ?", dbUser.Uuid).Select(o => m_mapper.MapDomainInstance<DbSecurityRole, SecurityRole>(o)).ToList();
+            retVal.Password = null;
             foreach (var itm in retVal.Roles)
             {
                 var ruuid = itm.Key.Value.ToByteArray();

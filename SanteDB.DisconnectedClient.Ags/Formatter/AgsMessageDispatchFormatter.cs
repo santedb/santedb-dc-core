@@ -107,7 +107,8 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         {
             m_defaultViewModel = ViewModelDescription.Load(typeof(AgsDispatchFormatter<>).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.ViewModel.xml"));
             var tracer = Tracer.GetTracer(typeof(AgsDispatchFormatter<TContract>));
-
+            foreach (var t in s_knownTypes)
+                ModelSerializationBinder.RegisterModelType(t);
             tracer.TraceInfo("Will generate serializer for {0}", typeof(TContract).FullName);
 
         }
