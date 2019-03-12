@@ -87,13 +87,17 @@ namespace SanteDB.DisconnectedClient.UI
         }
 
         /// <summary>
+        /// Gets or sets the synchronization modes
+        /// </summary>
+        public override SynchronizationMode Modes => SynchronizationMode.Sync | SynchronizationMode.Online;
+
+        /// <summary>
         /// Show toast
         /// </summary>
         public override void ShowToast(string subject)
         {
 
         }
-
 
         /// <summary>
         /// Get the application

@@ -32,6 +32,7 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -220,7 +221,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     var appInfo = new ApplicationInfo(RestOperationContext.Current.IncomingRequest.QueryString["_includeUpdates"] == "true" && netSvc.IsNetworkAvailable);
                     return new DiagnosticReport()
                     {
-                        ApplicationInfo = appInfo
+                        ApplicationInfo = appInfo,
+                        Tags = new List<DiagnosticReportTag>()
+                        {
+                            new DiagnosticReportTag("sync.allow.offline", ApplicationContext.Current.Modes.HasFlag(SynchronizationMode.Offline).ToString()),
+                            new DiagnosticReportTag("sync.allow.online", ApplicationContext.Current.Modes.HasFlag(SynchronizationMode.Online).ToString()),
+                            new DiagnosticReportTag("sync.allow.sync", ApplicationContext.Current.Modes.HasFlag(SynchronizationMode.Sync).ToString())
+
+                        }
                     };
                 }
                 catch (Exception e)
