@@ -269,6 +269,10 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         public SanteDBHostType HostType => SanteDBHostType.Client;
         /// <summary>
+        /// Gets the allowed synchronization modes
+        /// </summary>
+        public abstract SynchronizationMode Modes { get; }
+        /// <summary>
         /// Execution UUID
         /// </summary>
         public virtual Guid ExecutionUuid { get { return s_executionUuid; } }

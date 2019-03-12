@@ -98,9 +98,18 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     /// </summary>
     public enum SynchronizationMode
     {
-        Sync,
-        Online,
-        Offline
+        /// <summary>
+        /// Synchronization mode - Cache results offline
+        /// </summary>
+        Sync = 0x1,
+        /// <summary>
+        /// Operate online only
+        /// </summary>
+        Online = 0x2,
+        /// <summary>
+        /// Operate offline only
+        /// </summary>
+        Offline = 0x4
     }
 
     /// <summary>
