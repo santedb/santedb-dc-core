@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-11-23
+ * User: justi
+ * Date: 2019-1-12
  */
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -107,7 +107,8 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         {
             m_defaultViewModel = ViewModelDescription.Load(typeof(AgsDispatchFormatter<>).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.ViewModel.xml"));
             var tracer = Tracer.GetTracer(typeof(AgsDispatchFormatter<TContract>));
-
+            foreach (var t in s_knownTypes)
+                ModelSerializationBinder.RegisterModelType(t);
             tracer.TraceInfo("Will generate serializer for {0}", typeof(TContract).FullName);
 
         }

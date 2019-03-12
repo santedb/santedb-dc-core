@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-6-28
+ * User: justi
+ * Date: 2019-1-12
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -257,7 +257,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         public bool IsUserInRole(string userName, string roleName)
         {
-            throw new NotImplementedException();
+            var conn = this.CreateReadonlyConnection();
+            using(conn.Lock())
+                return conn.ExecuteScalar<Int32>("SELECT 1 FROM security_user_role INNER JOIN security_user ON(security_user.uuid = security_user_role.user_id) INNER JOIN security_role ON(security_role.uuid = security_user_role.role_id) WHERE security_user.username = ? AND security_role.name = ?", userName, roleName) > 0;
         }
 
         /// <summary>

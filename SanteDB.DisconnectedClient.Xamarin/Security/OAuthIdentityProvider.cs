@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-6-28
+ * User: justi
+ * Date: 2019-1-12
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
@@ -172,6 +172,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             // Invoke
                             if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                             {
+                                restClient.Description.Endpoint[0].Timeout = 5000;
+                                restClient.Invoke<Object, Object>("PING", "/", null, null);
+
                                 if (principal.Identity.Name == ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName)
                                     restClient.Description.Endpoint[0].Timeout = restClient.Description.Endpoint[0].Timeout * 2;
                                 else
@@ -452,7 +455,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <param name="principal">The authentication principal (the user that is changing the password).</param>
         public void ChangePassword(string userName, string newPassword, System.Security.Principal.IPrincipal principal)
         {
-
             try
             {
                 // The principal must change their own password or must have the changepassword credential
@@ -463,60 +465,67 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 // Get the user's identity
                 var securityUserService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-                using (AmiServiceClient client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami")))
+                var offlineIdService = ApplicationContext.Current.GetService<IOfflineRoleProviderService>();
+                if (offlineIdService.IsUserInRole(userName, "LOCAL_USERS")) // User is a local user, so we only change password on local
                 {
-                    client.Client.Accept = "application/xml";
-
-                    Guid userId = Guid.Empty;
-                    if (principal is IClaimsPrincipal)
-                    {
-                        var subjectClaim = (principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid);
-                        if (subjectClaim != null)
-                            userId = Guid.Parse(subjectClaim.Value);
-                    }
-
-                    // User ID not found - lookup
-                    if (userId == Guid.Empty)
-                    {
-                        // User service is null
-                        var securityUser = securityUserService.GetUser(principal.Identity);
-                        if (securityUser == null)
-                        {
-                            var tuser = client.GetUsers(o => o.UserName == principal.Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
-                            if (tuser == null)
-                                throw new ArgumentException(string.Format("User {0} not found", userName));
-                            else
-                                userId = tuser.Entity.Key.Value;
-                        }
-                        else
-                            userId = securityUser.Key.Value;
-                    }
-
-                    // Use the current configuration's credential provider
-                    var user = new SecurityUserInfo(new SecurityUser()
-                    {
-                        Key = userId,
-                        UserName = userName,
-                        Password = newPassword
-                    })
-                    {
-                        PasswordOnly = true
-                    };
-
-                    // Set the credentials 
-                    client.Client.Credentials = ApplicationContext.Current.Configuration.GetServiceDescription("ami").Binding.Security.CredentialProvider.GetCredentials(principal);
-
-                    client.UpdateUser(userId, user);
-                    var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
-
-                    // Change locally
-                    localIdp.ChangePassword(userName, newPassword, principal);
-
-                    // Audit - Local IDP has alerted this already
-                    if (!(localIdp is ISecurityAuditEventSource))
-                        this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(user, "password"));
+                    ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().ChangePassword(userName, newPassword, principal);
                 }
+                else
+                {
+                    using (AmiServiceClient client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami")))
+                    {
+                        client.Client.Accept = "application/xml";
 
+                        Guid userId = Guid.Empty;
+                        if (principal is IClaimsPrincipal)
+                        {
+                            var subjectClaim = (principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid);
+                            if (subjectClaim != null)
+                                userId = Guid.Parse(subjectClaim.Value);
+                        }
+
+                        // User ID not found - lookup
+                        if (userId == Guid.Empty)
+                        {
+                            // User service is null
+                            var securityUser = securityUserService.GetUser(principal.Identity);
+                            if (securityUser == null)
+                            {
+                                var tuser = client.GetUsers(o => o.UserName == principal.Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
+                                if (tuser == null)
+                                    throw new ArgumentException(string.Format("User {0} not found", userName));
+                                else
+                                    userId = tuser.Entity.Key.Value;
+                            }
+                            else
+                                userId = securityUser.Key.Value;
+                        }
+
+                        // Use the current configuration's credential provider
+                        var user = new SecurityUserInfo(new SecurityUser()
+                        {
+                            Key = userId,
+                            UserName = userName,
+                            Password = newPassword
+                        })
+                        {
+                            PasswordOnly = true
+                        };
+
+                        // Set the credentials 
+                        client.Client.Credentials = ApplicationContext.Current.Configuration.GetServiceDescription("ami").Binding.Security.CredentialProvider.GetCredentials(principal);
+
+                        client.UpdateUser(userId, user);
+                        var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
+
+                        // Change locally
+                        localIdp.ChangePassword(userName, newPassword, principal);
+
+                        // Audit - Local IDP has alerted this already
+                        if (!(localIdp is ISecurityAuditEventSource))
+                            this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(user, "password"));
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -539,7 +548,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
         {
-            throw new NotImplementedException();
+            if (ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") == "true")
+                return ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().CreateIdentity(userName, password, principal);
+            else
+                throw new InvalidOperationException(Strings.err_local_users_prohibited);
+
         }
         /// <summary>
         /// Sets the user's lockout status

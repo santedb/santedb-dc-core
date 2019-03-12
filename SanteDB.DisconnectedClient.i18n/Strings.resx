@@ -270,7 +270,7 @@ Sincerely,
     <value>Package is already installed</value>
   </data>
   <data name="err_invalid_accept" xml:space="preserve">
-    <value>Accept header is not understood</value>
+    <value>Accept header is not understood </value>
   </data>
   <data name="err_invalid_argumentType" xml:space="preserve">
     <value>Argument is of wrong type</value>
@@ -357,7 +357,7 @@ Sincerely,
     <value>The applet {0} is not signed or contains an invalid header. Your security settings do not allow for unsigned applets to be executed.</value>
   </data>
   <data name="locale_untrustedPublisherPrompt" xml:space="preserve">
-    <value>The applet {0} published by {1} is not trusted. Do you want to continue to load / install this applet?</value>
+    <value>The applet {0} published by {1} is not trusted. Do you want to continue to trust applets published by {1}?</value>
   </data>
   <data name="locale_updateCheck" xml:space="preserve">
     <value>Checking for updates...</value>
@@ -376,5 +376,8 @@ Sincerely,
   </data>
   <data name="err_notInitialized" xml:space="preserve">
     <value>Not Initialized</value>
+  </data>
+  <data name="err_local_users_prohibited" xml:space="preserve">
+    <value>Local users are not permitted on this device</value>
   </data>
 </root>

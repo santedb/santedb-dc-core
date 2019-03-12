@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-6-28
+ * User: justi
+ * Date: 2019-1-12
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
@@ -34,6 +34,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var dbUser = dataInstance as DbSecurityUser;
             var retVal = base.ToModelInstance(dataInstance, context);
             retVal.Roles = context.Connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE security_user_role.user_id = ?", dbUser.Uuid).Select(o => m_mapper.MapDomainInstance<DbSecurityRole, SecurityRole>(o)).ToList();
+            retVal.Password = null;
             foreach (var itm in retVal.Roles)
             {
                 var ruuid = itm.Key.Value.ToByteArray();

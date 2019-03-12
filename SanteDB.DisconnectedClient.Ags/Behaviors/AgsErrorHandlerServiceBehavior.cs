@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,13 +14,14 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-11-23
+ * User: justi
+ * Date: 2019-1-12
  */
 using RestSrvr;
 using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
 using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.Rest.Common.Fault;
@@ -83,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
             faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
-            object fault = new RestServiceFault(error);
+            object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
             if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
                 fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);

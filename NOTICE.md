@@ -5,6 +5,7 @@ The SanteDB leverages several third party artifacts to do its job. This file lis
 ## 1.1 Primary Copyright Notice
 
 SanteDB, Copyright (C) 2015-2018 Mohawk College of Applied Arts And Technology
+SanteDB, Copyright (C) 2019 SanteSuite Contributors
 
 This product includes software developed by Borland Software Corp.
 
@@ -23,6 +24,13 @@ This product includes cryptographic software written by Eric Young (eay@cryptsof
 ## 1.2 Asset Attributions
 
 This software uses assets (graphics, styles, etc.) from the following sources:
+
+## 1.3 SanteSuite Contributors
+
+SanteSuite contributors include:
+
+* Mohawk College of Applied Arts and Technology
+* Fyfe Software Inc.
 
 # 2. Third Party Licenses
 

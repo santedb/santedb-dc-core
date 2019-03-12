@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,9 +14,10 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-6-28
+ * User: justi
+ * Date: 2019-1-12
  */
+using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.DisconnectedClient.Core.Services
@@ -34,7 +35,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a service that can back-up data to/from another location
     /// </summary>
-    public interface IBackupService
+    public interface IBackupService : IServiceImplementation
     {
 
         /// <summary>

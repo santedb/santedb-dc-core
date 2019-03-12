@@ -66,3 +66,7 @@ INSERT INTO concept_class (uuid, Name, Mnemonic) VALUES (X'E6F8D74BB8E4BC4D93A7C
 INSERT INTO concept_class (uuid, Name, Mnemonic) VALUES (X'32BC9CDCEAB84441BEF1DC618E28F4D7', 'Drug or other Material', 'Material');
 INSERT INTO concept_class (uuid, Name, Mnemonic) VALUES (X'39346B0DBEC98044AF39EEB457C052D0', 'Other Classification', 'Other');
 INSERT INTO concept_class (uuid, Name, Mnemonic) VALUES (X'4A30D8FFEC43BC4E95FCFB4A4F2338F0', 'Stock control codes', 'Stock');
+
+-- CREATE LOCAL USERS ROLE
+INSERT INTO security_role (uuid, name, description) VALUES (X'FE453FDE43DDA344AD7D1C44CECAA4B6', 'LOCAL_USERS', 'Group for users which only exist on this device');
+INSERT INTO security_user_role (uuid, role_id, user_id) VALUES (X'EACC55F2AAF1544B922105E1104F3614', X'FE453FDE43DDA344AD7D1C44CECAA4B6', X'EACC55F2AAF1544B922105E1104F3614');

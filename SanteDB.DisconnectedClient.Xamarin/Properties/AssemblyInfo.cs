@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-6-28
+ * User: justi
+ * Date: 2019-1-12
  */
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -50,6 +50,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.20.0.*")]
+[assembly: AssemblyVersion("1.26.0.*")]
 [assembly: AssemblyInformationalVersion("Gananoque")]
-[assembly: AssemblyFileVersion("1.20.0.0")]
+[assembly: AssemblyFileVersion("1.26.0.0")]

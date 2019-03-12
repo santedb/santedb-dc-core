@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2018 Mohawk College of Applied Arts and Technology
- *
+ * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
+ * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justin
- * Date: 2018-6-28
+ * User: justi
+ * Date: 2019-1-12
  */
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
@@ -154,14 +154,15 @@ namespace SanteDB.DisconnectedClient.Core
             Object candidateService = null;
             if (!this.m_cache.TryGetValue(serviceType, out candidateService))
             {
+                var serviceTypeInfo = serviceType.GetTypeInfo();
                 ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-                candidateService = this.GetServices().FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
+                candidateService = this.GetServices().FirstOrDefault(o => o.GetType() != null && serviceTypeInfo.IsAssignableFrom(o.GetType().GetTypeInfo()));
                 // Candidate service not found? Look in configuration
                 if (candidateService == null)
                 {
                     lock (this.m_lockObject)
                     {
-                        var cserviceType = appSection.ServiceProviders.Select(o => o.Type).FirstOrDefault(o => serviceType.GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
+                        var cserviceType = appSection.ServiceProviders.Select(o => o.Type).FirstOrDefault(o => o != null && serviceTypeInfo.IsAssignableFrom(o.GetTypeInfo()));
                         if (cserviceType == null)
                             return null;
                         else
@@ -216,7 +217,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         /// <value>The policy information service.</value>
         public IPolicyInformationService PolicyInformationService { get { return this.GetService(typeof(IPolicyInformationService)) as IPolicyInformationService; } }
-       
+
         /// <summary>
         /// Gets user preference application
         /// </summary>
@@ -359,6 +360,32 @@ namespace SanteDB.DisconnectedClient.Core
         /// Close the application
         /// </summary>
         public abstract void Exit();
+
+        /// <summary>
+        /// Adds the specified service types
+        /// </summary>
+        public void AddServiceProvider(object serviceInstance)
+        {
+            if(!this.GetServices().Any(o=>o == serviceInstance))
+                lock (this.m_lockObject)
+                    this.m_providers.Add(serviceInstance);
+        }
+
+        /// <summary>
+        /// Remove service provider from the current runtime
+        /// </summary>
+        public void RemoveServiceProvider(object serviceInstance)
+        {
+            if(this.GetServices().Any(o=>o == serviceInstance))
+                lock(this.m_lockObject)
+                {
+                    (serviceInstance as IDaemonService)?.Stop();
+                    (serviceInstance as IDisposable)?.Dispose();
+                    this.m_providers.Remove(serviceInstance);
+                    foreach (var p in this.m_cache.Where(o => o.Value == serviceInstance).ToList())
+                        this.m_cache.Remove(p.Key);
+                }
+        }   
 
         /// <summary>
         /// Add service 
