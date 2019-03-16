@@ -40,6 +40,7 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.AMI.Wcf;
+using SanteDB.Rest.AMI;
 using SanteDB.Rest.AMI.Resources;
 using SanteDB.Rest.Common;
 using System;
@@ -63,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             new Rest.Common.ResourceHandlerTool(
                 typeof(SecurityUserResourceHandler).Assembly.ExportedTypes
                 .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes))
-                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))))
+                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract)))
         {
         }
 
@@ -283,14 +284,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 var serviceOptions = new ServiceOptions
                 {
                     InterfaceVersion = "1.0.0.0",
-                    Services = new List<ServiceResourceOptions>
-                {
-                    new ServiceResourceOptions
-                    {
-                        ResourceName = "time",
-                        Capabilities = ResourceCapability.Get
-                    }
-                },
+                    Resources = new List<ServiceResourceOptions>(),
                     Endpoints = (ApplicationServiceContext.Current as IServiceManager).GetServices().OfType<IApiEndpointProvider>().Select(o =>
                         new ServiceEndpointOptions
                         {
@@ -304,7 +298,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.AdministrationIntegrationService);
                 serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.HealthDataService);
                 serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.AuthenticationService);
-                
+
+                // Get the resources which are supported
+                foreach (var itm in this.m_resourceHandler.Handlers)
+                {
+                    var svc = this.ResourceOptions(itm.ResourceName);
+                    serviceOptions.Resources.Add(svc);
+                }
+
                 serviceOptions.Endpoints.AddRange(ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>().Services.Select(s => new ServiceEndpointOptions()
                 {
                     BaseUrl = s.Endpoints.Select(o=> {

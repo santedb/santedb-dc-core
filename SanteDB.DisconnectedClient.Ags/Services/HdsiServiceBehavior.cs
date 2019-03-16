@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             new Rest.Common.ResourceHandlerTool(
                 typeof(PatientResourceHandler).Assembly.ExportedTypes
                 .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a=>!a.IsDynamic).SelectMany(a=>a.ExportedTypes))
-                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))))
+                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IHdsiServiceContract)))
         {
         }
 
