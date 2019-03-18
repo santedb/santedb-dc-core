@@ -466,7 +466,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 // Get the user's identity
                 var securityUserService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
                 var offlineIdService = ApplicationContext.Current.GetService<IOfflineRoleProviderService>();
-                if (offlineIdService.IsUserInRole(userName, "LOCAL_USERS")) // User is a local user, so we only change password on local
+                if (offlineIdService?.IsUserInRole(userName, "LOCAL_USERS") == true) // User is a local user, so we only change password on local
                 {
                     ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().ChangePassword(userName, newPassword, principal);
                 }
@@ -477,7 +477,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         client.Client.Accept = "application/xml";
 
                         Guid userId = Guid.Empty;
-                        if (principal is IClaimsPrincipal)
+                        if (principal.Identity.Name.ToLowerInvariant() == userName.ToLowerInvariant())
                         {
                             var subjectClaim = (principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid);
                             if (subjectClaim != null)
@@ -488,10 +488,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         if (userId == Guid.Empty)
                         {
                             // User service is null
-                            var securityUser = securityUserService.GetUser(principal.Identity);
+                            var securityUser = securityUserService.GetUser(userName);
                             if (securityUser == null)
                             {
-                                var tuser = client.GetUsers(o => o.UserName == principal.Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
+                                var tuser = client.GetUsers(o => o.UserName == userName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
                                 if (tuser == null)
                                     throw new ArgumentException(string.Format("User {0} not found", userName));
                                 else
@@ -519,7 +519,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
                         // Change locally
-                        localIdp.ChangePassword(userName, newPassword, principal);
+                        localIdp?.ChangePassword(userName, newPassword, principal);
 
                         // Audit - Local IDP has alerted this already
                         if (!(localIdp is ISecurityAuditEventSource))

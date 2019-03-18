@@ -81,7 +81,18 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                 var asmLoc = Assembly.GetEntryAssembly()?.Location;
                 // Assembly load file
                 if (!String.IsNullOrEmpty(asmLoc))
-                    types = Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll").Select(o => Assembly.Load(o)).Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes).ToList();
+                    types = Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll").Select(o =>
+                    {
+                        try
+                        {
+                            return Assembly.LoadFile(o);
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceWarning("Could not load {0} due to {1}", o, e);
+                            return null;
+                        }
+                    }).Where(a => a?.IsDynamic == false).SelectMany(a => a.ExportedTypes).ToList();
                 else
                     types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
 

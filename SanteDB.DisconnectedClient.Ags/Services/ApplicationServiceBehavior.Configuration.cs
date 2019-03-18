@@ -134,8 +134,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             try
             {
 
-                new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.UnrestrictedAdministration).Demand();
-
+                new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.CreateDevice).Demand();
+                new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction).Demand();
+                new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.UnrestrictedMetadata).Demand();
+                
                 // We're allowed to access server admin!!!! Yay!!!
                 // We're goin to conigure the realm settings now (all of them)
                 var serviceClientSection = XamarinApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
