@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core;
 using SanteDB.Core.Data.QueryBuilder;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
@@ -231,13 +232,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                 //queryStatement = new SqlStatement<TDomain>().SelectFrom()
                 queryStatement = queryStatement.Where<TDomain>(expression);
+
             }
             else
             {
-                queryStatement = m_builder.CreateQuery(query, orderBy);
+                queryStatement = m_builder.CreateQuery(query, orderBy).Build();
             }
 
             queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();
+
             m_tracer.TraceVerbose("Built Query: {0}", queryStatement.SQL);
 
             // Is this a cached query?
@@ -276,8 +279,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             else
                 totalResults = 0;
 
+            // Async add query results
             if (queryId != Guid.Empty)
-                this.m_queryPersistence?.RegisterQuerySet(queryId, context.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).Select(o => o.Key), query, countResults ? totalResults : 0);
+            {
+                this.m_queryPersistence?.RegisterQuerySet(queryId, new Guid[0], query, countResults ? totalResults : 0);
+                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem((parm) =>
+                {
+                    var conn2 = parm as SQLiteDataContext;
+                    using (conn2.LockConnection())
+                    {
+                        this.m_queryPersistence?.AddResults(queryId, conn2.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).Select(o => o.Key));
+                    }
+                }, this.CreateConnection(context.Principal));
+            }
 
             if (count > 0)
                 queryStatement.Limit(count);
