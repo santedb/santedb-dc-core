@@ -20,7 +20,9 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -187,14 +189,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 var existing = ApplicationContext.Current.GetService<IDataCachingService>()?.GetCacheItem(key) as IdentifiedData;
-                if (existing != null)
+                if (existing != null && (existing is Entity || existing is Act)) // For entities and acts we want to ping the server 
                 { // check the cache to see if it is stale
                     string etag = null;
                     this.m_client.Client.Head($"{typeof(TModel).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>().ElementName}/{key}").TryGetValue("ETag", out etag);
                     if (versionKey != Guid.Empty) // not versioned so who cares!?
                         ;
                     else if (etag != (existing as IdentifiedData).Tag) // Versions don't match the latest
+                    {
                         ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(existing.Key.Value);
+                        existing = null;
+                    }
                 }
                 if (!this.m_missEntity.Contains(key) && (existing == null ||
                     (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))

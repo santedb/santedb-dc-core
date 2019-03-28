@@ -624,6 +624,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 return retVal;
                             })
                             .ToList();
+
+                        syncConfig.Mode = SynchronizationMode.Sync;
                         if (configuration.Synchronization.PollIntervalXml != "00:00:00")
                             syncConfig.PollIntervalXml = configuration.Synchronization.PollIntervalXml;
                         ApplicationContext.Current.Configuration.AddSection(syncConfig);
