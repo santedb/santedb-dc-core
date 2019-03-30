@@ -69,6 +69,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Data;
+using SanteDB.Core;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -100,7 +101,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             return new ConfigurationViewModel(XamarinApplicationContext.Current.GetUserConfiguration(AuthenticationContext.Current.Principal.Identity.Name));
         }
 
-
+        /// <summary>
+        /// Join the realm
+        /// </summary>
         [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public ConfigurationViewModel JoinRealm(JObject configData)
         {
@@ -261,6 +264,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     // Create application user
                     var role = amiClient.GetRole("SYNCHRONIZERS");
 
+                    var osiService = ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>();
                     // lookup existing device
                     var existingDevice = amiClient.GetDevices(o => o.Name == deviceName);
                     if (existingDevice.CollectionItem.Count == 0)
@@ -281,12 +285,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         {
                             SecurityDevice = newDevice.Entity,
                             StatusConceptKey = StatusKeys.Active,
-                            ManufacturerModelName = Environment.MachineName,
-                            OperatingSystemName = Environment.OSVersion.ToString(),
+                            ManufacturerModelName = osiService.ManufacturerName,
+                            OperatingSystemName = osiService.VersionString,
                             GeoTag = ApplicationContext.Current.GetService<IGeoTaggingService>()?.GetCurrentPosition(),
                             Names = new List<EntityName>()
                                 {
-                                    new EntityName(NameUseKeys.Assigned, deviceName)
+                                    new EntityName(NameUseKeys.Assigned, deviceName),
+                                    new EntityName(NameUseKeys.Search, osiService.MachineName)
                                 }
                         });
                     }
@@ -312,19 +317,21 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             });
 
                             // Create the device entity 
-                            var existingDeviceEntity = hdsiClient.Query<DeviceEntity>(o => o.SecurityDeviceKey == existingDeviceItem.Key.Value, 0, 1, false).Item.OfType<DeviceEntity>().FirstOrDefault();
-                            if (existingDeviceEntity != null)
-                                hdsiClient.Obsolete(existingDeviceEntity);
+                            var existingDeviceEntity = hdsiClient.Query<DeviceEntity>(o => o.SecurityDeviceKey == existingDeviceItem.Key.Value, 0, 1, false).Item.OfType<DeviceEntity>();
+                            foreach(var ede in existingDeviceEntity)
+                                hdsiClient.Obsolete(ede);
+                            
                             hdsiClient.Create(new DeviceEntity()
                             {
                                 SecurityDevice = existingDeviceItem,
                                 StatusConceptKey = StatusKeys.Active,
-                                ManufacturerModelName = Environment.MachineName,
-                                OperatingSystemName = Environment.OSVersion.ToString(),
+                                ManufacturerModelName = osiService.ManufacturerName,
+                                OperatingSystemName = osiService.VersionString,
                                 GeoTag = ApplicationContext.Current.GetService<IGeoTaggingService>()?.GetCurrentPosition(),
                                 Names = new List<EntityName>()
                                 {
-                                    new EntityName(NameUseKeys.Assigned, deviceName)
+                                    new EntityName(NameUseKeys.Assigned, deviceName),
+                                    new EntityName(NameUseKeys.Search, osiService.MachineName)
                                 }
                             });
 

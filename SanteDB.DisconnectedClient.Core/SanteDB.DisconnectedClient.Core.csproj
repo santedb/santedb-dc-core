@@ -70,6 +70,7 @@
     <Compile Include="Security\IOfflinePolicyInformationService.cs" />
     <Compile Include="Security\IOfflinePrincipal.cs" />
     <Compile Include="Security\IOfflineRoleProviderService.cs" />
+    <Compile Include="Security\IOperatingSystemInfoService.cs" />
     <Compile Include="Security\IOperatingSystemSecurityService.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\DefaultPolicyDecisionService.cs" />

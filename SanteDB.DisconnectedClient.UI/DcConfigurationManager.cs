@@ -134,7 +134,8 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(XamarinBackupService)),
                     new TypeReferenceConfiguration(typeof(DcAppletManagerService)),
                     new TypeReferenceConfiguration(typeof(ReportExecutor)),
-                    new TypeReferenceConfiguration(typeof(AppletReportRepository))
+                    new TypeReferenceConfiguration(typeof(AppletReportRepository)),
+                    new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService))
                 }
             };
 

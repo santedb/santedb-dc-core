@@ -25,6 +25,7 @@ using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Data;
+using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Mail;
@@ -156,12 +157,13 @@ namespace SanteDB.DisconnectedClient.SQLite
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLitePolicyInformationService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteAuditRepositoryService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteDeviceIdentityProviderService)));
-            
+
             // SQLite provider
 #if NOCRYPT
 			appSection.ServiceTypes.Add(typeof(SQLite.Net.Platform.Generic.SQLitePlatformGeneric).AssemblyQualifiedName);
 #else
-            switch (ApplicationContext.Current.OperatingSystem)
+            var osiService = ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>();
+            switch (osiService.OperatingSystem)
             {
                 case OperatingSystemID.Win32:
                     if (options.ContainsKey("encrypt") && options["encrypt"].Equals(true))

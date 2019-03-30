@@ -149,6 +149,7 @@
     <Compile Include="Security\TokenValidationManager.cs" />
     <Compile Include="Services\Attributes\AnonymousAttribute.cs" />
     <Compile Include="Services\Attributes\DemandAttribute.cs" />
+    <Compile Include="Services\DefaultOperatingSystemInfoService.cs" />
     <Compile Include="Services\Model\ApplicationHealthInfo.cs" />
     <Compile Include="Services\Model\BugReport.cs" />
     <Compile Include="Services\Model\ErrorResult.cs" />

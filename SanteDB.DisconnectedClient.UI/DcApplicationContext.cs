@@ -71,22 +71,6 @@ namespace SanteDB.DisconnectedClient.UI
         public String InstanceName { get; private set; }
 
         /// <summary>
-        /// Gets the operating system identifier
-        /// </summary>
-        public override OperatingSystemID OperatingSystem
-        {
-            get
-            {
-                if (Environment.OSVersion.Platform == PlatformID.MacOSX)
-                    return OperatingSystemID.MacOS;
-                else if (Environment.OSVersion.Platform == PlatformID.Unix)
-                    return OperatingSystemID.Linux;
-                else
-                    return OperatingSystemID.Win32;
-            }
-        }
-
-        /// <summary>
         /// Gets or sets the synchronization modes
         /// </summary>
         public override SynchronizationMode Modes => SynchronizationMode.Sync | SynchronizationMode.Online;
