@@ -150,14 +150,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(lanugageCode);
 
                 // Set the session 
-                if (!Boolean.Parse(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpUserAccessControlPrompt] ?? "false")) // Requesting all access so we need to send back a session ID :)
-                    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", retVal.Token)
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        Path = "/",
-                        Domain = RestOperationContext.Current.IncomingRequest.Url.Host
-                    });
+                //if (!Boolean.Parse(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpUserAccessControlPrompt] ?? "false")) // Requesting all access so we need to send back a session ID :)
+                //    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", retVal.Token)
+                //    {
+                //        HttpOnly = true,
+                //        Secure = true,
+                //        Path = "/",
+                //        Domain = RestOperationContext.Current.IncomingRequest.Url.Host
+                //    });
                 return retVal;
             }
         }

@@ -42,12 +42,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// </summary>
     public class RemoteSecurityRepository : AmiRepositoryBaseService,
         ISecurityRepositoryService,
-        IRepositoryService<SecurityUser>,
-        IRepositoryService<SecurityApplication>,
-        IRepositoryService<SecurityDevice>,
-        IRepositoryService<SecurityRole>,
-        IRepositoryService<SecurityPolicy>,
-        IRepositoryService<UserEntity>,
+        IPersistableQueryRepositoryService<SecurityUser>,
+        IPersistableQueryRepositoryService<SecurityApplication>,
+        IPersistableQueryRepositoryService<SecurityDevice>,
+        IPersistableQueryRepositoryService<SecurityRole>,
+        IPersistableQueryRepositoryService<SecurityPolicy>,
+        IPersistableQueryRepositoryService<UserEntity>,
         IRepositoryService<SecurityProvenance>
     {
 
@@ -55,6 +55,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// Get the service name
         /// </summary>
         public String ServiceName => "Remote Security Repository Service";
+
+        string IServiceImplementation.ServiceName => throw new NotImplementedException();
 
         // Get a tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteSecurityRepository));
@@ -343,19 +345,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<UserEntity> IRepositoryService<UserEntity>.Find(Expression<Func<UserEntity, bool>> query, int offset, int? count, out int totalResults, params ModelSort<UserEntity>[] orderBy)
         {
-            
-            try
-            {
-                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.GetCredentials();
-                var retVal = hdsiClient.Query<UserEntity>(query, offset, count, false, orderBy: orderBy);
-                totalResults = retVal.TotalResults;
-                return retVal.Item.OfType<UserEntity>();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not get user entity", e);
-            }
+
+            return ((IPersistableQueryRepositoryService<UserEntity>)this).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
 
         }
 
@@ -378,20 +369,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <returns>The matching security applications</returns>
         IEnumerable<SecurityApplication> IRepositoryService<SecurityApplication>.Find(Expression<Func<SecurityApplication, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityApplication>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
-                {
-                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query applications", e);
-            }
-            
+            return (this as IPersistableQueryRepositoryService<SecurityApplication>).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
         }
 
         /// <summary>
@@ -408,19 +386,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityDevice> IRepositoryService<SecurityDevice>.Find(Expression<Func<SecurityDevice, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityDevice>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
-                {
-                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query devices", e);
-            }
+            return ((IPersistableQueryRepositoryService<SecurityDevice>)this).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
         }
 
         /// <summary>
@@ -437,20 +403,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityRole> IRepositoryService<SecurityRole>.Find(Expression<Func<SecurityRole, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityRole>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
-                {
-                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query roles", e);
-            }
-
+            return ((IPersistableQueryRepositoryService<SecurityRole>)this).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
         }
 
         /// <summary>
@@ -467,28 +420,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityUser> IRepositoryService<SecurityUser>.Find(Expression<Func<SecurityUser, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityUser>[] orderBy)
         {
-            try
-            {
-                Dictionary<String, SecurityRole> cachedRoles = new Dictionary<string, SecurityRole>();
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
-                {
-                    o.Entity.Roles = o.Roles.Select(r => {
-                        SecurityRole rol = null;
-                        if (!cachedRoles.TryGetValue(r, out rol))
-                        {
-                            rol = this.FindRoles(q => q.Name == r).FirstOrDefault();
-                            cachedRoles.Add(r, rol);
-                        }
-                        return rol;
-                        }).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query users", e);
-            }
+            return (this as IPersistableQueryRepositoryService<SecurityUser>).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
         }
 
         /// <summary>
@@ -505,15 +437,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityPolicy> IRepositoryService<SecurityPolicy>.Find(Expression<Func<SecurityPolicy, bool>> query, int offset, int? count, out int totalResults, params ModelSort<SecurityPolicy>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<SecurityPolicy>();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query devices", e);
-            }
+            return ((IPersistableQueryRepositoryService<SecurityPolicy>)this).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
         }
 
         /// <summary>
@@ -1030,6 +954,130 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         SecurityProvenance IRepositoryService<SecurityProvenance>.Obsolete(Guid key)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Query persistable
+        /// </summary>
+        IEnumerable<SecurityUser> IPersistableQueryRepositoryService<SecurityUser>.Find(Expression<Func<SecurityUser, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityUser>[] orderBy)
+        {
+            try
+            {
+                Dictionary<String, SecurityRole> cachedRoles = new Dictionary<string, SecurityRole>();
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
+                {
+                    o.Entity.Roles = o.Roles.Select(r => {
+                        SecurityRole rol = null;
+                        if (!cachedRoles.TryGetValue(r, out rol))
+                        {
+                            rol = this.FindRoles(q => q.Name == r).FirstOrDefault();
+                            cachedRoles.Add(r, rol);
+                        }
+                        return rol;
+                    }).ToList();
+                    return o.Entity;
+                });
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query users", e);
+            }
+        }
+
+        /// <summary>
+        /// Perform query and persist query state
+        /// </summary>
+        IEnumerable<SecurityApplication> IPersistableQueryRepositoryService<SecurityApplication>.Find(Expression<Func<SecurityApplication, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityApplication>[] orderBy)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
+                {
+                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
+                    return o.Entity;
+                });
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query applications", e);
+            }
+        }
+
+        /// <summary>
+        /// Persisted state query for security device
+        /// </summary>
+        IEnumerable<SecurityDevice> IPersistableQueryRepositoryService<SecurityDevice>.Find(Expression<Func<SecurityDevice, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityDevice>[] orderBy)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
+                {
+                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
+                    return o.Entity;
+                });
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query devices", e);
+            }
+        }
+
+        /// <summary>
+        /// Query for security role persisting state
+        /// </summary>
+        IEnumerable<SecurityRole> IPersistableQueryRepositoryService<SecurityRole>.Find(Expression<Func<SecurityRole, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityRole>[] orderBy)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
+                {
+                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
+                    return o.Entity;
+                });
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query roles", e);
+            }
+        }
+
+        /// <summary>
+        /// Persisted state query
+        /// </summary>
+        IEnumerable<SecurityPolicy> IPersistableQueryRepositoryService<SecurityPolicy>.Find(Expression<Func<SecurityPolicy, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityPolicy>[] orderBy)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityPolicy>();
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query devices", e);
+            }
+        }
+
+        /// <summary>
+        /// Perform query with persisted query state
+        /// </summary>
+        IEnumerable<UserEntity> IPersistableQueryRepositoryService<UserEntity>.Find(Expression<Func<UserEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<UserEntity>[] orderBy)
+        {
+            try
+            {
+                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
+                hdsiClient.Client.Credentials = this.GetCredentials();
+                var retVal = hdsiClient.Query<UserEntity>(query, offset, count, false, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy);
+                totalResults = retVal.TotalResults;
+                return retVal.Item.OfType<UserEntity>();
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not get user entity", e);
+            }
         }
     }
 }
