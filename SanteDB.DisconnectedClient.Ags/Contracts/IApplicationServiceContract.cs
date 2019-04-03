@@ -22,6 +22,7 @@ using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Patch;
+using SanteDB.Core.Model.Subscription;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.DisconnectedClient.Core.Tickler;
@@ -69,10 +70,10 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         ConfigurationViewModel GetUserConfiguration();
 
         /// <summary>
-        /// Get subscription definitions
+        /// Get client facing subscription definitions
         /// </summary>
         [Get("/SubscriptionDefinition")]
-        List<AppletSubscriptionDefinition> GetSubscriptionDefinitions();
+        List<SubscriptionClientDefinition> GetSubscriptionDefinitions();
 
         /// <summary>
         /// Get locale assets

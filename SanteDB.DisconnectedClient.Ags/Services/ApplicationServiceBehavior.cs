@@ -21,7 +21,9 @@ using RestSrvr;
 using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
@@ -130,9 +132,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// Get subscription definitions
         /// </summary>
         /// <returns></returns>
-        public List<AppletSubscriptionDefinition> GetSubscriptionDefinitions()
+        public List<SubscriptionClientDefinition> GetSubscriptionDefinitions()
         {
-            return ApplicationContext.Current.GetService<IAppletManagerService>().Applets.SelectMany(o => o.SubscriptionDefinition).ToList();
+            return ApplicationContext.Current.GetService<IRepositoryService<SubscriptionDefinition>>().Find(o=>true).SelectMany(o=>o.ClientDefinitions).ToList();
         }
 
         /// <summary>
