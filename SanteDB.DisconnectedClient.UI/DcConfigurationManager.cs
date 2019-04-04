@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Cdss.Xml;
+using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
@@ -135,7 +136,8 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(DcAppletManagerService)),
                     new TypeReferenceConfiguration(typeof(ReportExecutor)),
                     new TypeReferenceConfiguration(typeof(AppletReportRepository)),
-                    new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService))
+                    new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),
+                    new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository))
                 }
             };
 
