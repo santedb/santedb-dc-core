@@ -129,15 +129,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         }
 
         /// <summary>
-        /// Get subscription definitions
-        /// </summary>
-        /// <returns></returns>
-        public List<SubscriptionClientDefinition> GetSubscriptionDefinitions()
-        {
-            return ApplicationContext.Current.GetService<IRepositoryService<SubscriptionDefinition>>().Find(o=>true).SelectMany(o=>o.ClientDefinitions).ToList();
-        }
-
-        /// <summary>
         /// Perform an update
         /// </summary>
         /// <param name="appId"></param>
