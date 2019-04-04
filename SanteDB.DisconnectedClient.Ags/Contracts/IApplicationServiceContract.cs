@@ -70,12 +70,6 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         ConfigurationViewModel GetUserConfiguration();
 
         /// <summary>
-        /// Get client facing subscription definitions
-        /// </summary>
-        [Get("/SubscriptionDefinition")]
-        List<SubscriptionClientDefinition> GetSubscriptionDefinitions();
-
-        /// <summary>
         /// Get locale assets
         /// </summary>
         [Get("/Locale")]
