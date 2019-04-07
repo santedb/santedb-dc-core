@@ -126,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
 #endif
 
                 var httpRequest = RestOperationContext.Current.IncomingRequest;
-                string contentType = httpRequest.Headers["Content-Type"];
+                string contentType = httpRequest.Headers["Content-Type"]?.ToLowerInvariant();
 
                 for (int pNumber = 0; pNumber < parameters.Length; pNumber++)
                 {
@@ -276,7 +276,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                         response.Body = new MemoryStream(tms.ToArray());
                     }
 
-                    contentType = "application/json+sdb-viewmodel";
+                    contentType = "application/json+sdb-viewModel";
                 }
                 // The request was in XML and/or the accept is JSON
                 else if ((accepts?.StartsWith("application/xml") == true ||

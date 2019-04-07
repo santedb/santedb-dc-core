@@ -32,13 +32,26 @@
     <property name="etag" behavior="never"/>
   </type>
 
+  <type type="EntityTelecomAddress" all="true">
+    <property name="source" behavior="never"/>
+    <property name="useModel" behavior="always" all="false">
+      <property name="mnemonic"/>
+    </property>
+  </type>
+
   <type type="EntityName" all="true">
     <property name="source" behavior="never"/>
+    <property name="useModel" behavior="always" all="false">
+      <property name="mnemonic"/>
+    </property>
     <property name="component" all="true" behavior="always">
       <property name="*" all="true"/>
     </property>
   </type>
   <type type="EntityAddress" all="true">
+    <property name="useModel" behavior="always" all="false">
+      <property name="mnemonic"/>
+    </property>
     <property name="source" behavior="never"/>
     <property name="component" all="true" behavior="always">
       <property name="*" all="true"/>

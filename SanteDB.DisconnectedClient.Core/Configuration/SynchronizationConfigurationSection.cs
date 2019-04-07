@@ -77,13 +77,13 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// Gets or sets the list of synchronization queries
         /// </summary>
-        [XmlElement("resource"), JsonProperty("resource")]
+        [XmlArray("resources"), XmlArrayItem("add"),  JsonProperty("resources")]
         public List<SynchronizationResource> SynchronizationResources { get; set; }
 
         /// <summary>
         /// Subscription
         /// </summary>
-        [XmlElement("subscribe"), JsonProperty("subscribe")]
+        [XmlArray("facilities"), XmlArrayItem("add"), JsonProperty("facilities")]
         public List<String> Facilities { get; set; }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// One or more filters 
         /// </summary>
-        [XmlElement("filter"), JsonProperty("filter")]
+        [XmlArray("filters"), XmlArrayItem("add"), JsonProperty("filters")]
         public List<string> Filters { get; set; }
 
         /// <summary>

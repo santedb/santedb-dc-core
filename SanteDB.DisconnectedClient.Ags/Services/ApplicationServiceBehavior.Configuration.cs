@@ -623,6 +623,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             Triggers = SynchronizationPullTriggerType.OnCommit
                         });
 
+                        syncConfig.Facilities = configuration.Synchronization.Facilities;
                         syncConfig.SynchronizationResources = syncConfig.SynchronizationResources.GroupBy(o => o.Name + o.Triggers.ToString())
                             .Select(g =>
                             {
