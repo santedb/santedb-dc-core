@@ -124,7 +124,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     else
                         retVal = sessionService.Authenticate(request["username"], request["password"]);
                     break;
-                case "refresh":
+                case "refresh_token":
                     var ses = sessionService.Refresh(request["refresh_token"]);
                     break;
                 case "pin":
