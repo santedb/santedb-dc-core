@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Security;
@@ -42,6 +43,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// </summary>
     public class RemoteSecurityRepository : AmiRepositoryBaseService,
         ISecurityRepositoryService,
+        IRoleProviderService,
         IPersistableQueryRepositoryService<SecurityUser>,
         IPersistableQueryRepositoryService<SecurityApplication>,
         IPersistableQueryRepositoryService<SecurityDevice>,
@@ -1077,6 +1079,115 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             catch (Exception e)
             {
                 throw new DataPersistenceException("Could not get user entity", e);
+            }
+        }
+
+        /// <summary>
+        /// Create the specified role
+        /// </summary>
+        public void CreateRole(string roleName, IPrincipal principal)
+        {
+            (this as IRepositoryService<SecurityRole>).Insert(new SecurityRole()
+            {
+                Name = roleName
+            });
+        }
+
+        /// <summary>
+        /// Add specified users to specified roles
+        /// </summary>
+        public void AddUsersToRoles(string[] users, string[] roles, IPrincipal principal)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                foreach(var usr in users)
+                {
+                    // Get the user info
+                    var secUser = this.m_client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
+                    secUser.Roles.AddRange(roles);
+                    this.m_client.UpdateUser(secUser.Entity.Key.Value, secUser);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not add users to roles", e);
+            }
+        }
+
+        /// <summary>
+        /// Remove users from roles
+        /// </summary>
+        public void RemoveUsersFromRoles(string[] users, string[] roles, IPrincipal principal)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                foreach (var usr in users)
+                {
+                    // Get the user info
+                    var secUser = this.m_client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
+                    secUser.Roles.RemoveAll(r=>roles.Contains(r));
+                    this.m_client.UpdateUser(secUser.Entity.Key.Value, secUser);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not remove users from roles", e);
+            }
+        }
+
+        /// <summary>
+        /// Find all users in role
+        /// </summary>
+        /// <param name="role"></param>
+        /// <returns></returns>
+        public string[] FindUsersInRole(string role)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.GetRoles(r => r.Name == role).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Users.ToArray();
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not get roles", e);
+            }
+        }
+
+        /// <summary>
+        /// Get all roles
+        /// </summary>
+        public string[] GetAllRoles(string userName)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.GetRoles(r=>r.ObsoletionTime != null).CollectionItem.OfType<SecurityRoleInfo>().Select(o => o.Entity.Name).ToArray();
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not remove users from roles", e);
+            }
+
+        }
+
+        /// <summary>
+        /// Determine if user is in role
+        /// </summary>
+        /// <param name="principal"></param>
+        /// <param name="roleName"></param>
+        /// <returns></returns>
+        public bool IsUserInRole(IPrincipal principal, string roleName)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.GetUsers(u => u.UserName == principal.Identity.Name && u.Roles.Any(r => r.Name == roleName)).CollectionItem.Count() > 0;
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not remove users from roles", e);
             }
         }
     }

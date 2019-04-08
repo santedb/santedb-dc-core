@@ -604,6 +604,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                                 case HttpStatusCode.NotModified:
                                     responseHeaders = errorResponse?.Headers;
                                     return default(TResult);
+                                case (HttpStatusCode)422:
+                                    throw exception;
+
                                 default:
                                     throw exception;
                             }

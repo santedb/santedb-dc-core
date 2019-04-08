@@ -73,6 +73,9 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
                     RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                     ie.GetType().FullName, ie.Message);
+
+                if (ie is RestClientException<RestServiceFault>)
+                    error = ie;
                 ie = ie.InnerException;
             }
 #else
