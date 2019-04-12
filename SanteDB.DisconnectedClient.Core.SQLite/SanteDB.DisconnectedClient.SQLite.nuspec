@@ -2,10 +2,10 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>1.40.0.0</version>
+    <version>1.41.0.0</version>
     <title>$title$</title>
-    <authors>Mohawk College of Applied Arts and Technology</authors>
-    <owners>Mohawk College of Applied Arts and Technology</owners>
+    <authors>Mohawk College of Applied Arts and Technology &amp; Fyfe Software Inc.</authors>
+    <owners>Mohawk College of Applied Arts and Technology &amp; Fyfe Software Inc.</owners>
     <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <projectUrl>http://santesuite.org</projectUrl>
     <iconUrl>http://santesuite.org/assets/img/logo.png</iconUrl>
@@ -17,13 +17,13 @@
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
       <dependency id="Mono.Data.Sqlite.Portable" version="1.0.3.5"/>
-      <dependency id="SanteDB.Core.Api" version="1.40.0.0"/>
-      <dependency id="SanteDB.Core.Model" version="1.40.0.0"/>
-      <dependency id="SanteDB.ReportR" version="1.40.0.0"/>
+      <dependency id="SanteDB.Core.Api" version="1.41.0.0"/>
+      <dependency id="SanteDB.Core.Model" version="1.41.0.0"/>
+      <dependency id="SanteDB.ReportR" version="1.41.0.0"/>
       <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.0.1"/>
       <dependency id="SQLite.Net.Core-PCL.MEDIC" version="3.1.1" />
       <dependency id="SharpCompress" version="0.18.2"/>
-      <dependency id="SanteDB.DisconnectedClient.Core" version="1.40.0.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Core" version="1.41.0.0"/>
     </dependencies>
   </metadata>
 </package>
