@@ -22,6 +22,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -1189,6 +1190,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 throw new DataPersistenceException("Could not remove users from roles", e);
             }
+        }
+
+
+        /// <summary>
+        /// Get the specified provider entity
+        /// </summary>
+        public Provider GetProviderEntity(IIdentity identity)
+        {
+            int t;
+            return ApplicationContext.Current.GetService<IRepositoryService<Provider>>()
+                .Find(o => o.Relationships.Where(r => r.RelationshipType.Mnemonic == "AssignedEntity").Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName == identity.Name), 0, 1, out t).FirstOrDefault();
         }
     }
 }
