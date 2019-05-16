@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>1.47.0.0</version>
+    <version>1.48.0.0</version>
     <title>$title$</title>
     <authors>Mohawk College of Applied Arts and Technology &amp; Fyfe Software Inc.</authors>
     <owners>Mohawk College of Applied Arts and Technology &amp; Fyfe Software Inc.</owners>
@@ -16,17 +16,17 @@
     <tags>santedb core ags</tags>
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
-      <dependency id="SanteDB.DisconnectedClient.Core" version="1.47.0.0"/>
-      <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.47.0.0"/>
-      <dependency id="SanteDB.Core.Api" version="1.47.0.0"/>
-      <dependency id="SanteDB.Core.Model" version="1.47.0.0"/>
-      <dependency id="SanteDB.Core.Model.AMI" version="1.47.0.0"/>
-      <dependency id="SanteDB.Core.Model.RISI" version="1.47.0.0"/>
-      <dependency id="SanteDB.Rest.AMI" version="1.47.0.0"/>
-      <dependency id="SanteDB.Rest.Common" version="1.47.0.0"/>
-      <dependency id="SanteDB.Rest.HDSI" version="1.47.0.0"/>
-      <dependency id="SanteDB.ReportR" version="1.47.0.0"/>
-      <dependency id="RestSrvr" version="1.47.0.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Core" version="1.48.0.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.48.0.0"/>
+      <dependency id="SanteDB.Core.Api" version="1.48.0.0"/>
+      <dependency id="SanteDB.Core.Model" version="1.48.0.0"/>
+      <dependency id="SanteDB.Core.Model.AMI" version="1.48.0.0"/>
+      <dependency id="SanteDB.Core.Model.RISI" version="1.48.0.0"/>
+      <dependency id="SanteDB.Rest.AMI" version="1.48.0.0"/>
+      <dependency id="SanteDB.Rest.Common" version="1.48.0.0"/>
+      <dependency id="SanteDB.Rest.HDSI" version="1.48.0.0"/>
+      <dependency id="SanteDB.ReportR" version="1.48.0.0"/>
+      <dependency id="RestSrvr" version="1.48.0.0"/>
       <dependency id="SharpCompress" version="0.18.2"/>
     </dependencies>
   </metadata>
