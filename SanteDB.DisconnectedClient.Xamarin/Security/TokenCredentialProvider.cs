@@ -57,9 +57,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             var tokenCredentials = AuthenticationContext.Current.Principal as TokenClaimsPrincipal;
             if (tokenCredentials != null)
             {
-                var expiryTime = DateTime.MinValue;
-                if (DateTime.TryParse(tokenCredentials.FindFirst(SanteDBClaimTypes.Expiration).Value, out expiryTime) &&
-                    expiryTime < DateTime.Now)
+                var expiryTime = tokenCredentials.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime();
+                if (expiryTime.HasValue && expiryTime < DateTime.Now)
                 {
                     var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
                     var principal = idp.ReAuthenticate(AuthenticationContext.Current.Principal);   // Force a re-issue
@@ -69,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 else if (expiryTime > DateTime.Now) // Token is good?
                     return this.GetCredentials(context);
                 else // I don't know what happened
-                    throw new SecurityException();
+                    throw new SecurityException("Server access token is expired");
             }
             else
                 throw new SecurityException();

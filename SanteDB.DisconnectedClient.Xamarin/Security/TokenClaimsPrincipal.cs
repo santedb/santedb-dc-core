@@ -110,9 +110,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 }
                 else if (((String)headers["alg"]).StartsWith("HS"))
                 {
-                    var keyId = headers["keyid"].Value<Int32>();
-                    if (keyId > this.m_configuration?.TokenSymmetricSecrets?.Count && !TokenValidationManager.OnSymmetricKeyValidationCallback(this, keyId, tokenBody["iss"].Value<String>()))
-                        throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Symmetric key not found");
                     // TODO: Verfiy signature
                 }
             }
