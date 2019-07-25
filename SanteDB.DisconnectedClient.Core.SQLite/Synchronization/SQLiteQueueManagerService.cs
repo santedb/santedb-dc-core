@@ -608,6 +608,36 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             };
 
 
+            // Does the outbound queue have data?
+            int dlc = SynchronizationQueue.DeadLetter.Count();
+            if (dlc > 0 &&
+                ApplicationContext.Current.Confirm(Strings.locale_startupRequeueConfirm))
+            {
+                int i = 0;
+                while (SynchronizationQueue.DeadLetter.Count() > 0)
+                {
+                    ApplicationContext.Current.SetProgress(Strings.locale_requeueing, ((float)i++) / (float)dlc);
+
+                    var itm = SynchronizationQueue.DeadLetter.PeekRaw();
+                    switch (itm.OriginalQueue)
+                    {
+                        case "inbound":
+                        case "inbound_queue":
+                            SynchronizationQueue.Inbound.EnqueueRaw(new InboundQueueEntry(itm));
+                            break;
+                        case "outbound":
+                        case "outbound_queue":
+                            SynchronizationQueue.Outbound.EnqueueRaw(new OutboundQueueEntry(itm));
+                            break;
+                        case "admin":
+                        case "admin_queue":
+                            SynchronizationQueue.Admin.EnqueueRaw(new OutboundAdminQueueEntry(itm));
+                            break;
+                    }
+                    SynchronizationQueue.DeadLetter.Delete(itm.Id);
+                }
+            }
+
             this.Started?.Invoke(this, EventArgs.Empty);
 
             return true;

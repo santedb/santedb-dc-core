@@ -649,6 +649,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Resubmitting Data....
+        /// </summary>
+        public static string locale_requeueing {
+            get {
+                return ResourceManager.GetString("locale_requeueing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Your online session couldn&apos;t be extended, you are now operating in disconnected mode..
         /// </summary>
         public static string locale_securitySwitchedMode {
@@ -726,6 +735,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_startingPoll {
             get {
                 return ResourceManager.GetString("locale_startingPoll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There are synchronization conflicts on your device. Do you want to resubmit them?.
+        /// </summary>
+        public static string locale_startupRequeueConfirm {
+            get {
+                return ResourceManager.GetString("locale_startupRequeueConfirm", resourceCulture);
             }
         }
         

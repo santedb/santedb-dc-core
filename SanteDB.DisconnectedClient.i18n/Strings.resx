@@ -380,4 +380,10 @@ Sincerely,
   <data name="err_local_users_prohibited" xml:space="preserve">
     <value>Local users are not permitted on this device</value>
   </data>
+  <data name="locale_requeueing" xml:space="preserve">
+    <value>Resubmitting Data...</value>
+  </data>
+  <data name="locale_startupRequeueConfirm" xml:space="preserve">
+    <value>There are synchronization conflicts on your device. Do you want to resubmit them?</value>
+  </data>
 </root>
