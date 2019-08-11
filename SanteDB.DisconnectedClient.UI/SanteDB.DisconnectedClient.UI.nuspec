@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>1.64.0.0</version>
+    <version>1.65.0.0</version>
     <title>$title$</title>
     <authors>Mohawk College of Applied Arts and Technology &amp; Fyfe Software Inc.</authors>
     <owners>Mohawk College of Applied Arts and Technology &amp; Fyfe Software Inc.</owners>
@@ -16,22 +16,22 @@
     <tags>santedb core</tags>
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
-      <dependency id="SanteDB.Core.Api" version="1.64.0.0"/>
-      <dependency id="SanteDB.Core.Applets" version="1.64.0.0"/>
-      <dependency id="SanteDB.Cdss.Xml" version="1.64.0.0"/>
-      <dependency id="SanteDB.Core.Model" version="1.64.0.0"/>
-      <dependency id="SanteDB.Core.Model.AMI" version="1.64.0.0"/>
-      <dependency id="SanteDB.BusinessRules.JavaScript" version="1.64.0.0"/>
-      <dependency id="SanteDB.Messaging.HDSI.Client" version="1.64.0.0" />
-      <dependency id="SanteDB.Messaging.AMI.Client" version="1.64.0.0" />
-      <dependency id="SanteDB.ReportR" version="1.64.0.0"/>
+      <dependency id="SanteDB.Core.Api" version="1.65.0.0"/>
+      <dependency id="SanteDB.Core.Applets" version="1.65.0.0"/>
+      <dependency id="SanteDB.Cdss.Xml" version="1.65.0.0"/>
+      <dependency id="SanteDB.Core.Model" version="1.65.0.0"/>
+      <dependency id="SanteDB.Core.Model.AMI" version="1.65.0.0"/>
+      <dependency id="SanteDB.BusinessRules.JavaScript" version="1.65.0.0"/>
+      <dependency id="SanteDB.Messaging.HDSI.Client" version="1.65.0.0" />
+      <dependency id="SanteDB.Messaging.AMI.Client" version="1.65.0.0" />
+      <dependency id="SanteDB.ReportR" version="1.65.0.0"/>
       <dependency id="SQLite.Net.Core-PCL.MEDIC" version="3.1.1"/>
       <dependency id="SQLite.Net-PCL.SQLCipher" version="3.1.1"/>
       <dependency id="SQLite.Net-PCL.MEDIC" version="3.1.1"/>
       <dependency id="SharpCompress" version="0.18.2"/>
-      <dependency id="SanteDB.DisconnectedClient.Core" version="1.64.0.0"/>
-      <dependency id="SanteDB.DisconnectedClient.Ags" version="1.64.0.0"/>
-      <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.64.0.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Core" version="1.65.0.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Ags" version="1.65.0.0"/>
+      <dependency id="SanteDB.DisconnectedClient.Xamarin" version="1.65.0.0"/>
     </dependencies>
     <references>
       <group targetFramework="net452">
