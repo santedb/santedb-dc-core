@@ -123,5 +123,15 @@ namespace SanteDB.DisconnectedClient.Core.Security
             this.m_client.Client.Credentials = this.GetCredentials();
             return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
         }
+
+
+        /// <summary>
+        /// Gets the specified policy instance (if applicable) for the specified object
+        /// </summary>
+        public IPolicyInstance GetPolicyInstance(object securable, string policyOid)
+        {
+            // TODO: Add caching for this
+            return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
+        }
     }
 }
