@@ -285,5 +285,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
         }
+
+
+        /// <summary>
+        /// Gets the specified policy instance (if applicable) for the specified object
+        /// </summary>
+        public IPolicyInstance GetPolicyInstance(object securable, string policyOid)
+        {
+            // TODO: Add caching for this
+            return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
+            throw new NotImplementedException();
+        }
     }
 }
