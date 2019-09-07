@@ -593,7 +593,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetPolicy(key)?.Policy;
+                return this.m_client.GetPolicy(key);
             }
             catch (Exception e)
             {
