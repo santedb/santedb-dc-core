@@ -30,12 +30,21 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Constructs a simple policy 
         /// </summary>
-        public GenericPolicy(String oid, String name, bool canOverride)
+        public GenericPolicy(Guid key, String oid, String name, bool canOverride)
         {
+            this.Key = key;
             this.Oid = oid;
             this.Name = name;
             this.CanOverride = canOverride;
             this.IsActive = true;
+        }
+
+        /// <summary>
+        /// Gets the key
+        /// </summary>
+        public Guid Key
+        {
+            get; private set;
         }
 
         /// <summary>
