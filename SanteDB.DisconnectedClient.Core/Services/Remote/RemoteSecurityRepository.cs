@@ -703,7 +703,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.CreatePolicy(new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(policy)).Policy;
+                return this.m_client.CreatePolicy(policy);
             }
             catch (Exception e)
             {
@@ -876,10 +876,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.UpdateRole(data.Key.Value, new SecurityRoleInfo(data)
-                {
-                    Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
-                });
+                var retVal = this.m_client.UpdateRole(data.Key.Value, new SecurityRoleInfo(data));
                 retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
                 return retVal.Entity;
             }
@@ -915,7 +912,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Save(SecurityPolicy data)
         {
-            throw new NotSupportedException("Updating policy information is not permitted");
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                var retVal = this.m_client.Client.Put<SecurityPolicy, SecurityPolicy>($"SecurityPolicy/{data.Key}", this.m_client.Client.Accept, data);
+                return retVal;
+            }
+            catch(Exception e)
+            {
+                throw new DataPersistenceException("Error saving policy", e);
+            }
         }
 
         /// <summary>
