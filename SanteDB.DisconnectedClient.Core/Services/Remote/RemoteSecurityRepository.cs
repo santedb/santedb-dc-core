@@ -801,7 +801,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeletePolicy(key).Policy;
+                return this.m_client.DeletePolicy(key);
             }
             catch (Exception e)
             {
