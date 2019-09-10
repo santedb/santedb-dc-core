@@ -593,7 +593,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetPolicy(key)?.Policy;
+                return this.m_client.GetPolicy(key);
             }
             catch (Exception e)
             {
@@ -703,7 +703,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.CreatePolicy(new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(policy)).Policy;
+                return this.m_client.CreatePolicy(policy);
             }
             catch (Exception e)
             {
@@ -801,7 +801,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeletePolicy(key).Policy;
+                return this.m_client.DeletePolicy(key);
             }
             catch (Exception e)
             {

@@ -20,6 +20,7 @@
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -67,7 +68,14 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public void AddPolicies(object securable, PolicyGrantType rule, IPrincipal principal, params string[] policyOids)
         {
-            throw new NotImplementedException();
+            this.m_client.Client.Credentials = this.GetCredentials();
+            foreach (var itm in policyOids) {
+                this.m_client.Client.Post<SecurityPolicyInfo, SecurityPolicyInfo>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy", this.m_client.Client.Accept, new SecurityPolicyInfo()
+                {
+                    Oid = itm, 
+                    Grant = rule
+                });
+            }
         }
 
         /// <summary>
@@ -80,18 +88,18 @@ namespace SanteDB.DisconnectedClient.Core.Security
             if (securable is SecurityDevice)
             {
                 string name = (securable as SecurityDevice).Name;
-                return this.m_client.GetDevices(o => o.Name == name).CollectionItem.OfType<SecurityDeviceInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
+                return this.m_client.GetDevices(o => o.Name == name).CollectionItem.OfType<SecurityDeviceInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Policy.Key.Value, o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
             }
             else if (securable is SecurityRole)
             {
                 string name = (securable as SecurityRole).Name;
-                return this.m_client.FindRole(o => o.Name == name).CollectionItem.OfType<SecurityRoleInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
+                return this.m_client.FindRole(o => o.Name == name).CollectionItem.OfType<SecurityRoleInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Policy.Key.Value, o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
 
             }
             else if (securable is SecurityApplication)
             {
                 string name = (securable as SecurityApplication).Name;
-                return this.m_client.GetApplications(o => o.Name == name).CollectionItem.OfType<SecurityApplicationInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
+                return this.m_client.GetApplications(o => o.Name == name).CollectionItem.OfType<SecurityApplicationInfo>().First().Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Policy.Key.Value, o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
             }
             else if (securable is IPrincipal || securable is IIdentity)
             {
@@ -110,6 +118,10 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 return new List<IPolicyInstance>();
         }
 
+        /// <summary>
+        /// Get all policies
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<IPolicy> GetPolicies()
         {
             throw new NotImplementedException();
@@ -121,7 +133,17 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public IPolicy GetPolicy(string policyOid)
         {
             this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
+            return this.m_client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
+        }
+
+
+        /// <summary>
+        /// Gets the specified policy instance (if applicable) for the specified object
+        /// </summary>
+        public IPolicyInstance GetPolicyInstance(object securable, string policyOid)
+        {
+            // TODO: Add caching for this
+            return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
         }
     }
 }

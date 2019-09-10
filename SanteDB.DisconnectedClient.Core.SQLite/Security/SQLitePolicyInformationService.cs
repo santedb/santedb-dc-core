@@ -169,7 +169,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 using (conn.Lock())
                 {
                     return conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_device_policy INNER JOIN security_policy ON (policy_id = security_policy.uuid) WHERE device_id = ?", secDev.Key.Value.ToByteArray())
-                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
+                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
                         .ToList();
                 }
             }
@@ -180,7 +180,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 using (conn.Lock())
                 {
                     return conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_role_policy INNER JOIN security_policy ON (policy_id = security_policy.uuid) WHERE role_id = ?", secRole.Key.Value.ToByteArray())
-                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
+                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
                         .ToList();
 
                 }
@@ -192,7 +192,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 using (conn.Lock())
                 {
                     return conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_application_policy INNER JOIN security_policy ON (policy_id = security_policy.uuid) WHERE application_id = ?", secApp.Key.Value.ToByteArray())
-                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
+                        .Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType))
                         .ToList();
                 }
             }
@@ -203,7 +203,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 // Is the identity a claims identity? If yes, we just use the claims made in the policy
                 if (identity is SanteDBClaimsIdentity && (identity as IClaimsIdentity).Claims.Any(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && o.Value != "*"))
                     return (identity as IClaimsIdentity).Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(
-                        o => new GenericPolicyInstance(new GenericPolicy(o.Value, "ClaimPolicy", false), PolicyGrantType.Grant)
+                        o => new GenericPolicyInstance(new GenericPolicy(Guid.Empty, o.Value, "ClaimPolicy", false), PolicyGrantType.Grant)
                         );
 
                 var conn = this.CreateConnection();
@@ -213,13 +213,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     {
                         var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_device_policy INNER JOIN security_device ON (security_device_policy.device_id = security_device.uuid) INNER JOIN security_policy ON (security_policy.uuid = security_device_policy.policy_id) WHERE lower(security_device.public_id) = lower(?)",
                             identity.Name).ToList();
-                        return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
+                        return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                     }
                     else
                     {
                         var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM security_user_role INNER JOIN security_role_policy ON (security_role_policy.role_id = security_user_role.role_id) INNER JOIN security_policy ON (security_policy.uuid = security_role_policy.policy_id) INNER JOIN security_user ON (security_user_role.user_id = security_user.uuid) WHERE lower(security_user.username) = lower(?)",
                             identity.Name).ToList();
-                        return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
+                        return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                     }
                 }
             }
@@ -232,7 +232,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM act_security_policy INNER JOIN security_policy ON (security_policy.uuid = act_security_policy.policy_id) WHERE act_id = ?",
                         pAct.Key).ToList();
 
-                    return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
+                    return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                 }
             }
             else if (securable is Entity)
@@ -243,7 +243,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 {
                     var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM entity_security_policy INNER JOIN security_policy ON (security_policy.uuid = entity_security_policy.policy_id) WHERE ent_id = ?",
                         pEntity.Key).ToList();
-                    return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
+                    return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                 }
             }
             else
@@ -259,7 +259,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             using (conn.Lock())
             {
                 var tbl = conn.Table<DbSecurityPolicy>();
-                return tbl.ToList().Select(o => new GenericPolicy(o.Oid, o.Name, o.CanOverride));
+                return tbl.ToList().Select(o => new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride));
             }
         }
 
@@ -273,7 +273,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 var dbp = conn.Table<DbSecurityPolicy>().Where(o => o.Oid == policyOid).FirstOrDefault();
                 if (dbp == null) return null;
-                else return new GenericPolicy(dbp.Oid, dbp.Name, dbp.CanOverride);
+                else return new GenericPolicy(dbp.Key, dbp.Oid, dbp.Name, dbp.CanOverride);
             }
         }
 
@@ -284,6 +284,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         private LockableSQLiteConnection CreateConnection()
         {
             return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
+        }
+
+
+        /// <summary>
+        /// Gets the specified policy instance (if applicable) for the specified object
+        /// </summary>
+        public IPolicyInstance GetPolicyInstance(object securable, string policyOid)
+        {
+            // TODO: Add caching for this
+            return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
+            throw new NotImplementedException();
         }
     }
 }
