@@ -49,6 +49,11 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public string ServiceName => "Memory based session manager";
 
         /// <summary>
+        /// Establishment of session has been completed
+        /// </summary>
+        public event EventHandler<SessionEstablishedEventArgs> Established;
+
+        /// <summary>
         /// Authentication with the user and establish a session
         /// </summary>
         public SessionInfo Authenticate(string userName, string password)
@@ -120,10 +125,19 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public ISession Establish(IPrincipal principal, DateTimeOffset expiry, string aud)
         {
             AuthenticationContext.Current = new AuthenticationContext(principal);
-            var session = new SessionInfo(principal, null);
-            session.Key = Guid.NewGuid();
-            this.m_session.Add(session.Token, session);
-            return session;
+            try
+            {
+                var session = new SessionInfo(principal, null);
+                session.Key = Guid.NewGuid();
+                this.m_session.Add(session.Token, session);
+                this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, session, true));
+                return session;
+            }
+            catch
+            {
+                this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, null, true));
+                throw;
+            }
         }
 
         /// <summary>
