@@ -110,7 +110,6 @@
     <Compile Include="Services\Remote\RemoteSecurityRepository.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
     <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
-    <Compile Include="Security\Audit\AuditUtil.cs" />
     <Compile Include="Security\NullCredentials.cs" />
     <Compile Include="Services\IBackupService.cs" />
     <Compile Include="Services\Local\LocalAuditService.cs" />
@@ -207,11 +206,11 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.72.0.0" />
-        <PackageReference Include="SanteDB.Core.Api" Version="1.72.0.0" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.72.0.0" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.74.0.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.74.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.74.0.0" />
         <PackageReference Include="SanteDB.Core.Model.AMI">
-          <Version>1.72.0.0</Version>
+          <Version>1.74.0.0</Version>
         </PackageReference>
       </ItemGroup>
     </Otherwise>
@@ -219,12 +218,12 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>1.72.0.0</Version>
+      <Version>1.74.0.0</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>1.72.0.0</Version>
+      <Version>1.74.0.0</Version>
     </PackageReference>
-    <PackageReference Include="SharpCompress" Version="0.18.2" />
+    <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup>

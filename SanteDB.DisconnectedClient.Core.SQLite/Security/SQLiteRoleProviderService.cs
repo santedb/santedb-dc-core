@@ -42,7 +42,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// <summary>
     /// Local role provider service
     /// </summary>
-    public class SQLiteRoleProviderService : IOfflineRoleProviderService, ISecurityAuditEventSource
+    public class SQLiteRoleProviderService : IOfflineRoleProviderService
     {
         /// <summary>
         /// Get the service name
@@ -55,13 +55,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         // Local tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteRoleProviderService));
 
-        public event EventHandler<AuditDataEventArgs> DataCreated;
-        public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
-        public event EventHandler<AuditDataEventArgs> DataObsoleted;
-        public event EventHandler<AuditDataEventArgs> DataUpdated;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityAttributesChanged;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
 
         /// <summary>
         /// Add specified roles to the specified groups
@@ -98,7 +91,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                             foreach (var itm in toBeInserted)
                                 conn.Insert(itm);
 
-                            this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(dbr, $"policy=[{String.Join(",", policyInstance.Select(o => $"{o.Policy.Name}:{o.Rule}"))}]"));
                             conn.Commit();
                         }
                         catch (Exception e)
@@ -110,9 +102,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
-                this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(roles.Select(o => new SecurityRole() { Name = o }), $"policy=[{String.Join(",", policyInstance.Select(o => $"{o.Policy.Name}:{o.Rule}"))}]") { Success = false });
+                this.m_tracer.TraceError("Error adding policies {0} to role {1}", String.Join(",", policyInstance.Select(o => o.Policy.Oid)), String.Join(",", roles));
+                throw new DataPersistenceException($"Error adding policies {String.Join(",", policyInstance.Select(o => o.Policy.Oid))} to role {String.Join(",", roles)}", e);
             }
         }
 
@@ -159,17 +152,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                                 });
                         }
 
-                        this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(dbu, $"role={String.Join(",", roleNames)}"));
-
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
-
-                this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(userNames.Select(o => new SecurityUser() { UserName = o }), $"roles=[{String.Join(",", roleNames.Select(o => $"{o}"))}]") { Success = false });
-
-                throw;
+                this.m_tracer.TraceError("Error adding users {0} to role {1}", String.Join(",", userNames), String.Join(",", roleNames));
+                throw new DataPersistenceException($"Error adding users {String.Join(",", userNames)} to role {String.Join(",", roleNames)}", e);
             }
         }
 
@@ -188,22 +177,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                    try
-                    {
                         var pk = Guid.NewGuid();
                         conn.Insert(new DbSecurityRole() { Name = value, Key = pk });
-                        this.DataCreated?.Invoke(this, new AuditDataEventArgs(new SecurityRole() { Key = pk, Name = value }));
-                    }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError($"Unable to create role: {e}");
-                    }
                 }
             }
-            catch
+            catch (Exception e)
             {
-                this.DataCreated?.Invoke(this, new AuditDataEventArgs(new SecurityRole() { Key = Guid.Empty, Name = value }) { Success = false });
-                throw;
+                this.m_tracer.TraceError($"Unable to create role: {e}");
+                throw new DataPersistenceException($"Unable to create role {value}", e);
             }
         }
 
@@ -258,7 +239,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public bool IsUserInRole(string userName, string roleName)
         {
             var conn = this.CreateReadonlyConnection();
-            using(conn.Lock())
+            using (conn.Lock())
                 return conn.ExecuteScalar<Int32>("SELECT 1 FROM security_user_role INNER JOIN security_user ON(security_user.uuid = security_user_role.user_id) INNER JOIN security_role ON(security_role.uuid = security_user_role.role_id) WHERE security_user.username = ? AND security_role.name = ?", userName, roleName) > 0;
         }
 

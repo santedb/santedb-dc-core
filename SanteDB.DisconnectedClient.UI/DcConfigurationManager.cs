@@ -270,7 +270,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public void Backup(SanteDBConfiguration configuration)
         {
-            using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress))
+            using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
                 configuration.Save(lzs);
         }
 
@@ -287,7 +287,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public SanteDBConfiguration Restore()
         {
-            using (var lzs = new BZip2Stream(File.OpenRead(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Decompress))
+            using (var lzs = new BZip2Stream(File.OpenRead(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Decompress, false))
             {
                 var retVal = SanteDBConfiguration.Load(lzs);
                 this.Save(retVal);

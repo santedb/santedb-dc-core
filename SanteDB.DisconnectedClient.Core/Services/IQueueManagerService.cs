@@ -17,6 +17,8 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
@@ -39,15 +41,15 @@ namespace SanteDB.DisconnectedClient.Core.Services
         /// <summary>
         /// Gets or sets the object keys
         /// </summary>
-        public IEnumerable<Guid> ObjectKeys { get; private set; }
+        public IEnumerable<Guid> Objects { get; private set; }
 
         /// <summary>
         /// Queue has been exhausted
         /// </summary>
-        public QueueExhaustedEventArgs(String queueName, params Guid[] objectKeys)
+        public QueueExhaustedEventArgs(String queueName, params Guid[] objects)
         {
             this.Queue = queueName;
-            this.ObjectKeys = objectKeys;
+            this.Objects = objects;
         }
     }
 

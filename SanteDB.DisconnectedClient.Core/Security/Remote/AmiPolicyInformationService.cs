@@ -79,6 +79,19 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
+        /// Note supported
+        /// </summary>
+        public void RemovePolicies(object securable, IPrincipal principal, params string[] policyOids)
+        {
+            this.m_client.Client.Credentials = this.GetCredentials();
+            foreach (var itm in policyOids)
+            {
+                var pol = this.GetPolicy(itm);
+                this.m_client.Client.Delete<SecurityPolicy>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy/{pol.Key}");
+            }
+        }
+
+        /// <summary>
         /// Get active policies for the specified securable
         /// </summary>
         public IEnumerable<IPolicyInstance> GetActivePolicies(object securable)

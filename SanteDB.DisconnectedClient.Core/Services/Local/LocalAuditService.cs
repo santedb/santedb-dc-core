@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
@@ -26,6 +27,7 @@ using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -138,65 +140,30 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 {
                     this.m_tracer.TraceInfo("Binding to service events...");
 
-                    ApplicationContext.Current.GetService<IIdentityProviderService>().Authenticated += (so, se) =>
-                    {
-                        if ((se.Principal?.Identity.Name ?? se.UserName).ToLower() != ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName.ToLower())
-                            AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);
-                    };
+                    // Queue has been exhausted
                     ApplicationContext.Current.GetService<IQueueManagerService>().QueueExhausted += (so, se) =>
                     {
-                        if (se.ObjectKeys.Count() > 0)
+                        if (se.Objects.Count() > 0)
                             switch (se.Queue)
                             {
                                 case "inbound":
                                     if (ApplicationContext.Current.GetService<IQueueManagerService>().Inbound.Count() == 0)
-                                        AuditUtil.AuditDataAction<IdentifiedData>(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Import, EventIdentifierType.Import, OutcomeIndicator.Success, null);
+                                        AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Import, EventIdentifierType.Import, OutcomeIndicator.Success, null, se.Objects.ToArray());
                                     break;
                                 case "outbound":
                                     if (ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Count() == 0)
-                                        AuditUtil.AuditDataAction<IdentifiedData>(EventTypeCodes.Export, ActionType.Execute, AuditableObjectLifecycle.Export, EventIdentifierType.Export, OutcomeIndicator.Success, null);
+                                        AuditUtil.AuditDataAction(EventTypeCodes.Export, ActionType.Execute, AuditableObjectLifecycle.Export, EventIdentifierType.Export, OutcomeIndicator.Success, null, se.Objects.ToArray());
                                     break;
                             }
                     };
 
-                    // Scan for IRepositoryServices and bind to their events as well
-                    foreach (var svc in ApplicationContext.Current.GetServices().OfType<IAuditEventSource>())
-                    {
-                        svc.DataCreated += (so, se) =>
-                        {
-                            if (se.Objects.Any(x => x is Entity || x is Act) && AuthenticationContext.Current.Principal.Identity.Name.ToLower() != ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName.ToLower())
-                                AuditUtil.AuditDataAction(EventTypeCodes.PatientRecord, ActionType.Create, AuditableObjectLifecycle.Creation, EventIdentifierType.PatientRecord, se.Success ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, null, se.Objects.OfType<IdentifiedData>().ToArray());
-                        };
-                        svc.DataUpdated += (so, se) =>
-                        {
-                            if (se.Objects.Any(x => x is Entity || x is Act) && AuthenticationContext.Current.Principal.Identity.Name.ToLower() != ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName.ToLower())
-                                AuditUtil.AuditDataAction(EventTypeCodes.PatientRecord, ActionType.Update, AuditableObjectLifecycle.Amendment, EventIdentifierType.PatientRecord, se.Success ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, null, se.Objects.OfType<IdentifiedData>().ToArray());
-                        };
-                        svc.DataObsoleted += (so, se) =>
-                        {
-                            if (se.Objects.Any(x => x is Entity || x is Act) && AuthenticationContext.Current.Principal.Identity.Name.ToLower() != ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName.ToLower())
-                                AuditUtil.AuditDataAction(EventTypeCodes.PatientRecord, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, EventIdentifierType.PatientRecord, se.Success ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, null, se.Objects.OfType<IdentifiedData>().ToArray());
-                        };
-                        svc.DataDisclosed += (so, se) =>
-                        {
-                            if (se.Objects.Count() > 0 && se.Objects.Any(i => i is Patient || i is Act) && AuthenticationContext.Current.Principal.Identity.Name.ToLower() != ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName.ToLower() &&
-                            AuthenticationContext.Current.Principal.Identity.Name.ToLower() != "system")
-                                AuditUtil.AuditDataAction(EventTypeCodes.Query, ActionType.Read, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, se.Success ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, se.Query, se.Objects.OfType<IdentifiedData>().ToArray());
-                        };
-
-                        if (svc is ISecurityAuditEventSource)
-                            (svc as ISecurityAuditEventSource).SecurityAttributesChanged += (so, se) => AuditUtil.AuditSecurityAttributeAction(se.Objects, se.Success, se.ChangedProperties);
-                    }
-
-                    AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
                 }
                 catch (Exception ex)
                 {
                     this.m_tracer.TraceError("Error starting up audit repository service: {0}", ex);
                 }
             };
-            ApplicationContext.Current.Stopped += (o, e) => AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStop);
-            ApplicationContext.Current.Stopping += (o, e) => this.m_safeToStop = true;
+            ApplicationServiceContext.Current.Stopping += (o, e) => this.m_safeToStop = true;
 
             AuditSubmission sendAudit = new AuditSubmission();
 
@@ -216,7 +183,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             // Queue user work item for sending
             ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 0, 30), timerQueue, null);
 
-            // Queue pooled item
+            // Queue pooled item that monitors the audit queue and places them onto the outbound queue for a batch submission
             ApplicationContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem(o =>
             {
                 while (!this.m_safeToStop)
@@ -270,13 +237,15 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             if (!this.m_safeToStop)
             {
                 AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.UseOfARestrictedFunction));
-                AuditUtil.AddDeviceActor(securityAlertData);
+                AuditUtil.AddLocalDeviceActor(securityAlertData);
                 AuditUtil.SendAudit(securityAlertData);
+                throw new InvalidOperationException("Cannot stop this audit monitor");
             }
+            
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
-        
+
     }
 }

@@ -34,6 +34,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security.Audit;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
 {
@@ -109,7 +110,6 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                             $"(SELECT {conn.GetMapping<DbAuditData>().FindColumnWithPropertyName(nameof(DbAuditData.Id)).Name} FROM {conn.GetMapping<DbAuditData>().TableName})" +
                             ")");
 
-                        AuditUtil.AuditAuditLogUsed(ActionType.Delete, OutcomeIndicator.Success, epred.ToString());
                         conn.Commit();
                     }
                     catch
@@ -157,14 +157,12 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     var sql = builder.CreateQuery<AuditData>(o => o.Key == pk, null).Limit(1).Build();
 
                     var res = conn.Query<DbAuditData.QueryResult>(sql.SQL, sql.Arguments.ToArray()).FirstOrDefault();
-                    AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.Success, sql.ToString(), pk);
 
                     return this.ToModelInstance(conn, res, false);
                 }
             }
             catch (Exception e)
             {
-                AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.EpicFail, id.ToString());
                 this.m_tracer.TraceError("Error retrieving audit {0} : {1}", id, e);
                 throw;
             }
@@ -287,13 +285,11 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     }
                     sql = sql.Build();
                     var itm = conn.Query<DbAuditData.QueryResult>(sql.SQL, sql.Arguments.ToArray());
-                    AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.Success, sql.ToString(), itm.Select(o => new Guid(o.Id)).ToArray());
                     return itm.Select(o => this.ToModelInstance(conn, o)).ToList();
                 }
             }
             catch (Exception e)
             {
-                AuditUtil.AuditAuditLogUsed(ActionType.Read, OutcomeIndicator.EpicFail, query.ToString());
                 this.m_tracer.TraceError("Could not query audit {0}: {1}", query, e);
                 throw;
             }

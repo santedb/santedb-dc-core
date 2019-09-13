@@ -17,12 +17,14 @@
  * User: justi
  * Date: 2019-1-12
  */
+using RestSrvr;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -46,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// <summary>
     /// Represents an OAuthIdentity provider
     /// </summary>
-    public class OAuthIdentityProvider : IIdentityProviderService, ISecurityAuditEventSource
+    public class OAuthIdentityProvider : IIdentityProviderService
     {
         /// <summary>
         /// Get the service name
@@ -65,13 +67,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// Occurs when authenticated.
         /// </summary>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityAttributesChanged;
-        public event EventHandler<AuditDataEventArgs> DataCreated;
-        public event EventHandler<AuditDataEventArgs> DataUpdated;
-        public event EventHandler<AuditDataEventArgs> DataObsoleted;
-        public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
 
         /// <summary>
         /// Authenticate the user
@@ -522,8 +517,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         localIdp?.ChangePassword(userName, newPassword, principal);
 
                         // Audit - Local IDP has alerted this already
-                        if (!(localIdp is ISecurityAuditEventSource))
-                            this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(user, "password"));
+                        AuditUtil.AuditSecurityAttributeAction(new object[] { user }, true, new string[] { "password" });
                     }
                 }
             }

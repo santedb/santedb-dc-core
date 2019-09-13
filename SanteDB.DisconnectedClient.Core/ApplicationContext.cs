@@ -24,6 +24,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -329,6 +330,8 @@ namespace SanteDB.DisconnectedClient.Core
                 this.Started?.Invoke(this, EventArgs.Empty);
             }, null);
 
+            AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
+
         }
 
         /// <summary>
@@ -337,6 +340,8 @@ namespace SanteDB.DisconnectedClient.Core
         public void Stop()
         {
             this.Stopping?.Invoke(this, EventArgs.Empty);
+
+            AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStop);
 
             ApplicationConfigurationSection config = this.Configuration.GetSection<ApplicationConfigurationSection>();
             var daemons = this.GetServices().OfType<IDaemonService>();

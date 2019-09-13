@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// <summary>
     /// Local identity service.
     /// </summary>
-    public class SQLiteIdentityService : IOfflineIdentityProviderService, ISecurityAuditEventSource, IPinAuthenticationService
+    public class SQLiteIdentityService : IOfflineIdentityProviderService, IPinAuthenticationService
     {
         /// <summary>
         /// Get the service name
@@ -75,13 +75,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// Fired on authenticating
         /// </summary>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityAttributesChanged;
-        public event EventHandler<AuditDataEventArgs> DataCreated;
-        public event EventHandler<AuditDataEventArgs> DataUpdated;
-        public event EventHandler<AuditDataEventArgs> DataObsoleted;
-        public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
 
         /// <summary>
         /// Authenticate this user with a local PIN number
@@ -273,14 +266,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;
                         conn.Update(dbu);
-                        this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(dbu, "password"));
                     }
                 }
             }
             catch (Exception e)
             {
 
-                this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(new SecurityUser() { Key = Guid.Empty, UserName = userName }, "password") { Success = false });
 
                 this.m_tracer.TraceError("Error changing password for user {0} : {1}", userName, e);
                 throw;
@@ -348,13 +339,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         Key = securityUser.Key.Value
                     };
                     conn.Insert(dbu);
-                    this.DataCreated?.Invoke(this, new AuditDataEventArgs(dbu));
                 }
                 return new SQLiteIdentity(securityUser.UserName, false);
             }
             catch
             {
-                this.DataCreated?.Invoke(this, new AuditDataEventArgs(new SecurityUser()) { Success = false });
                 throw;
             }
         }
@@ -468,14 +457,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == AuthenticationContext.Current.Principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;
                         conn.Update(dbu);
-                        this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(dbu, "pin"));
                     }
                 }
             }
             catch (Exception e)
             {
 
-                this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(new SecurityUser() { Key = Guid.Empty, UserName = userName }, "pin") { Success = false });
 
                 this.m_tracer.TraceError("Error changing password for user {0} : {1}", userName, e);
                 throw;

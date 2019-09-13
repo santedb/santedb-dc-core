@@ -49,6 +49,16 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public string ServiceName => "Memory based session manager";
 
         /// <summary>
+        /// Establishment of session has been completed
+        /// </summary>
+        public event EventHandler<SessionEstablishedEventArgs> Established;
+
+        /// <summary>
+        /// Fired when a session is abandoned
+        /// </summary>
+        public event EventHandler<SessionEstablishedEventArgs> Abandoned;
+
+        /// <summary>
         /// Authentication with the user and establish a session
         /// </summary>
         public SessionInfo Authenticate(string userName, string password)
@@ -110,8 +120,31 @@ namespace SanteDB.DisconnectedClient.Core.Security
         {
             SessionInfo ses = null;
             if (this.m_session.TryGetValue(principal.ToString(), out ses))
+            {
                 this.m_session.Remove(principal.ToString());
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(principal, ses, true));
+            }
+            else
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(principal, null, false));
             return ses;
+        }
+
+        /// <summary>
+        /// Abandon the specified session
+        /// </summary>
+        /// <param name="session">The session to be abandoned</param>
+        public void Abandon(ISession session)
+        {
+            var sessionId = Encoding.UTF8.GetString(session.Id, 0, session.Id.Length);
+            this.m_session.Remove(sessionId);
+            SessionInfo ses = null;
+            if (this.m_session.TryGetValue(sessionId, out ses))
+            {
+                this.m_session.Remove(sessionId);
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(null, ses, true));
+            }
+            else
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(null, null, false));
         }
 
         /// <summary>
@@ -120,10 +153,19 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public ISession Establish(IPrincipal principal, DateTimeOffset expiry, string aud)
         {
             AuthenticationContext.Current = new AuthenticationContext(principal);
-            var session = new SessionInfo(principal, null);
-            session.Key = Guid.NewGuid();
-            this.m_session.Add(session.Token, session);
-            return session;
+            try
+            {
+                var session = new SessionInfo(principal, null);
+                session.Key = Guid.NewGuid();
+                this.m_session.Add(session.Token, session);
+                this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, session, true));
+                return session;
+            }
+            catch
+            {
+                this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, null, true));
+                throw;
+            }
         }
 
         /// <summary>

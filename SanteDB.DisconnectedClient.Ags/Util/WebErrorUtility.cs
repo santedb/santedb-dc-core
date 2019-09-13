@@ -21,6 +21,7 @@ using RestSrvr;
 using RestSrvr.Exceptions;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Xamarin.Exceptions;

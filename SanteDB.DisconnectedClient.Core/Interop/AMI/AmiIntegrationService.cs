@@ -26,6 +26,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -216,7 +217,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
                             if (data is AuditSubmission)
                                 foreach (var a in (data as AuditSubmission).Audit)
                                 {
-                                    AuditUtil.AddDeviceActor(a);
+                                    AuditUtil.AddLocalDeviceActor(a);
                                 }
                             amiClient.SubmitAudit(data as AuditSubmission);
                         }

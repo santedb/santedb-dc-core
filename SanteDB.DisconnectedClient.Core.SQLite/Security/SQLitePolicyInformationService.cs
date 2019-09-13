@@ -82,6 +82,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     if (securable == null)
                         throw new KeyNotFoundException($"Device identity {did.Name} not found");
                 }
+                else if (securable is Act)
+                    throw new NotSupportedException("Policies should be assigned to ACTS via the IRepositoryService<Act>");
+                else if (securable is Entity)
+                    throw new NotSupportedException("Policies should be assigned to ENTITIES via the IRepositoryService<Entity>");
+
                 // Drop existing policies
                 IEnumerable delObjects = null;
                 byte[] key = (securable as IdentifiedData)?.Key.Value.ToByteArray();
@@ -295,6 +300,70 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             // TODO: Add caching for this
             return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Remove policies
+        /// </summary>
+        public void RemovePolicies(object securable, IPrincipal principal, params string[] policyOids)
+        {
+            var conn = this.CreateConnection();
+            using (conn.Lock())
+            {
+
+                // First resolve identities 
+                if (securable is IDeviceIdentity)
+                {
+                    var did = securable as IDeviceIdentity;
+                    var dbd = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == did.Name).ToList();
+                    securable = dbd.Select(o => new SecurityDevice()
+                    {
+                        Key = o.Key,
+                        Name = o.PublicId
+                    }).FirstOrDefault();
+                    if (securable == null)
+                        throw new KeyNotFoundException($"Device identity {did.Name} not found");
+                }
+                // First resolve identities 
+                else if (securable is IApplicationIdentity)
+                {
+                    var did = securable as IApplicationIdentity;
+                    var dbd = conn.Table<DbSecurityApplication>().Where(o => o.PublicId == did.Name).ToList();
+                    securable = dbd.Select(o => new SecurityApplication()
+                    {
+                        Key = o.Key,
+                        Name = o.PublicId
+                    }).FirstOrDefault();
+                    if (securable == null)
+                        throw new KeyNotFoundException($"Application identity {did.Name} not found");
+                }
+
+                // Drop existing policies
+                byte[] key = (securable as IdentifiedData)?.Key.Value.ToByteArray();
+
+                // Delete existing policy oids
+                foreach (var oid in policyOids)
+                {
+                    // Get the policy
+                    var policy = conn.Table<DbSecurityPolicy>().Where(p => p.Oid == oid).ToList().FirstOrDefault();
+                    if (policy == null)
+                        throw new KeyNotFoundException($"Policy {oid} not found");
+
+                    if (securable is SecurityDevice)
+                        conn.Table<DbSecurityDevicePolicy>().Delete(o => o.DeviceId == key && o.PolicyId == policy.Uuid);
+                    else if (securable is SecurityRole)
+                        conn.Table<DbSecurityRolePolicy>().Delete(o => o.RoleId == key && o.PolicyId == policy.Uuid);
+                    else if (securable is SecurityApplication)
+                        conn.Table<DbSecurityApplicationPolicy>().Delete(o => o.ApplicationId == key && o.PolicyId == policy.Uuid);
+                    else if (securable is Act)
+                        throw new NotSupportedException("Policies should be assigned to ACTS via the IRepositoryService<Act>");
+                    else if (securable is Entity)
+                        throw new NotSupportedException("Policies should be assigned to ENTITIES via the IRepositoryService<Entity>");
+                    else
+                        throw new ArgumentOutOfRangeException("Invalid type", nameof(securable));
+
+                }
+            }
         }
     }
 }

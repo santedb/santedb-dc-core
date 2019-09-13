@@ -28,6 +28,7 @@ using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Model;
@@ -66,6 +67,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes))
                 .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract)))
         {
+            
         }
 
         // Tracer
