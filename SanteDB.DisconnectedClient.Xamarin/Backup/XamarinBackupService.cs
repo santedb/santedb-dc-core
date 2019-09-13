@@ -129,7 +129,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                 var sourceDirectory = XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory;
 
                 using (var fs = File.Create(fileName))
-                using (var writer = new SharpCompress.Writers.Tar.TarWriter(fs, new SharpCompress.Writers.WriterOptions(SharpCompress.Common.CompressionType.None)))
+                using (var writer = new SharpCompress.Writers.Tar.TarWriter(fs, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true)))
                 {
                     this.BackupDirectory(writer, sourceDirectory, sourceDirectory);
 

@@ -28,6 +28,7 @@ using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SharpCompress.Compressors.LZMA;
+using SharpCompress.IO;
 using System;
 using System.IO;
 using System.Linq;
@@ -342,7 +343,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
                         if (Encoding.UTF8.GetString(itm.Content as byte[], 0, 4) == "LZIP")
                             using (var fs = File.Create(itmPath))
                             using (var ms = new MemoryStream(itm.Content as byte[]))
-                            using (var lzs = new LZipStream(ms, SharpCompress.Compressors.CompressionMode.Decompress, true))
+                            using (var lzs = new LZipStream(new NonDisposingStream(ms), SharpCompress.Compressors.CompressionMode.Decompress))
                                 lzs.CopyTo(fs);
                         else
                             File.WriteAllBytes(itmPath, itm.Content as byte[]);

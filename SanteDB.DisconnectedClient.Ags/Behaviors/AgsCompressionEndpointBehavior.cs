@@ -19,6 +19,7 @@
  */
 using RestSrvr;
 using RestSrvr.Message;
+using SharpCompress.IO;
 using SharpCompress.Compressors.Deflate;
 using System;
 using System.IO;
@@ -57,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             if (!String.IsNullOrEmpty(compressionScheme) && compressionScheme.Contains("deflate") && response.Body != null)
             {
                 var ms = new MemoryStream();
-                using (var dfz = new DeflateStream(ms, SharpCompress.Compressors.CompressionMode.Compress, leaveOpen: true))
+                using (var dfz = new DeflateStream(new NonDisposingStream(ms), SharpCompress.Compressors.CompressionMode.Compress))
                     response.Body.CopyTo(dfz);
                 ms.Seek(0, SeekOrigin.Begin);
                 response.Body.Dispose();

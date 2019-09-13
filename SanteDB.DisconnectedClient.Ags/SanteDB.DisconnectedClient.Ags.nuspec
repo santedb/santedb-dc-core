@@ -27,7 +27,7 @@
       <dependency id="SanteDB.Rest.HDSI" version="1.73.0.0"/>
       <dependency id="SanteDB.ReportR" version="1.73.0.0"/>
       <dependency id="RestSrvr" version="1.73.0.0"/>
-      <dependency id="SharpCompress" version="0.18.2"/>
+      <dependency id="SharpCompress" Version="0.24.0"/>
     </dependencies>
   </metadata>
   <files>
