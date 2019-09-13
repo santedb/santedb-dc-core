@@ -54,6 +54,11 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public event EventHandler<SessionEstablishedEventArgs> Established;
 
         /// <summary>
+        /// Fired when a session is abandoned
+        /// </summary>
+        public event EventHandler<SessionEstablishedEventArgs> Abandoned;
+
+        /// <summary>
         /// Authentication with the user and establish a session
         /// </summary>
         public SessionInfo Authenticate(string userName, string password)
@@ -115,7 +120,12 @@ namespace SanteDB.DisconnectedClient.Core.Security
         {
             SessionInfo ses = null;
             if (this.m_session.TryGetValue(principal.ToString(), out ses))
+            {
                 this.m_session.Remove(principal.ToString());
+                this.Abandoned(this, new SessionEstablishedEventArgs(principal, ses, true));
+            }
+            else
+                this.Abandoned(this, new SessionEstablishedEventArgs(principal, null, false));
             return ses;
         }
 

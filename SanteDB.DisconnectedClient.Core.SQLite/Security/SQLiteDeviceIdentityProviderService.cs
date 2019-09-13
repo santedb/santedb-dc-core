@@ -68,7 +68,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     /// Represents a SQL.NET PCL Device identity provider
     /// </summary>
     [ServiceProvider("SQLite-NET PCL Device Identity Provider")]
-    public class SQLiteDeviceIdentityProviderService : IOfflineDeviceIdentityProviderService, ISecurityAuditEventSource
+    public class SQLiteDeviceIdentityProviderService : IOfflineDeviceIdentityProviderService
     {
 
         // Tracer
@@ -90,9 +90,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// Authenticating
         /// </summary>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityAttributesChanged;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceCreated;
-        public event EventHandler<SecurityAuditDataEventArgs> SecurityResourceDeleted;
 
         /// <summary>
         /// Creates a connection to the local database
@@ -211,14 +208,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;
                         conn.Update(dbu);
-                        this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(dbu, "password"));
                     }
                 }
             }
             catch (Exception e)
             {
 
-                this.SecurityAttributesChanged?.Invoke(this, new SecurityAuditDataEventArgs(new SecurityDevice() { Key = Guid.Empty, Name = deviceName }, "password") { Success = false });
                 this.m_tracer.TraceError("Error changing secret for device {0} : {1}", deviceName, e);
                 throw;
             }
@@ -249,13 +244,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         CreatedByUuid = conn.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName == AuthenticationContext.Current?.Principal?.Identity?.Name)?.Uuid ?? Guid.Parse("fadca076-3690-4a6e-af9e-f1cd68e8c7e8").ToByteArray()
                     };
                     conn.Insert(dbu);
-                    this.SecurityResourceCreated?.Invoke(this, new SecurityAuditDataEventArgs(dbu, "created"));
                 }
                 return new SQLiteDeviceIdentity(name, false);
             }
             catch
             {
-                this.SecurityResourceCreated?.Invoke(this, new SecurityAuditDataEventArgs(new SecurityDevice() { Name = name }) { Success = false });
                 throw;
             }
         }

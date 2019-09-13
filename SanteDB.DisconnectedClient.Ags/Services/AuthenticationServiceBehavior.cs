@@ -69,7 +69,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Get the session
             if (AuthenticationContext.Current.Principal != null) { 
                 ApplicationContext.Current.GetService<ISessionManagerService>().Delete(AuthenticationContext.Current.Principal);
-                AuditUtil.AuditLogout(AuthenticationContext.Current.Principal);
             }
 
         }

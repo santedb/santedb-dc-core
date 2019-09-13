@@ -110,7 +110,6 @@
     <Compile Include="Services\Remote\RemoteSecurityRepository.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
     <Compile Include="Synchronization\RemoteSynchronizationService.cs" />
-    <Compile Include="Security\Audit\AuditUtil.cs" />
     <Compile Include="Security\NullCredentials.cs" />
     <Compile Include="Services\IBackupService.cs" />
     <Compile Include="Services\Local\LocalAuditService.cs" />

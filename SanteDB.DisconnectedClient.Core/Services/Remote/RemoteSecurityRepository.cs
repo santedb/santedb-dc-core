@@ -73,19 +73,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
 
-                foreach (var usr in users)
-                {
-                    var user = this.GetUser(usr);
-                    if (user == null)
-                        throw new KeyNotFoundException($"{usr} not found");
-
-                    this.m_tracer.TraceInfo("Assigning user {0} to roles {1}", usr, String.Join(",", roles));
-                    this.m_client.UpdateUser(user.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo()
+                var roleKeys = roles.Select(o => this.GetRole(o)).Select(o => o.Key);
+                foreach (var rol in roleKeys)
+                    foreach (var usr in users)
                     {
-                        Entity = user,
-                        Roles = new List<string>(roles)
-                    });
-                }
+
+                        this.m_client.Client.Post<SecurityUser, SecurityUser>($"SecurityRole/{rol}/user", this.m_client.Client.Accept, new SecurityUser()
+                        {
+                            UserName = usr
+                        });
+                    }
             }
             catch (Exception e)
             {
@@ -144,7 +141,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 throw new DataPersistenceException("Could not change password", e);
             }
         }
-      
+
         /// <summary>
         /// Create a user
         /// </summary>
@@ -227,7 +224,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             }
         }
 
-        
+
         /// <summary>
         /// Get role by name
         /// </summary>
@@ -266,7 +263,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             }
         }
 
-     
+
         /// <summary>
         /// Get user from identitiy
         /// </summary>
@@ -315,9 +312,22 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void RemoveUsersFromRoles(string[] users, string[] roles)
         {
-            throw new NotImplementedException();
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+
+                var roleKeys = roles.Select(o => this.GetRole(o)).Select(o => o.Key);
+                var userKeys = users.Select(o => this.GetUser(o)).Select(o => o.Key);
+                foreach (var rol in roleKeys)
+                    foreach (var usr in userKeys)
+                        this.m_client.Client.Delete<SecurityUser>($"SecurityRole/{rol}/user/${usr}");
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not add users to roles", e);
+            }
         }
-      
+
         /// <summary>
         /// Unlock the user
         /// </summary>
@@ -456,13 +466,13 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Get(Guid key, Guid versionKey)
         {
-            
+
 
             try
             {
                 var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
                 hdsiClient.Client.Credentials = this.GetCredentials();
-                return hdsiClient.Get<UserEntity>(key, versionKey != Guid.Empty ? (Guid?)versionKey: null) as UserEntity;
+                return hdsiClient.Get<UserEntity>(key, versionKey != Guid.Empty ? (Guid?)versionKey : null) as UserEntity;
             }
             catch (Exception e)
             {
@@ -667,7 +677,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Insert(SecurityRole roleInfo)
         {
-            
+
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
@@ -918,7 +928,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 var retVal = this.m_client.Client.Put<SecurityPolicy, SecurityPolicy>($"SecurityPolicy/{data.Key}", this.m_client.Client.Accept, data);
                 return retVal;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException("Error saving policy", e);
             }
@@ -976,7 +986,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 this.m_client.Client.Credentials = this.GetCredentials();
                 return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
                 {
-                    o.Entity.Roles = o.Roles.Select(r => {
+                    o.Entity.Roles = o.Roles.Select(r =>
+                    {
                         SecurityRole rol = null;
                         if (!cachedRoles.TryGetValue(r, out rol))
                         {
@@ -1108,7 +1119,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                foreach(var usr in users)
+                foreach (var usr in users)
                 {
                     // Get the user info
                     var secUser = this.m_client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
@@ -1134,7 +1145,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 {
                     // Get the user info
                     var secUser = this.m_client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
-                    secUser.Roles.RemoveAll(r=>roles.Contains(r));
+                    secUser.Roles.RemoveAll(r => roles.Contains(r));
                     this.m_client.UpdateUser(secUser.Entity.Key.Value, secUser);
                 }
             }
@@ -1170,7 +1181,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetRoles(r=>r.ObsoletionTime != null).CollectionItem.OfType<SecurityRoleInfo>().Select(o => o.Entity.Name).ToArray();
+                return this.m_client.GetRoles(r => r.ObsoletionTime != null).CollectionItem.OfType<SecurityRoleInfo>().Select(o => o.Entity.Name).ToArray();
             }
             catch (Exception e)
             {

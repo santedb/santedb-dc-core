@@ -20,6 +20,7 @@
 using RestSrvr;
 using RestSrvr.Bindings;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
@@ -77,6 +78,7 @@ namespace SanteDB.DisconnectedClient.Ags
         /// Fired when the handler has stopped
         /// </summary>
         public event EventHandler Stopped;
+      
 
         /// <summary>
         /// Gets the default AGS configuration

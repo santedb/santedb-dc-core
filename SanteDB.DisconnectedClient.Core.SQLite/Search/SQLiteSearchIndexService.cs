@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
     /// <summary>
     /// Search indexing service
     /// </summary>
-    public class SQLiteSearchIndexService : IFreetextSearchService, IDaemonService, IAuditEventSource
+    public class SQLiteSearchIndexService : IFreetextSearchService, IDaemonService
     {
         /// <summary>
         /// Get the service name
@@ -86,10 +86,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// The service is stopping
         /// </summary>
         public event EventHandler Stopping;
-        public event EventHandler<AuditDataEventArgs> DataCreated;
-        public event EventHandler<AuditDataEventArgs> DataUpdated;
-        public event EventHandler<AuditDataEventArgs> DataObsoleted;
-        public event EventHandler<AuditDataDisclosureEventArgs> DataDisclosed;
 
         /// <summary>
         /// Create a connection
@@ -155,7 +151,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                     var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal));
 
-                    this.DataDisclosed?.Invoke(this, new AuditDataDisclosureEventArgs("FTS:" + String.Join(":", tokens), retVal));
                     return retVal;
                 }
             }

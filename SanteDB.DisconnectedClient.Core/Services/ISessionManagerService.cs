@@ -28,7 +28,7 @@ namespace SanteDB.DisconnectedClient.Core.Services
     /// <summary>
     /// Represents a session manager service
     /// </summary>
-    public interface ISessionManagerService : IServiceImplementation
+    public interface ISessionManagerService : ISessionProviderService
     {
 
         /// <summary>

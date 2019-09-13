@@ -21,6 +21,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
