@@ -517,7 +517,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         localIdp?.ChangePassword(userName, newPassword, principal);
 
                         // Audit - Local IDP has alerted this already
-                        AuditUtil.AuditSecurityAttributeAction(new object[] { user }, true, new string[] { "password" }, RestOperationContext.Current.IncomingRequest.RemoteEndPoint.ToString());
+                        AuditUtil.AuditSecurityAttributeAction(new object[] { user }, true, new string[] { "password" });
                     }
                 }
             }

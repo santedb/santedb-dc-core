@@ -148,11 +148,11 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                             {
                                 case "inbound":
                                     if (ApplicationContext.Current.GetService<IQueueManagerService>().Inbound.Count() == 0)
-                                        AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Import, EventIdentifierType.Import, OutcomeIndicator.Success, null, ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain, se.Objects.ToArray());
+                                        AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Import, EventIdentifierType.Import, OutcomeIndicator.Success, null, se.Objects.ToArray());
                                     break;
                                 case "outbound":
                                     if (ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Count() == 0)
-                                        AuditUtil.AuditDataAction(EventTypeCodes.Export, ActionType.Execute, AuditableObjectLifecycle.Export, EventIdentifierType.Export, OutcomeIndicator.Success, null, ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain, se.Objects.ToArray());
+                                        AuditUtil.AuditDataAction(EventTypeCodes.Export, ActionType.Execute, AuditableObjectLifecycle.Export, EventIdentifierType.Export, OutcomeIndicator.Success, null, se.Objects.ToArray());
                                     break;
                             }
                     };

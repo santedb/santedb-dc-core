@@ -122,11 +122,29 @@ namespace SanteDB.DisconnectedClient.Core.Security
             if (this.m_session.TryGetValue(principal.ToString(), out ses))
             {
                 this.m_session.Remove(principal.ToString());
-                this.Abandoned(this, new SessionEstablishedEventArgs(principal, ses, true));
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(principal, ses, true));
             }
             else
-                this.Abandoned(this, new SessionEstablishedEventArgs(principal, null, false));
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(principal, null, false));
             return ses;
+        }
+
+        /// <summary>
+        /// Abandon the specified session
+        /// </summary>
+        /// <param name="session">The session to be abandoned</param>
+        public void Abandon(ISession session)
+        {
+            var sessionId = Encoding.UTF8.GetString(session.Id, 0, session.Id.Length);
+            this.m_session.Remove(sessionId);
+            SessionInfo ses = null;
+            if (this.m_session.TryGetValue(sessionId, out ses))
+            {
+                this.m_session.Remove(sessionId);
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(null, ses, true));
+            }
+            else
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(null, null, false));
         }
 
         /// <summary>
