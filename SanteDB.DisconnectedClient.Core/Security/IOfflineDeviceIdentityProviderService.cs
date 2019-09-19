@@ -38,14 +38,6 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         IIdentity CreateIdentity(Guid sid, string name, string deviceSecret, IPrincipal systemPrincipal);
 
-        /// <summary>
-        /// Change the device secret
-        /// </summary>
-        void ChangeSecret(string name, string deviceSecret, IPrincipal systemPrincipal);
 
-        /// <summary>
-        /// Gets the specified device identity from the local provider
-        /// </summary>
-        IIdentity GetIdentity(string name);
     }
 }

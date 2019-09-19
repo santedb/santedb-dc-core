@@ -255,5 +255,85 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             return ApplicationContext.Current.GetService<IRepositoryService<Provider>>()
                 .Find(o => o.Relationships.Where(r => r.RelationshipType.Mnemonic == "AssignedEntity").Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName == identity.Name), 0, 1, out t).FirstOrDefault();
         }
+
+        /// <summary>
+        /// Lock a device
+        /// </summary>
+        public void LockDevice(Guid key)
+        {
+            this.Demand(PermissionPolicyIdentifiers.CreateDevice);
+
+            this.m_traceSource.TraceWarning("Locking device {0}", key);
+
+            var iids = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>();
+            if (iids == null)
+                throw new InvalidOperationException("Missing identity provider service");
+
+            var securityDevice = ApplicationContext.Current.GetService<IRepositoryService<SecurityDevice>>()?.Get(key);
+            if (securityDevice == null)
+                throw new KeyNotFoundException(key.ToString());
+            
+            iids.SetLockout(securityDevice.Name, true, AuthenticationContext.Current.Principal);
+        }
+
+        /// <summary>
+        /// Locks the specified application
+        /// </summary>
+        public void LockApplication(Guid key)
+        {
+            this.Demand(PermissionPolicyIdentifiers.CreateApplication);
+
+            this.m_traceSource.TraceWarning("Locking application {0}", key);
+
+            var iids = ApplicationContext.Current.GetService<IApplicationIdentityProviderService>();
+            if (iids == null)
+                throw new InvalidOperationException("Missing identity provider service");
+
+            var securityApplication = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Get(key);
+            if (securityApplication == null)
+                throw new KeyNotFoundException(key.ToString());
+
+            iids.SetLockout(securityApplication.Name, true, AuthenticationContext.Current.Principal);
+        }
+
+        /// <summary>
+        /// Unlocks the specified device
+        /// </summary>
+        public void UnlockDevice(Guid key)
+        {
+            this.Demand(PermissionPolicyIdentifiers.CreateDevice);
+
+            this.m_traceSource.TraceWarning("Unlocking device {0}", key);
+
+            var iids = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>();
+            if (iids == null)
+                throw new InvalidOperationException("Missing identity provider service");
+
+            var securityDevice = ApplicationContext.Current.GetService<IRepositoryService<SecurityDevice>>()?.Get(key);
+            if (securityDevice == null)
+                throw new KeyNotFoundException(key.ToString());
+
+            iids.SetLockout(securityDevice.Name, false, AuthenticationContext.Current.Principal);
+        }
+
+        /// <summary>
+        /// Unlock the specified application
+        /// </summary>
+        public void UnlockApplication(Guid key)
+        {
+            this.Demand(PermissionPolicyIdentifiers.CreateApplication);
+
+            this.m_traceSource.TraceWarning("Unlocking application {0}", key);
+
+            var iids = ApplicationContext.Current.GetService<IApplicationIdentityProviderService>();
+            if (iids == null)
+                throw new InvalidOperationException("Missing identity provider service");
+
+            var securityApplication = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Get(key);
+            if (securityApplication == null)
+                throw new KeyNotFoundException(key.ToString());
+
+            iids.SetLockout(securityApplication.Name, false, AuthenticationContext.Current.Principal);
+        }
     }
 }
