@@ -275,5 +275,30 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 throw;
             }
         }
+
+        /// <summary>
+        /// Set the lockout of the specified object
+        /// </summary>
+        public void SetLockout(string name, bool lockoutState, IPrincipal principal)
+        {
+            try
+            {
+                var conn = this.CreateConnection();
+                using(conn.Lock())
+                {
+                    var dbi = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == name).FirstOrDefault();
+                    if (dbi == null)
+                        throw new KeyNotFoundException($"Device {name} not found");
+                    dbi.Lockout = DateTime.MaxValue;
+                    conn.Update(dbi);
+                    conn.Commit();
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError($"Error setting lockout on device {name}", e);
+                throw;
+            }
+        }
     }
 }

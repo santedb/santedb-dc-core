@@ -1219,5 +1219,71 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             return ApplicationContext.Current.GetService<IRepositoryService<Provider>>()
                 .Find(o => o.Relationships.Where(r => r.RelationshipType.Mnemonic == "AssignedEntity").Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName == identity.Name), 0, 1, out t).FirstOrDefault();
         }
+
+        /// <summary>
+        /// Lock the specified device
+        /// </summary>
+        public void LockDevice(Guid key)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                this.m_client.Client.Lock<SecurityDeviceInfo>($"SecurityDevice/{key}");
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not lock device", e);
+            }
+        }
+
+        /// <summary>
+        /// Lock the specified application
+        /// </summary>
+        /// <param name="key"></param>
+        public void LockApplication(Guid key)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                this.m_client.Client.Lock<SecurityApplicationInfo>($"SecurityApplication/{key}");
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not lock application", e);
+            }
+        }
+
+        /// <summary>
+        /// Unlock the specified device
+        /// </summary>
+        public void UnlockDevice(Guid key)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                this.m_client.Client.Unlock<SecurityDeviceInfo>($"SecurityDevice/{key}");
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not unlock device", e);
+            }
+        }
+
+        /// <summary>
+        /// Unlock the application
+        /// </summary>
+        /// <param name="key">The application to lock</param>
+        public void UnlockApplication(Guid key)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                this.m_client.Client.Unlock<SecurityApplicationInfo>($"SecurityApplication/{key}");
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not application device", e);
+            }
+        }
     }
 }

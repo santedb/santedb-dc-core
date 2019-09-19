@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.Security;
@@ -239,6 +240,31 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     localPip.AddPolicies(localDeviceIdentity, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
                 }
             }
+        }
+
+        /// <summary>
+        /// Get the identity of the specified object
+        /// </summary>
+        public IIdentity GetIdentity(string name)
+        {
+            return ApplicationServiceContext.Current.GetService<IOfflineDeviceIdentityProviderService>()?.GetIdentity(name);
+        }
+
+        /// <summary>
+        /// Set the lockout of the specified objet
+        /// </summary>
+        public void SetLockout(string name, bool lockoutState, IPrincipal principal)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Change the secret of the device
+        /// </summary>
+        public void ChangeSecret(string name, string deviceSecret, IPrincipal systemPrincipal)
+        {
+            throw new NotSupportedException();
+
         }
     }
 }
