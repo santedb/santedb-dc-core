@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             foreach (var itm in policyOids)
             {
                 var pol = this.GetPolicy(itm);
-                this.m_client.Client.Delete<SecurityPolicy>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy/{pol.Key}");
+                this.m_client.Client.Delete<object>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy/{pol.Key}");
             }
         }
 
