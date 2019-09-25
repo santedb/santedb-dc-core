@@ -289,7 +289,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     var dbi = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == name).FirstOrDefault();
                     if (dbi == null)
                         throw new KeyNotFoundException($"Device {name} not found");
-                    dbi.Lockout = DateTime.MaxValue;
+                    dbi.Lockout = lockoutState ? (DateTime?)DateTime.MaxValue.AddDays(-10) : null;
                     conn.Update(dbi);
                     conn.Commit();
                 }
