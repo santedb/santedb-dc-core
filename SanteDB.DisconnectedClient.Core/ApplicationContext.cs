@@ -129,6 +129,12 @@ namespace SanteDB.DisconnectedClient.Core
         #region IServiceProvider implementation
 
         /// <summary>
+        /// Gets the start time of the service
+        /// </summary>
+        /// <value>The start time.</value>
+        public DateTime StartTime { get; private set;  }
+
+        /// <summary>
         /// Gets the service.
         /// </summary>
         /// <returns>The service.</returns>
@@ -328,6 +334,7 @@ namespace SanteDB.DisconnectedClient.Core
             this.GetService<IThreadPoolService>().QueueNonPooledWorkItem(o =>
             {
                 this.Started?.Invoke(this, EventArgs.Empty);
+                this.StartTime = DateTime.Now;
             }, null);
 
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
