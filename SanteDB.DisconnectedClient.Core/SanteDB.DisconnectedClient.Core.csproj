@@ -74,7 +74,6 @@
     <Compile Include="Security\IOperatingSystemSecurityService.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\DefaultPolicyDecisionService.cs" />
-    <Compile Include="Security\SecurityExtensions.cs" />
     <Compile Include="Services\IGeoTaggingService.cs" />
     <Compile Include="Services\Local\GenericLocalActRepository.cs" />
     <Compile Include="Services\Local\GenericLocalClinicalDataRepository.cs" />

@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using Newtonsoft.Json.Linq;
+using SanteDB.Core.Api.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
