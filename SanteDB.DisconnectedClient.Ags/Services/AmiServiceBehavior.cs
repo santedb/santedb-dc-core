@@ -27,6 +27,7 @@ using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
@@ -45,10 +46,12 @@ using SanteDB.Rest.AMI;
 using SanteDB.Rest.AMI.Resources;
 using SanteDB.Rest.Common;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -153,6 +156,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override LogFileInfo GetLog(string logId)
         {
+            int offset = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_offset"] ?? "0"),
+                    count = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_count"] ?? "2048");
+
             // Determine if the log file is local or from server
             var logFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "log", logId);
             if (!File.Exists(logFileName)) // Server
@@ -160,6 +166,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                 {
                     var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                    amiClient.Client.Requesting += (o, e) =>
+                    {
+                        e.Query.Add("_offset", offset.ToString());
+                        e.Query.Add("_count", count.ToString());
+                    };
                     return amiClient.GetLog(logId);
                 }
                 else
@@ -168,13 +179,31 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             else
             {
                 var logFile = new FileInfo(logFileName);
-                return new LogFileInfo()
-                {
-                    Contents = File.ReadAllBytes(logFileName),
-                    LastWrite = logFile.LastWriteTime,
-                    Name = logFile.Name,
-                    Size = logFile.Length
-                };
+
+                
+                // Verify offset
+                if (offset > logFile.Length) throw new ArgumentOutOfRangeException($"Maximum size of {logFileName} is {logFile.Length}, offset is {offset}");
+
+                using (var fs = File.OpenRead(logFileName)) {
+
+                    // Is count specified 
+                    byte[] buffer;
+                    if (offset + count > logFile.Length) 
+                        buffer = new byte[logFile.Length - offset];
+                    else 
+                        buffer = new byte[count];
+
+                    fs.Seek(offset, SeekOrigin.Begin);
+                    fs.Read(buffer, 0, buffer.Length);
+
+                    return new LogFileInfo()
+                    {
+                        Contents = buffer,
+                        LastWrite = logFile.LastWriteTime,
+                        Name = logFile.Name,
+                        Size = logFile.Length
+                    };
+                }
             }
         }
 
@@ -183,27 +212,54 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override AmiCollection GetLogs()
         {
+            IEnumerable<LogFileInfo> hits = new List<LogFileInfo>();
             if (RestOperationContext.Current.IncomingRequest.QueryString["_extern"] == "true")
             {
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-                return amiClient.GetLogs();
+                hits = amiClient.GetLogs().CollectionItem.OfType<LogFileInfo>();
             }
             else
             {
                 var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "log");
-                AmiCollection retVal = new AmiCollection();
                 foreach (var itm in Directory.GetFiles(logDir))
                 {
                     var logFile = new FileInfo(itm);
-                    retVal.CollectionItem.Add(new LogFileInfo()
+                    (hits as IList).Add(new LogFileInfo()
                     {
                         Name = Path.GetFileName(itm),
                         LastWrite = logFile.LastWriteTime,
                         Size = logFile.Length
                     });
                 }
-                return retVal;
             }
+
+            // Now compile any matching 
+            int offset = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_offset"] ?? "0"),
+                count = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_count"] ?? "100");
+
+            var filterExpr = QueryExpressionParser.BuildLinqExpression<LogFileInfo>(RestOperationContext.Current.IncomingRequest.QueryString.ToQuery());
+
+            // Filter hits
+            hits = hits.Where(filterExpr.Compile());
+
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_orderBy"] != null)
+            {
+                var parts = RestOperationContext.Current.IncomingRequest.QueryString["_orderBy"].Split(':');
+                var expr = QueryExpressionParser.BuildPropertySelector<LogFileInfo>(parts[0]);
+                var parm = Expression.Parameter(typeof(LogFileInfo));
+                expr = Expression.Lambda<Func<LogFileInfo, dynamic>>(Expression.Convert(Expression.Invoke(expr, parm), typeof(Object)), parm);
+                if (parts.Length == 0 || parts[1] == "asc")
+                    hits = hits.OrderBy((Func<LogFileInfo, dynamic>)expr.Compile());
+                else
+                    hits = hits.OrderByDescending((Func<LogFileInfo, dynamic>)expr.Compile());
+            }
+
+            return new AmiCollection()
+            {
+                CollectionItem = hits.Skip(offset).Take(count).OfType<Object>().ToList(),
+                Size = hits.Count(),
+                Offset = offset
+            };
         }
 
         /// <summary>
