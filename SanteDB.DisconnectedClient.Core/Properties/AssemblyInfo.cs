@@ -26,8 +26,8 @@ using System.Reflection;
 [assembly: AssemblyDescription("SanteDB Mobile Core Functions")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Mohawk College of Applied Arts and Technology")]
-[assembly: AssemblyProduct("Open Immunize Disconnected Client")]
-[assembly: AssemblyCopyright("(C) 2015-2017")]
+[assembly: AssemblyProduct("SanteDB Client")]
+[assembly: AssemblyCopyright("(C) 2015-2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
