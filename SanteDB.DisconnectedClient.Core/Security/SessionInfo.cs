@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Api.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;

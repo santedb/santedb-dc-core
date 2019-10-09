@@ -26,8 +26,8 @@ using System.Reflection;
 [assembly: AssemblyDescription("SanteDB Mobile Core Functions")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Mohawk College of Applied Arts and Technology")]
-[assembly: AssemblyProduct("Open Immunize Disconnected Client")]
-[assembly: AssemblyCopyright("(C) 2015-2017")]
+[assembly: AssemblyProduct("SanteDB Client")]
+[assembly: AssemblyCopyright("(C) 2015-2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -35,8 +35,8 @@ using System.Reflection;
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
 [assembly: AssemblyInformationalVersion("Halifax")]
-[assembly: AssemblyVersion("1.75.0.*")]
-[assembly: AssemblyFileVersion("1.75.0")]
+[assembly: AssemblyVersion("1.76.0.*")]
+[assembly: AssemblyFileVersion("1.76.0")]
 
 // The following attributes are used to specify the signing key for the assembly,
 // if desired. See the Mono documentation for more information about signing.
