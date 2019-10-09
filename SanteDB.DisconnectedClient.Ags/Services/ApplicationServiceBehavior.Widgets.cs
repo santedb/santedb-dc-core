@@ -28,7 +28,6 @@ using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Xamarin.Data;
-using SanteDB.DisconnectedClient.Xamarin.Services.Attributes;
 using SanteDB.DisconnectedClient.Xamarin.Threading;
 using System;
 using System.Collections.Generic;

@@ -221,7 +221,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
                 service.AddServiceBehavior(new AgsAuthorizationServiceBehavior());
                 service.AddServiceBehavior(new AgsMagicServiceBehavior());
-                service.AddServiceBehavior(new AgsPermissionPolicyBehavior());
+                service.AddServiceBehavior(new AgsPermissionPolicyBehavior(itm.ServiceType));
 
                 foreach (var bhvr in itm.Behaviors)
                 {

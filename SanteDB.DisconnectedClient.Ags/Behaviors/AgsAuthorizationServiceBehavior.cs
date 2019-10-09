@@ -20,6 +20,7 @@
 using RestSrvr;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core;
@@ -70,33 +71,48 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                             }
                         case "bearer":
                             {
-                                var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-                                var session = smgr.Get(authHeader[1]);
-                                if (session != null)
-                                {
-                                    try
-                                    {
-                                        AuthenticationContext.Current = new AuthenticationContext(session.Principal);
-                                        this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
-                                    }
-                                    catch (SessionExpiredException)
-                                    {
-                                        this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", authHeader[1]);
-                                        throw new SecurityTokenException(SecurityTokenExceptionType.TokenExpired, "Session is expired");
-                                    }
-                                }
-                                else // Something wrong??? Perhaps it is an issue with the thingy?
-                                    throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Session is invalid");
+                                this.SetContextFromBearer(authHeader[1]);
                                 break;
                             }
 
                     }
+                }
+                else if(request.Url.Query.Contains("_sessionId="))
+                {
+                    var query = NameValueCollection.ParseQueryString(request.Url.Query);
+                    var session = query["_sessionId"][0];
+                    this.SetContextFromBearer(session);
                 }
             }
             finally
             {
                 RestOperationContext.Current.Disposed += (o, e) => AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.AnonymousPrincipal);
             }
+        }
+
+        /// <summary>
+        /// Session token
+        /// </summary>
+        /// <param name="sessionToken"></param>
+        private void SetContextFromBearer(string sessionToken)
+        {
+            var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
+            var session = smgr.Get(sessionToken);
+            if (session != null)
+            {
+                try
+                {
+                    AuthenticationContext.Current = new AuthenticationContext(session.Principal);
+                    this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
+                }
+                catch (SessionExpiredException)
+                {
+                    this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", sessionToken);
+                    throw new SecurityTokenException(SecurityTokenExceptionType.TokenExpired, "Session is expired");
+                }
+            }
+            else // Something wrong??? Perhaps it is an issue with the thingy?
+                throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Session is invalid");
         }
 
         /// <summary>

@@ -21,6 +21,8 @@ using RestSrvr;
 using RestSrvr.Message;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Rest.Common.Attributes;
+using System;
+using System.Linq;
 using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
@@ -30,12 +32,25 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
     /// </summary>
     public class AgsPermissionPolicyBehavior : IServiceBehavior, IEndpointBehavior, IOperationBehavior, IOperationPolicy
     {
+
+        // Behavior type
+        private Type m_behaviorType = null;
+
+        /// <summary>
+        /// Creates a new demand policy
+        /// </summary>
+        public AgsPermissionPolicyBehavior(Type behaviorType)
+        {
+            this.m_behaviorType = behaviorType;
+        }
+
         /// <summary>
         /// Apply the actual policy
         /// </summary>
         public void Apply(EndpointOperation operation, RestRequestMessage request)
         {
-            foreach (var ppe in operation.Description.InvokeMethod.GetCustomAttributes<DemandAttribute>())
+            var methInfo = this.m_behaviorType.GetMethod(operation.Description.InvokeMethod.Name, operation.Description.InvokeMethod.GetParameters().Select(p => p.ParameterType).ToArray());
+            foreach (var ppe in methInfo.GetCustomAttributes<DemandAttribute>())
                 new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, ppe.PolicyId).Demand();
         }
 

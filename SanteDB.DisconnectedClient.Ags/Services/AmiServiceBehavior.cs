@@ -45,6 +45,7 @@ using SanteDB.Messaging.AMI.Wcf;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.AMI.Resources;
 using SanteDB.Rest.Common;
+using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -79,6 +80,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Submits a diagnostic report
         /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public override DiagnosticReport CreateDiagnosticReport(DiagnosticReport report)
         {
             report.ApplicationInfo = new ApplicationInfo(false);
@@ -154,6 +156,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Get a single log file from the service
         /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public override LogFileInfo GetLog(string logId)
         {
             int offset = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_offset"] ?? "0"),
@@ -208,8 +211,36 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         }
 
         /// <summary>
+        /// Download the log contents as a stream
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public override Stream DownloadLog(string logId)
+        {
+            // Determine if the log file is local or from server
+            var logFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "log", logId);
+            if (!File.Exists(logFileName)) // Server
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                {
+                    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                    amiClient.Client.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.Headers.Add("Content-Disposition", e.Headers["Content-Disposition"] ?? $"attachment; filename={logId}.log");
+                    return new MemoryStream(amiClient.Client.Get($"Log/Stream/{logId}"));
+                }
+                else
+                    return null;
+            }
+            else
+            {
+                RestOperationContext.Current.OutgoingResponse.AddHeader("Content-Disposition", $"attachment; filename={Path.GetFileName(logFileName)}");
+                RestOperationContext.Current.OutgoingResponse.ContentType = "text/plain";
+                return File.OpenRead(logFileName);
+            }
+        }
+
+        /// <summary>
         /// Get logs for the application
         /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public override AmiCollection GetLogs()
         {
             IEnumerable<LogFileInfo> hits = new List<LogFileInfo>();
@@ -266,12 +297,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// Get a diagnostic report 
         /// </summary>
         /// <returns></returns>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public override DiagnosticReport GetServerDiagnosticReport()
         {
             if (RestOperationContext.Current.IncomingRequest.QueryString["_extern"] == "true")
             {
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-                return amiClient.GetServerDiagnoticReport();
+                return amiClient.Client.Get<DiagnosticReport>("Sherlock");
             }
             else
                 try
@@ -300,6 +332,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Get allowed TFA mechanisms
         /// </summary>
+        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
         public override AmiCollection GetTfaMechanisms()
         {
             try
@@ -384,6 +417,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Send a TFA secret
         /// </summary>
+        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
         public override void SendTfaSecret(TfaRequestInfo resetInfo)
         {
             try
