@@ -201,7 +201,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Get the specified session
         /// </summary>
-        public ISession Get(byte[] sessionToken)
+        public ISession Get(byte[] sessionToken, bool allowExpired = false)
         {
             return this.Get(Encoding.UTF8.GetString(sessionToken, 0, sessionToken.Length));
         }
@@ -251,6 +251,15 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 }
                 return session;
             }
+        }
+
+        /// <summary>
+        /// Get the identities associated with the session
+        /// </summary>
+        public IIdentity[] GetIdentities(ISession session)
+        {
+            // TOOD: Implement this.
+            throw new NotImplementedException();
         }
     }
 }
