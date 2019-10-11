@@ -1288,5 +1288,21 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 throw new DataPersistenceException("Could not application device", e);
             }
         }
+
+        /// <summary>
+        /// Find the specified provenance object
+        /// </summary>
+        public IEnumerable<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityProvenance>[] orderBy)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityProvenance>();
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query applications", e);
+            }
+        }
     }
 }
