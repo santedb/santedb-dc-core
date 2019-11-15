@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.BI.Services.Impl;
 using SanteDB.Cdss.Xml;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Configuration;
@@ -137,7 +138,8 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(ReportExecutor)),
                     new TypeReferenceConfiguration(typeof(AppletReportRepository)),
                     new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),
-                    new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository))
+                    new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository)),
+                    new TypeReferenceConfiguration(typeof(InMemoryPivotProvider))
                 }
             };
 

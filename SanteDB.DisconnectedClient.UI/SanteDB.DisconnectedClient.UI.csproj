@@ -73,6 +73,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj">
+      <Project>{030666AA-FC71-449E-9DFC-270F1C23C5DA}</Project>
+      <Name>SanteDB.BI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Ags\SanteDB.DisconnectedClient.Ags.csproj">
       <Project>{EDCD4511-B016-48EE-BD73-491A6B6687E6}</Project>
       <Name>SanteDB.DisconnectedClient.Ags</Name>

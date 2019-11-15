@@ -30,6 +30,7 @@ using SanteDB.DisconnectedClient.Ags.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Rest.AMI;
+using SanteDB.Rest.BIS;
 using SanteDB.Rest.HDSI;
 using SanteDB.Rest.RISI;
 using System;
@@ -110,6 +111,20 @@ namespace SanteDB.DisconnectedClient.Ags
             {
                 Services = new List<AgsServiceConfiguration>()
                 {
+                    // Default Configuration for BIS
+                    new AgsServiceConfiguration(typeof(BisServiceBehavior))
+                    {
+                        Behaviors = apiBehaviors,
+                        Endpoints = new List<AgsEndpointConfiguration>()
+                        {
+                            new AgsEndpointConfiguration()
+                            {
+                                Address = "http://127.0.0.1:9200/bis",
+                                Behaviors = endpointBehaviors,
+                                Contract = typeof(IBisServiceContract)
+                            }
+                        }
+                    },
                     // Default Configuration for HDSI
                     new AgsServiceConfiguration(typeof(HdsiServiceBehavior))
                     {

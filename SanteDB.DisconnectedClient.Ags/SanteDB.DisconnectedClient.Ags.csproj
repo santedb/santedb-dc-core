@@ -84,6 +84,14 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>11.0.2</Version>
     </PackageReference>
+    <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj">
+      <Project>{030666AA-FC71-449E-9DFC-270F1C23C5DA}</Project>
+      <Name>SanteDB.BI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\santedb-bis\SanteDB.Rest.BIS\SanteDB.Rest.BIS.csproj">
+      <Project>{200AC0CB-EBBF-4FDE-81D0-447CDFFFA2F7}</Project>
+      <Name>SanteDB.Rest.BIS</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
       <Name>SanteDB.DisconnectedClient.Core</Name>

@@ -105,6 +105,7 @@
     <Compile Include="Services\ISymmetricCryptographicProvider.cs" />
     <Compile Include="Services\Remote\AmiRepositoryBaseService.cs" />
     <Compile Include="Services\Remote\RemoteAuditRepositoryService.cs" />
+    <Compile Include="Services\Remote\RemoteBiService.cs" />
     <Compile Include="Services\Remote\RemoteMailRepositoryService.cs" />
     <Compile Include="Services\Remote\RemoteSecurityRepository.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
@@ -201,11 +202,16 @@
           <Project>{65ef51c6-5cb8-43b8-ae65-4a68f0b44ad2}</Project>
           <Name>SanteDB.Core.Model.AMI</Name>
         </ProjectReference>
+        <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj">
+          <Project>{030666AA-FC71-449E-9DFC-270F1C23C5DA}</Project>
+          <Name>SanteDB.BI</Name>
+        </ProjectReference>
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="SanteDB.Core.Applets" Version="1.80.0.0" />
+        <PackageReference Include="SanteDB.Core.BI" Version="1.80.0.0" />
         <PackageReference Include="SanteDB.Core.Api" Version="1.80.0.0" />
         <PackageReference Include="SanteDB.Core.Model" Version="1.80.0.0" />
         <PackageReference Include="SanteDB.Core.Model.AMI">

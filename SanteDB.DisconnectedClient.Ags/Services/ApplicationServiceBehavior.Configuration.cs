@@ -70,6 +70,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Data;
 using SanteDB.Core;
+using SanteDB.BI.Services.Impl;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -104,7 +105,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Join the realm
         /// </summary>
-        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public ConfigurationViewModel JoinRealm(JObject configData)
         {
             String realmUri = configData["realmUri"].Value<String>(),
@@ -175,7 +175,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 {
                     { ServiceEndpointType.AdministrationIntegrationService, "ami" },
                     { ServiceEndpointType.HealthDataService, "hdsi" },
-                    { ServiceEndpointType.AuthenticationService, "acs" }
+                    { ServiceEndpointType.AuthenticationService, "acs" },
+                    {ServiceEndpointType.BusinessIntelligenceService, "bis" }
                 };
 
                 foreach (var itm in serviceOptions.Endpoints)
@@ -532,6 +533,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteMailRepositoryService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(RemoteBiService), true);
                         break;
                     }
                 case SynchronizationMode.Offline:
@@ -574,7 +576,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
-
+                        ApplicationContext.Current.AddServiceProvider(typeof(AppletMetadataRepository), true);
+                        
+                        // TODO: Register execution engine
                         // Sync settings
                         var syncConfig = new SynchronizationConfigurationSection();
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
