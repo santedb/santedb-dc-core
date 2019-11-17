@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using System.Reflection;
 using SanteDB.Core.Model.Query;
+using System.Net;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Remote
 {
@@ -54,6 +55,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 var rootAtt = typeof(TBisDefinition).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
                 return this.m_restClient.Get<TBisDefinition>($"{rootAtt.ElementName}/{id}");
+            }
+            catch(System.Net.WebException e)
+            {
+                var wr = e.Response as HttpWebResponse;
+                this.m_tracer.TraceWarning("Remote service indicated failure: {0}", e);
+
+                if (wr?.StatusCode == HttpStatusCode.NotFound)
+                    return null;
+                else
+                    throw new Exception($"Error fetching BIS definition {id}", e);
+
             }
             catch (Exception e)
             {
@@ -106,6 +118,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 var rootAtt = typeof(TBisDefinition).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
                 this.m_restClient.Delete<TBisDefinition>($"{rootAtt.ElementName}/{id}");
             }
+            catch (System.Net.WebException e)
+            {
+                var wr = e.Response as HttpWebResponse;
+                this.m_tracer.TraceWarning("Remote service indicated failure: {0}", e);
+
+                if (wr?.StatusCode == HttpStatusCode.NotFound)
+                    throw new KeyNotFoundException($"Could not find definition with id {id}", e);
+                else
+                    throw new Exception($"Error fetching BIS definition {id}", e);
+
+            }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error deleting BIS definition {0} #{1}: {2}", typeof(TBisDefinition), id, e);
@@ -130,6 +153,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 var startTime = DateTime.Now;
                 var results = this.m_restClient.Get<IEnumerable<dynamic>>($"Query/{queryDefinition.Id}", parameters.ToArray());
                 return new BisResultContext(queryDefinition, parameters, this, results, startTime);
+            }
+            catch (System.Net.WebException e)
+            {
+                var wr = e.Response as HttpWebResponse;
+                this.m_tracer.TraceWarning("Remote service indicated failure: {0}", e);
+
+                if (wr?.StatusCode == HttpStatusCode.NotFound)
+                    throw new KeyNotFoundException($"Could not find definition with id {queryDefinition.Id}", e);
+                else
+                    throw new Exception($"Error fetching BIS definition {queryDefinition.Id}", e);
+
             }
             catch (Exception e)
             {
@@ -164,6 +198,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                 var startTime = DateTime.Now;
                 var results = this.m_restClient.Get<IEnumerable<dynamic>>($"Query/{viewDef.Id}", parameters.ToArray());
                 return new BisResultContext(viewDef.Query, parameters, this, results, startTime);
+            }
+            catch (System.Net.WebException e)
+            {
+                var wr = e.Response as HttpWebResponse;
+                this.m_tracer.TraceWarning("Remote service indicated failure: {0}", e);
+
+                if (wr?.StatusCode == HttpStatusCode.NotFound)
+                    throw new KeyNotFoundException($"Could not find definition with id {viewDef.Id}", e);
+                else
+                    throw new Exception($"Error fetching BIS definition {viewDef.Id }", e);
+
             }
             catch (Exception e)
             {
