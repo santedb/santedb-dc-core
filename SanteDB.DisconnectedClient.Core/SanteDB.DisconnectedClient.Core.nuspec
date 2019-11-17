@@ -17,6 +17,7 @@
     <dependencies>
       <dependency id="Newtonsoft.JSON" version="11.0.2"/>
       <dependency id="SanteDB.Core.Api" version="1.80.0.0"/>
+      <dependency id="SanteDB.BI" version="1.80.0.0"/>
       <dependency id="SanteDB.Core.Model" version="1.80.0.0"/>
       <dependency id="SanteDB.Core.Applets" version="1.80.0.0"/>
       <dependency id="SanteDB.Messaging.AMI.Client" version="1.80.0.0"/>
