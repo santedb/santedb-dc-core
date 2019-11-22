@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             if (!skipTrafficStop) // then we must adhere to traffic jams
             {
                 var mre = this.GetOrRegisterResetEvent(conn);
-                mre.WaitOne();
+                mre.Wait();
                 this.RegisterConnection(conn);
             }
         }
@@ -163,12 +163,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// <summary>
         /// Gets or sets the reset event for the particular database
         /// </summary>
-        private ManualResetEvent GetOrRegisterResetEvent(LockableSQLiteConnection connection)
+        private ManualResetEventSlim GetOrRegisterResetEvent(LockableSQLiteConnection connection)
         {
-            ManualResetEvent retVal = null;
+            ManualResetEventSlim retVal = null;
             if (!this.m_connections.TryGetValue(connection.ConnectionString.Name, out retVal))
             {
-                retVal = new ManualResetEvent(true);
+                retVal = new ManualResetEventSlim(true);
                 lock (s_lockObject)
                     if (!this.m_connections.ContainsKey(connection.ConnectionString.Name))
                         this.m_connections.Add(connection.ConnectionString.Name, retVal);
@@ -179,7 +179,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         }
 
         // connections
-        private Dictionary<String, ManualResetEvent> m_connections = new Dictionary<string, ManualResetEvent>();
+        private Dictionary<String, ManualResetEventSlim> m_connections = new Dictionary<string, ManualResetEventSlim>();
 
         // Readonly connections
         private Dictionary<String, List<LockableSQLiteConnection>> m_readonlyConnections = new Dictionary<string, List<LockableSQLiteConnection>>();
@@ -378,7 +378,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             foreach (var mre in this.m_connections)
             {
                 this.m_tracer.TraceVerbose("Waiting for {0} to become free...", mre.Key);
-                mre.Value.WaitOne();
+                mre.Value.Wait();
                 mre.Value.Reset();
             }
 

@@ -257,7 +257,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services.ServiceHandlers
                 throw new InvalidOperationException(Strings.err_already_syncrhonizing);
             else
             {
-                ManualResetEvent waitHandle = new ManualResetEvent(false);
+                ManualResetEventSlim waitHandle = new ManualResetEventSlim(false);
 
                 ApplicationContext.Current.SetProgress(Strings.locale_waitForOutbound, 0.1f);
 

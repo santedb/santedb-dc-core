@@ -93,7 +93,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
         private IAdHocDatawarehouseService m_warehouseService;
 
         // m_reset event
-        private ManualResetEvent m_resetEvent = new ManualResetEvent(false);
+        private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(LocalCarePlanManagerService));
@@ -247,7 +247,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
 
                     while (this.m_running)
                     {
-                        this.m_resetEvent.WaitOne();
+                        this.m_resetEvent.Wait();
                         // de-queue
                         int promiseCount = this.m_actCarePlanPromise.Count;
                         while (!syncService.IsSynchronizing &&

@@ -694,14 +694,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 new TraceWriterConfiguration () {
                         Filter = System.Diagnostics.Tracing.EventLevel.Critical,
                         InitializationData = "SanteDB",
-                        TraceWriter = new LogTraceWriter(System.Diagnostics.Tracing.EventLevel.Critical, "SanteDB")
+                        TraceWriter = typeof(LogTraceWriter)
                     },
 #endif
                 new TraceWriterConfiguration()
                 {
                     Filter = configuration.Log.Mode,
                     InitializationData = "SanteDB",
-                    TraceWriter = new FileTraceWriter(configuration.Log.Mode, "SanteDB")
+                    TraceWriter = typeof(FileTraceWriter)
                 }
             };
 

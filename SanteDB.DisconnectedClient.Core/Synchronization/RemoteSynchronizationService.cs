@@ -149,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
             var qmService = ApplicationContext.Current.GetService<IQueueManagerService>();
             if (!qmService.IsBusy && !this.IsSynchronizing)
             {
-                ManualResetEvent waitHandle = new ManualResetEvent(false);
+                ManualResetEventSlim waitHandle = new ManualResetEventSlim(false);
 
                 // Wait for outbound queue to finish
                 EventHandler<QueueExhaustedEventArgs> exhaustCallback = (o, e) =>
@@ -160,7 +160,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
 
                 qmService.QueueExhausted += exhaustCallback;
                 qmService.ExhaustOutboundQueues();
-                waitHandle.WaitOne();
+                waitHandle.Wait();
+                waitHandle.Reset();
                 qmService.QueueExhausted -= exhaustCallback;
             }
         }
