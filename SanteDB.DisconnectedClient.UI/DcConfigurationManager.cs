@@ -184,7 +184,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TraceWriterConfiguration () {
                         Filter = System.Diagnostics.Tracing.EventLevel.Warning,
                         InitializationData = "SanteDB",
-                        TraceWriter = new FileTraceWriter (System.Diagnostics.Tracing.EventLevel.LogAlways, "SanteDB")
+                        TraceWriter = typeof(FileTraceWriter)
                     }
                 }
             };
