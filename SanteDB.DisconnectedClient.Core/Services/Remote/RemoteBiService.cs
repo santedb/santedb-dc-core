@@ -15,13 +15,14 @@ using System.Xml.Serialization;
 using System.Reflection;
 using SanteDB.Core.Model.Query;
 using System.Net;
+using System.IO;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Remote
 {
     /// <summary>
     /// A BI metadata repository which works remotely
     /// </summary>
-    public class RemoteBiService : IBiMetadataRepository, IBiDataSource
+    public class RemoteBiService : IBiMetadataRepository, IBiDataSource, IBiRenderService
     {
         /// <summary>
         /// Gets the BI metadata repository
@@ -31,19 +32,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteBiService));
 
-        // The rest client to the server
-        private IRestClient m_restClient;
-
         /// <summary>
-        /// Creates a new instance of hte metadata repository
+        /// Gets the rest client
         /// </summary>
-        public RemoteBiService()
+        /// <returns></returns>
+        public IRestClient GetRestClient()
         {
-            ApplicationServiceContext.Current.Started += (o, e) =>
-            {
-                this.m_restClient = ApplicationContext.Current.GetRestClient("bis");
-                this.m_restClient.Accept = "application/json";
-            };
+            var retVal = ApplicationContext.Current.GetRestClient("bis"); 
+            retVal.Accept = "application/json";
+            return retVal;
         }
 
         /// <summary>
@@ -54,7 +51,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 var rootAtt = typeof(TBisDefinition).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
-                return this.m_restClient.Get<TBisDefinition>($"{rootAtt.ElementName}/{id}");
+                using (var client = this.GetRestClient())
+                    return client.Get<TBisDefinition>($"{rootAtt.ElementName}/{id}");
             }
             catch(System.Net.WebException e)
             {
@@ -82,7 +80,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 var rootAtt = typeof(TBisDefinition).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
-                return this.m_restClient.Post<TBisDefinition, TBisDefinition>($"{rootAtt.ElementName}", this.m_restClient.Accept, metadata);
+                using (var client = this.GetRestClient())
+                    return client.Post<TBisDefinition, TBisDefinition>($"{rootAtt.ElementName}", client.Accept, metadata);
             }
             catch (Exception e)
             {
@@ -99,7 +98,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 var rootAtt = typeof(TBisDefinition).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
-                return this.m_restClient.Get<BiDefinitionCollection>($"{rootAtt.ElementName}", QueryExpressionBuilder.BuildQuery(filter).ToArray())?.Items.OfType<TBisDefinition>().ToList();
+                using (var client = this.GetRestClient())
+                    return client.Get<BiDefinitionCollection>($"{rootAtt.ElementName}", QueryExpressionBuilder.BuildQuery(filter).ToArray())?.Items.OfType<TBisDefinition>().ToList();
             }
             catch (Exception e)
             {
@@ -116,7 +116,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             try
             {
                 var rootAtt = typeof(TBisDefinition).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
-                this.m_restClient.Delete<TBisDefinition>($"{rootAtt.ElementName}/{id}");
+                using (var client = this.GetRestClient())
+                    client.Delete<TBisDefinition>($"{rootAtt.ElementName}/{id}");
             }
             catch (System.Net.WebException e)
             {
@@ -139,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Execute the specified query definition remotely
         /// </summary>
-        public BisResultContext ExecuteQuery(BiQueryDefinition queryDefinition, Dictionary<string, object> parameters, BiAggregationDefinition[] aggregation, int offset, int? count)
+        public BisResultContext ExecuteQuery(BiQueryDefinition queryDefinition, IDictionary<string, object> parameters, BiAggregationDefinition[] aggregation, int offset, int? count)
         {
             try
             {
@@ -151,8 +152,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     parmDict.Add("_offset", offset);
 
                 var startTime = DateTime.Now;
-                var results = this.m_restClient.Get<IEnumerable<dynamic>>($"Query/{queryDefinition.Id}", parameters.ToArray());
-                return new BisResultContext(queryDefinition, parameters, this, results, startTime);
+                using (var client = this.GetRestClient())
+                {
+                    var results = client.Get<IEnumerable<dynamic>>($"Query/{queryDefinition.Id}", parameters.ToArray());
+                    return new BisResultContext(queryDefinition, parameters, this, results, startTime);
+                }
             }
             catch (System.Net.WebException e)
             {
@@ -176,7 +180,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Execute query identity
         /// </summary>
-        public BisResultContext ExecuteQuery(string queryId, Dictionary<string, object> parameters, BiAggregationDefinition[] aggregation, int offset, int? count)
+        public BisResultContext ExecuteQuery(string queryId, IDictionary<string, object> parameters, BiAggregationDefinition[] aggregation, int offset, int? count)
         {
             throw new NotImplementedException();
         }
@@ -184,7 +188,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Execute the specified view
         /// </summary>
-        public BisResultContext ExecuteView(BiViewDefinition viewDef, Dictionary<string, object> parameters, int offset, int? count)
+        public BisResultContext ExecuteView(BiViewDefinition viewDef, IDictionary<string, object> parameters, int offset, int? count)
         {
             try
             {
@@ -196,8 +200,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                     parmDict.Add("_offset", offset);
 
                 var startTime = DateTime.Now;
-                var results = this.m_restClient.Get<IEnumerable<dynamic>>($"Query/{viewDef.Id}", parameters.ToArray());
-                return new BisResultContext(viewDef.Query, parameters, this, results, startTime);
+                using (var client = this.GetRestClient())
+                {
+                    var results = client.Get<IEnumerable<dynamic>>($"Query/{viewDef.Id}", parameters.ToArray());
+                    return new BisResultContext(viewDef.Query, parameters, this, results, startTime);
+                }
             }
             catch (System.Net.WebException e)
             {
@@ -214,6 +221,46 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             {
                 this.m_tracer.TraceError($"Error executing BIS query {viewDef.Name} - {e}");
                 throw new Exception($"Error executing BIS query {viewDef.Name}", e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Render the specified report
+        /// </summary>
+        public Stream Render(string reportId, string viewName, string formatName, IDictionary<string, object> parameters, out string mimeType)
+        {
+            try 
+            {
+                if(!parameters.ContainsKey("_view"))
+                    parameters.Add("_view", viewName);
+
+                using (var client = this.GetRestClient())
+                {
+                    var contentType = String.Empty;
+                    client.Responding += (o, e) => contentType = e.ContentType;
+                    client.ProgressChanged += (o, e) => ApplicationContext.Current.SetProgress(reportId, e.Progress);
+                    var retVal = client.Get($"Report/{formatName}/{reportId}", parameters.ToArray());
+                    mimeType = contentType;
+                    return new MemoryStream(retVal);
+                }
+
+            }
+            catch (System.Net.WebException e)
+            {
+                var wr = e.Response as HttpWebResponse;
+                this.m_tracer.TraceWarning("Remote service indicated failure: {0}", e);
+
+                if (wr?.StatusCode == HttpStatusCode.NotFound)
+                    throw new KeyNotFoundException($"Could not find definition with id {reportId}", e);
+                else
+                    throw new Exception($"Error fetching BIS report {reportId}", e);
+
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError($"Error rendering BIS report {reportId} - {e}");
+                throw new Exception($"Error executing BIS report {reportId}", e);
                 throw;
             }
         }
