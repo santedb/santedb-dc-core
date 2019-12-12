@@ -20,7 +20,6 @@
       <dependency id="SanteDB.BusinessRules.JavaScript" version="1.82.0.0"/>
       <dependency id="SanteDB.Core.Applets" version="1.82.0.0"/>
       <dependency id="SanteDB.Messaging.AMI.Client" version="1.82.0.0" />
-      <dependency id="SanteDB.ReportR" version="1.82.0.0"/>
       <dependency id="SharpCompress" version="0.24.0"/>
       <dependency id="SanteDB.DisconnectedClient.Core" version="1.82.0.0"/>
     </dependencies>

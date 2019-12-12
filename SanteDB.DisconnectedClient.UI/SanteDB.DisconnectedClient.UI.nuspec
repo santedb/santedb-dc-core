@@ -24,7 +24,6 @@
       <dependency id="SanteDB.BusinessRules.JavaScript" version="1.82.0.0"/>
       <dependency id="SanteDB.Messaging.HDSI.Client" version="1.82.0.0" />
       <dependency id="SanteDB.Messaging.AMI.Client" version="1.82.0.0" />
-      <dependency id="SanteDB.ReportR" version="1.82.0.0"/>
       <dependency id="SanteDB.BI" version="1.82.0.0"/>
       <dependency id="SQLite.Net.Core-PCL.MEDIC" version="3.1.1"/>
       <dependency id="SQLite.Net-PCL.SQLCipher" version="3.1.1"/>

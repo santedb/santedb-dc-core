@@ -76,10 +76,7 @@
           <Project>{39E61451-F4FE-493D-B754-5F06EB284AAC}</Project>
           <Name>SanteDB.Core.Applets</Name>
         </ProjectReference>
-        <ProjectReference Include="..\..\reportr\SanteDB.ReportR\SanteDB.ReportR.csproj">
-          <Project>{39A382D5-A4A1-415A-8CEB-618177E23FAC}</Project>
-          <Name>SanteDB.ReportR</Name>
-        </ProjectReference>
+
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj">
           <Project>{3BFD6EE6-0267-4D82-BE7D-9B48B2F6F3D4}</Project>
           <Name>SanteDB.BusinessRules.JavaScript</Name>
@@ -102,9 +99,7 @@
         <PackageReference Include="SanteDB.Core.Api" Version="1.82.0.0" />
         <PackageReference Include="SanteDB.Core.Applets" Version="1.82.0.0" />
         <PackageReference Include="SanteDB.Core.Model" Version="1.82.0.0" />
-        <PackageReference Include="SanteDB.ReportR">
-          <Version>1.82.0.0</Version>
-        </PackageReference>
+        
         <PackageReference Include="SanteDB.BusinessRules.JavaScript">
           <Version>1.82.0.0</Version>
         </PackageReference>
