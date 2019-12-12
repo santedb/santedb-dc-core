@@ -548,6 +548,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteSecurityRepository), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
+                        ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
 
                         // Configure the selected storage provider
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
@@ -576,7 +577,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
+
+                        // BI Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletMetadataRepository), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(InMemoryPivotProvider), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(LocalRenderService), true);
                         
                         // TODO: Register execution engine
                         // Sync settings
