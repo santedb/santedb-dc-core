@@ -347,8 +347,13 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityProvenance>>();
             if (persistenceService is IStoredQueryDataPersistenceService<SecurityProvenance>)
                 return (persistenceService as IStoredQueryDataPersistenceService<SecurityProvenance>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
-            else
+            else if (persistenceService != null)
                 return persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
+            else
+            {
+                totalResults = 0;
+                return new List<SecurityProvenance>();
+            }
         }
     }
 }

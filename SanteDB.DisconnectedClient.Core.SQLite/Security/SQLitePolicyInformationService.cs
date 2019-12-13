@@ -91,20 +91,21 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 IEnumerable delObjects = null;
                 byte[] key = (securable as IdentifiedData)?.Key.Value.ToByteArray();
 
-                if (securable is SecurityDevice)
-                    conn.Table<DbSecurityDevicePolicy>().Delete(o => o.DeviceId == key);
-                else if (securable is SecurityRole)
-                    conn.Table<DbSecurityRolePolicy>().Delete(o => o.RoleId == key);
-                else
-                    throw new ArgumentOutOfRangeException("Invalid type", nameof(securable));
-
                 // Delete existing policy oids
                 foreach (var oid in policyOids)
                 {
+
                     // Get the policy
                     var policy = conn.Table<DbSecurityPolicy>().Where(p => p.Oid == oid).ToList().FirstOrDefault();
                     if (policy == null)
                         throw new KeyNotFoundException($"Policy {oid} not found");
+
+                    if (securable is SecurityDevice)
+                        conn.Table<DbSecurityDevicePolicy>().Delete(o => o.DeviceId == key && o.PolicyId == policy.Uuid);
+                    else if (securable is SecurityRole)
+                        conn.Table<DbSecurityRolePolicy>().Delete(o => o.RoleId == key && o.PolicyId == policy.Uuid);
+                    else
+                        throw new ArgumentOutOfRangeException("Invalid type", nameof(securable));
 
                     if (securable is SecurityDevice)
                         conn.Insert(new DbSecurityDevicePolicy()

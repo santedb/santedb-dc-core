@@ -320,7 +320,21 @@ namespace SanteDB.Core.Data.QueryBuilder
         public SqlStatement OrderBy<TExpression>(Expression<Func<TExpression, dynamic>> orderField, SortOrderType sortOperation = SortOrderType.OrderBy)
         {
             var orderMap = TableMapping.Get(typeof(TExpression));
-            var orderCol = orderMap.GetColumn(this.GetMember(orderField.Body));
+            var fldRef = orderField.Body;
+            while (fldRef.NodeType != ExpressionType.MemberAccess)
+            {
+                switch (fldRef.NodeType)
+                {
+                    case ExpressionType.Convert:
+                        fldRef = (fldRef as UnaryExpression).Operand;
+                        break;
+                    case ExpressionType.Call:
+                        fldRef = (fldRef as MethodCallExpression).Object;
+                        break;
+                }
+            }
+            var orderCol = orderMap.GetColumn(this.GetMember(fldRef));
+
             // Is there already an orderby in the previous statement?
             bool hasOrder = false;
             var t = this;
@@ -332,6 +346,7 @@ namespace SanteDB.Core.Data.QueryBuilder
 
             // Append order by?
             return this.Append($"{(!hasOrder ? " ORDER BY " : ",")} {orderMap.TableName}.{orderCol.Name} {(sortOperation == SortOrderType.OrderBy ? " ASC " : " DESC ")}");
+
         }
 
 
@@ -509,12 +524,7 @@ namespace SanteDB.Core.Data.QueryBuilder
             var tableMap = TableMapping.Get(typeof(T));
             return this.Append(new SqlStatement<T>($"UPDATE {tableMap.TableName} SET "));
         }
-
-        internal object SelectFrom(Func<object, object> p)
-        {
-            throw new NotImplementedException();
-        }
-
+        
 
     }
 }

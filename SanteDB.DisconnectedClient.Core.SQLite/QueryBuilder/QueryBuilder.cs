@@ -579,7 +579,10 @@ namespace SanteDB.Core.Data.QueryBuilder
             if (lValue == null)
                 lValue = new List<Object>() { value };
 
+            lValue = lValue.OfType<Object>().Distinct().ToList();
+
             retVal.Append("(");
+            int lc = 0;
             foreach (var itm in lValue)
             {
                 retVal.Append($"{tableAlias}.{columnData.Name}");
@@ -634,7 +637,8 @@ namespace SanteDB.Core.Data.QueryBuilder
                 else
                     retVal.Append(" = ? ", CreateParameterValue(iValue, propertyInfo.PropertyType));
 
-                if (lValue.IndexOf(itm) < lValue.Count - 1)
+                lc++;
+                if (lc < lValue.Count)
                     retVal.Append(semantic);
             }
 

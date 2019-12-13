@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public SynchronizationConfigurationSection()
         {
             this.SynchronizationResources = new List<SynchronizationResource>();
-            this.Facilities = new List<string>();
+            this.SubscribeTo = new List<string>();
         }
 
         /// <summary>
@@ -83,8 +83,14 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// <summary>
         /// Subscription
         /// </summary>
-        [XmlArray("facilities"), XmlArrayItem("add"), JsonProperty("facilities")]
-        public List<String> Facilities { get; set; }
+        [XmlArray("subscribeTo"), XmlArrayItem("add"), JsonProperty("subscribeTo")]
+        public List<String> SubscribeTo { get; set; }
+
+        /// <summary>
+        /// Subscription
+        /// </summary>
+        [XmlElement("subscribeType"), JsonProperty("subscribeType")]
+        public String SubscribeType { get; set; }
 
         /// <summary>
         /// When true never force a patch

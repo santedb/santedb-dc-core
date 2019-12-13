@@ -406,6 +406,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.Current.Principal);
                     localSu.Email = cprincipal.FindFirst(SanteDBClaimTypes.Email)?.Value;
                     localSu.PhoneNumber = cprincipal.FindFirst(SanteDBClaimTypes.Telephone)?.Value;
+                    localSu.LastLoginTime = DateTime.Now;
                     ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
                     // Add user to roles
@@ -551,19 +552,25 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <summary>
         /// Sets the user's lockout status
         /// </summary>
-        public void SetLockout(string userName, bool v, IPrincipal prinicpal)
+        public void SetLockout(string userName, bool locked, IPrincipal principal)
         {
-            throw new NotImplementedException();
+            if (ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") == "true")
+                ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().SetLockout(userName, locked, principal);
+            else
+                throw new InvalidOperationException(Strings.err_local_users_prohibited);
         }
 
         /// <summary>
         /// Deletes the specified identity
         /// </summary>
-        public void DeleteIdentity(string userName, IPrincipal prinicpal)
+        public void DeleteIdentity(string userName, IPrincipal principal)
         {
-            throw new NotImplementedException();
+            if (ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") == "true")
+                ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().DeleteIdentity(userName, principal);
+            else
+                throw new InvalidOperationException(Strings.err_local_users_prohibited);
         }
-        
+
         public string GenerateTfaSecret(string userName)
         {
             throw new NotSupportedException();

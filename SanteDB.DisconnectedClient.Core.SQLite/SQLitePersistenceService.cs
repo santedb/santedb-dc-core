@@ -17,6 +17,9 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.BI.Model;
+using SanteDB.BI.Services;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
@@ -25,9 +28,11 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Persistence;
+using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,6 +52,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         // Cache
         private static Dictionary<Type, ISQLitePersistenceService> s_persistenceCache = new Dictionary<Type, ISQLitePersistenceService>();
 
+        private DcDataConfigurationSection m_configuration = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<DcDataConfigurationSection>();
 
         /// <summary>
         /// Get the specified persister type
@@ -363,6 +369,27 @@ namespace SanteDB.DisconnectedClient.SQLite
                 this.m_tracer.TraceError("Error initializing local persistence: {0}", e);
                 throw;
             }
+
+            ApplicationServiceContext.Current.Started += (o, e) =>
+            {
+                // TODO: Subscriptions on SQLite
+                //ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(AdoSubscriptionExector));
+
+                // Bind BI stuff
+                ApplicationServiceContext.Current.GetService<IBiMetadataRepository>()?.Insert(new SanteDB.BI.Model.BiDataSourceDefinition()
+                {
+                    MetaData = new BiMetadata()
+                    {
+                        Version = typeof(SQLitePersistenceService).GetTypeInfo().Assembly.GetName().Version.ToString(),
+                        Status = BiDefinitionStatus.Active,
+                    },
+                    Id = "org.santedb.bi.dataSource.main",
+                    Name = "main",
+                    ConnectionString = m_configuration.MainDataSourceConnectionStringName,
+                    ProviderType = typeof(SQLiteBiDataSource)
+                });
+
+            };
         }
     }
 }

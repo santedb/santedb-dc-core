@@ -71,6 +71,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Data;
 using SanteDB.Core;
 using SanteDB.BI.Services.Impl;
+using SanteDB.Core.Model;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -562,7 +563,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is ITwoFactorRequestService
                                 || o is IAuditRepositoryService
                                 || o is ISynchronizationService
-                                || o is IMailMessageRepositoryService))
+                                || o is IMailMessageRepositoryService).ToArray())
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
 
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSynchronizationService), true);
@@ -577,21 +578,33 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(SystemPolicySynchronizationDaemon), true);
 
                         // BI Services
-                        ApplicationContext.Current.AddServiceProvider(typeof(AppletMetadataRepository), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(AppletBiRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(InMemoryPivotProvider), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalRenderService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(LocalBiRenderService), true);
                         
                         // TODO: Register execution engine
                         // Sync settings
                         var syncConfig = new SynchronizationConfigurationSection();
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
-                        var facilityIdentifiers = configuration.Synchronization.Facilities;
-                        foreach (var id in facilityIdentifiers)
+                        var subscribeToIdentifiers = configuration.Synchronization.SubscribeTo;
+                        foreach (var id in subscribeToIdentifiers)
                         {
-                            var facility = ApplicationContext.Current.GetService<IRepositoryService<Place>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
+                            IdentifiedData itm = null;
+                            switch(configuration.Synchronization.SubscribeType)
+                            {
+                                case "AssigningAuthority":
+                                    itm = ApplicationContext.Current.GetService<IRepositoryService<AssigningAuthority>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
+                                    break;
+                                case "Place":
+                                case "Facility":
+                                    itm = ApplicationContext.Current.GetService<IRepositoryService<Place>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
+                                    break;
+
+                            }
 
                             // Subscription data
                             // TODO: Check if mode is ALL
@@ -613,10 +626,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                             slen = filter.IndexOf("$", spos) - spos;
 
                                         var varName = filter.Substring(spos, slen);
-                                        var pexpr = QueryExpressionParser.BuildPropertySelector<Place>(varName.Substring(varName.IndexOf(".") + 1));
+                                        var pexpr = QueryExpressionParser.BuildPropertySelector(itm.GetType(), varName.Substring(varName.IndexOf(".") + 1));
 
                                         // Evaluate
-                                        var sval = pexpr.Compile().DynamicInvoke(facility);
+                                        var sval = pexpr.Compile().DynamicInvoke(itm);
                                         filter = filter.Replace($"${varName}$", sval?.ToString());
                                     }
 
@@ -632,7 +645,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             Triggers = SynchronizationPullTriggerType.OnCommit
                         });
 
-                        syncConfig.Facilities = configuration.Synchronization.Facilities;
+                        syncConfig.SubscribeTo = configuration.Synchronization.SubscribeTo;
                         syncConfig.SynchronizationResources = syncConfig.SynchronizationResources.GroupBy(o => o.Name + o.Triggers.ToString())
                             .Select(g =>
                             {

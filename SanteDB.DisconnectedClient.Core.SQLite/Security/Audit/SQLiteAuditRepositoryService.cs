@@ -35,6 +35,11 @@ using System.Linq.Expressions;
 using System.Reflection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Audit;
+using SanteDB.Core;
+using SanteDB.BI.Services;
+using SanteDB.BI.Model;
+using SanteDB.DisconnectedClient.SQLite;
+using SanteDB.DisconnectedClient.SQLite.Warehouse;
 
 namespace SanteDB.DisconnectedClient.Core.Security.Audit
 {
@@ -64,6 +69,21 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 try
                 {
                     this.Prune();
+
+                    // Bind BI stuff
+                    ApplicationServiceContext.Current.GetService<IBiMetadataRepository>()?.Insert(new SanteDB.BI.Model.BiDataSourceDefinition()
+                    {
+                        MetaData = new BiMetadata()
+                        {
+                            Version = typeof(SQLiteAuditRepositoryService).GetTypeInfo().Assembly.GetName().Version.ToString(),
+                            Status = BiDefinitionStatus.Active,
+                        },
+                        Id = "org.santedb.bi.dataSource.main",
+                        Name = "main",
+                        ConnectionString = "santeDbAudit",
+                        ProviderType = typeof(SQLiteBiDataSource)
+                    });
+
                 }
                 catch (Exception ex)
                 {

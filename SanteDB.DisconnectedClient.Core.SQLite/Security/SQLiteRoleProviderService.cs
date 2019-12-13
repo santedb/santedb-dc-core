@@ -254,9 +254,48 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Remove users from roles
         /// </summary>
-        public void RemoveUsersFromRoles(string[] users, string[] roles, IPrincipal principal)
+        public void RemoveUsersFromRoles(string[] userNames, string[] roleNames, IPrincipal principal)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (userNames == null)
+                    throw new ArgumentNullException(nameof(userNames));
+                if (roleNames == null)
+                    throw new ArgumentNullException(nameof(roleNames));
+
+                // Demand local admin
+                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+
+                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
+                {
+                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                }
+
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    foreach (var userName in userNames)
+                    {
+                        var un = userName.ToLower();
+                        var dbu = conn.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == un);
+                        if (dbu == null)
+                            throw new KeyNotFoundException(String.Format("User {0} not found", un));
+                        foreach (var rn in roleNames)
+                        {
+                            var dbr = conn.Table<DbSecurityRole>().FirstOrDefault(o => o.Name.ToLower() == rn.ToLower());
+                            if (dbr == null)
+                                throw new KeyNotFoundException(String.Format("Role {0} not found", rn));
+                            conn.Table<DbSecurityUserRole>().Delete(o => o.RoleUuid == dbr.Uuid && o.UserUuid == dbu.Uuid);
+                        }
+
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error adding users {0} to role {1}", String.Join(",", userNames), String.Join(",", roleNames));
+                throw new DataPersistenceException($"Error adding users {String.Join(",", userNames)} to role {String.Join(",", roleNames)}", e);
+            }
         }
 
         /// <summary>

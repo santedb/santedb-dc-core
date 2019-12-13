@@ -28,6 +28,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
     /// </summary>
     [Table("security_role")]
     [AssociativeTable(typeof(DbSecurityPolicy), typeof(DbSecurityRolePolicy))]
+    [AssociativeTable(typeof(DbSecurityUser), typeof(DbSecurityUserRole))]
     public class DbSecurityRole : DbIdentified
     {
         /// <summary>

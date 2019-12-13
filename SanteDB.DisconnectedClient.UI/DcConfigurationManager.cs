@@ -41,7 +41,6 @@ using SanteDB.DisconnectedClient.Xamarin.Rules;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.DisconnectedClient.Xamarin.Services;
 using SanteDB.DisconnectedClient.Xamarin.Threading;
-using SanteDB.ReportR;
 using SharpCompress.Compressors.BZip2;
 using System;
 using System.Collections.Generic;
@@ -135,8 +134,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(SimplePatchService)),
                     new TypeReferenceConfiguration(typeof(XamarinBackupService)),
                     new TypeReferenceConfiguration(typeof(DcAppletManagerService)),
-                    new TypeReferenceConfiguration(typeof(ReportExecutor)),
-                    new TypeReferenceConfiguration(typeof(AppletReportRepository)),
+                    new TypeReferenceConfiguration(typeof(AppletBiRepository)),
                     new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),
                     new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository)),
                     new TypeReferenceConfiguration(typeof(InMemoryPivotProvider))

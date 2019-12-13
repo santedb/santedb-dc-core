@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SQLite.Net.Attributes;
 using System;
 
@@ -26,6 +27,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
     /// Represents a user for the purpose of authentication
     /// </summary>
     [Table("security_user")]
+    [AssociativeTable(typeof(DbSecurityRole), typeof(DbSecurityUserRole))]
+
     public class DbSecurityUser : DbBaseData
     {
 
@@ -146,7 +149,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         /// Gets or sets the role identifier
         /// </summary>
         /// <value>The role identifier.</value>
-        [Column("role_id"), Indexed(Name = "security_user_role_user_role", Unique = true), MaxLength(16)]
+        [Column("role_id"), Indexed(Name = "security_user_role_user_role", Unique = true), MaxLength(16), ForeignKey(typeof(DbSecurityRole), nameof(DbSecurityRole.Uuid))]
         public byte[] RoleUuid
         {
             get;
@@ -157,7 +160,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         /// Gets or sets the user identifier
         /// </summary>
         /// <value>The user identifier.</value>
-        [Column("user_id"), Indexed(Name = "security_user_role_user_role", Unique = true), MaxLength(16)]
+        [Column("user_id"), Indexed(Name = "security_user_role_user_role", Unique = true), MaxLength(16), ForeignKey(typeof(DbSecurityUser), nameof(DbSecurityUser.Uuid))]
         public byte[] UserUuid
         {
             get;

@@ -329,7 +329,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             // Only subscribed faciliites
             if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().OnlySubscribedFacilities)
             {
-                var subFacl = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().Facilities;
+                var subFacl = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().SubscribeTo;
                 var isInSubFacility = this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.ToString())) == true;
                 if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {

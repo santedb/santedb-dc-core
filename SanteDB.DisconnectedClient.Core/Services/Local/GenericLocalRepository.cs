@@ -341,7 +341,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         {
             var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
             var outcome = pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, policyId);
-            if (outcome != PolicyGrantType.Grant)
+            if (outcome != PolicyGrantType.Grant )
                 throw new PolicyViolationException(AuthenticationContext.Current.Principal, policyId, outcome ?? PolicyGrantType.Deny);
 
         }

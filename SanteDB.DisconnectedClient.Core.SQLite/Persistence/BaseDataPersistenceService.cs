@@ -100,6 +100,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (data.CreatedBy != null) data.CreatedBy = data.CreatedBy?.EnsureExists(context);
             domainObject.UpdatedByKey = domainObject.CreatedByKey == Guid.Empty || domainObject.CreatedByKey == null ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
             domainObject.UpdatedTime = DateTime.Now;
+            
+            // Special case, undelete
+            if(!data.ObsoletedByKey.HasValue && existing.ObsoletionTime.HasValue)
+            {
+                domainObject.ObsoletionTime = null;
+                domainObject.ObsoletedByUuid = null;
+                //var model = TableMapping.Get(domainObject.GetType());
+                //context.Connection.Execute($"UPDATE {model.TableName} SET {model.GetColumn(nameof(DbBaseData.ObsoletionTime)).Name} = null, {model.GetColumn(nameof(DbBaseData.ObsoletedByUuid)).Name} = null WHERE {model.GetColumn(nameof(DbBaseData.Uuid)).Name} = X'{BitConverter.ToString(domainObject.Uuid).Replace("-", "")}'");
+            }
             context.Connection.Update(domainObject);
             context.AddTransactedItem(data);
 
@@ -115,10 +124,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             var domainObject = this.FromModelInstance(data, context) as TDomain;
             if (data.ObsoletedBy != null) data.ObsoletedBy = data.ObsoletedBy?.EnsureExists(context);
-            data.ObsoletedByKey = domainObject.ObsoletedByKey = data.ObsoletedBy?.Key ?? domainObject.ObsoletedByKey ?? base.CurrentUserUuid(context);
+            data.ObsoletedByKey = domainObject.ObsoletedByKey = data.ObsoletedBy?.Key ?? base.CurrentUserUuid(context);
             domainObject.ObsoletionTime = domainObject.ObsoletionTime ?? DateTime.Now;
             data.ObsoletionTime = (DateTimeOffset)domainObject.ObsoletionTime;
-            context.Connection.Update(domainObject);
+            var model = TableMapping.Get(domainObject.GetType());
+
+            context.Connection.Execute($"UPDATE {model.TableName} SET {model.GetColumn(nameof(DbBaseData.ObsoletionTime)).Name} = {DateTime.Now.Ticks}, {model.GetColumn(nameof(DbBaseData.ObsoletedByUuid)).Name} = X'{BitConverter.ToString(domainObject.ObsoletedByUuid).Replace("-", "")}' WHERE {model.GetColumn(nameof(DbBaseData.Uuid)).Name} = X'{BitConverter.ToString(domainObject.Uuid).Replace("-", "")}'");
             return data;
         }
 
