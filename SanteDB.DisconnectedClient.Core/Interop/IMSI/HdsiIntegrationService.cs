@@ -411,8 +411,8 @@ namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
                     // Get the object and then update
                     var idp = typeof(IDataPersistenceService<>).MakeGenericType(patch.AppliesTo.Type);
                     var idpService = ApplicationContext.Current.GetService(idp);
-                    var getMethod = idp.GetRuntimeMethod("Get", new Type[] { typeof(Guid) });
-                    var existing = getMethod.Invoke(idpService, new object[] { existingKey }) as IdentifiedData;
+                    var getMethod = idp.GetRuntimeMethod("Get", new Type[] { typeof(Guid), typeof(Guid?), typeof(bool), typeof(IPrincipal) });
+                    var existing = getMethod.Invoke(idpService, new object[] { existingKey, null, true, this.m_cachedCredential }) as IdentifiedData;
                     Guid newUuid = Guid.Empty;
 
                     try
@@ -486,8 +486,8 @@ namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
                     {
                         this.m_tracer.TraceVerbose("Patch successful - VersionId of {0} to {1}", existing, newUuid);
                         (existing as IVersionedEntity).VersionKey = newUuid;
-                        var updateMethod = idp.GetRuntimeMethod("Update", new Type[] { getMethod.ReturnType });
-                        updateMethod.Invoke(idpService, new object[] { existing });
+                        var updateMethod = idp.GetRuntimeMethod("Update", new Type[] { getMethod.ReturnType, typeof(TransactionMode), typeof(IPrincipal) });
+                        updateMethod.Invoke(idpService, new object[] { existing, TransactionMode.Commit, this.m_cachedCredential });
                     }
 
                 }
@@ -525,7 +525,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
             var idp = typeof(IDataPersistenceService<>).MakeGenericType(newData.GetType());
             var idpService = ApplicationContext.Current.GetService(idp);
             if (idpService != null)
-                idp.GetRuntimeMethod("Update", new Type[] { newData.GetType() }).Invoke(idpService, new object[] { newData });
+                idp.GetRuntimeMethod("Update", new Type[] { newData.GetType(), typeof(TransactionMode), typeof(IPrincipal) }).Invoke(idpService, new object[] { newData, TransactionMode.Commit, this.m_cachedCredential});
         }
     }
 }

@@ -148,36 +148,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         }
 
         /// <summary>
-        /// Get the health of the service
-        /// </summary>
-        /// <returns></returns>
-        [Demand(PermissionPolicyIdentifiers.Login)]
-        public ApplicationHealthInfo GetHealth()
-        {
-            try
-            {
-                var thdp = ApplicationContext.Current.GetService<SanteDBThreadPool>();
-                if (thdp == null) return null;
-
-                return new ApplicationHealthInfo()
-                {
-                    Concurrency = thdp.Concurrency,
-                    Threads = thdp.Threads.ToArray(),
-                    Active = thdp.ActiveThreads,
-                    WaitState = thdp.WaitingThreads,
-                    Timers = thdp.ActiveTimers,
-                    NonQueued = thdp.NonQueueThreads,
-                    Utilization = String.Format("{0:#0}%", (thdp.ActiveThreads / (float)thdp.Concurrency) * 100)
-                };
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Could not retrieve app info {0}...", e);
-                throw;
-            }
-        }
-
-        /// <summary>
         /// Performs the retrieval of menu items from the application
         /// </summary>
         /// <returns></returns>

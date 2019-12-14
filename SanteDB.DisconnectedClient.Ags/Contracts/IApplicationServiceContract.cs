@@ -117,12 +117,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Delete("/Tickle/{id}")]
         void DeleteTickle(Guid id);
-
-        /// <summary>
-        /// Get the health of the application
-        /// </summary>
-        [Get("/Health")]
-        ApplicationHealthInfo GetHealth();
+       
 
         /// <summary>
         /// Instruct the service to do an update

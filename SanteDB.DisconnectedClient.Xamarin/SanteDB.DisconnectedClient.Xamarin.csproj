@@ -132,6 +132,9 @@
     <Compile Include="Data\StorageProviderUtil.cs" />
     <Compile Include="Diagnostics\FileTraceWriter.cs" />
     <Compile Include="Diagnostics\LogTraceWriter.cs" />
+    <Content Include="Diagnostics\Performance\MachinePerformanceProbe.cs" />
+    <Content Include="Diagnostics\Performance\ThreadPoolPerformanceProbe.cs" />
+    <Content Include="Diagnostics\Performance\WindowsPerformanceCounterProbe.cs" />
     <Compile Include="Http\RestClient.cs" />
     <Compile Include="IStorageProvider.cs" />
     <Compile Include="Net\NetworkInformationService.cs" />

@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.Core.Mail
     /// <summary>
     /// Represents a local alerting service
     /// </summary>
-    public class LocalMailService : IMailMessageRepositoryService
+    public class LocalMailService : IMailMessageRepositoryService, IRepositoryService<MailMessage>
     {
 
         /// <summary>
@@ -163,6 +163,34 @@ namespace SanteDB.DisconnectedClient.Core.Mail
             }
 
             return alert;
+        }
+
+        /// <summary>
+        /// Gets the specified mail message
+        /// </summary>
+        public MailMessage Get(Guid key, Guid versionKey)
+        {
+            return this.Get(key);
+        }
+
+        /// <summary>
+        /// Find the specified mail message
+        /// </summary>
+        public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> query)
+        {
+            return this.Find(query, 0, 100, out int tr);
+        }
+
+        /// <summary>
+        /// Obsolete the mail message
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public MailMessage Obsolete(Guid key)
+        {
+            var message = this.Get(key);
+            message.Flags = MailMessageFlags.Archived;
+            return this.Save(message);
         }
     }
 }

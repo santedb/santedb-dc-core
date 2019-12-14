@@ -593,7 +593,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 case NonLivingSubject:
                     return new ApplicationEntityPersistenceService().Insert(context, data as ApplicationEntity);
                 case Person:
-                    return new PersonPersistenceService().Insert(context, data as Person);
+                    if(data is UserEntity)
+                        return new UserEntityPersistenceService().Insert(context, data as UserEntity);
+                    else
+                        return new PersonPersistenceService().Insert(context, data as Person);
                 case Patient:
                     return new PatientPersistenceService().Insert(context, data as Patient);
                 case Provider:
@@ -629,7 +632,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 case NonLivingSubject:
                     return new ApplicationEntityPersistenceService().Update(context, data as ApplicationEntity);
                 case Person:
-                    return new PersonPersistenceService().Update(context, data as Person);
+                    if (data is UserEntity)
+                        return new UserEntityPersistenceService().Update(context, data as UserEntity);
+                    else
+                        return new PersonPersistenceService().Update(context, data as Person);
                 case Patient:
                     return new PatientPersistenceService().Update(context, data as Patient);
                 case Provider:

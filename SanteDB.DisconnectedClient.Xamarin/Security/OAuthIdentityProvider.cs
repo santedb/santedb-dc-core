@@ -403,11 +403,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     }
 
                     // Copy security attributes
-                    var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.Current.Principal);
+                    var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.SystemPrincipal);
                     localSu.Email = cprincipal.FindFirst(SanteDBClaimTypes.Email)?.Value;
                     localSu.PhoneNumber = cprincipal.FindFirst(SanteDBClaimTypes.Telephone)?.Value;
                     localSu.LastLoginTime = DateTime.Now;
-                    ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                    ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
 
                     // Add user to roles
                     // TODO: Remove users from specified roles?
