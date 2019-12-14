@@ -46,10 +46,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Net
         {
             NetworkChange.NetworkAvailabilityChanged += (o, e) =>
             {
-                ApplicationContext.Current.GetService<ITickleService>()?.SendTickle(new Tickle(Guid.Empty, TickleType.Information | TickleType.Toast, "Your network status changed", DateTime.Now.AddSeconds(20)));
+                ApplicationContext.Current.GetService<ITickleService>()?.SendTickle(new Tickle(Guid.Empty, TickleType.Information | TickleType.Toast, "Your network status changed", DateTime.Now.AddMinutes(2)));
                 this.m_networkAvailable = e.IsAvailable;
                 this.NetworkStatusChanged?.Invoke(this, e);
             };
+
             // TODO: Discuss the ramifications of this
             // this.NetworkStatusChanged += NetworkInformationService_NetworkStatusChanged;
         }

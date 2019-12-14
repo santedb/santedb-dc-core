@@ -1,5 +1,8 @@
-﻿using SanteDB.Core.Services;
+﻿using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
+using SanteDB.DisconnectedClient.Xamarin.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,12 +44,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
             /// <summary>
             /// Gets the identifier for the pool
             /// </summary>
-            public override Guid Uuid => SanteDBConstants.ThreadPoolNonQueuedWorkerCounter;
+            public override Guid Uuid => PerformanceConstants.ThreadPoolNonQueuedWorkerCounter;
 
             /// <summary>
             /// Gets the value
             /// </summary>
-            public override int Value => ApplicationContext.Current.GetService<ThreadPoolService>().NonPooledWorkers;
+            public override int Value => ApplicationServiceContext.Current.GetService<SanteDBThreadPool>().NonQueueThreads;
 
         }
 
@@ -66,12 +69,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
             /// <summary>
             /// Gets the identifier for the pool
             /// </summary>
-            public override Guid Uuid => SanteDBConstants.ThreadPoolWorkerCounter;
+            public override Guid Uuid => PerformanceConstants.ThreadPoolWorkerCounter;
 
             /// <summary>
             /// Gets the value
             /// </summary>
-            public override int Value => ApplicationContext.Current.GetService<ThreadPoolService>().PooledWorkers;
+            public override int Value => ApplicationServiceContext.Current.GetService<SanteDBThreadPool>().ActiveThreads;
 
         }
 
@@ -91,13 +94,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
             /// <summary>
             /// Gets the identifier for the pool
             /// </summary>
-            public override Guid Uuid => SanteDBConstants.ThreadPoolConcurrencyCounter;
+            public override Guid Uuid => PerformanceConstants.ThreadPoolConcurrencyCounter;
 
 
             /// <summary>
             /// Gets the value
             /// </summary>
-            public override int Value => ApplicationContext.Current.GetService<ThreadPoolService>().Concurrency;
+            public override int Value => ApplicationServiceContext.Current.GetService<SanteDBThreadPool>().Concurrency;
 
         }
 
@@ -117,19 +120,19 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
             /// <summary>
             /// Gets the identifier for the pool
             /// </summary>
-            public override Guid Uuid => SanteDBConstants.ThreadPoolErrorWorkerCounter;
+            public override Guid Uuid => PerformanceConstants.ThreadPoolErrorWorkerCounter;
 
             /// <summary>
             /// Gets the value
             /// </summary>
-            public override int Value => ApplicationContext.Current.GetService<ThreadPoolService>().ErroredWorkers;
+            public override int Value => 0;
 
         }
 
         /// <summary>
         /// Get the UUID of the thread pool
         /// </summary>
-        public Guid Uuid => SanteDBConstants.ThreadPoolPerformanceCounter;
+        public Guid Uuid => PerformanceConstants.ThreadPoolPerformanceCounter;
 
         /// <summary>
         /// Gets the value of the 

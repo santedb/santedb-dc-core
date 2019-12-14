@@ -78,7 +78,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         // Static CTOR
         static SQLiteMailPersistenceService()
         {
-            m_mapper = SQLitePersistenceService.Mapper;
             m_builder = new QueryBuilder(m_mapper);
         }
 
@@ -235,7 +234,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                     else
                     {
                         var results = conn.Connection.Table<DbMailMessage>().Where(dbPredicate);
-
+                        totalResults = results.Count();
                         if (orderBy != null && orderBy.Length > 0)
                         {
                             foreach (var itm in orderBy)
@@ -247,9 +246,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                         else
                             results = results.OrderByDescending(o => o.TimeStamp);
 
-                        results = results.Skip(offset).Take(count ?? 100);
-                        totalResults = results.Count();
-                        return results.ToList().Select(o => o.ToAlert());
+                        
+                        return results.Skip(offset).Take(count ?? 100).ToList().Select(o => o.ToAlert());
                     }
                 }
             }

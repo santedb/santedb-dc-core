@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SanteDB.Core.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,8 +15,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
 
         private IDiagnosticsProbe[] m_values =
         {
-            new WindowsPerformanceCounterProbe(SanteDBConstants.ProcessorUseCounter, "Machine: CPU Utilization", "Shows the % of active time for CPU", "Processor Information", "% Processor Time", "_Total"),
-            new WindowsPerformanceCounterProbe(SanteDBConstants.MemoryUseCounter, "Machine: Memory Use", "Shows the amount of memory used", "Memory", "% Committed Bytes In Use", null)
+            new WindowsPerformanceCounterProbe(PerformanceConstants.ProcessorUseCounter, "Machine: CPU Utilization", "Shows the % of active time for CPU", "Processor Information", "% Processor Time", "_Total"),
+            new WindowsPerformanceCounterProbe(PerformanceConstants.MemoryUseCounter, "Machine: Memory Use", "Shows the amount of memory used", "Memory", "% Committed Bytes In Use", null)
         };
 
 
@@ -27,7 +28,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
         /// <summary>
         /// Gets the identifier of this counter
         /// </summary>
-        public Guid Uuid => SanteDBConstants.MachinePerformanceCounter;
+        public Guid Uuid => PerformanceConstants.MachinePerformanceCounter;
 
         /// <summary>
         /// Gets the name of this counter

@@ -196,6 +196,13 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public String RefreshToken { get; set; }
 
         /// <summary>
+        /// Gets the display name
+        /// </summary>
+        [JsonProperty("displayName")]
+        public String DisplayName =>
+             this.UserEntity?.Names.FirstOrDefault()?.ToString() ?? this.UserName;
+
+        /// <summary>
         /// Issue date
         /// </summary>
         public override DateTimeOffset ModifiedOn

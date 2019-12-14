@@ -19,7 +19,7 @@
  - Date: 2019-1-12
  -->
 <modelMap xmlns="http://santedb.org/model/map">
-  <class modelClass="SanteDB.Core.Mail.MailMessage, SanteDB.Core.Api, Version=1.0.1.0"
-		domainClass="SanteDB.DisconnectedClient.SQLite.Mail.DbMailMessage, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+  <class modelClass="SanteDB.Core.Mail.MailMessage, SanteDB.Core.Api, Version=1.0.0.0"
+		domainClass="SanteDB.DisconnectedClient.SQLite.Mail.DbMailMessage, SanteDB.DisconnectedClient.SQLite, Version=1.0.0.0">
   </class>
 </modelMap>

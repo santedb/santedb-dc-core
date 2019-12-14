@@ -1,11 +1,14 @@
-﻿using System;
+﻿using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Core.Security;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Xamarin.Performance
+namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
 {
     /// <summary>
     /// Allows the measuring of processor time
@@ -22,7 +25,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Performance
         /// </summary>
         public WindowsPerformanceCounterProbe(Guid uuid, String name, String description, String category, String measure, String value) : base(name, description)
         {
-            if (ApplicationContext.Current.OperatingSystem == OperatingSystemID.Win32)
+            var osiService = ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>();
+            if (osiService.OperatingSystem == OperatingSystemID.Win32)
             {
                 this.m_windowsCounter = new PerformanceCounter(category, measure, value, true);
             }

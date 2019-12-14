@@ -218,7 +218,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                         if (totalResults > 0 && initialSync)
                         {
                             var tickleService = ApplicationContext.Current.GetService<ITickleService>();
-                            tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_importDoneBody, new DateTime().AddMinutes(2)));
+                            tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_importDoneBody, new DateTime().AddMinutes(5)));
                             this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
                         }
                         else if (totalResults > 0)

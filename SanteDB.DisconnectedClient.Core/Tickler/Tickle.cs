@@ -36,6 +36,7 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
         public Tickle()
         {
             this.Id = Guid.NewGuid();
+            this.Created = DateTime.Now;
         }
 
         /// <summary>
@@ -72,6 +73,12 @@ namespace SanteDB.DisconnectedClient.Core.Tickler
         /// </summary>
         [JsonProperty("exp"), XmlAttribute("exp")]
         public DateTime Expiry { get; set; }
+
+        /// <summary>
+        /// The time the tickle was created
+        /// </summary>
+        [JsonProperty("creationTime"), XmlAttribute("creationTime")]
+        public DateTime Created { get; set; }
 
         /// <summary>
         /// The target of the tickle
