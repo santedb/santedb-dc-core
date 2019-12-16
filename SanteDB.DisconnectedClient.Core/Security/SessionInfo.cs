@@ -308,17 +308,17 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 {
                     int t = 0;
                     sid = Guid.Parse((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
-                    this.m_entity = amiService.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
+                    this.m_entity = amiService?.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
 
                     ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
                     {
                         var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
                         try
                         {
-                            if (persistence.Get((o as Entity).Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
-                                persistence.Insert(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            if (persistence?.Get((o as Entity).Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                                persistence?.Insert(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                             else
-                                persistence.Update(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                                persistence?.Update(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                         }
                         catch (Exception e)
                         {

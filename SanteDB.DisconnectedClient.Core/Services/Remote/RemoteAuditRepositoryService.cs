@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy)
         {
             this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.Query(query, offset, count, out totalResults).CollectionItem.OfType<AuditData>();
+            return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AuditData>();
         }
 
         /// <summary>

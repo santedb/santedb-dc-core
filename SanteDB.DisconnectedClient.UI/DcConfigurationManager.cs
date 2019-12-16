@@ -23,6 +23,7 @@ using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Ags;
@@ -130,6 +131,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(AmiUpdateManager)),
                     new TypeReferenceConfiguration(typeof(AppletClinicalProtocolRepository)),
                     new TypeReferenceConfiguration(typeof(MemoryQueryPersistenceService)),
+                    new TypeReferenceConfiguration(typeof(AuditDaemonService)),
                     new TypeReferenceConfiguration(typeof(SimpleQueueFileProvider)),
                     new TypeReferenceConfiguration(typeof(SimplePatchService)),
                     new TypeReferenceConfiguration(typeof(XamarinBackupService)),

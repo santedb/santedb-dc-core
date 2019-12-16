@@ -82,6 +82,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 
                 AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
 
+
                 // TODO: Clean this up - Login as device account
                 if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
                     ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
