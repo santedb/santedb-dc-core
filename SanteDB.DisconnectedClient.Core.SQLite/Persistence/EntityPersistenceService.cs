@@ -94,10 +94,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
             retVal.LoadAssociations(context,
                 // Exclude
-                nameof(SanteDB.Core.Model.Entities.Entity.Extensions),
-                nameof(SanteDB.Core.Model.Entities.Entity.Notes),
                 nameof(SanteDB.Core.Model.Entities.Entity.Participations),
-                nameof(SanteDB.Core.Model.Entities.Entity.Telecoms),
                 nameof(SanteDB.Core.Model.Entities.UserEntity.SecurityUser)
                 );
 

@@ -146,7 +146,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
 
                 if (lanugageCode != null)
-                    CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(lanugageCode);
+                    CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(lanugageCode.Trim());
 
                 // Set the session 
                 //if (!Boolean.Parse(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpUserAccessControlPrompt] ?? "false")) // Requesting all access so we need to send back a session ID :)

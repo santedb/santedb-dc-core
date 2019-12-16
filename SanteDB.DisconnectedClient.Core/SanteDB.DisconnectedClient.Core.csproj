@@ -103,6 +103,7 @@
     <Compile Include="Services\Local\LocalUserEntityRepository.cs" />
     <Compile Include="Services\Local\MailSynchronizationService.cs" />
     <Compile Include="Services\ISymmetricCryptographicProvider.cs" />
+    <Compile Include="Services\Local\SynchronizedAuditDispatchService.cs" />
     <Compile Include="Services\Remote\AmiRepositoryBaseService.cs" />
     <Compile Include="Services\Remote\RemoteAuditRepositoryService.cs" />
     <Compile Include="Services\Remote\RemoteBiService.cs" />

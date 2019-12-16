@@ -470,6 +470,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 default:
                     throw new KeyNotFoundException(queueItem.OriginalQueue);
             }
+            SynchronizationQueue.DeadLetter.Delete(queueItem.Id);
         }
 
         /// <summary>

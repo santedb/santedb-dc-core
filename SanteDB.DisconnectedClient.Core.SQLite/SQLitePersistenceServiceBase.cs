@@ -193,7 +193,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         {
 
                             // Does this object already exist?
-                            if (this.Get(context, data.Key.Value) != null)
+                            if (data.Key.HasValue && this.Get(context, data.Key.Value) != null)
                                 throw new DuplicateKeyException($"Object {typeof(TData).Name} with key {data.Key} already exists");
 
                             this.m_tracer.TraceVerbose("INSERT {0}", data);

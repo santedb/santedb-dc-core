@@ -579,7 +579,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SystemPolicySynchronizationDaemon), true);
-
+                        ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
                         // BI Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletBiRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(InMemoryPivotProvider), true);
@@ -602,6 +602,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 case "Place":
                                 case "Facility":
                                     itm = ApplicationContext.Current.GetService<IRepositoryService<Place>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
+
+                                    // Load guards on comment objects
+                                    (itm as Place).Addresses.ForEach(o =>
+                                    {
+                                        o.AddressUse = o.AddressUse ?? ApplicationServiceContext.Current.GetService<IRepositoryService<Concept>>().Get(o.AddressUseKey.GetValueOrDefault());
+                                        o.Component.ForEach(c => c.ComponentType = c.ComponentType ?? ApplicationServiceContext.Current.GetService<IRepositoryService<Concept>>().Get(c.ComponentTypeKey.GetValueOrDefault()));
+                                    });
                                     break;
 
                             }

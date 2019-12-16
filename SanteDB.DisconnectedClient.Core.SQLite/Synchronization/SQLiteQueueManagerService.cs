@@ -308,7 +308,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         else if (we?.Response == null)
                         {
                             SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
-                            SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
+                            SynchronizationQueue.Admin.DequeueRaw(); // Get rid of the last item
                         }
                         else
                         {
@@ -317,16 +317,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                             {
                                 case HttpStatusCode.NotFound:
                                     if (resp.Method == "DELETE") // Can't find the thing we're deleting? that is fine :)
-                                        SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
+                                        SynchronizationQueue.Admin.DequeueRaw(); // Get rid of the last item
                                     else
                                     {
                                         SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
-                                        SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
+                                        SynchronizationQueue.Admin.DequeueRaw(); // Get rid of the last item
                                     }
                                     break;
                                 default:
                                     SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
-                                    SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
+                                    SynchronizationQueue.Admin.DequeueRaw(); // Get rid of the last item
                                     break;
                             }
                         }
@@ -636,6 +636,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     }
                     SynchronizationQueue.DeadLetter.Delete(itm.Id);
                 }
+                this.ExhaustOutboundQueues();
             }
 
             this.Started?.Invoke(this, EventArgs.Empty);

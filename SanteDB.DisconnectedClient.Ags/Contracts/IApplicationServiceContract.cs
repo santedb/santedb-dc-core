@@ -138,10 +138,31 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         Stream GetWidget(String widgetId);
 
         /// <summary>
+        /// Get synchronization logs
+        /// </summary>
+        /// <returns></returns>
+        [Get("/Sync")]
+        List<ISynchronizationLogEntry> GetSynchronizationLogs();
+
+        /// <summary>
+        /// Get synchronization logs
+        /// </summary>
+        /// <returns></returns>
+        [Post("/Sync")]
+        void SynchronizeNow();
+
+
+        /// <summary>
+        /// Force requeue of all queue
+        /// </summary>
+        [Post("/Queue")]
+        void RetryAll();
+
+        /// <summary>
         /// Force re-sync of all queue
         /// </summary>
-        [Post("/Queue/All/Retry")]
-        void RetryAll();
+        [Get("/Queue")]
+        Dictionary<String, int> GetQueue();
 
         /// <summary>
         /// Gets the queue entries

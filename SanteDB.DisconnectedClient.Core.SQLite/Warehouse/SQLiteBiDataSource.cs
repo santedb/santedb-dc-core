@@ -268,21 +268,25 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                             throw new InvalidOperationException("Cannot apply aggregation function");
                     }
                 }).ToArray() ?? new string[] { "*" };
-                var groupings = agg.Groupings.Select(g => g.ColumnSelector).ToArray();
+                String[] groupings = agg.Groupings.Select(g => g.ColumnSelector).ToArray(),
+                    colGroupings = agg.Groupings.Select(g => $"{g.ColumnSelector} AS {g.Name}").ToArray();
                 // Aggregate
-                stmt = $"SELECT {String.Join(",", groupings.Union(selector))} " +
+                stmt = $"SELECT {String.Join(",", colGroupings.Union(selector))} " +
                     $"FROM ({stmt}) AS _inner " +
                     $"GROUP BY {String.Join(",", groupings)}";
             }
 
             // Get a readonly connection
-            using(var conn = new SqliteConnection($"Data Source={connectionString.Value}; Readonly=true"))
+            var connParts = new SqliteConnectionStringBuilder(connectionString.Value);
+            var file = connParts["dbfile"];
+            var enc = connParts["encrypt"];
+            using(var conn = new SqliteConnection($"Data Source=\"{file}\""))
             {
                 try
                 {
                     // Decrypt database 
                     var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
-                    if (securityKey != null)
+                    if (securityKey != null && (enc ?? "true").Equals("true"))
                         conn.SetPassword(Encoding.UTF8.GetString(securityKey, 0, securityKey.Length));
 
                     // Open the database
@@ -307,11 +311,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 
                     // Start time
                     DateTime startTime = DateTime.Now;
-                    var sqlStmt = new SqlStatement(stmt, values.ToArray()).Offset(offset).Limit(count ?? 10000).Build();
+                    var sqlStmt = new SqlStatement(stmt, values.ToArray()).Limit(count ?? 10000).Offset(offset).Build();
                     this.m_tracer.TraceInfo("Executing BI Query: {0}", sqlStmt.Build().SQL);
 
                     // Create command for execution
-                    using (var cmd = this.CreateCommand(conn, sqlStmt.SQL, sqlStmt.Arguments))
+                    using (var cmd = this.CreateCommand(conn, sqlStmt.SQL, sqlStmt.Arguments.ToArray()))
                     {
                         var results = new List<ExpandoObject>();
                         using (var rdr = cmd.ExecuteReader())

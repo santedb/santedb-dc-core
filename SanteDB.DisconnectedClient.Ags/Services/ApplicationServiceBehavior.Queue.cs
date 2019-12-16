@@ -32,6 +32,11 @@ using SanteDB.Rest.Common.Attributes;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Core.Exceptions;
+using SanteDB.DisconnectedClient.i18n;
+using System.Threading;
+using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.Core.Model.Query;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -40,6 +45,41 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// </summary>
     public partial class ApplicationServiceBehavior
     {
+
+        // Already downloading
+        private bool m_isDownloading;
+
+        /// <summary>
+        /// Get synchronization logs
+        /// </summary>
+		[DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public List<ISynchronizationLogEntry> GetSynchronizationLogs()
+        {
+            var syncService = ApplicationServiceContext.Current.GetService<ISynchronizationService>();
+            return syncService.Log;
+
+        }
+
+        /// <summary>
+        /// Get all queues data
+        /// </summary>
+        /// <returns></returns>
+		[DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public Dictionary<String, int> GetQueue()
+        {
+            var queueManager = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
+
+            Dictionary<String, int> retVal = new Dictionary<string, int>()
+            {
+                {  "admin", queueManager.Admin.Count() },
+                {  "inbound", queueManager.Inbound.Count() },
+                {  "outbound", queueManager.Outbound.Count() },
+                {  "dead", queueManager.DeadLetter.Count() }
+            };
+
+
+            return retVal;
+        }
 
         /// <summary>
         /// Gets the queue entries
@@ -214,6 +254,59 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Retry
             ApplicationServiceContext.Current.GetService<IQueueManagerService>().DeadLetter.Retry(queueItem);
 
+        }
+
+        /// <summary>
+        /// Synchronize the information now
+        /// </summary>
+        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public void SynchronizeNow()
+        {
+            var queueService = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
+            var syncService = ApplicationServiceContext.Current.GetService<ISynchronizationService>();
+
+            if (queueService.IsBusy || syncService.IsSynchronizing || this.m_isDownloading)
+                throw new InvalidOperationException(Strings.err_already_syncrhonizing);
+            else
+            {
+                ManualResetEventSlim waitHandle = new ManualResetEventSlim(false);
+
+                ApplicationContext.Current.SetProgress(Strings.locale_waitForOutbound, 0.1f);
+
+                // Wait for outbound queue to finish
+                EventHandler<QueueExhaustedEventArgs> exhaustCallback = (o, e) =>
+                {
+                    if (e.Queue == "outbound")
+                        waitHandle.Set();
+                };
+
+                queueService.QueueExhausted += exhaustCallback;
+                queueService.ExhaustOutboundQueues();
+                waitHandle.Wait();
+                queueService.QueueExhausted -= exhaustCallback;
+
+                this.m_isDownloading = true;
+                try
+                {
+                    ApplicationContext.Current.SetProgress(String.Format(Strings.locale_downloading, ""), 0);
+                    var targets =ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().SynchronizationResources.Where(o => o.Triggers.HasFlag(SynchronizationPullTriggerType.Always) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnNetworkChange) || o.Triggers.HasFlag(SynchronizationPullTriggerType.PeriodicPoll)).ToList();
+                    for (var i = 0; i < targets.Count(); i++)
+                    {
+                        var itm = targets[i];
+                        ApplicationContext.Current.SetProgress(String.Format(Strings.locale_downloading, itm.ResourceType.Name), (float)i / targets.Count);
+
+                        if (itm.Filters.Count > 0)
+                            foreach (var f in itm.Filters)
+                                syncService.Pull(itm.ResourceType, NameValueCollection.ParseQueryString(f), itm.Always);
+                        else
+                            ApplicationContext.Current.GetService<ISynchronizationService>().Pull(itm.ResourceType);
+                    }
+                }
+                finally
+                {
+                    this.m_isDownloading = false;
+                }
+            }
         }
 
         /// <summary>

@@ -77,9 +77,13 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                         {
                             Version = typeof(SQLiteAuditRepositoryService).GetTypeInfo().Assembly.GetName().Version.ToString(),
                             Status = BiDefinitionStatus.Active,
+                            Demands = new List<string>()
+                                {
+                                    PermissionPolicyIdentifiers.AccessAuditLog
+                                }
                         },
-                        Id = "org.santedb.bi.dataSource.main",
-                        Name = "main",
+                        Id = "org.santedb.bi.dataSource.audit",
+                        Name = "audit",
                         ConnectionString = "santeDbAudit",
                         ProviderType = typeof(SQLiteBiDataSource)
                     });

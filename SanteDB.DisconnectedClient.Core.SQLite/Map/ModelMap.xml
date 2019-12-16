@@ -65,6 +65,23 @@
     <property modelName="SourceEntityKey" domainName="RoleId"/>
     <property modelName="PolicyKey" domainName="PolicyId"/>
   </class>
+
+  <!-- Security Device -->
+  <class modelClass="SanteDB.Core.Model.Security.SecurityPolicyInstance, SanteDB.Core.Model, Version=1.0.1.0"
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityDevicePolicy, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    <property modelName="SourceEntityKey" domainName="DeviceId"/>
+    <property modelName="PolicyKey" domainName="PolicyId"/>
+  </class>
+
+
+  <!-- Security Application -->
+  <class modelClass="SanteDB.Core.Model.Security.SecurityPolicyInstance, SanteDB.Core.Model, Version=1.0.1.0"
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityApplicationPolicy, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    <property modelName="SourceEntityKey" domainName="ApplicationId"/>
+    <property modelName="PolicyKey" domainName="PolicyId"/>
+  </class>
   
   <!-- Security Role -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityPolicy, SanteDB.Core.Model, Version=1.0.1.0"

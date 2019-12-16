@@ -251,18 +251,31 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                     old = (TEntity)(persistenceService as IDataPersistenceService<EntityRelationship>).Query(o => o.SourceEntityKey == erd.SourceEntityKey && o.TargetEntityKey == erd.TargetEntityKey, 0, 1, out tr, AuthenticationContext.SystemPrincipal).OfType<EntityRelationship>().FirstOrDefault().Clone();
                 }
 
-                data = businessRulesService?.BeforeUpdate(data) ?? data;
-                data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-
-                var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
-                if (diff != null)
-                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
+                // Old does not exist
+                if(old == null)
+                {
+                    data = businessRulesService?.BeforeInsert(data) ?? data;
+                    data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
+                    data = businessRulesService?.AfterInsert(data) ?? data;
+                    this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+                }
                 else
-                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
+                {
+                    data = businessRulesService?.BeforeUpdate(data) ?? data;
+                    data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
+                    var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
+                    if (diff != null)
+                        ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
+                    else
+                        ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
 
 
-                data = businessRulesService?.AfterUpdate(data) ?? data;
-                this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+                    data = businessRulesService?.AfterUpdate(data) ?? data;
+                    this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+                }
+                
                 return data;
             }
             catch (KeyNotFoundException)
