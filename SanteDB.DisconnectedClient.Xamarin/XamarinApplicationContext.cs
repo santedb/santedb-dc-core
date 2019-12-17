@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using RestSrvr;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
@@ -40,7 +41,8 @@ namespace SanteDB.DisconnectedClient.Xamarin
     /// <summary>
     /// Represents an application context for Xamarin Android
     /// </summary>
-    public abstract class XamarinApplicationContext : ApplicationContext
+    public abstract class XamarinApplicationContext : ApplicationContext, IRemoteEndpointResolver
+
     {
 
         // Tracer
@@ -106,6 +108,8 @@ namespace SanteDB.DisconnectedClient.Xamarin
                 };
             }
         }
+
+        public string ServiceName => throw new NotImplementedException();
 
         /// <summary>
         /// Loads the user configuration for the specified user key
@@ -212,6 +216,26 @@ namespace SanteDB.DisconnectedClient.Xamarin
             }
 
             base.Start();
+        }
+
+        /// <summary>
+        /// Retrieve the remote endpoint information
+        /// </summary>
+        /// <returns></returns>
+        public string GetRemoteEndpoint()
+        {
+            var fwdHeader = RestOperationContext.Current?.IncomingRequest.Headers["X-Forwarded-For"];
+            if (!String.IsNullOrEmpty(fwdHeader))
+                return fwdHeader;
+            return RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString();
+        }
+
+        /// <summary>
+        /// Get the request URL 
+        /// </summary>
+        public string GetRemoteRequestUrl()
+        {
+            return RestOperationContext.Current?.IncomingRequest.Url.ToString();
         }
     }
 }

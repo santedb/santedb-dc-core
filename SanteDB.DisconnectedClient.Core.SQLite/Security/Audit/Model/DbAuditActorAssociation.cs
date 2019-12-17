@@ -46,5 +46,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit.Model
         [Column("actor_id"), NotNull, ForeignKey(typeof(DbAuditActor), nameof(DbAuditActor.Id))]
         public byte[] TargetUuid { get; set; }
 
+
+        /// <summary>
+        /// True if user is requestor
+        /// </summary>
+        [Column("is_requestor")]
+        public bool UserIsRequestor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the access point
+        /// </summary>
+        [Column("ap")]
+        public string AccessPoint { get; set; }
     }
 }

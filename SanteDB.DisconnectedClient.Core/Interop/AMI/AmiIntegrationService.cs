@@ -85,6 +85,7 @@ namespace SanteDB.DisconnectedClient.Core.Interop.AMI
 
                 // TODO: Clean this up - Login as device account
                 if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
+                    (AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value == "LOCAL" ||
                     ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
                 {
                     AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));

@@ -50,12 +50,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit.Model
         public String UserName { get; set; }
 
         /// <summary>
-        /// True if user is requestor
-        /// </summary>
-        [Column("is_requestor")]
-        public bool UserIsRequestor { get; set; }
-
-        /// <summary>
         /// Role code identifier
         /// </summary>
         [Column("role_code_id")]
@@ -78,6 +72,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit.Model
             /// </summary>
             [Column("code_system")]
             public String CodeSystem { get; set; }
+
+
+            /// <summary>
+            /// True if user is requestor
+            /// </summary>
+            [Column("is_requestor")]
+            public bool UserIsRequestor { get; set; }
+
+            /// <summary>
+            /// Gets or sets the access point
+            /// </summary>
+            [Column("ap")]
+            public string AccessPoint { get; set; }
         }
     }
 }

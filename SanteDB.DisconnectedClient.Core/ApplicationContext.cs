@@ -300,6 +300,8 @@ namespace SanteDB.DisconnectedClient.Core
             if (this.m_running)
                 return;
 
+            this.AddServiceProvider(this);
+
             // Set the application secret to the configured value
             this.Application.ApplicationSecret = this.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ?? this.Application.ApplicationSecret;
 

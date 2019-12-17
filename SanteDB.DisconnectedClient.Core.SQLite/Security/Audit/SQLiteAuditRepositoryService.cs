@@ -230,6 +230,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                     retVal.Actors.Add(new AuditActorData()
                     {
                         UserName = itm.UserName,
+                        NetworkAccessPointId = itm.AccessPoint,
                         UserIsRequestor = itm.UserIsRequestor,
                         UserIdentifier = itm.UserIdentifier,
                         ActorRoleCode = new List<AuditCode>()
@@ -259,7 +260,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 var sql = new SqlStatement<DbAuditActorAssociation>().SelectFrom()
                         .InnerJoin<DbAuditActorAssociation, DbAuditActor>(o => o.TargetUuid, o => o.Id)
                         .Join<DbAuditActor, DbAuditCode>("LEFT", o => o.ActorRoleCode, o => o.Id)
-                        .Where<DbAuditActorAssociation>(o => o.SourceUuid == res.Id).And<DbAuditActor>(p => p.UserIsRequestor == true)
+                        .Where<DbAuditActorAssociation>(o => o.SourceUuid == res.Id).And<DbAuditActorAssociation>(p => p.UserIsRequestor == true)
                         .Build();
 
                 foreach (var itm in context.Query<DbAuditActor.QueryResult>(sql.SQL, sql.Arguments.ToArray()))
@@ -268,6 +269,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                         UserName = itm.UserName,
                         UserIsRequestor = itm.UserIsRequestor,
                         UserIdentifier = itm.UserIdentifier,
+                        NetworkAccessPointId = itm.AccessPoint,
                         ActorRoleCode = new List<AuditCode>()
                         {
                             new AuditCode(itm.Code, itm.CodeSystem)
@@ -382,7 +384,9 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                             {
                                 TargetUuid = dbAct.Id,
                                 SourceUuid = dbAudit.Id,
-                                Id = Guid.NewGuid().ToByteArray()
+                                Id = Guid.NewGuid().ToByteArray(),
+                                AccessPoint = act.NetworkAccessPointId,
+                                UserIsRequestor = act.UserIsRequestor
                             });
                         }
 
