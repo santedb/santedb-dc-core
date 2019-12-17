@@ -365,7 +365,6 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                             {
                                 dbAct = this.m_mapper.MapModelInstance<AuditActorData, DbAuditActor>(act);
                                 dbAct.Id = Guid.NewGuid().ToByteArray();
-                                conn.Insert(dbAct);
                                 var roleCode = act.ActorRoleCode?.FirstOrDefault();
                                 if (roleCode != null)
                                 {
@@ -378,6 +377,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                                     else
                                         dbAct.ActorRoleCode = existing.Id;
                                 }
+                                conn.Insert(dbAct);
 
                             }
                             conn.Insert(new DbAuditActorAssociation()
