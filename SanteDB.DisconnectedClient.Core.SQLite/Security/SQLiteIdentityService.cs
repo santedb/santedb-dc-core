@@ -356,6 +356,31 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         }
 
         /// <summary>
+        /// Get identity by UUID
+        /// </summary>
+        public IIdentity GetIdentity(Guid uuid)
+        {
+            try
+            {
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    var uuidBytes = uuid.ToByteArray();
+                    var userData = conn.Table<DbSecurityUser>().FirstOrDefault(o => o.Uuid == uuidBytes);
+                    if (userData == null)
+                        return null;
+                    else
+                        return new SQLiteIdentity(userData.UserName, false, DateTime.MinValue, DateTime.MinValue);
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error getting identity {0}", e);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Gets an un-authenticated identity
         /// </summary>
         /// <returns>The identity.</returns>

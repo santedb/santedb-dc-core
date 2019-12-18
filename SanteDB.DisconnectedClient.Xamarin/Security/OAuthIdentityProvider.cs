@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using RestSrvr;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interfaces;
@@ -433,6 +434,15 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         {
             // Get identity from the local synchronized provider
             return new GenericIdentity(userName, "OAUTH");
+        }
+
+        /// <summary>
+        /// Gets the specified identity
+        /// </summary>
+        public System.Security.Principal.IIdentity GetIdentity(Guid uuid)
+        {
+            // Get identity from the local synchronized provider
+            return ApplicationServiceContext.Current.GetService<IOfflineIdentityProviderService>().GetIdentity(uuid);
         }
 
         /// <summary>
