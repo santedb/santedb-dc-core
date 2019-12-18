@@ -74,6 +74,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     db.CreateTable<DbAuditActor>();
                     db.CreateTable<DbAuditActorAssociation>();
                     db.CreateTable<DbAuditCode>();
+                    db.CreateTable<DbAuditMetadata>();
                     db.CreateTable<DbAuditObject>();
                     return true;
                 }

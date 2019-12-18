@@ -58,6 +58,7 @@
     <Compile Include="Model\Concepts\DbReferenceTermName.cs" />
     <Compile Include="Persistence\ReferenceTermNamePersister.cs" />
     <Compile Include="Persistence\ReferenceTermPersistenceService.cs" />
+    <Compile Include="Security\Audit\Model\DbAuditMetadata.cs" />
     <Compile Include="Security\SQLiteDeviceIdentityProviderService.cs" />
     <Compile Include="SQLiteDataContext.cs" />
     <Compile Include="SQLitePersistenceService.cs" />
@@ -198,7 +199,6 @@
     <Content Include="Sql\ExtractingConceptsFromOpenIZDefaultDictionary.txt" />
   </ItemGroup>
   <ItemGroup>
- 
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
       <Name>SanteDB.DisconnectedClient.Core</Name>

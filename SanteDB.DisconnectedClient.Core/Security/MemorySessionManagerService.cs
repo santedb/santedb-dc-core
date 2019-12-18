@@ -157,6 +157,8 @@ namespace SanteDB.DisconnectedClient.Core.Security
             {
                 var session = new SessionInfo(principal, null);
                 session.Key = Guid.NewGuid();
+                (principal.Identity as IClaimsIdentity)?.AddClaim(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, session.Key.ToString()));
+
                 this.m_session.Add(session.Token, session);
                 this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, session, true));
                 return session;

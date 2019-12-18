@@ -361,6 +361,7 @@ namespace SanteDB.Core.Data.QueryBuilder
                             {
 
                                 var subQuery = guardClause.Select(o => new KeyValuePair<String, Object>(QueryPredicate.Parse(o.Key).ToString(QueryPredicatePart.SubPath), o.Value)).ToList();
+                                string[] guardValues = guardClause.Key.Split('|');
 
                                 // TODO: GUARD CONDITION HERE!!!!
                                 if (!String.IsNullOrEmpty(guardClause.Key))
@@ -375,11 +376,14 @@ namespace SanteDB.Core.Data.QueryBuilder
                                         if (redirectProperty != null)
                                             clsProperty = clsProperty.DeclaringType.GetRuntimeProperty(redirectProperty);
 
-                                        guardCondition.Append(clsProperty.GetCustomAttributes<XmlElementAttribute>().First().ElementName);
+                                        guardCondition.Append(clsProperty.GetSerializationName());
                                         if (typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(clsModel.GetTypeInfo()))
                                             guardCondition.Append(".");
+
+                                        if (clsProperty.PropertyType.GetTypeInfo().IsEnum)
+                                            guardValues = guardValues.Select(o => ((int)Enum.Parse(clsProperty.PropertyType, o)).ToString()).ToArray();
                                     }
-                                    subQuery.Add(new KeyValuePair<string, object>(guardCondition.ToString(), guardClause.Key.Split('|')));
+                                    subQuery.Add(new KeyValuePair<string, object>(guardCondition.ToString(), guardValues));
                                 }
 
                                 // Generate method
