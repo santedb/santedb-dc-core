@@ -147,7 +147,8 @@ namespace SanteDB.DisconnectedClient.UI
             SecurityConfigurationSection secSection = new SecurityConfigurationSection()
             {
                 DeviceName = Environment.MachineName,
-                AuditRetention = new TimeSpan(30, 0, 0, 0, 0)
+                AuditRetention = new TimeSpan(30, 0, 0, 0, 0),
+                DomainAuthentication = DomainClientAuthentication.Inline
             };
 
             // Device key

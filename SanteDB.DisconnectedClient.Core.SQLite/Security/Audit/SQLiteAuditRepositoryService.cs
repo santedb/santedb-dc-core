@@ -253,6 +253,10 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                         Type = (AuditableObjectType)itm.Type
                     });
                 }
+
+                // Metadata
+                foreach (var itm in context.Table<DbAuditMetadata>().Where(o => o.AuditId == res.Id))
+                    retVal.AddMetadata((AuditMetadataKey)itm.MetadataKey, itm.Value);
             }
             else
             {
@@ -403,6 +407,17 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                             dbAo.Id = Guid.NewGuid().ToByteArray();
                             conn.Insert(dbAo);
                         }
+
+                    // metadata
+                    if (audit.Metadata != null)
+                        foreach (var meta in audit.Metadata)
+                            conn.Insert(new DbAuditMetadata()
+                            {
+                                Id = Guid.NewGuid().ToByteArray(),
+                                AuditId = dbAudit.Id,
+                                MetadataKey = (int)meta.Key,
+                                Value = meta.Value
+                            });
 
                     conn.Commit();
 

@@ -30,6 +30,7 @@ using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin.Configuration;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using System;
 using System.IO;
 using System.Linq;
@@ -178,6 +179,10 @@ namespace SanteDB.DisconnectedClient.Xamarin
         /// </summary>
         protected override void Start()
         {
+
+            // ADd metadata provider
+            this.AddServiceProvider(new AuditMetadataProvider());
+
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
             {
                 var asmLoc = Path.Combine(Path.GetDirectoryName(typeof(XamarinApplicationContext).Assembly.Location), r.Name.Substring(0, r.Name.IndexOf(",")) + ".dll");

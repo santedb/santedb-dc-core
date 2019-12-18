@@ -35,5 +35,11 @@ domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditObjec
   <class modelClass="SanteDB.Core.Auditing.AuditCode, SanteDB.Core.Model, Version=1.0.1.0"
 domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditCode, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
   </class>
+
+
+  <class modelClass="SanteDB.Core.Auditing.AuditMetadata, SanteDB.Core.Model, Version=1.0.1.0"
+domainClass="SanteDB.DisconnectedClient.SQLite.Security.Audit.Model.DbAuditMetadata, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="MetadataKey"/>
+  </class>
   
 </modelMap>
