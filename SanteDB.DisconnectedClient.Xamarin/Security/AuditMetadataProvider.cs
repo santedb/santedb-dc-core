@@ -1,7 +1,9 @@
 ﻿using RestSrvr;
+using SanteDB.Core;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,7 +28,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 { AuditMetadataKey.PID, Process.GetCurrentProcess().Id },
                 { AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName },
                 { AuditMetadataKey.SessionId, (AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value },
-                { AuditMetadataKey.CorrelationToken, RestOperationContext.Current?.Data["uuid"] }
+                { AuditMetadataKey.CorrelationToken, RestOperationContext.Current?.Data["uuid"] },
+                { AuditMetadataKey.AuditSourceType, "EndUserInterface" },
+                { AuditMetadataKey.LocalEndpoint, RestOperationContext.Current?.IncomingRequest.Url },
+                { AuditMetadataKey.RemoteHost, ApplicationServiceContext.Current.GetService<IRemoteEndpointResolver>()?.GetRemoteEndpoint() }
             };
         }
     }
