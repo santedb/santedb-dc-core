@@ -107,7 +107,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
-            if (authMethod.HasFlag(AuthenticationMethod.Local))
+            if (!authMethod.HasFlag(AuthenticationMethod.Local))
                 throw new InvalidOperationException("Identity provider only supports local auth");
 
             // Pre-event
@@ -136,7 +136,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         throw new SecurityException(Strings.locale_accountLocked);
                     else if (dbd.ObsoletionTime != null)
                         throw new SecurityException(Strings.locale_accountObsolete);
-                    else if (!String.IsNullOrEmpty(deviceSecret) && passwordHash.ComputeHash(deviceSecret) != dbd.Secret)
+                    else if (!String.IsNullOrEmpty(deviceSecret) && passwordHash.ComputeHash(deviceSecret) != dbd.DeviceSecret)
                     {
                         dbd.InvalidAuthAttempts++;
                         connection.Update(dbd);
@@ -204,7 +204,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     else
                     {
                         IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
-                        dbu.Secret = hash.ComputeHash(deviceSecret);
+                        dbu.DeviceSecret = hash.ComputeHash(deviceSecret);
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;
                         conn.Update(dbu);
@@ -237,7 +237,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 {
                     DbSecurityDevice dbu = new DbSecurityDevice()
                     {
-                        Secret = hash.ComputeHash(deviceSecret),
+                        DeviceSecret = hash.ComputeHash(deviceSecret),
                         PublicId = name,
                         Key = sid,
                         CreationTime = DateTime.Now,

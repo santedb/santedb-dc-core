@@ -138,8 +138,7 @@ namespace SanteDB.DisconnectedClient.UI
                 retVal.SetProgress("Run setup", 0);
                 //retVal.AddServiceProvider(typeof(ConfigurationManager));
 
-                ApplicationContext.Current = retVal;
-                ApplicationServiceContext.Current = ApplicationContext.Current;
+                ApplicationServiceContext.Current = ApplicationContext.Current = retVal;
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
@@ -200,7 +199,7 @@ namespace SanteDB.DisconnectedClient.UI
                     try
                     {
                         retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
-                        ApplicationContext.Current = retVal;
+                        ApplicationServiceContext.Current =  ApplicationContext.Current = retVal;
                         //retVal.AddServiceProvider(typeof(ConfigurationManager));
                         retVal.ConfigurationPersister.Backup(retVal.Configuration);
                     }

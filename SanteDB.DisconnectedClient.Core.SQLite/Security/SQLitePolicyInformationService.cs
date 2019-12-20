@@ -167,6 +167,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         public IEnumerable<IPolicyInstance> GetActivePolicies(object securable)
         {
+            if (securable is DbSecurityDevice)
+                securable = new SecurityDevice() { Key = (securable as DbSecurityDevice).Key };
+            else if (securable is DbSecurityUser)
+                securable = new SecurityUser() { Key = (securable as DbSecurityUser).Key };
+
             // Security device
             if (securable is SecurityDevice)
             {

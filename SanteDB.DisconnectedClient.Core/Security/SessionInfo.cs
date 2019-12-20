@@ -107,31 +107,36 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 // HACK: Find a better way
                 var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
-                UserEntity entity = null;
-                try
-                {
-                    entity = userService.GetUserEntity(this.Principal.Identity);
+                if (ApplicationContext.Current.ConfigurationPersister.IsConfigured) {
+                    UserEntity entity = null;
+                    try
+                    {
+                        entity = userService.GetUserEntity(this.Principal.Identity);
 
-                    if (entity == null && this.SecurityUser != null)
-                        entity = new UserEntity()
-                        {
-                            SecurityUserKey = this.SecurityUser.Key,
-                            LanguageCommunication = new List<PersonLanguageCommunication>() { new PersonLanguageCommunication(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, true) },
-                            Telecoms = new List<EntityTelecomAddress>()
+                        if (entity == null && this.SecurityUser != null)
+                            entity = new UserEntity()
+                            {
+                                SecurityUserKey = this.SecurityUser.Key,
+                                LanguageCommunication = new List<PersonLanguageCommunication>() { new PersonLanguageCommunication(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, true) },
+                                Telecoms = new List<EntityTelecomAddress>()
                             {
                                                     new EntityTelecomAddress(TelecomAddressUseKeys.Public, this.SecurityUser.Email ?? this.SecurityUser.PhoneNumber)
                             },
-                            Names = new List<EntityName>()
+                                Names = new List<EntityName>()
                             {
                                                     new EntityName() { NameUseKey =  NameUseKeys.OfficialRecord, Component = new List<EntityNameComponent>() { new EntityNameComponent(NameComponentKeys.Given, this.SecurityUser.UserName) } }
                             }
-                        };
-                    else
-                        this.m_entity = entity;
-                    return entity;
+                            };
+                        else
+                            this.m_entity = entity;
+                        return entity;
+                    }
+                    catch { return null; }
                 }
-                catch { return null; }
-
+                else
+                {
+                    return null;
+                }
             }
         }
 

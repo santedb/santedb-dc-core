@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         /// Gets the secret 
         /// </summary>
         [Column("secret")]
-        public String Secret { get; set; }
+        public String DeviceSecret { get; set; }
 
         /// <summary>
         /// Gets or sets the invalid authentication attempts.

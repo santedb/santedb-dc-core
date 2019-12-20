@@ -73,7 +73,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                
                 // Synchronize the groups
-                var roleSync = new String[] { "SYSTEM", "ANONYMOUS" };
+                var roleSync = new String[] { "SYSTEM", "ANONYMOUS", "DEVICE", "SYNCHRONIZERS" };
                 foreach (var rol in roleSync)
                 {
                     var group = securityRepository.GetRole(rol);
