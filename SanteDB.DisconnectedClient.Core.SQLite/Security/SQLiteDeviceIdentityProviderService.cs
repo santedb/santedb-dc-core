@@ -107,7 +107,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
-            if (authMethod.HasFlag(AuthenticationMethod.Local))
+            if (!authMethod.HasFlag(AuthenticationMethod.Local))
                 throw new InvalidOperationException("Identity provider only supports local auth");
 
             // Pre-event
