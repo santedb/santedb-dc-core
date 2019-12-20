@@ -67,6 +67,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 var netService = ApplicationServiceContext.Current.GetService<INetworkInformationService>();
                 var localPip = ApplicationServiceContext.Current.GetService<IOfflinePolicyInformationService>();
+                var localRp = ApplicationServiceContext.Current.GetService<IOfflineRoleProviderService>();
                 var securityRepository = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
                 var amiPip = new AmiPolicyInformationService();
 
@@ -77,7 +78,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 foreach (var rol in roleSync)
                 {
                     var group = securityRepository.GetRole(rol);
-                    if (group == null) continue;
+                    if (group == null)
+                    {
+                        localRp.CreateRole(rol, AuthenticationContext.SystemPrincipal);
+                        group = securityRepository.GetRole(rol);
+                    }
 
                     var activePolicies = amiPip.GetActivePolicies(group);
                     // Create local policy if not exists
