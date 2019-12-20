@@ -135,18 +135,19 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     new DiagnosticAttachmentInfo() { FileDescription = "Log File", FileSize = logFile.Length, FileName = logFile.Name, Id = "log", LastWriteDate = logFile.LastWriteTime }
                 };
 
-                foreach (var con in ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString)
-                {
-                    var fi = new FileInfo(con.GetComponent("dbfile"));
-                    this.FileInfo.Add(new DiagnosticAttachmentInfo() { FileDescription = con.Name, FileName = fi.FullName, LastWriteDate = fi.LastWriteTime, FileSize = fi.Length, Id = "db" });
-
-                    // Existing path
-                    if (File.Exists(Path.ChangeExtension(con.Value, "bak")))
+                if(ApplicationContext.Current.Configuration.SectionTypes.Any(o=>o.Type == typeof(DcDataConfigurationSection)))
+                    foreach (var con in ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString)
                     {
-                        fi = new FileInfo(Path.ChangeExtension(con.Value, "bak"));
-                        this.FileInfo.Add(new DiagnosticAttachmentInfo() { FileDescription = con.Name + " Backup", FileName = fi.FullName, LastWriteDate = fi.LastWriteTime, FileSize = fi.Length, Id = "bak" });
+                        var fi = new FileInfo(con.GetComponent("dbfile"));
+                        this.FileInfo.Add(new DiagnosticAttachmentInfo() { FileDescription = con.Name, FileName = fi.FullName, LastWriteDate = fi.LastWriteTime, FileSize = fi.Length, Id = "db" });
+
+                        // Existing path
+                        if (File.Exists(Path.ChangeExtension(con.Value, "bak")))
+                        {
+                            fi = new FileInfo(Path.ChangeExtension(con.Value, "bak"));
+                            this.FileInfo.Add(new DiagnosticAttachmentInfo() { FileDescription = con.Name + " Backup", FileName = fi.FullName, LastWriteDate = fi.LastWriteTime, FileSize = fi.Length, Id = "bak" });
+                        }
                     }
-                }
 
 
                 this.SyncInfo = ApplicationContext.Current.GetService<ISynchronizationLogService>().GetAll().Select(o => new DiagnosticSyncInfo()
