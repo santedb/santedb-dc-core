@@ -38,6 +38,7 @@
     <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
     <property modelName="ObsoletedByKey" domainName="ObsoletedByUuid"/>
     <property modelName="Name" domainName="PublicId"/>
+
   </class>
 
   <!-- Security Device -->
