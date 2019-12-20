@@ -20,6 +20,7 @@
 using SanteDB.Core.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
@@ -164,6 +165,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             var retVal = base.ToModelInstance(dataInstance, context);
             var dbDevice = dataInstance as DbSecurityDevice;
+            retVal.DeviceSecret = null;
             retVal.Policies = context.Connection.Table<DbSecurityDevicePolicy>().Where(o => o.DeviceId == dbDevice.Uuid).ToList().Select(o => m_mapper.MapDomainInstance<DbSecurityDevicePolicy, SecurityPolicyInstance>(o)).ToList();
             return retVal;
         }
@@ -176,13 +178,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var retVal = base.InsertInternal(context, data);
 
             // Roles
-            //if (retVal.Policies != null)
-            //    base.UpdateAssociatedItems<SecurityPolicyInstance, SecurityDevice>(
-            //        new List<SecurityPolicyInstance>(),
-            //        retVal.Policies,
-            //        retVal.Key,
-            //        context);
-
+            if (retVal.Policies != null)
+                foreach (var itm in retVal.Policies)
+                    context.Connection.Insert(new DbSecurityDevicePolicy()
+                    {
+                        Key = Guid.NewGuid(),
+                        DeviceId = retVal.Key.Value.ToByteArray(),
+                        GrantType = (int)itm.GrantType,
+                        PolicyId = itm.PolicyKey.Value.ToByteArray()
+                    });
 
             return retVal;
         }
@@ -196,13 +200,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var entityUuid = retVal.Key.Value.ToByteArray();
 
             // Roles
-            //if (retVal.Policies != null)
-            //    base.UpdateAssociatedItems<SecurityPolicyInstance, SecurityDevice>(
-            //        context.Table<DbSecurityDevicePolicy>().Where(o => o.DeviceId == entityUuid).ToList().Select(o => m_mapper.MapDomainInstance<DbSecurityDevicePolicy, SecurityPolicyInstance>(o)).ToList(),
-            //        retVal.Policies,
-            //        retVal.Key,
-            //        context);
-
+            if (retVal.Policies?.Count > 0)
+            {
+                context.Connection.Table<DbSecurityDevicePolicy>().Delete(o => o.DeviceId == entityUuid);
+                foreach (var itm in retVal.Policies)
+                    context.Connection.Insert(new DbSecurityDevicePolicy()
+                    {
+                        Key = Guid.NewGuid(),
+                        DeviceId = data.Key.Value.ToByteArray(),
+                        GrantType = (int)itm.GrantType,
+                        PolicyId = itm.PolicyKey.Value.ToByteArray()
+                    });
+            }
+              
 
             return retVal;
         }
