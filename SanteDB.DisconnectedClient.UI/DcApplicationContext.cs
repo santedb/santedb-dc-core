@@ -31,7 +31,7 @@ using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.UI.Resources;
+using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Xamarin;
 using SanteDB.DisconnectedClient.Xamarin.Backup;
 using SanteDB.DisconnectedClient.Xamarin.Configuration;

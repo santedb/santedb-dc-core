@@ -386,4 +386,16 @@ Sincerely,
   <data name="locale_startupRequeueConfirm" xml:space="preserve">
     <value>There are synchronization conflicts on your device. Do you want to resubmit them?</value>
   </data>
+  <data name="err_applet_corrupt_reinstall" xml:space="preserve">
+    <value>The applet {0} appears to be corrupt. Would you like to try downloading it again?</value>
+  </data>
+  <data name="err_configuration_invalid_restore_prompt1" xml:space="preserve">
+    <value>Your configuration file could not be read, there is a backup. Would you like to restore the backup?</value>
+  </data>
+  <data name="err_startup" xml:space="preserve">
+    <value>There was a serious error starting up SanteDB Disconnected Client. For reference, the error was: {0}. Would you like to make a backup of your existing files in a public place? The files are encrypted so only this user account can read them.</value>
+  </data>
+  <data name="locale_confirm_restore" xml:space="preserve">
+    <value>We deteced a backup on your device (probably from a previous installation). Do you want to restore it?</value>
+  </data>
 </root>

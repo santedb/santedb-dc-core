@@ -65,15 +65,9 @@
     <Compile Include="DcConfigurationManager.cs" />
     <Compile Include="ConsoleParameters.cs" />
     <Compile Include="IDialogProvider.cs" />
-    <Compile Include="Resources\Strings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Ags\SanteDB.DisconnectedClient.Ags.csproj">
       <Project>{EDCD4511-B016-48EE-BD73-491A6B6687E6}</Project>
       <Name>SanteDB.DisconnectedClient.Ags</Name>
@@ -92,12 +86,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Strings.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>
@@ -108,10 +96,10 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-		<ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj">
-		  <Project>{030666AA-FC71-449E-9DFC-270F1C23C5DA}</Project>
-		  <Name>SanteDB.BI</Name>
-		</ProjectReference>
+        <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj">
+          <Project>{030666AA-FC71-449E-9DFC-270F1C23C5DA}</Project>
+          <Name>SanteDB.BI</Name>
+        </ProjectReference>
         <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
           <Project>{F1A82A4F-4A57-47D7-AE76-444C8A4FF54A}</Project>
           <Name>SanteDB.Core.Model</Name>
@@ -128,13 +116,12 @@
           <Project>{CAD6BCB7-758B-4AA4-A5FE-A9FAB8A4CF2F}</Project>
           <Name>SanteDB.Cdss.Xml</Name>
         </ProjectReference>
-      
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="SanteDB.Core.Api" Version="1.88.0.0" />
-		<PackageReference Include="SanteDB.BI" Version="1.88.0.0" />
+        <PackageReference Include="SanteDB.BI" Version="1.88.0.0" />
         <PackageReference Include="SanteDB.Core.Applets" Version="1.88.0.0" />
         <PackageReference Include="SanteDB.Core.Model" Version="1.88.0.0" />
         <PackageReference Include="SanteDB.Cdss.Xml">
