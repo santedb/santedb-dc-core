@@ -17,10 +17,13 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using System;
@@ -109,22 +112,30 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public void Demand()
         {
-            var pdp = ApplicationContext.Current.PolicyDecisionService;
+            var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
+            var principal = this.m_principal ?? AuthenticationContext.Current.Principal;
+            var action = PolicyGrantType.Deny;
 
             // Non system principals must be authenticated
-            if (this.m_principal?.Identity?.IsAuthenticated == false || this.m_principal == null)
-                throw new PolicyViolationException(this.m_principal, this.m_policyId, PolicyGrantType.Deny);
+            if (!principal.Identity.IsAuthenticated &&
+                principal != AuthenticationContext.SystemPrincipal &&
+                this.m_isUnrestricted == true)
+                throw new PolicyViolationException(principal, this.m_policyId, PolicyGrantType.Deny);
+            else
+            {
+                if (pdp == null) // No way to verify 
+                    action = PolicyGrantType.Deny;
+                else if (pdp != null)
+                    action = pdp.GetPolicyOutcome(principal, this.m_policyId);
+            }
 
-            PolicyGrantType action = PolicyGrantType.Deny;
-            if (pdp == null) // No way to verify 
-                action = PolicyGrantType.Deny;
-            else if (pdp != null)
-                action = pdp.GetPolicyOutcome(this.m_principal, this.m_policyId);
 
-            this.m_traceSource.TraceInfo("Policy Enforce: {0}({1}) = {2}", this.m_principal?.Identity?.Name, this.m_policyId, action);
+            this.m_traceSource.TraceInfo("Policy Enforce: {0}({1}) = {2}", principal?.Identity?.Name, this.m_policyId, action);
 
+            AuditUtil.AuditAccessControlDecision(principal, m_policyId, action);
             if (action != PolicyGrantType.Grant)
-                throw new PolicyViolationException(this.m_principal, this.m_policyId, action);
+                throw new PolicyViolationException(principal, this.m_policyId, action);
+
         }
 
         /// <summary>

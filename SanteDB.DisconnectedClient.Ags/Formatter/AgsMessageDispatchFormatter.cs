@@ -49,6 +49,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
     /// <summary>
     /// Represents the AGS dispatch formatter
     /// </summary>
+    /// <remarks>This formatter is common to many different services, therefore the formatter in SanteDB.Rest.Common is not used</remarks>
     public abstract class AgsMessageDispatchFormatter : IDispatchMessageFormatter
     {
 
@@ -105,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         // Static ctor
         static AgsDispatchFormatter()
         {
-            m_defaultViewModel = ViewModelDescription.Load(typeof(AgsDispatchFormatter<>).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.ViewModel.xml"));
+            m_defaultViewModel = ViewModelDescription.Load(Assembly.Load("SanteDB.Rest.Common").GetManifestResourceStream("SanteDB.Rest.Common.Resources.ViewModel.xml"));
             var tracer = Tracer.GetTracer(typeof(AgsDispatchFormatter<TContract>));
             foreach (var t in s_knownTypes)
                 ModelSerializationBinder.RegisterModelType(t);

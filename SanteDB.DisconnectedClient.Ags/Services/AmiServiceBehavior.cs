@@ -441,14 +441,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
         }
 
-        /// <summary>
-        /// Demand permission
-        /// </summary>
-        protected override void Demand(string policyId)
-        {
-            new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId).Demand();
-        }
-
+        
         /// <summary>
         /// Create the specified resource
         /// </summary>

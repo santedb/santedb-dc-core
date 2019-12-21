@@ -17,6 +17,7 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
@@ -161,8 +162,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         
                         // Create the principal
                         retVal = new SQLitePrincipal(new SQLiteDeviceIdentity(dbd.PublicId, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), new string[] { });
-                        if (pdp.GetPolicyOutcome(retVal, PermissionPolicyIdentifiers.LoginAsService) != PolicyGrantType.Grant)
-                            throw new PolicyViolationException(retVal, PermissionPolicyIdentifiers.LoginAsService, PolicyGrantType.Deny);
+
+                        ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.LoginAsService);
 
                     }
                 }
@@ -192,9 +193,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
-                if (deviceName != principal.Identity.Name &&
-                    pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) == SanteDB.Core.Model.Security.PolicyGrantType.Deny)
-                    throw new SecurityException("User cannot change device secrets");
+                if (deviceName != principal.Identity.Name)
+                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -226,9 +226,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             try
             {
-                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
 
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();

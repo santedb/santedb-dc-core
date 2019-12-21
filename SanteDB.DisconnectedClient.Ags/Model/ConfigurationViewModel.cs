@@ -68,8 +68,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             this.RealmName = config.GetSection<SecurityConfigurationSection>()?.Domain;
             this.Security = config.GetSection<SecurityConfigurationSection>();
 
-            if (ApplicationContext.Current.Configuration.SectionTypes.Any(o => o.Type == typeof(DcDataConfigurationSection)))
-                this.Data = config.GetSection<DcDataConfigurationSection>();
+            this.Data = config.GetSection<DcDataConfigurationSection>();
             this.Applet = config.GetSection<AppletConfigurationSection>();
             this.Application = config.GetSection<ApplicationServiceContextConfigurationSection>();
             this.Log = config.GetSection<DiagnosticsConfigurationSection>();

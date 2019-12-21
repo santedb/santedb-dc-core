@@ -17,6 +17,7 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
@@ -64,9 +65,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             // Demand local admin
             try
             {
-                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -122,12 +122,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new ArgumentNullException(nameof(roleNames));
 
                 // Demand local admin
-                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
 
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                {
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
-                }
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -170,9 +166,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 // Demand local admin
-                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -264,12 +259,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new ArgumentNullException(nameof(roleNames));
 
                 // Demand local admin
-                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
 
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                {
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
-                }
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())

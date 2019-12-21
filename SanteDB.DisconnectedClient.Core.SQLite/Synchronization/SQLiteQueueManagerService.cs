@@ -23,6 +23,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -532,10 +533,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         svc.Update(data);
                     }
                 }
+                AuditUtil.AuditDataAction(EventTypeCodes.ApplicationActivity, SanteDB.Core.Auditing.ActionType.Update, SanteDB.Core.Auditing.AuditableObjectLifecycle.Import, SanteDB.Core.Auditing.EventIdentifierType.Import, SanteDB.Core.Auditing.OutcomeIndicator.Success, null, (data as Bundle)?.Item.ToArray() ?? new IdentifiedData[] { data });
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error inserting object data: {0}", e);
+                AuditUtil.AuditDataAction(EventTypeCodes.ApplicationActivity, SanteDB.Core.Auditing.ActionType.Update, SanteDB.Core.Auditing.AuditableObjectLifecycle.Import, SanteDB.Core.Auditing.EventIdentifierType.Import, SanteDB.Core.Auditing.OutcomeIndicator.MinorFail, null, (data as Bundle)?.Item.ToArray() ?? new IdentifiedData[] { data });
+
                 throw;
             }
         }

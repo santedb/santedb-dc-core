@@ -17,6 +17,7 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
@@ -133,9 +134,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public void CreatePolicy(IPolicy policy, IPrincipal principal)
         {
             // Demand local admin
-            var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-            if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+
 
             var conn = this.CreateConnection();
             using (conn.Lock())

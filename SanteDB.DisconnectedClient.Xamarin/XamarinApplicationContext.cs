@@ -36,13 +36,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Xamarin
 {
     /// <summary>
     /// Represents an application context for Xamarin Android
     /// </summary>
-    public abstract class XamarinApplicationContext : ApplicationContext, IRemoteEndpointResolver
+    public abstract class XamarinApplicationContext : ApplicationContext, IRemoteEndpointResolver, IPolicyEnforcementService
 
     {
 
@@ -243,6 +244,23 @@ namespace SanteDB.DisconnectedClient.Xamarin
         public string GetRemoteRequestUrl()
         {
             return RestOperationContext.Current?.IncomingRequest.Url.ToString();
+        }
+
+        /// <summary>
+        /// Demand access
+        /// </summary>
+        public void Demand(string policyId)
+        {
+            new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId).Demand();
+        }
+
+        /// <summary>
+        /// Demand the specified access
+        /// </summary>
+        public void Demand(string policyId, IPrincipal principal)
+        {
+            new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId, principal).Demand();
+
         }
     }
 }

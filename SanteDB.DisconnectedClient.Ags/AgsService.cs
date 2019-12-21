@@ -26,11 +26,13 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Contracts;
+using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Ags.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.BIS;
+using SanteDB.Rest.Common.Behavior;
 using SanteDB.Rest.HDSI;
 using SanteDB.Rest.RISI;
 using System;
@@ -102,9 +104,9 @@ namespace SanteDB.DisconnectedClient.Ags
             {
                 new AgsBehaviorConfiguration(typeof(AgsSerializationEndpointBehavior)),
 #if DEBUG
-                new AgsBehaviorConfiguration(typeof(AgsMessageLoggingEndpointBehavior)),
+                new AgsBehaviorConfiguration(typeof(MessageLoggingEndpointBehavior)),
 #endif
-                new AgsBehaviorConfiguration(typeof(AgsCompressionEndpointBehavior))
+                new AgsBehaviorConfiguration(typeof(MessageCompressionEndpointBehavior))
             };
 
             return new AgsConfigurationSection()
