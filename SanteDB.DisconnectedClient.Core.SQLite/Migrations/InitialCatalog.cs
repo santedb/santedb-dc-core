@@ -75,7 +75,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
             var tracer = Tracer.GetTracer(this.GetType());
             try
             {
-                db.BeginTransaction();
 
                 // Migration log create and check
                 db.CreateTable<DbMigrationLog>();
@@ -272,13 +271,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 //    }
                 //};
 
-                db.Commit();
             }
             catch (Exception e)
             {
-                db.Rollback();
                 tracer.TraceError("Error deploying InitialCatalog: {0}", e);
-                throw;
+                throw new System.Data.DataException("Error deploying InitialCatalog", e);
             }
             return true;
         }

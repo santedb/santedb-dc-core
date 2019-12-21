@@ -73,7 +73,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 catch { }
                 try
                 {
-                    db.BeginTransaction();
 
                     // Now we query and set the sequencing
                     int seq = 0;
@@ -82,12 +81,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                         itm.Sequence = seq++;
                         db.Update(itm);
                     }
-                    db.Commit();
                     return true;
                 }
                 catch (Exception e)
                 {
-                    db.Rollback();
                     tracer.TraceError("Error installing CTP5 update: {0}", e);
                     return true;
                     //throw new InvalidOperationException("Could not install Edmonton CTP5 update");

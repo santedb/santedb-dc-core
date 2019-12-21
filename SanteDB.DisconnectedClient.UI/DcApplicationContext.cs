@@ -217,8 +217,8 @@ namespace SanteDB.DisconnectedClient.UI
 
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();
-                    if (backupSvc.HasBackup(BackupMedia.Public) &&
-                        retVal.ConfigurationManager.GetAppSetting("ignore.restore") == null &&
+                    if (retVal.ConfigurationManager.GetAppSetting("ignore.restore") == null  &&
+                        backupSvc.HasBackup(BackupMedia.Public) &&
                         retVal.Confirm(Strings.locale_confirm_restore))
                     {
                         backupSvc.Restore(BackupMedia.Public);

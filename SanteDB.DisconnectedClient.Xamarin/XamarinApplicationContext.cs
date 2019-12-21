@@ -180,6 +180,7 @@ namespace SanteDB.DisconnectedClient.Xamarin
         protected override void Start()
         {
 
+            this.m_tracer.TraceInfo("Starting application context...");
             // ADd metadata provider
             this.AddServiceProvider(new AuditMetadataProvider());
 
@@ -195,6 +196,7 @@ namespace SanteDB.DisconnectedClient.Xamarin
                     return null;
             };
 
+            
             try
             {
                 var asmLoc = Assembly.GetEntryAssembly().Location;

@@ -62,6 +62,9 @@ namespace SanteDB.DisconnectedClient.Core
     public abstract class ApplicationContext : IServiceProvider, IServiceManager, IApplicationServiceContext
     {
 
+        // Tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(ApplicationContext));
+
         // Execution uuid
         private static Guid s_executionUuid = Guid.NewGuid();
 
@@ -296,12 +299,15 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         protected virtual void Start()
         {
+            AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
             // Already running
             if (this.m_running)
                 return;
+            this.m_tracer.TraceInfo("STAGE1: Base startup initiated...");
 
             this.AddServiceProvider(this);
 
+            this.m_tracer.TraceInfo("Loading application secret");
             // Set the application secret to the configured value
             this.Application.ApplicationSecret = this.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ?? this.Application.ApplicationSecret;
 
@@ -318,6 +324,8 @@ namespace SanteDB.DisconnectedClient.Core
             var daemons = this.GetServices().OfType<IDaemonService>();
             Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
             var nonChangeDaemons = daemons.Distinct().ToArray();
+            this.m_tracer.TraceInfo("STAGE2: Starting Daemon Services...");
+
             foreach (var d in nonChangeDaemons)
             {
                 try
@@ -333,11 +341,9 @@ namespace SanteDB.DisconnectedClient.Core
                 }
             }
 
-            this.GetService<IThreadPoolService>().QueueNonPooledWorkItem(o =>
-            {
-                this.Started?.Invoke(this, EventArgs.Empty);
-                this.StartTime = DateTime.Now;
-            }, null);
+            this.m_tracer.TraceInfo("STAGE 3: Broadcasting startup event to services...");
+            this.Started?.Invoke(this, EventArgs.Empty);
+            this.StartTime = DateTime.Now;
 
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
 

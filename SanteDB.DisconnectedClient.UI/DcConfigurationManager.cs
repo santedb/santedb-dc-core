@@ -30,6 +30,7 @@ using SanteDB.DisconnectedClient.Ags;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Caching;
 using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Services.Local;
 using SanteDB.DisconnectedClient.Core.Tickler;
@@ -196,6 +197,11 @@ namespace SanteDB.DisconnectedClient.UI
             retVal.Sections.Add(appSection);
             retVal.Sections.Add(secSection);
             retVal.Sections.Add(serviceSection);
+            retVal.Sections.Add(new DcDataConfigurationSection()
+            {
+                MainDataSourceConnectionStringName = "santeDbData",
+                MessageQueueConnectionStringName = "santeDbQueue"
+            });
             retVal.AddSection(AgsService.GetDefaultConfiguration());
             retVal.Sections.Add(new SynchronizationConfigurationSection()
             {
