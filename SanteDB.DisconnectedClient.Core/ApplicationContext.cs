@@ -294,6 +294,8 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         public bool IsRunning => this.m_running;
 
+        public string ServiceName => throw new NotImplementedException();
+
         /// <summary>
         /// Start the daemon services
         /// </summary>
@@ -504,6 +506,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// Get all types
         /// </summary>
         public abstract IEnumerable<Type> GetAllTypes();
+
     }
 }
 

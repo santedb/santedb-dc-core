@@ -373,12 +373,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-        /// <summary>
-        /// Demand provider
-        /// </summary>
-        protected override void Demand(string policyId)
-        {
-            new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId).Demand();
-        }
+       
     }
 }

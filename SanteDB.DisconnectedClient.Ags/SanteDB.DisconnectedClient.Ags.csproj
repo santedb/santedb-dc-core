@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SanteDB.Core.Model.ViewModelSerializers">
-      <HintPath>..\Solution Items\SanteDB.Core.Model.ViewModelSerializers.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,13 +42,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AgsService.cs" />
-    <Compile Include="Behaviors\AgsCompressionEndpointBehavior.cs" />
-    <Compile Include="Behaviors\AgsCorsEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsMagicServiceBehavior.cs" />
-    <Compile Include="Behaviors\AgsMessageLoggingEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsPermissionPolicyBehavior.cs" />
     <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsWebErrorHandlerServiceBehavior.cs" />
+    <Compile Include="Formatter\AgsMessageDispatchFormatter.cs" />
     <Compile Include="Model\ConfigurationViewModel.cs" />
     <Compile Include="Model\MenuInformation.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
@@ -66,7 +61,6 @@
     <Compile Include="Contracts\IApplicationServiceContract.cs" />
     <Compile Include="Contracts\IAuthenticationServiceContract.cs" />
     <Compile Include="Contracts\IWwwServiceContract.cs" />
-    <Compile Include="Formatter\AgsMessageDispatchFormatter.cs" />
     <Compile Include="HttpConfigurationKeys.cs" />
     <Compile Include="Model\ApplicationInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -99,6 +93,10 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.ViewModelSerializers\SanteDB.Core.Model.ViewModelSerializers.csproj">
+          <Project>{ece9b280-9647-4092-babf-eb2e25084670}</Project>
+          <Name>SanteDB.Core.Model.ViewModelSerializers</Name>
+        </ProjectReference>
         <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj">
           <Project>{030666AA-FC71-449E-9DFC-270F1C23C5DA}</Project>
           <Name>SanteDB.BI</Name>
@@ -186,9 +184,6 @@
       </ItemGroup>
     </Otherwise>
   </Choose>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\ViewModel.xml" />
-  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\antihaxor" />
   </ItemGroup>

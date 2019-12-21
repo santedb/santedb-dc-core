@@ -22,9 +22,9 @@ using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.Rest.Common.Fault;
+using SanteDB.Rest.Common.Serialization;
 using System;
 using System.Reflection;
 
@@ -92,7 +92,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
                 fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
 
-            AgsMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
+            RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
             return true;
         }
     }

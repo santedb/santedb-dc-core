@@ -173,8 +173,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
                             // Create the principal
                             retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), roles);
-                        if (pdp.GetPolicyOutcome(retVal, PermissionPolicyIdentifiers.Login) != PolicyGrantType.Grant)
-                            throw new PolicyViolationException(retVal, PermissionPolicyIdentifiers.Login, PolicyGrantType.Deny);
+                        ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.Login);
 
                     }
                 }
@@ -250,9 +249,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
-                if (userName != principal.Identity.Name &&
-                    pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.ChangePassword) == SanteDB.Core.Model.Security.PolicyGrantType.Deny)
-                    throw new SecurityException("User cannot change specified users password");
+                if (userName != principal.Identity.Name)
+                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword);
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -320,8 +318,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                if (pdp.GetPolicyOutcome(principal ?? AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, PolicyGrantType.Deny);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+
 
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
@@ -416,8 +414,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
-                if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AlterIdentity) == SanteDB.Core.Model.Security.PolicyGrantType.Deny)
-                    throw new PolicyViolationException(principal, PermissionPolicyIdentifiers.AlterIdentity, PolicyGrantType.Deny);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterIdentity);
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())

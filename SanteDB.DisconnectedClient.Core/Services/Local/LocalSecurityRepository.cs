@@ -17,6 +17,7 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Api.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -56,10 +57,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// </summary>
         protected void Demand(String policyId)
         {
-            var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-            var outcome = pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, policyId);
-            if (outcome != PolicyGrantType.Grant)
-                throw new PolicyViolationException(AuthenticationContext.Current.Principal, policyId, outcome ?? PolicyGrantType.Deny);
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(policyId);
 
         }
 

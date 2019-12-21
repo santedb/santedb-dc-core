@@ -168,13 +168,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                 throw new InvalidOperationException($"ADO.NET BI queries can only source data from 1 connection source, query {queryDefinition.Name} has {queryDefinition.DataSources?.Count}");
 
             // Ensure we have sufficient priviledge
-            var pdpService = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
             foreach (var pol in queryDefinition.DataSources.SelectMany(o => o?.MetaData.Demands).Union(queryDefinition.MetaData?.Demands))
-            {
-                var outcome = pdpService.GetPolicyOutcome(AuthenticationContext.Current.Principal, pol);
-                if (outcome != PolicyGrantType.Grant)
-                    throw new PolicyViolationException(AuthenticationContext.Current.Principal, pol, outcome);
-            }
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(pol);
 
             // Apply defaults where possible
             foreach (var defaultParm in queryDefinition.Parameters.Where(p => !String.IsNullOrEmpty(p.DefaultValue) && !parameters.ContainsKey(p.Name)))
