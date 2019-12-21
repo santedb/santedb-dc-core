@@ -14,13 +14,14 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justi
- * Date: 2019-1-12
+ * User: Justin Fyfe
+ * Date: 2019-8-8
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Xamarin;
@@ -66,7 +67,9 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             if (config == null) return;
             this.RealmName = config.GetSection<SecurityConfigurationSection>()?.Domain;
             this.Security = config.GetSection<SecurityConfigurationSection>();
-            this.Data = config.GetSection<DcDataConfigurationSection>();
+
+            if (ApplicationContext.Current.Configuration.SectionTypes.Any(o => o.Type == typeof(DcDataConfigurationSection)))
+                this.Data = config.GetSection<DcDataConfigurationSection>();
             this.Applet = config.GetSection<AppletConfigurationSection>();
             this.Application = config.GetSection<ApplicationServiceContextConfigurationSection>();
             this.Log = config.GetSection<DiagnosticsConfigurationSection>();

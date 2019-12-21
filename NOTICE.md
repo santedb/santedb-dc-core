@@ -17,7 +17,6 @@ This product includes software developed by Borland Software Corp.
 + Portions Copyright (c) 2012-2017 The ANTLR Project. All rights reserved.
 + Portions Copyright (c) Borland Software Corp.
 
-
 This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com).
 
 
@@ -29,8 +28,9 @@ This software uses assets (graphics, styles, etc.) from the following sources:
 
 SanteSuite contributors include:
 
-* Mohawk College of Applied Arts and Technology
-* Fyfe Software Inc.
+* Mohawk College of Applied Arts and Technology mHealth & eHealth Digital Innovation Centre (MEDIC) - http://mohawkmedic.ca
+* Fyfe Software Inc. (http://fyfesoftware.ca)
+* SanteSuite Inc. (http://santesuite.com)
 
 # 2. Third Party Licenses
 
