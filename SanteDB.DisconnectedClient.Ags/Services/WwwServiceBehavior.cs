@@ -102,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Write asset
             var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
             {
-                { "csp-nonce", BitConverter.ToString(ApplicationContext.Current.ExecutionUuid.ToByteArray()).Replace("-","") }
+                { "csp_nonce", BitConverter.ToString(ApplicationContext.Current.ExecutionUuid.ToByteArray()).Replace("-","") }
             });
             return new MemoryStream(content);
         }
