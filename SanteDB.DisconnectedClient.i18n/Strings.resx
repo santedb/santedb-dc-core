@@ -398,4 +398,7 @@ Sincerely,
   <data name="locale_confirm_restore" xml:space="preserve">
     <value>We deteced a backup on your device (probably from a previous installation). Do you want to restore it?</value>
   </data>
+  <data name="locale_authenticationFailure" xml:space="preserve">
+    <value>Authentication Failure</value>
+  </data>
 </root>

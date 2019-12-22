@@ -377,6 +377,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Authentication Failure.
+        /// </summary>
+        public static string locale_authenticationFailure {
+            get {
+                return ResourceManager.GetString("locale_authenticationFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Backing up your files.....
         /// </summary>
         public static string locale_backup {
