@@ -24,6 +24,7 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.Rest.Common.Behaviors;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -102,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Write asset
             var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
             {
-                { "csp_nonce", BitConverter.ToString(ApplicationContext.Current.ExecutionUuid.ToByteArray()).Replace("-","") }
+                { "csp_nonce", RestOperationContext.Current.ServiceEndpoint.Behaviors.OfType<SecurityPolicyHeadersBehavior>().FirstOrDefault()?.Nonce }
             });
             return new MemoryStream(content);
         }

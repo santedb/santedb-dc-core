@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
             var endpointBehaviors = new List<AgsBehaviorConfiguration>()
             {
-                new AgsBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior)) { Configuration = new System.Xml.Linq.XElement("nonce", BitConverter.ToString(ApplicationContext.Current.ExecutionUuid.ToByteArray()).Replace("-","")) },
+                new AgsBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior)),
                 new AgsBehaviorConfiguration(typeof(AgsSerializationEndpointBehavior)),
 #if DEBUG
                 new AgsBehaviorConfiguration(typeof(MessageLoggingEndpointBehavior)),
