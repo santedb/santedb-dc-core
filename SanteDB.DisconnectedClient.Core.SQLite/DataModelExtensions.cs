@@ -286,54 +286,58 @@ namespace SanteDB.DisconnectedClient.SQLite
             //    System.Diagnostics.Debugger.Break();
 
             IIdentifiedEntity existing = null;
-            if (me.Key != null)
-                existing = context.TryGetCacheItem(me.Key.Value);
-            if (existing != null) return existing;
-            else if (!context.Connection.IsInTransaction)
-                existing = context.TryGetData(me.Key.Value.ToString()) as IdentifiedData;
-            else if (me.Key.HasValue)
-                existing = context.FindTransactedItem(me.Key.Value);
 
-            if (forceDbSearch && me.Key.HasValue)
-                ApplicationContext.Current.GetService<IDataCachingService>().Remove(me.Key.Value);
+            if (!forceDbSearch)
+            {
+                if (me.Key != null)
+                    existing = context.TryGetCacheItem(me.Key.Value);
+                if (existing != null) return existing;
+                else if (!context.Connection.IsInTransaction)
+                    existing = context.TryGetData(me.Key.Value.ToString()) as IdentifiedData;
+                else if (me.Key.HasValue)
+                    existing = context.FindTransactedItem(me.Key.Value);
+                if (forceDbSearch && me.Key.HasValue)
+                    ApplicationContext.Current.GetService<IDataCachingService>().Remove(me.Key.Value);
+            }
 
-            // Is the key not null?
+            // Is the key not null? 
             if (me.Key != Guid.Empty && me.Key != null && existing == null)
             {
                 existing = idpInstance.Get(context, me.Key.Value) as IIdentifiedEntity;
             }
-
-            var classAtt = me.GetType().GetTypeInfo().GetCustomAttribute<KeyLookupAttribute>();
-            if (classAtt != null && existing == null)
+            else
             {
-
-                // Get the domain type
-                var dataType = SQLitePersistenceService.Mapper.MapModelType(me.GetType());
-                var tableMap = TableMapping.Get(dataType);
-
-                // Get the classifier attribute value
-                var classProperty = me.GetType().GetRuntimeProperty(classAtt.UniqueProperty);
-                object classifierValue = classProperty.GetValue(me); // Get the classifier
-
-                // Is the classifier a UUID'd item?
-                if (classifierValue is IIdentifiedEntity)
+                var classAtt = me.GetType().GetTypeInfo().GetCustomAttribute<KeyLookupAttribute>();
+                if (classAtt != null && existing == null)
                 {
-                    classifierValue = (classifierValue as IIdentifiedEntity).Key.Value;
-                    classProperty = me.GetType().GetRuntimeProperty(classProperty.GetCustomAttribute<SerializationReferenceAttribute>()?.RedirectProperty ?? classProperty.Name);
+
+                    // Get the domain type
+                    var dataType = SQLitePersistenceService.Mapper.MapModelType(me.GetType());
+                    var tableMap = TableMapping.Get(dataType);
+
+                    // Get the classifier attribute value
+                    var classProperty = me.GetType().GetRuntimeProperty(classAtt.UniqueProperty);
+                    object classifierValue = classProperty.GetValue(me); // Get the classifier
+
+                    // Is the classifier a UUID'd item?
+                    if (classifierValue is IIdentifiedEntity)
+                    {
+                        classifierValue = (classifierValue as IIdentifiedEntity).Key.Value;
+                        classProperty = me.GetType().GetRuntimeProperty(classProperty.GetCustomAttribute<SerializationReferenceAttribute>()?.RedirectProperty ?? classProperty.Name);
+                    }
+
+                    // Column 
+                    var column = tableMap.GetColumn(SQLitePersistenceService.Mapper.MapModelProperty(me.GetType(), dataType, classProperty));
+                    // Now we want to query 
+                    SqlStatement stmt = new SqlStatement().SelectFrom(dataType)
+                        .Where($"{column.Name} = ?", classifierValue).Build();
+
+                    var mapping = context.Connection.GetMapping(dataType);
+                    var dataObject = context.Connection.Query(mapping, stmt.SQL, stmt.Arguments.ToArray()).FirstOrDefault();
+                    if (dataObject != null)
+                        existing = idpInstance.ToModelInstance(dataObject, context) as IIdentifiedEntity;
                 }
-
-                // Column 
-                var column = tableMap.GetColumn(SQLitePersistenceService.Mapper.MapModelProperty(me.GetType(), dataType, classProperty));
-                // Now we want to query 
-                SqlStatement stmt = new SqlStatement().SelectFrom(dataType)
-                    .Where($"{column.Name} = ?", classifierValue).Build();
-
-                var mapping = context.Connection.GetMapping(dataType);
-                var dataObject = context.Connection.Query(mapping, stmt.SQL, stmt.Arguments.ToArray()).FirstOrDefault();
-                if (dataObject != null)
-                    existing = idpInstance.ToModelInstance(dataObject, context) as IIdentifiedEntity;
             }
-
             if (existing != null && me.Key.HasValue)
                 context.AddData(me.Key.Value.ToString(), existing);
 

@@ -250,7 +250,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
                 if (userName != principal.Identity.Name)
-                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword);
+                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword, principal);
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -318,7 +318,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
                 var conn = this.CreateConnection();
@@ -414,7 +414,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterIdentity);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterIdentity, principal);
 
                 var conn = this.CreateConnection();
                 using (conn.Lock())

@@ -134,7 +134,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public void CreatePolicy(IPolicy policy, IPrincipal principal)
         {
             // Demand local admin
-            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
             var conn = this.CreateConnection();

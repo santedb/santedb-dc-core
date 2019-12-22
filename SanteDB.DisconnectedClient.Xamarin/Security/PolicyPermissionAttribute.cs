@@ -84,6 +84,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public PolicyPermission(PermissionState state, String policyId, IPrincipal principal)
         {
+            if (principal == null)
+                throw new ArgumentNullException(nameof(principal));
             this.m_isUnrestricted = state == PermissionState.Unrestricted;
             this.m_policyId = policyId;
             this.m_principal = principal;

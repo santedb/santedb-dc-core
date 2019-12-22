@@ -225,11 +225,12 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                     // Ignore restoration
-                    retVal.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.Add(new AppSettingKeyValuePair()
-                    {
-                        Key = "ignore.restore",
-                        Value = "true"
-                    });
+                    if (retVal.ConfigurationManager.GetAppSetting("ignore.restore") == null)
+                        retVal.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.Add(new AppSettingKeyValuePair()
+                        {
+                            Key = "ignore.restore",
+                            Value = "true"
+                        });
 
                     // Add tracers
                     retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
@@ -241,8 +242,9 @@ namespace SanteDB.DisconnectedClient.UI
                     var configuredApplets = retVal.Configuration.GetSection<AppletConfigurationSection>().Applets;
 
                     var appletService = retVal.GetService<IAppletManagerService>();
+                    var updateService = retVal.GetService<IUpdateManager>();
 
-                    foreach (var appletInfo in configuredApplets)// Directory.GetFiles(this.m_configuration.GetSection<AppletConfigurationSection>().AppletDirectory)) {
+                    foreach (var appletInfo in configuredApplets.ToArray())// Directory.GetFiles(this.m_configuration.GetSection<AppletConfigurationSection>().AppletDirectory)) {
                         try
                         {
                             retVal.m_tracer.TraceInfo("Loading applet {0}", appletInfo);
@@ -267,9 +269,19 @@ namespace SanteDB.DisconnectedClient.UI
                         {
                             if (retVal.Confirm(String.Format(Strings.err_applet_corrupt_reinstall, appletInfo.Id)))
                             {
+
                                 String appletPath = Path.Combine(retVal.Configuration.GetSection<AppletConfigurationSection>().AppletDirectory, appletInfo.Id);
                                 if (File.Exists(appletPath))
                                     File.Delete(appletPath);
+                                try
+                                {
+                                    configuredApplets.Remove(appletInfo);
+                                    updateService.Install(appletInfo.Id);
+                                }
+                                catch
+                                {
+                                    retVal.Alert(String.Format(Strings.err_updateFailed));
+                                }
                             }
                             else
                             {
@@ -313,7 +325,7 @@ namespace SanteDB.DisconnectedClient.UI
                         }
 
                     // Start daemons
-                    ApplicationContext.Current.GetService<IUpdateManager>().AutoUpdate();
+                    updateService.AutoUpdate();
                     retVal.GetService<IThreadPoolService>().QueueUserWorkItem(o => { retVal.Start(); });
 
                     //retVal.Start();

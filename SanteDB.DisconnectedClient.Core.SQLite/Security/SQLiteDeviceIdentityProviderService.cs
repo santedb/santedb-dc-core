@@ -163,7 +163,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         // Create the principal
                         retVal = new SQLitePrincipal(new SQLiteDeviceIdentity(dbd.PublicId, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), new string[] { });
 
-                        ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.LoginAsService);
+                        ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.LoginAsService, retVal);
 
                     }
                 }
@@ -194,7 +194,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
                 if (deviceName != principal.Identity.Name)
-                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -226,7 +226,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
             try
             {
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();

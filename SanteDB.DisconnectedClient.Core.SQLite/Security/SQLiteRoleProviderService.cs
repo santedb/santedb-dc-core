@@ -65,7 +65,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             // Demand local admin
             try
             {
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
                 var conn = this.CreateConnection();
@@ -122,7 +122,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new ArgumentNullException(nameof(roleNames));
 
                 // Demand local admin
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
                 var conn = this.CreateConnection();
@@ -166,7 +166,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 // Demand local admin
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
                 var conn = this.CreateConnection();
@@ -259,7 +259,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new ArgumentNullException(nameof(roleNames));
 
                 // Demand local admin
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
                 var conn = this.CreateConnection();
