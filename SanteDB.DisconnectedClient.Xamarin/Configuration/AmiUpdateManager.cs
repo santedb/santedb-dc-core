@@ -17,12 +17,14 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Api.Security;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.AMI.Applet;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
@@ -36,6 +38,7 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Principal;
 
@@ -56,6 +59,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         private IPrincipal m_cachedCredential = null;
 
         private bool m_checkedForUpdates = false;
+
+        private AppletConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().Configuration.GetSection<AppletConfigurationSection>();
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(AmiUpdateManager));
@@ -107,7 +112,21 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                 {
                     var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                     amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
-                    return amiClient.StatUpdate(packageId);
+
+                    if (String.IsNullOrEmpty(this.m_configuration.AppletSolution))
+                        return amiClient.StatUpdate(packageId);
+                    else
+                    {
+                        var headers = amiClient.Client.Head($"AppletSolution/{this.m_configuration.AppletSolution}/applet/{packageId}");
+                        headers.TryGetValue("X-SanteDB-PakID", out string packId);
+                        headers.TryGetValue("ETag", out string versionKey);
+
+                        return new AppletInfo()
+                        {
+                            Id = packageId,
+                            Version = versionKey
+                        };
+                    }
                 }
                 else
                     return null;
@@ -133,13 +152,25 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                     amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
                     amiClient.Client.ProgressChanged += (o, e) => ApplicationContext.Current.SetProgress(String.Format(Strings.locale_downloading, packageId), e.Progress);
                     amiClient.Client.Description.Endpoint[0].Timeout = 30000;
+
                     // Fetch the applet package
-                    using (var ms = amiClient.DownloadApplet(packageId))
+                    if (String.IsNullOrEmpty(this.m_configuration.AppletSolution))
+                        using (var ms = amiClient.DownloadApplet(packageId))
+                        {
+                            var package = AppletPackage.Load(ms);
+                            this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
+                            ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
+                            // ApplicationContext.Current.Exit(); // restart
+                        }
+                    else
                     {
-                        var package = AppletPackage.Load(ms);
-                        this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
-                        ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
-                        // ApplicationContext.Current.Exit(); // restart
+                        using (var ms = new MemoryStream(amiClient.Client.Get($"AppletSolution/{this.m_configuration.AppletSolution}/applet/{packageId}")))
+                        {
+                            var package = AppletPackage.Load(ms);
+                            this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
+                            ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
+                            // ApplicationContext.Current.Exit(); // restart
+                        }
                     }
                 }
                 else
@@ -169,10 +200,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                     amiClient.Client.Description.Endpoint[0].Timeout = 10000;
                     if (amiClient.Ping())
                     {
-                        var solution = ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletSolution;
+                        var solution = this.m_configuration.AppletSolution;
                         IEnumerable<AppletManifestInfo> infos = null;
                         if (!String.IsNullOrEmpty(solution))
-                            infos = amiClient.GetAppletSolution(solution).Include;
+                        {
+                            infos = amiClient.Client.Get<AmiCollection>($"AppletSolution/{solution}/applet").CollectionItem.OfType<AppletManifestInfo>();
+                        }
                         else
                             infos = amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>();
 
@@ -182,7 +215,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                             var installed = ApplicationContext.Current.GetService<IAppletManagerService>().GetApplet(i.AppletInfo.Id);
                             if (installed == null ||
                                 new Version(installed.Info.Version) < new Version(i.AppletInfo.Version) &&
-                                ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets &&
+                                this.m_configuration.AutoUpdateApplets &&
                                 ApplicationContext.Current.Confirm(String.Format(Strings.locale_upgradeConfirm, i.AppletInfo.Names[0].Value, i.AppletInfo.Version, installed.Info.Version)))
                                 this.Install(i.AppletInfo.Id);
                         }
@@ -194,6 +227,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                 };
             this.m_checkedForUpdates = true;
         }
+
         /// <summary>
         /// Application startup
         /// </summary>

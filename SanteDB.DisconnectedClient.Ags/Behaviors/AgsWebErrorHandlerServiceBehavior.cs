@@ -21,6 +21,7 @@ using RestSrvr;
 using RestSrvr.Message;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Core;
 using System;
@@ -103,6 +104,9 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         response.Body = new MemoryStream(Encoding.UTF8.GetBytes(errRsp));
                     }
                 }
+
+                AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
+
                 return true;
             }
             catch (Exception e)

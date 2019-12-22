@@ -20,6 +20,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Model;
+using SanteDB.DisconnectedClient.Core.Synchronization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         {
             this.SynchronizationResources = new List<SynchronizationResource>();
             this.SubscribeTo = new List<string>();
+            this.ForbiddenResouces = new List<SynchronizationForbidConfiguration>();
         }
 
         /// <summary>
@@ -97,6 +99,54 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         [XmlElement("safePatchOnly"), JsonProperty("safePatch")]
         public bool SafePatchOnly { get; set; }
+
+
+        /// <summary>
+        /// Resources which are forbidden from being sychronized
+        /// </summary>
+        [XmlArray("forbidSync"), XmlArrayItem("add")]
+        public List<SynchronizationForbidConfiguration> ForbiddenResouces { get; set; }
+
+    }
+
+    /// <summary>
+    /// Resources which are forbidden from sync
+    /// </summary>
+    [XmlType(nameof(SynchronizationForbidConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    public class SynchronizationForbidConfiguration
+    {
+
+
+        /// <summary>
+        /// Forbid ctor for serialization
+        /// </summary>
+        public SynchronizationForbidConfiguration()
+        {
+
+        }
+
+        /// <summary>
+        /// Forbid ctor
+        /// </summary>
+        /// <param name="op"></param>
+        /// <param name="name"></param>
+        public SynchronizationForbidConfiguration(SynchronizationOperationType op, String name)
+        {
+            this.Operations = op;
+            this.ResourceName = name;
+        }
+
+        /// <summary>
+        /// Forbidden operations
+        /// </summary>
+        [XmlAttribute("op")]
+        public SynchronizationOperationType Operations { get; set; }
+
+        /// <summary>
+        /// Forbidden resource type
+        /// </summary>
+        [XmlText]
+        public String ResourceName { get; set; }
     }
 
     /// <summary>

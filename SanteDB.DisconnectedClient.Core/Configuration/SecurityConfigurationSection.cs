@@ -172,34 +172,41 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
             set
             {
                 this.m_deviceSecret = value;
-
-                if (!String.IsNullOrEmpty(value))
+                try
                 {
-                    if (this.PlainTextSecret)
-                        this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
-                    else
+                    if (!String.IsNullOrEmpty(value))
                     {
-                        var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
-                        if (cryptoService != null)
+                        if (this.PlainTextSecret)
+                            this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
+                        else
                         {
-                            if (ApplicationContext.Current.GetCurrentContextSecurityKey() != null)
+                            var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
+                            if (cryptoService != null)
                             {
-                                var iv = cryptoService.GenerateIV();
-                                var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(value), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
-                                byte[] b = new byte[iv.Length + res.Length];
-                                Array.Copy(iv, b, iv.Length);
-                                Array.Copy(res, 0, b, iv.Length, res.Length);
-                                this.DeviceSecretXml = b;
+                                if (ApplicationContext.Current.GetCurrentContextSecurityKey() != null)
+                                {
+                                    var iv = cryptoService.GenerateIV();
+                                    var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(value), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
+                                    byte[] b = new byte[iv.Length + res.Length];
+                                    Array.Copy(iv, b, iv.Length);
+                                    Array.Copy(res, 0, b, iv.Length, res.Length);
+                                    this.DeviceSecretXml = b;
+                                }
+                                else
+                                    this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
                             }
                             else
                                 this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
                         }
-                        else
-                            this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
                     }
+                    else
+                        this.DeviceSecretXml = null;
                 }
-                else
-                    this.DeviceSecretXml = null;
+                catch {
+                    this.PlainTextSecret = true;
+                    this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
+
+                }
             }
         }
 
@@ -248,38 +255,47 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
             }
             set
             {
-                this.m_applicationSecret = value;
-
-                if (!String.IsNullOrEmpty(value))
+                try
                 {
-                    if (this.PlainTextSecret)
-                        this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
-                    else
+                    this.m_applicationSecret = value;
+
+                    if (!String.IsNullOrEmpty(value))
                     {
-                        if (!String.IsNullOrEmpty(value))
+                        if (this.PlainTextSecret)
+                            this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
+                        else
                         {
-                            var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
-                            if (cryptoService != null)
+                            if (!String.IsNullOrEmpty(value))
                             {
-                                if (ApplicationContext.Current.GetCurrentContextSecurityKey() != null)
+                                var cryptoService = ApplicationContext.Current.GetService<ISymmetricCryptographicProvider>();
+                                if (cryptoService != null)
                                 {
-                                    var iv = cryptoService.GenerateIV();
-                                    var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(value), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
-                                    byte[] b = new byte[iv.Length + res.Length];
-                                    Array.Copy(iv, b, iv.Length);
-                                    Array.Copy(res, 0, b, iv.Length, res.Length);
-                                    this.DeviceSecretXml = b;
+                                    if (ApplicationContext.Current.GetCurrentContextSecurityKey() != null)
+                                    {
+                                        var iv = cryptoService.GenerateIV();
+                                        var res = cryptoService.Encrypt(Encoding.UTF8.GetBytes(value), ApplicationContext.Current.GetCurrentContextSecurityKey(), iv);
+                                        byte[] b = new byte[iv.Length + res.Length];
+                                        Array.Copy(iv, b, iv.Length);
+                                        Array.Copy(res, 0, b, iv.Length, res.Length);
+                                        this.DeviceSecretXml = b;
+                                    }
+                                    else
+                                        this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
                                 }
                                 else
                                     this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
                             }
-                            else
-                                this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
                         }
                     }
+                    else
+                        this.ApplicationSecretXml = null;
                 }
-                else
-                    this.ApplicationSecretXml = null;
+                catch {
+                    this.PlainTextSecret = true;
+                    this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
+
+                }
+
             }
         }
 

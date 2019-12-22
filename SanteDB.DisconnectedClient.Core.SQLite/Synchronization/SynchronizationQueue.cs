@@ -17,9 +17,13 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -100,6 +104,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         where TQueueEntry : SynchronizationQueueEntry, new()
     {
 
+        // Configuration
+        private SynchronizationConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>();
+
         // Get the tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SynchronizationQueue<TQueueEntry>));
 
@@ -158,6 +165,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         public TQueueEntry Enqueue(IdentifiedData data, SynchronizationOperationType operation)
         {
 
+            // Default SanteDB policy prevents 
             // Serialize object
             TQueueEntry queueEntry = new TQueueEntry()
             {
@@ -443,6 +451,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// <returns>The queue item</returns>
         ISynchronizationQueueEntry ISynchronizationQueue.Enqueue(IdentifiedData data, SynchronizationOperationType operation)
         {
+            // SanteDB Policy prevents certain dangerous items from flowing to the server from clients
+            if(data is Bundle)
+            {
+                var bund = data as Bundle;
+                bund.Item.RemoveAll(i => this.m_configuration.ForbiddenResouces.Any(o => o.Operations.HasFlag(operation) && o.ResourceName == data.Type));
+                data = bund;
+            }
+            else if (this.m_configuration.ForbiddenResouces.Any(o => o.Operations.HasFlag(operation) && o.ResourceName == data.Type))
+            {
+                this.m_tracer.TraceWarning("Ignoring enqueue operation for forbidden resource {0}", data);
+                return null;
+            }
             return this.Enqueue(data, operation);
         }
 

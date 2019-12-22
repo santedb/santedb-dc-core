@@ -39,6 +39,10 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <summary>
         /// Operation represents an obsolete
         /// </summary>
-        Obsolete = 3
+        Obsolete = 4,
+        /// <summary>
+        /// All actions
+        /// </summary>
+        All = Insert | Update | Obsolete
     }
 }

@@ -22,10 +22,12 @@ using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.Rest.Common.Fault;
 using SanteDB.Rest.Common.Serialization;
 using System;
+using System.Linq;
 using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
@@ -93,6 +95,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
 
             RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
+            AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
             return true;
         }
     }

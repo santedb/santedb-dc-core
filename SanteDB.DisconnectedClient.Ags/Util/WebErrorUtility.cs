@@ -57,17 +57,12 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                     // Ask the user to elevate themselves
                     var authHeader = $"Bearer realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error_code=\"insufficient_scope\" scope=\"{pve.PolicyId}\"";
                     if (enableBehavior)
-                    {
-                        AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, authHeader);
                         RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", authHeader);
-                    }
                     
                     return 401;
                 }
                 else
                 {
-                    if (enableBehavior)
-                        AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, "HTTP-403");
                     return 403;
                 }
             }
@@ -77,7 +72,6 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                 if (enableBehavior)
                 {
                     var authHeader = $"Bearer realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error=\"invalid_token\" error_description=\"{error.Message}\"";
-                    AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, authHeader);
                     RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", authHeader);
                 }
                 return 401;
@@ -85,8 +79,6 @@ namespace SanteDB.DisconnectedClient.Ags.Util
             }
             else if (error is SecurityException)
             {
-                if (enableBehavior)
-                    AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, "HTTP-403");
                 return 403;
             }
             else if (error is LimitExceededException)
@@ -100,8 +92,6 @@ namespace SanteDB.DisconnectedClient.Ags.Util
             }
             else if (error is UnauthorizedAccessException)
             {
-                if (enableBehavior)
-                    AuditUtil.AuditRestrictedFunction(error, RestOperationContext.Current.IncomingRequest.Url, "HTTP-403");
                 return 403;
             }
             else if (error is FaultException)

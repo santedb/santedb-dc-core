@@ -33,6 +33,7 @@ using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.BIS;
 using SanteDB.Rest.Common.Behavior;
+using SanteDB.Rest.Common.Behaviors;
 using SanteDB.Rest.HDSI;
 using SanteDB.Rest.RISI;
 using System;
@@ -102,6 +103,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
             var endpointBehaviors = new List<AgsBehaviorConfiguration>()
             {
+                new AgsBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior)),
                 new AgsBehaviorConfiguration(typeof(AgsSerializationEndpointBehavior)),
 #if DEBUG
                 new AgsBehaviorConfiguration(typeof(MessageLoggingEndpointBehavior)),
