@@ -132,7 +132,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
                     DbSecurityDevice dbd = connection.Table<DbSecurityDevice>().FirstOrDefault(o => o.PublicId.ToLower() == deviceId.ToLower());
                     if (dbd == null)
-                        throw new SecurityException(Strings.locale_invalidUserNamePassword);
+                        throw new SecurityException(Strings.locale_authenticationFailure);
                     else if (config?.MaxInvalidLogins.HasValue == true && dbd.Lockout.HasValue && dbd.Lockout > DateTime.Now)
                         throw new SecurityException(Strings.locale_accountLocked);
                     else if (dbd.ObsoletionTime != null)
@@ -141,7 +141,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     {
                         dbd.InvalidAuthAttempts++;
                         connection.Update(dbd);
-                        throw new SecurityException(Strings.locale_invalidUserNamePassword);
+                        throw new SecurityException(Strings.locale_authenticationFailure);
                     }
                     else if (config?.MaxInvalidLogins.HasValue == true && dbd.InvalidAuthAttempts > config?.MaxInvalidLogins)
                     { //s TODO: Make this configurable
