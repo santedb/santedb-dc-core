@@ -54,6 +54,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(LocalAppletManagerService));
 
+        public event EventHandler Changed;
+
         /// <summary>
         /// Local applet manager ctor
         /// </summary>
