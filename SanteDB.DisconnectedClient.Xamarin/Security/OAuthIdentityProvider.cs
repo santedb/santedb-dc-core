@@ -166,7 +166,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             };
 
                             // Invoke
-                            if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                            if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                             {
                                 restClient.Description.Endpoint[0].Timeout = 5000;
                                 restClient.Invoke<Object, Object>("PING", "/", null, null);
