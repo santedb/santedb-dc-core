@@ -100,7 +100,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
             // Write asset
-            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
+            {
+                { "csp-nonce", BitConverter.ToString(ApplicationContext.Current.ExecutionUuid.ToByteArray()).Replace("-","") }
+            });
             return new MemoryStream(content);
         }
     }
