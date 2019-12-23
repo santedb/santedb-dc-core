@@ -174,7 +174,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             }
             catch (Exception ex)
             {
-                this.m_tracer.TraceError("Error establishing device session: {0}", ex);
+                this.m_tracer.TraceError("Error establishing device session ({1}): {0}", ex, deviceSecret);
                 this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(deviceId, retVal, false));
 
                 throw;

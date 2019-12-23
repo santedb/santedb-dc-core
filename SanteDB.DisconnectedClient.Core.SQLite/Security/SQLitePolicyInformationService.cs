@@ -252,7 +252,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                    var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM entity_security_policy INNER JOIN security_policy ON (security_policy.uuid = entity_security_policy.policy_id) WHERE ent_id = ?",
+                    var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM entity_security_policy INNER JOIN security_policy ON (security_policy.uuid = entity_security_policy.policy_id) WHERE entity_id = ?",
                         pEntity.Key).ToList();
                     return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                 }

@@ -58,15 +58,22 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
         /// </summary>
         protected virtual string GetBackupDirectory(BackupMedia media)
         {
+            String retVal = String.Empty;
             switch (media)
             {
                 case BackupMedia.Private:
-                    return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    retVal = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    break;
                 case BackupMedia.Public:
-                    return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                    retVal =  Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                    // Sometimes my documents isn't available
+                    if (String.IsNullOrEmpty(retVal))
+                        retVal = Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments);
+                    break;
                 default:
                     throw new PlatformNotSupportedException("Don't support external media on this platform");
             }
+            return retVal;
         }
 
         /// <summary>
@@ -75,6 +82,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
         private string GetLastBackup(BackupMedia media)
         {
             var directoryName = this.GetBackupDirectory(media);
+            this.m_tracer.TraceInfo("Checking {0} for backups...", directoryName);
+            System.Diagnostics.Trace.TraceInformation(directoryName);
             return Directory.GetFiles(directoryName, "*.sdb.tar.gz").OrderByDescending(o => o).FirstOrDefault();
 
         }
