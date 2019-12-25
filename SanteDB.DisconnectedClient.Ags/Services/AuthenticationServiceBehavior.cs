@@ -38,6 +38,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Text;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -143,10 +144,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 var lanugageCode = retVal?.UserEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode;
 
-                CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
-
                 if (lanugageCode != null)
-                    CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(lanugageCode.Trim());
+                {
+                    Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
+                    claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, lanugageCode.Trim()));
+                }
 
                 // Set the session 
                 //if (!Boolean.Parse(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpUserAccessControlPrompt] ?? "false")) // Requesting all access so we need to send back a session ID :)

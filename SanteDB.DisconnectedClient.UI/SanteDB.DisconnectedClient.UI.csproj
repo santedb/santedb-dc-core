@@ -50,9 +50,6 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MohawkCollege.Util.Console.Parameters">
-      <HintPath>..\Solution Items\MohawkCollege.Util.Console.Parameters.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Serialization" />
@@ -63,7 +60,6 @@
     <Compile Include="DcAppletManagerService.cs" />
     <Compile Include="DcApplicationContext.cs" />
     <Compile Include="DcConfigurationManager.cs" />
-    <Compile Include="ConsoleParameters.cs" />
     <Compile Include="IDialogProvider.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

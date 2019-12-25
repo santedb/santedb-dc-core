@@ -103,6 +103,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
             var endpointBehaviors = new List<AgsBehaviorConfiguration>()
             {
+                new AgsBehaviorConfiguration(typeof(AcceptLanguageEndpointBehavior)),
                 new AgsBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior)),
                 new AgsBehaviorConfiguration(typeof(AgsSerializationEndpointBehavior)),
 #if DEBUG

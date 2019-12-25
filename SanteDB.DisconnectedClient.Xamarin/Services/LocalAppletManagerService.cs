@@ -30,6 +30,7 @@ using SanteDB.DisconnectedClient.i18n;
 using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -43,7 +44,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
     /// <summary>
     /// File based applet manager
     /// </summary>
-    public class LocalAppletManagerService : IAppletManagerService
+    public class LocalAppletManagerService : IAppletManagerService, IAppletSolutionManagerService
     {
         // Applet collection
         protected AppletCollection m_appletCollection = new AppletCollection();
@@ -54,6 +55,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(LocalAppletManagerService));
 
+        // This collection has changed
         public event EventHandler Changed;
 
         /// <summary>
@@ -63,6 +65,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
         {
             this.m_appletCollection = new AppletCollection();
             this.m_readonlyAppletCollection = this.m_appletCollection.AsReadonly();
+            this.m_readonlyAppletCollection.CollectionChanged += (o, e) => this.Changed?.Invoke(o, e);
 
         }
 
@@ -77,12 +80,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             }
         }
 
+        public IEnumerable<AppletSolution> Solutions => throw new NotImplementedException();
+
         /// <summary>
         /// Get the specified package data
         /// </summary>
         public byte[] GetPackage(String appletId)
         {
-            throw new NotSupportedException();
+            return null;
         }
 
 
@@ -392,5 +397,45 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             return true;
         }
 
+        /// <summary>
+        /// Gets applets for the solution
+        /// </summary>
+        public ReadonlyAppletCollection GetApplets(string solutionId)
+        {
+            if (String.IsNullOrEmpty(solutionId))
+                return this.m_readonlyAppletCollection;
+            else
+                throw new KeyNotFoundException($"Solution {solutionId} not found");
+        }
+
+        /// <summary>
+        /// Install a applet solution
+        /// </summary>
+        public bool Install(AppletSolution solution, bool isUpgrade = false)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Get the specified applet
+        /// </summary>
+        public AppletManifest GetApplet(string solutionId, string appletId)
+        {
+            if (String.IsNullOrEmpty(solutionId))
+                return this.GetApplet(appletId);
+            else
+                throw new KeyNotFoundException($"Applet {solutionId}/{appletId} not found");
+        }
+
+        /// <summary>
+        /// Get the specified package contents
+        /// </summary>
+        public byte[] GetPackage(string solutionId, string appletId)
+        {
+            if (String.IsNullOrEmpty(solutionId))
+                return this.GetPackage(appletId);
+            else
+                throw new KeyNotFoundException($"Applet {solutionId}/{appletId} not found");
+        }
     }
 }

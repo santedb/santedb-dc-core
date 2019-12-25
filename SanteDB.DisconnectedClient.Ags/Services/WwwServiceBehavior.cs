@@ -102,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
             // Write asset
-            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
+            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset,  CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
             {
                 { "csp_nonce", RestOperationContext.Current.ServiceEndpoint.Behaviors.OfType<SecurityPolicyHeadersBehavior>().FirstOrDefault()?.Nonce },
 #if DEBUG

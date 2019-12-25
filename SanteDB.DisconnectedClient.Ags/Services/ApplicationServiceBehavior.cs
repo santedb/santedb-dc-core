@@ -76,8 +76,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         sw.WriteLine("SanteDB = SanteDB || {}");
                         sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
                         sw.WriteLine("SanteDB.UserInterface.states = [");
+
+                        IEnumerable<AppletAsset> viewStates = appletService.Applets.ViewStateAssets.Select(o => new { Asset = o, Html = (o.Content ?? appletService.Applets.Resolver?.Invoke(o)) as AppletAssetHtml }).GroupBy(o => o.Html.ViewState.Name).Select(g => g.OrderByDescending(o => o.Html.ViewState.Priority).First().Asset);
+
                         // Collect routes
-                        foreach (var itm in appletService.Applets.ViewStateAssets)
+                        foreach (var itm in viewStates)
                         {
                             var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
                             var viewState = htmlContent.ViewState;
@@ -127,7 +130,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             return retVal;
 
         }
-
+       
         /// <summary>
         /// Perform an update
         /// </summary>
