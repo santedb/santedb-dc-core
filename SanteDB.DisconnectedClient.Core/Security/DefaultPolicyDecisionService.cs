@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         public String ServiceName => "Default Policy Decision Service";
 
         // Policy cache
-        private Dictionary<String, Dictionary<String, PolicyGrantType>> m_policyCache = new Dictionary<string, Dictionary<string, PolicyGrantType>>();
+        private Dictionary<String, Dictionary<String, dynamic>> m_policyCache = new Dictionary<string, Dictionary<string, dynamic>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.PolicyDecisionService"/> class.
@@ -82,7 +82,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// </summary>
         public PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
         {
-            Dictionary<String, PolicyGrantType> grants = null;
+            Dictionary<String, dynamic> grants = null;
             PolicyGrantType rule;
 
             if (principal == null)
@@ -94,9 +94,12 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 throw new ArgumentNullException(nameof(policyId));
             }
             else if (this.m_policyCache.TryGetValue(principal.Identity.Name, out grants) &&
-                grants.TryGetValue(policyId, out rule))
+                grants.TryGetValue(policyId, out dynamic data))
             {
-                return rule;
+                if (data.Time.Subtract(DateTime.Now).TotalSeconds > 120)
+                    grants.Remove(policyId);
+                else
+                    return data.Rule;
             }
 
             // Can we make this decision based on the claims?
@@ -154,13 +157,13 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
                 if (!this.m_policyCache.ContainsKey(principal.Identity.Name))
                 {
-                    grants = new Dictionary<string, PolicyGrantType>();
+                    grants = new Dictionary<string, dynamic>();
                     this.m_policyCache.Add(principal.Identity.Name, grants);
                 }
                 else if (grants == null)
                     grants = this.m_policyCache[principal.Identity.Name];
                 if (!grants.ContainsKey(policyId))
-                    grants.Add(policyId, rule);
+                    grants.Add(policyId, new { Rule = rule, Time = DateTime.Now });
             }
             return rule;
         }

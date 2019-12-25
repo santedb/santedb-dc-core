@@ -133,7 +133,6 @@
     <Compile Include="Security\Remote\AmiTwoFactorRequestService.cs" />
     <Compile Include="Security\SessionInfo.cs" />
     <Compile Include="Services\IDataConnectionManager.cs" />
-    <Compile Include="Services\IFreetextSearchService.cs" />
     <Compile Include="Services\Local\MemoryQueryPersistenceService.cs" />
     <Compile Include="Services\IntegrationQueryOptions.cs" />
     <Compile Include="Services\ISessionManagerService.cs" />

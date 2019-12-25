@@ -98,7 +98,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// <summary>
         /// Perform a search of the free-text index
         /// </summary>
-        public IEnumerable<TEntity> Search<TEntity>(string term, int offset, int? count, out int totalResults) where TEntity : Entity
+        public IEnumerable<TEntity> Search<TEntity>(string term, int offset, int? count, out int totalResults) where TEntity : IdentifiedData
         {
             // Tokenize on space
             var tokens = term.Split(' ');
@@ -108,7 +108,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// <summary>
         /// Search based on already tokenized string
         /// </summary>
-        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, int offset, int? count, out int totalResults) where TEntity : Entity
+        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, int offset, int? count, out int totalResults) where TEntity : IdentifiedData
         {
             try
             {

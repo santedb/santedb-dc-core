@@ -198,6 +198,14 @@ namespace SanteDB.DisconnectedClient.UI
             retVal.Sections.Add(appSection);
             retVal.Sections.Add(secSection);
             retVal.Sections.Add(serviceSection);
+            retVal.Sections.Add(new AuditAccountabilityConfigurationSection()
+            {
+                AuditFilters = new List<AuditFilterConfiguration>()
+                {
+                    new AuditFilterConfiguration(null, null, SanteDB.Core.Auditing.OutcomeIndicator.EpicFail | SanteDB.Core.Auditing.OutcomeIndicator.MinorFail | SanteDB.Core.Auditing.OutcomeIndicator.SeriousFail, true, true),
+                    new AuditFilterConfiguration(SanteDB.Core.Auditing.ActionType.Create | SanteDB.Core.Auditing.ActionType.Read | SanteDB.Core.Auditing.ActionType.Update | SanteDB.Core.Auditing.ActionType.Delete, null, null, true, true)
+                }
+            });
             retVal.Sections.Add(new DcDataConfigurationSection()
             {
                 MainDataSourceConnectionStringName = "santeDbData",

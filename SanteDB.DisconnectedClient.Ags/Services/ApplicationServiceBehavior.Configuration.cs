@@ -91,7 +91,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
         }
-        
+
         /// <summary>
         /// Get the configuration for the specified user
         /// </summary>
@@ -141,7 +141,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.CreateDevice).Demand();
                 new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction).Demand();
                 new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.UnrestrictedMetadata).Demand();
-                
+
                 // We're allowed to access server admin!!!! Yay!!!
                 // We're goin to conigure the realm settings now (all of them)
                 var serviceClientSection = XamarinApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
@@ -320,9 +320,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                             // Create the device entity 
                             var existingDeviceEntity = hdsiClient.Query<DeviceEntity>(o => o.SecurityDeviceKey == existingDeviceItem.Key.Value, 0, 1, false).Item.OfType<DeviceEntity>();
-                            foreach(var ede in existingDeviceEntity)
+                            foreach (var ede in existingDeviceEntity)
                                 hdsiClient.Obsolete(ede);
-                            
+
                             hdsiClient.Create(new DeviceEntity()
                             {
                                 SecurityDevice = existingDeviceItem,
@@ -414,7 +414,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                     else
                     {
-                       // ApplicationContext.Current.RemoveServiceProvider(typeof(HttpBasicIdentityProvider), true);
+                        // ApplicationContext.Current.RemoveServiceProvider(typeof(HttpBasicIdentityProvider), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(OAuthDeviceIdentityProvider), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(OAuthIdentityProvider), true);
 
@@ -553,8 +553,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                         // Configure the selected storage provider
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
-                            configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
-                            storageProvider.Configure(ApplicationContext.Current.Configuration, configuration.Data.Options);
+                        configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
+                        storageProvider.Configure(ApplicationContext.Current.Configuration, configuration.Data.Options);
 
                         // Remove all data persistence services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
@@ -584,17 +584,30 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletBiRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(InMemoryPivotProvider), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalBiRenderService), true);
-                        
+
                         // TODO: Register execution engine
                         // Sync settings
-                        var syncConfig = new SynchronizationConfigurationSection();
+                        var syncConfig = new SynchronizationConfigurationSection()
+                        {
+                            ForbiddenResouces = new List<SynchronizationForbidConfiguration>()
+                            {
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "DeviceEntity"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "ApplicationEntity"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "Concept"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "ConceptSet"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "Place"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "ReferenceTerm"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.All, "AssigningAuthority"),
+                                new SynchronizationForbidConfiguration(SynchronizationOperationType.Obsolete, "UserEntity")
+                            }
+                        };
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
                         var subscribeToIdentifiers = configuration.Synchronization.SubscribeTo;
                         foreach (var id in subscribeToIdentifiers)
                         {
                             IdentifiedData itm = null;
-                            switch(configuration.Synchronization.SubscribeType)
+                            switch (configuration.Synchronization.SubscribeType)
                             {
                                 case "AssigningAuthority":
                                     itm = ApplicationContext.Current.GetService<IRepositoryService<AssigningAuthority>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
@@ -735,9 +748,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 ApplicationContext.Current.ConfigurationManager.SetAppSetting(i.Key, i.Value);
 
             // Other sections
-            foreach(var oth in configuration.OtherSections)
+            foreach (var oth in configuration.OtherSections)
             {
-                if(ApplicationContext.Current.ConfigurationManager.Configuration.GetSection(oth.GetType()) != null)
+                if (ApplicationContext.Current.ConfigurationManager.Configuration.GetSection(oth.GetType()) != null)
                     ApplicationContext.Current.ConfigurationManager.Configuration.Sections.RemoveAll(o => o.GetType() == oth.GetType());
                 ApplicationContext.Current.ConfigurationManager.Configuration.AddSection(oth);
             }
