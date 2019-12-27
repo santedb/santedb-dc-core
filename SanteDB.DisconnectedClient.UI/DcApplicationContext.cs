@@ -326,7 +326,7 @@ namespace SanteDB.DisconnectedClient.UI
 
                     // Start daemons
                     updateService.AutoUpdate();
-                    retVal.GetService<IThreadPoolService>().QueueUserWorkItem(o => { retVal.Start(); });
+                    retVal.Start();
 
                     //retVal.Start();
 

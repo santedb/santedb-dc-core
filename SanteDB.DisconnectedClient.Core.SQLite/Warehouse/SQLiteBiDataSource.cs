@@ -139,7 +139,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                         (name.ToLower().Contains("date") ||
                         name.ToLower().Contains("time") ||
                         name.ToLower().Contains("utc")) && (value is int || value is long))
-                        value = new DateTime(value is int ? (int)value : (long)value, DateTimeKind.Utc);
+                        value = new DateTime(value is int ? (int)value : (long)value, DateTimeKind.Utc).ToLocalTime();
                     retVal.Add(name, value);
                 }
                 return retVal as ExpandoObject;

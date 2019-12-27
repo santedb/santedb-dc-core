@@ -41,7 +41,7 @@ namespace SanteDB.DisconnectedClient.Core.Caching
     /// <summary>
     /// Memory cache functions
     /// </summary>
-    public class MemoryCache : IDisposable
+    internal sealed class MemoryCache : IDisposable
     {
 
         // Entry table for the cache

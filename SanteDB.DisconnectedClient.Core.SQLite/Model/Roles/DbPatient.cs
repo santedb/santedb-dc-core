@@ -77,6 +77,30 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Roles
         }
 
         /// <summary>
+        /// Gets or sets the marital status code
+        /// </summary>
+        [Column("marital_status")]
+        public byte[] MaritalStatusUuid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the education level key
+        /// </summary>
+        [Column("education_level")]
+        public byte[] EducationLevelUuid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the living arrangement key
+        /// </summary>
+        [Column("living_arrangement")]
+        public byte[] LivingArrangementUuid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ethnic group code id
+        /// </summary>
+        [Column("ethnicity")]
+        public byte[] EthnicGroupCodeUuid { get; set; }
+
+        /// <summary>
         /// Query result for patient
         /// </summary>
         public class QueryResult : DbPerson.QueryResult

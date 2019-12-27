@@ -72,6 +72,8 @@ using SanteDB.Core.Data;
 using SanteDB.Core;
 using SanteDB.BI.Services.Impl;
 using SanteDB.Core.Model;
+using SanteDB.DisconnectedClient.Core.Security.Audit;
+using SanteDB.Core.Auditing;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -550,7 +552,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.RemoveServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
-
+                        ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
                         // Configure the selected storage provider
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
                         configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
@@ -601,6 +603,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 new SynchronizationForbidConfiguration(SynchronizationOperationType.Obsolete, "UserEntity")
                             }
                         };
+
+                        // Since we're running offline we don't want to audit certain events
+                        configuration.OtherSections.OfType<AuditAccountabilityConfigurationSection>().First().AuditFilters.AddRange(new AuditFilterConfiguration[]
+                            {
+                                // Never audit security alerts which are successful 
+                                new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.SecurityAlert | EventIdentifierType.UseOfRestrictedFunction | EventIdentifierType.NetworkEntry, OutcomeIndicator.Success, false, false),
+                            });
+
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
                         var subscribeToIdentifiers = configuration.Synchronization.SubscribeTo;

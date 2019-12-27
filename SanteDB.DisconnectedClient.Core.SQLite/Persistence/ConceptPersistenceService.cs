@@ -111,7 +111,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 foreach (var r in retVal.ReferenceTerms)
                     context.Connection.Insert(new DbConceptReferenceTerm()
                     {
-                        Key = Guid.NewGuid(),
+                        Key = r.Key ?? Guid.NewGuid(),
                         ConceptUuid = retVal.Key.Value.ToByteArray(),
                         ReferenceTermUuid = r.ReferenceTermKey.Value.ToByteArray(),
                         RelationshipTypeUuid = r.RelationshipTypeKey.Value.ToByteArray()
@@ -165,6 +165,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 foreach (var r in retVal.ReferenceTerms)
                     context.Connection.Insert(new DbConceptReferenceTerm()
                     {
+                        Key= r.Key ?? Guid.NewGuid(),
                         ConceptUuid = retVal.Key.Value.ToByteArray(),
                         ReferenceTermUuid = r.ReferenceTermKey.Value.ToByteArray(),
                         RelationshipTypeUuid = r.RelationshipTypeKey.Value.ToByteArray()

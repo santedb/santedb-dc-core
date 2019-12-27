@@ -80,7 +80,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             }
         }
 
-        public IEnumerable<AppletSolution> Solutions => throw new NotImplementedException();
+        public IEnumerable<AppletSolution> Solutions => new AppletSolution[0];
 
         /// <summary>
         /// Get the specified package data

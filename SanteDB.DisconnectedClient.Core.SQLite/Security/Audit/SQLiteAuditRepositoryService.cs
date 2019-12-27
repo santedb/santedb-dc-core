@@ -86,7 +86,8 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                         Id = "org.santedb.bi.dataSource.audit",
                         Name = "audit",
                         ConnectionString = "santeDbAudit",
-                        ProviderType = typeof(SQLiteBiDataSource)
+                        ProviderType = typeof(SQLiteBiDataSource),
+                        IsSystemObject = true
                     });
 
                 }

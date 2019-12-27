@@ -386,7 +386,8 @@ namespace SanteDB.DisconnectedClient.SQLite
                     Id = "org.santedb.bi.dataSource.main",
                     Name = "main",
                     ConnectionString = m_configuration.MainDataSourceConnectionStringName,
-                    ProviderType = typeof(SQLiteBiDataSource)
+                    ProviderType = typeof(SQLiteBiDataSource),
+                    IsSystemObject = true
                 });
 
             };

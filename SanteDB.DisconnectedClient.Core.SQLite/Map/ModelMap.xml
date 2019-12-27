@@ -279,6 +279,10 @@
        domainClass="SanteDB.DisconnectedClient.SQLite.Model.Roles.DbPatient, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="GenderConceptKey" domainName="GenderConceptUuid"/>
+    <property modelName="MaritalStatusKey" domainName="MaritalStatusUuid"/>
+    <property modelName="EducationLevelKey" domainName="EducationLevelUuid"/>
+    <property modelName="LivingArrangementKey" domainName="LivingArrangementUuid"/>
+    <property modelName="EthnicGroupCodeKey" domainName="EthnicGroupCodeUuid"/>
   </class>
 
   <!-- Material Maps -->

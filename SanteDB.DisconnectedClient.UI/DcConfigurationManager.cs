@@ -202,10 +202,13 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 AuditFilters = new List<AuditFilterConfiguration>()
                 {
+                    // Audit any failure - No matter which event
                     new AuditFilterConfiguration(null, null, SanteDB.Core.Auditing.OutcomeIndicator.EpicFail | SanteDB.Core.Auditing.OutcomeIndicator.MinorFail | SanteDB.Core.Auditing.OutcomeIndicator.SeriousFail, true, true),
+                    // Audit anything that creates, reads, or updates data
                     new AuditFilterConfiguration(SanteDB.Core.Auditing.ActionType.Create | SanteDB.Core.Auditing.ActionType.Read | SanteDB.Core.Auditing.ActionType.Update | SanteDB.Core.Auditing.ActionType.Delete, null, null, true, true)
                 }
             });
+
             retVal.Sections.Add(new DcDataConfigurationSection()
             {
                 MainDataSourceConnectionStringName = "santeDbData",
