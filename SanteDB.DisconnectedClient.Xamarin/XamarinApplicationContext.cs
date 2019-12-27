@@ -19,6 +19,7 @@
  */
 using RestSrvr;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
@@ -182,8 +183,9 @@ namespace SanteDB.DisconnectedClient.Xamarin
         {
 
             this.m_tracer.TraceInfo("Starting application context...");
+            
             // ADd metadata provider
-            this.AddServiceProvider(new AuditMetadataProvider());
+                this.AddServiceProvider(new AuditMetadataProvider());
 
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
             {
@@ -208,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Xamarin
                         try
                         {
                             var asmL = Assembly.ReflectionOnlyLoadFrom(f);
-                            if (asmL.GetExportedTypes().Any(o => o.GetInterfaces().Any(i => i.FullName == typeof(IStorageProvider).FullName)))
+                            if (asmL.GetExportedTypes().Any(o => o.GetInterfaces().Any(i => i.FullName == typeof(IDataConfigurationProvider).FullName)))
                             {
                                 this.m_tracer.TraceInfo("Loading {0}...", f);
                                 Assembly.LoadFile(f);

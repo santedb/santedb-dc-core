@@ -74,6 +74,7 @@ using SanteDB.BI.Services.Impl;
 using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.Core.Auditing;
+using SanteDB.DisconnectedClient.Ags.Configuration;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -553,6 +554,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
+                       
                         // Configure the selected storage provider
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
                         configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
@@ -765,6 +767,20 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 ApplicationContext.Current.ConfigurationManager.Configuration.AddSection(oth);
             }
             this.m_tracer.TraceInfo("Saving configuration options {0}", JsonConvert.SerializeObject(configuration));
+
+            // Re-binding of AGS endpoints?
+            var overrideBinding = configuration.Application.AppSettings.Find(o => o.Key == "http.bindAddress");
+            if(!String.IsNullOrEmpty(overrideBinding?.Value))
+            {
+                var currentAgs = ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>();
+                foreach (var svc in currentAgs.Services)
+                    foreach(var ep in svc.Endpoints)
+                    {
+                        var caddr = new Uri(ep.Address);
+                        ep.Address = new Uri($"{caddr.Scheme}://{overrideBinding.Value}{caddr.AbsolutePath}").ToString() ;
+                    }
+
+            }
             ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
             return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);

@@ -165,7 +165,8 @@ namespace SanteDB.DisconnectedClient.UI
                         throw;
                     }
 
-                retVal.Start();
+                retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o) => retVal.Start());
+
 
                 return true;
             }
@@ -326,7 +327,7 @@ namespace SanteDB.DisconnectedClient.UI
 
                     // Start daemons
                     updateService.AutoUpdate();
-                    retVal.Start();
+                    retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o)=> retVal.Start());
 
                     //retVal.Start();
 

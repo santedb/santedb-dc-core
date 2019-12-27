@@ -34,13 +34,21 @@ namespace SanteDB.DisconnectedClient.Xamarin.Data
     public static class StorageProviderUtil
     {
 
+        // Existing data providers
+        private static IEnumerable<IDataConfigurationProvider> m_existing;
+
         /// <summary>
         /// Gets providers for the specified platform
         /// </summary>
-        public static IEnumerable<IDataConfigurationProvider> GetProviders() => 
-                        ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
+        public static IEnumerable<IDataConfigurationProvider> GetProviders()
+        {
+            if(m_existing == null)
+                m_existing = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
                         .Where(o => typeof(IDataConfigurationProvider).IsAssignableFrom(o) && !o.GetTypeInfo().IsInterface && !o.GetTypeInfo().IsAbstract)
-                        .Select(t => Activator.CreateInstance(t) as IDataConfigurationProvider);
+                        .Select(t => Activator.CreateInstance(t) as IDataConfigurationProvider).ToArray();
+            return m_existing;
+        }
+                        
 
         /// <summary>
         /// Gets the specified storage provider

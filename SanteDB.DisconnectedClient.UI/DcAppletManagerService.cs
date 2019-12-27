@@ -27,6 +27,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using SanteDB.DisconnectedClient.Ags.Util;
 
 namespace SanteDB.DisconnectedClient.UI
 {
@@ -100,7 +101,7 @@ namespace SanteDB.DisconnectedClient.UI
                 tw.WriteLine("\tswitch(key) {");
                 foreach (var itm in this.Applets.GetStrings(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
                 {
-                    tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Key, itm.Value?.Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
+                    tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Key, itm.Value?.EncodeAscii().Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
                 }
                 tw.WriteLine("\t}");
                 tw.WriteLine("}");

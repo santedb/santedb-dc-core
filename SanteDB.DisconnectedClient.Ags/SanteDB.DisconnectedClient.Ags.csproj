@@ -71,6 +71,7 @@
     <Compile Include="Services\AuthenticationServiceBehavior.cs" />
     <Compile Include="Services\HdsiServiceBehavior.cs" />
     <Compile Include="Services\RisiServiceBehavior.cs" />
+    <Compile Include="Util\ExtensionMethods.cs" />
     <Compile Include="Util\WebErrorUtility.cs" />
   </ItemGroup>
   <ItemGroup>
