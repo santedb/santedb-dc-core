@@ -58,6 +58,7 @@
     <Compile Include="Model\Concepts\DbReferenceTermName.cs" />
     <Compile Include="Persistence\ReferenceTermNamePersister.cs" />
     <Compile Include="Persistence\ReferenceTermPersistenceService.cs" />
+    <Compile Include="Search\SQLiteSearchIndexRefreshJob.cs" />
     <Compile Include="Security\Audit\Model\DbAuditMetadata.cs" />
     <Compile Include="Security\SQLiteDeviceIdentityProviderService.cs" />
     <Compile Include="SQLiteDataContext.cs" />

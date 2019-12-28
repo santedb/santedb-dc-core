@@ -185,7 +185,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// <summary>
         /// Force a retry on the conflicted queue item
         /// </summary>
-        [Put("/Queue/dead/{id}")]
+        [Post("/Queue/dead/{id}")]
         void Retry(int id);
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// <summary>
         /// Remove a queue item
         /// </summary>
-        [Delete("/Queue/{queueName}/{id}")]
+        [Delete("/Queue/{queueName}/confirm/{id}")]
         void DeleteQueueItem(String queueName, int id);
 
     }

@@ -51,7 +51,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var appletCollection = ApplicationContext.Current.GetService<IAppletManagerService>().Applets;
             var httpq = NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
             var queryExpression = QueryExpressionParser.BuildLinqExpression<AppletWidget>(httpq).Compile();
-            return appletCollection.WidgetAssets.Select(o=>(o.Content ??  appletCollection.Resolver(o)) as AppletWidget).Where(queryExpression).ToList();
+            var retVal = appletCollection.WidgetAssets.Select(o => (o.Content ?? appletCollection.Resolver(o)) as AppletWidget).Where(queryExpression);
+            
+            // Now order by priority to get most preferred
+            return retVal.GroupBy(o=>o.Name).Select(o=>o.OrderByDescending(w=>w.Priority).First()).OrderBy(w=>w.Order).ToList();
         }
 
         /// <summary>
@@ -60,11 +63,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public Stream GetWidget(String widgetId)
         {
             var appletCollection = ApplicationContext.Current.GetService<IAppletManagerService>().Applets;
-            var widget = appletCollection.WidgetAssets.FirstOrDefault(o => ((o.Content ?? appletCollection.Resolver(o)) as AppletWidget).Name == widgetId);
-            if (widget == null)
+            var widget = appletCollection.WidgetAssets.Select(o => new { W = (o.Content ?? appletCollection.Resolver(o)) as AppletWidget, A = o }).Where(o=>o.W.Name == widgetId);
+
+            if (widget.Count() == 0)
                 throw new KeyNotFoundException(widgetId);
             else
-                return new MemoryStream(appletCollection.RenderAssetContent(widget, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+                return new MemoryStream(appletCollection.RenderAssetContent(widget.OrderByDescending(o=>o.W.Priority).First().A, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
 
         }
     }

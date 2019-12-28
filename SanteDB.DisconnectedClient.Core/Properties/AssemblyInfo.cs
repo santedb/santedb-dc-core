@@ -34,7 +34,7 @@ using System.Reflection;
 // The assembly version has the format "{Major}.{Minor}.{Build}.{Revision}".
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
-[assembly: AssemblyInformationalVersion("Halifax")]
+[assembly: AssemblyInformationalVersion("Iqaluit")]
 [assembly: AssemblyVersion("1.107.0.*")]
 [assembly: AssemblyFileVersion("1.107.0")]
 

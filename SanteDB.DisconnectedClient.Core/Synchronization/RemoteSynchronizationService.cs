@@ -399,7 +399,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                     var e = ex.InnerException;
                     this.m_tracer.TraceError("Error synchronizing {0} : {1} ", modelType, e);
                     var tickleService = ApplicationContext.Current.GetService<ITickleService>();
-                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, Strings.locale_downloadErrorBody));
+                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", modelType.Name)));
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), 0));
 
                     return 0;
@@ -409,7 +409,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                 {
                     this.m_tracer.TraceError("Error synchronizing {0} : {1} ", modelType, e);
                     var tickleService = ApplicationContext.Current.GetService<ITickleService>();
-                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, Strings.locale_downloadErrorBody));
+                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", modelType.Name)));
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), 0));
 
                     return 0;

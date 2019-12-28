@@ -75,6 +75,7 @@ using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.Core.Auditing;
 using SanteDB.DisconnectedClient.Ags.Configuration;
+using SanteDB.Core.Jobs;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -528,6 +529,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is ISecurityRepositoryService
                                 || o is ITwoFactorRequestService
                                 || o is IAuditRepositoryService
+                                || o is IJobManagerService
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
@@ -564,6 +566,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
+                                || o is IJobManagerService
                                 || o is ITwoFactorRequestService
                                 || o is IAuditRepositoryService
                                 || o is ISynchronizationService
@@ -576,6 +579,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiIntegrationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(LocalJobManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityRepository), true);

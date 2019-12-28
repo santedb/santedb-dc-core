@@ -18,6 +18,7 @@
  * Date: 2019-8-8
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
@@ -84,8 +85,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     conn.CreateTable<SearchTermEntity>();
                 } // release lock
 
-                // Perform an initial indexing
-                return ApplicationContext.Current.GetService<IFreetextSearchService>().Index();
+             
+                return true;
             }
             catch (Exception e)
             {

@@ -52,4 +52,4 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.107.0*")]
 [assembly: AssemblyVersion("1.107.0.0")]
 [assembly: AssemblyFileVersion("1.107.0.0")]
-[assembly: AssemblyInformationalVersion("Halifax")]
+[assembly: AssemblyInformationalVersion("Iqaluit")]

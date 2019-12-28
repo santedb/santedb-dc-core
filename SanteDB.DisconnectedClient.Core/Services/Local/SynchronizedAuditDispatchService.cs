@@ -200,12 +200,6 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
 
                             try
                             {
-                                // First, save the audit locally
-                                var ar = ApplicationContext.Current.GetService<IAuditRepositoryService>();
-                                if (ar == null)
-                                    throw new InvalidOperationException("!!SECURITY ALERT!! >> Cannot find audit repository");
-                                ad = ar.Insert(ad);
-
                                 lock (sendAudit)
                                     sendAudit.Audit.Add(ad);
                             }

@@ -293,15 +293,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 }, this.CreateConnection(context.Principal));
             }
 
-            if (count > 0)
-                queryStatement.Limit(count);
+            queryStatement.Limit(count);
             if (offset > 0)
-            {
-                if (count == 0)
-                    queryStatement.Limit(100).Offset(offset);
-                else
-                    queryStatement.Offset(offset);
-            }
+                queryStatement.Offset(offset);
 
             // Exec query
             var domainList = context.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).ToList();

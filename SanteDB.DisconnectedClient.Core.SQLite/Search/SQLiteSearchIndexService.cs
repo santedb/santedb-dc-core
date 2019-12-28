@@ -19,11 +19,13 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -96,19 +98,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         }
 
         /// <summary>
-        /// Perform a search of the free-text index
-        /// </summary>
-        public IEnumerable<TEntity> Search<TEntity>(string term, int offset, int? count, out int totalResults) where TEntity : IdentifiedData
-        {
-            // Tokenize on space
-            var tokens = term.Split(' ');
-            return this.Search<TEntity>(tokens, offset, count, out totalResults);
-        }
-
-        /// <summary>
         /// Search based on already tokenized string
         /// </summary>
-        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, int offset, int? count, out int totalResults) where TEntity : IdentifiedData
+        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData
         {
             try
             {
@@ -140,6 +132,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     queryBuilder.Remove(queryBuilder.Length - 11, 11);
                     queryBuilder.Append(")");
 
+                    
                     // Search now!
                     this.m_tracer.TraceVerbose("FREETEXT SEARCH: {0}", queryBuilder);
 
@@ -149,7 +142,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
                     totalResults = results.Count();
 
-                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal));
+                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal));
+
+                    // Sorting (well as best we can for FTS)
+                    if(orderBy.Length > 0)
+                    {
+                        var order = orderBy.First();
+                        if(order.SortOrder == SanteDB.Core.Model.Map.SortOrderType.OrderBy)
+                            retVal = retVal.OrderBy(order.SortProperty.Compile());
+                        else
+                            retVal = retVal.OrderByDescending(order.SortProperty.Compile());
+                    }
 
                     return retVal;
                 }
@@ -164,7 +167,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// <summary>
         /// Perform an index of the entity
         /// </summary>
-        private bool IndexEntity(params Entity[] entities)
+        internal bool IndexEntity(params Entity[] entities)
         {
             if (entities.Length == 0) return true;
 
@@ -229,7 +232,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// <summary>
         /// Perform an index of the entity
         /// </summary>
-        private bool DeleteEntity(Entity e)
+        internal bool DeleteEntity(Entity e)
         {
             var conn = this.CreateConnection();
             using (conn.Lock())
@@ -305,15 +308,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         bundlePersistence.Obsoleted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(doBundleIndex, e.Data);
                     }
 
-
-                    try
-                    {
-                        // Not Indexed
-                        if (ApplicationContext.Current.ConfigurationManager.GetAppSetting("santedb.mobile.core.search.lastIndex") == null)
-                            this.Index();
-                    }
-                    catch { }
-
+                    ApplicationContext.Current.GetService<IJobManagerService>().AddJob(new SQLiteSearchIndexRefreshJob(), new TimeSpan(0, 10, 0));
                     this.Started?.Invoke(this, EventArgs.Empty);
                 }
                 catch (Exception e)
@@ -337,52 +332,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
             return true;
         }
 
-        /// <summary>
-        /// Perform full index
-        /// </summary>
-        public bool Index()
-        {
-            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((o) =>
-            {
-                if (Monitor.TryEnter(this.m_lock))
-                    try
-                    {
-                        this.m_tracer.TraceInfo("Starting complete full-text indexing of the primary datastore");
-                        try
-                        {
-                            // Load all entities in database and index them
-                            int tr = 101, ofs = 0;
-                            var patientService = ApplicationContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
-                            Guid queryId = Guid.NewGuid();
-
-                            while (tr > ofs + 50)
-                            {
-
-                                if (patientService == null) break;
-                                var entities = patientService.Query(e => e.StatusConceptKey != StatusKeys.Obsolete, queryId, ofs, 50, out tr, AuthenticationContext.SystemPrincipal);
-
-                                // Index 
-                                this.IndexEntity(entities.ToArray());
-
-                                // Let user know the status
-                                ofs += 50;
-                                ApplicationContext.Current.SetProgress(Strings.locale_indexing, (float)ofs / tr);
-                            }
-                            if (patientService != null)
-                                ApplicationContext.Current.ConfigurationManager.SetAppSetting("santedb.mobile.core.search.lastIndex", DateTime.Now.ToString("o"));
-                        }
-                        catch (Exception e)
-                        {
-                            this.m_tracer.TraceError("Error indexing primary database: {0}", e);
-                            throw;
-                        }
-                    }
-                    finally
-                    {
-                        Monitor.Exit(this.m_lock);
-                    }
-            });
-            return true; // indexing is going to occur
-        }
+      
     }
 }
