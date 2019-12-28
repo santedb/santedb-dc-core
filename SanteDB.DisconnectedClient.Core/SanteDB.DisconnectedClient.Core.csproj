@@ -210,12 +210,12 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.107.0.0" />
-        <PackageReference Include="SanteDB.BI" Version="1.107.0.0" />
-        <PackageReference Include="SanteDB.Core.Api" Version="1.107.0.0" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.107.0.0" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.108.0.0" />
+        <PackageReference Include="SanteDB.BI" Version="1.108.0.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.108.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.108.0.0" />
         <PackageReference Include="SanteDB.Core.Model.AMI">
-          <Version>1.107.0.0</Version>
+          <Version>1.108.0.0</Version>
         </PackageReference>
       </ItemGroup>
     </Otherwise>
