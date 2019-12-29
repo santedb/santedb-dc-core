@@ -190,6 +190,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
         {
             // Check for updates
             if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+            {
                 try
                 {
                     ApplicationContext.Current.SetProgress(Strings.locale_updateCheck, 0.5f);
@@ -224,8 +225,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Configuration
                 catch (Exception ex)
                 {
                     this.m_tracer.TraceError("Error checking for updates: {0}", ex.Message);
-                };
-            this.m_checkedForUpdates = true;
+                }
+                this.m_checkedForUpdates = true;
+            }
+            else
+            {
+                this.m_tracer.TraceInfo("No network available, skipping update check");
+            }
+
         }
 
         /// <summary>

@@ -39,6 +39,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
+using SanteDB.Core.Model.DataTypes;
 
 namespace SanteDB.DisconnectedClient.Core.Services.Remote
 {
@@ -48,6 +49,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     public class RemoteSecurityRepository : AmiRepositoryBaseService,
         ISecurityRepositoryService,
         IRoleProviderService,
+        IPersistableQueryRepositoryService<AssigningAuthority>,
         IPersistableQueryRepositoryService<SecurityUser>,
         IPersistableQueryRepositoryService<SecurityApplication>,
         IPersistableQueryRepositoryService<SecurityDevice>,
@@ -1302,6 +1304,113 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             catch (Exception e)
             {
                 throw new DataPersistenceException("Could not query applications", e);
+            }
+        }
+
+        /// <summary>
+        /// Find Specified assigning authorities
+        /// </summary>
+        IEnumerable<AssigningAuthority> IPersistableQueryRepositoryService<AssigningAuthority>.Find(Expression<Func<AssigningAuthority, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<AssigningAuthority>[] orderBy)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<AssigningAuthority>();
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not query assigning authorities", e);
+            }
+        }
+
+        /// <summary>
+        /// Get AA
+        /// </summary>
+        AssigningAuthority IRepositoryService<AssigningAuthority>.Get(Guid key)
+        {
+            return ((IRepositoryService<AssigningAuthority>)this).Get(key, Guid.Empty);
+        }
+
+        /// <summary>
+        /// Get assigning authority
+        /// </summary>
+        AssigningAuthority IRepositoryService<AssigningAuthority>.Get(Guid key, Guid versionKey)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                var retVal = this.m_client.Client.Get<AssigningAuthority>($"AssigningAuthority/{key}");
+                return retVal;
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not retrieve authority", e);
+            }
+        }
+
+        /// <summary>
+        /// Finds the specified assigning authority
+        /// </summary>
+        IEnumerable<AssigningAuthority> IRepositoryService<AssigningAuthority>.Find(Expression<Func<AssigningAuthority, bool>> query)
+        {
+            int tr = 0;
+            return ((IRepositoryService<AssigningAuthority>)this).Find(query, 0, null, out tr);
+        }
+
+        IEnumerable<AssigningAuthority> IRepositoryService<AssigningAuthority>.Find(Expression<Func<AssigningAuthority, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AssigningAuthority>[] orderBy)
+        {
+            return (this as IPersistableQueryRepositoryService<AssigningAuthority>).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
+        }
+
+        /// <summary>
+        /// Insert the specified data
+        /// </summary>
+        AssigningAuthority IRepositoryService<AssigningAuthority>.Insert(AssigningAuthority data)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                var retVal = this.m_client.CreateAssigningAuthority(data);
+                return retVal;
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not create application", e);
+            }
+        }
+
+        /// <summary>
+        /// Update assigning authority
+        /// </summary>
+        AssigningAuthority IRepositoryService<AssigningAuthority>.Save(AssigningAuthority data)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                var retVal = this.m_client.UpdateAssigningAuthority(data.Key.Value, data);
+                return retVal;
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not create authority", e);
+            }
+        }
+
+        /// <summary>
+        /// Obsolete the authority
+        /// </summary>
+        /// <returns></returns>
+        AssigningAuthority IRepositoryService<AssigningAuthority>.Obsolete(Guid key)
+        {
+            try
+            {
+                this.m_client.Client.Credentials = this.GetCredentials();
+                var retVal = this.m_client.DeleteAssigningAuthority(key);
+                return retVal;
+            }
+            catch (Exception e)
+            {
+                throw new DataPersistenceException("Could not delete authority", e);
             }
         }
     }

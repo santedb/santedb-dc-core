@@ -57,7 +57,6 @@ using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
 using SanteDB.DisconnectedClient.Xamarin.Http;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Messaging.AMI.Client;
-using SanteDB.Messaging.HDSI.Client;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
@@ -76,6 +75,7 @@ using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.Core.Auditing;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.Core.Jobs;
+using SanteDB.Messaging.HDSI.Client;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
