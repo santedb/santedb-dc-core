@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// Get all queues data
         /// </summary>
         /// <returns></returns>
-		[DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+		[DemandAttribute(PermissionPolicyIdentifiers.LoginAsService)]
         public Dictionary<String, int> GetQueue()
         {
             var queueManager = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
@@ -245,6 +245,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Retry the queue item
         /// </summary>
+        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public void Retry(int id)
         {
             var queueItem = this.GetQueueEntry("dead", id) as ISynchronizationQueueRetryEntry;
@@ -259,7 +260,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Synchronize the information now
         /// </summary>
-        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [DemandAttribute(PermissionPolicyIdentifiers.LoginAsService)]
         public void SynchronizeNow()
         {
             var queueService = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
@@ -312,7 +313,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Force re-sync of all queue
         /// </summary>
-        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [DemandAttribute(PermissionPolicyIdentifiers.LoginAsService)]
         public void RetryAll()
         {
             // Force resynchronization

@@ -189,8 +189,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         private void ProcessMenuItem(AppletMenu menu, List<MenuInformation> retVal, String context)
         {
             // TODO: Demand permission
+            var asset = ApplicationContext.Current.GetService<IAppletManagerService>().Applets.ResolveAsset(menu.Asset, menu.Manifest.Assets[0]);
+
             if (menu.Context != context || menu.Asset != null &&
-                !ApplicationContext.Current.GetService<IAppletManagerService>().Applets.ResolveAsset(menu.Asset, menu.Manifest.Assets[0])?.Policies?.Any(p => ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) == SanteDB.Core.Model.Security.PolicyGrantType.Deny) == false)
+                !asset?.Policies?.Any(p => ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) == SanteDB.Core.Model.Security.PolicyGrantType.Deny) == false)
                 return;
 
             // Get text for menu item
@@ -212,6 +214,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 foreach (var child in menu.Menus)
                     this.ProcessMenuItem(child, existing.Menu, context);
             }
+
         }
     }
 }

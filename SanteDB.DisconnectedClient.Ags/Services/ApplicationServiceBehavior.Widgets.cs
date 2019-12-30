@@ -19,10 +19,12 @@
  */
 using RestSrvr;
 using RestSrvr.Attributes;
+using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
@@ -51,10 +53,19 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var appletCollection = ApplicationContext.Current.GetService<IAppletManagerService>().Applets;
             var httpq = NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
             var queryExpression = QueryExpressionParser.BuildLinqExpression<AppletWidget>(httpq).Compile();
-            var retVal = appletCollection.WidgetAssets.Select(o => (o.Content ?? appletCollection.Resolver(o)) as AppletWidget).Where(queryExpression);
-            
+            var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
+            var retVal = appletCollection.WidgetAssets
+                .Where(o=>o.Policies?.Any(p=>pdp.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) != SanteDB.Core.Model.Security.PolicyGrantType.Grant) != true)
+                .Select(o => (o.Content ?? appletCollection.Resolver(o)) as AppletWidget)
+                .Where(queryExpression);
+
+            // Filter by permission
             // Now order by priority to get most preferred
-            return retVal.GroupBy(o=>o.Name).Select(o=>o.OrderByDescending(w=>w.Priority).First()).OrderBy(w=>w.Order).ToList();
+            return retVal
+                .GroupBy(o=>o.Name)
+                .Select(o=>o.OrderByDescending(w=>w.Priority).First())
+                .OrderBy(w=>w.Order)
+                .ToList();
         }
 
         /// <summary>
