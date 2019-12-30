@@ -80,7 +80,7 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                             Status = BiDefinitionStatus.Active,
                             Demands = new List<string>()
                                 {
-                                    PermissionPolicyIdentifiers.AccessAuditLog
+                                    PermissionPolicyIdentifiers.Login
                                 }
                         },
                         Id = "org.santedb.bi.dataSource.audit",
