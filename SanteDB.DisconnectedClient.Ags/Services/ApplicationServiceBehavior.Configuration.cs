@@ -227,8 +227,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 // Re-initialize the service providers
                 ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAssigningAuthorityService));
                 ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteSecurityRepository));
                 ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService));
                 ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService));
                 ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository));
                 ApplicationContext.Current.GetService<RemoteRepositoryService>().Start();
@@ -535,6 +537,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService), true);
+
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
@@ -674,6 +678,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             }));
                         }
 
+                        ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAssigningAuthorityService), true);
+
                         // Synchronization resources
                         syncConfig.SynchronizationResources.Add(new SynchronizationResource()
                         {
@@ -727,8 +733,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Audit retention.
             ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().AuditRetention = TimeSpan.Parse(configuration.Security.AuditRetentionXml);
 
-            if (configuration.Security.OnlySubscribedFacilities)
-                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().OnlySubscribedFacilities = true;
+            if (configuration.Security.RestrictLoginToFacilityUsers)
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().RestrictLoginToFacilityUsers = true;
+            if(configuration.Security.Facilities.Count > 0)
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities= configuration.Security.Facilities;
 
             // Proxy
             if (!String.IsNullOrEmpty(configuration.Network.ProxyAddress))

@@ -164,8 +164,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
             // Start job service
             this.Stopping?.Invoke(this, EventArgs.Empty);
 
-            foreach (var itm in this.m_jobs.OfType<IDisposable>())
-                itm.Dispose();
+            try
+            {
+                foreach (var itm in this.m_jobs?.OfType<IDisposable>())
+                    itm.Dispose();
+            }
+            catch { }
 
             this.m_jobs = null;
 

@@ -342,10 +342,15 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public TimeSpan AuditRetention { get; set; }
 
         /// <summary>
-        /// When true, only allow login from subscribed facilities
+        /// Restrict login to only listed facilities
         /// </summary>
-        [XmlElement("onlySubscribedAuth"), JsonProperty("onlySubscribedAuth")]
-        public bool OnlySubscribedFacilities { get; set; }
+        [XmlElement("restrictLogin"), JsonProperty("restrictLogin")]
+        public bool RestrictLoginToFacilityUsers { get; set; }
+        /// <summary>
+        /// When true, only allow login from this facility
+        /// </summary>
+        [XmlElement("facility"), JsonProperty("facility")]
+        public List<Guid> Facilities { get; set; }
 
         /// <summary>
         /// Local session length
