@@ -782,7 +782,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             // Re-binding of AGS endpoints?
             var overrideBinding = configuration.Application.AppSettings.Find(o => o.Key == "http.bindAddress");
-            if(!String.IsNullOrEmpty(overrideBinding?.Value))
+            if(ApplicationServiceContext.Current.HostType == SanteDBHostType.Gateway && !String.IsNullOrEmpty(overrideBinding?.Value))
             {
                 var currentAgs = ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>();
                 foreach (var svc in currentAgs.Services)
