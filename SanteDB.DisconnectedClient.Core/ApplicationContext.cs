@@ -275,7 +275,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Gets the host type
         /// </summary>
-        public SanteDBHostType HostType => SanteDBHostType.Client;
+        public virtual SanteDBHostType HostType => SanteDBHostType.Client;
         /// <summary>
         /// Gets the allowed synchronization modes
         /// </summary>
