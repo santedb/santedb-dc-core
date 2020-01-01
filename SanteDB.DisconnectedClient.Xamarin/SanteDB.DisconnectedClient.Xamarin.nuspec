@@ -23,5 +23,17 @@
       <dependency id="SharpCompress" version="0.24.0"/>
       <dependency id="SanteDB.DisconnectedClient.Core" version="1.112.0.0"/>
     </dependencies>
+    <references>
+      <group targetFramework="net45">
+        <reference file="SanteDB.DisconnectedClient.Xamarin.dll"/>
+      </group>
+      <group targetFramework="monoandroid">
+        <reference file="SanteDB.DisconnectedClient.Xamarin.dll"/>
+      </group>
+    </references>
   </metadata>
+  <files>
+    <file src="..\bin\$configuration$\SanteDB.DisconnectedClient.Xamarin.dll" target="lib\net45"/>
+    <file src="..\bin\$configuration$\SanteDB.DisconnectedClient.Xamarin.dll" target="lib\monoandroid"/>
+  </files>
 </package>
