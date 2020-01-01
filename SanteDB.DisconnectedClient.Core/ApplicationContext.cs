@@ -412,6 +412,7 @@ namespace SanteDB.DisconnectedClient.Core
         public void AddServiceProvider(Type serviceType, bool addToConfiguration)
         {
 
+            this.m_tracer.TraceInfo("Adding service provider {0}", serviceType.FullName);
             ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             if (!this.GetServices().Any(o => o.GetType() == serviceType))
                 lock (this.m_lockObject)

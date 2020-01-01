@@ -356,7 +356,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             catch (PolicyViolationException ex)
             {
 
-                this.m_tracer.TraceWarning("Policy violation exception on {0}. Will attempt again", ex.Demanded);
+                this.m_tracer.TraceWarning("Policy violation exception on {0}. Will attempt again", ex.Demanded, ex.ToString());
                 // Only configure the minimum to contact the realm for authentication to continue
                 var serviceClientSection = XamarinApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
                 if (serviceClientSection == null)
@@ -552,6 +552,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 case SynchronizationMode.Sync:
                     {
+                        this.m_tracer.TraceInfo("Removing remote service providers....");
                         // Remove any references to remote storage providers
                         ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRepositoryService), true);
@@ -560,8 +561,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
-                       
+
                         // Configure the selected storage provider
+                        this.m_tracer.TraceInfo("Configuration of data service provider....");
+
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
                         configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
                         storageProvider.Configure(ApplicationContext.Current.Configuration, configuration.Data.Options);
@@ -576,6 +579,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
+
+                        this.m_tracer.TraceInfo("Adding local service provider....");
 
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSynchronizationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalMailService), true);
@@ -623,6 +628,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
 
+                        this.m_tracer.TraceInfo("Configuring Subscription....");
+
                         var subscribeToIdentifiers = configuration.Synchronization.SubscribeTo;
                         foreach (var id in subscribeToIdentifiers)
                         {
@@ -660,6 +667,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 {
                                     var filter = f.ToString();
 
+                                    this.m_tracer.TraceInfo("Configure subscription for {0}", filter);
                                     while (filter.Contains("$"))
                                     {
                                         int spos = filter.IndexOf("$") + 1,
@@ -687,6 +695,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             Triggers = SynchronizationPullTriggerType.OnCommit
                         });
 
+                        this.m_tracer.TraceInfo("Cleaning up subscriptions...");
+
                         syncConfig.SubscribeTo = configuration.Synchronization.SubscribeTo;
                         syncConfig.SynchronizationResources = syncConfig.SynchronizationResources.GroupBy(o => o.Name + o.Triggers.ToString())
                             .Select(g =>
@@ -708,6 +718,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
 
             // Password hashing
+            this.m_tracer.TraceInfo("Setting password hasher...");
+
             var pwh = ApplicationContext.Current.GetService<IPasswordHashingService>();
             if (pwh != null)
                 ApplicationContext.Current.RemoveServiceProvider(pwh.GetType());
@@ -725,6 +737,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     break;
             }
 
+            this.m_tracer.TraceInfo("Setting application secret...");
+
             // Repository service provider
             ApplicationContext.Current.AddServiceProvider(typeof(RepositoryEntitySource), true);
             // Override application secret
@@ -735,7 +749,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             if (configuration.Security.RestrictLoginToFacilityUsers)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().RestrictLoginToFacilityUsers = true;
-            if(configuration.Security.Facilities.Count > 0)
+            if(configuration.Security.Facilities?.Count > 0)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities= configuration.Security.Facilities;
 
             // Proxy
@@ -767,17 +781,21 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 }
             };
 
+            this.m_tracer.TraceInfo("Setting additional application settings...");
 
-            foreach (var i in configuration.Application.AppSettings)
-                ApplicationContext.Current.ConfigurationManager.SetAppSetting(i.Key, i.Value);
+            if(configuration.Application.AppSettings != null)
+                foreach (var i in configuration.Application.AppSettings)
+                    ApplicationContext.Current.ConfigurationManager.SetAppSetting(i.Key, i.Value);
 
             // Other sections
-            foreach (var oth in configuration.OtherSections)
-            {
-                if (ApplicationContext.Current.ConfigurationManager.Configuration.GetSection(oth.GetType()) != null)
-                    ApplicationContext.Current.ConfigurationManager.Configuration.Sections.RemoveAll(o => o.GetType() == oth.GetType());
-                ApplicationContext.Current.ConfigurationManager.Configuration.AddSection(oth);
-            }
+            this.m_tracer.TraceInfo("Setting other settings...");
+            if(configuration.OtherSections != null)
+                foreach (var oth in configuration.OtherSections)
+                {
+                    if (ApplicationContext.Current.ConfigurationManager.Configuration.GetSection(oth.GetType()) != null)
+                        ApplicationContext.Current.ConfigurationManager.Configuration.Sections.RemoveAll(o => o.GetType() == oth.GetType());
+                    ApplicationContext.Current.ConfigurationManager.Configuration.AddSection(oth);
+                }
             this.m_tracer.TraceInfo("Saving configuration options {0}", JsonConvert.SerializeObject(configuration));
 
             // Re-binding of AGS endpoints?

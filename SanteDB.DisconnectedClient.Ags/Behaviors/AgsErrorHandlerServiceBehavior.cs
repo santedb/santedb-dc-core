@@ -68,18 +68,21 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         public bool ProvideFault(Exception error, RestResponseMessage faultMessage)
         {
 
-#if DEBUG
-            var ie = error;
-            while (ie != null)
+            try
             {
-                this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
-                    RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
-                    ie.GetType().FullName, ie.Message);
+#if DEBUG
+                this.m_tracer.TraceError("Error on pipeline: {0}", error);
+                var ie = error;
+                while (ie != null)
+                {
+                    this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
+                        RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
+                        ie.GetType().FullName, ie.Message);
 
-                if (ie is RestClientException<RestServiceFault>)
-                    error = ie;
-                ie = ie.InnerException;
-            }
+                    if (ie is RestClientException<RestServiceFault>)
+                        error = ie;
+                    ie = ie.InnerException;
+                }
 #else
             if (error is TargetInvocationException)
                 this.m_tracer.TraceError("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
@@ -87,15 +90,22 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 this.m_tracer.TraceError("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
 #endif
 
-            faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
+                faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
-            object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
+           
+                object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
-            if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
-                fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
 
-            RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
-            AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
+                if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
+                    fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
+
+                RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
+                AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Error providing fault: {0}", e);
+            }
             return true;
         }
     }

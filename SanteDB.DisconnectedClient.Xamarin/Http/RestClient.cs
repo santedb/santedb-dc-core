@@ -42,6 +42,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -402,13 +403,17 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                     {
 
                         // Get request object
-                        using (var responseTask = Task.Run(async () => { return await requestObj.GetResponseAsync(); }))
+                        var cancelTokenSource = new CancellationTokenSource();
+                        CancellationToken ct = cancelTokenSource.Token;
+
+                        using (var responseTask = Task.Run(async () => { try { return await requestObj.GetResponseAsync(); } catch (Exception e) { this.m_tracer.TraceError("Error executing HTTP: {0}", e.Message); throw; } } ,cancelTokenSource.Token))
                         {
                             try
                             {
                                 if (!responseTask.Wait(this.Description.Endpoint[0].Timeout))
                                 {
                                     requestObj.Abort();
+                                    cancelTokenSource.Cancel();
                                     throw new TimeoutException();
                                 }
                                 response = (HttpWebResponse)responseTask.Result;
@@ -416,6 +421,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                             catch (AggregateException e)
                             {
                                 requestObj.Abort();
+                                cancelTokenSource.Cancel();
                                 throw e.InnerExceptions.First();
                             }
                         }
@@ -523,6 +529,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                         //responseTask.Dispose();
                     }
                 }
+                
                 catch (TimeoutException e)
                 {
                     this.m_tracer.TraceError("Request timed out:{0}", e.Message);
@@ -622,6 +629,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                         default:
                             throw;
                     }
+                }
+                catch (InvalidOperationException e)
+                {
+                    this.m_tracer.TraceError("Invalid Operation: {0}", e.Message);
+                    throw;
                 }
 
             }

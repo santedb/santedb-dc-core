@@ -132,10 +132,6 @@
     <Compile Include="Data\StorageProviderUtil.cs" />
     <Compile Include="Diagnostics\FileTraceWriter.cs" />
     <Compile Include="Diagnostics\LogTraceWriter.cs" />
-    <Compile Include="Diagnostics\Performance\MachinePerformanceProbe.cs" />
-    <Compile Include="Diagnostics\Performance\PerformanceConstants.cs" />
-    <Compile Include="Diagnostics\Performance\ThreadPoolPerformanceProbe.cs" />
-    <Compile Include="Diagnostics\Performance\WindowsPerformanceCounterProbe.cs" />
     <Compile Include="Http\RestClient.cs" />
     <Compile Include="Net\NetworkInformationService.cs" />
     <Compile Include="Rules\BusinessRulesDaemonService.cs" />

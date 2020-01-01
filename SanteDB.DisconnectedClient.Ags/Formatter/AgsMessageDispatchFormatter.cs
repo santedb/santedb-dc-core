@@ -61,20 +61,28 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         /// </summary>
         public static AgsMessageDispatchFormatter CreateFormatter(Type contractType)
         {
-            AgsMessageDispatchFormatter retVal = null;
-            if (!m_formatters.TryGetValue(contractType, out retVal))
+            try
             {
-                lock (m_formatters)
+                AgsMessageDispatchFormatter retVal = null;
+                if (!m_formatters.TryGetValue(contractType, out retVal))
                 {
-                    if (!m_formatters.ContainsKey(contractType))
+                    lock (m_formatters)
                     {
-                        var typeFormatter = typeof(AgsDispatchFormatter<>).MakeGenericType(contractType);
-                        retVal = Activator.CreateInstance(typeFormatter) as AgsMessageDispatchFormatter;
-                        m_formatters.Add(contractType, retVal);
+                        if (!m_formatters.ContainsKey(contractType))
+                        {
+                            var typeFormatter = typeof(AgsDispatchFormatter<>).MakeGenericType(contractType);
+                            retVal = Activator.CreateInstance(typeFormatter) as AgsMessageDispatchFormatter;
+                            m_formatters.Add(contractType, retVal);
+                        }
                     }
                 }
+                return retVal;
             }
-            return retVal;
+            catch(Exception e)
+            {
+                Tracer.GetTracer(typeof(AgsMessageDispatchFormatter)).TraceError("Error creating dispatch formatter : {0}", e);
+                throw new Exception("Could not create AGS Dispatch Formatter: {0}", e);
+            }
         }
 
         /// <summary>

@@ -53,6 +53,8 @@ namespace SanteDB.DisconnectedClient.UI
     public class DcApplicationContext : XamarinApplicationContext
     {
 
+        // Host type
+        private readonly SanteDBHostType m_santeDBHostType;
         // Dialog provider
         private IDialogProvider m_dialogProvider = null;
 
@@ -82,6 +84,11 @@ namespace SanteDB.DisconnectedClient.UI
         {
 
         }
+
+        /// <summary>
+        /// Gets or sets the host type
+        /// </summary>
+        public override SanteDBHostType HostType => this.m_santeDBHostType;
 
         /// <summary>
         /// Get the application
@@ -117,12 +124,13 @@ namespace SanteDB.DisconnectedClient.UI
         /// Initializes a new instance of the <see cref="DisconnectedClient.DcApplicationContext"/> class.
         /// </summary>
         /// <param name="dialogProvider">Dialog provider.</param>
-        public DcApplicationContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
+        public DcApplicationContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
             : base(new DcConfigurationManager(instanceName))
         {
             this.m_dialogProvider = dialogProvider;
             c_application = applicationId;
             this.InstanceName = instanceName;
+            this.m_santeDBHostType = hostType;
         }
 
         /// <summary>
@@ -130,11 +138,11 @@ namespace SanteDB.DisconnectedClient.UI
 		/// configuring the software
 		/// </summary>
 		/// <returns><c>true</c>, if temporary was started, <c>false</c> otherwise.</returns>
-		public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
+		public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
         {
             try
             {
-                var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
+                var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
                 retVal.SetProgress("Run setup", 0);
                 //retVal.AddServiceProvider(typeof(ConfigurationManager));
 
@@ -181,7 +189,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Start the application context
         /// </summary>
-        public static bool StartContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId)
+        public static bool StartContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
         {
 
 
@@ -199,7 +207,7 @@ namespace SanteDB.DisconnectedClient.UI
 
                     try
                     {
-                        retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId);
+                        retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
                         ApplicationServiceContext.Current =  ApplicationContext.Current = retVal;
                         //retVal.AddServiceProvider(typeof(ConfigurationManager));
                         retVal.ConfigurationPersister.Backup(retVal.Configuration);

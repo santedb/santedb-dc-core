@@ -140,6 +140,8 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
                 {
                     this.m_tracer.TraceInfo("Binding to service events...");
 
+                    AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
+
                     // Queue has been exhausted
                     ApplicationContext.Current.GetService<IQueueManagerService>().QueueExhausted += (so, se) =>
                     {
@@ -230,11 +232,16 @@ namespace SanteDB.DisconnectedClient.Core.Security.Audit
             // Audit tool should never stop!!!!!
             if (!this.m_safeToStop)
             {
-                AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.UseOfARestrictedFunction));
+                AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
                 AuditUtil.AddLocalDeviceActor(securityAlertData);
                 AuditUtil.SendAudit(securityAlertData);
-                throw new InvalidOperationException("Cannot stop this audit monitor");
             }
+            else
+            {
+                AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
+                AuditUtil.AddLocalDeviceActor(securityAlertData);
+                AuditUtil.SendAudit(securityAlertData);
+        }
             
 
             this.Stopped?.Invoke(this, EventArgs.Empty);

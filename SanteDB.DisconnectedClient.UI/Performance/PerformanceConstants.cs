@@ -23,7 +23,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics.Performance
+namespace SanteDB.DisconnectedClient.UI.Diagnostics.Performance
 {
     /// <summary>
     /// Constants used for performance 

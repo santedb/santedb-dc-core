@@ -30,23 +30,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics
     /// <summary>
     /// Represents a trace listener that appends data to a file
     /// </summary>
-    public class FileTraceWriter : TraceWriter, IDisposable
+    public class FileTraceWriter : TraceWriter
     {
-
-        // Dispatch thread
-        private Thread m_dispatchThread = null;
 
         // True when disposing
         private bool m_disposing = false;
 
         // The text writer
         private String m_logFile;
-
-        // The log backlog
-        private Queue<String> m_logBacklog = new Queue<string>();
-
-        // Sync object
-        private static Object s_syncObject = new object();
 
         // Number of logs to keep
         private int m_keepLogs = 4;
@@ -80,15 +71,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics
 
             this.m_logFile = logFileBase;
 
-            // Start log dispatch
-            this.m_dispatchThread = new Thread(this.LogDispatcherLoop);
-            this.m_dispatchThread.IsBackground = true;
-            this.m_dispatchThread.Start();
-
             this.WriteTrace(EventLevel.Informational, "Startup", "SanteDB.DisconnectedClient.Core Version: {0} logging at level [{1}]", typeof(ApplicationContext).Assembly.GetName().Version, filter);
         }
 
-        #region implemented abstract members of TraceWriter
         /// <summary>
         /// Write the trace to the log file
         /// </summary>
@@ -98,76 +83,19 @@ namespace SanteDB.DisconnectedClient.Xamarin.Diagnostics
         /// <param name="args">Arguments.</param>
         protected override void WriteTrace(System.Diagnostics.Tracing.EventLevel level, string source, string format, params object[] args)
         {
-            lock (this.m_logBacklog)
-            {
-                try
-                {
-                    this.m_logBacklog.Enqueue(String.Format("{0}@{1} <{2}> [{3:o}]: {4}", source, Thread.CurrentThread.Name, level, DateTime.Now, String.Format(format, args)));
-                    Monitor.Pulse(this.m_logBacklog);
-                }
-                catch { }
-                //string dq = String.Format("{0}@{1} <{2}> [{3:o}]: {4}", source, Thread.CurrentThread.Name, level, DateTime.Now, String.Format(format, args));
-                //using (TextWriter tw = File.AppendText(this.m_logFile))
-                //    tw.WriteLine(dq); // This allows other threads to add to the write queue
-
-            }
-        }
-        #endregion
-
-        /// <summary>
-        /// Log dispatcher loop.
-        /// </summary>
-        private void LogDispatcherLoop()
-        {
-            while (true)
-            {
-                while (true)
-                {
                     try
                     {
-                        Monitor.Enter(this.m_logBacklog);
-                        if (this.m_disposing) return; // shutdown dispatch
-                        while (this.m_logBacklog.Count == 0)
-                            Monitor.Wait(this.m_logBacklog);
-                        if (this.m_disposing) return;
-
                         using (TextWriter tw = File.AppendText(this.m_logFile))
-                            while (this.m_logBacklog.Count > 0)
-                            {
-                                var dq = this.m_logBacklog.Dequeue();
-                                Monitor.Exit(this.m_logBacklog);
-                                tw.WriteLine(dq); // This allows other threads to add to the write queue
-                                Monitor.Enter(this.m_logBacklog);
-                            }
+                                tw.WriteLine("{0}@{1} <{2}> [{3:o}]: {4}", source, Thread.CurrentThread.Name, level, DateTime.Now, String.Format(format, args)); // This allows other threads to add to the write queue
                     }
                     catch
                     {
                         ;
                     }
-                    finally
-                    {
-                        if (Monitor.IsEntered(this.m_logBacklog))
-                            Monitor.Exit(this.m_logBacklog);
-                    }
-                }
-
-            }
+                   
         }
 
-        /// <summary>
-        /// Dispose of the object
-        /// </summary>
-        public void Dispose()
-        {
-            if (this.m_dispatchThread != null)
-            {
-                this.m_disposing = true;
-                lock (this.m_logBacklog)
-                    Monitor.PulseAll(this.m_logBacklog);
-                this.m_dispatchThread.Join(); // Abort thread
-                this.m_dispatchThread = null;
-            }
-        }
+       
     }
 }
 
