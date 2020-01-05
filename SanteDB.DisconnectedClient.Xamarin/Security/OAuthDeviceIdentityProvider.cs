@@ -197,8 +197,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 !String.IsNullOrEmpty(deviceSecret) && principal is IClaimsPrincipal &&
                             XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
+                AuthenticationContext.Current = new AuthenticationContext(principal);
                 IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
-                var amiPip = new AmiPolicyInformationService(cprincipal);
+                var amiPip = new AmiPolicyInformationService();
 
                 // Local device
                 int tr = 0;

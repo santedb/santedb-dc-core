@@ -21,6 +21,7 @@ using SanteDB.Core.Api.Security;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -39,7 +40,6 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     {
         // Service client
         protected AmiServiceClient m_client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-        protected IPrincipal m_cachedCredential = null;
 
         /// <summary>
         /// Gets current credentials
@@ -47,33 +47,22 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         protected Credentials GetCredentials()
         {
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
+            IPrincipal principal = AuthenticationContext.Current.Principal;
 
             // Authentication
-            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated)
-            {
-                if (this.m_cachedCredential != null)
-                    AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential);
-                else
-                {
-                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                    this.m_cachedCredential = AuthenticationContext.Current.Principal;
-                }
-            }
-            
-        
+            if (!principal.Identity.IsAuthenticated)
+                principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+
             // Extend?
-            if (((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+            if (((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
             {
                 // Is a device and expired so re-auth
-                if (this.m_cachedCredential != null)
-                {
-                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                    this.m_cachedCredential = AuthenticationContext.Current.Principal;
-                }
-                else
-                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IIdentityProviderService>().ReAuthenticate(AuthenticationContext.Current.Principal));
+                if (principal.Identity is IDeviceIdentity)
+                    principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             }
-            return this.m_client.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+
+            // get credentials
+            return this.m_client.Client.Description.Binding.Security.CredentialProvider.GetCredentials(principal);
         }
     }
 }

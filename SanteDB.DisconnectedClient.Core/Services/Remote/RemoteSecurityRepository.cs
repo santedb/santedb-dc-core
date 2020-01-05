@@ -184,7 +184,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
         {
-            return new AmiPolicyInformationService(this.m_cachedCredential as IClaimsPrincipal).GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
+            return new AmiPolicyInformationService().GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
         }
 
         /// <summary>

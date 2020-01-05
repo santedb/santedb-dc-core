@@ -229,8 +229,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 {
                     // Connected to internet
                     { "online", ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable },
-                    { "ami", ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>().IsAvailable()},
-                    { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>().IsAvailable() }
+                    { "ami", ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() ?? true},
+                    { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>()?.IsAvailable()?? true }
                 };
             }
             catch(Exception e)

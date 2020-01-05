@@ -219,10 +219,7 @@ namespace SanteDB.DisconnectedClient.Core.Caching
                 MemoryCache.Current.RemoveObject(rel.SourceEntityKey.Value);
                 MemoryCache.Current.RemoveObject(rel.TargetEntityKey.Value);
             }
-            else if (e.Object is IdentifiedData) // We need to remove RCT 
-            {
-                MemoryCache.Current.RemoveObject((e.Object as IdentifiedData).Key);
-            }
+            
 
         }
 

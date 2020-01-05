@@ -55,14 +55,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
         }
 
-        /// <summary>
-        /// Creates a new AMI PIP
-        /// </summary>
-        public AmiPolicyInformationService(IPrincipal principal)
-        {
-            this.m_cachedCredential = principal;
-        }
-
+     
         /// <summary>
         /// Note supported
         /// </summary>
