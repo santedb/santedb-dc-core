@@ -200,5 +200,11 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         [Delete("/Queue/{queueName}/confirm/{id}")]
         void DeleteQueueItem(String queueName, int id);
 
+        /// <summary>
+        /// Get DCG online state
+        /// </summary>
+        [Get("/Online")]
+        Dictionary<String, bool> GetOnlineState();
+
     }
 }

@@ -19,6 +19,7 @@
  */
 using RestSrvr;
 using RestSrvr.Attributes;
+using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Model.Subscription;
@@ -215,6 +216,28 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     this.ProcessMenuItem(child, existing.Menu, context);
             }
 
+        }
+
+        /// <summary>
+        /// Get online status
+        /// </summary>
+        public Dictionary<string, bool> GetOnlineState()
+        {
+            try
+            {
+                return new Dictionary<string, bool>()
+                {
+                    // Connected to internet
+                    { "online", ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable },
+                    { "ami", ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>().IsAvailable()},
+                    { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>().IsAvailable() }
+                };
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceWarning("Cannot determine online state: {0}", e.Message);
+                return new Dictionary<string, bool>();
+            }
         }
     }
 }
