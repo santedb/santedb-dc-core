@@ -20,10 +20,12 @@
 using RestSrvr;
 using RestSrvr.Exceptions;
 using RestSrvr.Message;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Ags.Util;
+using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.Rest.Common.Fault;
 using SanteDB.Rest.Common.Serialization;
 using System;
@@ -99,8 +101,11 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
                     fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
 
-                RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type).SerializeResponse(faultMessage, null, fault);
-                AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
+                var formatter = RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type);
+                formatter.SerializeResponse(faultMessage, null, fault);
+
+                if(ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem != OperatingSystemID.Android)
+                    AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
             }
             catch(Exception e)
             {

@@ -353,6 +353,11 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         public List<Guid> Facilities { get; set; }
 
         /// <summary>
+        /// When true, only allow login from this facility
+        /// </summary>
+        [XmlElement("owner"), JsonProperty("owner")]
+        public List<Guid> Owners { get; set; }
+        /// <summary>
         /// Local session length
         /// </summary>
         [XmlElement("localSessionLength"), JsonProperty("localSessionLength")]

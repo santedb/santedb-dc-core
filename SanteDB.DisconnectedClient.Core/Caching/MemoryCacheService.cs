@@ -126,8 +126,8 @@ namespace SanteDB.DisconnectedClient.Core.Caching
 
                      // Seed cache
                      this.m_tracer.TraceInfo("Loading materials dictionary...");
-                     ApplicationContext.Current.GetService<IDataPersistenceService<Material>>().Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
-                     ApplicationContext.Current.GetService<IDataPersistenceService<ManufacturedMaterial>>().Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
+                     ApplicationContext.Current.GetService<IDataPersistenceService<Material>>()?.Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
+                     ApplicationContext.Current.GetService<IDataPersistenceService<ManufacturedMaterial>>()?.Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
 
                      // handles when a item is being mapped
                      if (this.m_mappingHandler == null)

@@ -308,29 +308,35 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
                 // Attempt to download if the user entity is null
                 // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity 
-                var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
-                if (this.m_entity == null || amiService != null && amiService.IsAvailable() || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
+                if(this.m_entity == null || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
-                    int t = 0;
-                    sid = Guid.Parse((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Sid)?.Value ?? ApplicationContext.Current.GetService<IFastQueryDataPersistenceService<SecurityUser>>().QueryFast(o => o.UserName == principal.Identity.Name, Guid.Empty , 0, 1, out t).FirstOrDefault()?.Key.ToString());
-                    this.m_entity = amiService?.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
-
-                    ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
+                    var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
+                    if (amiService != null && amiService.IsAvailable())
                     {
-                        var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
-                        try
+                        this.m_entity = amiService?.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
+                        // Update the local user 
+                        ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
                         {
-                            if (persistence?.Get((o as Entity).Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
-                                persistence?.Insert(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                            else
-                                persistence?.Update(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                        }
-                        catch (Exception e)
-                        {
-                            this.m_tracer.TraceError("Could not create / update user entity for logged in user: {0}", e);
-                        }
-                    }, this.m_entity);
+                            var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
+                            try
+                            {
+                                if (persistence?.Get((o as Entity).Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                                    persistence?.Insert(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                                else
+                                    persistence?.Update(o as Entity, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            }
+                            catch (Exception e)
+                            {
+                                this.m_tracer.TraceError("Could not create / update user entity for logged in user: {0}", e);
+                            }
+                        }, this.m_entity);
+                    }
+                    else
+                        this.m_entity = ApplicationContext.Current.GetService<IRepositoryService<UserEntity>>().Find(o => o.SecurityUserKey == sid, 0, 1, out int t).FirstOrDefault();
                 }
+
+               
+                
             }
             catch (Exception e)
             {

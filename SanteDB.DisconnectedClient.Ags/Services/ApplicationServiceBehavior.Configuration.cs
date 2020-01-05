@@ -382,7 +382,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 var scheme = enableSSL ? "https" : "http";
                 string amiUri = String.Format("{0}://{1}:{2}/ami", scheme,
                     realmUri,
+                    port),
+                    hdsiUri = String.Format("{0}://{1}:{2}/hdsi", scheme,
+                    realmUri,
                     port);
+
                 serviceClientSection.Client.Add(new ServiceClientDescription()
                 {
                     Binding = new ServiceClientBinding()
@@ -395,6 +399,20 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         }
                     },
                     Name = "ami",
+                    Trace = enableTrace
+                });
+                serviceClientSection.Client.Add(new ServiceClientDescription()
+                {
+                    Binding = new ServiceClientBinding()
+                    {
+                        Optimize = true
+                    },
+                    Endpoint = new System.Collections.Generic.List<ServiceClientEndpoint>() {
+                        new ServiceClientEndpoint() {
+                            Address = hdsiUri, Timeout = 30000
+                        }
+                    },
+                    Name = "hdsi",
                     Trace = enableTrace
                 });
 
@@ -552,6 +570,20 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 case SynchronizationMode.Sync:
                     {
+
+                        // First, we want to update the central repository to let it know information about us
+                        if (configuration.Security.Facilities?.Count > 0 || configuration.Security.Owners?.Count > 0)
+                        {
+                            var deviceEntity = ApplicationServiceContext.Current.GetService<IRepositoryService<DeviceEntity>>().Find(o => o.SecurityDevice.Name == ApplicationContext.Current.Device.Name, 0, 1, out int t).FirstOrDefault();
+                            if(deviceEntity != null)
+                            {
+                                deviceEntity.Relationships.RemoveAll(r => r.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation || r.RelationshipTypeKey == EntityRelationshipTypeKeys.AssignedEntity);
+                                deviceEntity.Relationships.AddRange(configuration.Security.Facilities?.Select(o => new EntityRelationship(EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation, o)) ?? new EntityRelationship[0]);
+                                deviceEntity.Relationships.AddRange(configuration.Security.Owners?.Select(o => new EntityRelationship(EntityRelationshipTypeKeys.AssignedEntity, o)) ?? new EntityRelationship[0]);
+                                ApplicationServiceContext.Current.GetService<IRepositoryService<DeviceEntity>>().Save(deviceEntity);
+                            }
+                        }
+
                         this.m_tracer.TraceInfo("Removing remote service providers....");
                         // Remove any references to remote storage providers
                         ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService), true);
@@ -751,6 +783,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().RestrictLoginToFacilityUsers = true;
             if(configuration.Security.Facilities?.Count > 0)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities= configuration.Security.Facilities;
+            if (configuration.Security.Owners?.Count > 0)
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Owners = configuration.Security.Owners;
 
             // Proxy
             if (!String.IsNullOrEmpty(configuration.Network.ProxyAddress))
