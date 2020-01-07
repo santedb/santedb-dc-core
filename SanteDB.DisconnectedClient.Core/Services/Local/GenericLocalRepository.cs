@@ -20,6 +20,7 @@
 using SanteDB.Core;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -64,10 +65,46 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// </summary>
         protected Tracer m_traceSource = Tracer.GetTracer(typeof(GenericLocalRepository<TEntity>));
 
+        /// <summary>
+        /// Record is inserted
+        /// </summary>
         public event EventHandler<RepositoryEventArgs<TEntity>> Inserted;
+        /// <summary>
+        /// Record has been saved
+        /// </summary>
         public event EventHandler<RepositoryEventArgs<TEntity>> Saved;
+        /// <summary>
+        /// Record has been retrieved
+        /// </summary>
         public event EventHandler<RepositoryEventArgs<TEntity>> Retrieved;
+        /// <summary>
+        /// Query has been executed
+        /// </summary>
         public event EventHandler<RepositoryEventArgs<IEnumerable<TEntity>>> Queried;
+        /// <summary>
+        /// Record is being inserted
+        /// </summary>
+        public event EventHandler<DataPersistingEventArgs<TEntity>> Inserting;
+        /// <summary>
+        /// Record is being saved
+        /// </summary>
+        public event EventHandler<DataPersistingEventArgs<TEntity>> Saving;
+        /// <summary>
+        /// Record is being obsoleted
+        /// </summary>
+        public event EventHandler<DataPersistingEventArgs<TEntity>> Obsoleting;
+        /// <summary>
+        /// Record has been obsoleted
+        /// </summary>
+        public event EventHandler<DataPersistedEventArgs<TEntity>> Obsoleted;
+        /// <summary>
+        /// Record 
+        /// </summary>
+        public event EventHandler<DataRetrievingEventArgs<TEntity>> Retrieving;
+        /// <summary>
+        /// Record is being queried
+        /// </summary>
+        public event EventHandler<QueryRequestEventArgs<TEntity>> Querying;
 
         /// <summary>
         /// Gets the policy required for querying
@@ -89,6 +126,58 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// Gets the policy for altering
         /// </summary>
         protected virtual String AlterPolicy => PermissionPolicyIdentifiers.LoginAsService;
+
+        event EventHandler<DataPersistedEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Inserted
+        {
+            add
+            {
+                throw new NotImplementedException();
+            }
+
+            remove
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        event EventHandler<DataPersistedEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Saved
+        {
+            add
+            {
+                throw new NotImplementedException();
+            }
+
+            remove
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        event EventHandler<DataRetrievedEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Retrieved
+        {
+            add
+            {
+                throw new NotImplementedException();
+            }
+
+            remove
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        event EventHandler<QueryResultEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Queried
+        {
+            add
+            {
+                throw new NotImplementedException();
+            }
+
+            remove
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         /// <summary>
         /// Find with stored query parameters

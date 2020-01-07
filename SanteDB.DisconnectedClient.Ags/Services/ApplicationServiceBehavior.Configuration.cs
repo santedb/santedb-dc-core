@@ -655,7 +655,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         configuration.OtherSections.OfType<AuditAccountabilityConfigurationSection>().First().AuditFilters.AddRange(new AuditFilterConfiguration[]
                             {
                                 // Never audit security alerts which are successful 
-                                new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.SecurityAlert | EventIdentifierType.UseOfRestrictedFunction | EventIdentifierType.NetworkEntry, OutcomeIndicator.Success, false, false),
+                                new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.SecurityAlert | EventIdentifierType.UseOfRestrictedFunction | EventIdentifierType.NetworkActivity, OutcomeIndicator.Success, false, false),
                             });
 
                         var binder = new SanteDB.Core.Model.Serialization.ModelSerializationBinder();
