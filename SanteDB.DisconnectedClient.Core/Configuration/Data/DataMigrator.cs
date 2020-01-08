@@ -48,31 +48,40 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
         /// <param name="configuration">Configuration.</param>
         public DataMigrator()
         {
-            this.m_tracer = Tracer.GetTracer(this.GetType());
-            this.m_migrations = new List<IDbMigration>();
-
-            this.m_tracer.TraceInfo("Scanning for data migrations...");
-
-            // Scan for migrations 
-            foreach (var dbm in ApplicationContext.Current.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders
-                .Select(o => o.Type?.GetTypeInfo().Assembly).Distinct().SelectMany(a => a.DefinedTypes))
+            try
             {
-                try
-                {
-                    if (dbm.AsType() == typeof(DataMigrator) ||
-                        !typeof(IDbMigration).GetTypeInfo().IsAssignableFrom(dbm))
-                        continue;
+                this.m_tracer = Tracer.GetTracer(this.GetType());
+                this.m_migrations = new List<IDbMigration>();
 
-                    IDbMigration migration = Activator.CreateInstance(dbm.AsType()) as IDbMigration;
-                    if (migration != null)
+                this.m_tracer.TraceInfo("Scanning for data migrations...");
+
+                // Scan for migrations 
+                var migrations = ApplicationContext.Current.Configuration.GetSection<ApplicationServiceContextConfigurationSection>()?.ServiceProviders
+                    ?.Select(o => o?.Type?.GetTypeInfo().Assembly).Distinct().SelectMany(a => a?.DefinedTypes);
+                if (migrations != null)
+                    foreach (var dbm in migrations)
                     {
-                        this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
-                        this.m_migrations.Add(migration);
+                        try
+                        {
+                            if (dbm.AsType() == typeof(DataMigrator) ||
+                                !typeof(IDbMigration).GetTypeInfo().IsAssignableFrom(dbm))
+                                continue;
+
+                            IDbMigration migration = Activator.CreateInstance(dbm.AsType()) as IDbMigration;
+                            if (migration != null)
+                            {
+                                this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
+                                this.m_migrations.Add(migration);
+                            }
+                        }
+                        catch
+                        {
+                        }
                     }
-                }
-                catch
-                {
-                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Won't load migrations: {0}", e);
             }
         }
 

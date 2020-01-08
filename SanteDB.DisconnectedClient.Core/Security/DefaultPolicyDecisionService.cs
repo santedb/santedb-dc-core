@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             else if (this.m_policyCache.TryGetValue(principal.Identity.Name, out grants) &&
                 grants.TryGetValue(policyId, out dynamic data))
             {
-                if (data.Time.Subtract(DateTime.Now).TotalSeconds > 120)
+                if (DateTime.Now.Subtract(data.Time).TotalSeconds > 120)
                     grants.Remove(policyId);
                 else
                     return data.Rule;

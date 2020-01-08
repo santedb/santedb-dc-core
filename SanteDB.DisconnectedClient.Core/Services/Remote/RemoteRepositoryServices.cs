@@ -201,7 +201,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                         existing = null;
                     }
                 }
-                if (!this.m_missEntity.Contains(key) && (existing == null ||
+                if (!this.m_missEntity.Contains(key) && (existing == null || !(existing is TModel) ||
                     (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
                 {
                     existing = this.m_client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
