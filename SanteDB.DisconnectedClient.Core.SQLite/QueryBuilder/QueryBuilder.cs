@@ -586,9 +586,9 @@ namespace SanteDB.Core.Data.QueryBuilder
             lValue = lValue.OfType<Object>().Distinct().ToList();
 
             retVal.Append("(");
-            int lc = 0;
-            foreach (var itm in lValue)
+            for (var i = 0; i < lValue.Count; i++)
             {
+                var itm = lValue[i];
                 retVal.Append($"{tableAlias}.{columnData.Name}");
                 var semantic = " OR ";
                 var iValue = itm;
@@ -605,12 +605,32 @@ namespace SanteDB.Core.Data.QueryBuilder
                                 retVal.Append(" < ?", CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType));
                             break;
                         case '>':
-                            semantic = " AND ";
-                            if (sValue[1] == '=')
-                                retVal.Append(" >= ?", CreateParameterValue(sValue.Substring(2), propertyInfo.PropertyType));
+                            // peek the next value and see if it is < then we use BETWEEN
+                            if (i < lValue.Count - 1 && lValue[i + 1].ToString().StartsWith("<"))
+                            {
+                                object lower = null, upper = null;
+                                if (sValue[1] == '=')
+                                    lower = CreateParameterValue(sValue.Substring(2), propertyInfo.PropertyType);
+                                else
+                                    lower = CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType);
+                                sValue = lValue[++i].ToString();
+                                if (sValue[1] == '=')
+                                    upper = CreateParameterValue(sValue.Substring(2), propertyInfo.PropertyType);
+                                else
+                                    upper = CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType);
+                                semantic = " OR ";
+                                retVal.Append($" BETWEEN ? AND ?", lower, upper);
+                            }
                             else
-                                retVal.Append(" > ?", CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType));
+                            {
+                                semantic = " AND ";
+                                if (sValue[1] == '=')
+                                    retVal.Append($" >= ?", CreateParameterValue(sValue.Substring(2), propertyInfo.PropertyType));
+                                else
+                                    retVal.Append($" > ?", CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType));
+                            }
                             break;
+                            
                         case '!':
                             semantic = " AND ";
                             if (sValue.Equals("!null"))
@@ -641,8 +661,7 @@ namespace SanteDB.Core.Data.QueryBuilder
                 else
                     retVal.Append(" = ? ", CreateParameterValue(iValue, propertyInfo.PropertyType));
 
-                lc++;
-                if (lc < lValue.Count)
+                if (i < lValue.Count - 1)
                     retVal.Append(semantic);
             }
 
@@ -658,14 +677,20 @@ namespace SanteDB.Core.Data.QueryBuilder
         {
             object retVal = null;
             if (value is Guid)
-                return ((Guid)value).ToByteArray();
+                retVal = ((Guid)value).ToByteArray();
             else if (value.GetType() == toType ||
                 value.GetType() == toType.StripNullable())
-                return value;
-            else if (MapUtil.TryConvert(value, toType, out retVal))
-                return retVal;
-            else
+                retVal = value;
+            else if (!MapUtil.TryConvert(value, toType, out retVal))
                 throw new ArgumentOutOfRangeException(value.ToString());
+
+            // Dates in SQLite are UTC so lets convert
+            if (retVal is DateTime)
+                retVal = ((DateTime)retVal).ToUniversalTime();
+            else if(retVal is DateTimeOffset)
+                retVal = ((DateTimeOffset)retVal).ToUniversalTime();
+
+            return retVal;
         }
     }
 }

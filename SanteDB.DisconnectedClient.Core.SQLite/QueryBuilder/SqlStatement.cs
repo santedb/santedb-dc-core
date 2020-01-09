@@ -382,6 +382,8 @@ namespace SanteDB.Core.Data.QueryBuilder
                 return $"X'{BitConverter.ToString(((Guid)v).ToByteArray()).Replace("-", "")}'";
             else if (v is String)
                 return $"'{v}'";
+            else if (v is DateTime)
+                return ((DateTime)v).Ticks.ToString();
             else if (v == null)
                 return "null";
             else
