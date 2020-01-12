@@ -18,6 +18,8 @@
  * Date: 2019-8-8
  */
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
@@ -31,6 +33,18 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         GenericLocalMetadataRepository<AssigningAuthority>,
         IAssigningAuthorityRepositoryService
     {
+
+        /// <summary>
+        /// Updates to non-local assigning authorities are not permitted
+        /// </summary>
+        public override AssigningAuthority Save(AssigningAuthority data)
+        {
+            // Was this created by someone on this device?
+            if (!data.CreatedByKey.HasValue || ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(data.CreatedByKey.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                return base.Save(data);
+            else
+                throw new NotSupportedException($"{data.DomainName} appears to be controlled by the master server. You cannot update it");
+        }
 
         /// <summary>
         /// Get the specified assigning authority

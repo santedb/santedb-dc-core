@@ -220,10 +220,13 @@
        domainClass="SanteDB.DisconnectedClient.SQLite.Model.DataType.DbAssigningAuthority, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="AssigningApplicationKey" domainName="AssigningApplicationUuid"/>
+    <property modelName="PolicyKey" domainName="PolicyUuid" />
     <property modelName="CreatedByKey" domainName="CreatedByUuid"    />
     <property modelName="CreatedByKey" domainName="UpdatedByUuid"/>
     <property modelName="ObsoletedByKey" domainName="ObsoletedByUuid"/>
-
+    <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
+    <property modelName="UpdatedTime" domainName="UpdatedTime"/>
+    <property modelName="modifiedOn" domainName="UpdatedTime"/>
   </class>
 
 
