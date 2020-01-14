@@ -587,7 +587,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             throw new NotSupportedException();
         }
 
-        public void AddClaim(string userName, IClaim claim, IPrincipal prinicpal)
+        public void AddClaim(string userName, IClaim claim, IPrincipal prinicpal,TimeSpan? expiry = null)
         {
             throw new NotSupportedException();
         }
