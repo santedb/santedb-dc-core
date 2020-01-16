@@ -71,10 +71,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             Dictionary<String, int> retVal = new Dictionary<string, int>()
             {
-                {  "admin", queueManager.Admin.Count() },
-                {  "inbound", queueManager.Inbound.Count() },
-                {  "outbound", queueManager.Outbound.Count() },
-                {  "dead", queueManager.DeadLetter.Count() }
+                {  "admin", queueManager?.Admin.Count() ?? 0 },
+                {  "inbound", queueManager?.Inbound.Count()  ?? 0},
+                {  "outbound", queueManager?.Outbound.Count() ?? 0 },
+                {  "dead", queueManager?.DeadLetter.Count() ?? 0 }
             };
 
 

@@ -229,6 +229,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
 
             var retVal = this.m_client.Create(data);
+            ApplicationContext.Current.GetService<IDataCachingService>()?.Add(retVal);
+
             return retVal;
         }
 
@@ -240,6 +242,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
 
             var retVal = this.m_client.Obsolete(new TModel() { Key = key });
+            ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(key);
             return retVal;
         }
 
@@ -294,6 +297,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
             this.GetCredentials();
 
             var retVal = this.m_client.Update(data);
+            ApplicationContext.Current.GetService<IDataCachingService>()?.Add(retVal);
+
             return retVal;
         }
 
