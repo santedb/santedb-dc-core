@@ -497,7 +497,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             throw new NotImplementedException();
         }
 
-        public void AddClaim(string userName, IClaim claim, IPrincipal principal)
+        public void AddClaim(string userName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
             throw new NotImplementedException();
         }
