@@ -158,7 +158,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
         public RestClient() : base()
         {
             this.m_tracer = Tracer.GetTracer(this.GetType());
-            this.m_configurationSection = ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
+            this.m_configurationSection = ApplicationContext.Current?.Configuration?.GetSection<ServiceClientConfigurationSection>();
 
         }
 
@@ -167,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
         /// </summary>
         public RestClient(ServiceClientDescription config) : base(config)
         {
-            this.m_configurationSection = ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
+            this.m_configurationSection = ApplicationContext.Current?.Configuration?.GetSection<ServiceClientConfigurationSection>();
             this.m_tracer = Tracer.GetTracer(this.GetType());
             // Find the specified certificate
             if (config.Binding.Security?.ClientCertificate != null)
@@ -200,7 +200,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                 retVal.ClientCertificates.AddRange(this.ClientCertificates);
 
             // Proxy?
-            if (!String.IsNullOrEmpty(this.m_configurationSection.ProxyAddress))
+            if (!String.IsNullOrEmpty(this.m_configurationSection?.ProxyAddress))
                 retVal.Proxy = new WebProxy(this.m_configurationSection.ProxyAddress);
 
             try

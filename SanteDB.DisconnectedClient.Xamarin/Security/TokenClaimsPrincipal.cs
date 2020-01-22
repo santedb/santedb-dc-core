@@ -54,10 +54,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
         // Access token
         private String m_accessToken;
-
-        // Configuration
-        private SecurityConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-
+        
         /// <summary>
         /// Gets the refresh token
         /// </summary>
@@ -96,10 +93,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     tokenObjects[i] = tokenObjects[i].PadRight(tokenObjects[i].Length + (tokenObjects[i].Length % 4), '=').Replace("===", "=");
                 JObject headers = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(tokenObjects[0])));
                 tokenBody = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(tokenObjects[1])));
-
-                // Algorithm is valid?
-                if (this.m_configuration.TokenAlgorithms?.Contains((String)headers["alg"]) == false)
-                    throw new SecurityTokenException(SecurityTokenExceptionType.InvalidTokenType, String.Format("Token algorithm {0} not permitted", headers["alg"]));
 
                 // Attempt to get the certificate
                 if (((String)headers["alg"]).StartsWith("RS"))
