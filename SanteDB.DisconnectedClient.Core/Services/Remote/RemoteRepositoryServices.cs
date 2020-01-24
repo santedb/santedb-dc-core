@@ -139,16 +139,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public String ServiceName => $"Remote repository for {typeof(TModel).FullName}";
 
-        // Service client
-        private HdsiServiceClient m_client = null;
-
         // Used to reduce requests to the server which the server had previously rejected
         private HashSet<Guid> m_missEntity = new HashSet<Guid>();
 
-        public RemoteRepositoryService()
+        /// <summary>
+        /// Get the client
+        /// </summary>
+        public HdsiServiceClient GetClient()
         {
-            this.m_client = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-            this.m_client.Client.Requesting += (o, e) =>
+            var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
+            retVal.Client.Requesting += (o, e) =>
             {
                 e.Query.Add("_expand", new List<String>() {
                         "typeConcept",
@@ -156,19 +156,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                         "name.use"
                 });
             };
-
-        }
-
-        private IPrincipal m_cachedCredential = null;
-
-        /// <summary>
-        /// Gets current credentials
-        /// </summary>
-        private Credentials GetCredentials()
-        {
-            var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
-            return this.m_client.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+            retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+            return retVal;
         }
 
         /// <summary>
@@ -184,41 +173,40 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public TModel Get(Guid key, Guid versionKey)
         {
-            this.GetCredentials();
-
-            try
-            {
-                var existing = ApplicationContext.Current.GetService<IDataCachingService>()?.GetCacheItem(key) as IdentifiedData;
-                if (existing != null && (existing is Entity || existing is Act)) // For entities and acts we want to ping the server 
-                { // check the cache to see if it is stale
-                    string etag = null;
-                    this.m_client.Client.Head($"{typeof(TModel).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>().ElementName}/{key}").TryGetValue("ETag", out etag);
-                    if (versionKey != Guid.Empty) // not versioned so who cares!?
-                        ;
-                    else if (etag != (existing as IdentifiedData).Tag) // Versions don't match the latest
-                    {
-                        ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(existing.Key.Value);
-                        existing = null;
-                    }
-                }
-                if (!this.m_missEntity.Contains(key) && (existing == null || !(existing is TModel) ||
-                    (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
+            using (var client = this.GetClient())
+                try
                 {
-                    existing = this.m_client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
+                    var existing = ApplicationContext.Current.GetService<IDataCachingService>()?.GetCacheItem(key) as IdentifiedData;
+                    if (existing != null && (existing is Entity || existing is Act)) // For entities and acts we want to ping the server 
+                    { // check the cache to see if it is stale
+                        string etag = null;
+                        client.Client.Head($"{typeof(TModel).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>().ElementName}/{key}").TryGetValue("ETag", out etag);
+                        if (versionKey != Guid.Empty) // not versioned so who cares!?
+                            ;
+                        else if (etag != (existing as IdentifiedData).Tag) // Versions don't match the latest
+                        {
+                            ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(existing.Key.Value);
+                            existing = null;
+                        }
+                    }
+                    if (!this.m_missEntity.Contains(key) && (existing == null || !(existing is TModel) ||
+                        (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
+                    {
+                        existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
 
-                    // Add if existing key is same newest version
-                    if (versionKey == Guid.Empty)
-                        ApplicationContext.Current.GetService<IDataCachingService>()?.Add(existing as IdentifiedData);
+                        // Add if existing key is same newest version
+                        if (versionKey == Guid.Empty)
+                            ApplicationContext.Current.GetService<IDataCachingService>()?.Add(existing as IdentifiedData);
+                    }
+                    return (TModel)existing;
                 }
-                return (TModel)existing;
-            }
-            catch (WebException)
-            {
-                lock (this.m_missEntity)
-                    this.m_missEntity.Add(key);
-                // Web exceptions should not bubble up
-                return default(TModel);
-            }
+                catch (WebException)
+                {
+                    lock (this.m_missEntity)
+                        this.m_missEntity.Add(key);
+                    // Web exceptions should not bubble up
+                    return default(TModel);
+                }
         }
 
         /// <summary>
@@ -226,12 +214,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public TModel Insert(TModel data)
         {
-            this.GetCredentials();
-
-            var retVal = this.m_client.Create(data);
-            ApplicationContext.Current.GetService<IDataCachingService>()?.Add(retVal);
-
-            return retVal;
+            using (var client = this.GetClient())
+            {
+                var retVal = client.Create(data);
+                ApplicationContext.Current.GetService<IDataCachingService>()?.Add(retVal);
+                return retVal;
+            }
         }
 
         /// <summary>
@@ -239,11 +227,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public TModel Obsolete(Guid key)
         {
-            this.GetCredentials();
-
-            var retVal = this.m_client.Obsolete(new TModel() { Key = key });
-            ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(key);
-            return retVal;
+            using (var client = this.GetClient())
+            {
+                var retVal = client.Obsolete(new TModel() { Key = key });
+                ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(key);
+                return retVal;
+            }
         }
 
         /// <summary>
@@ -260,32 +249,31 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy)
         {
-            this.GetCredentials();
-
-            try
-            {
-                var data = this.m_client.Query(query, offset, count, false, orderBy: orderBy);
-                (data as Bundle)?.Reconstitute();
-                offset = (data as Bundle)?.Offset ?? offset;
-                count = (data as Bundle)?.Count ?? count;
-                totalResults = (data as Bundle)?.TotalResults ?? 1;
-
-                // Reconstitute the bundle
-                (data as Bundle)?.Reconstitute();
-                data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
-                data.ExpansionKeys.Clear();
-                data.Item.AsParallel().ForAll(o =>
+            using (var client = this.GetClient())
+                try
                 {
-                    ApplicationContext.Current.GetService<IDataCachingService>()?.Add(o as IdentifiedData);
-                });
+                    var data = client.Query(query, offset, count, false, orderBy: orderBy);
+                    (data as Bundle)?.Reconstitute();
+                    offset = (data as Bundle)?.Offset ?? offset;
+                    count = (data as Bundle)?.Count ?? count;
+                    totalResults = (data as Bundle)?.TotalResults ?? 1;
 
-                return (data as Bundle)?.Item.OfType<TModel>() ?? new List<TModel>() { data as TModel };
-            }
-            catch (WebException)
-            {
-                totalResults = 0;
-                return new List<TModel>();
-            }
+                    // Reconstitute the bundle
+                    (data as Bundle)?.Reconstitute();
+                    data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
+                    data.ExpansionKeys.Clear();
+                    data.Item.AsParallel().ForAll(o =>
+                    {
+                        ApplicationContext.Current.GetService<IDataCachingService>()?.Add(o as IdentifiedData);
+                    });
+
+                    return (data as Bundle)?.Item.OfType<TModel>() ?? new List<TModel>() { data as TModel };
+                }
+                catch (WebException)
+                {
+                    totalResults = 0;
+                    return new List<TModel>();
+                }
 
         }
 
@@ -294,12 +282,12 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public TModel Save(TModel data)
         {
-            this.GetCredentials();
-
-            var retVal = this.m_client.Update(data);
-            ApplicationContext.Current.GetService<IDataCachingService>()?.Add(retVal);
-
-            return retVal;
+            using (var client = this.GetClient())
+            {
+                var retVal = client.Update(data);
+                ApplicationContext.Current.GetService<IDataCachingService>()?.Add(retVal);
+                return retVal;
+            }
         }
 
     }

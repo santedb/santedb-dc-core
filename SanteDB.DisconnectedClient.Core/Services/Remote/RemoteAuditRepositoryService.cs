@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
+            
             int tr = 0;
             return this.Find(query, 0, null, out tr);
         }
@@ -59,8 +59,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AuditData>();
+            using (var client = this.GetClient())
+                return client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AuditData>();
         }
 
         /// <summary>
@@ -68,13 +68,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public AuditData Get(object correlationKey)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            if (correlationKey is Guid || correlationKey is Guid?)
-                return this.m_client.GetAudit((Guid)correlationKey);
-            else if (correlationKey is String)
-                return this.m_client.GetAudit(Guid.Parse(correlationKey.ToString()));
-            else
-                throw new ArgumentException("Improper type supplied", nameof(correlationKey));
+            using (var client = this.GetClient())
+            {
+                if (correlationKey is Guid || correlationKey is Guid?)
+                    return client.GetAudit((Guid)correlationKey);
+                else if (correlationKey is String)
+                    return client.GetAudit(Guid.Parse(correlationKey.ToString()));
+                else
+                    throw new ArgumentException("Improper type supplied", nameof(correlationKey));
+            }
         }
 
         /// <summary>
@@ -82,8 +84,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public AuditData Insert(AuditData audit)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            this.m_client.SubmitAudit(new AuditSubmission(audit));
+            using (var client = this.GetClient())
+                client.SubmitAudit(new AuditSubmission(audit));
             return audit;
         }
 

@@ -60,8 +60,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.Query<MailMessage>(predicate, offset, count, out totalCount).CollectionItem.OfType<MailMessage>();
+            using (var client = this.GetClient())
+                return client.Query<MailMessage>(predicate, offset, count, out totalCount).CollectionItem.OfType<MailMessage>();
         }
 
         /// <summary>
@@ -78,8 +78,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public MailMessage Get(Guid id)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.GetMailMessage(id);
+            using (var client = this.GetClient())
+                return client.GetMailMessage(id);
         }
 
         /// <summary>
@@ -95,8 +95,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public MailMessage Insert(MailMessage message)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.CreateMailMessage(message);
+            using (var client = this.GetClient())
+                return client.CreateMailMessage(message);
         }
 
         /// <summary>
@@ -104,10 +104,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public MailMessage Obsolete(Guid key)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
+            
             var message = this.Get(key);
             message.Flags = MailMessageFlags.Archived;
-            return this.m_client.UpdateMailMessage(key, message);
+            using (var client = this.GetClient())
+                return client.UpdateMailMessage(key, message);
         }
 
         /// <summary>
@@ -115,8 +116,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public MailMessage Save(MailMessage message)
         {
-            this.m_client.Client.Credentials = this.GetCredentials();
-            return this.m_client.UpdateMailMessage(message.Key.Value, message);
+            using (var client = this.GetClient())
+                return client.UpdateMailMessage(message.Key.Value, message);
         }
     }
 }

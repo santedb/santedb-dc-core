@@ -38,31 +38,33 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
     /// </summary>
     public abstract class AmiRepositoryBaseService
     {
-        // Service client
-        protected AmiServiceClient m_client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+
+        // The principal to fall back on
+        private IPrincipal m_devicePrincipal;
 
         /// <summary>
-        /// Gets current credentials
+        /// Get a service client
         /// </summary>
-        protected Credentials GetCredentials()
+        protected AmiServiceClient GetClient ()
         {
+            var retVal = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+            
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
             IPrincipal principal = AuthenticationContext.Current.Principal;
 
             // Authentication
             if (!principal.Identity.IsAuthenticated)
-                principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
-
-            // Extend?
-            if (((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
             {
-                // Is a device and expired so re-auth
-                if (principal.Identity is IDeviceIdentity)
-                    principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                principal = this.m_devicePrincipal;
+                // Expired or not exists
+                if(principal == null || ((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                    this.m_devicePrincipal = principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             }
 
-            // get credentials
-            return this.m_client.Client.Description.Binding.Security.CredentialProvider.GetCredentials(principal);
+            retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(principal);
+            return retVal;
         }
+
+       
     }
 }

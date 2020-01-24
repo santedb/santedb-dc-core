@@ -73,25 +73,24 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void AddUsersToRoles(string[] users, string[] roles)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-
-                var roleKeys = roles.Select(o => this.GetRole(o)).Select(o => o.Key);
-                foreach (var rol in roleKeys)
-                    foreach (var usr in users)
-                    {
-
-                        this.m_client.Client.Post<SecurityUser, SecurityUser>($"SecurityRole/{rol}/user", this.m_client.Client.Accept, new SecurityUser()
+            using (var client = this.GetClient())
+                try
+                {
+                    var roleKeys = roles.Select(o => this.GetRole(o)).Select(o => o.Key);
+                    foreach (var rol in roleKeys)
+                        foreach (var usr in users)
                         {
-                            UserName = usr
-                        });
-                    }
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not add users to roles", e);
-            }
+
+                            client.Client.Post<SecurityUser, SecurityUser>($"SecurityRole/{rol}/user", client.Client.Accept, new SecurityUser()
+                            {
+                                UserName = usr
+                            });
+                        }
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not add users to roles", e);
+                }
         }
 
         /// <summary>
@@ -100,22 +99,22 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         public void ChangePassword(string userName, string password)
         {
 
-            try
-            {
-                var user = this.GetUser(userName);
-                if (user == null)
-                    throw new KeyNotFoundException($"{userName} not found");
-                user.Password = password;
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.UpdateUser(user.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(user)
+            using (var client = this.GetClient())
+                try
                 {
-                    PasswordOnly = true
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not change password", e);
-            }
+                    var user = this.GetUser(userName);
+                    if (user == null)
+                        throw new KeyNotFoundException($"{userName} not found");
+                    user.Password = password;
+                    client.UpdateUser(user.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(user)
+                    {
+                        PasswordOnly = true
+                    });
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not change password", e);
+                }
         }
 
         /// <summary>
@@ -127,23 +126,23 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         public SecurityUser ChangePassword(Guid userId, string password)
         {
 
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var user = ((IRepositoryService<SecurityUser>)this).Get(userId);
-                if (user == null)
-                    throw new KeyNotFoundException($"{userId} not found");
-                user.Password = password;
-                user = this.m_client.UpdateUser(user.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(user)
+            using (var client = this.GetClient())
+                try
                 {
-                    PasswordOnly = true
-                }).Entity;
-                return user;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not change password", e);
-            }
+                    var user = ((IRepositoryService<SecurityUser>)this).Get(userId);
+                    if (user == null)
+                        throw new KeyNotFoundException($"{userId} not found");
+                    user.Password = password;
+                    user = client.UpdateUser(user.Key.Value, new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(user)
+                    {
+                        PasswordOnly = true
+                    }).Entity;
+                    return user;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not change password", e);
+                }
         }
 
         /// <summary>
@@ -151,21 +150,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityUser CreateUser(SecurityUser userInfo, string password)
         {
-
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.CreateUser(new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(userInfo)
+            using (var client = this.GetClient())
+                try
                 {
-                    Roles = userInfo.Roles.Select(o => o.Name).ToList()
-                });
-                retVal.Entity.Roles = retVal.Roles.Select(o => this.GetRole(o)).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create user", e);
-            }
+                    var retVal = client.CreateUser(new SanteDB.Core.Model.AMI.Auth.SecurityUserInfo(userInfo)
+                    {
+                        Roles = userInfo.Roles.Select(o => o.Name).ToList()
+                    });
+                    retVal.Entity.Roles = retVal.Roles.Select(o => this.GetRole(o)).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create user", e);
+                }
         }
 
         /// <summary>
@@ -201,15 +199,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityPolicy GetPolicy(string policyOid)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetPolicies(o => o.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve policy", e);
-            }
+
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.GetPolicies(o => o.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve policy", e);
+                }
         }
 
         /// <summary>
@@ -217,15 +216,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityProvenance GetProvenance(Guid provenanceId)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetProvenance(provenanceId);
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve security provenance information", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.GetProvenance(provenanceId);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve security provenance information", e);
+                }
         }
 
 
@@ -234,18 +233,18 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityRole GetRole(string roleName)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var role = this.m_client.GetRoles(r => r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
-                if (role != null)
-                    role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return role?.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve role", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var role = client.GetRoles(r => r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
+                    if (role != null)
+                        role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return role?.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve role", e);
+                }
         }
 
         /// <summary>
@@ -253,18 +252,18 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public SecurityUser GetUser(string userName)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var user = this.m_client.GetUsers(u => u.UserName == userName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
-                if (user != null)
-                    user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
-                return user?.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve user", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var user = client.GetUsers(u => u.UserName == userName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
+                    if (user != null)
+                        user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
+                    return user?.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve user", e);
+                }
         }
 
 
@@ -299,15 +298,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void LockUser(Guid userId)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.LockUser(userId);
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not lock user", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    client.LockUser(userId);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not lock user", e);
+                }
         }
 
 
@@ -316,20 +315,19 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void RemoveUsersFromRoles(string[] users, string[] roles)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-
-                var roleKeys = roles.Select(o => this.GetRole(o)).Select(o => o.Key);
-                var userKeys = users.Select(o => this.GetUser(o)).Select(o => o.Key);
-                foreach (var rol in roleKeys)
-                    foreach (var usr in userKeys)
-                        this.m_client.Client.Delete<SecurityUser>($"SecurityRole/{rol}/user/${usr}");
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not add users to roles", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var roleKeys = roles.Select(o => this.GetRole(o)).Select(o => o.Key);
+                    var userKeys = users.Select(o => this.GetUser(o)).Select(o => o.Key);
+                    foreach (var rol in roleKeys)
+                        foreach (var usr in userKeys)
+                            client.Client.Delete<SecurityUser>($"SecurityRole/{rol}/user/${usr}");
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not add users to roles", e);
+                }
         }
 
         /// <summary>
@@ -337,15 +335,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void UnlockUser(Guid userId)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.UnlockUser(userId);
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not unlock user", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    client.UnlockUser(userId);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not unlock user", e);
+                }
         }
 
         /// <summary>
@@ -474,9 +472,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
 
             try
             {
-                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.GetCredentials();
-                return hdsiClient.Get<UserEntity>(key, versionKey != Guid.Empty ? (Guid?)versionKey : null) as UserEntity;
+                using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
+                {
+                    hdsiClient.Client.Credentials = this.GetClient().Client.Credentials;
+                    return hdsiClient.Get<UserEntity>(key, versionKey != Guid.Empty ? (Guid?)versionKey : null) as UserEntity;
+                }
             }
             catch (Exception e)
             {
@@ -497,18 +497,18 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Get(Guid key, Guid versionKey)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var application = this.m_client.GetApplication(key);
-                application.Entity.Policies = application.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return application.Entity;
+            using (var client = this.GetClient())
+                try
+                {
+                    var application = client.GetApplication(key);
+                    application.Entity.Policies = application.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return application.Entity;
 
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve application", e);
-            }
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve application", e);
+                }
         }
 
         /// <summary>
@@ -524,17 +524,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Get(Guid key, Guid versionKey)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var device = this.m_client.GetDevice(key);
-                device.Entity.Policies = device.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return device.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve device", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var device = client.GetDevice(key);
+                    device.Entity.Policies = device.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return device.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve device", e);
+                }
         }
 
         /// <summary>
@@ -550,17 +550,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Get(Guid key, Guid versionKey)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var role = this.m_client.GetRole(key);
-                role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return role.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve role", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var role = client.GetRole(key);
+                    role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return role.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve role", e);
+                }
         }
 
         /// <summary>
@@ -576,18 +576,18 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityUser IRepositoryService<SecurityUser>.Get(Guid key, Guid versionKey)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var user = this.m_client.GetUser(key);
-                if (user != null)
-                    user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
-                return user?.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve user", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var user = client.GetUser(key);
+                    if (user != null)
+                        user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
+                    return user?.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve user", e);
+                }
         }
 
         /// <summary>
@@ -604,15 +604,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Get(Guid key, Guid versionKey)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetPolicy(key);
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve policy", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.GetPolicy(key);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve policy", e);
+                }
         }
 
         /// <summary>
@@ -623,9 +623,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
 
             try
             {
-                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.GetCredentials();
-                return hdsiClient.Create(userEntity);
+                using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
+                {
+                    hdsiClient.Client.Credentials = this.GetClient().Client.Credentials;
+                    return hdsiClient.Create(userEntity);
+                }
             }
             catch (Exception e)
             {
@@ -639,20 +641,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         SecurityApplication IRepositoryService<SecurityApplication>.Insert(SecurityApplication data)
         {
 
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.CreateApplication(new SanteDB.Core.Model.AMI.Auth.SecurityApplicationInfo(data)
+            using (var client = this.GetClient())
+                try
                 {
-                    Policies = data.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
-                });
-                retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create application", e);
-            }
+                    var retVal = client.CreateApplication(new SanteDB.Core.Model.AMI.Auth.SecurityApplicationInfo(data)
+                    {
+                        Policies = data.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
+                    });
+                    retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create application", e);
+                }
         }
 
         /// <summary>
@@ -660,20 +662,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Insert(SecurityDevice device)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.CreateDevice(new SanteDB.Core.Model.AMI.Auth.SecurityDeviceInfo(device)
+            using (var client = this.GetClient())
+                try
                 {
-                    Policies = device.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
-                });
-                retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create device", e);
-            }
+                    var retVal = client.CreateDevice(new SanteDB.Core.Model.AMI.Auth.SecurityDeviceInfo(device)
+                    {
+                        Policies = device.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
+                    });
+                    retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create device", e);
+                }
         }
 
         /// <summary>
@@ -682,20 +684,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         SecurityRole IRepositoryService<SecurityRole>.Insert(SecurityRole roleInfo)
         {
 
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.CreateRole(new SanteDB.Core.Model.AMI.Auth.SecurityRoleInfo(roleInfo)
+            using (var client = this.GetClient())
+                try
                 {
-                    Policies = roleInfo.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
-                });
-                retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create role", e);
-            }
+                    var retVal = client.CreateRole(new SanteDB.Core.Model.AMI.Auth.SecurityRoleInfo(roleInfo)
+                    {
+                        Policies = roleInfo.Policies.Select(o => new SanteDB.Core.Model.AMI.Auth.SecurityPolicyInfo(o)).ToList()
+                    });
+                    retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create role", e);
+                }
         }
 
         /// <summary>
@@ -714,15 +716,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         SecurityPolicy IRepositoryService<SecurityPolicy>.Insert(SecurityPolicy policy)
         {
 
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.CreatePolicy(policy);
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create policy", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.CreatePolicy(policy);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create policy", e);
+                }
         }
 
         /// <summary>
@@ -732,9 +734,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         {
             try
             {
-                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.GetCredentials();
-                return hdsiClient.Obsolete(new UserEntity() { Key = key }) as UserEntity;
+                using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
+                {
+                    hdsiClient.Client.Credentials = this.GetClient().Client.Credentials;
+                    return hdsiClient.Obsolete(new UserEntity() { Key = key }) as UserEntity;
+                }
             }
             catch (Exception e)
             {
@@ -748,15 +752,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Obsolete(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeleteApplication(key).Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not delte application", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.DeleteApplication(key).Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not delte application", e);
+                }
         }
 
         /// <summary>
@@ -764,15 +768,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Obsolete(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeleteDevice(key).Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not delete device", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.DeleteDevice(key).Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not delete device", e);
+                }
         }
 
         /// <summary>
@@ -780,15 +784,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Obsolete(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeleteRole(key).Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not delete role", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.DeleteRole(key).Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not delete role", e);
+                }
         }
 
         /// <summary>
@@ -796,15 +800,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityUser IRepositoryService<SecurityUser>.Obsolete(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeleteUser(key).Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not delete device", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.DeleteUser(key).Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not delete device", e);
+                }
         }
 
         /// <summary>
@@ -812,15 +816,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Obsolete(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.DeletePolicy(key);
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not delete policy", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.DeletePolicy(key);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not delete policy", e);
+                }
         }
 
         /// <summary>
@@ -830,9 +834,11 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         {
             try
             {
-                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.GetCredentials();
-                return hdsiClient.Update(data) as UserEntity;
+                using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
+                {
+                    hdsiClient.Client.Credentials = this.GetClient().Client.Credentials;
+                    return hdsiClient.Update(data) as UserEntity;
+                }
             }
             catch (Exception e)
             {
@@ -845,20 +851,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Save(SecurityApplication data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.UpdateApplication(data.Key.Value, new SecurityApplicationInfo(data)
+            using (var client = this.GetClient())
+                try
                 {
-                    Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
-                });
-                retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Error saving application", e);
-            }
+                    var retVal = client.UpdateApplication(data.Key.Value, new SecurityApplicationInfo(data)
+                    {
+                        Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
+                    });
+                    retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Error saving application", e);
+                }
         }
 
         /// <summary>
@@ -866,20 +872,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityDevice IRepositoryService<SecurityDevice>.Save(SecurityDevice data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.UpdateDevice(data.Key.Value, new SecurityDeviceInfo(data)
+            using (var client = this.GetClient())
+                try
                 {
-                    Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
-                });
-                retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Error saving application", e);
-            }
+                    var retVal = client.UpdateDevice(data.Key.Value, new SecurityDeviceInfo(data)
+                    {
+                        Policies = data.Policies.Select(o => new SecurityPolicyInfo(o)).ToList()
+                    });
+                    retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Error saving application", e);
+                }
         }
 
         /// <summary>
@@ -887,17 +893,17 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Save(SecurityRole data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.UpdateRole(data.Key.Value, new SecurityRoleInfo(data));
-                retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Error saving role", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var retVal = client.UpdateRole(data.Key.Value, new SecurityRoleInfo(data));
+                    retVal.Entity.Policies = retVal.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Error saving role", e);
+                }
         }
 
         /// <summary>
@@ -905,20 +911,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityUser IRepositoryService<SecurityUser>.Save(SecurityUser data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.UpdateUser(data.Key.Value, new SecurityUserInfo(data)
+            using (var client = this.GetClient())
+                try
                 {
-                    Roles = data.Roles.Select(o => o.Name).ToList()
-                });
-                retVal.Entity.Roles = retVal.Roles.Select(o => this.GetRole(o)).ToList();
-                return retVal.Entity;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Error saving role", e);
-            }
+                    var retVal = client.UpdateUser(data.Key.Value, new SecurityUserInfo(data)
+                    {
+                        Roles = data.Roles.Select(o => o.Name).ToList()
+                    });
+                    retVal.Entity.Roles = retVal.Roles.Select(o => this.GetRole(o)).ToList();
+                    return retVal.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Error saving role", e);
+                }
         }
 
         /// <summary>
@@ -926,16 +932,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Save(SecurityPolicy data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.Client.Put<SecurityPolicy, SecurityPolicy>($"SecurityPolicy/{data.Key}", this.m_client.Client.Accept, data);
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Error saving policy", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+                    var retVal = client.Client.Put<SecurityPolicy, SecurityPolicy>($"SecurityPolicy/{data.Key}", client.Client.Accept, data);
+                    return retVal;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Error saving policy", e);
+                }
         }
 
         /// <summary>
@@ -984,29 +990,30 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityUser> IPersistableQueryRepositoryService<SecurityUser>.Find(Expression<Func<SecurityUser, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityUser>[] orderBy)
         {
-            try
-            {
-                Dictionary<String, SecurityRole> cachedRoles = new Dictionary<string, SecurityRole>();
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
+            using (var client = this.GetClient())
+                try
                 {
-                    o.Entity.Roles = o.Roles.Select(r =>
+                    Dictionary<String, SecurityRole> cachedRoles = new Dictionary<string, SecurityRole>();
+
+                    return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityUserInfo>().Select(o =>
                     {
-                        SecurityRole rol = null;
-                        if (!cachedRoles.TryGetValue(r, out rol))
+                        o.Entity.Roles = o.Roles.Select(r =>
                         {
-                            rol = this.FindRoles(q => q.Name == r).FirstOrDefault();
-                            cachedRoles.Add(r, rol);
-                        }
-                        return rol;
-                    }).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query users", e);
-            }
+                            SecurityRole rol = null;
+                            if (!cachedRoles.TryGetValue(r, out rol))
+                            {
+                                rol = this.FindRoles(q => q.Name == r).FirstOrDefault();
+                                cachedRoles.Add(r, rol);
+                            }
+                            return rol;
+                        }).ToList();
+                        return o.Entity;
+                    });
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query users", e);
+                }
         }
 
         /// <summary>
@@ -1014,19 +1021,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityApplication> IPersistableQueryRepositoryService<SecurityApplication>.Find(Expression<Func<SecurityApplication, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityApplication>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
+            using (var client = this.GetClient())
+                try
                 {
-                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query applications", e);
-            }
+
+                    return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
+                    {
+                        o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
+                        return o.Entity;
+                    });
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query applications", e);
+                }
         }
 
         /// <summary>
@@ -1034,19 +1042,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityDevice> IPersistableQueryRepositoryService<SecurityDevice>.Find(Expression<Func<SecurityDevice, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityDevice>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
+            using (var client = this.GetClient())
+                try
                 {
-                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query devices", e);
-            }
+
+                    return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
+                    {
+                        o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
+                        return o.Entity;
+                    });
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query devices", e);
+                }
         }
 
         /// <summary>
@@ -1054,19 +1063,20 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityRole> IPersistableQueryRepositoryService<SecurityRole>.Find(Expression<Func<SecurityRole, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityRole>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
+            using (var client = this.GetClient())
+                try
                 {
-                    o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
-                    return o.Entity;
-                });
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query roles", e);
-            }
+
+                    return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
+                    {
+                        o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
+                        return o.Entity;
+                    });
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query roles", e);
+                }
         }
 
         /// <summary>
@@ -1074,15 +1084,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         IEnumerable<SecurityPolicy> IPersistableQueryRepositoryService<SecurityPolicy>.Find(Expression<Func<SecurityPolicy, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityPolicy>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityPolicy>();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query devices", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityPolicy>();
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query devices", e);
+                }
         }
 
         /// <summary>
@@ -1092,11 +1103,13 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         {
             try
             {
-                var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-                hdsiClient.Client.Credentials = this.GetCredentials();
-                var retVal = hdsiClient.Query<UserEntity>(query, offset, count, false, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy);
-                totalResults = retVal.TotalResults;
-                return retVal.Item.OfType<UserEntity>();
+                using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
+                {
+                    hdsiClient.Client.Credentials = this.GetClient().Client.Credentials;
+                    var retVal = hdsiClient.Query<UserEntity>(query, offset, count, false, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy);
+                    totalResults = retVal.TotalResults;
+                    return retVal.Item.OfType<UserEntity>();
+                }
             }
             catch (Exception e)
             {
@@ -1120,21 +1133,22 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void AddUsersToRoles(string[] users, string[] roles, IPrincipal principal)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                foreach (var usr in users)
+            using (var client = this.GetClient())
+                try
                 {
-                    // Get the user info
-                    var secUser = this.m_client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
-                    secUser.Roles.AddRange(roles);
-                    this.m_client.UpdateUser(secUser.Entity.Key.Value, secUser);
+
+                    foreach (var usr in users)
+                    {
+                        // Get the user info
+                        var secUser = client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
+                        secUser.Roles.AddRange(roles);
+                        client.UpdateUser(secUser.Entity.Key.Value, secUser);
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not add users to roles", e);
-            }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not add users to roles", e);
+                }
         }
 
         /// <summary>
@@ -1142,21 +1156,22 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void RemoveUsersFromRoles(string[] users, string[] roles, IPrincipal principal)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                foreach (var usr in users)
+            using (var client = this.GetClient())
+                try
                 {
-                    // Get the user info
-                    var secUser = this.m_client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
-                    secUser.Roles.RemoveAll(r => roles.Contains(r));
-                    this.m_client.UpdateUser(secUser.Entity.Key.Value, secUser);
+
+                    foreach (var usr in users)
+                    {
+                        // Get the user info
+                        var secUser = client.GetUsers(u => u.UserName == usr).CollectionItem.FirstOrDefault() as SecurityUserInfo;
+                        secUser.Roles.RemoveAll(r => roles.Contains(r));
+                        client.UpdateUser(secUser.Entity.Key.Value, secUser);
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not remove users from roles", e);
-            }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not remove users from roles", e);
+                }
         }
 
         /// <summary>
@@ -1166,15 +1181,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <returns></returns>
         public string[] FindUsersInRole(string role)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetRoles(r => r.Name == role).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Users.ToArray();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not get roles", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    return client.GetRoles(r => r.Name == role).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Users.ToArray();
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not get roles", e);
+                }
         }
 
         /// <summary>
@@ -1182,15 +1198,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public string[] GetAllRoles(string userName)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetRoles(r => r.ObsoletionTime != null).CollectionItem.OfType<SecurityRoleInfo>().Select(o => o.Entity.Name).ToArray();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not remove users from roles", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    return client.GetRoles(r => r.ObsoletionTime != null).CollectionItem.OfType<SecurityRoleInfo>().Select(o => o.Entity.Name).ToArray();
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not remove users from roles", e);
+                }
 
         }
 
@@ -1202,15 +1219,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <returns></returns>
         public bool IsUserInRole(IPrincipal principal, string roleName)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.GetUsers(u => u.UserName == principal.Identity.Name && u.Roles.Any(r => r.Name == roleName)).CollectionItem.Count() > 0;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not remove users from roles", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    return client.GetUsers(u => u.UserName == principal.Identity.Name && u.Roles.Any(r => r.Name == roleName)).CollectionItem.Count() > 0;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not remove users from roles", e);
+                }
         }
 
 
@@ -1229,15 +1247,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void LockDevice(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.Client.Lock<SecurityDeviceInfo>($"SecurityDevice/{key}");
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not lock device", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    client.Client.Lock<SecurityDeviceInfo>($"SecurityDevice/{key}");
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not lock device", e);
+                }
         }
 
         /// <summary>
@@ -1246,15 +1265,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <param name="key"></param>
         public void LockApplication(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.Client.Lock<SecurityApplicationInfo>($"SecurityApplication/{key}");
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not lock application", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    client.Client.Lock<SecurityApplicationInfo>($"SecurityApplication/{key}");
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not lock application", e);
+                }
         }
 
         /// <summary>
@@ -1262,15 +1282,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public void UnlockDevice(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.Client.Unlock<SecurityDeviceInfo>($"SecurityDevice/{key}");
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not unlock device", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    client.Client.Unlock<SecurityDeviceInfo>($"SecurityDevice/{key}");
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not unlock device", e);
+                }
         }
 
         /// <summary>
@@ -1279,15 +1300,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <param name="key">The application to lock</param>
         public void UnlockApplication(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                this.m_client.Client.Unlock<SecurityApplicationInfo>($"SecurityApplication/{key}");
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not application device", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    client.Client.Unlock<SecurityApplicationInfo>($"SecurityApplication/{key}");
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not application device", e);
+                }
         }
 
         /// <summary>
@@ -1295,15 +1317,16 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         public IEnumerable<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityProvenance>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityProvenance>();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query applications", e);
-            }
+            using (var client = this.GetClient())
+                try
+                {
+
+                    return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityProvenance>();
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query applications", e);
+                }
         }
 
     }

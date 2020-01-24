@@ -33,10 +33,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         AssigningAuthority IRepositoryService<AssigningAuthority>.Get(Guid key, Guid versionKey)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.Client.Get<AssigningAuthority>($"AssigningAuthority/{key}");
+            using (var client = this.GetClient())
+                try
+                {
+                var retVal = client.Client.Get<AssigningAuthority>($"AssigningAuthority/{key}");
                 return retVal;
             }
             catch (Exception e)
@@ -56,10 +56,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
 
         IEnumerable<AssigningAuthority> IRepositoryService<AssigningAuthority>.Find(Expression<Func<AssigningAuthority, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AssigningAuthority>[] orderBy)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                return this.m_client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AssigningAuthority>();
+            using (var client = this.GetClient())
+                try
+                {
+                return client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AssigningAuthority>();
             }
             catch (Exception e)
             {
@@ -72,10 +72,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         AssigningAuthority IRepositoryService<AssigningAuthority>.Insert(AssigningAuthority data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.CreateAssigningAuthority(data);
+            using (var client = this.GetClient())
+                try
+                {
+                var retVal = client.CreateAssigningAuthority(data);
                 return retVal;
             }
             catch (Exception e)
@@ -89,10 +89,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// </summary>
         AssigningAuthority IRepositoryService<AssigningAuthority>.Save(AssigningAuthority data)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.UpdateAssigningAuthority(data.Key.Value, data);
+            using (var client = this.GetClient())
+                try
+                {
+                var retVal = client.UpdateAssigningAuthority(data.Key.Value, data);
                 return retVal;
             }
             catch (Exception e)
@@ -107,10 +107,10 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <returns></returns>
         AssigningAuthority IRepositoryService<AssigningAuthority>.Obsolete(Guid key)
         {
-            try
-            {
-                this.m_client.Client.Credentials = this.GetCredentials();
-                var retVal = this.m_client.DeleteAssigningAuthority(key);
+            using (var client = this.GetClient())
+                try
+                {
+                var retVal = client.DeleteAssigningAuthority(key);
                 return retVal;
             }
             catch (Exception e)
