@@ -226,7 +226,7 @@
     <property modelName="ObsoletedByKey" domainName="ObsoletedByUuid"/>
     <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
     <property modelName="UpdatedTime" domainName="UpdatedTime"/>
-    <property modelName="modifiedOn" domainName="UpdatedTime"/>
+    <property modelName="ModifiedOn" domainName="UpdatedTime"/>
   </class>
 
 
