@@ -18,6 +18,7 @@
  * Date: 2019-8-8
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using SQLite.Net.Attributes;
@@ -35,6 +36,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
     public abstract class SynchronizationQueueEntry : ISynchronizationQueueEntry
     {
 
+        // Gets the transient data
+        private IdentifiedData m_transientData = null;
+
         /// <summary>
         /// Serialization ctor
         /// </summary>
@@ -49,7 +53,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
         public SynchronizationQueueEntry(SynchronizationQueueEntry entry)
         {
             this.CreationTime = entry.CreationTime;
-            this.Data = ApplicationContext.Current.GetService<IQueueFileProvider>().CopyQueueData(entry.Data);
+            this.DataFileKey = ApplicationContext.Current.GetService<IQueueFileProvider>().CopyQueueData(entry.DataFileKey);
+            this.Data = entry.Data;
             this.IsRetry = entry.IsRetry;
             this.Operation = entry.Operation;
             this.Type = entry.Type;
@@ -104,12 +109,28 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
         /// </summary>
         /// <value>The data.</value>
         [Column("data"), JsonProperty("data"), XmlIgnore]
-        public String Data
+        public String DataFileKey
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Gets or sets the actual data object
+        /// </summary>
+        [XmlIgnore, JsonIgnore, Ignore]
+        public IdentifiedData Data {
+            get
+            {
+                if (this.m_transientData == null)
+                    this.m_transientData = ApplicationContext.Current.GetService<IQueueFileProvider>().GetQueueData(this.DataFileKey, System.Type.GetType(this.Type));
+                return this.m_transientData;
+            }
+            set
+            {
+                this.m_transientData = value;
+            }
+        }
 
         /// <summary>
         /// Identifies whether the queue item is a retry
@@ -172,7 +193,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
                 throw new ArgumentNullException(nameof(fromEntry));
 
             this.OriginalQueue = fromEntry.GetType().GetTypeInfo().GetCustomAttribute<TableAttribute>().Name;
-            this.Data = ApplicationContext.Current.GetService<IQueueFileProvider>().CopyQueueData(fromEntry.Data);
+            this.DataFileKey = ApplicationContext.Current.GetService<IQueueFileProvider>().CopyQueueData(fromEntry.DataFileKey);
             this.CreationTime = DateTime.Now;
             this.Type = fromEntry.Type;
             this.TagData = tagData;

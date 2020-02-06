@@ -136,9 +136,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
 		private IdentifiedData GetQueueData(ISynchronizationQueueEntry queueEntry)
         {
-            var queueData = ApplicationServiceContext.Current.GetService<IQueueFileProvider>().GetQueueData(queueEntry?.Data, Type.GetType(queueEntry.Type));
+            var queueData = ApplicationServiceContext.Current.GetService<IQueueFileProvider>().GetQueueData(queueEntry?.DataFileKey, Type.GetType(queueEntry.Type));
             if (queueData == null)
-                throw new KeyNotFoundException($"error.queueentry.notfound.{queueEntry.Data}");
+                throw new KeyNotFoundException($"error.queueentry.notfound.{queueEntry.DataFileKey}");
             return queueData;
         }
 
@@ -167,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 throw new KeyNotFoundException($"error.queueentry.notfound.{id}");
             var queueVersion = this.GetQueueData(queueData);
             if (queueVersion == null)
-                throw new KeyNotFoundException($"error.queudata.notfound.{queueData.Data}");
+                throw new KeyNotFoundException($"error.queudata.notfound.{queueData.DataFileKey}");
 
             var idb = typeof(IReadOnlyCollection<>).MakeGenericType(Type.GetType(queueData.Type));
             var persistenceService = ApplicationServiceContext.Current.GetService(idb);
@@ -191,7 +191,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 throw new KeyNotFoundException($"error.queueentry.notfound.{id}");
             var queueVersion = this.GetQueueData(queueData);
             if (queueVersion == null)
-                throw new KeyNotFoundException($"error.queudata.notfound.{queueData.Data}");
+                throw new KeyNotFoundException($"error.queudata.notfound.{queueData.DataFileKey}");
             
             // Data type
             var idb = typeof(IReadOnlyCollection<>).MakeGenericType(Type.GetType(queueData.Type));

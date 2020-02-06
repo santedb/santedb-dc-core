@@ -119,11 +119,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// <summary>
         /// Fired when the data is about to be enqueued
         /// </summary>
-        public event EventHandler<DataPersistingEventArgs<TQueueEntry>> Enqueuing;
+        public event EventHandler<DataPersistingEventArgs<ISynchronizationQueueEntry>> Enqueuing;
         /// <summary>
         /// Fired after the data has been enqueued
         /// </summary>
-        public event EventHandler<DataPersistedEventArgs<TQueueEntry>> Enqueued;
+        public event EventHandler<DataPersistedEventArgs<ISynchronizationQueueEntry>> Enqueued;
 
         /// <summary>
         /// Singleton
@@ -169,7 +169,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             // Serialize object
             TQueueEntry queueEntry = new TQueueEntry()
             {
-                Data = ApplicationContext.Current.GetService<IQueueFileProvider>().SaveQueueData(data),
+                DataFileKey = ApplicationContext.Current.GetService<IQueueFileProvider>().SaveQueueData(data),
+                Data = data,
                 CreationTime = DateTime.Now,
                 Operation = operation,
                 Type = data.GetType().AssemblyQualifiedName
@@ -186,12 +187,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         public TQueueEntry EnqueueRaw(TQueueEntry entry)
         {
             // Fire pre-event args
-            var preEventArgs = new DataPersistingEventArgs<TQueueEntry>(entry, AuthenticationContext.Current.Principal);
+            var preEventArgs = new DataPersistingEventArgs<ISynchronizationQueueEntry>(entry, AuthenticationContext.Current.Principal);
             this.Enqueuing?.Invoke(this, preEventArgs);
             if (preEventArgs.Cancel)
             {
                 this.m_tracer.TraceInfo("Pre-event handler has cancelled the action");
-                return preEventArgs.Data;
+                return (TQueueEntry)preEventArgs.Data;
             }
 
             var conn = this.CreateConnection();
@@ -207,9 +208,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         conn.Commit();
                     }
 
-                    var postEventArgs = new DataPersistedEventArgs<TQueueEntry>(entry, AuthenticationContext.Current.Principal);
+                    var postEventArgs = new DataPersistedEventArgs<ISynchronizationQueueEntry>(entry, AuthenticationContext.Current.Principal);
                     this.Enqueued?.Invoke(this, postEventArgs);
-                    return postEventArgs.Data;
+                    return (TQueueEntry)postEventArgs.Data;
 
                 }
                 catch (Exception e)
@@ -227,7 +228,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// </summary>
         public IdentifiedData DeserializeObject(TQueueEntry entry)
         {
-            return ApplicationContext.Current.GetService<IQueueFileProvider>().GetQueueData(entry.Data, Type.GetType(entry.Type));
+            return ApplicationContext.Current.GetService<IQueueFileProvider>().GetQueueData(entry.DataFileKey, Type.GetType(entry.Type));
         }
 
         /// <summary>
@@ -263,7 +264,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         var queueItem = conn.Table<TQueueEntry>().Where(o => o.Id >= 0).OrderBy(i => i.Id).FirstOrDefault();
                         if (queueItem != null)
                         {
-                            ApplicationContext.Current.GetService<IQueueFileProvider>().RemoveQueueData(queueItem.Data);
+                            ApplicationContext.Current.GetService<IQueueFileProvider>().RemoveQueueData(queueItem.DataFileKey);
                             conn.Delete(queueItem);
                         }
                         return queueItem;
@@ -387,7 +388,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         if (tdata != null)
                         {
                             conn.Delete(tdata);
-                            ApplicationContext.Current.GetService<IQueueFileProvider>().RemoveQueueData(tdata?.Data);
+                            ApplicationContext.Current.GetService<IQueueFileProvider>().RemoveQueueData(tdata?.DataFileKey);
                         }
                         else
                             this.m_tracer.TraceWarning("Could not find queue item {0} to be deleted", id);

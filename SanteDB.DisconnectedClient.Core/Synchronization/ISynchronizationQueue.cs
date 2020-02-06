@@ -17,6 +17,7 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
@@ -48,7 +49,12 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <summary>
         /// Gets the data of the object
         /// </summary>
-        String Data { get; set; }
+        String DataFileKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the transient data
+        /// </summary>
+        IdentifiedData Data { get; set; }
 
         /// <summary>
         /// Gets the operation of the object
@@ -82,6 +88,16 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
     /// </summary>
     public interface ISynchronizationQueue
     {
+
+        /// <summary>
+        /// Fired prior to data being placed into this queue
+        /// </summary>
+        event EventHandler<DataPersistingEventArgs<ISynchronizationQueueEntry>> Enqueuing;
+
+        /// <summary>
+        /// Fired after data has been placed into this queue
+        /// </summary>
+        event EventHandler<DataPersistedEventArgs<ISynchronizationQueueEntry>> Enqueued;
 
         /// <summary>
         /// Enqueue the data

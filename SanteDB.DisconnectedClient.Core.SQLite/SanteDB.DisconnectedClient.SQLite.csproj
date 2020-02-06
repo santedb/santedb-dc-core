@@ -50,6 +50,7 @@
     <Compile Include="Hacks\ConceptQueryHack.cs" />
     <Compile Include="Hacks\RelationshipQueryHack.cs" />
     <Compile Include="ISQLitePersistenceService.cs" />
+    <Compile Include="Mdm\MdmDataManager.cs" />
     <Compile Include="Migrations\InitialMessageCatalog.cs" />
     <Compile Include="Migrations\InitialQueueCatalog.cs" />
     <Compile Include="Model\Concepts\DbCodeSystem.cs" />

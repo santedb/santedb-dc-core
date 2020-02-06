@@ -17,6 +17,8 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core.Event;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;

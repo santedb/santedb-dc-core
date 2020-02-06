@@ -18,10 +18,13 @@
  * Date: 2019-8-8
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Http;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -348,6 +351,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                         // Queue the act of queueing
                         if (result != null)
                         {
+                            
                             if (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
                                 count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000)
                                 count = 5000;
@@ -364,8 +368,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                                 count = 100;
 
                             this.m_tracer.TraceVerbose("Download {0} ({1}..{2}/{3})", modelType.FullName, i, i + result.Count, result.TotalResults);
-                            result.Item.RemoveAll(o => o is SecurityUser || o is SecurityRole || o is SecurityPolicy);
 
+                            result.Item.RemoveAll(o => o is SecurityUser || o is SecurityRole || o is SecurityPolicy);
                             ApplicationContext.Current.GetService<IQueueManagerService>().Inbound.Enqueue(result, SynchronizationOperationType.Sync);
                             logSvc.SaveQuery(modelType, filter.ToString(), qid, name, result.Offset + result.Count);
 
