@@ -290,7 +290,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 try
                 {
                     ApplicationContext.Current.SetProgress(String.Format(Strings.locale_downloading, ""), 0);
-                    var targets =ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().SynchronizationResources.Where(o => o.Triggers.HasFlag(SynchronizationPullTriggerType.Always) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnNetworkChange) || o.Triggers.HasFlag(SynchronizationPullTriggerType.PeriodicPoll)).ToList();
+                    var targets =ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().SynchronizationResources.Where(o => o.Triggers.HasFlag(SynchronizationPullTriggerType.Always) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnNetworkChange) || o.Triggers.HasFlag(SynchronizationPullTriggerType.PeriodicPoll) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnStart)).ToList();
                     for (var i = 0; i < targets.Count(); i++)
                     {
                         var itm = targets[i];

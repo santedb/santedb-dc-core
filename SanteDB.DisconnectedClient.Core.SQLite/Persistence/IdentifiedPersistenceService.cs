@@ -283,12 +283,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (queryId != Guid.Empty)
             {
                 this.m_queryPersistence?.RegisterQuerySet(queryId, new Guid[0], query, countResults ? totalResults : 0);
+                var originalQuery = queryStatement.Build();
                 ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem((parm) =>
                 {
                     var conn2 = parm as SQLiteDataContext;
                     using (conn2.LockConnection())
                     {
-                        this.m_queryPersistence?.AddResults(queryId, conn2.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).Select(o => o.Key));
+                        this.m_queryPersistence?.AddResults(queryId, conn2.Connection.Query<TQueryResult>(originalQuery.SQL, args).Select(o => o.Key));
                     }
                 }, this.CreateConnection(context.Principal));
             }

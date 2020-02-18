@@ -163,7 +163,15 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 else if (grants == null)
                     grants = this.m_policyCache[principal.Identity.Name];
                 if (!grants.ContainsKey(policyId))
-                    grants.Add(policyId, new { Rule = rule, Time = DateTime.Now });
+                    try
+                    {
+                        grants.Add(policyId, new { Rule = rule, Time = DateTime.Now });
+                    }
+                    catch
+                    {
+                        this.m_policyCache.Remove(principal.Identity.Name);
+                        return rule;
+                    }
             }
             return rule;
         }

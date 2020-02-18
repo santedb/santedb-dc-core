@@ -326,7 +326,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (retVal.Tags != null)
                 base.UpdateAssociatedItems<ActTag, Act>(
                     new List<ActTag>(),
-                    retVal.Tags,
+                    retVal.Tags.Where(o=>!o.TagKey.StartsWith("$")),
                     retVal.Key,
                     context);
 
@@ -421,7 +421,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (retVal.Tags != null)
                 base.UpdateAssociatedItems<ActTag, Act>(
                     context.Connection.Table<DbActTag>().Where(a => ruuid == a.SourceUuid).ToList().Select(o => m_mapper.MapDomainInstance<DbActTag, ActTag>(o)).ToList(),
-                    retVal.Tags,
+                    retVal.Tags.Where(o => !o.TagKey.StartsWith("$")),
                     retVal.Key,
                     context);
 

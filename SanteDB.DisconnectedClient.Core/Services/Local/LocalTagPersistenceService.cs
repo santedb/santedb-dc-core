@@ -41,7 +41,8 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
         /// </summary>
         public void Save(Guid sourceKey, ITag tag)
         {
-
+            if (tag == null || tag.TagKey.StartsWith("$"))
+                return; // $ tags are not saved
             if (tag is EntityTag)
             {
                 var idp = ApplicationContext.Current.GetService<IDataPersistenceService<EntityTag>>();
