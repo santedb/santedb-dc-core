@@ -31,6 +31,7 @@ using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Synchronization;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
+using SharpCompress.Compressors.Deflate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +40,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -488,6 +490,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         }
                     }
                     catch (SecurityException) { }
+                    catch (ZlibException) { }
+                    catch (XmlException) { }
                     catch (Exception ex)
                     {
                         this.m_tracer.TraceError("Error sending object to IMS: {0}", ex);

@@ -421,8 +421,8 @@ namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
                         {
                             this.m_tracer.TraceVerbose("Patch successful - VersionId of {0} to {1}", existing, newUuid);
                             (existing as IVersionedEntity).VersionKey = newUuid;
-                            var updateMethod = idp.GetRuntimeMethod("Update", new Type[] { getMethod.ReturnType });
-                            updateMethod.Invoke(idpService, new object[] { existing });
+                            var updateMethod = idp.GetRuntimeMethod("Update", new Type[] { getMethod.ReturnType, typeof(TransactionMode), typeof(IPrincipal) });
+                            updateMethod.Invoke(idpService, new object[] { existing, TransactionMode.Commit, this.m_cachedCredential });
                         }
 
                     }

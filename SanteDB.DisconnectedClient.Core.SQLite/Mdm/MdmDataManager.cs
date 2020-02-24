@@ -5,6 +5,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -127,7 +128,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         {
             IEnumerable<IdentifiedData> toProcess = null;
             if (data is Bundle bundle)
-                toProcess = bundle.Item;
+                toProcess = bundle.Item.ToArray();
             else
                 toProcess = new IdentifiedData[] { data };
 
@@ -143,17 +144,20 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         var masterRelation = entity.Relationships.Where(o => o.RelationshipTypeKey == MasterRecordRelationship);
 
                         // The source of these point to the master, we need to correct all inbound relationships to point to me instead of the local which originally pointed at
-                        foreach (var rel in masterRelation)
+                        foreach (var rel in masterRelation.ToArray())
                         {
+
+                            // Do we have a local object? 
+                            var local = EntitySource.Current.Get<Entity>(rel.SourceEntityKey);
+                            if (local != null && !local.ObsoletionTime.HasValue)
+                            {
+                                local.ObsoletionTime = DateTime.Now;
+                                local.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
+                                //entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
+                                (data as Bundle).Item.Add(local);
+                            }
                             // Rewrite all relationships
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
-                            // Do we have a local object? 
-                            if (rel.LoadProperty<Entity>(nameof(EntityRelationship.SourceEntity)) != null)
-                            {
-                                rel.SourceEntity.ObsoletionTime = DateTime.Now;
-                                rel.SourceEntity.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
-                                entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
-                            }
                         }
 
                         // Remove all MDM links as these make no sense in this context

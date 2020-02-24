@@ -21,6 +21,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Exceptions;
@@ -329,6 +330,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             data.StatusConceptKey = data.StatusConceptKey.GetValueOrDefault() == Guid.Empty ? StatusKeys.New : data.StatusConceptKey;
 
             var retVal = base.InsertInternal(context, data);
+            var altKeys = data.Tags.FirstOrDefault(o => o.TagKey == "$alt.keys")?.Value;
 
             // Identifiers
             if (data.Identifiers != null)
@@ -336,12 +338,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 // Validate unique values for IDs
                 var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => ((ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>() as ISQLitePersistenceService).Get(context, o.AuthorityKey.Value) as AssigningAuthority)?.IsUnique == true);
                 byte[] entId = data.Key.Value.ToByteArray();
-
+                
                 foreach (var itm in uniqueIds)
                 {
                     byte[] authId = itm.Authority.Key.Value.ToByteArray();
-                    if (context.Connection.Table<DbEntityIdentifier>().Count(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value) > 0)
-                        throw new DuplicateKeyException(itm.Value);
+                    foreach (var id in context.Connection.Table<DbEntityIdentifier>().Where(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value))
+                    {
+                        // Allow from alt keys
+                        if(altKeys?.Contains(new Guid(id.SourceUuid).ToString()) == false)
+                            throw new DuplicateKeyException(itm.Value);
+                    }
                 }
 
                 base.UpdateAssociatedItems<EntityIdentifier, Entity>(
@@ -411,6 +417,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.Key,
                     context);
 
+            
             // Participations = The source is not the patient so we don't touch
             //if (data.Participations != null)
             //    foreach (var itm in data.Participations)
@@ -454,6 +461,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             retVal.CreationTime = DateTimeOffset.Now;
             retVal.CreatedByKey = data.CreatedByKey == Guid.Empty || data.CreatedByKey == null ? base.CurrentUserUuid(context) : data.CreatedByKey;
 
+            var altKeys = data.Tags?.FirstOrDefault(o => o.TagKey == "$alt.keys")?.Value;
 
             // Identifiers
             if (data.Identifiers != null)
@@ -470,8 +478,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 foreach (var itm in uniqueIds)
                 {
                     byte[] authId = itm.Authority.Key.Value.ToByteArray();
-                    if (context.Connection.Table<DbEntityIdentifier>().Count(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value) > 0)
-                        throw new DuplicateKeyException(itm.Value);
+                    foreach (var id in context.Connection.Table<DbEntityIdentifier>().Where(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value))
+                    {
+                        // Allow from alt keys
+                        if (altKeys?.Contains(new Guid(id.SourceUuid).ToString()) == false)
+                            throw new DuplicateKeyException(itm.Value);
+                    }
                 }
 
                 base.UpdateAssociatedItems<EntityIdentifier, Entity>(
