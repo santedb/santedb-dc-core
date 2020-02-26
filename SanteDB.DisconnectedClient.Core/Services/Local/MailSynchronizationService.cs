@@ -192,7 +192,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Local
                             //    }
                             //}
 
-                            logSvc.Save(typeof(MailMessage), null, null, null);
+                            logSvc.Save(typeof(MailMessage), null, null, null, DateTime.Now);
                         }
                         catch (Exception ex)
                         {

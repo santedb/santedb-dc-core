@@ -18,6 +18,7 @@
  * Date: 2019-8-8
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
@@ -37,9 +38,6 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
     /// </summary>
     public class SimpleQueueFileProvider : IQueueFileProvider
     {
-
-        // Serializers
-        private Dictionary<Type, XmlSerializer> m_serializers = new Dictionary<Type, XmlSerializer>();
 
         // Queue cache (in memory queue)
         private Dictionary<String, IdentifiedData> m_queueCache = new Dictionary<string, IdentifiedData>();
@@ -73,14 +71,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             try
             {
 #endif
-            XmlSerializer xsz = null;
-            if (!this.m_serializers.TryGetValue(typeSpec, out xsz))
-            {
-                xsz = new XmlSerializer(typeSpec);
-                lock (this.m_serializers)
-                    if (!this.m_serializers.ContainsKey(typeSpec))
-                        this.m_serializers.Add(typeSpec, xsz);
-            }
+            XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeSpec);
 
             var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().MessageQueueConnectionStringName).GetComponent("dbfile");
 
@@ -180,14 +171,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             try
             {
 #endif
-            XmlSerializer xsz = null;
-            if (!this.m_serializers.TryGetValue(data.GetType(), out xsz))
-            {
-                xsz = new XmlSerializer(data.GetType());
-                lock (this.m_serializers)
-                    if (!this.m_serializers.ContainsKey(data.GetType()))
-                        this.m_serializers.Add(data.GetType(), xsz);
-            }
+            XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(data.GetType());
 
             var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().MessageQueueConnectionStringName).GetComponent("dbfile");
 

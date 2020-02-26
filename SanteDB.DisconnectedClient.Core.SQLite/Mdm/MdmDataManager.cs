@@ -7,6 +7,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
@@ -18,9 +19,27 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.SQLite.Mdm
 {
+
+    /// <summary>
+    /// Stub class for receiving MDM Entities
+    /// </summary>
+    [XmlType(Namespace = "http://santedb.org/model")]
+    public class EntityMaster<T> : Entity
+        where T : IdentifiedData, new()
+    { }
+
+    /// <summary>
+    /// Stub class for receiving MDM Acts
+    /// </summary>
+    [XmlType(Namespace = "http://santedb.org/model")]
+    public class ActMaster<T> : Act
+        where T : IdentifiedData, new()
+    { }
+
     /// <summary>
     /// When synchronizing with a server which has MDM enabled. 
     /// </summary>
@@ -28,6 +47,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
     /// attempts to insert a record which is tagged / flagged as an MDM master this service will take over persistence of the data</remarks>
     public class MdmDataManager : IDaemonService
     {
+
+        /// <summary>
+        /// Get all types from core classes of entity and act and create shims in the model serialization binder
+        /// </summary>
+        static MdmDataManager()
+        {
+            foreach (var t in typeof(Entity).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
+                ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
+            foreach (var t in typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
+                ModelSerializationBinder.RegisterModelType(typeof(ActMaster<>).MakeGenericType(t));
+        }
 
         // Get the tracer for this class
         private Tracer m_tracer = Tracer.GetTracer(typeof(MdmDataManager));
@@ -136,7 +166,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
             // Process the objects
             foreach (var itm in toProcess)
             {
-                if (itm is ITaggable taggable && taggable.Tags.Any(o => o.TagKey == "mdm.type" && o.Value == "M")) // is a master record
+                if (itm is ITaggable taggable && taggable.Tags.Any(o => o.TagKey == "$mdm.type" && o.Value == "M")) // is a master record
                 {
                     // First, get alternate keys by which this master is known
                     if (itm is Entity entity)

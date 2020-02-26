@@ -293,13 +293,12 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                 if (always)
                     lastModificationDate = null;
                 if (lastModificationDate != null)
-                    lastModificationDate = lastModificationDate.Value.AddMinutes(-1);
+                    lastModificationDate = lastModificationDate.Value;
 
                 // Performance timer for more intelligent query control
                 Stopwatch perfTimer = new Stopwatch();
                 EventHandler<RestResponseEventArgs> respondingHandler = (o, e) => perfTimer.Stop();
                 this.m_integrationService.Responding += respondingHandler;
-
                 try
                 {
 
@@ -327,6 +326,8 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                         if (existingQuery != null) logSvc.CompleteQuery(existingQuery.Uuid);
                         logSvc.SaveQuery(modelType, filter.ToString(), qid, name, 0);
                     }
+
+                    DateTime startTime = DateTime.Now;
 
                     // Enqueue
                     for (int i = result.Count; i < result.TotalResults; i += result.Count)
@@ -388,7 +389,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
                         ApplicationContext.Current.SetProgress(String.Format(Strings.locale_sync, modelType.Name, result.TotalResults, result.TotalResults), 1.0f);
 
                     // Log that we synchronized successfully
-                    logSvc.Save(modelType, filter.ToString(), eTag, name);
+                    logSvc.Save(modelType, filter.ToString(), eTag, name, startTime);
 
                     // Clear the query
                     logSvc.CompleteQuery(qid);

@@ -106,8 +106,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         private Tracer m_traceSource = Tracer.GetTracer(typeof(AgsDispatchFormatter<TContract>));
         // Known types
         private static Type[] s_knownTypes = typeof(TContract).GetCustomAttributes<ServiceKnownResourceAttribute>().Select(t => t.Type).ToArray();
-        // Serializers
-        private static Dictionary<Type, XmlSerializer> s_serializers = new Dictionary<Type, XmlSerializer>();
+       
         // Default view model
         private static ViewModelDescription m_defaultViewModel = null;
 
@@ -149,7 +148,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     // Use XML Serializer
                     else if (contentType?.StartsWith("application/xml") == true)
                     {
-                        XmlSerializer serializer = null;
                         using (XmlReader bodyReader = XmlReader.Create(request.Body))
                         {
                             while (bodyReader.NodeType != XmlNodeType.Element)
@@ -157,13 +155,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
 
                             Type eType = s_knownTypes.FirstOrDefault(o => o.GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
                                 o.GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
-                            if (!s_serializers.TryGetValue(eType, out serializer))
-                            {
-                                serializer = new XmlSerializer(eType);
-                                lock (s_serializers)
-                                    if (!s_serializers.ContainsKey(eType))
-                                        s_serializers.Add(eType, serializer);
-                            }
+                            var serializer = XmlModelSerializerFactory.Current.CreateSerializer(eType);
                             parameters[pNumber] = serializer.Deserialize(request.Body);
                         }
 
@@ -292,19 +284,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     contentType?.StartsWith("application/xml") == true) &&
                     result?.GetType().GetCustomAttribute<XmlTypeAttribute>() != null)
                 {
-                    XmlSerializer xsz = null;
-                    if (!s_serializers.TryGetValue(result.GetType(), out xsz))
-                    {
-                        // Build a serializer
-                        this.m_traceSource.TraceWarning("Could not find pre-created serializer for {0}, will generate one...", result.GetType().FullName);
-                        xsz = new XmlSerializer(result.GetType());
-                        lock (s_serializers)
-                        {
-                            if (!s_serializers.ContainsKey(result.GetType()))
-                                s_serializers.Add(result.GetType(), xsz);
-                        }
-                    }
-
+                    XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(result.GetType());
                     MemoryStream ms = new MemoryStream();
                     xsz.Serialize(ms, result);
                     contentType = "application/xml";

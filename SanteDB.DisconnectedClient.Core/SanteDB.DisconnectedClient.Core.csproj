@@ -128,7 +128,6 @@
     <Compile Include="Exceptions\SessionExpiredException.cs" />
     <Compile Include="Interop\AMI\AmiIntegrationService.cs" />
     <Compile Include="Interop\ConfigurationExtensions.cs" />
-    <Compile Include="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
     <Compile Include="Security\MemorySessionManagerService.cs" />
     <Compile Include="Security\ITwoFactorRequestService.cs" />
     <Compile Include="Security\Remote\AmiTwoFactorRequestService.cs" />

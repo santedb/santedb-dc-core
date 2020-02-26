@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Core.Synchronization
         /// <summary>
         /// Update the log entry 
         /// </summary>
-        void Save(Type modelType, String filter, String eTag, String name);
+        void Save(Type modelType, String filter, String eTag, String name, DateTime since);
 
         /// <summary>
         /// Get all log entries

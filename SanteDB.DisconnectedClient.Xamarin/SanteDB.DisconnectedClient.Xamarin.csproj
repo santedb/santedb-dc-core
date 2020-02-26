@@ -135,6 +135,7 @@
     <Compile Include="Http\RestClient.cs" />
     <Compile Include="Net\NetworkInformationService.cs" />
     <Compile Include="Rules\BusinessRulesDaemonService.cs" />
+    <Compile Include="Rules\DisconnectedGatewayJni.cs" />
     <Compile Include="Security\AesSymmetricCrypographicProvider.cs" />
     <Compile Include="Security\AuditMetadataProvider.cs" />
     <Compile Include="Security\HttpBasicTokenCredentialProvider.cs" />

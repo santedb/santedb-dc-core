@@ -24,7 +24,6 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite.Connection;

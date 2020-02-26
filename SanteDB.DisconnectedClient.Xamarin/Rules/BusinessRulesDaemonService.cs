@@ -70,6 +70,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Rules
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletDataReferenceResolver));
                     new AppletBusinessRuleLoader().LoadRules();
 
+                    // Attach DCG JNI\
+                    JavascriptBusinessRulesEngine.AddExposedObject("SanteDBDcg", new DisconnectedGatewayJni());
                 }
                 catch (Exception ex)
                 {

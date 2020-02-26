@@ -35,8 +35,6 @@ using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Core.Data.Warehouse;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Interop;
 using SanteDB.DisconnectedClient.Core.Interop.AMI;
@@ -593,7 +591,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
-
                         // Configure the selected storage provider
                         this.m_tracer.TraceInfo("Configuration of data service provider....");
 
@@ -626,7 +623,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
+                        //ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SystemPolicySynchronizationDaemon), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
                         // BI Services

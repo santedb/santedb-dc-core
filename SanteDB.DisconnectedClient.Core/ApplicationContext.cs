@@ -28,7 +28,7 @@ using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Data;
+//using SanteDB.DisconnectedClient.Core.Data;
 using SanteDB.DisconnectedClient.Core.Services;
 using System;
 using System.Collections.Generic;

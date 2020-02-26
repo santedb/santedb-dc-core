@@ -20,6 +20,7 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Diagnostics;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core;
@@ -150,7 +151,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Backup
                     // Output appInfo
                     using (var ms = new MemoryStream())
                     {
-                        XmlSerializer xsz = new XmlSerializer(appInfo.GetType());
+                        XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(appInfo.GetType());
                         xsz.Serialize(ms, appInfo);
                         ms.Flush();
                         ms.Seek(0, SeekOrigin.Begin);
