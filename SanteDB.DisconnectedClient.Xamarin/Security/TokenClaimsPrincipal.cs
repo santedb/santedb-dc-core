@@ -135,7 +135,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 if (expiry == null || expiry < DateTime.Now)
                     throw new SecurityTokenException(SecurityTokenExceptionType.TokenExpired, "Token expired");
                 else if (notBefore == null || Math.Abs(notBefore.Subtract(DateTime.Now).TotalMinutes) > 3)
-                    throw new SecurityTokenException(SecurityTokenExceptionType.NotYetValid, "Token cannot yet be used (issued in the future)");
+                    throw new SecurityTokenException(SecurityTokenExceptionType.NotYetValid, $"Token cannot yet be used (issued {notBefore} but current time is {DateTime.Now})");
             }
             this.RefreshToken = refreshToken;
 

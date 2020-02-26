@@ -67,11 +67,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Exceptions
         /// </summary>
         /// <param name="type">Type.</param>
         /// <param name="detail">Detail.</param>
-        public SecurityTokenException(SecurityTokenExceptionType type, String detail) : base(type.ToString())
+        public SecurityTokenException(SecurityTokenExceptionType type, String detail) : base($"{type} - {detail}")
         {
             this.Type = type;
             this.Detail = detail;
         }
+
     }
 }
 
