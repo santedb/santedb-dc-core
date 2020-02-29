@@ -191,10 +191,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             // We must demand the change password permission
             try
             {
-                IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-
-                if (deviceName != principal.Identity.Name)
-                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
+                var pep = ApplicationContext.Current.GetService<IPolicyEnforcementService>();
+                if (pep == null)
+                    throw new InvalidOperationException("Cannot find the PolicyEnforcementService");
+                if (deviceName != principal.Identity.Name) 
+                    pep.Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -204,6 +205,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     else
                     {
                         IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
+
+                        if (hash == null)
+                            throw new InvalidOperationException("Cannot find Password Hashing Service");
+
                         dbu.DeviceSecret = hash.ComputeHash(deviceSecret);
                         dbu.UpdatedByUuid = conn.Table<DbSecurityUser>().First(u => u.UserName == principal.Identity.Name).Uuid;
                         dbu.UpdatedTime = DateTime.Now;

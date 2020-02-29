@@ -346,7 +346,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 //AndroidApplicationContext.Current.SetPrincipal(cprincipal);
 
                 // Ensure policies exist from the claim
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim))
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).ToArray())
                 {
                     if (localPip.GetPolicy(itm.Value) == null)
                     {
@@ -364,7 +364,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                 // Ensure roles exist from the claim
                 var localRoles = localRp.GetAllRoles();
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType))
+                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).ToArray())
                 {
                     // Ensure policy exists
                     try

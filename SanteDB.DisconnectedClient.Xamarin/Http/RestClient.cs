@@ -461,13 +461,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                                 return default(TResult);
 
                             serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
-                            if(serializer?.Serializer is XmlSerializer)
-                            {
-                                (serializer.Serializer as XmlSerializer).UnknownNode += (o, e) =>
-                                {
-                                    this.m_tracer.TraceWarning("Warning: Unknown XML element: {0}", e.NodeType);
-                                };
-                            }
+                            
                             TResult retVal = default(TResult);
                             // Compression?
                             using (MemoryStream ms = new MemoryStream())
