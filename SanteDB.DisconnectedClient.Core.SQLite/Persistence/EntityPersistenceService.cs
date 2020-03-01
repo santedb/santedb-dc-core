@@ -335,20 +335,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Identifiers
             if (data.Identifiers != null)
             {
-                // Validate unique values for IDs
-                var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => ((ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>() as ISQLitePersistenceService).Get(context, o.AuthorityKey.Value) as AssigningAuthority)?.IsUnique == true);
-                byte[] entId = data.Key.Value.ToByteArray();
-                
-                foreach (var itm in uniqueIds)
-                {
-                    byte[] authId = itm.Authority.Key.Value.ToByteArray();
-                    foreach (var id in context.Connection.Table<DbEntityIdentifier>().Where(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value))
-                    {
-                        // Allow from alt keys
-                        if(altKeys?.Contains(new Guid(id.SourceUuid).ToString()) == false)
-                            throw new DuplicateKeyException(itm.Value);
-                    }
-                }
 
                 base.UpdateAssociatedItems<EntityIdentifier, Entity>(
                     new List<EntityIdentifier>(),
