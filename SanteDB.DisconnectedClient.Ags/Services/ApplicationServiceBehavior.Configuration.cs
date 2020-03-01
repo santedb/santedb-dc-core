@@ -560,6 +560,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteMailRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteBiService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(RemoteJobManager), true);
                         break;
                     }
                 case SynchronizationMode.Offline:
