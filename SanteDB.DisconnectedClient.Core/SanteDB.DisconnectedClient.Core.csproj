@@ -108,6 +108,7 @@
     <Compile Include="Services\Remote\RemoteAssigningAuthorityService.cs" />
     <Compile Include="Services\Remote\RemoteAuditRepositoryService.cs" />
     <Compile Include="Services\Remote\RemoteBiService.cs" />
+    <Compile Include="Services\Remote\RemoteJobManager.cs" />
     <Compile Include="Services\Remote\RemoteMailRepositoryService.cs" />
     <Compile Include="Services\Remote\RemoteSecurityRepository.cs" />
     <Compile Include="Synchronization\ISynchronizationLogService.cs" />
