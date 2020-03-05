@@ -90,7 +90,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
 
                         // Copy the name component and address component values
-                        if (cstr.GetComponent("encrypt") != "true")
+                        if (cstr.GetComponent("encrypt") != "true" || ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
                             memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY ''");
                         else
                             memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");
@@ -125,7 +125,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         using (var fileContext = this.CreateConnection(principal))
                         using (fileContext.LockConnection())
                         {
-                            if (cstr.GetComponent("encrypt") != "true")
+                            if (cstr.GetComponent("encrypt") != "true" || ApplicationContext.Current.GetCurrentContextSecurityKey() == null)
                                 memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY ''");
                             else
                                 memConnection.Execute($"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS file_db KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'");

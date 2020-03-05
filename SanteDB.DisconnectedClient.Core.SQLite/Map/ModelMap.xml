@@ -235,6 +235,7 @@
      domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbTelecomAddress, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
     <property modelName="AddressUseKey" domainName="TelecomUseUuid"/>
+    <property modelName="TypeConceptKey" domainName="TelecomTypeUuid"/>
     <property modelName="SourceEntityKey" domainName="SourceUuid"/>
   </class>
 

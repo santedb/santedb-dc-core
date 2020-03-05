@@ -43,6 +43,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
         }
 
         /// <summary>
+        /// Telecome type uuid
+        /// </summary>
+        [Column("type"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+        public byte[] TelecomTypeUuid { get; set; }
+
+        /// <summary>
         /// Gets or sets the value.
         /// </summary>
         /// <value>The value.</value>

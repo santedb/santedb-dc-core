@@ -57,7 +57,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 
                 // Scan for migrations 
                 var migrations = ApplicationContext.Current.Configuration.GetSection<ApplicationServiceContextConfigurationSection>()?.ServiceProviders
-                    ?.Select(o => o?.Type?.GetTypeInfo().Assembly).Distinct().SelectMany(a => a?.DefinedTypes);
+                    ?.Select(o => o?.Type?.GetTypeInfo().Assembly).OfType<Assembly>().Distinct().SelectMany(a => a?.DefinedTypes).ToArray();
                 if (migrations != null)
                     foreach (var dbm in migrations)
                     {
