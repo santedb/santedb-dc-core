@@ -117,8 +117,9 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
                         using (var client = RemoteJobManager.GetRestClient())
                         {
                             var ji = new JobInfo(this);
-                            for (int i = 0; i < ji.Parameters.Count; i++)
-                                ji.Parameters[i].Value = parameters[i];
+                            if(ji.Parameters != null)
+                                for (int i = 0; i < ji.Parameters.Count; i++)
+                                    ji.Parameters[i].Value = parameters[i];
                             client.Put<JobInfo, JobInfo>($"JobInfo/{this.Key}", client.Accept, ji);
                         }
                     }
@@ -139,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         private static IRestClient GetRestClient()
         {
             var retVal = ApplicationContext.Current.GetRestClient("ami");
-            retVal.Accept = "application/json";
+            retVal.Accept = "application/xml";
             return retVal;
         }
 
