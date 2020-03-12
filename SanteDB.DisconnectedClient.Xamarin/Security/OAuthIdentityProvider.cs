@@ -217,7 +217,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             if (ex.Status == WebExceptionStatus.ProtocolError)
                                 throw;
 
-                            this.m_tracer.TraceWarning("Original OAuth2 request failed trying local. {0}", ex.Message);
+                            this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
                             try
                             {
                                 if (localIdp == null)
@@ -242,7 +242,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         {
                             try
                             {
-                                this.m_tracer.TraceWarning("Original OAuth2 request failed trying local. {0}", ex.Message);
+                                this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
+
                                 if (localIdp == null)
                                     throw new SecurityException(Strings.err_offline_no_local_available);
 

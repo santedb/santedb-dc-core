@@ -237,6 +237,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                 }
             }
 
+#if DEBUG
+            this.m_tracer.TraceInfo("Created request to {0}", retVal.RequestUri);
+#endif
             // Set user agent
             var asm = Assembly.GetEntryAssembly() ?? typeof(RestClient).Assembly;
             retVal.UserAgent = String.Format("{0} {1} ({2})", asm.GetCustomAttribute<AssemblyTitleAttribute>()?.Title, asm.GetName().Version, asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);

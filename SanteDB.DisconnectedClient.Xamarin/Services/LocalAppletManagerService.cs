@@ -285,8 +285,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Services
             if (!this.VerifyPackage(package))
                 throw new SecurityException("Applet failed validation");
             else if (!this.m_appletCollection.VerifyDependencies(package.Meta))
-                throw new InvalidOperationException($"Applet {package.Meta} depends on : [{String.Join(", ", package.Meta.Dependencies.Select(o => o.ToString()))}] which are missing or incompatible");
-
+            {
+                this.m_tracer.TraceWarning($"Applet {package.Meta} depends on : [{String.Join(", ", package.Meta.Dependencies.Select(o => o.ToString()))}] which are missing or incompatible");
+            }
             var appletSection = ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>();
             String appletPath = Path.Combine(appletSection.AppletDirectory, package.Meta.Id);
 
