@@ -130,8 +130,6 @@
     <Compile Include="Interop\AMI\AmiIntegrationService.cs" />
     <Compile Include="Interop\ConfigurationExtensions.cs" />
     <Compile Include="Security\MemorySessionManagerService.cs" />
-    <Compile Include="Security\ITwoFactorRequestService.cs" />
-    <Compile Include="Security\Remote\AmiTwoFactorRequestService.cs" />
     <Compile Include="Security\SessionInfo.cs" />
     <Compile Include="Services\IDataConnectionManager.cs" />
     <Compile Include="Services\Local\MemoryQueryPersistenceService.cs" />
@@ -211,12 +209,12 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Applets" Version="1.127.0.0" />
-        <PackageReference Include="SanteDB.BI" Version="1.127.0.0" />
-        <PackageReference Include="SanteDB.Core.Api" Version="1.127.0.0" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.127.0.0" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="1.128.0.0" />
+        <PackageReference Include="SanteDB.BI" Version="1.128.0.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="1.128.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.128.0.0" />
         <PackageReference Include="SanteDB.Core.Model.AMI">
-          <Version>1.127.0.0</Version>
+          <Version>1.128.0.0</Version>
         </PackageReference>
       </ItemGroup>
     </Otherwise>
@@ -224,10 +222,10 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>1.127.0</Version>
+      <Version>1.128.0</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>1.127.0</Version>
+      <Version>1.128.0</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />

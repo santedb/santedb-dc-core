@@ -82,7 +82,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 throw new SecurityException(Strings.locale_sessionError);
             else
             {
-                return this.Establish(principal, DateTimeOffset.MaxValue, null) as SessionInfo;
+                return this.Establish(principal, DateTimeOffset.MaxValue, null, null, null) as SessionInfo;
             }
         }
 
@@ -100,7 +100,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
                 if (principal == null)
                     throw new SecurityException(Strings.locale_sessionError);
                 else
-                    return this.Establish(principal, DateTimeOffset.MaxValue, null) as SessionInfo;
+                    return this.Establish(principal, DateTimeOffset.MaxValue, null, claims.FirstOrDefault(o=>o.Type == SanteDBClaimTypes.XspaPurposeOfUseClaim).Value, claims.Where(o=>o.Type == SanteDBClaimTypes.SanteDBScopeClaim).Select(o=>o.Value).ToArray()) as SessionInfo;
 
             }
         }
@@ -150,7 +150,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Establish the session
         /// </summary>
-        public ISession Establish(IPrincipal principal, DateTimeOffset expiry, string aud)
+        public ISession Establish(IPrincipal principal, DateTimeOffset expiry, string aud, string purpose, string[] policies)
         {
             AuthenticationContext.Current = new AuthenticationContext(principal);
             try

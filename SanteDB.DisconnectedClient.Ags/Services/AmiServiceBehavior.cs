@@ -338,13 +338,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             try
             {
-                var resetService = ApplicationContext.Current.GetService<ITwoFactorRequestService>();
-                if (resetService == null)
-                    throw new InvalidOperationException(Strings.err_reset_not_supported);
-                return new AmiCollection()
-                {
-                    CollectionItem = resetService.GetResetMechanisms().OfType<Object>().ToList()
-                };
+                var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                return amiClient.Client.Get<AmiCollection>("Tfa");
             }
             catch (Exception e)
             {
@@ -415,26 +410,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-        /// <summary>
-        /// Send a TFA secret
-        /// </summary>
-        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
-        public override void SendTfaSecret(TfaRequestInfo resetInfo)
-        {
-            try
-            {
-                var resetService = ApplicationContext.Current.GetService<ITwoFactorRequestService>();
-                if (resetService == null)
-                    throw new InvalidOperationException(Strings.err_reset_not_supported);
-                resetService.SendVerificationCode(resetInfo.ResetMechanism, resetInfo.Verification, resetInfo.UserName, resetInfo.Purpose);
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Error getting sending secret: {0}", e);
-                throw;
-            }
-        }
-
+    
         /// <summary>
         /// Throw if the service is not ready
         /// </summary>

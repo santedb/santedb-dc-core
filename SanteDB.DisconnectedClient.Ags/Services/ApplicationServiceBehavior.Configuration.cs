@@ -41,7 +41,6 @@ using SanteDB.DisconnectedClient.Core.Interop.AMI;
 using SanteDB.DisconnectedClient.Core.Interop.HDSI;
 using SanteDB.DisconnectedClient.Core.Mail;
 using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Security.Remote;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Core.Services.Local;
@@ -545,7 +544,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
-                                || o is ITwoFactorRequestService
                                 || o is IAuditRepositoryService
                                 || o is IJobManagerService
                                 || o is ISynchronizationService
@@ -556,7 +554,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService), true);
 
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteMailRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteBiService), true);
@@ -588,7 +585,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteSecurityRepository), true);
-                        ApplicationContext.Current.RemoveServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
@@ -604,7 +600,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
                                 || o is IJobManagerService
-                                || o is ITwoFactorRequestService
                                 || o is IAuditRepositoryService
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
@@ -616,7 +611,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalMailService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(HdsiIntegrationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiIntegrationService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(AmiTwoFactorRequestService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalJobManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);

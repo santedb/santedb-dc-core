@@ -140,6 +140,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                             dbs.Uuid).Select(o => o.Name).ToArray();
                         var tPrincipal = new GenericPrincipal(new GenericIdentity(userName, true, "LOCAL"), roles);
                         List<IClaim> additionalClaims = new List<IClaim>();
+                     
                         // Ensure we are not explicitly denied access to the scope
                         foreach (var scp in pip.GetPolicies())
                             if (pdp.GetPolicyOutcome(tPrincipal, scp.Oid) == PolicyGrantType.Grant)

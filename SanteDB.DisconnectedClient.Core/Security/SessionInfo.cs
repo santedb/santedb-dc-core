@@ -141,6 +141,10 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
+        /// Gets the claims for the session 
+        /// </summary>
+        public IClaim[] Claims { get; private set; }
+        /// <summary>
         /// Gets or sets the security user information
         /// </summary>
         [JsonProperty("user")]
@@ -248,23 +252,21 @@ namespace SanteDB.DisconnectedClient.Core.Security
             this.IsAuthenticated = principal.Identity.IsAuthenticated;
             this.AuthenticationType = principal.Identity.AuthenticationType;
             this.Principal = principal;
-            if (principal is IClaimsPrincipal)
-                this.Token = principal.ToString();
             this.RefreshToken = BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", ""); // TODO: Sign this
 
             Guid sid = Guid.Empty;
 
             // Expiry / etc
-            if (principal is IClaimsPrincipal)
+            if (principal is IClaimsPrincipal claimsPrincipal)
             {
-                var cp = principal as IClaimsPrincipal;
-
-                this.Issued = (cp.FindFirst(SanteDBClaimTypes.AuthenticationInstant)?.AsDateTime().ToLocalTime() ?? DateTime.Now);
-                this.Expiry = expiry ?? (cp.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
-                this.Roles = cp.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
-                this.AuthenticationType = cp.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value;
-                if (cp.HasClaim(o => o.Type == SanteDBClaimTypes.Sid))
-                    Guid.TryParse(cp.FindFirst(SanteDBClaimTypes.Sid)?.Value, out sid);
+                this.Token = principal.ToString();
+                this.Issued = (claimsPrincipal.FindFirst(SanteDBClaimTypes.AuthenticationInstant)?.AsDateTime().ToLocalTime() ?? DateTime.Now);
+                this.Expiry = expiry ?? (claimsPrincipal.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
+                this.Roles = claimsPrincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
+                this.AuthenticationType = claimsPrincipal.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value;
+                this.Claims = claimsPrincipal.Claims.ToArray();
+                if (claimsPrincipal.HasClaim(o => o.Type == SanteDBClaimTypes.Sid))
+                    Guid.TryParse(claimsPrincipal.FindFirst(SanteDBClaimTypes.Sid)?.Value, out sid);
             }
             else
             {
