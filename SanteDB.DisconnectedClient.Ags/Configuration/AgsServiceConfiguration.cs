@@ -47,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Ags.Configuration
         /// <summary>
         /// Creates a service configuration from the specified type
         /// </summary>
-        internal AgsServiceConfiguration(Type type) : this()
+        public AgsServiceConfiguration(Type type) : this()
         {
             this.Name = type.GetCustomAttribute<ServiceBehaviorAttribute>()?.Name ?? type.FullName;
             this.ServiceType = type;

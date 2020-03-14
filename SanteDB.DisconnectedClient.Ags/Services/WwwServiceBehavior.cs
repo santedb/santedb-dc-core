@@ -36,7 +36,7 @@ using System.Text;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// WWW Service Behavior of AGS
+    /// DCG Web Hosting Service
     /// </summary>
     [ServiceBehavior(Name = "WWW", InstanceMode = ServiceInstanceMode.PerCall)]
     public class WwwServiceBehavior : IWwwServiceContract

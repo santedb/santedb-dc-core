@@ -40,8 +40,8 @@ using SanteDB.Core.Model.Query;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
-	/// <summary>
-    /// Represents an application service behavior for queue entries
+    /// <summary>
+    /// DCG Application Services Interface Behavior
     /// </summary>
     public partial class ApplicationServiceBehavior
     {

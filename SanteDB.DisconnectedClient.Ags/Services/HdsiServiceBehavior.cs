@@ -36,7 +36,7 @@ using System.Linq;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// Implementation of the HDSI 
+    /// DCG Health Data Services Interface 
     /// </summary>
     public class HdsiServiceBehavior : HdsiServiceBehaviorBase
     {

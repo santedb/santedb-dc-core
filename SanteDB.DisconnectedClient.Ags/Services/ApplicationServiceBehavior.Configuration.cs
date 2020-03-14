@@ -78,7 +78,7 @@ using SanteDB.Messaging.HDSI.Client;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// The application services behavior
+    /// DCG Application Services Interface Behavior
     /// </summary>
     public partial class ApplicationServiceBehavior : IApplicationServiceContract
     {

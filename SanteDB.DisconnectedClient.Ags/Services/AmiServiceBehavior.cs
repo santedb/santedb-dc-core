@@ -57,8 +57,9 @@ using System.Linq.Expressions;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// AMI Service behavior base
+    /// DCG Administration Management Interface Service
     /// </summary>
+    /// <remarks>This class implements the service behaviors for the Disconnected Gateway</remarks>
     public class AmiServiceBehavior : AmiServiceBehaviorBase
     {
 

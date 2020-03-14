@@ -43,7 +43,7 @@ using System.Threading;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// Authentication service behavior
+    /// DCG Authentication Service BEhavior
     /// </summary>
     [ServiceBehavior(Name = "AUTH", InstanceMode = ServiceInstanceMode.PerCall)]
     public class AuthenticationServiceBehavior : IAuthenticationServiceContract
@@ -88,7 +88,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     AccessToken = session.Token,
                     RefreshToken = session.RefreshToken,
                     ExpiresIn = (int)session.Expiry.Subtract(DateTime.Now).TotalSeconds,
-                    TokenType = "urn:santedb:session-info"
+                    TokenType = "bearer"
                 };
             }
             catch(Exception e)

@@ -27,9 +27,9 @@ using System.IO;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// RISI service behavior
+    /// DCG Reporting Integration Services
     /// </summary>
-    [ServiceBehavior(Name = "RISI", InstanceMode = ServiceInstanceMode.PerCall)]
+    [ServiceBehavior(Name = "RISI", InstanceMode = ServiceInstanceMode.PerCall), Obsolete("Use the Business Intelligence Services instead")]
     public class RisiServiceBehavior : IRisiServiceContract
     {
         public DatamartDefinition CreateDatamart(DatamartDefinition definition)

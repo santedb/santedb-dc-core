@@ -41,7 +41,7 @@ using System.Linq;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// The application services behavior
+    /// DCG Application Services Interface Behavior
     /// </summary>
     [ServiceBehavior(Name = "APP", InstanceMode = ServiceInstanceMode.PerCall)]
     public partial class ApplicationServiceBehavior : IApplicationServiceContract

@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
-    /// Application service behavior for tickles
+    /// DCG Application Services Interface Behavior
     /// </summary>
     public partial class ApplicationServiceBehavior
     {

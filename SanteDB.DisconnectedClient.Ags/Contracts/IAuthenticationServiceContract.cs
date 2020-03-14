@@ -20,6 +20,7 @@
 using RestSrvr.Attributes;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.Rest.Common.Fault;
 using System;
 using System.Collections.Specialized;
 
@@ -35,7 +36,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// <summary>
         /// Authenticate the request
         /// </summary>
-        [Post("oauth2_token")]
+        [Post("oauth2_token"), ServiceConsumes("application/x-www-form-urlencoded"), ServiceProduces("application/json")]
         OAuthTokenResponse AuthenticateOAuth(NameValueCollection request);
 
         /// <summary>
@@ -43,13 +44,13 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        [Post("session")]
+        [Post("session"), ServiceProduces("application/json")]
         SessionInfo Authenticate(NameValueCollection request);
 
         /// <summary>
         /// Get the session
         /// </summary>
-        [Get("session")]
+        [Get("session"), ServiceProduces("application/json")]
         SessionInfo GetSession();
 
         /// <summary>
@@ -62,6 +63,8 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// Gets an policy decision for the specified policy
         /// </summary>
         [Get("pdp/{policyId}")]
+        [ServiceFault(401, typeof(RestServiceFault), "The user needs to re-authenticate (elevate)")]
+        [ServiceFault(403, typeof(RestServiceFault), "The user does not have access to this policy")]
         void AclPreCheck(String policyId);
     }
 }

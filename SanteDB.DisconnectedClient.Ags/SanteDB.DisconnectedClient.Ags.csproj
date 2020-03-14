@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\SanteDB.DisconnectedClient.Ags.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -47,6 +48,7 @@
     <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
     <Compile Include="Behaviors\AgsWebErrorHandlerServiceBehavior.cs" />
     <Compile Include="Formatter\AgsMessageDispatchFormatter.cs" />
+    <Compile Include="Metadata\ApiEndpointProviderShim.cs" />
     <Compile Include="Model\ConfigurationViewModel.cs" />
     <Compile Include="Model\MenuInformation.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
