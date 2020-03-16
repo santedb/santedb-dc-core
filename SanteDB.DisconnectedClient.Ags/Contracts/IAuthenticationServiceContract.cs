@@ -18,7 +18,9 @@
  * Date: 2019-11-27
  */
 using RestSrvr.Attributes;
+using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Security.Session;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using SanteDB.Rest.Common.Fault;
 using System;
@@ -38,15 +40,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Post("oauth2_token"), ServiceConsumes("application/x-www-form-urlencoded"), ServiceProduces("application/json")]
         OAuthTokenResponse AuthenticateOAuth(NameValueCollection request);
-
-        /// <summary>
-        /// Authenticate the request
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        [Post("session"), ServiceProduces("application/json")]
-        SessionInfo Authenticate(NameValueCollection request);
-
+        
         /// <summary>
         /// Get the session
         /// </summary>

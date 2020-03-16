@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// <summary>
     /// Represents an OAuthIdentity provider
     /// </summary>
-    public class OAuthIdentityProvider : IIdentityProviderService
+    public class OAuthIdentityProvider : IElevatableIdentityProviderService, ISecurityChallengeIdentityService
     {
         /// <summary>
         /// Get the service name
@@ -64,10 +64,12 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// Occurs when authenticating.
         /// </summary>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
+
         /// <summary>
         /// Occurs when authenticated.
         /// </summary>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
+        public event EventHandler<SecurityOverrideEventArgs> OverrideRequested;
 
         /// <summary>
         /// Authenticate the user
@@ -76,250 +78,9 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// <param name="password">Password.</param>
         public System.Security.Principal.IPrincipal Authenticate(string userName, string password)
         {
-            return this.Authenticate(new GenericPrincipal(new GenericIdentity(userName), null), password);
+            return this.Authenticate(userName, password, null);
         }
 
-        /// <summary>
-        /// Perform authentication with specified password
-        /// </summary>
-        public System.Security.Principal.IPrincipal Authenticate(System.Security.Principal.IPrincipal principal, string password)
-        {
-            return this.Authenticate(principal, password, null);
-        }
-
-        /// <summary>
-        /// Authenticate the user
-        /// </summary>
-        /// <param name="principal">Principal.</param>
-        /// <param name="password">Password.</param>
-        public System.Security.Principal.IPrincipal Authenticate(System.Security.Principal.IPrincipal principal, string password, String tfaSecret)
-        {
-
-            AuthenticatingEventArgs e = new AuthenticatingEventArgs(principal.Identity.Name) { Principal = principal };
-            this.Authenticating?.Invoke(this, e);
-            if (e.Cancel)
-            {
-                this.m_tracer.TraceWarning("Pre-Event ordered cancel of auth {0}", principal);
-                return e.Principal;
-            }
-
-            var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
-
-            // Get the scope being requested
-            String scope = "*";
-            if (principal is IOfflinePrincipal && password == null)
-                return localIdp.ReAuthenticate(principal);
-
-            // Authenticate
-            IPrincipal retVal = null;
-
-            try
-            {
-                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
-                {
-
-                    try
-                    {
-                        // TODO: Add claims for elevation!
-                        var scopeClaim = (principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBScopeClaim)?.Value;
-                        var overrideClaim = (principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBOverrideClaim)?.Value;
-                        var purposeOfUseClaim = (principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.XspaPurposeOfUseClaim)?.Value;
-
-                        if (!String.IsNullOrEmpty(scopeClaim))
-                            scope = scopeClaim;
-
-                        // Create grant information
-                        OAuthTokenRequest request = null;
-                        if (!String.IsNullOrEmpty(password))
-                            request = new OAuthTokenRequest(principal.Identity.Name, password, scope);
-                        else if (principal is TokenClaimsPrincipal)
-                            request = new OAuthTokenRequest(principal as TokenClaimsPrincipal, scope);
-                        else
-                            request = new OAuthTokenRequest(principal.Identity.Name, null, scope);
-
-                        // Set credentials
-                        if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
-                            restClient.Credentials = new OAuthTokenServiceCredentials(principal);
-                        else
-                        {
-                            request.ClientId = ApplicationContext.Current.Application.Name;
-                            request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
-                        }
-
-                        try
-                        {
-                            restClient.Requesting += (o, p) =>
-                            {
-
-                                // Add device credential
-                                if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
-                                    p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
-                                if (overrideClaim == "true")
-                                {
-                                    p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
-                                            $"{SanteDBClaimTypes.SanteDBOverrideClaim}=true;{SanteDBClaimTypes.XspaPurposeOfUseClaim}={purposeOfUseClaim}"
-                                        )));
-                                }
-
-                                if (!String.IsNullOrEmpty(tfaSecret))
-                                    p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
-                            };
-
-                            // Invoke
-                            if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
-                            {
-                                restClient.Description.Endpoint[0].Timeout = 5000;
-                                restClient.Invoke<Object, Object>("PING", "/", null, null);
-
-                                if (principal.Identity.Name == ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName)
-                                    restClient.Description.Endpoint[0].Timeout = restClient.Description.Endpoint[0].Timeout * 2;
-                                else
-                                    restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
-
-                                OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
-                                retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
-                            }
-                            else
-                            {
-                                this.m_tracer.TraceWarning("Network unavailable, trying local");
-                                try
-                                {
-                                    if (localIdp == null)
-                                        throw new SecurityException(Strings.err_offline_no_local_available);
-
-                                    if (!String.IsNullOrEmpty(password))
-                                        retVal = localIdp.Authenticate(principal.Identity.Name, password);
-                                    else
-                                        retVal = localIdp.ReAuthenticate(principal);
-                                }
-                                catch (Exception ex2)
-                                {
-                                    this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
-                                    throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
-                                }
-                            }
-                            this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, retVal, true));
-
-                        }
-                        catch (RestClientException<OAuthTokenResponse> ex)
-                        {
-                            this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-                            var se = new SecurityException(
-                                String.Format("err_oauth2_{0}", ex.Result.Error),
-                                ex
-                            );
-                            se.Data.Add("oauth_result", ex.Result);
-                            throw se;
-                        }
-                        catch (WebException ex) // Raw level web exception
-                        {
-                            // Not network related, but a protocol level error
-                            if (ex.Status == WebExceptionStatus.ProtocolError)
-                                throw;
-
-                            this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
-                            try
-                            {
-                                if (localIdp == null)
-                                    throw new SecurityException(Strings.err_offline_no_local_available);
-                                if (!String.IsNullOrEmpty(password))
-                                    retVal = localIdp.Authenticate(principal.Identity.Name, password);
-                                else
-                                    retVal = localIdp.ReAuthenticate(principal);
-                            }
-                            catch (Exception ex2)
-                            {
-                                this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
-                                throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
-                            }
-                        }
-                        catch (SecurityException ex)
-                        {
-                            this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
-                            throw;
-                        }
-                        catch (Exception ex) // fallback to local
-                        {
-                            try
-                            {
-                                this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
-
-                                if (localIdp == null)
-                                    throw new SecurityException(Strings.err_offline_no_local_available);
-
-                                if (!String.IsNullOrEmpty(password))
-                                    retVal = localIdp.Authenticate(principal.Identity.Name, password);
-                                else
-                                    retVal = localIdp.ReAuthenticate(principal);
-                            }
-                            catch (Exception ex2)
-                            {
-                                this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
-
-                                throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
-                            }
-                        }
-
-
-                        // We have a match! Lets make sure we cache this data
-                        // TODO: Clean this up
-                        try
-                        {
-                            if (!(retVal is IOfflinePrincipal))
-                                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
-                        }
-                        catch (Exception ex)
-                        {
-                            try
-                            {
-                                this.m_tracer.TraceWarning("Failed to fetch remote security parameters - {0}", ex.Message);
-
-                                if (localIdp == null)
-                                    throw new SecurityException(Strings.err_offline_no_local_available);
-
-                                if (!String.IsNullOrEmpty(password))
-                                    retVal = localIdp.Authenticate(principal.Identity.Name, password);
-                                else
-                                    retVal = localIdp.ReAuthenticate(principal);
-                            }
-                            catch (Exception ex2)
-                            {
-                                this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
-                                throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message));
-                            }
-                        }
-                    }
-                    catch (SecurityTokenException ex)
-                    {
-                        this.m_tracer.TraceError("TOKEN exception: {0}", ex.Message);
-                        throw new SecurityException(
-                            String.Format("err_token_{0}", ex.Type),
-                            ex
-                        );
-                    }
-                    catch (SecurityException ex)
-                    {
-                        this.m_tracer.TraceError("Security exception: {0}", ex.Message);
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        this.m_tracer.TraceError("Generic exception: {0}", ex);
-                        throw new SecurityException(
-                            Strings.err_authentication_exception,
-                            ex);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
-                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(principal.Identity.Name, retVal, false));
-                throw;
-            }
-
-            return retVal;
-        }
 
         /// <summary>
         /// Synchronize the security settings
@@ -452,8 +213,140 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
 		public System.Security.Principal.IPrincipal Authenticate(string userName, string password, string tfaSecret)
         {
-            return this.Authenticate(new GenericPrincipal(new GenericIdentity(userName), null), password, tfaSecret);
+            return this.DoAuthenticationInternal(userName, password, tfaSecret: tfaSecret);
         }
+
+
+        /// <summary>
+        /// Do internal authentication
+        /// </summary>
+        private IPrincipal DoAuthenticationInternal(String userName = null, String password = null, string tfaSecret = null, bool isOverride = false, TokenClaimsPrincipal refreshPrincipal = null, string purposeOfUse = null, string[] policies = null)
+        { 
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(userName);
+            this.Authenticating?.Invoke(this, e);
+            if (e.Cancel)
+            {
+                this.m_tracer.TraceWarning("Pre-Event ordered cancel of auth {0}", userName);
+                return e.Principal;
+            }
+
+            var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
+            IPrincipal retVal = null;
+
+            // Authenticate
+            try
+            {
+                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
+                {
+
+                    // Construct oauth req
+                    OAuthTokenRequest request = null;
+                    if (refreshPrincipal != null)
+                        request = new OAuthTokenRequest(refreshPrincipal, "*");
+                    if (!String.IsNullOrEmpty(password))
+                        request = new OAuthTokenRequest(userName, password, "*");
+                    else
+                        request = new OAuthTokenRequest(userName, null, "*");
+
+                    // Explicit policies
+                    if (policies != null)
+                        request.Scope = String.Join(" ", policies);
+
+                    // Set credentials for oauth req
+                    if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
+                        restClient.Credentials = new OAuthTokenServiceCredentials(null);
+                    else
+                    {
+                        request.ClientId = ApplicationContext.Current.Application.Name;
+                        request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
+                    }
+
+                    restClient.Requesting += (o, p) =>
+                    {
+                        if (!String.IsNullOrEmpty(tfaSecret))
+                            p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
+                        if(isOverride)
+                            p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                                $"{SanteDBClaimTypes.PurposeOfUse}={purposeOfUse};{SanteDBClaimTypes.SanteDBOverrideClaim}=true"
+                                )));
+                    };
+
+                    // Invoke
+                    if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    {
+                        // Try OAUTH server
+                        try
+                        {
+                            restClient.Description.Endpoint[0].Timeout = 5000;
+                            restClient.Invoke<Object, Object>("PING", "/", null, null);
+
+                            if (userName == ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName)
+                                restClient.Description.Endpoint[0].Timeout = restClient.Description.Endpoint[0].Timeout * 2;
+                            else
+                                restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
+
+                            OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                            retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
+                        }
+                        catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
+                        {
+                            this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
+                            var se = new SecurityException(
+                                String.Format("err_oauth2_{0}", ex.Result.Error),
+                                ex
+                            );
+                            se.Data.Add("oauth_result", ex.Result);
+                            throw se;
+                        }
+                        catch (SecurityException ex)
+                        {
+                            this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
+                            throw;
+                        }
+                        catch (Exception ex) // All others, try local
+                        {
+                            this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
+
+                        }
+                    }
+
+
+                    if (retVal == null) // Some error occurred, use local
+                    {
+                        this.m_tracer.TraceWarning("Network unavailable, trying local");
+                        try
+                        {
+                            if (localIdp == null)
+                                throw new SecurityException(Strings.err_offline_no_local_available);
+
+                            retVal = localIdp.Authenticate(userName, password);
+                        }
+                        catch (Exception ex2)
+                        {
+                            this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
+                            throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
+                        }
+                    }
+                    this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
+
+                    // We have a match! Lets make sure we cache this data
+                    // TODO: Clean this up
+                    if (!(retVal is IOfflinePrincipal))
+                        ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
+                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, false));
+                throw;
+            }
+
+            return retVal;
+
+        }
+
 
         /// <summary>
         /// Changes the users password.
@@ -541,13 +434,16 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             }
 
         }
-        
+
         /// <summary>
         /// Perform re-auth
         /// </summary>
         public IPrincipal ReAuthenticate(IPrincipal principal)
         {
-            return this.Authenticate(principal, null);
+            if (principal is TokenClaimsPrincipal tokenClaim)
+                return this.DoAuthenticationInternal(refreshPrincipal: tokenClaim);
+            else
+                return ApplicationServiceContext.Current.GetService<IOfflineIdentityProviderService>().ReAuthenticate(principal);
         }
 
         /// <summary>
@@ -588,7 +484,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             throw new NotSupportedException();
         }
 
-        public void AddClaim(string userName, IClaim claim, IPrincipal prinicpal,TimeSpan? expiry = null)
+        public void AddClaim(string userName, IClaim claim, IPrincipal prinicpal, TimeSpan? expiry = null)
         {
             throw new NotSupportedException();
         }
@@ -597,6 +493,109 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         {
             throw new NotSupportedException();
         }
+
+        /// <summary>
+        /// Challenge key authentication for password change only
+        /// </summary>
+        public IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret)
+        {
+            AuthenticatingEventArgs e = new AuthenticatingEventArgs(userName);
+            this.Authenticating?.Invoke(this, e);
+            if (e.Cancel)
+            {
+                this.m_tracer.TraceWarning("Pre-Event ordered cancel of auth {0}", userName);
+                return e.Principal;
+            }
+
+            var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
+
+            // Get the scope being requested
+            try
+            {
+                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
+                {
+
+                    // Create grant information
+                    OAuthTokenRequest request = new OAuthResetTokenRequest(userName, challengeKey.ToString(), response);
+
+                    // Set credentials
+                    if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
+                        restClient.Credentials = new OAuthTokenServiceCredentials(null);
+                    else
+                    {
+                        request.ClientId = ApplicationContext.Current.Application.Name;
+                        request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
+                    }
+
+                    try
+                    {
+                        restClient.Requesting += (o, p) =>
+                        {
+
+                            // Add device credential
+                            if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
+                                p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
+
+                            if (!String.IsNullOrEmpty(tfaSecret))
+                                p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
+                        };
+
+                        // Invoke
+                        if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                        {
+                            restClient.Description.Endpoint[0].Timeout = 5000;
+                            restClient.Invoke<Object, Object>("PING", "/", null, null);
+                            restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
+                            var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                            var retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken);
+                            this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
+                            return retVal;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Cannot send reset credential while offline");
+                        }
+
+                    }
+                    catch (RestClientException<OAuthTokenResponse> ex)
+                    {
+                        this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
+                        var se = new SecurityException(
+                            String.Format("err_oauth2_{0}", ex.Result.Error),
+                            ex
+                        );
+                        se.Data.Add("oauth_result", ex.Result);
+                        throw se;
+                    }
+                    catch (SecurityException ex)
+                    {
+                        this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
+                        throw;
+                    }
+                    catch (Exception ex) // fallback to local
+                    {
+                        throw new SecurityException($"General authentication error occurred: {ex.Message}", ex);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
+                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, null, false));
+                throw;
+            }
+
+        }
+
+        /// <summary>
+        /// Elevated authentication
+        /// </summary>
+        public IPrincipal ElevatedAuthenticate(string userName, string password, string tfaSecret, string purpose, params string[] policies)
+        {
+            return this.DoAuthenticationInternal(userName: userName, password: password, tfaSecret: tfaSecret, isOverride: true, purposeOfUse: purpose, policies: policies);
+        }
+
 
         #endregion
     }

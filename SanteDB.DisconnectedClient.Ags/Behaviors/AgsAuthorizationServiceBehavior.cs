@@ -19,16 +19,20 @@
  */
 using RestSrvr;
 using RestSrvr.Message;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Exceptions;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 using System;
+using System.Linq;
 using System.Net;
+using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
@@ -41,6 +45,9 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
         // Tracer for this class
         private Tracer m_tracer = Tracer.GetTracer(typeof(AgsAuthorizationServiceBehavior));
+
+        // Session property name
+        public const string SessionPropertyName = "Session";
 
         /// <summary>
         /// Apply the specified policy
@@ -96,23 +103,26 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// <param name="sessionToken"></param>
         private void SetContextFromBearer(string sessionToken)
         {
-            var smgr = ApplicationContext.Current.GetService<ISessionManagerService>();
-            var session = smgr.Get(sessionToken);
-            if (session != null)
-            {
-                try
-                {
-                    AuthenticationContext.Current = new AuthenticationContext(session.Principal);
-                    this.m_tracer.TraceVerbose("Retrieved session {0} from cookie", session?.Key);
-                }
-                catch (SessionExpiredException)
-                {
-                    this.m_tracer.TraceWarning("Session {0} is expired and could not be extended", sessionToken);
-                    throw new SecurityTokenException(SecurityTokenExceptionType.TokenExpired, "Session is expired");
-                }
-            }
-            else // Something wrong??? Perhaps it is an issue with the thingy?
-                throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Session is invalid");
+            var smgr = ApplicationContext.Current.GetService<ISessionProviderService>();
+
+            // Get the session
+            var session = ApplicationServiceContext.Current.GetService<ISessionProviderService>().Get(
+                Enumerable.Range(0, sessionToken.Length)
+                                    .Where(x => x % 2 == 0)
+                                    .Select(x => Convert.ToByte(sessionToken.Substring(x, 2), 16))
+                                    .ToArray()
+            );
+            if (session == null)
+                throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Bearer token not valid");
+
+            IPrincipal principal = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>().Authenticate(session);
+            if (principal == null)
+                throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Invalid bearer token");
+
+            RestOperationContext.Current.Data.Add(SessionPropertyName, session);
+            AuthenticationContext.Current = new AuthenticationContext(principal);
+
+            this.m_tracer.TraceInfo("User {0} authenticated via SESSION BEARER", principal.Identity.Name);
         }
 
         /// <summary>

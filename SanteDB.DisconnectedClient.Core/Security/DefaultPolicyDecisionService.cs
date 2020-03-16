@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             }
 
             // Can we make this decision based on the claims?
-            if (principal is IClaimsPrincipal && (principal as IClaimsPrincipal).HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && (c.Value == policyId || policyId.StartsWith(String.Format("{0}.", c.Value)))))
+            if (principal is IClaimsPrincipal && (principal as IClaimsPrincipal).HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && (c.Value == policyId || policyId.StartsWith(c.Value))))
             {
                 rule = PolicyGrantType.Grant;
             }

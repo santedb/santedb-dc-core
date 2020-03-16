@@ -132,48 +132,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbs.LastLoginTime = DateTime.Now;
                         dbs.InvalidLoginAttempts = 0;
                         connection.Update(dbs);
-
-                        IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                        IPolicyInformationService pip = ApplicationContext.Current.GetService<IPolicyInformationService>();
-
+                        
                         var roles = connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
                             dbs.Uuid).Select(o => o.Name).ToArray();
-                        var tPrincipal = new GenericPrincipal(new GenericIdentity(userName, true, "LOCAL"), roles);
-                        List<IClaim> additionalClaims = new List<IClaim>();
-                     
-                        // Ensure we are not explicitly denied access to the scope
-                        foreach (var scp in pip.GetPolicies())
-                            if (pdp.GetPolicyOutcome(tPrincipal, scp.Oid) == PolicyGrantType.Grant)
-                                additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, scp.Oid));
 
-                        // Add SID
-                        additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.Sid, dbs.Key.ToString()));
-                        //// Override
-                        //if (additionalClaims.Any(o=>o.Type == ClaimTypes.SanteDBOverrideClaim && o.Value == "true"))
-                        //{
-                        //    var pou = additionalClaims.FirstOrDefault(o => o.Type == ClaimTypes.XspaPurposeOfUseClaim)?.Value;
-
-                            //    // First ensure that the prinicpal has ability to override
-                            //    if (pdp.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Deny)
-                            //        throw new PolicyViolationException(PermissionPolicyIdentifiers.OverridePolicyPermission, PolicyGrantType.Deny);
-
-                            //    // Next ensure that the scoped policies are allowed to be overridden
-                            //    foreach(var scp in scopes)
-                            //    {
-                            //        if (scp == "*") throw new SecurityException("Cannot override ALL policies");
-                            //        else if (pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Grant ||
-                            //                pdp.GetPolicyOutcome(principal, scp) == PolicyGrantType.Elevate && pip.GetPolicy(scp).CanOverride)
-                            //            additionalClaims.Add(new Claim(ClaimTypes.SanteDBScopeClaim, scp));
-                            //    }
-
-                            //    var overrideArgs = new OverrideEventArgs(principal, pou, scopes);
-                            //    this.Overridding?.Invoke(this, overrideArgs);
-                            //    if (overrideArgs.Cancel)
-                            //        throw new SecurityException("Override was denied / cancelled");
-                            //}
-
-                            // Create the principal
-                            retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), roles);
+                        // Create the principal
+                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))), roles);
                         ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.Login, retVal);
 
                     }

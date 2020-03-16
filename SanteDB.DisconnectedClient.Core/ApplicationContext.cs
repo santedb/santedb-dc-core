@@ -328,7 +328,7 @@ namespace SanteDB.DisconnectedClient.Core
             var nonChangeDaemons = daemons.Distinct().ToArray();
             this.m_tracer.TraceInfo("STAGE2: Starting Daemon Services...");
 
-            foreach (var d in nonChangeDaemons)
+            foreach (var d in nonChangeDaemons.Distinct())
             {
                 try
                 {

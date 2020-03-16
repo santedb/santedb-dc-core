@@ -28,6 +28,5 @@ namespace SanteDB.DisconnectedClient.Core.Security
 
         public const string HttpTfaSecret = "X-SanteDB-TfaSecret";
 
-        public const string HttpUserAccessControlPrompt = "X-SanteDBClient-UserAccessControl";
     }
 }

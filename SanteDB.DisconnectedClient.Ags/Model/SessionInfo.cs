@@ -18,6 +18,7 @@
  * Date: 2019-11-27
  */
 using Newtonsoft.Json;
+using SanteDB.Core;
 using SanteDB.Core.Api.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
@@ -29,9 +30,11 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Xamarin.Security;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -42,28 +45,51 @@ using System.Security.Principal;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Ags.Model
 {
+
     /// <summary>
     /// Session information
     /// </summary>
     [JsonObject("SessionInfo"), XmlType("SessionInfo", Namespace = "http://santedb.org/model")]
-    public class SessionInfo : IdentifiedData, ISession
+    public class SessionInfo
     {
+
+        // The principal
+        private IPrincipal m_cachedPrincipal;
 
         // The entity 
         private UserEntity m_entity;
 
+        // The user
+        private SecurityUser m_user;
+
+        // The roles of the user
+        private string[] m_roles;
+
+        // The general token
+        private string m_idToken;
+
         // Lock
         private object m_syncLock = new object();
 
+        // Security configuration section
+        private SecurityConfigurationSection m_securityConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+
         /// <summary>
-        /// Default ctor
+        /// Get the underlying principal for this session information
         /// </summary>
-        public SessionInfo()
+        private IPrincipal GetPrincipal()
         {
-            this.Key = Guid.NewGuid();
+            if (this.m_cachedPrincipal == null)
+                this.m_cachedPrincipal = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>().Authenticate(this.Session);
+            return this.m_cachedPrincipal;
         }
+
+        /// <summary>
+        /// Serialization ctor
+        /// </summary>
+        public SessionInfo() { }
 
         // The tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SessionInfo));
@@ -71,47 +97,40 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// <summary>
         /// Create the session object from the principal
         /// </summary>
-        internal SessionInfo(IPrincipal principal, DateTime? expiry)
+        internal SessionInfo(ISession session)
         {
-            this.ProcessPrincipal(principal, expiry);
-        }
-
-        private object ApplicationContextIDataPersistenceService<T>()
-        {
-            throw new NotImplementedException();
+            this.Session = session;
+            this.ProcessSession();
         }
 
         /// <summary>
-        /// Gets the principal of the session
+        /// Gets the underlying session this wraps
         /// </summary>
         [JsonIgnore, DataIgnore]
-        public IPrincipal Principal { get; private set; }
-
-        /// <summary>
-        /// Clear the set cache
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void ClearCached() { this.m_entity = null; }
+        public ISession Session { get; private set; }
 
         /// <summary>
         /// Gets the user entity
         /// </summary>
-        [JsonProperty("entity")]
+        [JsonProperty("entity"), XmlElement("entity")]
         public UserEntity UserEntity
         {
             get
             {
-                if (this.m_entity != null || this.Principal == null)
+                if (this.m_entity != null)
                     return this.m_entity;
 
                 // HACK: Find a better way
-                var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
+                var userService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
+                var sessionService = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>();
 
-                if (ApplicationContext.Current.ConfigurationPersister.IsConfigured) {
+                if (ApplicationContext.Current.ConfigurationPersister.IsConfigured)
+                {
                     UserEntity entity = null;
                     try
                     {
-                        entity = userService.GetUserEntity(this.Principal.Identity);
+                        var identities = sessionService.GetIdentities(this.Session);
+                        entity = userService.GetUserEntity(identities.First());
 
                         if (entity == null && this.SecurityUser != null)
                             entity = new UserEntity()
@@ -141,176 +160,128 @@ namespace SanteDB.DisconnectedClient.Core.Security
         }
 
         /// <summary>
-        /// Gets the claims for the session 
-        /// </summary>
-        public IClaim[] Claims { get; private set; }
-        /// <summary>
         /// Gets or sets the security user information
         /// </summary>
-        [JsonProperty("user")]
-        public SecurityUser SecurityUser { get; set; }
+        [JsonProperty("user"), XmlElement("user")]
+        public SecurityUser SecurityUser
+        {
+            get
+            {
+                if (this.m_user == null)
+                {
+                    var sessionService = ApplicationContext.Current.GetService<ISessionIdentityProviderService>();
+                    var identities = sessionService.GetIdentities(this.Session);
+                    var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
+                    this.m_user = userService.GetUser(identities.First());
+                }
+                return this.m_user;
+            }
+            set { }
+        }
 
         /// <summary>
         /// Gets the user name
         /// </summary>
-        [JsonProperty("username")]
-        public string UserName { get; set; }
-
-        /// <summary>
-        /// Gets the roles to which the identity belongs
-        /// </summary>
-        [JsonProperty("roles")]
-        public List<String> Roles { get; set; }
-
-        /// <summary>
-        /// True if authenticated
-        /// </summary>
-        [JsonProperty("isAuthenticated")]
-        public bool IsAuthenticated { get; set; }
+        [JsonProperty("username"), XmlElement("username")]
+        public string UserName
+        {
+            get => this.SecurityUser.UserName;
+            set { }
+        }
 
         /// <summary>
         /// Gets or sets the mechanism
         /// </summary>
-        [JsonProperty("method")]
-        public String AuthenticationType { get; set; }
+        [JsonProperty("method"), XmlElement("method")]
+        public String AuthenticationType
+        {
+            get => this.Session.Claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AuthenticationMethod)?.Value;
+            set { }
+        }
 
         /// <summary>
         /// Expiry time
         /// </summary>
-        [JsonProperty("exp")]
-        public DateTime Expiry { get; set; }
+        [JsonProperty("exp"), XmlElement("exp")]
+        public DateTime Expiry
+        {
+            get => this.Session.NotAfter.DateTime;
+            set { }
+        }
 
         /// <summary>
         /// Issued time
         /// </summary>
         [JsonProperty("nbf")]
-        public DateTime Issued { get; set; }
-
-        /// <summary>
-        /// Gets or sets the access token
-        /// </summary>
-        [JsonProperty("access_token")]
-        public String Token { get; set; }
-
-        /// <summary>
-        /// Gets or sets the JWT token
-        /// </summary>
-        [JsonProperty("id_token")]
-        public string IdentityToken { get; set; }
-
-        /// <summary>
-        /// Gets or sets the refresh token
-        /// </summary>
-        [JsonProperty("refresh_token")]
-        public String RefreshToken { get; set; }
+        public DateTime Issued
+        {
+            get => this.Session.NotBefore.DateTime;
+            set { }
+        }
 
         /// <summary>
         /// Gets the display name
         /// </summary>
         [JsonProperty("displayName")]
-        public String DisplayName =>
-             this.UserEntity?.Names.FirstOrDefault()?.ToString() ?? this.UserName;
+        public String DisplayName => this.UserEntity?.Names.FirstOrDefault()?.ToString() ?? this.UserName;
 
         /// <summary>
-        /// Issue date
+        /// Gets the identity token
         /// </summary>
-        public override DateTimeOffset ModifiedOn
-        {
-            get
-            {
-                return this.Issued;
-            }
-        }
+        [XmlIgnore, JsonIgnore]
+        public string IdentityToken { get; private set; }
 
         /// <summary>
-        /// Gets the session ID
+        /// Gets the refresh token
         /// </summary>
-        byte[] ISession.Id => Encoding.UTF8.GetBytes(this.Token);
+        [JsonIgnore, XmlIgnore]
+        public string RefreshToken { get; private set; }
 
-        /// <summary>
-        /// Not before
-        /// </summary>
-        DateTimeOffset ISession.NotBefore => this.Issued;
-
-        /// <summary>
-        /// Not after
-        /// </summary>
-        DateTimeOffset ISession.NotAfter => this.Expiry;
-
-        /// <summary>
-        /// Refresh token
-        /// </summary>
-        byte[] ISession.RefreshToken => Encoding.UTF8.GetBytes(this.RefreshToken);
-        
         /// <summary>
         /// Process a principal
         /// </summary>
-        /// <param name="principal"></param>
-        private void ProcessPrincipal(IPrincipal principal, DateTime? expiry)
+        private void ProcessSession()
         {
-            this.UserName = principal.Identity.Name;
-            this.IsAuthenticated = principal.Identity.IsAuthenticated;
-            this.AuthenticationType = principal.Identity.AuthenticationType;
-            this.Principal = principal;
-            this.RefreshToken = BitConverter.ToString(Guid.NewGuid().ToByteArray()).Replace("-", ""); // TODO: Sign this
-
-            Guid sid = Guid.Empty;
-
-            // Expiry / etc
-            if (principal is IClaimsPrincipal claimsPrincipal)
-            {
-                this.Token = principal.ToString();
-                this.Issued = (claimsPrincipal.FindFirst(SanteDBClaimTypes.AuthenticationInstant)?.AsDateTime().ToLocalTime() ?? DateTime.Now);
-                this.Expiry = expiry ?? (claimsPrincipal.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MaxValue);
-                this.Roles = claimsPrincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList();
-                this.AuthenticationType = claimsPrincipal.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value;
-                this.Claims = claimsPrincipal.Claims.ToArray();
-                if (claimsPrincipal.HasClaim(o => o.Type == SanteDBClaimTypes.Sid))
-                    Guid.TryParse(claimsPrincipal.FindFirst(SanteDBClaimTypes.Sid)?.Value, out sid);
-            }
-            else
-            {
-                IRoleProviderService rps = ApplicationContext.Current.GetService<IRoleProviderService>();
-                this.Roles = rps.GetAllRoles(this.UserName).ToList();
-                this.Issued = DateTime.Now;
-                this.Expiry = expiry ?? DateTime.MaxValue;
-            }
-
-            /// Identity token (not signed by this class)
-            this.IdentityToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new
-            {
-                nbf = this.Issued,
-                exp = this.Expiry,
-                role = this.Roles.FirstOrDefault(),
-                authmethod = this.AuthenticationType,
-                unique_name = this.UserName,
-                scope = (principal as IClaimsPrincipal)?.Claims.Where(o=>o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o=>o.Value).ToArray(),
-                sub = sid.ToString()
-            })));
 
             // Grab the user entity
             String errDetail = String.Empty;
+            var sessionService = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>();
 
             // Try to get user entity
             try
             {
                 var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-                var securityUser = userService.GetUser(principal.Identity);
+
+                var sid = Guid.Parse(this.Session.Claims.First(o => o.Type == SanteDBClaimTypes.NameIdentifier).Value);
+                var securityUser = userService.GetUser(this.GetPrincipal().Identity);
+
+                this.RefreshToken = BitConverter.ToString(this.Session.RefreshToken).Replace("-", "");
+                this.IdentityToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new
+                {
+                    nbf = this.Issued,
+                    exp = this.Expiry,
+                    role = this.Session.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType)?.Select(o => o.Value)?.ToList(),
+                    authmethod = this.AuthenticationType,
+                    unique_name = this.UserName,
+                    scope = this.Session.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray(),
+                    sub = sid.ToString()
+                })));
+
                 if (securityUser == null) // Not yet persisted, get from server
                     this.SecurityUser = new SecurityUser()
                     {
-                        Key = Guid.Parse((principal as IClaimsPrincipal).FindFirst(SanteDBClaimTypes.Sid).Value),
-                        UserName = principal.Identity.Name
+                        Key = sid,
+                        UserName = this.GetPrincipal().Identity.Name
                     };
                 else
                     this.SecurityUser = securityUser;
 
                 // User entity available?
-                this.m_entity = userService.GetUserEntity(principal.Identity);
+                this.m_entity = userService.GetUserEntity(this.GetPrincipal().Identity);
 
                 // Attempt to download if the user entity is null
                 // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity 
-                if(this.m_entity == null || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
+                if (this.m_entity == null || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
                     if (amiService != null && amiService.IsAvailable())
@@ -336,9 +307,6 @@ namespace SanteDB.DisconnectedClient.Core.Security
                     else
                         this.m_entity = ApplicationContext.Current.GetService<IRepositoryService<UserEntity>>().Find(o => o.SecurityUserKey == sid, 0, 1, out int t).FirstOrDefault();
                 }
-
-               
-                
             }
             catch (Exception e)
             {
@@ -351,7 +319,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
             {
                 var subFacl = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities;
                 var isInSubFacility = this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.Value)) == true;
-                if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(principal, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
+                if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(this.GetPrincipal(), PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {
                     if (this.m_entity == null)
                     {

@@ -187,7 +187,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         public String Scope
         {
             get;
-            private set;
+            set;
         }
 
         /// <summary>
@@ -202,6 +202,45 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         [FormElement("client_secret")]
         public string ClientSecret { get; set; }
 
+
+    }
+
+    /// <summary>
+    /// OAuth token request.
+    /// </summary>
+    public class OAuthResetTokenRequest : OAuthTokenRequest
+    {
+
+        
+        /// <summary>
+        /// Create a new oauth reset token request
+        /// </summary>
+        public OAuthResetTokenRequest(String username, String challenge, String response) : base(username, null, "*")
+        {
+            this.GrantType = "x_reset";
+            this.Challenge = challenge;
+            this.Response = response;
+        }
+
+        /// <summary>
+        /// Serialization ctor
+        /// </summary>
+        public OAuthResetTokenRequest()
+        {
+
+        }
+
+        /// <summary>
+        /// Gets the challenge
+        /// </summary>
+        [FormElement("challenge")]
+        public String Challenge { get; private set; }
+
+        /// <summary>
+        /// Get the response for the challenge
+        /// </summary>
+        [FormElement("response")]
+        public String Response { get; private set; }
 
     }
 }

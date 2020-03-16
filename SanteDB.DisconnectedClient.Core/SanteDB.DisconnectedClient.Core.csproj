@@ -74,6 +74,7 @@
     <Compile Include="Security\IOperatingSystemSecurityService.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\DefaultPolicyDecisionService.cs" />
+    <Compile Include="Security\Session\MemorySession.cs" />
     <Compile Include="Services\IGeoTaggingService.cs" />
     <Compile Include="Services\Local\GenericLocalActRepository.cs" />
     <Compile Include="Services\Local\GenericLocalClinicalDataRepository.cs" />
@@ -129,12 +130,10 @@
     <Compile Include="Exceptions\SessionExpiredException.cs" />
     <Compile Include="Interop\AMI\AmiIntegrationService.cs" />
     <Compile Include="Interop\ConfigurationExtensions.cs" />
-    <Compile Include="Security\MemorySessionManagerService.cs" />
-    <Compile Include="Security\SessionInfo.cs" />
+    <Compile Include="Security\Session\MemorySessionManagerService.cs" />
     <Compile Include="Services\IDataConnectionManager.cs" />
     <Compile Include="Services\Local\MemoryQueryPersistenceService.cs" />
     <Compile Include="Services\IntegrationQueryOptions.cs" />
-    <Compile Include="Services\ISessionManagerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Configuration\ConfigurationManager.cs" />
     <Compile Include="Configuration\Data\IDbMigration.cs" />

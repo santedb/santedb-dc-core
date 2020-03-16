@@ -51,6 +51,7 @@
     <Compile Include="Metadata\ApiEndpointProviderShim.cs" />
     <Compile Include="Model\ConfigurationViewModel.cs" />
     <Compile Include="Model\MenuInformation.cs" />
+    <Compile Include="Model\SessionInfo.cs" />
     <Compile Include="Model\StorageProviderViewModel.cs" />
     <Compile Include="Services\ApplicationServiceBehavior.Widgets.cs" />
     <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" />

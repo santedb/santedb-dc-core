@@ -20,14 +20,19 @@
 using Newtonsoft.Json;
 using RestSrvr;
 using RestSrvr.Attributes;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Contracts;
+using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
+using SanteDB.DisconnectedClient.Core.Security.Session;
 using SanteDB.DisconnectedClient.Core.Services;
 using SanteDB.DisconnectedClient.Xamarin.Security;
 using System;
@@ -37,6 +42,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Security;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 
@@ -65,13 +71,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Abandons the session
         /// </summary>
-        public void AbandonSession()
+        public void AbandonSession()    
         {
             // Get the session
-            if (AuthenticationContext.Current.Principal != null) { 
-                ApplicationContext.Current.GetService<ISessionManagerService>().Delete(AuthenticationContext.Current.Principal);
-            }
-
+            if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
+                ApplicationContext.Current.GetService<ISessionProviderService>().Abandon(session as ISession);
         }
 
         /// <summary>
@@ -81,17 +85,88 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             try
             {
-                var session = this.Authenticate(request);
+                var sessionService = ApplicationContext.Current.GetService<ISessionProviderService>();
+                var identityService = ApplicationContext.Current.GetService<IIdentityProviderService>();
+                var remoteEpResolve = ApplicationContext.Current.GetService<IRemoteEndpointResolver>();
+
+                var headerClaims = Encoding.UTF8.GetString(Convert.FromBase64String(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpClaims])).Split(';').ToDictionary(o => o.Split('=')[0], o => o.Split('=')[1]);
+                ISession session = null;
+
+                var scopes = request["scope"] == "*" ? null : request["scope"].Split(' ');
+                var isOverride = scopes?.Any(o => o == PermissionPolicyIdentifiers.OverridePolicyPermission) == true || headerClaims.TryGetValue(SanteDBClaimTypes.SanteDBOverrideClaim, out string overrideFlag) && overrideFlag == "true";
+                var purposeOfUse = headerClaims.FirstOrDefault(o => o.Key == SanteDBClaimTypes.PurposeOfUse).Value;
+                var tfa = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpTfaSecret];
+
+                // TODO: Authenticate the client and device
+
+                // Grant types
+                switch (request["grant_type"])
+                {
+                    case "x_reset":
+                        {
+                            var principal = ApplicationServiceContext.Current.GetService<ISecurityChallengeIdentityService>().Authenticate(request["username"], Guid.Parse(request["challenge"]), request["response"], tfa);
+                            if (principal != null)
+                                session = sessionService.Establish(principal, remoteEpResolve.GetRemoteEndpoint(), isOverride, purposeOfUse, scopes);
+                            else
+                                throw new SecurityException("Could not authenticate principal");
+                            break;
+                        }
+                    case "password":
+                        {
+                            IPrincipal principal = null;
+                            if (isOverride && identityService is IElevatableIdentityProviderService elevatedAuth)
+                                principal = elevatedAuth.ElevatedAuthenticate(request["username"], request["password"], tfa, purposeOfUse, scopes);
+                            if (!String.IsNullOrEmpty(tfa))
+                                principal = identityService.Authenticate(request["username"], request["password"], tfa);
+                            else
+                                principal = identityService.Authenticate(request["username"], request["password"]);
+
+                            if (principal != null)
+                                session = sessionService.Establish(principal, remoteEpResolve.GetRemoteEndpoint(), isOverride, purposeOfUse, scopes);
+                            else
+                                throw new SecurityException("Could not authenticate principal");
+
+                        }
+                        break;
+                    case "refresh_token":
+                        {
+                            var refreshToken = Enumerable.Range(0, request["refresh_token"].Length)
+                                           .Where(x => x % 2 == 0)
+                                           .Select(x => Convert.ToByte(request["refresh_token"].Substring(x, 2), 16))
+                                           .ToArray();
+
+                            // Get the local session               
+                            session = sessionService.Extend(refreshToken);
+                            break;
+                        }
+                    case "pin":
+                        {
+                            var pinAuthSvc = ApplicationServiceContext.Current.GetService<IPinAuthenticationService>();
+                            IPrincipal principal = pinAuthSvc.Authenticate(request["username"], request["pin"].Select(o => Byte.Parse(o.ToString())).ToArray());
+                            if (principal != null)
+                                session = sessionService.Establish(principal, remoteEpResolve.GetRemoteEndpoint(), isOverride, purposeOfUse, scopes);
+                            else
+                                throw new SecurityException("Could not authenticate principal");
+                            break;
+                        }
+                }
+
+                var sessionInfo = new SessionInfo(session);
+                var lanugageCode = sessionInfo?.UserEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode;
+                if (lanugageCode != null)
+                    Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
+
                 return new OAuthTokenResponse()
                 {
-                    IdToken = session.IdentityToken,
-                    AccessToken = session.Token,
-                    RefreshToken = session.RefreshToken,
-                    ExpiresIn = (int)session.Expiry.Subtract(DateTime.Now).TotalSeconds,
-                    TokenType = "bearer"
+                    AccessToken = BitConverter.ToString(session.Id).Replace("-", ""),
+                    RefreshToken = BitConverter.ToString(session.RefreshToken).Replace("-", ""),
+                    ExpiresIn = (int)DateTime.Now.Subtract(session.NotAfter.DateTime).TotalSeconds,
+                    TokenType = "bearer",
+                    IdToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(session.Claims.GroupBy(o=>o.Type).ToDictionary(o => o.Key, o => o.Count() == 1 ? (object)o.First().Value : o.Select(v=>v.Value).ToArray()))))
                 };
+                
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 RestOperationContext.Current.OutgoingResponse.StatusCode = 400;
                 return new OAuthTokenResponse()
@@ -102,73 +177,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-        /// <summary>
-        /// Authenticate the user
-        /// </summary>
-        public SessionInfo Authenticate(NameValueCollection request)
-        {
-            var sessionService = ApplicationContext.Current.GetService<ISessionManagerService>();
-            SessionInfo retVal = null;
-
-            List<IClaim> claims = new List<IClaim>()
-            {
-                new SanteDBClaim("scope", request["scope"] ?? "*")
-            };
-
-            switch (request["grant_type"])
-            {
-                case "password":
-                    var tfa = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpTfaSecret];
-                    if (!String.IsNullOrEmpty(tfa))
-                        retVal = sessionService.Authenticate(request["username"], request["password"], tfa);
-                    else
-                        retVal = sessionService.Authenticate(request["username"], request["password"]);
-                    break;
-                case "refresh_token":
-                    var ses = sessionService.Refresh(request["refresh_token"]);
-                    break;
-                case "pin":
-                    var pinAuthSvc = sessionService as IPinAuthenticationService;
-                    retVal = sessionService.Authenticate(request["username"], request["pin"].Select(o => Byte.Parse(o.ToString())).ToArray(), claims.Union(this.ExtractClaims(RestOperationContext.Current.IncomingRequest.Headers)).ToArray());
-                    break;
-            }
-
-            // override
-            if (claims.Any(o => o.Type == SanteDBClaimTypes.SanteDBOverrideClaim && o.Value == "true")) {
-                throw new NotImplementedException(); // TODO:
-            }
-
-            if (retVal == null)
-                throw new SecurityException();
-            else
-            {
-                var lanugageCode = retVal?.UserEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode;
-
-                if (lanugageCode != null)
-                {
-                    Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
-                    claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, lanugageCode.Trim()));
-                }
-
-                // Set the session 
-                //if (!Boolean.Parse(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpUserAccessControlPrompt] ?? "false")) // Requesting all access so we need to send back a session ID :)
-                //    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", retVal.Token)
-                //    {
-                //        HttpOnly = true,
-                //        Secure = true,
-                //        Path = "/",
-                //        Domain = RestOperationContext.Current.IncomingRequest.Url.Host
-                //    });
-                return retVal;
-            }
-        }
-
+       
         /// <summary>
         /// Get the specified session information
         /// </summary>
         public SessionInfo GetSession()
         {
-            return ApplicationContext.Current.GetService<ISessionManagerService>().Get(AuthenticationContext.Current.Principal.ToString());
+            if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
+                return new SessionInfo(session as ISession);
+            return null;
         }
 
         /// <summary>
