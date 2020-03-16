@@ -102,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 // Grant types
                 switch (request["grant_type"])
                 {
-                    case "x_reset":
+                    case "x_challenge":
                         {
                             var principal = ApplicationServiceContext.Current.GetService<ISecurityChallengeIdentityService>().Authenticate(request["username"], Guid.Parse(request["challenge"]), request["response"], tfa);
                             if (principal != null)

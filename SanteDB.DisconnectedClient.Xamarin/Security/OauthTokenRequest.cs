@@ -217,7 +217,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public OAuthResetTokenRequest(String username, String challenge, String response) : base(username, null, "*")
         {
-            this.GrantType = "x_reset";
+            this.GrantType = "x_challenge";
             this.Challenge = challenge;
             this.Response = response;
         }
