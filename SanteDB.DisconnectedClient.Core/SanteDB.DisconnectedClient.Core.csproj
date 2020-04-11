@@ -74,6 +74,7 @@
     <Compile Include="Security\IOperatingSystemSecurityService.cs" />
     <Compile Include="Security\IPinAuthenticationService.cs" />
     <Compile Include="Security\DefaultPolicyDecisionService.cs" />
+    <Compile Include="Security\Remote\AmiSecurityChallengeProvider.cs" />
     <Compile Include="Security\Session\MemorySession.cs" />
     <Compile Include="Services\IGeoTaggingService.cs" />
     <Compile Include="Services\Local\GenericLocalActRepository.cs" />

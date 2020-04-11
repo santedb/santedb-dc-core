@@ -45,14 +45,15 @@ namespace SanteDB.DisconnectedClient.Core.Services.Remote
         /// <summary>
         /// Get a service client
         /// </summary>
-        protected AmiServiceClient GetClient ()
+        protected AmiServiceClient GetClient (IPrincipal principal = null)
         {
             var retVal = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
             
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            IPrincipal principal = AuthenticationContext.Current.Principal;
+            if(principal == null)
+                principal = AuthenticationContext.Current.Principal;
 
-            // Authentication
+            // Don't allow anonymous principals
             if (!principal.Identity.IsAuthenticated)
             {
                 principal = this.m_devicePrincipal;

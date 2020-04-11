@@ -32,6 +32,7 @@ using SanteDB.DisconnectedClient.Core.Caching;
 using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Configuration.Data;
 using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Core.Security.Remote;
 using SanteDB.DisconnectedClient.Core.Security.Session;
 using SanteDB.DisconnectedClient.Core.Services.Local;
 using SanteDB.DisconnectedClient.Core.Synchronization;
@@ -142,6 +143,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(AppletBiRepository)),
                     new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),
                     new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository)),
+                    new TypeReferenceConfiguration(typeof(AmiSecurityChallengeProvider)),
                     new TypeReferenceConfiguration(typeof(InMemoryPivotProvider))
                 }
             };

@@ -110,8 +110,13 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
 
                         // HACK: Set preferred sid to device SID
                         var cprincipal = retVal as IClaimsPrincipal;
-                        cprincipal.Identities.First().RemoveClaim(cprincipal.FindFirst(SanteDBClaimTypes.Sid));
-                        cprincipal.Identities.First().AddClaim(new SanteDBClaim(SanteDBClaimTypes.Sid, cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value));
+
+                        var devId = cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim);
+                        if (devId != null)
+                        {
+                            cprincipal.Identities.First().RemoveClaim(cprincipal.FindFirst(SanteDBClaimTypes.Sid));
+                            cprincipal.Identities.First().AddClaim(new SanteDBClaim(SanteDBClaimTypes.Sid, devId.Value));
+                        }
 
                         // Synchronize the security devices
                         this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
