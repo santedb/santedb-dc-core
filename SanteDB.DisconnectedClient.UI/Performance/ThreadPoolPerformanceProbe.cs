@@ -21,7 +21,7 @@ using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
-using SanteDB.DisconnectedClient.Xamarin.Threading;
+using SanteDB.DisconnectedClient.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;

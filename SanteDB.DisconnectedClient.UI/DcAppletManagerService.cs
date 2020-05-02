@@ -19,15 +19,15 @@
  */
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Configuration;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Xamarin.Services;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Ags.Util;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using SanteDB.DisconnectedClient.Ags.Util;
 
 namespace SanteDB.DisconnectedClient.UI
 {

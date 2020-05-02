@@ -24,14 +24,14 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// Represetns a base service that uses the AMI

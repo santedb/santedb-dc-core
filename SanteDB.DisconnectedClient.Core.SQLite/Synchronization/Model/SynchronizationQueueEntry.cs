@@ -19,8 +19,8 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Synchronization;
 using SQLite.Net.Attributes;
 using System;
 using System.Reflection;

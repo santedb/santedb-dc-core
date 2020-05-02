@@ -21,7 +21,7 @@ using SanteDB.Core.Model;
 using System;
 using System.Threading;
 
-namespace SanteDB.DisconnectedClient.Core.Caching
+namespace SanteDB.DisconnectedClient.Caching
 {
     /// <summary>
     /// Represents a cache entry

@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.Synchronization
 {
     /// <summary>
     /// Synchronization operation type.

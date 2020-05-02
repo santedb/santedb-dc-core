@@ -24,7 +24,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
 using SQLite.Net;
@@ -42,7 +42,7 @@ using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using SanteDB.Core.Model;
 
-namespace SanteDB.DisconnectedClient.Core.Security.Audit
+namespace SanteDB.DisconnectedClient.Security.Audit
 {
     /// <summary>
     /// Local audit repository service

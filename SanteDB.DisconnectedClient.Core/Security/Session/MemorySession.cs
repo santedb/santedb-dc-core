@@ -7,7 +7,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Security.Session
+namespace SanteDB.DisconnectedClient.Security.Session
 {
     /// <summary>
     /// Represents an in-memory session

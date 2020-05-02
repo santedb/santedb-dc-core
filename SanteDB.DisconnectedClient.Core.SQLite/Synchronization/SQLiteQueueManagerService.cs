@@ -25,10 +25,10 @@ using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using SharpCompress.Compressors.Deflate;
@@ -258,7 +258,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 locked = Monitor.TryEnter(this.m_adminLock, 100);
                 if (!locked) return;
                 // TODO: Sleep thread here
-                var amiService = SanteDB.DisconnectedClient.Core.ApplicationContext.Current.GetService<IAdministrationIntegrationService>();
+                var amiService = SanteDB.DisconnectedClient.ApplicationContext.Current.GetService<IAdministrationIntegrationService>();
                 if (!amiService.IsAvailable())
                 {
                     // Come back in 30 seconds...
@@ -391,7 +391,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 while (SynchronizationQueue.Outbound.Count() > 0)
                 {
                     // Exhaust the outbound queue
-                    var integrationService = SanteDB.DisconnectedClient.Core.ApplicationContext.Current.GetService<IClinicalIntegrationService>();
+                    var integrationService = SanteDB.DisconnectedClient.ApplicationContext.Current.GetService<IClinicalIntegrationService>();
                     var syncItm = SynchronizationQueue.Outbound.PeekRaw();
                     var dpe = SynchronizationQueue.Outbound.DeserializeObject(syncItm);
 
@@ -517,7 +517,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         private void ImportElement(IdentifiedData data)
         {
             var idpType = typeof(IDataPersistenceService<>).MakeGenericType(data.GetType());
-            var svc = SanteDB.DisconnectedClient.Core.ApplicationContext.Current.GetService(idpType) as IDataPersistenceService;
+            var svc = SanteDB.DisconnectedClient.ApplicationContext.Current.GetService(idpType) as IDataPersistenceService;
             try
             {
                 IdentifiedData existing = null;

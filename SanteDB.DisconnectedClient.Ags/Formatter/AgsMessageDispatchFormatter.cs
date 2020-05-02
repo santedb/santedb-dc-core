@@ -31,7 +31,7 @@ using SanteDB.Core.Model.Json.Formatter;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;

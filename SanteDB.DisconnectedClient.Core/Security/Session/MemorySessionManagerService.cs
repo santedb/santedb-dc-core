@@ -25,8 +25,8 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections.Generic;
@@ -35,7 +35,7 @@ using System.Security;
 using System.Security.Principal;
 using System.Text;
 
-namespace SanteDB.DisconnectedClient.Core.Security.Session
+namespace SanteDB.DisconnectedClient.Security.Session
 {
     /// <summary>
     /// Memory session manager service

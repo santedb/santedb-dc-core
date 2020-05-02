@@ -19,7 +19,7 @@
  */
 using RestSrvr;
 using RestSrvr.Message;
-using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Linq;

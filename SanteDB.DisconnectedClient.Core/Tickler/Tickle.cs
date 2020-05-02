@@ -21,7 +21,7 @@ using Newtonsoft.Json;
 using System;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Tickler
+namespace SanteDB.DisconnectedClient.Tickler
 {
     /// <summary>
     /// Represents a tickle message

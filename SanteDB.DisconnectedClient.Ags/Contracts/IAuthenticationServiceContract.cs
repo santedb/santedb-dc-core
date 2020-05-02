@@ -19,9 +19,9 @@
  */
 using RestSrvr.Attributes;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Security.Session;
-using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Security.Session;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Fault;
 using System;
 using System.Collections.Specialized;

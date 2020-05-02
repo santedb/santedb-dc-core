@@ -20,9 +20,9 @@
 using RestSrvr;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Tickler;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Tickler;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;

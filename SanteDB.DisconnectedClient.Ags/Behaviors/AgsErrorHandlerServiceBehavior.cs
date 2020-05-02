@@ -25,7 +25,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Ags.Util;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Fault;
 using SanteDB.Rest.Common.Serialization;
 using System;

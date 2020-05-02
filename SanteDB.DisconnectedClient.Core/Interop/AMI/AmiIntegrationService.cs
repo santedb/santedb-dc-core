@@ -31,10 +31,10 @@ using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Security.Audit;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Linq;
@@ -42,7 +42,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Interop.AMI
+namespace SanteDB.DisconnectedClient.Interop.AMI
 {
     /// <summary>
     /// Represents an integration service for administrative data

@@ -26,15 +26,15 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-//using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Configuration.Data;
+//using SanteDB.DisconnectedClient.Data;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Xamarin;
-using SanteDB.DisconnectedClient.Xamarin.Backup;
-using SanteDB.DisconnectedClient.Xamarin.Configuration;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Backup;
+using SanteDB.DisconnectedClient.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.UI
     /// <summary>
     /// Test application context
     /// </summary>
-    public class DcApplicationContext : XamarinApplicationContext
+    public class DcApplicationContext : ApplicationContext
     {
 
         // Host type
@@ -111,9 +111,9 @@ namespace SanteDB.DisconnectedClient.UI
 
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
-                if (XamarinApplicationContext.Current != null)
+                if (ApplicationContext.Current != null)
                 {
-                    Tracer tracer = Tracer.GetTracer(typeof(XamarinApplicationContext));
+                    Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
                     tracer.TraceEvent(EventLevel.Critical, "Uncaught exception: {0}", e.ExceptionObject.ToString());
                 }
             };

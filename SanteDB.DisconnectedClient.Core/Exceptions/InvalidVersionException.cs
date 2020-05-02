@@ -19,7 +19,7 @@
  */
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Exceptions
+namespace SanteDB.DisconnectedClient.Exceptions
 {
     /// <summary>
     /// Invalid version exception

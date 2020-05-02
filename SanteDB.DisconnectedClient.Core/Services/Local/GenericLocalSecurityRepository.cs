@@ -21,7 +21,7 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Generic local security repository

@@ -26,8 +26,8 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,7 +36,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
-namespace SanteDB.DisconnectedClient.Core.Caching
+namespace SanteDB.DisconnectedClient.Caching
 {
     /// <summary>
     /// Memory cache functions

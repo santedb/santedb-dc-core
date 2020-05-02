@@ -26,7 +26,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Linq.Expressions;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
     /// <summary>
     /// Represents an integration service which is responsible for sending and

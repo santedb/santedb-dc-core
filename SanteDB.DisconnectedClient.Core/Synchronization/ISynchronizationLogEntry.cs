@@ -19,7 +19,7 @@
  */
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.Synchronization
 {
     /// <summary>
     /// Represents a log entry for synchronization

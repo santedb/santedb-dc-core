@@ -21,14 +21,14 @@ using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Exceptions;
+using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data
+namespace SanteDB.DisconnectedClient.Configuration.Data
 {
     /// <summary>
     /// Represents a data migrator which is responsible for performing data migrations
@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
         private List<IDbMigration> m_migrations;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.Data.DataMigrator"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrator"/> class.
         /// </summary>
         /// <param name="configuration">Configuration.</param>
         public DataMigrator()

@@ -24,7 +24,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Local security application repository

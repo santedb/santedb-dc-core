@@ -23,7 +23,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Localuser entity repository

@@ -19,7 +19,7 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

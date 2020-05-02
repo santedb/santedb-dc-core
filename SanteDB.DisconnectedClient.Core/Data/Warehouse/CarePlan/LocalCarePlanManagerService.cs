@@ -27,8 +27,8 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Warehouse;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections;
@@ -38,7 +38,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
-namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
+namespace SanteDB.DisconnectedClient.Data.Warehouse
 {
     /// <summary>
     /// The protocol watch service is used to watch patient regsitrations and ensure the clinical
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                         this.m_warehouseService.DeleteDatamart(this.m_dataMart.Id);
 
                     this.m_tracer.TraceInfo("Datamart for care plan service doesn't exist, will have to create it...");
-                    this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(LocalCarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
+                    this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(LocalCarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
                     this.m_tracer.TraceVerbose("Datamart {0} created", this.m_dataMart.Id);
                 }
                 else
@@ -169,7 +169,7 @@ namespace SanteDB.DisconnectedClient.Core.Data.Warehouse
                     if (this.m_dataMart == null)
                     {
                         this.m_tracer.TraceInfo("Datamart for care plan service doesn't exist, will have to create it...");
-                        this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(LocalCarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Core.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
+                        this.m_dataMart = this.m_warehouseService.CreateDatamart("oizcp", DatamartSchema.Load(typeof(LocalCarePlanManagerService).GetTypeInfo().Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Data.Warehouse.CarePlan.CarePlanWarehouseSchema.xml")));
                         this.m_tracer.TraceVerbose("Datamart {0} created", this.m_dataMart.Id);
                     }
                     //else // prune datamart

@@ -21,7 +21,7 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Services;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Local patient repository service

@@ -19,7 +19,7 @@
  */
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Exceptions
+namespace SanteDB.DisconnectedClient.Exceptions
 {
     /// <summary>
     /// Indicates that a data operation failed due to a duplicate key

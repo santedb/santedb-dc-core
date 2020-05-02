@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;

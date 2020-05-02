@@ -22,11 +22,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Services;
 using RestSrvr;
 using SanteDB.Rest.Common.Attributes;
 using SanteDB.Core.Security;
@@ -34,8 +34,8 @@ using SanteDB.Core.Services;
 using SanteDB.Core.Exceptions;
 using SanteDB.DisconnectedClient.i18n;
 using System.Threading;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.Core.Model.Query;
 
 namespace SanteDB.DisconnectedClient.Ags.Services

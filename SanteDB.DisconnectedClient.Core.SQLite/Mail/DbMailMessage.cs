@@ -20,7 +20,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Mail;
 using SanteDB.Core.Security;
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient;
 using SQLite.Net.Attributes;
 using System;
 using System.Xml.Serialization;

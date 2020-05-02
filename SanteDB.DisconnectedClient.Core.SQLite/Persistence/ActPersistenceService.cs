@@ -24,7 +24,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;

@@ -20,7 +20,7 @@
 using SanteDB.Core.Model;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.Synchronization
 {
     /// <summary>
     /// Queue file provider

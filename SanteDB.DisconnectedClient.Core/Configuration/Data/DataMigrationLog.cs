@@ -22,7 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data
+namespace SanteDB.DisconnectedClient.Configuration.Data
 {
     /// <summary>
     /// Data migration log
@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.Data.DataMigrationLog"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog"/> class.
         /// </summary>
         public DataMigrationLog()
         {
@@ -59,7 +59,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 
             /// <summary>
             /// Initializes a new instance of the
-            /// <see cref="SanteDB.DisconnectedClient.Core.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
+            /// <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
             /// </summary>
             public DataMigrationEntry()
             {
@@ -68,7 +68,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration.Data
 
             /// <summary>
             /// Initializes a new instance of the
-            /// <see cref="SanteDB.DisconnectedClient.Core.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
+            /// <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
             /// </summary>
             /// <param name="migration">Migration.</param>
             public DataMigrationEntry(IDbMigration migration)

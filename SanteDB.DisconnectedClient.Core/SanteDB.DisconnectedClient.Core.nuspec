@@ -27,7 +27,7 @@
     </dependencies>
     <references>
       <group targetFramework="portable45-net45+win8">
-        <reference file="SanteDB.DisconnectedClient.Core.dll"/>
+        <reference file="SanteDB.DisconnectedClient.dll"/>
         <reference file="SanteDB.DisconnectedClient.i18n.dll"/>
       </group>
     </references>

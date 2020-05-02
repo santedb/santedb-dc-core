@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents a principal that was issued offline

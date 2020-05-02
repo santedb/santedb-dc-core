@@ -28,9 +28,9 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Collections.Generic;
@@ -41,7 +41,7 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// Represents a persistence service which uses the HDSI only in online mode

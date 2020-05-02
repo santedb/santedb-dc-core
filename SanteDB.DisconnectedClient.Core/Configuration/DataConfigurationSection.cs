@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data
+namespace SanteDB.DisconnectedClient.Configuration.Data
 {
     /// <summary>
     /// Data configuration section
