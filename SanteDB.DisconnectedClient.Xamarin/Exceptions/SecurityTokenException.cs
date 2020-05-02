@@ -33,7 +33,8 @@ namespace SanteDB.DisconnectedClient.Xamarin.Exceptions
         InvalidTokenType,
         KeyNotFound,
         NotYetValid,
-        InvalidClaim
+        InvalidClaim,
+        InvalidIssuer
     }
 
     /// <summary>

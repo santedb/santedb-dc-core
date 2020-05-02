@@ -138,8 +138,10 @@
     <Compile Include="Rules\DisconnectedGatewayJni.cs" />
     <Compile Include="Security\AesSymmetricCrypographicProvider.cs" />
     <Compile Include="Security\AuditMetadataProvider.cs" />
+    <Compile Include="Security\DefaultDataSigningService.cs" />
     <Compile Include="Security\HttpBasicTokenCredentialProvider.cs" />
     <Compile Include="Security\OAuthDeviceIdentityProvider.cs" />
+    <Compile Include="Security\OpenIdConfigurationInfo.cs" />
     <Compile Include="Security\SystemPolicySynchronizationDaemon.cs" />
     <Compile Include="Security\TokenValidationManager.cs" />
     <Compile Include="Services\DefaultOperatingSystemInfoService.cs" />

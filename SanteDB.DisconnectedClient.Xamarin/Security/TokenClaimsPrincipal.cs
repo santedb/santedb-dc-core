@@ -26,6 +26,7 @@ using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Xamarin.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -65,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         /// <param name="idToken">Token.</param>
         /// <param name="tokenType">Token type.</param>
-        public TokenClaimsPrincipal(String accessToken, String idToken, String tokenType, String refreshToken) : base()
+        public TokenClaimsPrincipal(String accessToken, String idToken, String tokenType, String refreshToken, OpenIdConfigurationInfo configuration) : base()
         {
             if (String.IsNullOrEmpty(idToken))
                 throw new ArgumentNullException(nameof(idToken));
@@ -104,7 +105,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                 }
                 else if (((String)headers["alg"]).StartsWith("HS"))
                 {
-                    // TODO: Verfiy signature
+                    // TODO: Verfiy signature using our client secret
                 }
             }
 
@@ -120,6 +121,11 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     claims.AddRange(this.ProcessClaim(kf, claimName));
             }
 
+            // Validate issuer
+            if (!claims.Any(c => c.Type == "iss" && c.Value == configuration.Issuer))
+                throw new SecurityTokenException(SecurityTokenExceptionType.InvalidIssuer, "Issuer mismatch");
+
+            // Validate validity
             IClaim expiryClaim = claims.Find(o => o.Type == SanteDBClaimTypes.Expiration),
                 notBeforeClaim = claims.Find(o => o.Type == SanteDBClaimTypes.AuthenticationInstant);
 

@@ -259,6 +259,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
 
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret = Encoding.ASCII.GetString(pcharArray);
+                                
                 // Create the necessary device user
                 try
                 {
@@ -424,9 +425,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 {
                     var serviceOptions = amiClient.Options();
 
-                    var option = serviceOptions.Endpoints.FirstOrDefault(o => o.ServiceType == ServiceEndpointType.AuthenticationService);
+                    var acsOption = serviceOptions.Endpoints.FirstOrDefault(o => o.ServiceType == ServiceEndpointType.AuthenticationService);
 
-                    if (option == null)
+                    if (acsOption == null)
                     {
                         ApplicationContext.Current.RemoveServiceProvider(typeof(OAuthIdentityProvider), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(OAuthDeviceIdentityProvider), true);
@@ -454,7 +455,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             },
                             Name = "acs",
                             Trace = enableTrace,
-                            Endpoint = option.BaseUrl.Select(o => new ServiceClientEndpoint()
+                            Endpoint = acsOption.BaseUrl.Select(o => new ServiceClientEndpoint()
                             {
                                 Address = o.Replace("0.0.0.0", realmUri),
                                 Timeout = 30000
@@ -464,19 +465,19 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
 
                     // Update the security binding on the temporary AMI binding
-                    option = serviceOptions.Endpoints.FirstOrDefault(o => o.ServiceType == ServiceEndpointType.AdministrationIntegrationService);
+                    acsOption = serviceOptions.Endpoints.FirstOrDefault(o => o.ServiceType == ServiceEndpointType.AdministrationIntegrationService);
 
                     serviceClientSection.Client[0].Binding.Security = new ServiceClientSecurity()
                     {
                         AuthRealm = realmUri,
-                        Mode = option.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth) ? SecurityScheme.Bearer :
-                                    option.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth) ? SecurityScheme.Basic :
+                        Mode = acsOption.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth) ? SecurityScheme.Bearer :
+                                    acsOption.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth) ? SecurityScheme.Basic :
                                     SecurityScheme.None,
-                        CredentialProvider = option.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth) ? (ICredentialProvider)new TokenCredentialProvider() :
-                                    option.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth) ?
-                                    (ICredentialProvider)(option.ServiceType == ServiceEndpointType.AuthenticationService ? (ICredentialProvider)new OAuth2CredentialProvider() : new HttpBasicTokenCredentialProvider()) :
+                        CredentialProvider = acsOption.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth) ? (ICredentialProvider)new TokenCredentialProvider() :
+                                    acsOption.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth) ?
+                                    (ICredentialProvider)(acsOption.ServiceType == ServiceEndpointType.AuthenticationService ? (ICredentialProvider)new OAuth2CredentialProvider() : new HttpBasicTokenCredentialProvider()) :
                                     null,
-                        PreemptiveAuthentication = option.Capabilities != ServiceEndpointCapabilities.None
+                        PreemptiveAuthentication = acsOption.Capabilities != ServiceEndpointCapabilities.None
                     };
 
                     throw new PolicyViolationException(AuthenticationContext.Current.Principal, ex.PolicyId, SanteDB.Core.Model.Security.PolicyGrantType.Deny);

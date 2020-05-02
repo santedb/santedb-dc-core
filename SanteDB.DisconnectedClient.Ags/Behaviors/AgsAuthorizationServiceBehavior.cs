@@ -34,6 +34,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Principal;
 using System.Text;
+using SanteDB.Core.Model;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -100,21 +101,26 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// <summary>
         /// Session token
         /// </summary>
-        /// <param name="sessionToken"></param>
-        private void SetContextFromBearer(string sessionToken)
+        private void SetContextFromBearer(string bearerToken)
         {
             var smgr = ApplicationContext.Current.GetService<ISessionProviderService>();
 
+            var bearerBinary = bearerToken.ParseHexString();
+            var sessionId = bearerBinary.Take(16).ToArray();
+            var signature = bearerBinary.Skip(16).ToArray();
+
+            if (!ApplicationServiceContext.Current.GetService<IDataSigningService>().Verify(sessionId, signature))
+                throw new SecurityTokenException(SecurityTokenExceptionType.InvalidSignature, "Token has been tampered");
+
             // Get the session
             var session = ApplicationServiceContext.Current.GetService<ISessionProviderService>().Get(
-                Enumerable.Range(0, sessionToken.Length)
-                                    .Where(x => x % 2 == 0)
-                                    .Select(x => Convert.ToByte(sessionToken.Substring(x, 2), 16))
-                                    .ToArray()
+                sessionId   
             );
-            if (session == null)
-                throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Bearer token not valid");
 
+            if (session == null)
+                return;
+
+            
             IPrincipal principal = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>().Authenticate(session);
             if (principal == null)
                 throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Invalid bearer token");

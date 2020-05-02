@@ -17,6 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using Newtonsoft.Json.Linq;
 using RestSrvr;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -51,6 +52,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
     /// </summary>
     public class OAuthIdentityProvider : IElevatableIdentityProviderService, ISecurityChallengeIdentityService
     {
+
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -60,6 +62,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         private Tracer m_tracer = Tracer.GetTracer(typeof(OAuthIdentityProvider));
 
         #region IIdentityProviderService implementation
+
         /// <summary>
         /// Occurs when authenticating.
         /// </summary>
@@ -69,6 +72,10 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// Occurs when authenticated.
         /// </summary>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
+
+        /// <summary>
+        /// An override has been requested
+        /// </summary>
         public event EventHandler<SecurityOverrideEventArgs> OverrideRequested;
 
         /// <summary>
@@ -81,6 +88,25 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
             return this.Authenticate(userName, password, null);
         }
 
+        /// <summary>
+        /// Gets the configuration information for the OpenID service
+        /// </summary>
+        private OpenIdConfigurationInfo GetConfigurationInfo()
+        {
+            try
+            {
+                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
+                {
+                    restClient.Description.Endpoint[0].Timeout = 2000;
+                    return restClient.Get<OpenIdConfigurationInfo>(".well-known/openid-configuration");
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error fetching OpenID configuration settings: {0}", e);
+                return null;
+            }
+        }
 
         /// <summary>
         /// Synchronize the security settings
@@ -243,7 +269,7 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                     OAuthTokenRequest request = null;
                     if (refreshPrincipal != null)
                         request = new OAuthTokenRequest(refreshPrincipal, "*");
-                    if (!String.IsNullOrEmpty(password))
+                    else if (!String.IsNullOrEmpty(password))
                         request = new OAuthTokenRequest(userName, password, "*");
                     else
                         request = new OAuthTokenRequest(userName, null, "*");
@@ -285,8 +311,21 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             else
                                 restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
 
-                            OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
-                            retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
+                            // GEt configuration 
+                            var configuration = this.GetConfigurationInfo();
+                            if (configuration == null) // default action
+                            {
+                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                            }
+                            else
+                            {
+                                if (!configuration.GrantTypesSupported.Contains("password"))
+                                    throw new InvalidOperationException("Password grants not supported by this provider");
+
+                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
+                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                            }
                         }
                         catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
                         {
@@ -546,8 +585,24 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                             restClient.Description.Endpoint[0].Timeout = 5000;
                             restClient.Invoke<Object, Object>("PING", "/", null, null);
                             restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
-                            var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
-                            var retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken);
+
+                            // Swap out the endpoint and authenticate
+                            var configuration = this.GetConfigurationInfo();
+                            IPrincipal retVal = null;
+                            if (configuration == null) // default action
+                            {
+                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                            }
+                            else
+                            {
+                                if (!configuration.GrantTypesSupported.Contains("password"))
+                                    throw new InvalidOperationException("Password grants not supported by this provider");
+
+                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
+                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                            }
+
                             this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
                             return retVal;
                         }

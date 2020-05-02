@@ -65,6 +65,27 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// </summary>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
 
+
+        /// <summary>
+        /// Gets the configuration information for the OpenID service
+        /// </summary>
+        private OpenIdConfigurationInfo GetConfigurationInfo()
+        {
+            try
+            {
+                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
+                {
+                    restClient.Description.Endpoint[0].Timeout = 2000;
+                    return restClient.Get<OpenIdConfigurationInfo>(".well-known/openid-configuration");
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error fetching OpenID configuration settings: {0}", e);
+                return null;
+            }
+        }
+
         /// <summary>
         /// Authenticate the specified device
         /// </summary>
@@ -105,8 +126,18 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
                         ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() != false) // Network may be on but internet is not available
                     {
                         restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.333f);
-                        OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
-                        retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken);
+
+                        var configuration = this.GetConfigurationInfo();
+                        if (configuration == null)
+                        {
+                            OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                            retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken, configuration);
+                        }
+                        else
+                        {
+                            OAuthTokenResponse response = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
+                            retVal = new TokenClaimsPrincipal(response.AccessToken, response.IdToken ?? response.AccessToken, response.TokenType, response.RefreshToken, configuration);
+                        }
 
                         // HACK: Set preferred sid to device SID
                         var cprincipal = retVal as IClaimsPrincipal;

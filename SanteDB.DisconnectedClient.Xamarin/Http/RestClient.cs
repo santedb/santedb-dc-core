@@ -538,100 +538,99 @@ namespace SanteDB.DisconnectedClient.Xamarin.Http
                     this.m_tracer.TraceError("Request timed out:{0}", e.Message);
                     throw;
                 }
-                catch (WebException e)
+                catch(WebException e) when (e.Response is HttpWebResponse errorResponse && errorResponse.StatusCode == HttpStatusCode.NotModified)
                 {
-
-                    var errorResponse = (e.Response as HttpWebResponse);
-                    if (errorResponse?.StatusCode == HttpStatusCode.NotModified)
-                    {
-                        this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
-                        responseHeaders = errorResponse?.Headers;
-                        return default(TResult);
-                    }
-
                     this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                    this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
+                    responseHeaders = errorResponse?.Headers;
+                    return default(TResult);
+                }
+                catch(WebException e) when (e.Response is HttpWebResponse errorResponse && e.Status == WebExceptionStatus.ProtocolError)
+                {
+                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                    // Deserialize
+                    object errorResult = default(ErrorResult);
 
-                    // status
-                    switch (e.Status)
+                    var responseContentType = errorResponse.ContentType;
+                    if (responseContentType.Contains(";"))
+                        responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
+
+                    var ms = new MemoryStream(); // copy response to memory
+                    errorResponse.GetResponseStream().CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+
+                    try
                     {
-                        case WebExceptionStatus.ProtocolError:
+                        var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
 
-                            // Deserialize
-                            object errorResult = default(ErrorResult);
-
-                            var responseContentType = errorResponse.ContentType;
-                            if (responseContentType.Contains(";"))
-                                responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
-
-                            var ms = new MemoryStream(); // copy response to memory
-                            errorResponse.GetResponseStream().CopyTo(ms);
-                            ms.Seek(0, SeekOrigin.Begin);
-
-
-                            try
-                            {
-                                var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
-
-                                switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
-                                {
-                                    case "deflate":
-                                        using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                            errorResult = serializer.DeSerialize(df);
-                                        break;
-                                    case "gzip":
-                                        using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                            errorResult = serializer.DeSerialize(df);
-                                        break;
-                                    case "bzip2":
-                                        using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress ,false))
-                                            errorResult = serializer.DeSerialize(bzs);
-                                        break;
-                                    case "lzma":
-                                        using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                            errorResult = serializer.DeSerialize(lzmas);
-                                        break;
-                                    default:
-                                        errorResult = serializer.DeSerialize(ms);
-                                        break;
-                                }
-                            }
-                            catch
-                            {
-                                errorResult = new RestServiceFault(e);
-                            }
-
-                            Exception exception = null;
-                            if (errorResult is TResult)
-                                exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
-                            else
-                                exception = new RestClientException<RestServiceFault>((RestServiceFault)errorResult, e, e.Status, e.Response);
-
-                            switch (errorResponse.StatusCode)
-                            {
-                                case HttpStatusCode.Unauthorized: // Validate the response
-                                    if (this.ValidateResponse(errorResponse) != ServiceClientErrorType.Valid)
-                                        throw exception;
-                                    break;
-                                case HttpStatusCode.NotModified:
-                                    responseHeaders = errorResponse?.Headers;
-                                    return default(TResult);
-                                case (HttpStatusCode)422:
-                                    throw exception;
-
-                                default:
-                                    throw exception;
-                            }
-                            break;
-                        case WebExceptionStatus.ConnectFailure:
-                            if ((e.InnerException as SocketException)?.SocketErrorCode == SocketError.TimedOut)
-                                throw new TimeoutException();
-                            else
-                                throw;
-                        case WebExceptionStatus.Timeout:
-                            throw new TimeoutException();
-                        default:
-                            throw;
+                        switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
+                        {
+                            case "deflate":
+                                using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                    errorResult = serializer.DeSerialize(df);
+                                break;
+                            case "gzip":
+                                using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                    errorResult = serializer.DeSerialize(df);
+                                break;
+                            case "bzip2":
+                                using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
+                                    errorResult = serializer.DeSerialize(bzs);
+                                break;
+                            case "lzma":
+                                using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                    errorResult = serializer.DeSerialize(lzmas);
+                                break;
+                            default:
+                                errorResult = serializer.DeSerialize(ms);
+                                break;
+                        }
                     }
+                    catch
+                    {
+                        errorResult = new RestServiceFault(e);
+                    }
+
+                    Exception exception = null;
+                    if (errorResult is TResult)
+                        exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
+                    else
+                        exception = new RestClientException<RestServiceFault>((RestServiceFault)errorResult, e, e.Status, e.Response);
+
+                    switch (errorResponse.StatusCode)
+                    {
+                        case HttpStatusCode.Unauthorized: // Validate the response
+                            if (this.ValidateResponse(errorResponse) != ServiceClientErrorType.Valid)
+                                throw exception;
+                            break;
+                        case HttpStatusCode.NotModified:
+                            responseHeaders = errorResponse?.Headers;
+                            return default(TResult);
+                        case (HttpStatusCode)422:
+                            throw exception;
+
+                        default:
+                            throw exception;
+                    }
+                }
+                catch (WebException e) when (e.Status == WebExceptionStatus.Timeout)
+                {
+                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                    throw new TimeoutException($"Timeout executing REST operation {method} {url}", e);
+                }
+                catch(WebException e) when (e.Status == WebExceptionStatus.ConnectFailure)
+                {
+                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                    if ((e.InnerException as SocketException)?.SocketErrorCode == SocketError.TimedOut)
+                        throw new TimeoutException();
+                    else
+                        throw;
+                }
+                catch(WebException e)
+                {
+                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                    throw;
                 }
                 catch (InvalidOperationException e)
                 {

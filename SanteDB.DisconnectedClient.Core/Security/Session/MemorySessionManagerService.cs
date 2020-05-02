@@ -18,6 +18,7 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core;
+using SanteDB.Core.Api.Security;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
@@ -155,7 +156,17 @@ namespace SanteDB.DisconnectedClient.Core.Security.Session
                 var sessionRefresh = Guid.NewGuid();
                 claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, sessionKey.ToString()));
 
-                var memorySession = new MemorySession(sessionKey, DateTime.Now, DateTime.Now.Add(this.m_securityConfig.MaxLocalSession), sessionRefresh.ToByteArray(), claims.ToArray(), principal);
+                // Is the principal a remote principal (i.e. not issued by us?)
+                MemorySession memorySession = null;
+                if (principal is IOfflinePrincipal)
+                    memorySession = new MemorySession(sessionKey, DateTime.Now, DateTime.Now.Add(this.m_securityConfig.MaxLocalSession), sessionRefresh.ToByteArray(), claims.ToArray(), principal);
+                else
+                {
+                    DateTime notAfter = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.Expiration).AsDateTime(),
+                        notBefore = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AuthenticationInstant).AsDateTime();
+                    memorySession = new MemorySession(sessionKey, notBefore, notAfter, sessionRefresh.ToByteArray(), claims.ToArray(), principal);
+                }
+
                 this.m_session.Add(this.GetSessionKey(sessionKey.ToByteArray()), memorySession);
                 this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, memorySession, true, isOverride, purpose, policyDemands));
                 return memorySession;
@@ -180,14 +191,14 @@ namespace SanteDB.DisconnectedClient.Core.Security.Session
 
             // Refresh the principal
             var principal = ApplicationServiceContext.Current.GetService<IIdentityProviderService>().ReAuthenticate(session.Principal);
+            
+            // First, we want to abandon the session
+            this.Abandon(session);
             session = this.Establish(principal,
                 null,
                 false,
                 null,
                 null) as MemorySession;
-
-            // First, we want to abandon the session
-            this.Abandon(session);
 
             return session;
         }

@@ -30,6 +30,7 @@ using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient.Core.Configuration;
 using SanteDB.DisconnectedClient.Core.Security;
 using SanteDB.DisconnectedClient.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Core.Security.Session;
@@ -45,6 +46,7 @@ using System.Security;
 using System.Security.Principal;
 using System.Text;
 using System.Threading;
+using SanteDB.Core.Model;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -71,7 +73,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Abandons the session
         /// </summary>
-        public void AbandonSession()    
+        public void AbandonSession()
         {
             // Get the session
             if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
@@ -89,13 +91,18 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 var identityService = ApplicationContext.Current.GetService<IIdentityProviderService>();
                 var remoteEpResolve = ApplicationContext.Current.GetService<IRemoteEndpointResolver>();
 
-                var headerClaims = Encoding.UTF8.GetString(Convert.FromBase64String(RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpClaims])).Split(';').ToDictionary(o => o.Split('=')[0], o => o.Split('=')[1]);
+                var claimsHeader = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpClaims];
+                IDictionary<String, String> headerClaims = null;
+                if(!String.IsNullOrEmpty(claimsHeader))
+                    headerClaims = Encoding.UTF8.GetString(Convert.FromBase64String(claimsHeader)).Split(';').ToDictionary(o => o.Split('=')[0], o => o.Split('=')[1]);
+
                 ISession session = null;
 
                 var scopes = request["scope"] == "*" ? null : request["scope"].Split(' ');
-                var isOverride = scopes?.Any(o => o == PermissionPolicyIdentifiers.OverridePolicyPermission) == true || headerClaims.TryGetValue(SanteDBClaimTypes.SanteDBOverrideClaim, out string overrideFlag) && overrideFlag == "true";
-                var purposeOfUse = headerClaims.FirstOrDefault(o => o.Key == SanteDBClaimTypes.PurposeOfUse).Value;
+                var isOverride = scopes?.Any(o => o == PermissionPolicyIdentifiers.OverridePolicyPermission) == true || headerClaims != null && headerClaims.TryGetValue(SanteDBClaimTypes.SanteDBOverrideClaim, out string overrideFlag) && overrideFlag == "true";
+                var purposeOfUse = headerClaims?.FirstOrDefault(o => o.Key == SanteDBClaimTypes.PurposeOfUse).Value;
                 var tfa = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpTfaSecret];
+                var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
 
                 // TODO: Authenticate the client and device
 
@@ -130,10 +137,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         break;
                     case "refresh_token":
                         {
-                            var refreshToken = Enumerable.Range(0, request["refresh_token"].Length)
-                                           .Where(x => x % 2 == 0)
-                                           .Select(x => Convert.ToByte(request["refresh_token"].Substring(x, 2), 16))
-                                           .ToArray();
+                            byte[] refreshTokenData = request["refresh_token"].ParseHexString(),
+                                refreshToken = refreshTokenData.Take(16).ToArray(),
+                                signature = refreshTokenData.Skip(16).ToArray();
+                            if (!signatureService.Verify(refreshToken, signature))
+                                throw new SecurityException("Refresh token signature mismatch");
 
                             // Get the local session               
                             session = sessionService.Extend(refreshToken);
@@ -156,15 +164,17 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 if (lanugageCode != null)
                     Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
 
+
                 return new OAuthTokenResponse()
                 {
-                    AccessToken = BitConverter.ToString(session.Id).Replace("-", ""),
-                    RefreshToken = BitConverter.ToString(session.RefreshToken).Replace("-", ""),
+                    // TODO: Sign the access token
+                    AccessToken = $"{session.Id.ToHexString()}{signatureService.SignData(session.Id).ToHexString()}",
+                    RefreshToken = $"{session.RefreshToken.ToHexString()}{signatureService.SignData(session.RefreshToken).ToHexString()}",
                     ExpiresIn = (int)DateTime.Now.Subtract(session.NotAfter.DateTime).TotalSeconds,
                     TokenType = "bearer",
-                    IdToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(session.Claims.GroupBy(o=>o.Type).ToDictionary(o => o.Key, o => o.Count() == 1 ? (object)o.First().Value : o.Select(v=>v.Value).ToArray()))))
+                    IdToken = this.HydrateToken(session)
                 };
-                
+
             }
             catch (Exception e)
             {
@@ -177,7 +187,50 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-       
+        /// <summary>
+        /// Hydrates an identity token
+        /// </summary>
+        private string HydrateToken(ISession session)
+        {
+            IDictionary<String, Object> idTokenClaims = new Dictionary<String, Object>();
+            Dictionary<String, String> claimMap = new Dictionary<string, string>() {
+                { SanteDBClaimTypes.DefaultNameClaimType , "unique_name" },
+                { SanteDBClaimTypes.DefaultRoleClaimType, "role"  },
+                { SanteDBClaimTypes.Sid, "sub" },
+                { SanteDBClaimTypes.AuthenticationMethod , "authmethod" },
+                { SanteDBClaimTypes.Expiration, "exp" },
+                { SanteDBClaimTypes.AuthenticationInstant , "nbf" },
+                { SanteDBClaimTypes.Email , "email" },
+                { SanteDBClaimTypes.Telephone , "tel" }
+            };
+
+            foreach (var clm in session.Claims.GroupBy(o => o.Type))
+            {
+                if (!claimMap.TryGetValue(clm.Key, out string jwtOption))
+                    jwtOption = clm.Key;
+                idTokenClaims.Add(jwtOption, clm.Count() == 1 ? (object)clm.First().Value : clm.Select(o => o.Value).ToArray());
+            }
+
+            var payload = UrlEncodeUtil(Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(idTokenClaims))));
+            var header = UrlEncodeUtil(Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new
+            {
+                typ = "JWT",
+                alg = "HS256"
+            }))));
+
+            var signingService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
+            var hash = UrlEncodeUtil(Convert.ToBase64String(signingService.SignData(Encoding.UTF8.GetBytes($"{header}.{payload}"), ApplicationContext.Current.Application.ApplicationSecret)));
+            return $"{header}.{payload}.{hash}";
+
+        }
+
+        /// <summary>
+        /// Utility for JWT signature
+        /// </summary>
+        private string UrlEncodeUtil(string source) => source.Replace('+', '-')
+                  .Replace('/', '_')
+                  .Replace("=", "");
+
         /// <summary>
         /// Get the specified session information
         /// </summary>

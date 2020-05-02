@@ -390,6 +390,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         /// </summary>
         [XmlIgnore, JsonProperty("hasher")]
         public string Hasher { get; set; }
+
     }
 
 }
