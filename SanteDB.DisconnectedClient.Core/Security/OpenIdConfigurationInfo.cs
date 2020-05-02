@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Xamarin.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Serialized open id configuration

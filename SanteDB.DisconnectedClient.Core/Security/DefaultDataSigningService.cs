@@ -1,12 +1,11 @@
 ﻿using SanteDB.Core.Security;
-using SanteDB.DisconnectedClient.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Xamarin.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents a default data signature service
@@ -18,6 +17,14 @@ namespace SanteDB.DisconnectedClient.Xamarin.Security
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Default Data Signature Service";
+
+        /// <summary>
+        /// Gets the signature algorithm
+        /// </summary>
+        public string GetSignatureAlgorithm(string keyId = null)
+        {
+            return "HS256";
+        }
 
         /// <summary>
         /// Sign the specified data 
