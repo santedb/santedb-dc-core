@@ -26,7 +26,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
-        <PackageLicenseExpression>apache2</PackageLicenseExpression>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 	    <Product>SanteDB</Product>
     <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
@@ -94,9 +94,9 @@
   <!-- </ItemGroup> -->
   <!-- <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" /> -->
   <ItemGroup>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Ags\SanteDB.DisconnectedClient.Ags.csproj"/>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj"/>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj"/>
+    <ProjectReference Include="..\SanteDB.DisconnectedClient.Ags\SanteDB.DisconnectedClient.Ags.csproj" />
+    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj" />
+    <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
@@ -109,11 +109,11 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj"/>
-        <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj"/>
-        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj"/>
-        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj"/>
-        <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj"/>
+        <ProjectReference Include="..\..\santedb-bis\SanteDB.BI\SanteDB.BI.csproj" />
+        <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj" />
+        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
+        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
+        <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
       </ItemGroup>
     </When>
     <Otherwise>

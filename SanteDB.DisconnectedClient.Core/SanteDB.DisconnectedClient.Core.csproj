@@ -28,7 +28,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
-        <PackageLicenseExpression>apache2</PackageLicenseExpression>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 	    <Product>SanteDB</Product>
     <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
@@ -55,11 +55,9 @@
   <ItemGroup>
     <None Remove="Resources\antihaxor" />
     <None Remove="Resources\ViewModel.xml" />
-    <None Remove="Schema\AppletAssets.txt" />
   </ItemGroup>
     
   <ItemGroup>
-    <Content Include="Schema\AppletAssets.txt" />
     <Content Include="Services\ServiceHandlers\AdhocWarehouseService.cs" />
     <Content Include="Services\ServiceHandlers\AmiService.cs" />
     <Content Include="Services\ServiceHandlers\ApplicationService.cs" />
