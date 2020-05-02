@@ -20,7 +20,7 @@
 using SanteDB.Core.Http;
 using System.Collections.Generic;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Null credentials

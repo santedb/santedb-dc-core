@@ -18,11 +18,11 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core.Security.Services;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents an authentication service which can authenticate a user using a PIN which is a local secret for this device only

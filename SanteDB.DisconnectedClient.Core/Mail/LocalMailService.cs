@@ -22,12 +22,12 @@ using SanteDB.Core.Mail;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace SanteDB.DisconnectedClient.Core.Mail
+namespace SanteDB.DisconnectedClient.Mail
 {
     /// <summary>
     /// Represents a local alerting service

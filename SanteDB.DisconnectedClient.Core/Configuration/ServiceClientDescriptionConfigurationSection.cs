@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration
+namespace SanteDB.DisconnectedClient.Configuration
 {
 
     /// <summary>
@@ -36,7 +36,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     public class ServiceClientConfigurationSection : IConfigurationSection
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.ServiceClientConfigurationSection"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClientConfigurationSection"/> class.
         /// </summary>
         public ServiceClientConfigurationSection()
         {
@@ -105,7 +105,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Configuration.ServiceClient"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClient"/> class.
         /// </summary>
         public ServiceClientDescription()
         {
@@ -236,7 +236,7 @@ namespace SanteDB.DisconnectedClient.Core.Configuration
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this <see cref="SanteDB.DisconnectedClient.Core.Configuration.ServiceClientBinding"/>
+        /// Gets or sets a value indicating whether this <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClientBinding"/>
         /// is optimized
         /// </summary>
         /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>

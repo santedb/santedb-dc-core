@@ -31,8 +31,8 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Collections.Generic;
@@ -41,7 +41,7 @@ using System.Linq.Expressions;
 using System.Security.Principal;
 using SanteDB.Core.Model.DataTypes;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// Represents a remote security repository

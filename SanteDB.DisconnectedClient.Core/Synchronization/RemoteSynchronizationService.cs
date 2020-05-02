@@ -26,8 +26,8 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections.Generic;
@@ -36,7 +36,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.Synchronization
 {
     /// <summary>
     /// Represents a synchronization service which can query the HDSI and place 

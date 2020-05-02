@@ -19,7 +19,7 @@
  */
 using SanteDB.Core.Services;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
     /// <summary>
     /// Represents a crypto service provider that encrypts things using symmetric encryption

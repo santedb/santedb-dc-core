@@ -1,4 +1,5 @@
-﻿using SQLite.Net;
+﻿using SanteDB.DisconnectedClient.SQLite.Connection;
+using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;

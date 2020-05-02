@@ -33,26 +33,26 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Interop.AMI;
-using SanteDB.DisconnectedClient.Core.Interop.HDSI;
-using SanteDB.DisconnectedClient.Core.Mail;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Interop.AMI;
+using SanteDB.DisconnectedClient.Interop.HDSI;
+using SanteDB.DisconnectedClient.Mail;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Services.Local;
-using SanteDB.DisconnectedClient.Core.Services.Remote;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.DisconnectedClient.Core.Tickler;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Services.Local;
+using SanteDB.DisconnectedClient.Services.Remote;
+using SanteDB.DisconnectedClient.Synchronization;
+using SanteDB.DisconnectedClient.Tickler;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Xamarin;
-using SanteDB.DisconnectedClient.Xamarin.Data;
-using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
-using SanteDB.DisconnectedClient.Xamarin.Http;
-using SanteDB.DisconnectedClient.Xamarin.Security;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Data;
+using SanteDB.DisconnectedClient.Diagnostics;
+using SanteDB.DisconnectedClient.Http;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Rest.Common.Attributes;
 using System;
@@ -68,7 +68,7 @@ using SanteDB.Core.Data;
 using SanteDB.Core;
 using SanteDB.BI.Services.Impl;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
+using SanteDB.DisconnectedClient.Security.Audit;
 using SanteDB.Core.Auditing;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.Core.Jobs;
@@ -90,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public ConfigurationViewModel GetConfiguration()
         {
-            return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
+            return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         [Demand(PermissionPolicyIdentifiers.Login)]
         public ConfigurationViewModel GetUserConfiguration()
         {
-            return new ConfigurationViewModel(XamarinApplicationContext.Current.GetUserConfiguration(AuthenticationContext.Current.Principal.Identity.Name));
+            return new ConfigurationViewModel(ApplicationContext.Current.GetUserConfiguration(AuthenticationContext.Current.Principal.Identity.Name));
         }
 
         /// <summary>
@@ -145,14 +145,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 // We're allowed to access server admin!!!! Yay!!!
                 // We're goin to conigure the realm settings now (all of them)
-                var serviceClientSection = XamarinApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
+                var serviceClientSection = ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
                 if (serviceClientSection == null)
                 {
                     serviceClientSection = new ServiceClientConfigurationSection()
                     {
                         RestClientType = typeof(RestClient)
                     };
-                    XamarinApplicationContext.Current.Configuration.AddSection(serviceClientSection);
+                    ApplicationContext.Current.Configuration.AddSection(serviceClientSection);
                 }
 
                 // TODO: Actually contact the AMI for this information
@@ -348,21 +348,21 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     this.m_tracer.TraceError("Error registering device account: {0}", e);
                     throw;
                 }
-                return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
+                return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
             }
             catch (PolicyViolationException ex)
             {
 
                 this.m_tracer.TraceWarning("Policy violation exception on {0}. Will attempt again", ex.Demanded, ex.ToString());
                 // Only configure the minimum to contact the realm for authentication to continue
-                var serviceClientSection = XamarinApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
+                var serviceClientSection = ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
                 if (serviceClientSection == null)
                 {
                     serviceClientSection = new ServiceClientConfigurationSection()
                     {
                         RestClientType = typeof(RestClient)
                     };
-                    XamarinApplicationContext.Current.Configuration.AddSection(serviceClientSection);
+                    ApplicationContext.Current.Configuration.AddSection(serviceClientSection);
                 }
 
                 // TODO: Actually contact the AMI for this information
@@ -507,7 +507,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         [Demand(PermissionPolicyIdentifiers.Login)]
         public void SaveUserConfiguration(ConfigurationViewModel model)
         {
-            XamarinApplicationContext.Current.SaveUserConfiguration(AuthenticationContext.Current.Principal.Identity.Name,
+            ApplicationContext.Current.SaveUserConfiguration(AuthenticationContext.Current.Principal.Identity.Name,
                 new SanteDBConfiguration()
                 {
                     Sections = new List<object>()
@@ -526,7 +526,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public ConfigurationViewModel UpdateConfiguration(ConfigurationViewModel configuration)
         {
             // We will be rewriting the configuration
-            if (!(ApplicationContext.Current as XamarinApplicationContext).ConfigurationPersister.IsConfigured)
+            if (!(ApplicationContext.Current as ApplicationContext).ConfigurationPersister.IsConfigured)
                 ApplicationContext.Current.Configuration.RemoveSection<SynchronizationConfigurationSection>();
 
             // Did the user add any other service definitions?
@@ -592,7 +592,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_tracer.TraceInfo("Configuration of data service provider....");
 
                         var storageProvider = StorageProviderUtil.GetProvider(configuration.Data.Provider);
-                        configuration.Data.Options.Add("DataDirectory", XamarinApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
+                        configuration.Data.Options.Add("DataDirectory", ApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory);
                         storageProvider.Configure(ApplicationContext.Current.Configuration, configuration.Data.Options);
 
                         // Remove all data persistence services
@@ -839,7 +839,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
             ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
-            return new ConfigurationViewModel(XamarinApplicationContext.Current.Configuration);
+            return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
         }
     }
 }

@@ -26,7 +26,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents an offline policy information service

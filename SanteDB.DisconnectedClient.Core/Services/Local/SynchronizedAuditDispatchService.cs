@@ -30,15 +30,15 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace SanteDB.DisconnectedClient.Core.Security.Audit
+namespace SanteDB.DisconnectedClient.Security.Audit
 {
     /// <summary>
     /// Local auditing service

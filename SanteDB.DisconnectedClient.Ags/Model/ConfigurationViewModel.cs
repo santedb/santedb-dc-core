@@ -21,10 +21,10 @@ using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Xamarin;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +56,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Return true if configured
         /// </summary>
         [JsonProperty("isConfigured")]
-        public bool IsConfigured { get => XamarinApplicationContext.Current.ConfigurationPersister.IsConfigured; }
+        public bool IsConfigured { get => ApplicationContext.Current.ConfigurationPersister.IsConfigured; }
 
         /// <summary>
         /// Configuation

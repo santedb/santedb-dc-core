@@ -20,9 +20,9 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Search;
 using SanteDB.DisconnectedClient.SQLite.Search.Model;

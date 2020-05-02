@@ -23,7 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration
+namespace SanteDB.DisconnectedClient.Configuration
 {
 
     /// <summary>

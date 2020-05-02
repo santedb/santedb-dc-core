@@ -23,7 +23,7 @@ using SanteDB.BI.Services;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
-using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +36,7 @@ using SanteDB.Core.Model.Query;
 using System.Net;
 using System.IO;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// A BI metadata repository which works remotely

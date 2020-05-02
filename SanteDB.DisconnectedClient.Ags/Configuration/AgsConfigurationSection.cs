@@ -19,7 +19,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Configuration;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 

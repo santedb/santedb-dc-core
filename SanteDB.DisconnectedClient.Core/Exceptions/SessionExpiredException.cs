@@ -20,7 +20,7 @@
 using SanteDB.DisconnectedClient.i18n;
 using System.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Exceptions
+namespace SanteDB.DisconnectedClient.Exceptions
 {
     /// <summary>
     /// Session expired exception

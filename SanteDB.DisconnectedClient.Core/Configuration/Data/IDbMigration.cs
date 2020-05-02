@@ -19,7 +19,7 @@
  */
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration.Data
+namespace SanteDB.DisconnectedClient.Configuration.Data
 {
     /// <summary>
     /// Identifies a database migration script in code

@@ -19,14 +19,14 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration
+namespace SanteDB.DisconnectedClient.Configuration
 {
 
     /// <summary>

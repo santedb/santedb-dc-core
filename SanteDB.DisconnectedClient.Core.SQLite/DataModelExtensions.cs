@@ -25,7 +25,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient;
 using System;
 using System.Collections;
 using System.Collections.Generic;

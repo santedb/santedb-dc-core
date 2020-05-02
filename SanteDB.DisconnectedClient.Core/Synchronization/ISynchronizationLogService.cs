@@ -20,7 +20,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SanteDB.DisconnectedClient.Core.Synchronization
+namespace SanteDB.DisconnectedClient.Synchronization
 {
     /// <summary>
     /// Represents a synchronization log service

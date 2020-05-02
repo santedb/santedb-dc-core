@@ -21,7 +21,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
     /// <summary>
     /// Represents a service which can initiate a remote synchronization

@@ -1,18 +1,44 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<!-- <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"> -->
+  <!-- <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" /> -->
+  <!-- <PropertyGroup> -->
+    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration> -->
+    <!-- <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform> -->
+    <!-- <ProjectGuid>{EDCD4511-B016-48EE-BD73-491A6B6687E6}</ProjectGuid> -->
+    <!-- <OutputType>Library</OutputType> -->
+    <!-- <AppDesignerFolder>Properties</AppDesignerFolder> -->
+    <!-- <RootNamespace>SanteDB.DisconnectedClient.Ags</RootNamespace> -->
+    <!-- <AssemblyName>SanteDB.DisconnectedClient.Ags</AssemblyName> -->
+    <!-- <TargetFrameworkVersion>v4.5</TargetFrameworkVersion> -->
+    <!-- <FileAlignment>512</FileAlignment> -->
+    <!-- <Deterministic>true</Deterministic> -->
+  <!-- </PropertyGroup> -->
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EDCD4511-B016-48EE-BD73-491A6B6687E6}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SanteDB.DisconnectedClient.Ags</RootNamespace>
-    <AssemblyName>SanteDB.DisconnectedClient.Ags</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
+    
+  <PropertyGroup>
+    <PackageId>SanteDB.DisconnectedClient.Ags</PackageId>
+    <Title>SanteDB.DisconnectedClient.Ags</Title>
+    <Version>2.0.0</Version>
+    <Description>SanteDB Disconnected Client Application Gateway Services</Description>
+    <Authors>SanteSuite Contributors</Authors>
+    <PackageTags>SanteDB</PackageTags>
+    <RepositoryUrl>https://github.com/santedb/santedb-dc-core</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
+        <PackageLicenseExpression>apache2</PackageLicenseExpression>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+	    <Product>SanteDB</Product>
+    <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
+    <Company>SanteSuite Contributors</Company>
+  </PropertyGroup>  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>           
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -31,52 +57,52 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AgsService.cs" />
-    <Compile Include="Behaviors\AgsMagicServiceBehavior.cs" />
-    <Compile Include="Behaviors\AgsPermissionPolicyBehavior.cs" />
-    <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" />
-    <Compile Include="Behaviors\AgsWebErrorHandlerServiceBehavior.cs" />
-    <Compile Include="Formatter\AgsMessageDispatchFormatter.cs" />
-    <Compile Include="Metadata\ApiEndpointProviderShim.cs" />
-    <Compile Include="Model\ConfigurationViewModel.cs" />
-    <Compile Include="Model\MenuInformation.cs" />
-    <Compile Include="Model\SessionInfo.cs" />
-    <Compile Include="Model\StorageProviderViewModel.cs" />
-    <Compile Include="Services\ApplicationServiceBehavior.Widgets.cs" />
-    <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" />
-    <Compile Include="Services\ApplicationServiceBehavior.Tickles.cs" />
-    <Compile Include="Services\WwwServiceBehavior.cs" />
-    <Compile Include="Configuration\AgsBehaviorConfiguration.cs" />
-    <Compile Include="Configuration\AgsConfigurationSection.cs" />
-    <Compile Include="Configuration\AgsEndpointConfiguration.cs" />
-    <Compile Include="Configuration\AgsServiceConfiguration.cs" />
-    <Compile Include="Contracts\IApplicationServiceContract.cs" />
-    <Compile Include="Contracts\IAuthenticationServiceContract.cs" />
-    <Compile Include="Contracts\IWwwServiceContract.cs" />
-    <Compile Include="HttpConfigurationKeys.cs" />
-    <Compile Include="Model\ApplicationInfo.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Behaviors\AgsAuthorizationServiceBehavior.cs" />
-    <Compile Include="Behaviors\AgsErrorHandlerServiceBehavior.cs" />
-    <Compile Include="Services\AmiServiceBehavior.cs" />
-    <Compile Include="Services\ApplicationServiceBehavior.cs" />
-    <Compile Include="Services\AuthenticationServiceBehavior.cs" />
-    <Compile Include="Services\HdsiServiceBehavior.cs" />
-    <Compile Include="Services\RisiServiceBehavior.cs" />
-    <Compile Include="Util\ExtensionMethods.cs" />
-    <Compile Include="Util\WebErrorUtility.cs" />
-  </ItemGroup>
+  <!-- <ItemGroup> -->
+    <!-- <Reference Include="System" /> -->
+    <!-- <Reference Include="System.Core" /> -->
+    <!-- <Reference Include="System.Xml.Linq" /> -->
+    <!-- <Reference Include="System.Data.DataSetExtensions" /> -->
+    <!-- <Reference Include="Microsoft.CSharp" /> -->
+    <!-- <Reference Include="System.Data" /> -->
+    <!-- <Reference Include="System.Net.Http" /> -->
+    <!-- <Reference Include="System.Xml" /> -->
+  <!-- </ItemGroup> -->
+  <!-- <ItemGroup> -->
+    <!-- <Compile Include="AgsService.cs" /> -->
+    <!-- <Compile Include="Behaviors\AgsMagicServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Behaviors\AgsPermissionPolicyBehavior.cs" /> -->
+    <!-- <Compile Include="Behaviors\AgsSerializationEndpointBehavior.cs" /> -->
+    <!-- <Compile Include="Behaviors\AgsWebErrorHandlerServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Formatter\AgsMessageDispatchFormatter.cs" /> -->
+    <!-- <Compile Include="Metadata\ApiEndpointProviderShim.cs" /> -->
+    <!-- <Compile Include="Model\ConfigurationViewModel.cs" /> -->
+    <!-- <Compile Include="Model\MenuInformation.cs" /> -->
+    <!-- <Compile Include="Model\SessionInfo.cs" /> -->
+    <!-- <Compile Include="Model\StorageProviderViewModel.cs" /> -->
+    <!-- <Compile Include="Services\ApplicationServiceBehavior.Widgets.cs" /> -->
+    <!-- <Compile Include="Services\ApplicationServiceBehavior.Configuration.cs" /> -->
+    <!-- <Compile Include="Services\ApplicationServiceBehavior.Tickles.cs" /> -->
+    <!-- <Compile Include="Services\WwwServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Configuration\AgsBehaviorConfiguration.cs" /> -->
+    <!-- <Compile Include="Configuration\AgsConfigurationSection.cs" /> -->
+    <!-- <Compile Include="Configuration\AgsEndpointConfiguration.cs" /> -->
+    <!-- <Compile Include="Configuration\AgsServiceConfiguration.cs" /> -->
+    <!-- <Compile Include="Contracts\IApplicationServiceContract.cs" /> -->
+    <!-- <Compile Include="Contracts\IAuthenticationServiceContract.cs" /> -->
+    <!-- <Compile Include="Contracts\IWwwServiceContract.cs" /> -->
+    <!-- <Compile Include="HttpConfigurationKeys.cs" /> -->
+    <!-- <Compile Include="Model\ApplicationInfo.cs" /> -->
+    <!-- <Compile Include="Properties\AssemblyInfo.cs" /> -->
+    <!-- <Compile Include="Behaviors\AgsAuthorizationServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Behaviors\AgsErrorHandlerServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Services\AmiServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Services\ApplicationServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Services\AuthenticationServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Services\HdsiServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Services\RisiServiceBehavior.cs" /> -->
+    <!-- <Compile Include="Util\ExtensionMethods.cs" /> -->
+    <!-- <Compile Include="Util\WebErrorUtility.cs" /> -->
+  <!-- </ItemGroup> -->
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">
       <Version>11.0.2</Version>
@@ -88,10 +114,6 @@
     <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
       <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
       <Name>SanteDB.DisconnectedClient.i18n</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Xamarin\SanteDB.DisconnectedClient.Xamarin.csproj">
-      <Project>{9a06acc9-4d6f-4eab-8a8a-9652bc6a70ae}</Project>
-      <Name>SanteDB.DisconnectedClient.Xamarin</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>
@@ -150,40 +172,40 @@
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="RestSrvr">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Cdss.Xml">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Api">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Applets">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model.RISI">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Core.Model.AMI">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Rest.AMI">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Rest.Common">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Rest.HDSI">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.BI">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
         <PackageReference Include="SanteDB.Rest.BIS">
-          <Version>1.129.0.0</Version>
+          <Version>2.0.0.0</Version>
         </PackageReference>
       </ItemGroup>
     </Otherwise>
@@ -198,8 +220,10 @@
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>
-    <None Include="SanteDB.DisconnectedClient.Ags.nuspec" />
-    <Compile Include="Services\ApplicationServiceBehavior.Queue.cs" />
+    <!-- <Compile Include="Services\ApplicationServiceBehavior.Queue.cs" /> -->
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <!-- <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /> -->
 </Project>

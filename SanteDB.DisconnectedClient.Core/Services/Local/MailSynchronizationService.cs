@@ -28,10 +28,10 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Interop;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Represents an alert synchronization service

@@ -33,9 +33,9 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Linq;
@@ -44,7 +44,7 @@ using System.Net;
 using System.Reflection;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Interop.HDSI
+namespace SanteDB.DisconnectedClient.Interop.HDSI
 {
     /// <summary>
     /// Represents an HDSI integration service which sends and retrieves data from the IMS.

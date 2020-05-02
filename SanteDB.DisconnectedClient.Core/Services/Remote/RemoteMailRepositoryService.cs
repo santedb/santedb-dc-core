@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// Represents a mail repository that connects to the AMI

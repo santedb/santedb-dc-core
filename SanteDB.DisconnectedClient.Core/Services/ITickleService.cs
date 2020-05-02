@@ -18,12 +18,12 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Tickler;
+using SanteDB.DisconnectedClient.Tickler;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
 
     /// <summary>

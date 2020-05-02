@@ -20,7 +20,7 @@
 using SanteDB.Core.Security;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents a simple policy implemtnation

@@ -29,15 +29,15 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Represents a security repository service that uses the direct local services

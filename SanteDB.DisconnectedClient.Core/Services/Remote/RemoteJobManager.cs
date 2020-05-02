@@ -23,8 +23,8 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.AMI;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Jobs;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Interop;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +32,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// A job management service which is just chained to the central server

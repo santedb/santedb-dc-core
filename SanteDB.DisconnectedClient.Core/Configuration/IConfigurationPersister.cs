@@ -19,7 +19,7 @@
  */
 using SanteDB.Core.Configuration;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration
+namespace SanteDB.DisconnectedClient.Configuration
 {
     /// <summary>
     /// Configuration manager for the application

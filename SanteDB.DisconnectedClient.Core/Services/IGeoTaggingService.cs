@@ -20,7 +20,7 @@
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Services;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
 
     /// <summary>

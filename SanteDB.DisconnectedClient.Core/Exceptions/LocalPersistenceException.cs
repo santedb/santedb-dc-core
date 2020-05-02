@@ -17,10 +17,10 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Synchronization;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Exceptions
+namespace SanteDB.DisconnectedClient.Exceptions
 {
     /// <summary>
     /// Local persistence exception.
@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.Core.Exceptions
         private Object m_data;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.LocalPersistenceException"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.LocalPersistenceException"/> class.
         /// </summary>
         /// <param name="operation">Operation.</param>
         /// <param name="data">Data.</param>
@@ -42,7 +42,7 @@ namespace SanteDB.DisconnectedClient.Core.Exceptions
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.LocalPersistenceException"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.LocalPersistenceException"/> class.
         /// </summary>
         /// <param name="operation">Operation.</param>
         /// <param name="data">Data.</param>

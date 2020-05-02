@@ -23,7 +23,7 @@ using System;
 using System.Linq;
 using System.Net;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
     /// <summary>
     /// Query options to control data coming back from the server

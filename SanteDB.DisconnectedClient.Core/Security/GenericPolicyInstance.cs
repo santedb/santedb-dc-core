@@ -20,7 +20,7 @@
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents a policy instance 

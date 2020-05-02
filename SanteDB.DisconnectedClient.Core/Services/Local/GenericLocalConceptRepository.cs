@@ -20,7 +20,7 @@
 using SanteDB.Core.Model;
 using SanteDB.Core.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Generic local concept repository with sufficient permissions

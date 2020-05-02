@@ -23,7 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Memory query persistence service

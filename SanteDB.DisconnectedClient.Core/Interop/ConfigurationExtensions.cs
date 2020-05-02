@@ -20,10 +20,10 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Http;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient.Configuration;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Interop
+namespace SanteDB.DisconnectedClient.Interop
 {
     /// <summary>
     /// Configuration sections

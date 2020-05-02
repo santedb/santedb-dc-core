@@ -18,8 +18,8 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;

@@ -27,10 +27,10 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     public class SQLiteDeviceIdentity : SanteDBClaimsIdentity, IDeviceIdentity
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLiteIdentity"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Security.SQLiteIdentity"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="authenticated">If set to <c>true</c> authenticated.</param>

@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Represents a service which is responsible for the

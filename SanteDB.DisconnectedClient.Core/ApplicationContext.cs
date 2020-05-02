@@ -27,16 +27,18 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-//using SanteDB.DisconnectedClient.Core.Data;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+//using SanteDB.DisconnectedClient.Data;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core
+namespace SanteDB.DisconnectedClient
 {
 
     /// <summary>
@@ -63,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Core
     {
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(ApplicationContext));
+        protected Tracer m_tracer = Tracer.GetTracer(typeof(ApplicationContext));
 
         // Execution uuid
         private static Guid s_executionUuid = Guid.NewGuid();
@@ -120,7 +122,7 @@ namespace SanteDB.DisconnectedClient.Core
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.ApplicationContext"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.ApplicationContext"/> class.
         /// </summary>
         public ApplicationContext(IConfigurationPersister configPersister)
         {
@@ -135,7 +137,7 @@ namespace SanteDB.DisconnectedClient.Core
         /// Gets the start time of the service
         /// </summary>
         /// <value>The start time.</value>
-        public DateTime StartTime { get; private set;  }
+        public DateTime StartTime { get; private set; }
 
         /// <summary>
         /// Gets the service.
@@ -231,23 +233,77 @@ namespace SanteDB.DisconnectedClient.Core
         /// <summary>
         /// Gets user preference application
         /// </summary>
-        public abstract SanteDBConfiguration GetUserConfiguration(String userId);
+        /// TODO: Move this to a service
+        public SanteDBConfiguration GetUserConfiguration(String userId)
+        {
+            try
+            {
+                var userPrefDir = this.Configuration.GetSection<ApplicationConfigurationSection>().UserPrefDir;
+                if (!Directory.Exists(userPrefDir))
+                    Directory.CreateDirectory(userPrefDir);
+
+                // Now we want to load
+                String configFile = Path.ChangeExtension(Path.Combine(userPrefDir, userId), "userpref");
+                if (!File.Exists(configFile))
+                    return new SanteDBConfiguration()
+                    {
+                        Sections = new System.Collections.Generic.List<object>()
+                        {
+                            new AppletConfigurationSection(),
+                            new ApplicationConfigurationSection()
+                        }
+                    };
+                else
+                    using (var fs = File.OpenRead(configFile))
+                        return SanteDBConfiguration.Load(fs);
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("Error getting user configuration data {0}: {1}", userId, ex);
+                throw;
+            }
+        }
 
         /// <summary>
         /// Save user configuration
         /// </summary>
-        public abstract void SaveUserConfiguration(String userId, SanteDBConfiguration config);
+        /// TODO: Move this to a service
+        public void SaveUserConfiguration(String userId, SanteDBConfiguration config)
+        {
+            if (userId == null) throw new ArgumentNullException(nameof(userId));
+            else if (config == null) throw new ArgumentNullException(nameof(config));
+
+            // Try-catch for save
+            try
+            {
+                var userPrefDir = this.Configuration.GetSection<ApplicationConfigurationSection>().UserPrefDir;
+                if (!Directory.Exists(userPrefDir))
+                    Directory.CreateDirectory(userPrefDir);
+
+                // Now we want to load
+                String configFile = Path.ChangeExtension(Path.Combine(userPrefDir, userId), "userpref");
+                using (var fs = File.Create(configFile))
+                    config.Save(fs);
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("Error saving user configuration data {0}: {1}", userId, ex);
+                throw;
+            }
+        }
 
         /// <summary>
         /// Gets the policy decision service.
         /// </summary>
         /// <value>The policy decision service.</value>
         public IPolicyDecisionService PolicyDecisionService { get { return this.GetService(typeof(IPolicyDecisionService)) as IPolicyDecisionService; } }
+
         /// <summary>
         /// Gets the identity provider service.
         /// </summary>
         /// <value>The identity provider service.</value>
         public IIdentityProviderService IdentityProviderService { get { return this.GetService(typeof(IIdentityProviderService)) as IIdentityProviderService; } }
+
         /// <summary>
         /// Gets the role provider service.
         /// </summary>
@@ -270,7 +326,18 @@ namespace SanteDB.DisconnectedClient.Core
         /// Gets the device information for the currently running device
         /// </summary>
         /// <value>The device.</value>
-        public abstract SecurityDevice Device { get; }
+        public virtual SecurityDevice Device 
+        {
+            get
+            {
+                // TODO: Load this from configuration
+                return new SanteDB.Core.Model.Security.SecurityDevice()
+                {
+                    Name = this.Configuration.GetSection<SecurityConfigurationSection>().DeviceName,
+                    DeviceSecret = this.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
+                };
+            }
+        }
         
         /// <summary>
         /// Gets the host type
@@ -294,19 +361,67 @@ namespace SanteDB.DisconnectedClient.Core
         /// </summary>
         public bool IsRunning => this.m_running;
 
-        public string ServiceName => throw new NotImplementedException();
+        /// <summary>
+        /// Get the service name
+        /// </summary>
+        public string ServiceName => "SanteDB Disconnected Core Context";
 
         /// <summary>
         /// Start the daemon services
         /// </summary>
         protected virtual void Start()
         {
-            AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
             // Already running
             if (this.m_running)
                 return;
+
             this.m_tracer.TraceInfo("STAGE1: Base startup initiated...");
 
+            // ADd metadata provider
+            this.AddServiceProvider(new AuditMetadataProvider());
+
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
+            {
+                var asmLoc = Path.Combine(Path.GetDirectoryName(typeof(ApplicationContext).Assembly.Location), r.Name.Substring(0, r.Name.IndexOf(",")) + ".dll");
+                var retVal = Assembly.ReflectionOnlyLoad(r.Name);
+                if (retVal != null)
+                    return retVal;
+                else if (File.Exists(asmLoc))
+                    return Assembly.ReflectionOnlyLoadFrom(asmLoc);
+                else
+                    return null;
+            };
+
+            // Force load the data providers from the directory
+            try
+            {
+                var asmLoc = Assembly.GetEntryAssembly().Location;
+                if (!String.IsNullOrEmpty(asmLoc))
+                {
+                    foreach (var f in Directory.GetFiles(Path.GetDirectoryName(asmLoc), "*.dll"))
+                    {
+                        try
+                        {
+                            var asmL = Assembly.ReflectionOnlyLoadFrom(f);
+                            if (asmL.GetExportedTypes().Any(o => o.GetInterfaces().Any(i => i.FullName == typeof(IDataConfigurationProvider).FullName)))
+                            {
+                                this.m_tracer.TraceInfo("Loading {0}...", f);
+                                Assembly.LoadFile(f);
+                            }
+                        }
+                        catch (Exception e) { }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceWarning("Could not scan startup assembly location: {0}", e);
+            }
+
+            // Authenticate as system principal for startup 
+            AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
+
+            // Add this as a provider
             this.AddServiceProvider(this);
 
             this.m_tracer.TraceInfo("Loading application secret");
@@ -350,7 +465,7 @@ namespace SanteDB.DisconnectedClient.Core
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
 
         }
-
+        
         /// <summary>
         /// Force stop
         /// </summary>

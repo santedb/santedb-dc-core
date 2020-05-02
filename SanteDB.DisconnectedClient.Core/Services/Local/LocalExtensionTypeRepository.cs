@@ -22,7 +22,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Linq;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Local extension types

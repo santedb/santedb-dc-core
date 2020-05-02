@@ -28,7 +28,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Remote
+namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
     /// An assigning authority service for remotely fetching AA

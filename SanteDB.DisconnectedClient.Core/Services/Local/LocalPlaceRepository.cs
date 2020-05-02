@@ -20,7 +20,7 @@
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Place repository that uses local persistence

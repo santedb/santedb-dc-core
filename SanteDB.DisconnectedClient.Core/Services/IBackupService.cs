@@ -20,7 +20,7 @@
 using SanteDB.Core.Services;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Services
+namespace SanteDB.DisconnectedClient.Services
 {
     /// <summary>
     /// Gets or sets the backup media

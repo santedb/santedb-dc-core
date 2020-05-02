@@ -26,12 +26,12 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Linq;
 
-namespace SanteDB.DisconnectedClient.Core.Caching
+namespace SanteDB.DisconnectedClient.Caching
 {
     /// <summary>
     /// Memory cache service

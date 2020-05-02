@@ -26,12 +26,12 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
-using SanteDB.DisconnectedClient.Xamarin.Diagnostics;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Synchronization;
+using SanteDB.DisconnectedClient.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -59,7 +59,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// </summary>
         public ApplicationInfo(bool checkForUpdates) : base(ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes().FirstOrDefault(t => t.Name == "SplashActivity")?.Assembly ?? typeof(SanteDBConfiguration).Assembly)
         {
-            this.SanteDB = new DiagnosticVersionInfo(typeof(SanteDB.DisconnectedClient.Core.ApplicationContext).Assembly);
+            this.SanteDB = new DiagnosticVersionInfo(typeof(SanteDB.DisconnectedClient.ApplicationContext).Assembly);
 
             var appService = ApplicationContext.Current.GetService<IAppletManagerService>();
             try

@@ -17,13 +17,13 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace SanteDB.DisconnectedClient.Core.Tickler
+namespace SanteDB.DisconnectedClient.Tickler
 {
     /// <summary>
     /// Represents a tickle service that just uses memory

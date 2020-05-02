@@ -17,10 +17,10 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Configuration.Data;
 using System;
 
-namespace SanteDB.DisconnectedClient.Core.Exceptions
+namespace SanteDB.DisconnectedClient.Exceptions
 {
     /// <summary>
     /// Data migration exception
@@ -39,14 +39,14 @@ namespace SanteDB.DisconnectedClient.Core.Exceptions
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.DataMigrationException"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.DataMigrationException"/> class.
         /// </summary>
         public DataMigrationException(IDbMigration offender) : this(offender, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Exceptions.DataMigrationException"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.DataMigrationException"/> class.
         /// </summary>
         public DataMigrationException(IDbMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
         {

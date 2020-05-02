@@ -29,8 +29,8 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Synchronization;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -147,7 +147,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// <summary>
         /// Inbound queue object has been queued, ensure that the MDM references are corrected for proper operation of the mobile device queue
         /// </summary>
-        private void OnEnqueueInbound(object sender, SanteDB.Core.Event.DataPersistingEventArgs<Core.Synchronization.ISynchronizationQueueEntry> e)
+        private void OnEnqueueInbound(object sender, SanteDB.Core.Event.DataPersistingEventArgs<ISynchronizationQueueEntry> e)
         {
             if(this.CorrectMdmData(e.Data.Data))
             {

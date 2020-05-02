@@ -21,13 +21,13 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
-using SanteDB.DisconnectedClient.Core.Services;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
     /// Represents the policy decision service
@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.Core.Security
         private Dictionary<String, Dictionary<String, dynamic>> m_policyCache = new Dictionary<string, Dictionary<string, dynamic>>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.PolicyDecisionService"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Security.PolicyDecisionService"/> class.
         /// </summary>
         public DefaultPolicyDecisionService()
         {

@@ -20,7 +20,7 @@
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Services.Local
+namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Represents a local security role service

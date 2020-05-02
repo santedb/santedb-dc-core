@@ -31,7 +31,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
+using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SQLite.Net;
 using System;

@@ -22,14 +22,14 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core;
-using SanteDB.DisconnectedClient.Core.Configuration;
-using SanteDB.DisconnectedClient.Core.Exceptions;
-using SanteDB.DisconnectedClient.Core.Security;
-using SanteDB.DisconnectedClient.Core.Security.Audit;
+using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Security.Audit;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Core.Services;
-using SanteDB.DisconnectedClient.Core.Tickler;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Tickler;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
@@ -44,7 +44,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core;
 using SanteDB.Core.Security.Principal;
-using SanteDB.DisconnectedClient.Core.Configuration.Data;
+using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.Core.Api.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
@@ -513,7 +513,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
     public class SQLiteIdentity : SanteDBClaimsIdentity
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLiteIdentity"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Security.SQLiteIdentity"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="authenticated">If set to <c>true</c> authenticated.</param>
@@ -571,7 +571,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         private Guid m_token = Guid.NewGuid();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.SQLitePrincipal"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Security.SQLitePrincipal"/> class.
         /// </summary>
         public SQLitePrincipal(SanteDBClaimsIdentity identity, String[] roles) : base(identity)
         {
