@@ -223,7 +223,7 @@ namespace SanteDB.DisconnectedClient.UI
                         else
                             throw;
                     }
-                    retVal.AddServiceProvider(typeof(XamarinBackupService));
+                    retVal.AddServiceProvider(typeof(DefaultBackupService));
 
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();

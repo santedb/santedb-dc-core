@@ -138,7 +138,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(AuditDaemonService)),
                     new TypeReferenceConfiguration(typeof(SimpleQueueFileProvider)),
                     new TypeReferenceConfiguration(typeof(SimplePatchService)),
-                    new TypeReferenceConfiguration(typeof(XamarinBackupService)),
+                    new TypeReferenceConfiguration(typeof(DefaultBackupService)),
                     new TypeReferenceConfiguration(typeof(DcAppletManagerService)),
                     new TypeReferenceConfiguration(typeof(AppletBiRepository)),
                     new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),

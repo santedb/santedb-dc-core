@@ -34,6 +34,8 @@
     <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
     <Company>SanteSuite Contributors</Company>
     <RootNamespace>SanteDB.DisconnectedClient</RootNamespace>
+    <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
+    <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
   </PropertyGroup>
     
   <ItemGroup>
