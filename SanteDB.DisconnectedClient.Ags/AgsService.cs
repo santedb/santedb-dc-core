@@ -87,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Ags
         /// Fired when the handler has stopped
         /// </summary>
         public event EventHandler Stopped;
-      
+
 
         /// <summary>
         /// Gets the default AGS configuration
@@ -236,7 +236,7 @@ namespace SanteDB.DisconnectedClient.Ags
         public bool Start()
         {
 
-            RemoteEndpointUtil.Current.AddEndpointProvider(() => this.GetRemoteEndpointInfo());
+            RemoteEndpointUtil.Current.AddEndpointProvider(this.GetRemoteEndpointInfo);
             this.Starting?.Invoke(this, EventArgs.Empty);
 
             // Start up each of the services
@@ -385,6 +385,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
         }
 
+
         /// <summary>
         /// Retrieve the remote endpoint information
         /// </summary>
@@ -398,10 +399,10 @@ namespace SanteDB.DisconnectedClient.Ags
                 return new RemoteEndpointInfo()
                 {
                     OriginalRequestUrl = RestOperationContext.Current?.IncomingRequest.Url.ToString(),
-                    RemoteAddress = fwdHeader ?? RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString()
+                    RemoteAddress = fwdHeader ?? RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString(),
+                    CorrelationToken = RestOperationContext.Current?.Data["uuid"]?.ToString()
                 };
             }
-           
         }
 
     }

@@ -377,9 +377,6 @@ namespace SanteDB.DisconnectedClient
 
             this.m_tracer.TraceInfo("STAGE1: Base startup initiated...");
 
-            // ADd metadata provider
-            this.AddServiceProvider(new AuditMetadataProvider());
-
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
             {
                 var asmLoc = Path.Combine(Path.GetDirectoryName(typeof(ApplicationContext).Assembly.Location), r.Name.Substring(0, r.Name.IndexOf(",")) + ".dll");
