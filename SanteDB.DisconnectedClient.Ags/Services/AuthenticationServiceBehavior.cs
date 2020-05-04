@@ -46,6 +46,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using SanteDB.Core.Model;
+using SanteDB.Core.Api.Security;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -88,7 +89,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 var sessionService = ApplicationContext.Current.GetService<ISessionProviderService>();
                 var identityService = ApplicationContext.Current.GetService<IIdentityProviderService>();
-                var remoteEpResolve = ApplicationContext.Current.GetService<IRemoteEndpointResolver>();
+                var remoteEp = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress;
 
                 var claimsHeader = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpClaims];
                 IDictionary<String, String> headerClaims = null;
@@ -112,7 +113,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         {
                             var principal = ApplicationServiceContext.Current.GetService<ISecurityChallengeIdentityService>().Authenticate(request["username"], Guid.Parse(request["challenge"]), request["response"], tfa);
                             if (principal != null)
-                                session = sessionService.Establish(principal, remoteEpResolve.GetRemoteEndpoint(), isOverride, purposeOfUse, scopes);
+                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes);
                             else
                                 throw new SecurityException("Could not authenticate principal");
                             break;
@@ -128,7 +129,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 principal = identityService.Authenticate(request["username"], request["password"]);
 
                             if (principal != null)
-                                session = sessionService.Establish(principal, remoteEpResolve.GetRemoteEndpoint(), isOverride, purposeOfUse, scopes);
+                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes);
                             else
                                 throw new SecurityException("Could not authenticate principal");
 
@@ -151,7 +152,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             var pinAuthSvc = ApplicationServiceContext.Current.GetService<IPinAuthenticationService>();
                             IPrincipal principal = pinAuthSvc.Authenticate(request["username"], request["pin"].Select(o => Byte.Parse(o.ToString())).ToArray());
                             if (principal != null)
-                                session = sessionService.Establish(principal, remoteEpResolve.GetRemoteEndpoint(), isOverride, purposeOfUse, scopes);
+                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes);
                             else
                                 throw new SecurityException("Could not authenticate principal");
                             break;

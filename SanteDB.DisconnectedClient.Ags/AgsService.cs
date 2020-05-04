@@ -43,13 +43,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using SanteDB.Core.Api.Security;
 
 namespace SanteDB.DisconnectedClient.Ags
 {
     /// <summary>
     /// Represents the Applet Gateway Service
     /// </summary>
-    public class AgsService : IDaemonService, IRestServiceFactory, IRemoteEndpointResolver
+    public class AgsService : IDaemonService, IRestServiceFactory
     {
 
         /// <summary>
@@ -234,6 +235,8 @@ namespace SanteDB.DisconnectedClient.Ags
         /// </summary>
         public bool Start()
         {
+
+            RemoteEndpointUtil.Current.AddEndpointProvider(() => this.GetRemoteEndpointInfo());
             this.Starting?.Invoke(this, EventArgs.Empty);
 
             // Start up each of the services
@@ -386,21 +389,20 @@ namespace SanteDB.DisconnectedClient.Ags
         /// Retrieve the remote endpoint information
         /// </summary>
         /// <returns></returns>
-        public string GetRemoteEndpoint()
+        public RemoteEndpointInfo GetRemoteEndpointInfo()
         {
-            var fwdHeader = RestOperationContext.Current?.IncomingRequest.Headers["X-Forwarded-For"];
-            if (!String.IsNullOrEmpty(fwdHeader))
-                return fwdHeader;
-            return RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString();
+            if (RestOperationContext.Current == null) return null;
+            else
+            {
+                var fwdHeader = RestOperationContext.Current?.IncomingRequest.Headers["X-Forwarded-For"];
+                return new RemoteEndpointInfo()
+                {
+                    OriginalRequestUrl = RestOperationContext.Current?.IncomingRequest.Url.ToString(),
+                    RemoteAddress = fwdHeader ?? RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString()
+                };
+            }
+           
         }
 
-        /// <summary>
-        /// Gets the URL that was originally requested
-        /// </summary>
-        public string GetRemoteRequestUrl()
-        {
-            return RestOperationContext.Current?.IncomingRequest.Url.ToString();
-
-        }
     }
 }

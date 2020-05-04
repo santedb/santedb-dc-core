@@ -19,6 +19,7 @@
  */
 using RestSrvr;
 using SanteDB.Core;
+using SanteDB.Core.Api.Security;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -50,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Security
                 { AuditMetadataKey.CorrelationToken, RestOperationContext.Current?.Data["uuid"] },
                 { AuditMetadataKey.AuditSourceType, "EndUserInterface" },
                 { AuditMetadataKey.LocalEndpoint, RestOperationContext.Current?.IncomingRequest.Url },
-                { AuditMetadataKey.RemoteHost, ApplicationServiceContext.Current.GetService<IRemoteEndpointResolver>()?.GetRemoteEndpoint() }
+                { AuditMetadataKey.RemoteHost, RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress }
             };
         }
     }
