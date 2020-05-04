@@ -49,7 +49,7 @@ namespace SanteDB.DisconnectedClient.Ags
     /// <summary>
     /// Represents the Applet Gateway Service
     /// </summary>
-    public class AgsService : IDaemonService, IRestServiceFactory
+    public class AgsService : IDaemonService, IRestServiceFactory, IRemoteEndpointResolver
     {
 
         /// <summary>
@@ -379,6 +379,27 @@ namespace SanteDB.DisconnectedClient.Ags
                 Tracer.GetTracer(typeof(AgsService)).TraceError("Could not start {0} : {1}", serviceType.FullName, e);
                 throw new Exception($"Could not start {serviceType.FullName}", e);
             }
+
+        }
+
+        /// <summary>
+        /// Retrieve the remote endpoint information
+        /// </summary>
+        /// <returns></returns>
+        public string GetRemoteEndpoint()
+        {
+            var fwdHeader = RestOperationContext.Current?.IncomingRequest.Headers["X-Forwarded-For"];
+            if (!String.IsNullOrEmpty(fwdHeader))
+                return fwdHeader;
+            return RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString();
+        }
+
+        /// <summary>
+        /// Gets the URL that was originally requested
+        /// </summary>
+        public string GetRemoteRequestUrl()
+        {
+            return RestOperationContext.Current?.IncomingRequest.Url.ToString();
 
         }
     }
