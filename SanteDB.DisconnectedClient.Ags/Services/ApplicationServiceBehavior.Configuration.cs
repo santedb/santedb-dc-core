@@ -344,10 +344,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         }
                     }
                 }
+                catch (DuplicateNameException)
+                {
+                    throw;
+                }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Error registering device account: {0}", e);
-                    throw;
+                    throw new Exception($"Error registering device {deviceName} on realm {realmUri}", e);
                 }
                 return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
             }
