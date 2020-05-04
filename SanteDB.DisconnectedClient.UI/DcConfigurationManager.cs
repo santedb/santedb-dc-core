@@ -235,7 +235,20 @@ namespace SanteDB.DisconnectedClient.UI
                 }
             });
 
-            foreach (var t in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes).Where(t => typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface))
+            foreach (var t in AppDomain.CurrentDomain.GetAssemblies()
+                .Where(a => !a.IsDynamic)
+                .SelectMany(a =>
+                {
+                    try
+                    {
+                        return a.ExportedTypes;
+                    }
+                    catch (Exception e)
+                    {
+                        throw new InvalidOperationException($"Could not reflect types from {a.FullName}", e);
+                    }
+                })
+                .Where(t => typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface))
                 retVal = (Activator.CreateInstance(t) as IInitialConfigurationProvider).Provide(retVal);
             return retVal;
         }
