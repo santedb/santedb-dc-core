@@ -31,6 +31,7 @@ using SanteDB.Rest.Common.Serialization;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Security;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -81,7 +82,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                         ie.GetType().FullName, ie.Message);
 
-                    if (ie is RestClientException<RestServiceFault>)
+                    if (ie is RestClientException<RestServiceFault> || ie is SecurityException)
                         error = ie;
                     ie = ie.InnerException;
                 }
@@ -95,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
            
-                object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
+                object fault = (ie as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
 
                 if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification

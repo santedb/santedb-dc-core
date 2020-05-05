@@ -196,6 +196,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
                 }
             }
+
             else if (securable is SecurityApplication)
             {
                 var secApp = securable as SecurityApplication;

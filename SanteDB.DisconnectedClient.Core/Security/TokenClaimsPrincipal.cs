@@ -47,7 +47,10 @@ namespace SanteDB.DisconnectedClient.Security
             { "exp", SanteDBClaimTypes.Expiration },
             { "nbf", SanteDBClaimTypes.AuthenticationInstant },
             { "email", SanteDBClaimTypes.Email },
-            { "tel", SanteDBClaimTypes.Telephone }
+            { "tel", SanteDBClaimTypes.Telephone },
+            { "nameid", SanteDBClaimTypes.NameIdentifier },
+            { "actort", SanteDBClaimTypes.Actor },
+            { "appid", SanteDBClaimTypes.SanteDBApplicationIdentifierClaim }
         };
 
         // The token

@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient
     /// <summary>
     /// Application context.
     /// </summary>
-    public abstract class ApplicationContext : IServiceProvider, IServiceManager, IApplicationServiceContext
+    public abstract class ApplicationContext : IServiceProvider, IServiceManager, IApplicationServiceContext, IPolicyEnforcementService
     {
 
         // Tracer
@@ -376,7 +376,7 @@ namespace SanteDB.DisconnectedClient
                 return;
 
             this.m_tracer.TraceInfo("STAGE1: Base startup initiated...");
-
+            this.AddServiceProvider(this);
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
             {
                 var asmLoc = Path.Combine(Path.GetDirectoryName(typeof(ApplicationContext).Assembly.Location), r.Name.Substring(0, r.Name.IndexOf(",")) + ".dll");
@@ -619,6 +619,23 @@ namespace SanteDB.DisconnectedClient
         /// Get all types
         /// </summary>
         public abstract IEnumerable<Type> GetAllTypes();
+
+
+        /// <summary>
+        /// Demand the policy
+        /// </summary>
+        public void Demand(string policyId)
+        {
+            new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId).Demand();
+        }
+
+        /// <summary>
+        /// Demand policy enforcement
+        /// </summary>
+        public void Demand(string policyId, IPrincipal principal)
+        {
+            new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId, principal).Demand();
+        }
 
     }
 }

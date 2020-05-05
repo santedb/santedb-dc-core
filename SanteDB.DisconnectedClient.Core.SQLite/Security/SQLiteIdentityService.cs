@@ -136,8 +136,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         var roles = connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
                             dbs.Uuid).Select(o => o.Name).ToArray();
 
+                        var additionalClaims = new List<IClaim>()
+                        {
+                            new SanteDBClaim(SanteDBClaimTypes.NameIdentifier, dbs.Key.ToString()),
+                            new SanteDBClaim(SanteDBClaimTypes.DefaultNameClaimType, dbs.UserName)
+                        };
+
                         // Create the principal
-                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0))), roles);
+                        retVal = new SQLitePrincipal(new SQLiteIdentity(dbs.UserName, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), roles);
                         ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.Login, retVal);
 
                     }
