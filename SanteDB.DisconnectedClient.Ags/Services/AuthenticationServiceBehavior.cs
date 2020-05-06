@@ -178,6 +178,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
             catch (Exception e)
             {
+                this.m_tracer.TraceError("Error establishing session for {0}: {1}", request["username"], e);
                 RestOperationContext.Current.OutgoingResponse.StatusCode = 400;
                 return new OAuthTokenResponse()
                 {

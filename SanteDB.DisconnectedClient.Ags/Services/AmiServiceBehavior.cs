@@ -432,7 +432,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<Object, Object>($"/{resourceType}", restClient.Accept, data);
+                        return restClient.Post<Object, Object>($"{resourceType}", restClient.Accept, data);
                     }
                     catch (Exception e)
                     {
@@ -459,7 +459,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<Object, Object>($"/{resourceType}/{key}", restClient.Accept, data);
+                        return restClient.Post<Object, Object>($"{resourceType}/{key}", restClient.Accept, data);
                     }
                     catch (Exception e)
                     {
@@ -489,7 +489,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Delete<Object>($"/{resourceType}");
+                        return restClient.Delete<Object>($"{resourceType}");
                     }
                     catch (Exception e)
                     {
@@ -522,7 +522,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Get<Object>($"/{resourceType}/{key}");
+                        return restClient.Get<Object>($"{resourceType}/{key}");
                     }
                     catch (Exception e)
                     {
@@ -552,7 +552,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Get<Object>($"/{resourceType}/{key}/history/{versionKey}");
+                        return restClient.Get<Object>($"{resourceType}/{key}/history/{versionKey}");
                     }
                     catch (Exception e)
                     {
@@ -582,7 +582,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Get<AmiCollection>($"/{resourceType}/{key}/history");
+                        return restClient.Get<AmiCollection>($"{resourceType}/{key}/history");
                     }
                     catch (Exception e)
                     {
@@ -613,7 +613,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     try
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
-                        return restClient.Options<ServiceResourceOptions>($"/{resourceType}");
+                        return restClient.Options<ServiceResourceOptions>($"{resourceType}");
                     }
                     catch (Exception e)
                     {
@@ -642,7 +642,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     try
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
-                        return restClient.Get<AmiCollection>($"/{resourceType}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
+                        return restClient.Get<AmiCollection>($"{resourceType}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
                     }
                     catch (Exception e)
                     {
@@ -672,7 +672,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Put<Object, Object>($"/{resourceType}/{key}", restClient.Accept, data);
+                        return restClient.Put<Object, Object>($"{resourceType}/{key}", restClient.Accept, data);
                     }
                     catch (Exception e)
                     {
@@ -702,7 +702,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Lock<Object>($"/{resourceType}/{key}");
+                        return restClient.Lock<Object>($"{resourceType}/{key}");
                     }
                     catch (Exception e)
                     {
@@ -732,7 +732,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Unlock<Object>($"/{resourceType}/{key}");
+                        return restClient.Unlock<Object>($"{resourceType}/{key}");
                     }
                     catch (Exception e)
                     {
