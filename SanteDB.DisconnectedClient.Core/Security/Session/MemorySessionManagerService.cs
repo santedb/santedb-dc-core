@@ -104,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
         /// <summary>
         /// Establish the session
         /// </summary>
-        public ISession Establish(IPrincipal principal, string aud, bool isOverride, string purpose, string[] policyDemands)
+        public ISession Establish(IPrincipal principal, string aud, bool isOverride, string purpose, string[] policyDemands, string language)
         {
             AuthenticationContext.Current = new AuthenticationContext(principal);
             try
@@ -156,6 +156,9 @@ namespace SanteDB.DisconnectedClient.Security.Session
                 var sessionRefresh = Guid.NewGuid();
                 claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, sessionKey.ToString()));
 
+                if(!String.IsNullOrEmpty(language))
+                    claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, language));
+
                 // Is the principal a remote principal (i.e. not issued by us?)
                 MemorySession memorySession = null;
                 if (principal is IOfflinePrincipal)
@@ -198,7 +201,8 @@ namespace SanteDB.DisconnectedClient.Security.Session
                 null,
                 false,
                 null,
-                null) as MemorySession;
+                null,
+                session.Claims.FirstOrDefault(o=>o.Type == SanteDBClaimTypes.Language)?.Value) as MemorySession;
 
             return session;
         }

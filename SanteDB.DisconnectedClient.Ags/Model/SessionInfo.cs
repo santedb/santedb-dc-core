@@ -110,6 +110,12 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         public ISession Session { get; private set; }
 
         /// <summary>
+        /// The language
+        /// </summary>
+        [JsonProperty("lang")]
+        public String Language => this.Session.Claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.Language)?.Value;
+
+        /// <summary>
         /// Gets the user entity
         /// </summary>
         [JsonProperty("entity"), XmlElement("entity")]
@@ -178,6 +184,12 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             }
             set { }
         }
+
+        /// <summary>
+        /// Grants
+        /// </summary>
+        [JsonProperty("scope")]
+        public String[] Grants => this.Session.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray();
 
         /// <summary>
         /// Gets the user name

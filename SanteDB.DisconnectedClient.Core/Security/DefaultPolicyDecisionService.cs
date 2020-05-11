@@ -23,6 +23,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
@@ -40,7 +41,7 @@ namespace SanteDB.DisconnectedClient.Security
         public String ServiceName => "Default Policy Decision Service";
 
         // Policy cache
-        private Dictionary<String, Dictionary<String, dynamic>> m_policyCache = new Dictionary<string, Dictionary<string, dynamic>>();
+        private ConcurrentDictionary<String, ConcurrentDictionary<String, dynamic>> m_policyCache = new ConcurrentDictionary<string, ConcurrentDictionary<string, dynamic>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Security.PolicyDecisionService"/> class.
@@ -82,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
         {
-            Dictionary<String, dynamic> grants = null;
+            ConcurrentDictionary<String, dynamic> grants = null;
             PolicyGrantType rule;
 
             if (principal == null)
@@ -97,7 +98,7 @@ namespace SanteDB.DisconnectedClient.Security
                 grants.TryGetValue(policyId, out dynamic data))
             {
                 if (DateTime.Now.Subtract(data.Time).TotalSeconds > 120)
-                    grants.Remove(policyId);
+                    grants.TryRemove(policyId, out dynamic v);
                 else
                     return data.Rule;
             }
@@ -152,27 +153,23 @@ namespace SanteDB.DisconnectedClient.Security
             } // db lookup
 
             // Add to local policy cache
-            lock (this.m_policyCache)
-            {
-
                 if (!this.m_policyCache.ContainsKey(principal.Identity.Name))
                 {
-                    grants = new Dictionary<string, dynamic>();
-                    this.m_policyCache.Add(principal.Identity.Name, grants);
+                    grants = new ConcurrentDictionary<string, dynamic>();
+                    this.m_policyCache.TryAdd(principal.Identity.Name, grants);
                 }
                 else if (grants == null)
                     grants = this.m_policyCache[principal.Identity.Name];
                 if (!grants.ContainsKey(policyId))
                     try
                     {
-                        grants.Add(policyId, new { Rule = rule, Time = DateTime.Now });
+                        grants.TryAdd(policyId, new { Rule = rule, Time = DateTime.Now });
                     }
                     catch
                     {
-                        this.m_policyCache.Remove(principal.Identity.Name);
+                        this.m_policyCache.TryRemove(principal.Identity.Name, out grants);
                         return rule;
                     }
-            }
             return rule;
         }
     }

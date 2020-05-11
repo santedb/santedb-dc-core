@@ -189,6 +189,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                             existing = null;
                         }
                     }
+
                     if (!this.m_missEntity.Contains(key) && (existing == null || !(existing is TModel) ||
                         (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
                     {

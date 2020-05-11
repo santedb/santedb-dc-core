@@ -35,6 +35,9 @@ using System.Net;
 using System.Security.Principal;
 using System.Text;
 using SanteDB.Core.Model;
+using System.Threading;
+using System.Globalization;
+using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {
@@ -91,6 +94,13 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                     var session = query["_sessionId"][0];
                     this.SetContextFromBearer(session);
                 }
+                else if(request.Cookies["_s"] != null) // cookie authentication
+                {
+                    var token = request.Cookies["_s"].Value;
+                    if (token.Length == 64) // appropriate length
+                        this.SetContextFromBearer(token);
+                }
+
             }
             finally
             {
@@ -120,7 +130,6 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             if (session == null)
                 return;
 
-            
             IPrincipal principal = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>().Authenticate(session);
             if (principal == null)
                 throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Invalid bearer token");

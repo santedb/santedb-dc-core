@@ -125,7 +125,7 @@ namespace SanteDB.DisconnectedClient.Security
             }
 
             // Validate issuer
-            if (!claims.Any(c => c.Type == "iss" && c.Value == configuration.Issuer))
+            if (configuration != null && !claims.Any(c => c.Type == "iss" && c.Value == configuration?.Issuer))
                 throw new SecurityTokenException(SecurityTokenExceptionType.InvalidIssuer, "Issuer mismatch");
 
             // Validate validity

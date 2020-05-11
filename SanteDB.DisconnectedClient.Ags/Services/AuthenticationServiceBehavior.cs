@@ -77,7 +77,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             // Get the session
             if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
+            {
+                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", ""));
                 ApplicationContext.Current.GetService<ISessionProviderService>().Abandon(session as ISession);
+            }
         }
 
         /// <summary>
@@ -93,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 var claimsHeader = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpClaims];
                 IDictionary<String, String> headerClaims = null;
-                if(!String.IsNullOrEmpty(claimsHeader))
+                if (!String.IsNullOrEmpty(claimsHeader))
                     headerClaims = Encoding.UTF8.GetString(Convert.FromBase64String(claimsHeader)).Split(';').ToDictionary(o => o.Split('=')[0], o => o.Split('=')[1]);
 
                 ISession session = null;
@@ -104,8 +107,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 var tfa = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpTfaSecret];
                 var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
 
-                // TODO: Authenticate the client and device
-
                 // Grant types
                 switch (request["grant_type"])
                 {
@@ -113,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         {
                             var principal = ApplicationServiceContext.Current.GetService<ISecurityChallengeIdentityService>().Authenticate(request["username"], Guid.Parse(request["challenge"]), request["response"], tfa);
                             if (principal != null)
-                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes);
+                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes, request["ui_locales"]);
                             else
                                 throw new SecurityException("Could not authenticate principal");
                             break;
@@ -128,8 +129,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             else
                                 principal = identityService.Authenticate(request["username"], request["password"]);
 
+                            // TODO: Authenticate the device 
+                            var lanugageCode = request["ui_locales"] ?? ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>()?.GetUserEntity(principal.Identity)?.LanguageCommunication?.FirstOrDefault(o=>o.IsPreferred)?.LanguageCode ?? "en";
                             if (principal != null)
-                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes);
+                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes, lanugageCode);
                             else
                                 throw new SecurityException("Could not authenticate principal");
 
@@ -152,20 +155,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             var pinAuthSvc = ApplicationServiceContext.Current.GetService<IPinAuthenticationService>();
                             IPrincipal principal = pinAuthSvc.Authenticate(request["username"], request["pin"].Select(o => Byte.Parse(o.ToString())).ToArray());
                             if (principal != null)
-                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes);
+                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes, request["ui_locales"]);
                             else
                                 throw new SecurityException("Could not authenticate principal");
                             break;
                         }
                 }
 
-                var sessionInfo = new SessionInfo(session);
-                var lanugageCode = sessionInfo?.UserEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode;
-                if (lanugageCode != null)
-                    Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureInfo.DefaultThreadCurrentUICulture?.TwoLetterISOLanguageName ?? "en");
-
-
-                return new OAuthTokenResponse()
+               
+                var retVal = new OAuthTokenResponse()
                 {
                     // TODO: Sign the access token
                     AccessToken = $"{session.Id.ToHexString()}{signatureService.SignData(session.Id).ToHexString()}",
@@ -175,6 +173,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     IdToken = this.HydrateToken(session)
                 };
 
+                return retVal;
             }
             catch (Exception e)
             {
@@ -247,7 +246,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public void AclPreCheck(string policyId)
         {
-            throw new NotImplementedException();
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(policyId);
         }
     }
 }

@@ -262,7 +262,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 }
                 catch (Exception e)
                 {
-                    throw new DataPersistenceException("Could not retrieve user", e);
+                   throw new DataPersistenceException("Could not retrieve user", e);
                 }
         }
 

@@ -333,7 +333,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Get allowed TFA mechanisms
         /// </summary>
-        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
         public override AmiCollection GetTfaMechanisms()
         {
             try

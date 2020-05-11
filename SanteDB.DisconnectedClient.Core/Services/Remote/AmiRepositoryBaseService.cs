@@ -54,7 +54,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 principal = AuthenticationContext.Current.Principal;
 
             // Don't allow anonymous principals
-            if (!principal.Identity.IsAuthenticated)
+            if (!principal.Identity.IsAuthenticated ||
+                principal == AuthenticationContext.SystemPrincipal ||
+                principal == AuthenticationContext.AnonymousPrincipal)
             {
                 principal = this.m_devicePrincipal;
                 // Expired or not exists

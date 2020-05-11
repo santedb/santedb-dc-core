@@ -96,8 +96,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
            
-                object fault = (ie as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
-
+                object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
                 if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
                     fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
