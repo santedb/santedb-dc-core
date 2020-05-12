@@ -150,7 +150,14 @@ namespace SanteDB.DisconnectedClient.Security
                         }
 
                         // Synchronize the security devices
-                        this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
+                        try
+                        {
+                            this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
+                        }
+                        catch(Exception e2 )
+                        {
+                            this.m_tracer.TraceError("Error synchronizing the local device security: {0}", e2);
+                        }
                         this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(deviceId, retVal, true) { Principal = retVal });
                     }
                     else if (authMethod.HasFlag(AuthenticationMethod.Local))

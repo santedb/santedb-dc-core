@@ -140,10 +140,11 @@ namespace SanteDB.DisconnectedClient.Services.Local
             // Patch
             if (old != null)
             {
-                var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, data.Entry);
-                if (diff != null)
-                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
-                else
+                //This can cause issues on the MDM handler, need to fix this first  before re-enabling it
+                //var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, data.Entry);
+                //if (diff != null)
+                //    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
+                //else
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
             }
             else

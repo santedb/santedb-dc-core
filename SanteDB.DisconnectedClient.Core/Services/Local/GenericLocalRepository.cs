@@ -355,10 +355,10 @@ namespace SanteDB.DisconnectedClient.Services.Local
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
-                    var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
-                    if (diff != null)
-                        ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
-                    else
+                    //var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
+                    //if (diff != null)
+                    //    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
+                    //else
                         ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
 
 

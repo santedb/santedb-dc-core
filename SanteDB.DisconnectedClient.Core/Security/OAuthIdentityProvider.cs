@@ -371,7 +371,14 @@ namespace SanteDB.DisconnectedClient.Security
                     // We have a match! Lets make sure we cache this data
                     // TODO: Clean this up
                     if (!(retVal is IOfflinePrincipal))
-                        ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
+                        try
+                        {
+                            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
+                        }
+                        catch(Exception e2)
+                        {
+                            this.m_tracer.TraceError("An error occurred when inserting the local credential: {0}", e2);
+                        }
                 }
 
             }
