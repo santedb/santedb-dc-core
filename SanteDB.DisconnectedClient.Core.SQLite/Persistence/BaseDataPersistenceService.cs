@@ -91,7 +91,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             var domainObject = this.FromModelInstance(data, context) as TDomain;
             var existing = context.Connection.Table<TDomain>().Where(o => o.Uuid == domainObject.Uuid).FirstOrDefault();
             if (existing == null)
-                throw new KeyNotFoundException(data.Key.ToString());
+                throw new KeyNotFoundException($"Cannot find existing copy of {data}");
 
             // Created by is the updated by
             existing.CopyObjectData(domainObject);

@@ -93,8 +93,7 @@ namespace SanteDB.DisconnectedClient.Security
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                
                 // Synchronize the groups
-                var roleSync = new String[] { "SYSTEM", "ANONYMOUS", "DEVICE", "SYNCHRONIZERS" };
-                foreach (var rol in roleSync)
+                foreach (var rol in localRp.GetAllRoles())
                 {
                     var group = securityRepository.GetRole(rol);
                     if (group == null)

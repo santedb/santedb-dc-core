@@ -51,7 +51,8 @@ namespace SanteDB.DisconnectedClient.SQLite
     public abstract class SQLitePersistenceServiceBase<TData> : 
         IDataPersistenceService<TData>, 
         IStoredQueryDataPersistenceService<TData>,
-        ISQLitePersistenceService 
+        ISQLitePersistenceService,
+        IDataPersistenceService
     where TData : IdentifiedData, new()
     {
 

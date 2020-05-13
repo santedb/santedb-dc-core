@@ -468,7 +468,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     {
                         // Allow from alt keys
                         if (altKeys?.Contains(new Guid(id.SourceUuid).ToString()) == false)
-                            throw new DuplicateKeyException(itm.Value);
+                            throw new DuplicateKeyException($"Attempted to insert a new identifier {itm.Value} for entity {data} however entity {new Guid(id.SourceUuid)} already has this identifier");
                     }
                 }
 

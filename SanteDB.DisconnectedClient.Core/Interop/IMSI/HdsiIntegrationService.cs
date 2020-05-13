@@ -287,7 +287,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 var iver = method.Invoke(client, new object[] { submission }) as IVersionedEntity;
 
                 if (iver != null)
-                    this.UpdateToServerCopy(iver);
+                    this.UpdateToServerCopy(iver, data as IVersionedEntity);
             }
             catch (TargetInvocationException e)
             {
@@ -352,7 +352,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                 var iver = method.Invoke(client, new object[] { data }) as IVersionedEntity;
                 if (iver != null)
-                    this.UpdateToServerCopy(iver);
+                    this.UpdateToServerCopy(iver, data as IVersionedEntity);
             }
             catch (TargetInvocationException e)
             {
@@ -496,11 +496,12 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                     var method = typeof(HdsiServiceClient).GetRuntimeMethods().FirstOrDefault(o => o.Name == "Update" && o.GetParameters().Length == 1);
                     method = method.MakeGenericMethod(new Type[] { submission.GetType() });
+                    
                     this.m_tracer.TraceVerbose("Performing HDSI UPDATE (FULL) {0}", data);
 
                     var iver = method.Invoke(client, new object[] { submission }) as IVersionedEntity;
                     if (iver != null)
-                        this.UpdateToServerCopy(iver);
+                        this.UpdateToServerCopy(iver, submission as IVersionedEntity);
                 }
             }
             catch (TargetInvocationException e)
@@ -513,14 +514,33 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         /// <summary>
         /// Update the version identifier to the server identifier
         /// </summary>
-        public void UpdateToServerCopy(IVersionedEntity newData)
+        public void UpdateToServerCopy(IVersionedEntity newData, IVersionedEntity submittedData)
         {
             this.m_tracer.TraceVerbose("Updating to remote version {0}", newData);
+
             // Update the ETag of the current version
             var idp = typeof(IDataPersistenceService<>).MakeGenericType(newData.GetType());
-            var idpService = ApplicationContext.Current.GetService(idp);
+            var idpService = ApplicationContext.Current.GetService(idp) as IDataPersistenceService;
+
             if (idpService != null)
-                idp.GetRuntimeMethod("Update", new Type[] { newData.GetType(), typeof(TransactionMode), typeof(IPrincipal) }).Invoke(idpService, new object[] { newData, TransactionMode.Commit, this.m_cachedCredential});
+            {
+                if (newData.Key.HasValue && submittedData.Key.HasValue)
+                {
+                    if (submittedData.Key == newData.Key) // Server did not redirect to MDM copy
+                    {
+                        idpService.Update(newData);
+                    }
+                    else
+                    { // Server rewrote our version so we have to 
+                        idpService.Obsolete(submittedData);
+                        idpService.Insert(newData);
+                    }
+                }
+                else
+                    idpService.Update(newData);
+
+
+            }
         }
     }
 }
