@@ -126,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Net
         {
 
             return NetworkInterface.GetAllNetworkInterfaces().Select(o => new NetworkInterfaceInfo(
-                o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault()?.ToString(), o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString()
+                o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault(a=>a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.Address.ToString(), o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString()
             ));
 
         }
@@ -157,14 +157,12 @@ namespace SanteDB.DisconnectedClient.Net
         {
             try
             {
-                System.Uri uri = null;
-                if (System.Uri.TryCreate(hostName, UriKind.RelativeOrAbsolute, out uri))
-                    hostName = uri.Host;
+
                 System.Net.NetworkInformation.Ping p = new System.Net.NetworkInformation.Ping();
                 var reply = p.Send(hostName);
                 return reply.Status == IPStatus.Success ? reply.RoundtripTime : -1;
             }
-            catch
+            catch(Exception e)
             {
                 return -1;
             }

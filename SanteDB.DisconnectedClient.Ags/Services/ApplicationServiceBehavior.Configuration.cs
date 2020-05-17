@@ -94,6 +94,25 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         }
 
         /// <summary>
+        /// Push configuration to a remote target
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public List<String> PushConfiguration(TargetedConfigurationViewModel model)
+        {
+            try
+            {
+                var svc = ApplicationServiceContext.Current.GetService<IConfigurationPushService>();
+                if (svc == null) throw new InvalidOperationException("Cannot find configuration push service");
+                return svc.Configure(new Uri(model.RemoteUri), model.UserName, model.Password, model.Parameters).Select(o => o.ToString()).ToList();
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Error sending configuration details to {0} - {1}", model.RemoteUri, e);
+                throw new Exception($"Failed to push relevant configuration details to {model.RemoteUri}", e);
+            }
+        }
+
+        /// <summary>
         /// Get the configuration for the specified user
         /// </summary>
         /// <param name="userId"></param>

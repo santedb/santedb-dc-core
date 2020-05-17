@@ -24,7 +24,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <summary>
         /// Configure the specified target
         /// </summary>
-        public void Configure(Uri targetUri, string userName, string password, IDictionary<String, Object> configuration)
+        public List<Uri> Configure(Uri targetUri, string userName, string password, IDictionary<String, Object> configuration)
         {
 
             // Find the appropriate target
@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 var target = this.GetTarget(targetUri);
                 if (target == null) throw new InvalidOperationException($"Cannot find configuration target implementation for {targetUri}");
                 this.m_tracer.TraceVerbose("Will attempt to push configuration to {0} (package: {1})...", targetUri, target);
-                target.PushConfiguration(targetUri, userName, password, configuration);
+                return target.PushConfiguration(targetUri, userName, password, configuration);
             }
             catch(Exception e)
             {

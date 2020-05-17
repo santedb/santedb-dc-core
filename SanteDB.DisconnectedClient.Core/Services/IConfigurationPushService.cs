@@ -14,7 +14,7 @@ namespace SanteDB.DisconnectedClient.Services
         /// <summary>
         /// Configure the specified target device with the specified username and software
         /// </summary>
-        void Configure(Uri targetUri, String userName, String password, IDictionary<String, Object> configuration);
+        List<Uri> Configure(Uri targetUri, String userName, String password, IDictionary<String, Object> configuration);
 
         /// <summary>
         /// Gets the specified remote software package 

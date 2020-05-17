@@ -17,7 +17,7 @@ namespace SanteDB.DisconnectedClient.Services
         /// <summary>
         /// Push configuration to the remote target
         /// </summary>
-        void PushConfiguration(Uri target, String user, String password, IDictionary<String, Object> configuration);
+        List<Uri> PushConfiguration(Uri target, String user, String password, IDictionary<String, Object> configuration);
 
     }
 }

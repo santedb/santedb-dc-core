@@ -101,7 +101,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 ISession session = null;
 
-                var scopes = request["scope"] == "*" ? null : request["scope"].Split(' ');
+                var scopes = request["scope"] == "*" ? null : request["scope"]?.Split(' ');
                 var isOverride = scopes?.Any(o => o == PermissionPolicyIdentifiers.OverridePolicyPermission) == true || headerClaims != null && headerClaims.TryGetValue(SanteDBClaimTypes.SanteDBOverrideClaim, out string overrideFlag) && overrideFlag == "true";
                 var purposeOfUse = headerClaims?.FirstOrDefault(o => o.Key == SanteDBClaimTypes.PurposeOfUse).Value;
                 var tfa = RestOperationContext.Current.IncomingRequest.Headers[HeaderTypes.HttpTfaSecret];

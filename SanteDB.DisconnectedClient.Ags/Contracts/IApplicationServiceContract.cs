@@ -206,5 +206,10 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         [Get("/Online")]
         Dictionary<String, bool> GetOnlineState();
 
+        /// <summary>
+        /// Push a configuration
+        /// </summary>
+        [Post("/PushConfig")]
+        List<String> PushConfiguration(TargetedConfigurationViewModel model);
     }
 }
