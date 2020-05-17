@@ -212,6 +212,16 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         }
 
         /// <summary>
+        /// Gets the claims associated with the session
+        /// </summary>
+        [JsonProperty("claim"), XmlElement("claim")]
+        public Dictionary<String, String> Claims
+        {
+            get => this.Session.Claims.GroupBy(o => o.Type).Where(o => o.Count() == 1).ToDictionary(o => o.Key, o => o.First().Value);
+            set { }
+        }
+
+        /// <summary>
         /// Expiry time
         /// </summary>
         [JsonProperty("exp"), XmlElement("exp")]

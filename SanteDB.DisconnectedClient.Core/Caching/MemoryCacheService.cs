@@ -20,6 +20,7 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
@@ -288,12 +289,21 @@ namespace SanteDB.DisconnectedClient.Caching
         /// </summary>
         public void Add(IdentifiedData data)
         {
-            var exist = MemoryCache.Current.TryGetEntry(data.Key);
-            MemoryCache.Current.AddUpdateEntry(data);
-            if (exist != null)
-                this.Updated?.Invoke(this, new DataCacheEventArgs(data));
+            IdentifiedData[] elements = null;
+            if (data is Bundle bundle)
+                elements = bundle.Item.ToArray();
             else
-                this.Added?.Invoke(this, new DataCacheEventArgs(data));
+                elements = new IdentifiedData[1] { data };
+
+            foreach (var d in elements)
+            {
+                var exist = MemoryCache.Current.TryGetEntry(d.Key);
+                MemoryCache.Current.AddUpdateEntry(d);
+                if (exist != null)
+                    this.Updated?.Invoke(this, new DataCacheEventArgs(d));
+                else
+                    this.Added?.Invoke(this, new DataCacheEventArgs(d));
+            }
         }
 
         /// <summary>

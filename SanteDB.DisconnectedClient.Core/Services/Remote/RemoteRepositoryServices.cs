@@ -140,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public String ServiceName => $"Remote repository for {typeof(TModel).FullName}";
 
         // Used to reduce requests to the server which the server had previously rejected
-        private HashSet<Guid> m_missEntity = new HashSet<Guid>();
+        //private HashSet<Guid> m_missEntity = new HashSet<Guid>();
 
         /// <summary>
         /// Get the client
@@ -190,8 +190,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         }
                     }
 
-                    if (!this.m_missEntity.Contains(key) && (existing == null || !(existing is TModel) ||
-                        (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey)))
+                    if (existing == null || !(existing is TModel) ||
+                        (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey))
                     {
                         existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
 
@@ -203,8 +203,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 }
                 catch (WebException)
                 {
-                    lock (this.m_missEntity)
-                        this.m_missEntity.Add(key);
+                    //lock (this.m_missEntity)
+                    //    this.m_missEntity.Add(key);
                     // Web exceptions should not bubble up
                     return default(TModel);
                 }

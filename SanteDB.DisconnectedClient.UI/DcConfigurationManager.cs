@@ -145,7 +145,8 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository)),
                     new TypeReferenceConfiguration(typeof(AmiSecurityChallengeProvider)),
                     new TypeReferenceConfiguration(typeof(InMemoryPivotProvider)),
-                    new TypeReferenceConfiguration(typeof(DefaultDataSigningService))
+                    new TypeReferenceConfiguration(typeof(DefaultDataSigningService)),
+                    new TypeReferenceConfiguration(typeof(GenericConfigurationPushService))
                 }
             };
 
