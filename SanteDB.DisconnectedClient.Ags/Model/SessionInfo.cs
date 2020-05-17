@@ -197,7 +197,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         [JsonProperty("username"), XmlElement("username")]
         public string UserName
         {
-            get => this.SecurityUser.UserName;
+            get => this.SecurityUser?.UserName;
             set { }
         }
 

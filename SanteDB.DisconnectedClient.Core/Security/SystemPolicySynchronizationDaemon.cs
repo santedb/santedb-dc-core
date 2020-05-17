@@ -91,9 +91,11 @@ namespace SanteDB.DisconnectedClient.Security
                 var amiPip = new AmiPolicyInformationService();
 
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-               
+
+                var systemRoles = new String[]{ "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS" };
+
                 // Synchronize the groups
-                foreach (var rol in localRp.GetAllRoles())
+                foreach (var rol in localRp.GetAllRoles().Union(systemRoles))
                 {
                     var group = securityRepository.GetRole(rol);
                     if (group == null)
