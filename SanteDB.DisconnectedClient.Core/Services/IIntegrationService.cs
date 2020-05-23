@@ -28,6 +28,34 @@ using System.Linq.Expressions;
 
 namespace SanteDB.DisconnectedClient.Services
 {
+
+    /// <summary>
+    /// Integration result arguments
+    /// </summary>
+    public class IntegrationResultEventArgs : EventArgs
+    {
+
+        /// <summary>
+        /// Creates a new integration result based on the response
+        /// </summary>
+        public IntegrationResultEventArgs(IdentifiedData submitted, IdentifiedData result)
+        {
+            this.SubmittedData = submitted;
+            this.ResponseData = result;
+        }
+        
+        /// <summary>
+        /// The data that was submitted to the server
+        /// </summary>
+        public IdentifiedData SubmittedData { get; set; }
+
+        /// <summary>
+        /// The data that the server responded with
+        /// </summary>
+        public IdentifiedData ResponseData { get; set; }
+
+    }
+
     /// <summary>
     /// Represents an integration service which is responsible for sending and
     /// pulling data to/from remote sources
@@ -44,6 +72,11 @@ namespace SanteDB.DisconnectedClient.Services
         /// Progress has changed
         /// </summary>
         event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+        /// <summary>
+        /// The remote system has responsed
+        /// </summary>
+        event EventHandler<IntegrationResultEventArgs> Responded;
 
         /// <summary>
         /// Find the specified filtered object

@@ -107,6 +107,11 @@ namespace SanteDB.DisconnectedClient.Configuration
         [XmlArray("forbidSync"), XmlArrayItem("add")]
         public List<SynchronizationForbidConfiguration> ForbiddenResouces { get; set; }
 
+        /// <summary>
+        /// Use patches instead of full submission
+        /// </summary>
+        [XmlElement("allowPatch"), JsonProperty("allowPatch")]
+        public bool UsePatches { get; set; }
     }
 
     /// <summary>

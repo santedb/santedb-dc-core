@@ -24,6 +24,7 @@ using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
@@ -66,6 +67,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         /// Progress has changed
         /// </summary>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+        /// <summary>
+        /// The server has responded to the request
+        /// </summary>
+        public event EventHandler<IntegrationResultEventArgs> Responded;
 
         // Cached credential
         private IPrincipal m_cachedCredential = null;
@@ -180,6 +186,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 this.m_tracer.TraceVerbose("Performing HDSI query ({0}):{1}", typeof(TModel).FullName, predicate);
 
                 var retVal = client.Query<TModel>(predicate, offset, count, queryId: options?.QueryId);
+                this.Responded?.Invoke(this, new IntegrationResultEventArgs(null, retVal));
                 //retVal?.Reconstitute();
                 return retVal;
             }
@@ -233,10 +240,12 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 if (retVal is Bundle)
                 {
                     (retVal as Bundle)?.Reconstitute();
-                    return (retVal as Bundle).Entry as TModel;
+                    retVal = (retVal as Bundle).Entry;
                 }
-                else
-                    return retVal as TModel;
+
+                this.Responded?.Invoke(this, new IntegrationResultEventArgs(null, retVal));
+
+                return retVal as TModel;
             }
             catch (TargetInvocationException e)
             {
@@ -288,6 +297,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                 if (iver != null)
                     this.UpdateToServerCopy(iver, data as IVersionedEntity);
+                this.Responded?.Invoke(this, new IntegrationResultEventArgs(data, iver as IdentifiedData));
             }
             catch (TargetInvocationException e)
             {
@@ -353,6 +363,10 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 var iver = method.Invoke(client, new object[] { data }) as IVersionedEntity;
                 if (iver != null)
                     this.UpdateToServerCopy(iver, data as IVersionedEntity);
+
+                // Indicate that the server has responded
+                this.Responded?.Invoke(this, new IntegrationResultEventArgs(data, iver as IdentifiedData));
+
             }
             catch (TargetInvocationException e)
             {
@@ -389,11 +403,14 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                 // Special case = Batch submit of data with an entry point
                 var submission = (data as Bundle)?.Entry ?? data;
-
+                var existing = submission;
+                
                 // Assign a uuid for this submission
                 if (data is Bundle && data.Key == null)
                     data.Key = Guid.NewGuid();
 
+                // TODO: In MDM mode on the server patching will def cause an issue as we don't process the location header sent back from the server
+                // we need to update the server to send back an appropriate location header and to fetch the local.
                 if (submission is Patch)
                 {
                     var patch = submission as Patch;
@@ -405,26 +422,13 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     var existingKey = patch.AppliesTo.Key;
                     // Get the object and then update
                     var idp = typeof(IDataPersistenceService<>).MakeGenericType(patch.AppliesTo.Type);
-                    var idpService = ApplicationContext.Current.GetService(idp);
-                    var getMethod = idp.GetRuntimeMethod("Get", new Type[] { typeof(Guid), typeof(Guid?), typeof(bool), typeof(IPrincipal) });
-                    var existing = getMethod.Invoke(idpService, new object[] { existingKey, null, true, this.m_cachedCredential }) as IdentifiedData;
+                    var idpService = ApplicationContext.Current.GetService(idp) as IDataPersistenceService;
+                    existing = idpService.Get(existingKey.Value) as IdentifiedData;
                     Guid newUuid = Guid.Empty;
 
                     try
                     {
-
                         newUuid = client.Patch(patch);
-
-                        // Update the server version key
-                        if (existing is IVersionedEntity &&
-                            (existing as IVersionedEntity)?.VersionKey != newUuid)
-                        {
-                            this.m_tracer.TraceVerbose("Patch successful - VersionId of {0} to {1}", existing, newUuid);
-                            (existing as IVersionedEntity).VersionKey = newUuid;
-                            var updateMethod = idp.GetRuntimeMethod("Update", new Type[] { getMethod.ReturnType, typeof(TransactionMode), typeof(IPrincipal) });
-                            updateMethod.Invoke(idpService, new object[] { existing, TransactionMode.Commit, this.m_cachedCredential });
-                        }
-
                     }
                     catch (WebException e)
                     {
@@ -475,14 +479,12 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                         }
                     }
 
-                    // Update the server version key
-                    if (existing is IVersionedEntity &&
-                        (existing as IVersionedEntity)?.VersionKey != newUuid)
+                    // Update the local version key to the server version key
+                    if (existing is IVersionedEntity iver)
                     {
                         this.m_tracer.TraceVerbose("Patch successful - VersionId of {0} to {1}", existing, newUuid);
-                        (existing as IVersionedEntity).VersionKey = newUuid;
-                        var updateMethod = idp.GetRuntimeMethod("Update", new Type[] { getMethod.ReturnType, typeof(TransactionMode), typeof(IPrincipal) });
-                        updateMethod.Invoke(idpService, new object[] { existing, TransactionMode.Commit, this.m_cachedCredential });
+                        iver.VersionKey = newUuid;
+                        idpService.Update(existing);
                     }
 
                 }
@@ -502,7 +504,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     var iver = method.Invoke(client, new object[] { submission }) as IVersionedEntity;
                     if (iver != null)
                         this.UpdateToServerCopy(iver, submission as IVersionedEntity);
+
+                    // Notify updated
+                    this.Responded?.Invoke(this, new IntegrationResultEventArgs(existing, iver as IdentifiedData));
                 }
+
             }
             catch (TargetInvocationException e)
             {
@@ -524,22 +530,10 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
             if (idpService != null)
             {
-                if (newData.Key.HasValue && submittedData.Key.HasValue)
-                {
-                    if (submittedData.Key == newData.Key) // Server did not redirect to MDM copy
-                    {
-                        idpService.Update(newData);
-                    }
-                    else
-                    { // Server rewrote our version so we have to 
-                        idpService.Obsolete(submittedData);
-                        idpService.Insert(newData);
-                    }
-                }
-                else
-                    idpService.Update(newData);
-
-
+                submittedData.VersionKey = newData.VersionKey;
+                submittedData.VersionSequence = newData.VersionSequence;
+                submittedData.PreviousVersionKey = newData.PreviousVersionKey;
+                idpService.Update(submittedData);
             }
         }
     }

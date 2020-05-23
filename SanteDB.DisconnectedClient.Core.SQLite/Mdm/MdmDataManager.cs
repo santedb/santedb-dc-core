@@ -106,7 +106,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// <summary>
         /// Gets the service name
         /// </summary>
-        public string ServiceName => "MDM Synchronization Correction Manager";
+        public string ServiceName => "MDM Synchronization Manager";
 
         /// <summary>
         /// Fired when the service is starting
@@ -136,13 +136,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
             {
                 var qms = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
                 if (qms != null)
-                {
                     qms.Inbound.Enqueuing += OnEnqueueInbound;
-                }
+
+                var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
+                //if (clinDi != null)
+                //    clinDi.Responded += ClinicalRepositoryResponded;
             };
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
+
 
         /// <summary>
         /// Inbound queue object has been queued, ensure that the MDM references are corrected for proper operation of the mobile device queue
@@ -205,6 +208,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                                 //entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
                                 (data as Bundle).Item.Add(local);
                             }
+
                             // Rewrite all relationships
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
                         }
@@ -245,7 +249,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// <summary>
         /// Rewrite all relationships on the specified data entry 
         /// </summary>
-        private void RewriteRelationships(IdentifiedData itm, Guid? from, Guid? to)
+        private void RewriteRelationships(IdentifiedData itm, Guid? localId, Guid? masterId)
         {
             foreach(var pi in itm.GetType().GetRuntimeProperties())
             {
@@ -253,11 +257,23 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                 if (existing is IList list)
                 {
                     foreach (var i in list)
-                        if (i is ISimpleAssociation association && association.SourceEntityKey == from)
-                            association.SourceEntityKey = to;
+                        if (i is ISimpleAssociation association && association.SourceEntityKey == localId)
+                            association.SourceEntityKey = masterId;
                 }
-                else if (existing is ISimpleAssociation association && association.SourceEntityKey == from)
-                    association.SourceEntityKey = to;
+                else if (existing is ISimpleAssociation association && association.SourceEntityKey == localId)
+                    association.SourceEntityKey = masterId;
+            }
+
+            // Now correct relationships in the DB that might be pointing at any of the locals
+            if(itm is Entity entity)
+            {
+                var entityRelation = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                foreach(var er in entityRelation.Query(o=>o.TargetEntityKey == localId, AuthenticationContext.SystemPrincipal))
+                {
+                    // Re-write the relationship to the master
+                    er.TargetEntityKey = masterId;
+                    entityRelation.Update(er, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                }
             }
         }
 

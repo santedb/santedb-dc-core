@@ -70,6 +70,7 @@ namespace SanteDB.DisconnectedClient.Interop.AMI
         /// Progress has changed
         /// </summary>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+        public event EventHandler<IntegrationResultEventArgs> Responded;
 
         /// <summary>
         /// Gets current credentials

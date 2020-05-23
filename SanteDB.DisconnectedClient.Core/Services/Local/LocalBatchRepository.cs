@@ -22,6 +22,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
@@ -138,13 +139,13 @@ namespace SanteDB.DisconnectedClient.Services.Local
             data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
             // Patch
-            if (old != null)
+            if (old != null && ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().UsePatches)
             {
                 //This can cause issues on the MDM handler, need to fix this first  before re-enabling it
-                //var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, data.Entry);
-                //if (diff != null)
-                //    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
-                //else
+                var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, data.Entry);
+                if (diff != null)
+                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
+                else
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
             }
             else

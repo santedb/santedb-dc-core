@@ -31,6 +31,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
@@ -355,10 +356,16 @@ namespace SanteDB.DisconnectedClient.Services.Local
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
-                    //var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
-                    //if (diff != null)
-                    //    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
-                    //else
+                    // Use patches
+                    if (ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().UsePatches)
+                    {
+                        var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, this.Get(data.Key.Value), "participation");
+                        if (diff != null)
+                            ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
+                        else
+                            ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
+                    }
+                    else
                         ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
 
 
