@@ -273,7 +273,7 @@ namespace SanteDB.Core.Data.QueryBuilder
                     if (!flatNames.Contains(o.Name))
                     {
                         flatNames.Add(o.Name);
-                        return $"{tablePrefix}{o.Table.TableName}.{o.Name} AS {o.Name}";
+                        return $"{tablePrefix}{o.Table.TableName}.{o.Name} AS \"{o.Name}\"";
                     }
                     else if (skipParentJoin)
                         return $"{tablePrefix}{rootCol.Table.TableName}.{rootCol.Name}";

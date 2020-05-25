@@ -29,6 +29,7 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using System;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
@@ -84,7 +85,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                         From = "SanteDB Team",
                         Flags = MailMessageFlags.None,
                         Subject = Strings.locale_welcomeMessageSubject,
-                        TimeStamp = DateTime.Now
+                        TimeStamp = DateTime.Now,
+                        RcptToXml = new System.Collections.Generic.List<Guid>()
+                        {
+                            Guid.Parse(AuthenticationContext.SystemUserSid)
+                        }
                     });
                 }
                 catch (Exception e)

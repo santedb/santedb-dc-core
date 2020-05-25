@@ -37,7 +37,11 @@
     <Company>SanteSuite Contributors</Company>
     <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
-  </PropertyGroup>  
+  </PropertyGroup>
+    
+  <ItemGroup>
+    <None Remove="Resources\icon.ico" />
+  </ItemGroup>  
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>           
@@ -226,6 +230,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\icon.ico" />
   </ItemGroup>
   <!-- <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /> -->
 </Project>

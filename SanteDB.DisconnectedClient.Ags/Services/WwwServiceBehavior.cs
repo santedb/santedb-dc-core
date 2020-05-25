@@ -46,6 +46,16 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         // Lock object
         private static object m_lockObject = new object();
         
+        /// <summary>
+        /// Get the icon for the SanteDB server
+        /// </summary>
+        public Stream GetIcon()
+        {
+            var ms = new MemoryStream();
+            typeof(WwwServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.icon.ico").CopyTo(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+            return ms;
+        }
 
         /// <summary>
         /// Get the asset

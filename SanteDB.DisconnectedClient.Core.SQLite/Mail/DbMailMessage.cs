@@ -18,6 +18,7 @@
  * Date: 2019-11-27
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Data.QueryBuilder.Attributes;
 using SanteDB.Core.Mail;
 using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient;
@@ -45,6 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         public DbMailMessage(MailMessage am)
         {
+
             this.TimeStamp = am.TimeStamp.DateTime;
             this.From = am.From;
             this.Subject = am.Subject;
@@ -53,6 +55,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
             this.CreatedBy = AuthenticationContext.Current.Principal?.Identity.Name ?? "SYSTEM";
             this.Flags = (int)am.Flags;
             this.Id = am.Key.HasValue ? am.Key.Value.ToByteArray() : Guid.NewGuid().ToByteArray();
+            this.CreationTime = DateTime.Now;
         }
 
         /// <summary>
@@ -63,8 +66,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
             return new MailMessage(this.From, this.To, this.Subject, this.Body, (MailMessageFlags)this.Flags)
             {
                 Key = new Guid(this.Id),
-                CreationTime = this.TimeStamp.GetValueOrDefault(),
-                UpdatedTime = this.TimeStamp
+                CreationTime = new DateTimeOffset(this.CreationTime),
+                TimeStamp = new DateTimeOffset(this.TimeStamp.GetValueOrDefault())
             };
         }
 
@@ -73,6 +76,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// </summary>
         [Column("key"), PrimaryKey, MaxLength(16)]
         public byte[] Id { get; set; }
+
+        /// <summary>
+        /// The time that the message was created
+        /// </summary>
+        [Column("creationTime")]
+        public DateTime CreationTime { get; set; }
 
         /// <summary>
         /// Gets or sets the time
@@ -95,13 +104,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <summary>
         /// Identifies the to
         /// </summary>
-        [Column("to")]
+        [Column("addrTo")]
         public String To { get; set; }
 
         /// <summary>
         /// Gets or sets the "from" subject if it is a human based message
         /// </summary>
-        [Column("from")]
+        [Column("addrFrom")]
         public string From { get; set; }
 
         /// <summary>
@@ -116,6 +125,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         [Column("body")]
         public string Body { get; set; }
 
+        /// <summary>
+        /// The intended recipient of this message
+        /// </summary>
+        [Column("rcptTo")]
+        public byte[] Recipient { get; set; }
     }
 
 }

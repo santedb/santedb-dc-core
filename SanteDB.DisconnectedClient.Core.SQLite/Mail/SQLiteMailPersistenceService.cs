@@ -30,6 +30,8 @@ using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Mail.Hacks;
+using SQLite.Net;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -78,7 +80,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         // Static CTOR
         static SQLiteMailPersistenceService()
         {
-            m_builder = new QueryBuilder(m_mapper);
+            m_builder = new QueryBuilder(m_mapper, new RecipientQueryHack());
         }
 
         /// <summary>
@@ -138,19 +140,26 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                 using (conn.LockConnection())
                 {
                     if (!data.Key.HasValue) data.Key = Guid.NewGuid();
-                    var dbData = new DbMailMessage(data);
 
-                    if (String.IsNullOrEmpty(dbData.CreatedBy))
-                        dbData.CreatedBy = authContext?.Identity.Name ?? AuthenticationContext.Current.Principal?.Identity?.Name;
-
-                    // Create table if not exists
-                    if (!conn.Connection.TableMappings.Any(o => o.MappedType == typeof(DbMailMessage)))
+                    // Insert into each rcpt
+                    foreach (var itm in data.RcptToXml.Distinct())
                     {
-                        conn.Connection.CreateTable<DbMailMessage>();
+                        var dbData = new DbMailMessage(data);
+
+                        // Route to proper RCPT TO
+                        dbData.Recipient = itm.ToByteArray();
+
+                        if (String.IsNullOrEmpty(dbData.CreatedBy))
+                            dbData.CreatedBy = authContext?.Identity.Name ?? AuthenticationContext.Current.Principal?.Identity?.Name;
+
+                        // Create table if not exists
+                        if (!conn.Connection.TableMappings.Any(o => o.MappedType == typeof(DbMailMessage)))
+                        {
+                            conn.Connection.CreateTable<DbMailMessage>();
+                        }
+
+                        conn.Connection.Insert(dbData);
                     }
-
-                    conn.Connection.Insert(dbData);
-
                     return data;
                 }
             }
@@ -223,32 +232,34 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                 var conn = this.CreateReadonlyConnection();
                 using (conn.LockConnection())
                 {
+
                     var dbPredicate = m_mapper.MapModelExpression<MailMessage, DbMailMessage, bool>(query, false);
 
+                    IEnumerable<DbMailMessage> results = null;
                     if (dbPredicate == null)
                     {
-                        this.m_tracer.TraceError("Cannot map query to DB");
-                        totalResults = 0;
-                        return null;
+                        var sqlStatement = m_builder.CreateQuery(query, orderBy).Build();
+                        results = conn.Connection.DeferredQuery<DbMailMessage>(sqlStatement.SQL, sqlStatement.Arguments.ToArray());
                     }
                     else
                     {
-                        var results = conn.Connection.Table<DbMailMessage>().Where(dbPredicate);
-                        totalResults = results.Count();
+                        var dbResults = conn.Connection.Table<DbMailMessage>().Where(dbPredicate);
                         if (orderBy != null && orderBy.Length > 0)
                         {
                             foreach (var itm in orderBy)
                                 if (itm.SortOrder == SortOrderType.OrderBy)
-                                    results = results.OrderBy(m_mapper.MapModelExpression<MailMessage, DbMailMessage, dynamic>(itm.SortProperty));
+                                    dbResults = dbResults.OrderBy(m_mapper.MapModelExpression<MailMessage, DbMailMessage, dynamic>(itm.SortProperty));
                                 else
-                                    results = results.OrderByDescending(m_mapper.MapModelExpression<MailMessage, DbMailMessage, dynamic>(itm.SortProperty));
+                                    dbResults = dbResults.OrderByDescending(m_mapper.MapModelExpression<MailMessage, DbMailMessage, dynamic>(itm.SortProperty));
                         }
                         else
-                            results = results.OrderByDescending(o => o.TimeStamp);
-
-                        
-                        return results.Skip(offset).Take(count ?? 100).ToList().Select(o => o.ToAlert());
+                            dbResults = dbResults.OrderByDescending(o => o.TimeStamp);
+                        results = dbResults;
                     }
+
+                    totalResults = results.Count();
+                   
+                    return results.Skip(offset).Take(count ?? 100).ToList().Select(o => o.ToAlert());
                 }
             }
             catch (Exception e)
@@ -312,6 +323,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
             return this.Update((MailMessage)data);
         }
 
-        
+
     }
 }

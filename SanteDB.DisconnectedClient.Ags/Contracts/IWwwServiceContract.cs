@@ -31,6 +31,13 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
     {
 
         /// <summary>
+        /// Get the icon
+        /// </summary>
+        /// <returns></returns>
+        [Get("/favicon.ico")]
+        Stream GetIcon();
+
+        /// <summary>
         /// Get specified object
         /// </summary>
         [Get("*")]
