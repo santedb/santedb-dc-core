@@ -635,7 +635,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalMailService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(HdsiIntegrationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiIntegrationService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationJob), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalJobManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
