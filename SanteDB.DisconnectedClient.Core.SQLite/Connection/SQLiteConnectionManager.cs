@@ -31,6 +31,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
+using SanteDB.DisconnectedClient.Configuration.Data;
+using System.Reflection;
+using SQLite.Net.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -405,6 +410,89 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             this.IsRunning = false;
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
+        }
+
+        /// <summary>
+        /// Perform a backup of the databases to another location 
+        /// </summary>
+        /// <param name="passkey">The passkey to set on the backed up databases</param>
+        /// <returns>The output folder where backed up files can be located</returns>
+        public String Backup(String passkey)
+        {
+            // Let other threads know they can't open a r/o connection for each db
+            try
+            {
+
+                var backupDir = Path.Combine(Path.GetTempPath(), "bktmp");
+                if (!Directory.Exists(backupDir))
+                    Directory.CreateDirectory(backupDir);
+
+                ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
+                var connectionStrings = (ApplicationContext.Current.GetService<IConfigurationManager>()).GetSection<DcDataConfigurationSection>().ConnectionString;
+                for (var i = 0; i < connectionStrings.Count; i++)
+                {
+                    this.m_tracer.TraceInfo("Will backup {0} with passkey {1}", connectionStrings[i].GetComponent("dbfile"), !String.IsNullOrEmpty(passkey));
+                    if (!File.Exists(connectionStrings[i].GetComponent("dbfile")))
+                        continue;
+                    var conn = this.GetConnection(connectionStrings[i]);
+                    using (conn.Lock())
+                    {
+                        ApplicationContext.Current.SetProgress(Strings.locale_backup, (float)i / connectionStrings.Count);
+
+                        var backupFile = Path.Combine(backupDir, Path.GetFileName(conn.DatabasePath));
+                        if (File.Exists(backupFile))
+                            File.Delete(backupFile);
+                        // Create empty database 
+                        this.m_tracer.TraceVerbose("Creating temporary copy of database at {0}...", backupFile);
+
+                        // Create table
+                        using (var bakConn = new SQLiteConnection(platform, backupFile, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.FullMutex, key: String.IsNullOrEmpty(passkey) ? null : System.Text.Encoding.UTF8.GetBytes(passkey)))
+                        {
+                            bakConn.Execute("PRAGMA synchronous = 1");
+
+                            foreach (var tbl in conn.Query<SysInfoStruct>("SELECT name FROM sqlite_master WHERE type='table'"))
+                                foreach (var map in typeof(SQLiteConnectionManager).Assembly.GetTypes().Where(o => o.GetCustomAttribute<TableAttribute>(false)?.Name == tbl.Name))
+                                {
+                                    this.m_tracer.TraceInfo("Creating table structure {0}...", tbl.Name);
+                                    bakConn.CreateTable(map);
+                                }
+                            bakConn.Commit();
+                        }
+
+                        try
+                        {
+                            // Copy the tables to backup
+                            if (String.IsNullOrEmpty(passkey))
+                                conn.Execute($"ATTACH DATABASE '{backupFile}' AS bak_db KEY ''");
+                            else
+                                conn.Execute($"ATTACH DATABASE '{backupFile}' AS bak_db KEY '{passkey}'");
+
+                            foreach (var tbl in conn.Query<SysInfoStruct>("SELECT name FROM sqlite_master WHERE type='table'"))
+                                foreach (var map in typeof(SQLiteConnectionManager).Assembly.GetTypes().Where(o => o.GetCustomAttribute<TableAttribute>(false)?.Name == tbl.Name))
+                                {
+                                    try
+                                    {
+                                        this.m_tracer.TraceInfo("Backing up table {0}...", tbl.Name);
+                                        conn.Execute($"INSERT OR IGNORE INTO bak_db.{tbl.Name} SELECT * FROM {tbl.Name}");
+                                    }
+                                    catch(Exception e)
+                                    {
+                                        this.m_tracer.TraceWarning("Could not backup {0} - {1}", tbl.Name, e);
+                                    }
+                                }
+                        }
+                        finally
+                        {
+                            conn.Execute("DETACH DATABASE bak_db");
+                        }
+
+                    }
+                }
+                return backupDir;
+            }
+            finally
+            {
+            }
         }
 
         /// <summary>

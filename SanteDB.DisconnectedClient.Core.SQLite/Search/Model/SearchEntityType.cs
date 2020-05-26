@@ -25,7 +25,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search.Model
     /// <summary>
     /// Search entity master list of types
     /// </summary>
-    [Table("entity")]
+    [Table("search_entity")]
     public class SearchEntityType
     {
 

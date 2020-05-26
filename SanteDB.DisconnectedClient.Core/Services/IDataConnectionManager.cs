@@ -30,5 +30,12 @@ namespace SanteDB.DisconnectedClient.Services
         /// Instructs the data connection manager to compact data
         /// </summary>
         void Compact();
+
+        /// <summary>
+        /// Copy the database to another location for backup purposes
+        /// </summary>
+        /// <param name="passkey">The passkey to use to encrypt the backup</param>
+        /// <returns>The location where backup can be found</returns>
+        string Backup(string passkey);
     }
 }

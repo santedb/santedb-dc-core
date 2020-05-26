@@ -138,7 +138,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                 if (qms != null)
                     qms.Inbound.Enqueuing += OnEnqueueInbound;
 
-                var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
+                //var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
                 //if (clinDi != null)
                 //    clinDi.Responded += ClinicalRepositoryResponded;
             };

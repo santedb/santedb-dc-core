@@ -37,13 +37,17 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
+using SanteDB.Core.Services;
+using SanteDB.Core;
+using SanteDB.Core.Jobs;
+using System.Collections.Generic;
 
 namespace SanteDB.DisconnectedClient.Backup
 {
     /// <summary>
     /// Xamarin backup service
     /// </summary>
-    public class DefaultBackupService : IBackupService
+    public class DefaultBackupService : IBackupService, IDaemonService
     {
 
         /// <summary>
@@ -51,8 +55,30 @@ namespace SanteDB.DisconnectedClient.Backup
         /// </summary>
         public String ServiceName => "Default Configuration Backup Service";
 
+        /// <summary>
+        /// True if the backup service is running
+        /// </summary>
+        public bool IsRunning => false;
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupService));
+
+        /// <summary>
+        /// Fired when the service is starting
+        /// </summary>
+        public event EventHandler Starting;
+        /// <summary>
+        /// Fired when the service has started
+        /// </summary>
+        public event EventHandler Started;
+        /// <summary>
+        /// Fired when the service is stopping
+        /// </summary>
+        public event EventHandler Stopping;
+        /// <summary>
+        /// Fired when the service has stopped
+        /// </summary>
+        public event EventHandler Stopped;
 
         /// <summary>
         /// Get backup directory
@@ -63,10 +89,12 @@ namespace SanteDB.DisconnectedClient.Backup
             switch (media)
             {
                 case BackupMedia.Private:
-                    retVal = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    retVal = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB","backup");
+                    if (!Directory.Exists(retVal))
+                        Directory.CreateDirectory(retVal);
                     break;
                 case BackupMedia.Public:
-                    retVal =  Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                    retVal = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                     // Sometimes my documents isn't available
                     if (String.IsNullOrEmpty(retVal))
                         retVal = Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments);
@@ -103,9 +131,17 @@ namespace SanteDB.DisconnectedClient.Backup
             // Add files
             foreach (var itm in Directory.GetFiles(dir))
             {
-                this.m_tracer.TraceVerbose("Backing up {0}", itm);
-                archive.Write(itm.Replace(rootDirectory, ""), File.OpenRead(itm), DateTime.Now);
+                try
+                {
+                    this.m_tracer.TraceVerbose("Backing up {0}", itm);
+                    archive.Write(itm.Replace(rootDirectory, ""), File.OpenRead(itm), DateTime.Now);
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Could not add file {0} to backup : {1}", itm, e);
+                }
             }
+
         }
 
         /// <summary>
@@ -120,7 +156,7 @@ namespace SanteDB.DisconnectedClient.Backup
 
             // Get the output medium
             var directoryName = this.GetBackupDirectory(media);
-            string fileName = Path.Combine(directoryName, $"sdbdc-{DateTime.Now.ToString("yyyyMMddHHmm")}.sdb.tar");
+            string fileName = Path.Combine(directoryName, $"sdbdc-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm")}.sdb.tar");
 
             // Confirm if the user really really wants to backup
             if (String.IsNullOrEmpty(password) &&
@@ -137,46 +173,54 @@ namespace SanteDB.DisconnectedClient.Backup
                 ApplicationContext.Current?.SetProgress(Strings.locale_backup, 0.25f);
                 // Backup folders first
                 var sourceDirectory = ApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory;
-
-                using (var fs = File.Create(fileName))
-                using (var writer = new SharpCompress.Writers.Tar.TarWriter(fs, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true)))
+                try
                 {
-                    this.BackupDirectory(writer, sourceDirectory, sourceDirectory);
-
-                    var appInfo = new DiagnosticReport()
+                    using (var fs = File.Create(fileName))
+                    using (var writer = new SharpCompress.Writers.Tar.TarWriter(fs, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true)))
                     {
-                        ApplicationInfo = new DiagnosticApplicationInfo(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(o => o.DefinedTypes.Any(t => t.Name == "Program" || t.Name == "SplashActivity")) ?? typeof(SanteDBConfiguration).Assembly)
-                    };
+                        this.BackupDirectory(writer, sourceDirectory, sourceDirectory);
 
-                    // Output appInfo
-                    using (var ms = new MemoryStream())
-                    {
-                        XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(appInfo.GetType());
-                        xsz.Serialize(ms, appInfo);
-                        ms.Flush();
-                        ms.Seek(0, SeekOrigin.Begin);
-                        writer.Write(".appinfo.xml", ms, DateTime.Now);
+                        var appInfo = new DiagnosticReport()
+                        {
+                            ApplicationInfo = new DiagnosticApplicationInfo(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(o => o.DefinedTypes.Any(t => t.Name == "Program" || t.Name == "SplashActivity")) ?? typeof(SanteDBConfiguration).Assembly)
+                        };
+
+                        // Output appInfo
+                        using (var ms = new MemoryStream())
+                        {
+                            XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(appInfo.GetType());
+                            xsz.Serialize(ms, appInfo);
+                            ms.Flush();
+                            ms.Seek(0, SeekOrigin.Begin);
+                            writer.Write(".appinfo.xml", ms, DateTime.Now);
+                        }
+
+                        // Output declaration statement
+                        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes($"User {(AuthenticationContext.Current?.Principal?.Identity?.Name ?? "SYSTEM")} created this backup on {DateTime.Now}. The end user was asked to confirm this decision to backup and acknolwedges all responsibilities for guarding this file.")))
+                            writer.Write("DISCLAIMER.TXT", ms, DateTime.Now);
+
+                        // Output databases
+                        var dcc = ApplicationServiceContext.Current.GetService<IDataConnectionManager>();
+                        var dbBackupLocation = dcc.Backup(password);
+                        this.BackupDirectory(writer, dbBackupLocation, Path.GetDirectoryName(dbBackupLocation));
+                        try
+                        {
+                            Directory.Delete(dbBackupLocation, true);
+                        }
+                        catch { }
                     }
 
-                    // Output declaration statement
-                    using (var ms = new MemoryStream(Encoding.UTF8.GetBytes($"User {(AuthenticationContext.Current?.Principal?.Identity?.Name ?? "SYSTEM")} created this backup on {DateTime.Now}. The end user was asked to confirm this decision to backup and acknolwedges all responsibilities for guarding this file.")))
-                        writer.Write("DISCLAIMER.TXT", ms, DateTime.Now);
-                }
-
-                this.m_tracer.TraceInfo("Beginning compression {0}..", fileName);
-                using (var fs = File.OpenRead(fileName))
-                using (var gzs = new GZipStream(File.Create(fileName + ".gz"), CompressionMode.Compress))
-                {
-                    int br = 4096;
-                    byte[] buffer = new byte[br];
-                    while (br == 4096)
+                    this.m_tracer.TraceInfo("Beginning compression {0}..", fileName);
+                    using (var fs = File.OpenRead(fileName))
+                    using (var gzs = new GZipStream(File.Create(fileName + ".gz"), CompressionMode.Compress))
                     {
-                        br = fs.Read(buffer, 0, 4096);
-                        gzs.Write(buffer, 0, br);
-                        ApplicationContext.Current?.SetProgress(Strings.locale_backup_compressing, (float)fs.Position / (float)fs.Length * 0.5f + 0.5f);
+                        fs.CopyTo(gzs);
                     }
                 }
-                File.Delete(fileName);
+                finally
+                {
+                    File.Delete(fileName);
+                }
             }
             catch (Exception ex)
             {
@@ -188,21 +232,30 @@ namespace SanteDB.DisconnectedClient.Backup
         /// <summary>
         /// Restore the specified data
         /// </summary>
-        public void Restore(BackupMedia media, String password = null)
+        public void Restore(BackupMedia media, String backupDescriptor = null, String password = null)
         {
             // Get the last backup
-            var lastBackup = this.GetLastBackup(media);
+            String backupFile = null;
+            if (String.IsNullOrEmpty(backupDescriptor))
+                backupFile = this.GetLastBackup(media);
+            else
+            {
+                var directoryName = this.GetBackupDirectory(media);
+                backupFile = Path.ChangeExtension(Path.Combine(directoryName, backupDescriptor), ".sdb.tar.gz");
+                if (!File.Exists(backupFile))
+                    throw new FileNotFoundException($"Cannot find backup with descriptor {backupDescriptor}");
+            }
 
-            if (!ApplicationContext.Current.Confirm(String.Format(Strings.locale_backup_restore_confirm, new FileInfo(lastBackup).CreationTime.ToString("ddd MMM dd, yyyy"))))
+            if (!ApplicationContext.Current.Confirm(String.Format(Strings.locale_backup_restore_confirm, new FileInfo(backupFile).CreationTime.ToString("ddd MMM dd, yyyy"))))
                 return;
 
             try
             {
-                this.m_tracer.TraceInfo("Beginning restore of {0}...", lastBackup);
+                this.m_tracer.TraceInfo("Beginning restore of {0}...", backupFile);
                 ApplicationContext.Current?.SetProgress(Strings.locale_backup_restore, 0.0f);
                 var sourceDirectory = ApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory;
 
-                using (var fs = File.OpenRead(lastBackup))
+                using (var fs = File.OpenRead(backupFile))
                 using (var gzs = new GZipStream(fs, CompressionMode.Decompress))
                 using (var tr = TarReader.Open(gzs))
                 {
@@ -225,7 +278,7 @@ namespace SanteDB.DisconnectedClient.Backup
             }
             catch (Exception ex)
             {
-                this.m_tracer.TraceError("Error restoring backup {0}: {1}", lastBackup, ex);
+                this.m_tracer.TraceError("Error restoring backup {0}: {1}", backupFile, ex);
                 throw;
             }
         }
@@ -236,6 +289,68 @@ namespace SanteDB.DisconnectedClient.Backup
         public bool HasBackup(BackupMedia media)
         {
             return this.GetLastBackup(media) != null;
+        }
+
+        /// <summary>
+        /// Start the backup service
+        /// </summary>
+        public bool Start()
+        {
+            this.Starting?.Invoke(this, EventArgs.Empty);
+
+            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DefaultBackupJob(), TimeSpan.MaxValue);
+            this.Started?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        /// <summary>
+        /// Stop the service
+        /// </summary>
+        /// <returns></returns>
+        public bool Stop()
+        {
+            this.Stopping?.Invoke(this, EventArgs.Empty);
+            this.Stopped?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        /// <summary>
+        /// Get the list of backup descriptors
+        /// </summary>
+        public IEnumerable<string> GetBackups(BackupMedia media)
+        {
+            var directoryName = this.GetBackupDirectory(media);
+            this.m_tracer.TraceInfo("Getting {0} for backups...", directoryName);
+            return Directory.GetFiles(directoryName, "*.sdb.tar.gz").OrderByDescending(o => new FileInfo(o).CreationTime).Select(o => Path.GetFileNameWithoutExtension(o));
+        }
+
+        /// <summary>
+        /// Rremove t
+        /// </summary>
+        /// <param name="media"></param>
+        /// <param name="backupDescriptor"></param>
+        public void RemoveBackup(BackupMedia media, string backupDescriptor)
+        {
+            // Make a determination that the user is allowed to perform this action
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, PermissionPolicyIdentifiers.ExportClinicalData).Demand();
+
+            var directoryName = this.GetBackupDirectory(media);
+            this.m_tracer.TraceInfo("Removing backup {0}...", backupDescriptor);
+
+            var expectedFile = Path.ChangeExtension(Path.Combine(directoryName, backupDescriptor), ".tar.gz");
+            if (!File.Exists(expectedFile))
+                throw new FileNotFoundException($"Cannot find backup with descriptor {backupDescriptor}");
+            else
+                try
+                {
+                    File.Delete(expectedFile);
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error removing backup descriptor {0}", backupDescriptor);
+                    throw new Exception($"Error removing backup descriptor {backupDescriptor}");
+                }
         }
     }
 }

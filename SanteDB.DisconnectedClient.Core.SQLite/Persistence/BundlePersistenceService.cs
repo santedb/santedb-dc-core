@@ -35,6 +35,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Principal;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -136,9 +137,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                                 // Copy copy!!!
                                 int i = 0;
-                                foreach (var tbl in columnMapping)
+                                foreach (var tbl in memConnection.Query<SysInfoStruct>("SELECT name FROM sqlite_master WHERE type='table'"))
                                 {
-                                    memConnection.Execute($"INSERT OR REPLACE INTO file_db.{tbl.TableName} SELECT * FROM {tbl.TableName}");
+                                    memConnection.Execute($"INSERT OR REPLACE INTO file_db.{tbl.Name} SELECT * FROM {tbl.Name}");
                                     ApplicationContext.Current.SetProgress(Strings.locale_committing, (float)i++ / columnMapping.Count);
 
                                 }

@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 
 namespace SanteDB.DisconnectedClient.Services
 {
@@ -46,11 +47,21 @@ namespace SanteDB.DisconnectedClient.Services
         /// <summary>
         /// Restore from media
         /// </summary>
-        void Restore(BackupMedia media, String password = null);
+        void Restore(BackupMedia media, String backupDescriptor = null, String password = null);
 
         /// <summary>
         /// Has backup on the specified media
         /// </summary>
         bool HasBackup(BackupMedia media);
+
+        /// <summary>
+        /// Gets the backup descriptors for the specified media
+        /// </summary>
+        IEnumerable<String> GetBackups(BackupMedia media);
+
+        /// <summary>
+        /// Remove a backup
+        /// </summary>
+        void RemoveBackup(BackupMedia media, String backupDescriptor);
     }
 }
