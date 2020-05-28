@@ -35,6 +35,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using SanteDB.Core;
 
 namespace SanteDB.DisconnectedClient.Synchronization
 {
@@ -124,23 +125,34 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
             this.m_networkInfoService.NetworkStatusChanged += (o, e) => this.Pull(SynchronizationPullTriggerType.OnNetworkChange);
 
-            this.m_tracer.TraceInfo("Performing OnStart trigger pull...");
-            this.Pull(SynchronizationPullTriggerType.OnStart);
-
-            // Polling
-            if (this.m_configuration.SynchronizationResources.Any(o => (o.Triggers & SynchronizationPullTriggerType.PeriodicPoll) != 0) &&
-                this.m_configuration.PollInterval != default(TimeSpan))
+            ApplicationServiceContext.Current.Started += (xo, xe) =>
             {
-                Action<Object> pollFn = null;
-                pollFn = _ =>
+                try
                 {
-                    this.Pull(SynchronizationPullTriggerType.PeriodicPoll);
-                    ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.m_configuration.PollInterval, pollFn, null);
+                    this.m_tracer.TraceInfo("Performing OnStart trigger pull...");
+                    this.Pull(SynchronizationPullTriggerType.OnStart);
 
-                };
-                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.m_configuration.PollInterval, pollFn, null);
-            }
-            this.Started?.Invoke(this, EventArgs.Empty);
+                    // Polling
+                    if (this.m_configuration.SynchronizationResources.Any(o => (o.Triggers & SynchronizationPullTriggerType.PeriodicPoll) != 0) &&
+                        this.m_configuration.PollInterval != default(TimeSpan))
+                    {
+                        Action<Object> pollFn = null;
+                        pollFn = _ =>
+                        {
+                            this.Pull(SynchronizationPullTriggerType.PeriodicPoll);
+                            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.m_configuration.PollInterval, pollFn, null);
+
+                        };
+                        ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.m_configuration.PollInterval, pollFn, null);
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error starting remote sync service: {0}");
+                }
+            };
+
+                this.Started?.Invoke(this, EventArgs.Empty);
 
             return true;
 
@@ -398,7 +410,12 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
                     // Fire the pull event
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), retVal));
-                    this.m_errorTickle = false;
+
+                    if (this.m_errorTickle)
+                    {
+                        this.m_errorTickle = false;
+                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_syncRestored));
+                    }
 
                     return retVal;
                 }

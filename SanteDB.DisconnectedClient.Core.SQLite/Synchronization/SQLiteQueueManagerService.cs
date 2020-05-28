@@ -41,6 +41,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using SanteDB.Core;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -56,6 +57,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// </summary>
         public String ServiceName => "SQLite Queue Manager";
 
+        // Error tickle has been rai
+        private bool m_errorTickle = false;
         private Object m_inboundLock = new object();
         private Object m_outboundLock = new object();
         private Object m_adminLock = new object();
@@ -489,15 +492,41 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                             SynchronizationQueue.Outbound.UpdateRaw(syncItm);
                         }
                     }
-                    catch (SecurityException) { }
-                    catch (ZlibException) { }
-                    catch (XmlException) { }
+                    catch (SecurityException e) {
+                        if(!this.m_errorTickle)
+                        {
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, e.GetType().Name)));
+                            this.m_errorTickle = true;
+                        }
+                        this.m_tracer.TraceError("Error upload data to central server: {0}", e);
+                    }
+                    catch (ZlibException e) {
+                        if (!this.m_errorTickle)
+                        {
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, e.GetType().Name)));
+                            this.m_errorTickle = true;
+                        }
+                        this.m_tracer.TraceError("Error uploading data to central server: {0}", e);
+                    }
+                    catch (XmlException e) {
+                        if (!this.m_errorTickle)
+                        {
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, e.GetType().Name)));
+                            this.m_errorTickle = true;
+                        }
+                        this.m_tracer.TraceError("Error uploading data to central server: {0}", e);
+                    }
                     catch (Exception ex)
                     {
                         this.m_tracer.TraceError("Error sending object to IMS: {0}", ex);
                         //this.CreateUserAlert(Strings.locale_syncErrorSubject, Strings.locale_syncErrorBody, ex, dpe);
                         SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                         SynchronizationQueue.Outbound.DequeueRaw();
+                        if (!this.m_errorTickle)
+                        {
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, ex.GetType().Name)));
+                            this.m_errorTickle = true;
+                        }
 
                         throw;
                     }

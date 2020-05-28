@@ -23,7 +23,9 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,6 +47,8 @@ namespace SanteDB.DisconnectedClient.Security
 
         // Trace logging
         private Tracer m_tracer = Tracer.GetTracer(typeof(SystemPolicySynchronizationDaemon));
+        // SErvice tickle
+        private bool m_serviceTickle = false;
 
         /// <summary>
         /// True if this service is running
@@ -92,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Security
 
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
 
-                var systemRoles = new String[]{ "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS" };
+                var systemRoles = new String[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS" };
 
                 // Synchronize the groups
                 foreach (var rol in localRp.GetAllRoles().Union(systemRoles))
@@ -109,15 +113,26 @@ namespace SanteDB.DisconnectedClient.Security
                     foreach (var pol in activePolicies)
                         if (localPip.GetPolicy(pol.Policy.Oid) == null)
                             localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
-                    
+
                     // Assign policies
                     foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
                         localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
 
                 }
+
+                if(this.m_serviceTickle)
+                {
+                    this.m_serviceTickle = false;
+                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_syncRestored));
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
+                if (!this.m_serviceTickle)
+                {
+                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", "Security Policy")));
+                    this.m_serviceTickle = true;
+                }
                 this.m_tracer.TraceWarning("Could not refresh system policies: {0}", e);
             }
             var pollInterval = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().PollInterval;

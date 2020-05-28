@@ -11,8 +11,8 @@
 namespace SanteDB.DisconnectedClient.i18n {
     using System;
     using System.Reflection;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -24,15 +24,15 @@ namespace SanteDB.DisconnectedClient.i18n {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Strings {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Strings() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.i18n {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -60,7 +60,7 @@ namespace SanteDB.DisconnectedClient.i18n {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server has detected a change conflict on an object you&apos;re attempting to update..
         /// </summary>
@@ -69,7 +69,7 @@ namespace SanteDB.DisconnectedClient.i18n {
                 return ResourceManager.GetString("Conflict", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server has a newer version of the object you&apos;re trying to update.
         /// </summary>
@@ -78,7 +78,45 @@ namespace SanteDB.DisconnectedClient.i18n {
                 return ResourceManager.GetString("DBPE002", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        /// Local sync auth error
+        /// </summary>
+        public static string locale_syncAuthError
+        {
+            get
+            {
+                return ResourceManager.GetString("locale_syncAuthError", resourceCulture);
+
+            }
+        }
+
+        public static string locale_updateInstalled
+        {
+            get
+            {
+                return ResourceManager.GetString("locale_updateInstalled", resourceCulture);
+            }
+        }
+
+        public static string locale_updateCheckFailed
+        {
+            get
+            {
+                return ResourceManager.GetString("locale_updateCheckFailed", resourceCulture);
+            }
+        }
+        /// <summary>
+        /// Local sync auth error
+        /// </summary>
+        public static string locale_syncUploadError
+        {
+            get
+            {
+                return ResourceManager.GetString("locale_syncUploadError", resourceCulture);
+
+            }
+        }
         /// <summary>
         ///   Looks up a localized string similar to The care plan service is already calculating your facility plan....
         /// </summary>
@@ -366,7 +404,18 @@ namespace SanteDB.DisconnectedClient.i18n {
                 return ResourceManager.GetString("locale_accountLocked", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account is locked - Please try again in a few minutes.
+        /// </summary>
+        public static string locale_syncRestored
+        {
+            get
+            {
+                return ResourceManager.GetString("locale_syncRestored", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Account was deleted - Please contact your system administrator.
         /// </summary>

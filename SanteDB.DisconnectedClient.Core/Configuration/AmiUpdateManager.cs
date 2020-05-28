@@ -65,6 +65,9 @@ namespace SanteDB.DisconnectedClient.Configuration
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(AmiUpdateManager));
 
+        // Error tickle
+        private bool m_errorTickle = false;
+
         // Start events
         public event EventHandler Starting;
         public event EventHandler Started;
@@ -160,6 +163,8 @@ namespace SanteDB.DisconnectedClient.Configuration
                             var package = AppletPackage.Load(ms);
                             this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
                             ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, String.Format(Strings.locale_updateInstalled, package.Meta.Id, package.Meta.Version)));
+
                             // ApplicationContext.Current.Exit(); // restart
                         }
                     else
@@ -169,6 +174,8 @@ namespace SanteDB.DisconnectedClient.Configuration
                             var package = AppletPackage.Load(ms);
                             this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
                             ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, String.Format(Strings.locale_updateInstalled, package.Meta.Id, package.Meta.Version)));
+
                             // ApplicationContext.Current.Exit(); // restart
                         }
                     }
@@ -224,6 +231,11 @@ namespace SanteDB.DisconnectedClient.Configuration
                 }
                 catch (Exception ex)
                 {
+                    if (!this.m_errorTickle)
+                    {
+                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_updateCheckFailed, ex.GetType().Name)));
+                        this.m_errorTickle = true;
+                    }
                     this.m_tracer.TraceError("Error checking for updates: {0}", ex.Message);
                 }
                 this.m_checkedForUpdates = true;

@@ -52,6 +52,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public String ServiceName => "AMI Remote Policy Information Service";
 
+        
         /// <summary>
         /// Remote policies only
         /// </summary>

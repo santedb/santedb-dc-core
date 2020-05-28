@@ -401,4 +401,22 @@ Sincerely,
   <data name="locale_authenticationFailure" xml:space="preserve">
     <value>Authentication Failure</value>
   </data>
+  <data name="locale_syncRestored" xml:space="preserve">
+    <value>Remote download functionality has been restored!</value>
+  </data>
+  <data name="locale_syncAuthError" xml:space="preserve">
+    <value>Your gateway cannot authenticate against the central server. Outbound items will be held until this can be resolved.</value>
+  </data>
+  <data name="local_syncUploadError" xml:space="preserve">
+    <value>Uploads to the central server are temporary not working due to a {0} error.</value>
+  </data>
+  <data name="locale_syncUploadError" xml:space="preserve">
+    <value>Uploads to the remote server are not working due to a {0} error. Try again later.</value>
+  </data>
+  <data name="locale_updateCheckFailed" xml:space="preserve">
+    <value>Could not check for software updates due to {0} error</value>
+  </data>
+  <data name="locale_updateInstalled" xml:space="preserve">
+    <value>Package {0} was updated to version {1}</value>
+  </data>
 </root>
