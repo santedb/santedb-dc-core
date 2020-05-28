@@ -49,6 +49,8 @@ namespace SanteDB.DisconnectedClient.Synchronization
         /// </summary>
         public String ServiceName => "Remote Data Synchronization Service";
 
+        // Error tickle has been rai
+        private bool m_errorTickle = false;
         // Lock
         private object m_lock = new object();
         // Get the tracer
@@ -396,6 +398,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
                     // Fire the pull event
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), retVal));
+                    this.m_errorTickle = false;
 
                     return retVal;
                 }
@@ -403,8 +406,11 @@ namespace SanteDB.DisconnectedClient.Synchronization
                 {
                     var e = ex.InnerException;
                     this.m_tracer.TraceError("Error synchronizing {0} : {1} ", modelType, e);
-                    var tickleService = ApplicationContext.Current.GetService<ITickleService>();
-                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", modelType.Name)));
+                    if (!this.m_errorTickle)
+                    {
+                        var tickleService = ApplicationContext.Current.GetService<ITickleService>();
+                        tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", modelType.Name)));
+                    }
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), 0));
 
                     return 0;
@@ -413,8 +419,13 @@ namespace SanteDB.DisconnectedClient.Synchronization
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Error synchronizing {0} : {1} ", modelType, e);
-                    var tickleService = ApplicationContext.Current.GetService<ITickleService>();
-                    tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", modelType.Name)));
+
+                    if (!this.m_errorTickle)
+                    {
+                        var tickleService = ApplicationContext.Current.GetService<ITickleService>();
+                        tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", modelType.Name)));
+                        this.m_errorTickle = true;
+                    }
                     this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(modelType, filter, lastModificationDate.GetValueOrDefault(), 0));
 
                     return 0;

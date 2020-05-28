@@ -43,6 +43,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
+using System.Security;
 using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Interop.HDSI
@@ -75,6 +76,9 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
         // Cached credential
         private IPrincipal m_cachedCredential = null;
+
+        // Have we let the user know?
+        private bool m_tickleSent;
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(HdsiIntegrationService));
@@ -128,7 +132,9 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             }
             catch (Exception e)
             {
-                return null;
+
+                this.m_tracer.TraceError("Error authentication for synchronization: {0}", e);
+                throw new SecurityException("Error authenticating for synchronization. Perhaps the device has been reconfigured?", e);
             }
         }
 
