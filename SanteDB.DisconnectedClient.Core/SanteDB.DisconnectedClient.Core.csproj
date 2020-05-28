@@ -19,7 +19,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.DisconnectedClient</PackageId>
     <Title>SanteDB.DisconnectedClient</Title>
-    <Version>2.0.15</Version>
+    <Version>2.0.16</Version>
     <Description>SanteDB Disconnected Client Core API Services</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>
@@ -281,16 +281,16 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="RestSrvr" Version="2.0.15.0" />
-        <PackageReference Include="SanteDB.Core.Applets" Version="2.0.15.0" />
-        <PackageReference Include="SanteDB.BI" Version="2.0.15.0" />
-        <PackageReference Include="SanteDB.Core.Api" Version="2.0.15.0" />
-        <PackageReference Include="SanteDB.Core.Model" Version="2.0.15.0" />
-        <PackageReference Include="SanteDB.Rest.Common" Version="2.0.15.0" />
-        <PackageReference Include="SanteDB.BusinessRules.JavaScript" Version="2.0.15.0" />
+        <PackageReference Include="RestSrvr" Version="2.0.16.0" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="2.0.16.0" />
+        <PackageReference Include="SanteDB.BI" Version="2.0.16.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="2.0.16.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="2.0.16.0" />
+        <PackageReference Include="SanteDB.Rest.Common" Version="2.0.16.0" />
+        <PackageReference Include="SanteDB.BusinessRules.JavaScript" Version="2.0.16.0" />
 
         <PackageReference Include="SanteDB.Core.Model.AMI">
-          <Version>2.0.15.0</Version>
+          <Version>2.0.16.0</Version>
         </PackageReference>
       </ItemGroup>
     </Otherwise>
@@ -298,10 +298,10 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>2.0.15</Version>
+      <Version>2.0.16</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>2.0.15</Version>
+      <Version>2.0.16</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.25.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
