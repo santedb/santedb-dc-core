@@ -96,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Backup
             switch (media)
             {
                 case BackupMedia.Private:
-                    retVal = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", "backup");
+                    retVal = Path.Combine(ApplicationServiceContext.Current.GetService<IConfigurationPersister>().ApplicationDataDirectory, "backup");
                     if (!Directory.Exists(retVal))
                         Directory.CreateDirectory(retVal);
                     break;
@@ -133,7 +133,11 @@ namespace SanteDB.DisconnectedClient.Backup
 
             // Backup
             foreach (var itm in Directory.GetDirectories(dir))
-                this.BackupDirectory(archive, itm, rootDirectory);
+                if (Path.GetFileName(itm).Equals("backup", StringComparison.OrdinalIgnoreCase) || 
+                    Path.GetFileName(itm).Equals("restore", StringComparison.OrdinalIgnoreCase))
+                    this.m_tracer.TraceWarning("Skipping {0} ", itm);
+                else
+                     this.BackupDirectory(archive, itm, rootDirectory);
 
             // Add files
             foreach (var itm in Directory.GetFiles(dir))
@@ -345,12 +349,18 @@ namespace SanteDB.DisconnectedClient.Backup
                                 var destDir = Path.Combine(sourceDirectory, tr.Entry.Key.Replace('/', Path.DirectorySeparatorChar));
                                 if (!Directory.Exists(Path.GetDirectoryName(destDir)))
                                     Directory.CreateDirectory(Path.GetDirectoryName(destDir));
+
                                 if (!tr.Entry.IsDirectory)
                                     using (var s = tr.OpenEntryStream())
                                     using (var ofs = File.Create(Path.Combine(sourceDirectory, tr.Entry.Key)))
                                         s.CopyTo(ofs);
+
                             }
                         }
+
+                        // Restore passkeys
+                        var dcc = ApplicationServiceContext.Current.GetService<IDataConnectionManager>();
+                        dcc?.RekeyDatabases();
                     }
                     finally
                     {
@@ -381,7 +391,8 @@ namespace SanteDB.DisconnectedClient.Backup
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DefaultBackupJob(), TimeSpan.MaxValue);
+           
+            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DefaultBackupJob(), new TimeSpan(2,0,0));
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -434,6 +445,29 @@ namespace SanteDB.DisconnectedClient.Backup
                     this.m_tracer.TraceError("Error removing backup descriptor {0}", backupDescriptor);
                     throw new Exception($"Error removing backup descriptor {backupDescriptor}");
                 }
+        }
+
+        /// <summary>
+        /// Automatic restoration
+        /// </summary>
+        public void AutoRestore()
+        {
+            // Is there a restore directory for system file?
+            var autoRestore = Path.Combine(ApplicationServiceContext.Current.GetService<IConfigurationPersister>().ApplicationDataDirectory, "restore");
+            if (Directory.Exists(autoRestore) && Directory.GetFiles(autoRestore, "*.sdbk").Length == 1)
+            {
+                try
+                {
+                    var bkFile = Directory.GetFiles(autoRestore, "*.sdbk")[0];
+                    File.Copy(bkFile, Path.Combine(this.GetBackupDirectory(BackupMedia.Private), Path.GetFileName(bkFile)), true);
+                    this.Restore(BackupMedia.Private, Path.GetFileNameWithoutExtension(bkFile), ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName);
+                }
+                finally
+                {
+                    Directory.Delete(autoRestore, true);
+                }
+            }
+
         }
     }
 }

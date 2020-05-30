@@ -116,7 +116,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 { "csp_nonce", RestOperationContext.Current.ServiceEndpoint.Behaviors.OfType<SecurityPolicyHeadersBehavior>().FirstOrDefault()?.Nonce },
 #if DEBUG
-                { "env_type","debug" },
+                { "env_type", "debug" },
 #else
                 { "env_type", "release" },
 #endif

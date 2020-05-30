@@ -45,6 +45,11 @@ namespace SanteDB.DisconnectedClient.Services
         void Backup(BackupMedia media, String password = null);
 
         /// <summary>
+        /// Perform autorestore
+        /// </summary>
+        void AutoRestore();
+
+        /// <summary>
         /// Restore from media
         /// </summary>
         void Restore(BackupMedia media, String backupDescriptor = null, String password = null);

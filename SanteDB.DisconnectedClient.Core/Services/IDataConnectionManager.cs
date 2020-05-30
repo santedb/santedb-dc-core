@@ -37,5 +37,10 @@ namespace SanteDB.DisconnectedClient.Services
         /// <param name="passkey">The passkey to use to encrypt the backup</param>
         /// <returns>The location where backup can be found</returns>
         string Backup(string passkey);
+
+        /// <summary>
+        /// Rekey all databases
+        /// </summary>
+        void RekeyDatabases();
     }
 }

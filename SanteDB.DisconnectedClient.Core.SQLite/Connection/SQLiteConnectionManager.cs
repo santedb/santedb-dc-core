@@ -36,6 +36,9 @@ using SanteDB.DisconnectedClient.Configuration.Data;
 using System.Reflection;
 using SQLite.Net.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.Core.Model;
+using System.Text;
+using System.Runtime.InteropServices;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -312,7 +315,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                         //writeConnection.Execute("PRAGMA journal_mode = WAL");
                         this.m_writeConnections.Add(dataSource.Name, writeConnection);
                     }
-
                     retVal = writeConnection;
                 }
 
@@ -420,79 +422,76 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         public String Backup(String passkey)
         {
             // Let other threads know they can't open a r/o connection for each db
-            try
-            {
+            lock (s_lockObject)
 
-                var backupDir = Path.Combine(Path.GetTempPath(), "db-copy");
-                if (!Directory.Exists(backupDir))
-                    Directory.CreateDirectory(backupDir);
-
-                ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
-                var connectionStrings = (ApplicationContext.Current.GetService<IConfigurationManager>()).GetSection<DcDataConfigurationSection>().ConnectionString;
-                for (var i = 0; i < connectionStrings.Count; i++)
+                try
                 {
-                    this.m_tracer.TraceInfo("Will backup {0} with passkey {1}", connectionStrings[i].GetComponent("dbfile"), !String.IsNullOrEmpty(passkey));
-                    if (!File.Exists(connectionStrings[i].GetComponent("dbfile")))
-                        continue;
-                    var conn = this.GetConnection(connectionStrings[i]);
-                    using (conn.Lock())
+
+                    var backupDir = Path.Combine(Path.GetTempPath(), "db-copy");
+                    if (!Directory.Exists(backupDir))
+                        Directory.CreateDirectory(backupDir);
+
+                    ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
+                    var connectionStrings = (ApplicationContext.Current.GetService<IConfigurationManager>()).GetSection<DcDataConfigurationSection>().ConnectionString;
+                    for (var i = 0; i < connectionStrings.Count; i++)
                     {
+                        this.m_tracer.TraceInfo("Will backup {0} with passkey {1}", connectionStrings[i].GetComponent("dbfile"), !String.IsNullOrEmpty(passkey));
+                        if (!File.Exists(connectionStrings[i].GetComponent("dbfile")))
+                            continue;
+
+                        var dataFile = connectionStrings[i].GetComponent("dbfile");
+
                         ApplicationContext.Current.SetProgress(Strings.locale_backup, (float)i / connectionStrings.Count);
 
-                        var backupFile = Path.Combine(backupDir, Path.GetFileName(conn.DatabasePath));
+                        var backupFile = Path.Combine(backupDir, Path.GetFileName(dataFile));
                         if (File.Exists(backupFile))
                             File.Delete(backupFile);
                         // Create empty database 
                         this.m_tracer.TraceVerbose("Creating temporary copy of database at {0}...", backupFile);
 
-                        // Create table
-                        using (var bakConn = new SQLiteConnection(platform, backupFile, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.FullMutex, key: String.IsNullOrEmpty(passkey) ? null : System.Text.Encoding.UTF8.GetBytes(passkey)))
+                        // Create new encrypted database
+                        Mono.Data.Sqlite.SqliteConnection.CreateFile(backupFile);
+                        using (var prodConn = new Mono.Data.Sqlite.SqliteConnection($"Data Source={backupFile}"))
                         {
-                            bakConn.Execute("PRAGMA synchronous = 1");
-
-                            foreach (var tbl in conn.Query<SysInfoStruct>("SELECT name FROM sqlite_master WHERE type='table'"))
-                                foreach (var map in typeof(SQLiteConnectionManager).Assembly.GetTypes().Where(o => o.GetCustomAttribute<TableAttribute>(false)?.Name == tbl.Name))
-                                {
-                                    this.m_tracer.TraceInfo("Creating table structure {0}...", tbl.Name);
-                                    bakConn.CreateTable(map);
-                                }
-                            bakConn.Commit();
+                            prodConn.Open();
+                            using (var cmd = prodConn.CreateCommand())
+                            {
+                                cmd.CommandType = System.Data.CommandType.Text;
+                                cmd.CommandText = $"PRAGMA key = '{passkey}'";
+                                cmd.ExecuteNonQuery();
+                            }
                         }
 
-                        try
+                        // Commands to be run
+                        string[] sqlScript =
                         {
-                            // Copy the tables to backup
-                            if (String.IsNullOrEmpty(passkey))
-                                conn.Execute($"ATTACH DATABASE '{backupFile}' AS bak_db KEY ''");
-                            else
-                                conn.Execute($"ATTACH DATABASE '{backupFile}' AS bak_db KEY '{passkey}'");
+                        $"ATTACH DATABASE '{backupFile}' AS bak_db KEY '{passkey}'",
+                        "SELECT sqlcipher_export('bak_db')",
+                        "DETACH DATABASE bak_db"
+                        };
 
-                            foreach (var tbl in conn.Query<SysInfoStruct>("SELECT name FROM sqlite_master WHERE type='table'"))
-                                foreach (var map in typeof(SQLiteConnectionManager).Assembly.GetTypes().Where(o => o.GetCustomAttribute<TableAttribute>(false)?.Name == tbl.Name))
-                                {
-                                    try
-                                    {
-                                        this.m_tracer.TraceInfo("Backing up table {0}...", tbl.Name);
-                                        conn.Execute($"INSERT OR IGNORE INTO bak_db.{tbl.Name} SELECT * FROM {tbl.Name}");
-                                    }
-                                    catch(Exception e)
-                                    {
-                                        this.m_tracer.TraceWarning("Could not backup {0} - {1}", tbl.Name, e);
-                                    }
-                                }
-                        }
-                        finally
+                        // Attempt to use the existing security key 
+                        using (var bakConn = new Mono.Data.Sqlite.SqliteConnection($"Data Source={dataFile}"))
                         {
-                            conn.Execute("DETACH DATABASE bak_db");
+                            if (connectionStrings[i].GetComponent("encrypt") == "true")
+                                bakConn.SetPassword(ApplicationContext.Current.GetCurrentContextSecurityKey());
+                            bakConn.Open();
+                            foreach (var sql in sqlScript)
+                                using (var cmd = bakConn.CreateCommand())
+                                {
+                                    cmd.CommandType = System.Data.CommandType.Text;
+                                    cmd.CommandText = sql;
+                                    cmd.ExecuteNonQuery();
+
+                                }
                         }
 
                     }
+                    return backupDir;
                 }
-                return backupDir;
-            }
-            finally
-            {
-            }
+                finally
+                {
+                }
         }
 
         /// <summary>
@@ -524,6 +523,76 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
             }
         }
+
+        /// <summary>
+        /// Re-key all databases
+        /// </summary>
+        public void RekeyDatabases()
+        {
+            if (ApplicationContext.Current.GetCurrentContextSecurityKey() == null) return; // no need to rekey
+            lock (s_lockObject)
+                try
+                {
+
+                    ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
+                    var connectionStrings = (ApplicationContext.Current.GetService<IConfigurationManager>()).GetSection<DcDataConfigurationSection>().ConnectionString;
+                    for (var i = 0; i < connectionStrings.Count; i++)
+                    {
+                        ApplicationContext.Current.SetProgress(Strings.locale_backup_restore, (float)i / connectionStrings.Count);
+                        var cstr = connectionStrings[i];
+                        var dbFile = cstr.GetComponent("dbfile");
+                        try
+                        {
+                            File.Move(dbFile, Path.ChangeExtension(dbFile, "old"));
+
+                            // Create new encrypted database
+                            Mono.Data.Sqlite.SqliteConnection.CreateFile(dbFile);
+                            using (var prodConn = new Mono.Data.Sqlite.SqliteConnection($"Data Source={dbFile}"))
+                            {
+                                prodConn.Open();
+                                using (var cmd = prodConn.CreateCommand())
+                                {
+                                    cmd.CommandType = System.Data.CommandType.Text;
+                                    cmd.CommandText = $"PRAGMA key = '{Encoding.UTF8.GetString(ApplicationContext.Current.GetCurrentContextSecurityKey())}'";
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            // Commands to be run
+                            string[] sqlScript =
+                            {
+                        $"ATTACH DATABASE '{dbFile}' AS prod_db KEY '{Encoding.UTF8.GetString(ApplicationContext.Current.GetCurrentContextSecurityKey())}'",
+                        "SELECT sqlcipher_export('prod_db')",
+                        "DETACH DATABASE prod_db"
+                        };
+
+                            // Attempt to use the existing security key 
+                            using (var bakConn = new Mono.Data.Sqlite.SqliteConnection($"Data Source={Path.ChangeExtension(dbFile, "old")}"))
+                            {
+                                bakConn.Open();
+                                foreach (var sql in sqlScript)
+                                    using (var cmd = bakConn.CreateCommand())
+                                    {
+                                        cmd.CommandType = System.Data.CommandType.Text;
+                                        cmd.CommandText = sql;
+                                        cmd.ExecuteNonQuery();
+
+                                    }
+                            }
+                        }
+                        finally
+                        {
+                            File.Delete(Path.ChangeExtension(dbFile, "old"));
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error rekeying database: {0}", e);
+                    throw new Exception("Error re-keying databases", e);
+                }
+        }
+
     }
 
     /// <summary>
