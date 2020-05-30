@@ -330,6 +330,7 @@ namespace SanteDB.DisconnectedClient.Security
                         catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
                         {
                             this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
+                            
                             var se = new SecurityException(
                                 String.Format("err_oauth2_{0}", ex.Result.Error),
                                 ex

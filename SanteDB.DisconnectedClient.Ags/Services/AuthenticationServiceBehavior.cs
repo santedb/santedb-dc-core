@@ -47,6 +47,7 @@ using System.Text;
 using System.Threading;
 using SanteDB.Core.Model;
 using SanteDB.Core.Api.Security;
+using SanteDB.Core.Http;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -190,11 +191,16 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 this.m_tracer.TraceError("Error establishing session for {0}: {1}", request["username"], e);
                 RestOperationContext.Current.OutgoingResponse.StatusCode = 400;
-                return new OAuthTokenResponse()
-                {
-                    Error = "invalid_grant",
-                    ErrorDescription = e.Message
-                };
+
+                // Was the original exception thrown a remote OAUTH response?
+                if (e.InnerException is RestClientException<OAuthTokenResponse> oauth)
+                    return oauth.Result;
+                else
+                    return new OAuthTokenResponse()
+                    {
+                        Error = "invalid_grant",
+                        ErrorDescription = e.Message
+                    };
             }
         }
 

@@ -41,6 +41,8 @@ using SanteDB.Core.Services;
 using SanteDB.Core;
 using SanteDB.Core.Jobs;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Security;
 
 namespace SanteDB.DisconnectedClient.Backup
 {
@@ -54,6 +56,11 @@ namespace SanteDB.DisconnectedClient.Backup
         /// Configuration backup service
         /// </summary>
         public String ServiceName => "Default Configuration Backup Service";
+
+        /// <summary>
+        /// Magic bytes
+        /// </summary>
+        private static readonly byte[] MAGIC = { (byte)'S', (byte)'D', (byte)'B', (byte)2 };
 
         /// <summary>
         /// True if the backup service is running
@@ -89,7 +96,7 @@ namespace SanteDB.DisconnectedClient.Backup
             switch (media)
             {
                 case BackupMedia.Private:
-                    retVal = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB","backup");
+                    retVal = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", "backup");
                     if (!Directory.Exists(retVal))
                         Directory.CreateDirectory(retVal);
                     break;
@@ -113,7 +120,7 @@ namespace SanteDB.DisconnectedClient.Backup
             var directoryName = this.GetBackupDirectory(media);
             this.m_tracer.TraceInfo("Checking {0} for backups...", directoryName);
             System.Diagnostics.Trace.TraceInformation(directoryName);
-            return Directory.GetFiles(directoryName, "*.sdb.tar.gz").OrderByDescending(o => o).FirstOrDefault();
+            return Directory.GetFiles(directoryName, "*.sdbk").OrderByDescending(o => o).FirstOrDefault();
 
         }
 
@@ -156,7 +163,7 @@ namespace SanteDB.DisconnectedClient.Backup
 
             // Get the output medium
             var directoryName = this.GetBackupDirectory(media);
-            string fileName = Path.Combine(directoryName, $"sdbdc-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm")}.sdb.tar");
+            string fileName = Path.Combine(directoryName, $"sdbdc-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm")}.tar");
 
             // Confirm if the user really really wants to backup
             if (String.IsNullOrEmpty(password) &&
@@ -201,8 +208,8 @@ namespace SanteDB.DisconnectedClient.Backup
 
                         // Output databases
                         var dcc = ApplicationServiceContext.Current.GetService<IDataConnectionManager>();
-                        var dbBackupLocation = dcc.Backup(password);
-                        this.BackupDirectory(writer, dbBackupLocation, Path.GetDirectoryName(dbBackupLocation));
+                        var dbBackupLocation = dcc.Backup("");
+                        this.BackupDirectory(writer, dbBackupLocation, dbBackupLocation);
                         try
                         {
                             Directory.Delete(dbBackupLocation, true);
@@ -211,10 +218,43 @@ namespace SanteDB.DisconnectedClient.Backup
                     }
 
                     this.m_tracer.TraceInfo("Beginning compression {0}..", fileName);
-                    using (var fs = File.OpenRead(fileName))
-                    using (var gzs = new GZipStream(File.Create(fileName + ".gz"), CompressionMode.Compress))
+
+                    using (var fileStream = File.Create(Path.ChangeExtension(fileName, "sdbk")))
                     {
-                        fs.CopyTo(gzs);
+
+                        Stream outStream = fileStream;
+                        try
+                        {
+                            // Write header
+                            fileStream.Write(MAGIC, 0, MAGIC.Length);
+
+                            // Encrypt
+                            if (!String.IsNullOrEmpty(password))
+                            {
+                                fileStream.WriteByte(1);
+
+                                var cryptProvider = AesCryptoServiceProvider.Create();
+                                var passKey = ASCIIEncoding.ASCII.GetBytes(password);
+                                passKey = Enumerable.Range(0, 32).Select(o => passKey.Length > o ? passKey[o] : (byte)0).ToArray();
+                                cryptProvider.Key = passKey;
+
+                                cryptProvider.GenerateIV();
+                                fileStream.Write(BitConverter.GetBytes(cryptProvider.IV.Length), 0, 4);
+                                fileStream.Write(cryptProvider.IV, 0, cryptProvider.IV.Length);
+                                outStream = new CryptoStream(fileStream, cryptProvider.CreateEncryptor() , CryptoStreamMode.Write);
+                            }
+                            else
+                                fileStream.WriteByte(0);
+                            using (var fs = File.OpenRead(fileName))
+                            using (var gzs = new GZipStream(outStream, CompressionMode.Compress))
+                            {
+                                fs.CopyTo(gzs);
+                            }
+                        }
+                        finally
+                        {
+                            if (outStream != fileStream) outStream.Close();
+                        }
                     }
                 }
                 finally
@@ -241,7 +281,7 @@ namespace SanteDB.DisconnectedClient.Backup
             else
             {
                 var directoryName = this.GetBackupDirectory(media);
-                backupFile = Path.ChangeExtension(Path.Combine(directoryName, backupDescriptor), ".sdb.tar.gz");
+                backupFile = Path.ChangeExtension(Path.Combine(directoryName, backupDescriptor), ".sdbk");
                 if (!File.Exists(backupFile))
                     throw new FileNotFoundException($"Cannot find backup with descriptor {backupDescriptor}");
             }
@@ -256,23 +296,66 @@ namespace SanteDB.DisconnectedClient.Backup
                 var sourceDirectory = ApplicationContext.Current.ConfigurationPersister.ApplicationDataDirectory;
 
                 using (var fs = File.OpenRead(backupFile))
-                using (var gzs = new GZipStream(fs, CompressionMode.Decompress))
-                using (var tr = TarReader.Open(gzs))
                 {
+                    // Validate header
+                    byte[] header = new byte[MAGIC.Length];
+                    fs.Read(header, 0, MAGIC.Length);
+                    if (!header.SequenceEqual(MAGIC))
+                        throw new InvalidOperationException("Backup file is invalid");
 
-                    // Move to next entry & copy 
-                    while (tr.MoveToNextEntry())
+                    Stream inStream = fs;
+                    try
                     {
+                        // Encrypted?
+                        if (fs.ReadByte() == 1)
+                        {
+                            // Read length of IV
+                            byte[] ivLengthByte = new byte[4];
+                            fs.Read(ivLengthByte, 0, 4);
+                            var ivLength = BitConverter.ToInt32(ivLengthByte, 0);
 
-                        this.m_tracer.TraceVerbose("Extracting : {0}", tr.Entry.Key);
-                        if (tr.Entry.Key == "DISCLAIMER.TXT" || tr.Entry.Key == ".appinfo.xml") continue;
-                        var destDir = Path.Combine(sourceDirectory, tr.Entry.Key.Replace('/', Path.DirectorySeparatorChar));
-                        if (!Directory.Exists(Path.GetDirectoryName(destDir)))
-                            Directory.CreateDirectory(Path.GetDirectoryName(destDir));
-                        if (!tr.Entry.IsDirectory)
-                            using (var s = tr.OpenEntryStream())
-                            using (var ofs = File.Create(Path.Combine(sourceDirectory, tr.Entry.Key)))
-                                s.CopyTo(ofs);
+                            // Read IV
+                            byte[] iv = new byte[ivLength];
+                            fs.Read(iv, 0, ivLength);
+
+                            // Now Create crypto stream with password
+                            if (String.IsNullOrEmpty(password))
+                                throw new SecurityException("This backup archive is encrypted. You must provide a password");
+                            else
+                            {
+                                var desCrypto = AesCryptoServiceProvider.Create();
+                                var passKey = ASCIIEncoding.ASCII.GetBytes(password);
+                                passKey = Enumerable.Range(0, 32).Select(o => passKey.Length > o ? passKey[o] : (byte)0).ToArray();
+                                desCrypto.IV = iv;
+                                desCrypto.Key = passKey;
+                                inStream = new CryptoStream(fs, desCrypto.CreateDecryptor(), CryptoStreamMode.Read);
+                            }
+                        }
+
+                        using (var gzs = new GZipStream(inStream, CompressionMode.Decompress))
+                        using (var tr = TarReader.Open(gzs))
+                        {
+
+                            // Move to next entry & copy 
+                            while (tr.MoveToNextEntry())
+                            {
+
+                                this.m_tracer.TraceVerbose("Extracting : {0}", tr.Entry.Key);
+                                if (tr.Entry.Key == "DISCLAIMER.TXT" || tr.Entry.Key == ".appinfo.xml") continue;
+                                var destDir = Path.Combine(sourceDirectory, tr.Entry.Key.Replace('/', Path.DirectorySeparatorChar));
+                                if (!Directory.Exists(Path.GetDirectoryName(destDir)))
+                                    Directory.CreateDirectory(Path.GetDirectoryName(destDir));
+                                if (!tr.Entry.IsDirectory)
+                                    using (var s = tr.OpenEntryStream())
+                                    using (var ofs = File.Create(Path.Combine(sourceDirectory, tr.Entry.Key)))
+                                        s.CopyTo(ofs);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (inStream != fs)
+                            inStream.Close();
                     }
                 }
             }
@@ -321,7 +404,7 @@ namespace SanteDB.DisconnectedClient.Backup
         {
             var directoryName = this.GetBackupDirectory(media);
             this.m_tracer.TraceInfo("Getting {0} for backups...", directoryName);
-            return Directory.GetFiles(directoryName, "*.sdb.tar.gz").OrderByDescending(o => new FileInfo(o).CreationTime).Select(o => Path.GetFileNameWithoutExtension(o));
+            return Directory.GetFiles(directoryName, "*.sdbk").OrderByDescending(o => new FileInfo(o).CreationTime).Select(o => Path.GetFileNameWithoutExtension(o));
         }
 
         /// <summary>

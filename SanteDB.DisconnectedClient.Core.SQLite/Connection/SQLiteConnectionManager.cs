@@ -423,7 +423,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             try
             {
 
-                var backupDir = Path.Combine(Path.GetTempPath(), "bktmp");
+                var backupDir = Path.Combine(Path.GetTempPath(), "db-copy");
                 if (!Directory.Exists(backupDir))
                     Directory.CreateDirectory(backupDir);
 
