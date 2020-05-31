@@ -392,7 +392,7 @@ namespace SanteDB.DisconnectedClient.Backup
             this.Starting?.Invoke(this, EventArgs.Empty);
 
            
-            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DefaultBackupJob(), new TimeSpan(2,0,0));
+            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DefaultBackupJob(), new TimeSpan(12,0,0));
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
