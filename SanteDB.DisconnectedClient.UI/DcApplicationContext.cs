@@ -139,7 +139,7 @@ namespace SanteDB.DisconnectedClient.UI
 		/// configuring the software
 		/// </summary>
 		/// <returns><c>true</c>, if temporary was started, <c>false</c> otherwise.</returns>
-		public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
+		public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType, bool startContext)
         {
             try
             {
@@ -152,6 +152,7 @@ namespace SanteDB.DisconnectedClient.UI
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
                 retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
+                retVal.AddServiceProvider(typeof(DefaultBackupService));
 
                 var appletService = retVal.GetService<IAppletManagerService>();
 
@@ -174,8 +175,8 @@ namespace SanteDB.DisconnectedClient.UI
                         throw;
                     }
 
-                retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o) => retVal.Start());
-
+                if(startContext)
+                    retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o) => retVal.Start());
 
                 return true;
             }
