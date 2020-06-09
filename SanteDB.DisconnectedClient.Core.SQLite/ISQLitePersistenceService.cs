@@ -29,6 +29,7 @@ namespace SanteDB.DisconnectedClient.SQLite
     /// </summary>
     public interface ISQLitePersistenceService : IDataPersistenceService
     {
+        
         /// <summary>
         /// Inserts the specified object
         /// </summary>

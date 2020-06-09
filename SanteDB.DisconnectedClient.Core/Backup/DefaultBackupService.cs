@@ -149,7 +149,7 @@ namespace SanteDB.DisconnectedClient.Backup
                 }
                 catch (Exception e)
                 {
-                    this.m_tracer.TraceError("Could not add file {0} to backup : {1}", itm, e);
+                    this.m_tracer.TraceWarning("Could not add file {0} to backup : {1}", itm, e);
                 }
             }
 
@@ -472,7 +472,7 @@ namespace SanteDB.DisconnectedClient.Backup
             var directoryName = this.GetBackupDirectory(media);
             this.m_tracer.TraceInfo("Removing backup {0}...", backupDescriptor);
 
-            var expectedFile = Path.ChangeExtension(Path.Combine(directoryName, backupDescriptor), ".tar.gz");
+            var expectedFile = Path.ChangeExtension(Path.Combine(directoryName, backupDescriptor), ".sdbk");
             if (!File.Exists(expectedFile))
                 throw new FileNotFoundException($"Cannot find backup with descriptor {backupDescriptor}");
             else

@@ -52,6 +52,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
+using SanteDB.DisconnectedClient.UI.Services;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -108,6 +109,8 @@ namespace SanteDB.DisconnectedClient.UI
 
                 if (File.Exists(oldPath))
                 {
+                    Debug.WriteLine($"Old configuration at {oldPath} found, will restore...", "RESTORE_UPDATE");
+
                     // Copy the config file
                     if (!Directory.Exists(Path.GetDirectoryName(this.m_configPath)))
                         Directory.CreateDirectory(Path.GetDirectoryName(this.m_configPath));
@@ -128,7 +131,12 @@ namespace SanteDB.DisconnectedClient.UI
                     Directory.Move(oldDataPath, dataPath);
                     return true;
                 }
-                else return false;
+                else
+                {
+                    Debug.WriteLine($"No configuration at {oldPath} to restore...", "RESTORE_UPDATE");
+
+                    return false;
+                }
             }
             catch(Exception e)
             {
@@ -200,7 +208,8 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(AmiSecurityChallengeProvider)),
                     new TypeReferenceConfiguration(typeof(InMemoryPivotProvider)),
                     new TypeReferenceConfiguration(typeof(DefaultDataSigningService)),
-                    new TypeReferenceConfiguration(typeof(GenericConfigurationPushService))
+                    new TypeReferenceConfiguration(typeof(GenericConfigurationPushService)),
+                    new TypeReferenceConfiguration(typeof(QrBarcodeGenerator))
                 }
             };
 
@@ -324,7 +333,7 @@ namespace SanteDB.DisconnectedClient.UI
         public SanteDBConfiguration Load()
         {
             // Configuration exists?
-            if (this.IsConfigured)
+            if (this.IsConfigured && File.Exists(this.m_configPath))
                 using (var fs = File.OpenRead(this.m_configPath))
                 {
                     return SanteDBConfiguration.Load(fs);
@@ -354,6 +363,7 @@ namespace SanteDB.DisconnectedClient.UI
             catch (Exception e)
             {
                 this.m_tracer?.TraceError(e.ToString());
+                throw new Exception($"Unable to save configuration to {this.m_configPath}", e);
             }
         }
 

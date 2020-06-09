@@ -371,10 +371,9 @@ namespace SanteDB.DisconnectedClient.UI
                 }
                 catch (Exception e)
                 {
-                    retVal.m_tracer?.TraceError(e.ToString());
                     //ApplicationContext.Current = null;
                     AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                    throw;
+                    throw new Exception("Error starting context", e);
                 }
                 return true;
             }
