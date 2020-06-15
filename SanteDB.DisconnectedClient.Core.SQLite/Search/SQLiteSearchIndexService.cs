@@ -183,11 +183,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         var entityUuid = e.Key.Value.ToByteArray();
                         var entityVersionUuid = e.VersionKey.Value.ToByteArray();
 
-                        if (conn.Table<SearchEntityType>().Where(o => o.Key == entityUuid && o.VersionKey == entityVersionUuid).Count() > 0) return true; // no change
+                        if (conn.Table<SearchEntityType>().Where(o => o.Key == entityUuid && o.VersionKey == entityVersionUuid).Count() > 0) continue; // no change
                         else if (e.LoadCollection<EntityTag>("Tags").Any(t => t.TagKey == "isAnonymous")) // Anonymous?
                             continue;
 
-                        var tokens = (e.Names ?? new List<EntityName>()).SelectMany(o => o.Component.Select(c => c.Value.Trim().ToLower()))
+                        var tokens = (e.Names ?? new List<EntityName>()).SelectMany(o => o.Component.SelectMany(c => c.Value.Split(' ')).Select(c=>c.Trim().ToLower()))
                         .Union((e.Identifiers ?? new List<EntityIdentifier>()).Select(o => o.Value.ToLower()))
                         .Union((e.Addresses ?? new List<EntityAddress>()).SelectMany(o => o.Component.Select(c => c.Value.Trim().ToLower())))
                         .Union((e.Telecoms ?? new List<EntityTelecomAddress>()).Select(o => o.Value.ToLower()))
@@ -207,11 +207,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         // Now match tokens with this 
                         conn.Execute(String.Format(String.Format("DELETE FROM {0} WHERE entity = ?", conn.GetMapping<SearchTermEntity>().TableName), e.Key.Value.ToByteArray()));
                         conn.Delete<SearchEntityType>(e.Key.Value.ToByteArray());
-                        var insertRefs = existing.Union(inserting).Distinct().Select(o => new SearchTermEntity() { EntityId = e.Key.Value.ToByteArray(), TermId = o.Key }).ToArray();
-                        conn.InsertAll(insertRefs);
-                        conn.Insert(new SearchEntityType() { Key = e.Key.Value.ToByteArray(), SearchType = e.GetType().FullName, VersionKey = e.VersionKey.Value.ToByteArray() });
 
-                        this.m_tracer.TraceVerbose("Indexed {0}", e);
+                        if (!e.ObsoletionTime.HasValue)
+                        {
+                            var insertRefs = existing.Union(inserting).Distinct().Select(o => new SearchTermEntity() { EntityId = e.Key.Value.ToByteArray(), TermId = o.Key }).ToArray();
+                            conn.InsertAll(insertRefs);
+                            conn.Insert(new SearchEntityType() { Key = e.Key.Value.ToByteArray(), SearchType = e.GetType().FullName, VersionKey = e.VersionKey.Value.ToByteArray() });
+                        }
+
+                        this.m_tracer.TraceInfo("Indexed {0}", e);
 
                     }
 
@@ -305,7 +309,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                         bundlePersistence.Inserted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(doBundleIndex, e.Data);
                         bundlePersistence.Updated += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(doBundleIndex, e.Data);
-                        bundlePersistence.Obsoleted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(doBundleIndex, e.Data);
+                        bundlePersistence.Obsoleted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((data) => {
+                            foreach (var itm in (data as Bundle).Item.OfType<Patient>())
+                                this.DeleteEntity(itm);
+                        }, e.Data);
                     }
 
                     ApplicationContext.Current.GetService<IJobManagerService>().AddJob(new SQLiteSearchIndexRefreshJob(), new TimeSpan(0, 10, 0));

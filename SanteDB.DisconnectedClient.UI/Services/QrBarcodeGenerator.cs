@@ -39,24 +39,33 @@ namespace SanteDB.DisconnectedClient.UI.Services
                 var dataSigner = new HMACSHA256(sourceKey);
                 // Append the header to the token
                 // Append authorities to identifiers
-                StringBuilder identityToken = new StringBuilder($"{sourceKey.Take(4).ToArray().ToHexString()}.");
-
-                var domainList = identifers.Select(o => new
+                var header = new
                 {
-                    id = o.Value,
-                    domain = new
+                    alg = "HS256",
+                    type = identifers.First().LoadProperty<TEntity>("SourceEntity")?.Type,
+                    key = sourceKey.Take(4).ToArray().ToHexString()
+                };
+                StringBuilder identityToken = new StringBuilder($"{JsonConvert.SerializeObject(header)}.");
+
+                var domainList = new
+                {
+                    id = identifers.Select(o => new
                     {
-                        ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName,
-                        oid = o.Authority.Oid
-                    }
-                }).ToList();
+                        value = o.Value,
+                        domain = new
+                        {
+                            ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName,
+                            oid = o.Authority.Oid
+                        }
+                    }).ToList()
+                };
 
                 identityToken.Append(JsonConvert.SerializeObject(domainList));
 
                 // Sign the data
                 var tokenData = Encoding.UTF8.GetBytes(identityToken.ToString());
                 var signature = dataSigner.ComputeHash(tokenData);
-                identityToken.AppendFormat("] }}.{0}", Convert.ToBase64String(signature));
+                identityToken.AppendFormat(".{0}", Convert.ToBase64String(signature));
 
                 // Now generate the token
                 var writer = new BarcodeWriter()

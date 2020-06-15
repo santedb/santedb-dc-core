@@ -71,7 +71,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             data.CreatedByKey = domainObject.CreatedByKey = domainObject.CreatedByKey == Guid.Empty ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
             domainObject.CreationTime = domainObject.CreationTime == DateTimeOffset.MinValue || domainObject.CreationTime == null || domainObject.CreationTime.Value.DateTime == DateTime.MinValue ? DateTimeOffset.Now : domainObject.CreationTime;
             data.CreationTime = (DateTimeOffset)domainObject.CreationTime;
-
+            domainObject.UpdatedByKey = domainObject.CreatedByKey == Guid.Empty || domainObject.CreatedByKey == null ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
+            domainObject.UpdatedTime = DateTime.Now;
             if (!context.Connection.Table<TDomain>().Where(o => o.Uuid == domainObject.Uuid).Any())
                 context.Connection.Insert(domainObject);
             else
