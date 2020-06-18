@@ -19,6 +19,7 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -47,9 +48,7 @@ namespace SanteDB.DisconnectedClient.Security
 
         // Trace logging
         private Tracer m_tracer = Tracer.GetTracer(typeof(SystemPolicySynchronizationDaemon));
-        // SErvice tickle
-        private bool m_serviceTickle = false;
-
+       
         /// <summary>
         /// True if this service is running
         /// </summary>
@@ -77,67 +76,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public event EventHandler Stopped;
 
-        /// <summary>
-        /// Polls the system policy information
-        /// </summary>
-        private void PollSystemPolicy(object parm)
-        {
-            if (!this.m_isRunning) return; // Stop execution
-            this.m_tracer.TraceInfo("Will start system policy polling");
-
-            try
-            {
-
-                var netService = ApplicationServiceContext.Current.GetService<INetworkInformationService>();
-                var localPip = ApplicationServiceContext.Current.GetService<IOfflinePolicyInformationService>();
-                var localRp = ApplicationServiceContext.Current.GetService<IOfflineRoleProviderService>();
-                var securityRepository = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-                var amiPip = new AmiPolicyInformationService();
-
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-
-                var systemRoles = new String[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS" };
-
-                // Synchronize the groups
-                foreach (var rol in localRp.GetAllRoles().Union(systemRoles))
-                {
-                    var group = securityRepository.GetRole(rol);
-                    if (group == null)
-                    {
-                        localRp.CreateRole(rol, AuthenticationContext.SystemPrincipal);
-                        group = securityRepository.GetRole(rol);
-                    }
-
-                    var activePolicies = amiPip.GetActivePolicies(group);
-                    // Create local policy if not exists
-                    foreach (var pol in activePolicies)
-                        if (localPip.GetPolicy(pol.Policy.Oid) == null)
-                            localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
-
-                    // Assign policies
-                    foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
-                        localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
-
-                }
-
-                if(this.m_serviceTickle)
-                {
-                    this.m_serviceTickle = false;
-                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_syncRestored));
-                }
-            }
-            catch (Exception e)
-            {
-                if (!this.m_serviceTickle)
-                {
-                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", "Security Policy")));
-                    this.m_serviceTickle = true;
-                }
-                this.m_tracer.TraceWarning("Could not refresh system policies: {0}", e);
-            }
-            var pollInterval = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().PollInterval;
-            ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(pollInterval, this.PollSystemPolicy, null);
-        }
+      
 
         /// <summary>
         /// Start this service
@@ -149,9 +88,11 @@ namespace SanteDB.DisconnectedClient.Security
             this.m_isRunning = true;
             this.m_safeToStop = false;
             ApplicationServiceContext.Current.Stopping += (o, e) => this.m_safeToStop = true; // Only allow stopping when app context stops
-
-            // Bind timer
-            ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.PollSystemPolicy, null);
+            ApplicationServiceContext.Current.Started += (o, e) =>
+            {
+                var pollInterval = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().PollInterval;
+                ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new SystemPolicySynchronizationJob(), pollInterval);
+            };
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return this.m_isRunning;
