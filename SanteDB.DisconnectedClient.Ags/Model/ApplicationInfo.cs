@@ -92,24 +92,39 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                             this.m_tracer.TraceWarning("Could not load {0} due to {1}", o, e);
                             return null;
                         }
-                    }).Where(a => a?.IsDynamic == false).SelectMany(a => a.ExportedTypes).ToList();
+                    }).Where(a => a?.IsDynamic == false).SelectMany(a =>
+                    {
+                        try
+                        {
+                            return a.ExportedTypes;
+                        }
+                        catch
+                        {
+                            return Type.EmptyTypes;
+                        }
+                    }).ToList();
                 else
                     types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
 
 
                 foreach (var t in types.Where(o => o.GetInterfaces().Any(i => i.FullName == typeof(IServiceImplementation).FullName) && !o.IsGenericTypeDefinition && !o.IsAbstract && !o.IsInterface))
                 {
-                    this.ServiceInfo.Add(new DiagnosticServiceInfo()
+                    try
                     {
-                        IsRunning = (ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) as IDaemonService)?.IsRunning ?? false,
-                        Active = ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) != null,
-                        Description = t.CustomAttributes.FirstOrDefault(o => o.AttributeType.FullName == typeof(ServiceProviderAttribute).FullName)?.ConstructorArguments[0].Value?.ToString() ?? t.FullName,
-                        Class = t.GetInterfaces().Any(o => o.Name.Contains("IDaemonService")) ? ServiceClass.Daemon :
-                                t.GetInterfaces().Any(o => o.Name.Contains("IDataPersistenceService")) ? ServiceClass.Data :
-                                t.GetInterfaces().Any(o => o.Name.Contains("IRepositoryService")) ? ServiceClass.Repository :
-                                ServiceClass.Passive,
-                        Type = t.AssemblyQualifiedName
-                    });
+                        this.ServiceInfo.Add(new DiagnosticServiceInfo()
+                        {
+                            IsRunning = (ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) as IDaemonService)?.IsRunning ?? false,
+                            Active = ApplicationServiceContext.Current.GetService(Type.GetType(t.AssemblyQualifiedName)) != null,
+                            Description = t.CustomAttributes.FirstOrDefault(o => o.AttributeType.FullName == typeof(ServiceProviderAttribute).FullName)?.ConstructorArguments[0].Value?.ToString() ?? t.FullName,
+                            Class = t.GetInterfaces().Any(o => o.Name.Contains("IDaemonService")) ? ServiceClass.Daemon :
+                                    t.GetInterfaces().Any(o => o.Name.Contains("IDataPersistenceService")) ? ServiceClass.Data :
+                                    t.GetInterfaces().Any(o => o.Name.Contains("IRepositoryService")) ? ServiceClass.Repository :
+                                    ServiceClass.Passive,
+                            Type = t.AssemblyQualifiedName
+                        });
+                    }
+                    catch { }
+
                 }
 
                 this.Configuration = ApplicationContext.Current.Configuration;

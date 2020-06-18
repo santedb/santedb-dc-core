@@ -216,7 +216,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         }
 
                         this.m_tracer.TraceInfo("Indexed {0}", e);
-
+                        
                     }
 
                     // Now commit
