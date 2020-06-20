@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy)
         {
             using (var client = this.GetClient())
-                return client.Query<MailMessage>(predicate, offset, count, out totalCount).CollectionItem.OfType<MailMessage>();
+                return client.Query<MailMessage>(predicate, offset, count, out totalCount, null, orderBy).CollectionItem.OfType<MailMessage>();
         }
 
         /// <summary>
