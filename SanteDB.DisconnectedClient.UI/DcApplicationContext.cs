@@ -135,11 +135,37 @@ namespace SanteDB.DisconnectedClient.UI
         }
 
         /// <summary>
-		/// Starts the application context using in-memory default configuration for the purposes of 
-		/// configuring the software
-		/// </summary>
-		/// <returns><c>true</c>, if temporary was started, <c>false</c> otherwise.</returns>
-		public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
+        /// Start a restore context
+        /// </summary>
+        /// <returns></returns>
+        public static bool StartRestore(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
+        {
+            try
+            {
+                var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
+                retVal.SetProgress("Start restore", 0);
+                //retVal.AddServiceProvider(typeof(ConfigurationManager));
+
+                ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
+                retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
+                foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
+                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
+                retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
+                retVal.AddServiceProvider(typeof(DefaultBackupService));
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("SanteDB FATAL: {0}", e.ToString());
+                return false;
+            }
+        }
+        /// <summary>
+        /// Starts the application context using in-memory default configuration for the purposes of 
+        /// configuring the software
+        /// </summary>
+        /// <returns><c>true</c>, if temporary was started, <c>false</c> otherwise.</returns>
+        public static bool StartTemporary(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
         {
             try
             {
@@ -152,6 +178,7 @@ namespace SanteDB.DisconnectedClient.UI
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
                 retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
+                retVal.AddServiceProvider(typeof(DefaultBackupService));
 
                 var appletService = retVal.GetService<IAppletManagerService>();
 
@@ -175,7 +202,6 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                 retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o) => retVal.Start());
-
 
                 return true;
             }
@@ -209,7 +235,7 @@ namespace SanteDB.DisconnectedClient.UI
                     try
                     {
                         retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
-                        ApplicationServiceContext.Current =  DcApplicationContext.Current = retVal;
+                        ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
                         //retVal.AddServiceProvider(typeof(ConfigurationManager));
                         retVal.ConfigurationPersister.Backup(retVal.Configuration);
                     }
@@ -338,7 +364,7 @@ namespace SanteDB.DisconnectedClient.UI
 
                     // Start daemons
                     updateService.AutoUpdate();
-                    retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o)=> retVal.Start());
+                    retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o) => retVal.Start());
 
                     //retVal.Start();
 
