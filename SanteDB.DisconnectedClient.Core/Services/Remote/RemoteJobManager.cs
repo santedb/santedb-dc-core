@@ -213,7 +213,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Add a job to the job manager
         /// </summary>
-        public void AddJob(IJob jobType, TimeSpan elapseTime)
+        public void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType jobStartType = JobStartType.Immediate)
         {
             // Not supported
         }

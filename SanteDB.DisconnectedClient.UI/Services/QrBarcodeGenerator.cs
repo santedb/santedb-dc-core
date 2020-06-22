@@ -42,30 +42,32 @@ namespace SanteDB.DisconnectedClient.UI.Services
                 var header = new
                 {
                     alg = "HS256",
-                    type = identifers.First().LoadProperty<TEntity>("SourceEntity")?.Type,
+                    typ = $"x-santedb+{identifers.First().LoadProperty<TEntity>("SourceEntity")?.Type}",
                     key = sourceKey.Take(4).ToArray().ToHexString()
                 };
-                StringBuilder identityToken = new StringBuilder($"{JsonConvert.SerializeObject(header)}.");
+
+                // From RFC7515
+                var hdrString= Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(header)).Base64UrlEncode();
+                StringBuilder identityToken = new StringBuilder($"{hdrString}.");
 
                 var domainList = new
                 {
                     id = identifers.Select(o => new
                     {
                         value = o.Value,
-                        domain = new
-                        {
-                            ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName,
-                            oid = o.Authority.Oid
-                        }
+                        ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName
                     }).ToList()
                 };
 
-                identityToken.Append(JsonConvert.SerializeObject(domainList));
+                // From RFC7515
+                var bodyString = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainList)).Base64UrlEncode();
+                identityToken.Append(bodyString);
 
                 // Sign the data
+                // From RFC7515
                 var tokenData = Encoding.UTF8.GetBytes(identityToken.ToString());
                 var signature = dataSigner.ComputeHash(tokenData);
-                identityToken.AppendFormat(".{0}", Convert.ToBase64String(signature));
+                identityToken.AppendFormat(".{0}", signature.Base64UrlEncode());
 
                 // Now generate the token
                 var writer = new BarcodeWriter()
@@ -73,8 +75,8 @@ namespace SanteDB.DisconnectedClient.UI.Services
                     Format = BarcodeFormat.QR_CODE,
                     Options = new QrCodeEncodingOptions()
                     {
-                        Width = 200,
-                        Height = 200,
+                        Width = 300,
+                        Height = 300,
                         PureBarcode = true,
                         Margin = 1
                         

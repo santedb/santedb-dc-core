@@ -118,7 +118,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <summary>
         /// Add a job to this service
         /// </summary>
-        public void AddJob(IJob jobType, TimeSpan elapseTime)
+        public void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType jobStartType = JobStartType.Immediate)
         {
             this.ThrowIfNotStarted();
 
@@ -130,8 +130,15 @@ namespace SanteDB.DisconnectedClient.Services.Local
                     this.m_jobs.Add(jobType);
 
             // Run job
-            ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.RunJobBackground, new { Job = jobType, Elapse = elapseTime });
-
+            switch (jobStartType)
+            {
+                case JobStartType.Immediate:
+                    ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.RunJobBackground, new { Job = jobType, Elapse = elapseTime });
+                    break;
+                case JobStartType.DelayStart:
+                    ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 5, 0), this.RunJobBackground, new { Job = jobType, Elapse = elapseTime });
+                    break;
+            }
         }
 
         /// <summary>
