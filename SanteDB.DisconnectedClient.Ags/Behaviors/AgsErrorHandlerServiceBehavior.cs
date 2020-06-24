@@ -74,11 +74,11 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             try
             {
 #if DEBUG
-                this.m_tracer.TraceError("Error on pipeline: {0}", error);
+                this.m_tracer.TraceWarning("Error on pipeline: {0}", error);
                 var ie = error;
                 while (ie != null)
                 {
-                    this.m_tracer.TraceError("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
+                    this.m_tracer.TraceWarning("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
                         RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                         ie.GetType().FullName, ie.Message);
 
@@ -88,9 +88,9 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 }
 #else
             if (error is TargetInvocationException)
-                this.m_tracer.TraceError("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
+                this.m_tracer.TraceWarning("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
             else
-                this.m_tracer.TraceError("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
+                this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
 #endif
 
                 faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);

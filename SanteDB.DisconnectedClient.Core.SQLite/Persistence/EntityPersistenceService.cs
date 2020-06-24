@@ -43,9 +43,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
     /// </summary>
     public class EntityPersistenceService : VersionedDataPersistenceService<Entity, DbEntity>
     {
-        // Unique assigning authorities
-        private HashSet<Guid> m_uniqueAssigningAuthorites = null;
-
+        
         private const String Entity = "E29FCFAD-EC1D-4C60-A055-039A494248AE";
         private const String ManufacturedMaterial = "FAFEC286-89D5-420B-9085-054ACA9D1EEF";
         private const String Animal = "61FCBF42-B5E0-4FB5-9392-108A5C6DBEC7";
@@ -452,26 +450,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Identifiers
             if (data.Identifiers != null)
             {
-                // Validate unique values for IDs
-                if (this.m_uniqueAssigningAuthorites == null)
-                {
-                    this.m_uniqueAssigningAuthorites = new HashSet<Guid>(context.Connection.Table<DbAssigningAuthority>().Where(o => o.IsUnique).ToArray().Select(o => new Guid(o.Uuid)));
-                }
-
-                var uniqueIds = data.Identifiers.Where(o => o.AuthorityKey.HasValue).Where(o => this.m_uniqueAssigningAuthorites.Contains(o.Authority.Key.Value));
-                byte[] entId = data.Key.Value.ToByteArray();
-
-                foreach (var itm in uniqueIds)
-                {
-                    byte[] authId = itm.Authority.Key.Value.ToByteArray();
-                    foreach (var id in context.Connection.Table<DbEntityIdentifier>().Where(o => o.SourceUuid != entId && o.AuthorityUuid == authId && o.Value == itm.Value))
-                    {
-                        // Allow from alt keys
-                        if (altKeys?.Contains(new Guid(id.SourceUuid).ToString()) == false)
-                            throw new DuplicateKeyException($"Attempted to insert a new identifier {itm.Value} for entity {data} however entity {new Guid(id.SourceUuid)} already has this identifier");
-                    }
-                }
-
+               
                 base.UpdateAssociatedItems<EntityIdentifier, Entity>(
                     context.Connection.Table<DbEntityIdentifier>().Where(o => o.SourceUuid == entityUuid).ToList().Select(o => m_mapper.MapDomainInstance<DbEntityIdentifier, EntityIdentifier>(o)).ToList(),
                     data.Identifiers,

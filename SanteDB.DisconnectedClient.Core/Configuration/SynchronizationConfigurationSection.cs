@@ -112,6 +112,12 @@ namespace SanteDB.DisconnectedClient.Configuration
         /// </summary>
         [XmlElement("allowPatch"), JsonProperty("allowPatch")]
         public bool UsePatches { get; set; }
+
+        /// <summary>
+        /// TRue it use big bundles (> 1000)
+        /// </summary>
+        [XmlAttribute("bigBundles"), JsonProperty("bigBundles")]
+        public bool BigBundles { get; set; }
     }
 
     /// <summary>

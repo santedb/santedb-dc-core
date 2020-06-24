@@ -40,11 +40,18 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// </summary>
     public class HdsiServiceBehavior : HdsiServiceBehaviorBase
     {
+
+        // Resource handler tool
+        private ResourceHandlerTool m_resourceHandler;
+
         /// <summary>
-        /// HDSI service behavior
+        /// Get resource handler
         /// </summary>
-        public HdsiServiceBehavior() : base(
-            new Rest.Common.ResourceHandlerTool(
+        /// <returns></returns>
+        protected override ResourceHandlerTool GetResourceHandler()
+        {
+            if (this.m_resourceHandler == null)
+                this.m_resourceHandler = new Rest.Common.ResourceHandlerTool(
                 typeof(PatientResourceHandler).Assembly.ExportedTypes
                 .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a =>
                 {
@@ -56,7 +63,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 }))
                 .OfType<Type>()
                 .Where(t => t != null && !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t))
-                .ToList(), typeof(IHdsiServiceContract)))
+                .ToList(), typeof(IHdsiServiceContract));
+            return this.m_resourceHandler;
+        }
+
+        /// <summary>
+        /// HDSI service behavior
+        /// </summary>
+        public HdsiServiceBehavior() 
         {
         }
 

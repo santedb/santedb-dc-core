@@ -367,17 +367,17 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         if (result != null)
                         {
                             
-                            if (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
-                                count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000)
+                            if (this.m_configuration.BigBundles && (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
+                                count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000))
                                 count = 5000;
-                            else if (count == 2500 && perfTimer.ElapsedMilliseconds < 30000 ||
-                                count < 2500 && result.TotalResults > 10000 && perfTimer.ElapsedMilliseconds < 30000)
+                            else if (this.m_configuration.BigBundles && (count == 2500 && perfTimer.ElapsedMilliseconds < 30000 ||
+                                count < 2500 && result.TotalResults > 10000 && perfTimer.ElapsedMilliseconds < 30000))
                                 count = 2500;
                             else if (count == 1000 && perfTimer.ElapsedMilliseconds < 20000 ||
                                 count < 1000 && result.TotalResults > 5000 && perfTimer.ElapsedMilliseconds < 20000)
                                 count = 1000;
-                            else if (count == 200 && perfTimer.ElapsedMilliseconds < 10000 ||
-                                count < 500 && result.TotalResults > 1000 && perfTimer.ElapsedMilliseconds < 10000)
+                            else if (count == 500 && perfTimer.ElapsedMilliseconds < 10000 ||
+                                count < 200 && result.TotalResults > 1000 && perfTimer.ElapsedMilliseconds < 10000)
                                 count = 500;
                             else
                                 count = 100;

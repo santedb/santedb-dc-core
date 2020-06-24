@@ -63,16 +63,28 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     public class AmiServiceBehavior : AmiServiceBehaviorBase
     {
 
+        // Resource handler tool
+        private ResourceHandlerTool m_resourceHandler;
+
+        /// <summary>
+        /// Resource handler
+        /// </summary>
+        /// <returns></returns>
+        protected override ResourceHandlerTool GetResourceHandler()
+        {
+            if (this.m_resourceHandler == null)
+                this.m_resourceHandler = new Rest.Common.ResourceHandlerTool(
+                    typeof(SecurityUserResourceHandler).Assembly.ExportedTypes
+                    .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes))
+                    .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract));
+            return this.m_resourceHandler;
+        }
         /// <summary>
         /// AMI service behavior
         /// </summary>
-        public AmiServiceBehavior() : base(
-            new Rest.Common.ResourceHandlerTool(
-                typeof(SecurityUserResourceHandler).Assembly.ExportedTypes
-                .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes))
-                .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract)))
+        public AmiServiceBehavior()
         {
-            
+
         }
 
         // Tracer
@@ -184,17 +196,18 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 var logFile = new FileInfo(logFileName);
 
-                
+
                 // Verify offset
                 if (offset > logFile.Length) throw new ArgumentOutOfRangeException($"Maximum size of {logFileName} is {logFile.Length}, offset is {offset}");
 
-                using (var fs = File.OpenRead(logFileName)) {
+                using (var fs = File.OpenRead(logFileName))
+                {
 
                     // Is count specified 
                     byte[] buffer;
-                    if (offset + count > logFile.Length) 
+                    if (offset + count > logFile.Length)
                         buffer = new byte[logFile.Length - offset];
-                    else 
+                    else
                         buffer = new byte[count];
 
                     fs.Seek(offset, SeekOrigin.Begin);
@@ -291,7 +304,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 CollectionItem = hits.Skip(offset).Take(count).OfType<Object>().ToList(),
                 Size = hits.Count(),
                 Offset = offset
-            };  
+            };
         }
 
         /// <summary>
@@ -394,7 +407,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 serviceOptions.Endpoints.AddRange(ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>().Services.Select(s => new ServiceEndpointOptions()
                 {
-                    BaseUrl = s.Endpoints.Select(o=> {
+                    BaseUrl = s.Endpoints.Select(o =>
+                    {
                         var configHost = new Uri(o.Address);
                         this.m_traceSource.TraceVerbose("Rewriting OPTION {0}:{1} > {2}", configHost.Host, configHost.Port, RestOperationContext.Current.IncomingRequest.UserHostAddress);
                         return o.Address.Replace(configHost.Host + ":" + configHost.Port, RestOperationContext.Current.IncomingRequest.UserHostAddress);
@@ -404,12 +418,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     s.ServiceType == typeof(HdsiServiceBehavior) ? ServiceEndpointType.HealthDataService :
                     s.ServiceType == typeof(AuthenticationServiceBehavior) ? ServiceEndpointType.AuthenticationService :
                     (ServiceEndpointType)0
-                }).Where(o=>o.ServiceType > 0));
+                }).Where(o => o.ServiceType > 0));
                 return serviceOptions;
             }
         }
 
-    
+
         /// <summary>
         /// Throw if the service is not ready
         /// </summary>
@@ -417,7 +431,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
         }
 
-        
+
         /// <summary>
         /// Create the specified resource
         /// </summary>

@@ -19,6 +19,14 @@ namespace SanteDB.DisconnectedClient.Backup
     {
 
         /// <summary>
+        /// Job is starting
+        /// </summary>
+        public DefaultBackupJob()
+        {
+            this.CurrentState = JobStateType.NotRun;
+        }
+
+        /// <summary>
         /// Tracer for backup job
         /// </summary>
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupJob));
