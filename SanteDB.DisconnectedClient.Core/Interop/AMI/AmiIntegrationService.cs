@@ -81,18 +81,11 @@ namespace SanteDB.DisconnectedClient.Interop.AMI
             {
                 var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
-                AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
-
-
-                // TODO: Clean this up - Login as device account
-                if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                    (AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.AuthenticationMethod)?.Value == "LOCAL" ||
-                    ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
-                {
-                    AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                    this.m_cachedCredential = AuthenticationContext.Current.Principal;
-                }
-                return client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+                if (this.m_cachedCredential == null ||
+                    this.m_cachedCredential is IClaimsPrincipal claimsPrincipal &&
+                    (claimsPrincipal.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                    this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                return client.Description.Binding.Security.CredentialProvider.GetCredentials(this.m_cachedCredential);
             }
             catch (Exception e)
             {

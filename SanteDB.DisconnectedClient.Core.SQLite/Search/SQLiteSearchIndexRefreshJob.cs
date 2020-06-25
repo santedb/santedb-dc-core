@@ -89,7 +89,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
             }
             set
             {
-                if(this.CurrentState == JobStateType.Completed)
+                if (this.CurrentState == JobStateType.Completed)
                     ApplicationContext.Current.ConfigurationManager.SetAppSetting("santedb.mobile.core.search.lastIndex", value.ToString());
             }
         }
@@ -124,10 +124,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                 int tr = 101, ofs = 0;
                 var patientService = ApplicationServiceContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
                 Guid queryId = Guid.NewGuid();
-                var since = parameters?.FirstOrDefault() as DateTime? ?? this.LastFinished.GetValueOrDefault();
+                var since = parameters?.FirstOrDefault() as DateTime? ?? this.LastFinished ?? new DateTime(1970, 01, 01);
 
                 int n = 0;
-                
+
                 while (tr > ofs + 50 && !this.m_cancelRequested)
                 {
 
@@ -142,7 +142,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     ofs += 50;
                     ApplicationContext.Current.SetProgress(Strings.locale_indexing, (float)ofs / tr);
                 }
-               
+
                 if (this.m_cancelRequested)
                     this.CurrentState = JobStateType.Cancelled;
                 else

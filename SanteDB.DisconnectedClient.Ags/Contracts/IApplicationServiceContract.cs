@@ -211,5 +211,17 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Post("/PushConfig")]
         List<String> PushConfiguration(TargetedConfigurationViewModel model);
+
+        /// <summary>
+        /// Disable the specified service
+        /// </summary>
+        [Delete("/Configuration/Service/{serviceType}")]
+        void DisableService(String serviceType);
+
+        /// <summary>
+        /// Enable the specified service
+        /// </summary>
+        [Post("/Configuration/Service/{serviceType}")]
+        void EnableService(String serviceType);
     }
 }

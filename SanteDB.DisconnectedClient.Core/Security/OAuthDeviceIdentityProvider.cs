@@ -44,6 +44,7 @@ namespace SanteDB.DisconnectedClient.Security
     /// </summary>
     public class OAuthDeviceIdentityProvider : IDeviceIdentityProviderService
     {
+
         /// <summary>
         /// Get the service name
         /// </summary>

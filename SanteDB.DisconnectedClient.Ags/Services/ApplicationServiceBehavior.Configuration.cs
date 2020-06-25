@@ -73,6 +73,8 @@ using SanteDB.Core.Auditing;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.Core.Jobs;
 using SanteDB.Messaging.HDSI.Client;
+using System.Net;
+using SanteDB.Core.Interfaces;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -517,6 +519,18 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw;
             }
+            catch (WebException e) when (e.Message.StartsWith("The remote name could not be resolved"))
+            {
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
+                this.m_tracer.TraceError("Error joining context: {0}", e);
+                throw new Exception($"Error Joining Domain - {e.Message}", e);
+            }
+            catch (WebException e) 
+            {
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
+                this.m_tracer.TraceError("Error joining context: {0}", e);
+                throw new Exception($"Remote server returned error - {e.Message}", e);
+            }
             catch (Exception e)
             {
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
@@ -541,6 +555,54 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 }
             );
+        }
+
+        /// <summary>
+        /// Remove the specified service from the DCG
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.UnrestrictedAdministration)]
+        public void DisableService(String serviceIdentifier)
+        {
+            try
+            {
+                var svc = ApplicationServiceContext.Current.GetService<IServiceManager>().GetServices().FirstOrDefault(o => o.GetType().FullName.Equals(serviceIdentifier, StringComparison.OrdinalIgnoreCase));
+                var serviceType = svc?.GetType() ?? Type.GetType(serviceIdentifier);
+                if (serviceType == null)
+                    throw new KeyNotFoundException($"Service {serviceIdentifier} not found");
+
+                (ApplicationServiceContext.Current.GetService(serviceType) as IDaemonService)?.Stop();
+                ApplicationContext.Current.RemoveServiceProvider(serviceType, true);
+                ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error disabling service : {0}", e);
+                throw new Exception($"Could not disable service {serviceIdentifier}", e);
+            }
+        }
+
+        /// <summary>
+        /// Remove the specified service from the DCG
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.UnrestrictedAdministration)]
+        public void EnableService(String serviceIdentifier)
+        {
+            try
+            {
+                var svc = ApplicationServiceContext.Current.GetService<IServiceManager>().GetServices().FirstOrDefault(o => o.GetType().FullName.Equals(serviceIdentifier, StringComparison.OrdinalIgnoreCase));
+                var serviceType = svc?.GetType() ?? Type.GetType(serviceIdentifier);
+                if (serviceType == null)
+                    throw new KeyNotFoundException($"Service {serviceIdentifier} not found");
+
+                ApplicationContext.Current.AddServiceProvider(serviceType, true);
+                (ApplicationServiceContext.Current.GetService(serviceType) as IDaemonService)?.Start();
+                ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error enabling service: {0}", e);
+                throw new Exception($"Could not enable service {serviceIdentifier}", e);
+            }
         }
 
         /// <summary>
