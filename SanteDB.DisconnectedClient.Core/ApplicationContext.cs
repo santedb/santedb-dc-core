@@ -128,7 +128,6 @@ namespace SanteDB.DisconnectedClient
         {
             this.m_configManager = new ConfigurationManager(configPersister);
             this.ConfigurationPersister = configPersister;
-            this.ThreadDefaultPrincipal = AuthenticationContext.AnonymousPrincipal;
         }
 
         #region IServiceProvider implementation
@@ -351,11 +350,7 @@ namespace SanteDB.DisconnectedClient
         /// Execution UUID
         /// </summary>
         public virtual Guid ExecutionUuid { get { return s_executionUuid; } }
-        /// <summary>
-        /// Gets the default thread principal
-        /// </summary>
-        public IPrincipal ThreadDefaultPrincipal { get; protected set; }
-
+       
         /// <summary>
         /// Returns true if service is running
         /// </summary>

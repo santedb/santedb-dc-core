@@ -166,12 +166,11 @@ namespace SanteDB.DisconnectedClient.Security
                         // Is this another device authenticating against me?
                         if (deviceId != ApplicationContext.Current.Device.Name)
                         {
-                            this.m_tracer.TraceWarning("Network unavailable falling back to local");
                             return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);
                         }
                         else
                         {
-                            this.m_tracer.TraceWarning("Network unavailable, skipping authentication");
+                            this.m_tracer.TraceWarning("Network unavailable, skipping authentication - Authenticating as SELF");
                             throw new SecurityException(Strings.err_network_securityNotAvailable);
                         }
                     }

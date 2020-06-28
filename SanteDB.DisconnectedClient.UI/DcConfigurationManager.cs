@@ -38,14 +38,11 @@ using SanteDB.DisconnectedClient.Services.Local;
 using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.DisconnectedClient.Tickler;
 using SanteDB.DisconnectedClient.Backup;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Diagnostics;
 using SanteDB.DisconnectedClient.Http;
 using SanteDB.DisconnectedClient.Net;
 using SanteDB.DisconnectedClient.Rules;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Threading;
 using SharpCompress.Compressors.BZip2;
 using System;
 using System.Collections.Generic;
@@ -191,7 +188,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(BusinessRulesDaemonService)),
                     new TypeReferenceConfiguration(typeof(AgsService)),
                     new TypeReferenceConfiguration(typeof(MemoryCacheService)),
-                    new TypeReferenceConfiguration(typeof(SanteDBThreadPool)),
+                    new TypeReferenceConfiguration(typeof(DefaultThreadPoolService)),
                     new TypeReferenceConfiguration(typeof(SimpleCarePlanService)),
                     new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),
                     new TypeReferenceConfiguration(typeof(AmiUpdateManager)),

@@ -315,6 +315,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="Threading\" />
   </ItemGroup>
   <!-- <ItemGroup /> -->
 </Project>
