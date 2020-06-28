@@ -589,7 +589,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             try
             {
-                var svc = ApplicationServiceContext.Current.GetService<IServiceManager>().GetServices().FirstOrDefault(o => o.GetType().FullName.Equals(serviceIdentifier, StringComparison.OrdinalIgnoreCase));
+                var svc = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes().FirstOrDefault(o => o.FullName.Equals(serviceIdentifier, StringComparison.OrdinalIgnoreCase));
                 var serviceType = svc?.GetType() ?? Type.GetType(serviceIdentifier);
                 if (serviceType == null)
                     throw new KeyNotFoundException($"Service {serviceIdentifier} not found");

@@ -409,7 +409,7 @@ namespace SanteDB.DisconnectedClient.Http
                         var cancelTokenSource = new CancellationTokenSource();
                         CancellationToken ct = cancelTokenSource.Token;
 
-                        using (var responseTask = Task.Run(async () => { try { return await requestObj.GetResponseAsync(); } catch (Exception e) { this.m_tracer.TraceError("Error executing HTTP: {0}", e.Message); throw; } } ,cancelTokenSource.Token))
+                        using (var responseTask = Task.Run(async () => { try { return await requestObj.GetResponseAsync(); } catch (Exception e) { this.m_tracer.TraceWarning("HTTP RESPONSE: {0}", e.Message); throw; } } ,cancelTokenSource.Token))
                         {
                             try
                             {
@@ -540,7 +540,6 @@ namespace SanteDB.DisconnectedClient.Http
                 }
                 catch(WebException e) when (e.Response is HttpWebResponse errorResponse && errorResponse.StatusCode == HttpStatusCode.NotModified)
                 {
-                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
                     this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
                     responseHeaders = errorResponse?.Headers;
                     return default(TResult);

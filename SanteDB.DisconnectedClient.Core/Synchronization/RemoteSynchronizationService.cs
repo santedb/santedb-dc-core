@@ -192,6 +192,8 @@ namespace SanteDB.DisconnectedClient.Synchronization
             this.m_threadPool.QueueUserWorkItem((state) =>
             {
 
+                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
+
                 var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
                 bool initialSync = !logSvc.GetAll().Any();
 
@@ -329,11 +331,13 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
                     // Attempt to find an existing query
                     var existingQuery = logSvc.FindQueryData(modelType, filter.ToString());
+                    DateTime? startTime = null;
                     if (existingQuery != null && DateTime.Now.ToUniversalTime().Subtract(existingQuery.StartTime).TotalHours <= 1)
                     {
                         qid = existingQuery.Uuid;
                         result.Count = existingQuery.LastSuccess;
                         result.TotalResults = result.Count + 1;
+                        startTime = existingQuery.StartTime;
                     }
                     else
                     {
@@ -341,7 +345,6 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         logSvc.SaveQuery(modelType, filter.ToString(), qid, name, 0);
                     }
 
-                    DateTime startTime = DateTime.Now;
 
                     // Enqueue
                     for (int i = result.Count; i < result.TotalResults; i += result.Count)
@@ -362,6 +365,8 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         perfTimer.Start();
 
                         result = this.m_integrationService.Find(modelType, filter, i, count, new IntegrationQueryOptions() { IfModifiedSince = lastModificationDate, Timeout = 120000, Lean = true, InfrastructureOptions = infopt, QueryId = qid });
+                        if(!startTime.HasValue)
+                            startTime = DateTime.Now;
 
                         // Queue the act of queueing
                         if (result != null)
@@ -403,7 +408,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         ApplicationContext.Current.SetProgress(String.Format(Strings.locale_sync, modelType.Name, result.TotalResults, result.TotalResults), 1.0f);
 
                     // Log that we synchronized successfully
-                    logSvc.Save(modelType, filter.ToString(), eTag, name, startTime);
+                    logSvc.Save(modelType, filter.ToString(), eTag, name, startTime.Value);
 
                     // Clear the query
                     logSvc.CompleteQuery(qid);

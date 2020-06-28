@@ -17,9 +17,11 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.Core;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 
@@ -28,7 +30,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
     /// <summary>
     /// Generic nullifiable local repository
     /// </summary>
-    public class GenericLocalNullifiedRepository<TModel> : GenericLocalRepository<TModel>, INullifyRepositoryService<TModel>
+    public class GenericLocalNullifiedRepository<TModel> : GenericLocalRepository<TModel>, IRepositoryServiceEx<TModel>
         where TModel : IdentifiedData, IHasState
     {
         /// <summary>
@@ -39,6 +41,24 @@ namespace SanteDB.DisconnectedClient.Services.Local
             var target = base.Get(id); ;
             target.StatusConceptKey = StatusKeys.Nullified;
             return base.Save(target);
+        }
+
+
+        /// <summary>
+        /// Touch the specified object
+        /// </summary>
+        /// <param name="id">The id of the object to be touched</param>
+        /// <returns>The touched object</returns>
+        public virtual void Touch(Guid id)
+        {
+            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
+            if (persistenceService is IDataPersistenceServiceEx<TModel> exPersistence)
+            {
+                this.DemandAlter(null);
+                exPersistence.Touch(id, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            }
+            else
+                throw new InvalidOperationException("Repository must support TOUCH");
         }
     }
 }

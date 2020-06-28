@@ -311,7 +311,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         var we = ie as WebException;
                         if (we.Status == WebExceptionStatus.ConnectFailure)
                             continue;
-                        else if (we?.Response == null)
+                        else if (we?.Response == null )
                         {
                             SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                             SynchronizationQueue.Admin.DequeueRaw(); // Get rid of the last item

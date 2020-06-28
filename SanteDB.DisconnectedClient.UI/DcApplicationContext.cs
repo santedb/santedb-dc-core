@@ -150,7 +150,6 @@ namespace SanteDB.DisconnectedClient.UI
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
-                retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
                 retVal.AddServiceProvider(typeof(DefaultBackupService));
                 return true;
             }
@@ -177,7 +176,6 @@ namespace SanteDB.DisconnectedClient.UI
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
-                retVal.ThreadDefaultPrincipal = AuthenticationContext.SystemPrincipal;
                 retVal.AddServiceProvider(typeof(DefaultBackupService));
 
                 var appletService = retVal.GetService<IAppletManagerService>();

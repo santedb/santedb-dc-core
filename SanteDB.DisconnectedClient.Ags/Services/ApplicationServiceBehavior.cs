@@ -30,7 +30,6 @@ using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Data;
-using SanteDB.DisconnectedClient.Threading;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
