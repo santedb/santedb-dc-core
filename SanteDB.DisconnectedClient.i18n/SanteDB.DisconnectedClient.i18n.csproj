@@ -23,7 +23,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.DisconnectedClient.i81n</PackageId>
     <Title>SanteDB.DisconnectedClient.i81n</Title>
-    <Version>2.0.23</Version>
+    <Version>2.0.25</Version>
     <Description>SanteDB Disconnected Client Translations</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>
