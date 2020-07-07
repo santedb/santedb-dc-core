@@ -542,5 +542,34 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 idpService.Update(submittedData);
             }
         }
+
+        /// <summary>
+        /// Get the difference between the server and this device's time
+        /// </summary>
+        public TimeSpan GetServerTimeDrift()
+        {
+            try
+            {
+                //var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                var networkInformationService = ApplicationContext.Current.GetService<INetworkInformationService>();
+                if (networkInformationService.IsNetworkAvailable)
+                {
+                    HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
+                    client.Client.Credentials = new NullCredentials();
+                    client.Client.Description.Endpoint[0].Timeout = 10000;
+                    TimeSpan drift = TimeSpan.MinValue;
+                    client.Client.Responded += (o, e) => drift = DateTime.Now.Subtract(DateTime.Parse(e.Headers["X-GeneratedOn"]));
+                    client.Ping();
+                    return drift;
+                }
+                else
+                    return TimeSpan.MinValue;
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError($"Unable to determine server time drift: {e}");
+                return TimeSpan.MinValue;
+            }
+        }
     }
 }

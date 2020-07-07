@@ -308,8 +308,17 @@ namespace SanteDB.DisconnectedClient.Synchronization
                 var lastModificationDate = logSvc.GetLastTime(modelType, filter.ToString());
                 if (always)
                     lastModificationDate = null;
-                if (lastModificationDate != null)
+                if (lastModificationDate != null) {
                     lastModificationDate = lastModificationDate.Value;
+
+                    // Get the time drift
+                    var serverDrift = this.m_integrationService.GetServerTimeDrift();
+                    if (Math.Abs(serverDrift.TotalMinutes) > 5) // More than 5 min drift
+                    {
+                        this.m_tracer.TraceWarning("Server time is {0} milliseconds drifted", serverDrift.TotalMilliseconds);
+                        lastModificationDate.Value.Subtract(serverDrift);
+                    }
+                }
 
                 // Performance timer for more intelligent query control
                 Stopwatch perfTimer = new Stopwatch();

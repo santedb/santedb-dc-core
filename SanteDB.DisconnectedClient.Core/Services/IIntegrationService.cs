@@ -139,7 +139,10 @@ namespace SanteDB.DisconnectedClient.Services
     /// </summary>
     public interface IClinicalIntegrationService : IIntegrationService
     {
-
+        /// <summary>
+        /// Get the server time drift
+        /// </summary>
+        TimeSpan GetServerTimeDrift();
     }
 
     /// <summary>
