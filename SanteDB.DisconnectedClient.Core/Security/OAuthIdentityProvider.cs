@@ -247,7 +247,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// Do internal authentication
         /// </summary>
         private IPrincipal DoAuthenticationInternal(String userName = null, String password = null, string tfaSecret = null, bool isOverride = false, TokenClaimsPrincipal refreshPrincipal = null, string purposeOfUse = null, string[] policies = null)
-        { 
+        {
             AuthenticatingEventArgs e = new AuthenticatingEventArgs(userName);
             this.Authenticating?.Invoke(this, e);
             if (e.Cancel)
@@ -291,7 +291,7 @@ namespace SanteDB.DisconnectedClient.Security
                     {
                         if (!String.IsNullOrEmpty(tfaSecret))
                             p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
-                        if(isOverride)
+                        if (isOverride)
                             p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
                                 $"{SanteDBClaimTypes.PurposeOfUse}={purposeOfUse};{SanteDBClaimTypes.SanteDBOverrideClaim}=true"
                                 )));
@@ -330,13 +330,17 @@ namespace SanteDB.DisconnectedClient.Security
                         catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
                         {
                             this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-                            
-                            var se = new SecurityException(
+
+                            if (ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") != "true")
+                            {
+
+                                var se = new SecurityException(
                                 String.Format("err_oauth2_{0}", ex.Result.Error),
-                                ex
-                            );
-                            se.Data.Add("oauth_result", ex.Result);
-                            throw se;
+                                    ex
+                                );
+                                se.Data.Add("oauth_result", ex.Result);
+                                throw se;
+                            }
                         }
                         catch (SecurityException ex)
                         {
@@ -376,7 +380,7 @@ namespace SanteDB.DisconnectedClient.Security
                         {
                             ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
                         }
-                        catch(Exception e2)
+                        catch (Exception e2)
                         {
                             this.m_tracer.TraceError("An error occurred when inserting the local credential: {0}", e2);
                         }
