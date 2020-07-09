@@ -202,23 +202,23 @@ namespace SanteDB.DisconnectedClient.Caching
             if (e.Object is ActParticipation)
             {
                 var ptcpt = (e.Object as ActParticipation);
-                MemoryCache.Current.RemoveObject(ptcpt.Key.Value);
-                MemoryCache.Current.RemoveObject(ptcpt.SourceEntityKey.Value);
-                MemoryCache.Current.RemoveObject(ptcpt.ActKey.Value);
+                MemoryCache.Current.RemoveObject(ptcpt.Key.GetValueOrDefault());
+                MemoryCache.Current.RemoveObject(ptcpt.SourceEntityKey.GetValueOrDefault());
+                MemoryCache.Current.RemoveObject(ptcpt.ActKey.GetValueOrDefault());
             }
             else if (e.Object is ActRelationship)
             {
                 var rel = (e.Object as ActRelationship);
-                MemoryCache.Current.RemoveObject(rel.Key.Value);
-                MemoryCache.Current.RemoveObject(rel.SourceEntityKey.Value);
-                MemoryCache.Current.RemoveObject(rel.TargetActKey.Value);
+                MemoryCache.Current.RemoveObject(rel.Key.GetValueOrDefault());
+                MemoryCache.Current.RemoveObject(rel.SourceEntityKey.GetValueOrDefault());
+                MemoryCache.Current.RemoveObject(rel.TargetActKey.GetValueOrDefault());
             }
             else if (e.Object is EntityRelationship)
             {
                 var rel = (e.Object as EntityRelationship);
-                MemoryCache.Current.RemoveObject(rel.Key.Value);
-                MemoryCache.Current.RemoveObject(rel.SourceEntityKey.Value);
-                MemoryCache.Current.RemoveObject(rel.TargetEntityKey.Value);
+                MemoryCache.Current.RemoveObject(rel.Key.GetValueOrDefault());
+                MemoryCache.Current.RemoveObject(rel.SourceEntityKey.GetValueOrDefault());
+                MemoryCache.Current.RemoveObject(rel.TargetEntityKey.GetValueOrDefault());
             }
             
 
