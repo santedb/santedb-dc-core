@@ -558,7 +558,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     client.Client.Credentials = new NullCredentials();
                     client.Client.Description.Endpoint[0].Timeout = 10000;
                     TimeSpan drift = TimeSpan.MinValue;
-                    client.Client.Responded += (o, e) => drift = DateTime.Now.Subtract(DateTime.Parse(e.Headers["X-GeneratedOn"]));
+                    client.Client.Responded += (o, e) =>
+                    {
+                        if(e.Headers != null)
+                            drift = DateTime.Now.Subtract(DateTime.Parse(e.Headers["X-GeneratedOn"]));
+                    };
                     client.Ping();
                     return drift;
                 }

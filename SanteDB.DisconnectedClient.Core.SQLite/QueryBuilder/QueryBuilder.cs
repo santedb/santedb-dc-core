@@ -30,6 +30,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
 namespace SanteDB.Core.Data.QueryBuilder
 {
@@ -240,7 +241,11 @@ namespace SanteDB.Core.Data.QueryBuilder
                         {
                             var fkTbl = TableMapping.Get(jt.ForeignKey.Table);
                             var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
-                            selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
+
+                            if(typeof(IDbHideable).IsAssignableFrom(fkTbl.OrmType))
+                                selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name} AND {tablePrefix}{fkAtt.Table.TableName}.hidden = 0) ");
+                            else
+                                selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
                             if (!scopedTables.Contains(fkTbl))
                                 fkStack.Push(fkTbl);
                             scopedTables.Add(fkAtt.Table);

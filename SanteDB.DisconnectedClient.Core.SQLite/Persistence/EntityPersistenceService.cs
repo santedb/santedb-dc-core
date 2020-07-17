@@ -427,7 +427,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             data.StatusConceptKey = data.StatusConcept?.Key ?? data.StatusConceptKey;
             data.TypeConceptKey = data.TypeConcept?.Key ?? data.TypeConceptKey;
 
-
             var retVal = base.UpdateInternal(context, data);
 
             byte[] entityUuid = retVal.Key.Value.ToByteArray();

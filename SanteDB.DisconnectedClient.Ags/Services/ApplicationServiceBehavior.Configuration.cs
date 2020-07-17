@@ -510,29 +510,33 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 }
                 finally
                 {
+                    ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 }
             }
             catch (DuplicateNameException) // handles duplicate device name
             {
-
+                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw;
             }
             catch (WebException e) when (e.Message.StartsWith("The remote name could not be resolved"))
             {
+                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Error Joining Domain - {e.Message}", e);
             }
             catch (WebException e) 
             {
+                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Remote server returned error - {e.Message}", e);
             }
             catch (Exception e)
             {
+                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Could not complete joining context", e);

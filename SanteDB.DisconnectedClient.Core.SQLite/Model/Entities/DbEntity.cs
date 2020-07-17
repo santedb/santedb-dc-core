@@ -28,8 +28,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
     /// Represents an entity in the database
     /// </summary>
     [Table("entity")]
-    public class DbEntity : DbVersionedData
+    public class DbEntity : DbVersionedData, IDbHideable
     {
+
         /// <summary>
         /// Gets or sets the template
         /// </summary>
@@ -79,6 +80,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
             get;
             set;
         }
+
+        /// <summary>
+        /// When true, hides the specified result from query results
+        /// </summary>
+        [Column("hidden")]
+        public bool Hidden { get; set; }
+
 
 
     }
