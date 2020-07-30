@@ -167,7 +167,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     db.Insert(new DbSecurityUser()
                     {
                         Key = uid,
-                        Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash("SanteDB123"),
+                        Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(Guid.NewGuid().ToString()),
                         SecurityHash = Guid.NewGuid().ToString(),
                         Lockout = DateTime.MaxValue,
                         UserName = "LocalAdministrator",

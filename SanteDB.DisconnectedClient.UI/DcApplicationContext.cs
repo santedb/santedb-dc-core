@@ -235,9 +235,11 @@ namespace SanteDB.DisconnectedClient.UI
                         retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
                         ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
                         //retVal.AddServiceProvider(typeof(ConfigurationManager));
+                        if(retVal.ConfigurationPersister == null)
+                            throw new InvalidOperationException("Missing configuration persistence service");
                         retVal.ConfigurationPersister.Backup(retVal.Configuration);
                     }
-                    catch
+                    catch(Exception e)
                     {
                         if (retVal.ConfigurationPersister.HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))
                         {
@@ -245,7 +247,7 @@ namespace SanteDB.DisconnectedClient.UI
                             retVal.ConfigurationManager.Reload();
                         }
                         else
-                            throw;
+                            throw new Exception("Could not load or backup configuration", e);
                     }
                     retVal.AddServiceProvider(typeof(DefaultBackupService));
 
@@ -270,10 +272,12 @@ namespace SanteDB.DisconnectedClient.UI
 
                     // Add tracers
                     retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
+                    retVal.m_tracer.TraceInfo("Starting logging infrastructure");
                     foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                         Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
 
                     retVal.SetProgress("Loading configuration", 0.2f);
+
                     // Load all user-downloaded applets in the data directory
                     var configuredApplets = retVal.Configuration.GetSection<AppletConfigurationSection>().Applets;
 
@@ -300,7 +304,6 @@ namespace SanteDB.DisconnectedClient.UI
                                 appletService.LoadApplet(manifest);
                             }
                         }
-                        catch (AppDomainUnloadedException) { throw; }
                         catch (Exception e)
                         {
                             if (retVal.Confirm(String.Format(Strings.err_applet_corrupt_reinstall, appletInfo.Id)))
@@ -322,7 +325,7 @@ namespace SanteDB.DisconnectedClient.UI
                             else
                             {
                                 retVal.m_tracer.TraceError("Loading applet {0} failed: {1}", appletInfo, e.ToString());
-                                throw;
+                                throw new Exception($"Could not load applet {appletInfo}", e);
                             }
                         }
 
@@ -353,15 +356,17 @@ namespace SanteDB.DisconnectedClient.UI
                         catch (Exception e)
                         {
                             retVal.m_tracer.TraceError(e.ToString());
-                            throw;
+                            throw new Exception("Error executing migrations", e);
                         }
                         finally
                         {
                             retVal.ConfigurationPersister.Save(retVal.Configuration);
                         }
 
+                    if(retVal.GetService<IThreadPoolService>() == null)
+                        throw new InvalidOperationException(("Missing thread pool service(s)"));
                     // Start daemons
-                    updateService.AutoUpdate();
+                    updateService?.AutoUpdate();
                     retVal.GetService<IThreadPoolService>().QueueUserWorkItem((o) => retVal.Start());
 
                     //retVal.Start();

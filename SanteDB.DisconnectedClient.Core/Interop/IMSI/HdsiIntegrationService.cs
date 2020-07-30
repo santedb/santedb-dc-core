@@ -560,8 +560,13 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     TimeSpan drift = TimeSpan.MinValue;
                     client.Client.Responded += (o, e) =>
                     {
-                        if(e.Headers != null)
-                            drift = DateTime.Now.Subtract(DateTime.Parse(e.Headers["X-GeneratedOn"]));
+                        if (e.Headers != null)
+                        {
+                            if (e.Headers.ContainsKey("X-GeneratedOn"))
+                                drift = DateTime.Parse(e.Headers["X-GeneratedOn"]).Subtract(DateTime.Now);
+                            else if (DateTime.TryParse(e.Headers["Date"], out DateTime serverTime))
+                                drift = serverTime.Subtract(DateTime.Now);
+                        }
                     };
                     client.Ping();
                     return drift;

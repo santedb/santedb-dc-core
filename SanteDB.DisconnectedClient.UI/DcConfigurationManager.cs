@@ -94,8 +94,10 @@ namespace SanteDB.DisconnectedClient.UI
             var oldPath = this.m_configPath.Replace(
                 Environment.GetFolderPath(Environment.SpecialFolder.Windows),
                 Path.Combine(Path.ChangeExtension(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "OLD"), "Windows"))
-                .ToUpper()
-                .Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
+                .ToUpper();
+                
+            if(Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
+                oldPath = oldPath.Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
                 ;
 
             try
