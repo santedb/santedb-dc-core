@@ -71,7 +71,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             /// <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
             /// </summary>
             /// <param name="migration">Migration.</param>
-            public DataMigrationEntry(IDbMigration migration)
+            public DataMigrationEntry(IConfigurationMigration migration)
             {
                 this.Id = migration.Id;
                 this.Date = DateTime.Now;

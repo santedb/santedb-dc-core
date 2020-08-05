@@ -24,6 +24,7 @@ using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -53,9 +54,26 @@ namespace SanteDB.DisconnectedClient.Configuration
         /// </summary>
         public ConfigurationManager(IConfigurationPersister defaultPersister = null)
         {
-            this.Configuration = (defaultPersister  ?? ApplicationContext.Current.ConfigurationPersister).Load();
+            var persister = (defaultPersister ?? ApplicationContext.Current.ConfigurationPersister);
+            try
+            {
+                this.Configuration = persister.Load();
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError("Could not load configuration file - Will attempt restore - {0}", e);
+                try {
+                    if(persister.HasBackup())
+                        (defaultPersister ?? ApplicationContext.Current.ConfigurationPersister).Restore();
+                    this.Configuration = persister.Load();
+                }
+                catch(Exception e2)
+                {
+                    throw new InvalidOperationException("Cannot load configuration file", e2);
+                }
+            }
         }
-
+ 
         /// <summary>
         /// Get app setting
         /// </summary>

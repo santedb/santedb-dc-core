@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// This class is responsible for setting up an initial catalog of items in the SQL Lite database
     /// </summary>
-    internal class InitialCatalog : IDbMigration
+    internal class InitialCatalog : IConfigurationMigration
     {
 
         #region IDbMigration implementation

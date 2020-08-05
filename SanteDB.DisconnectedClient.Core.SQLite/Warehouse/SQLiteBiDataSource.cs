@@ -24,7 +24,7 @@ using SanteDB.BI.Services;
 using SanteDB.BI.Util;
 using SanteDB.Core;
 using SanteDB.Core.Configuration.Data;
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;

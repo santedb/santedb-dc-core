@@ -383,8 +383,16 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public void Backup(SanteDBConfiguration configuration)
         {
-            using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
-                configuration.Save(lzs);
+            try
+            {
+                using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
+                    configuration.Save(lzs);
+            }
+            catch(Exception e)
+            {
+                File.Delete(Path.ChangeExtension(this.m_configPath, "bak.bz2"));
+                throw new InvalidOperationException($"Could not backup to {Path.ChangeExtension(this.m_configPath, "bak.bz2")}", e);
+            }
         }
 
         /// <summary>
@@ -404,7 +412,7 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 var retVal = SanteDBConfiguration.Load(lzs);
                 this.Save(retVal);
-                ApplicationContext.Current.ConfigurationManager.Reload();
+                ApplicationContext.Current.ConfigurationManager?.Reload();
                 return retVal;
             }
         }

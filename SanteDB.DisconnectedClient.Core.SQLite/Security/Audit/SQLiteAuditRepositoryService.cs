@@ -19,7 +19,7 @@
  */
 using SanteDB.Core.Security;
 using SanteDB.Core.Auditing;
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Security.Services;

@@ -25,7 +25,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace SanteDB.Core.Data.QueryBuilder
+namespace SanteDB.DisconnectedClient.SQLite.Query
 {
     /// <summary>
     /// Represents a SQL statement builder tool
@@ -212,7 +212,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// </summary>
         public SqlStatement Or(String clause, params object[] args)
         {
-            return this.And(new SqlStatement(clause, args));
+            return this.Or(new SqlStatement(clause, args));
         }
 
         /// <summary>

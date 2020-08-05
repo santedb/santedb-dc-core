@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
         private Tracer m_tracer;
 
         // Migrations
-        private List<IDbMigration> m_migrations;
+        private List<IConfigurationMigration> m_migrations;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrator"/> class.
@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             try
             {
                 this.m_tracer = Tracer.GetTracer(this.GetType());
-                this.m_migrations = new List<IDbMigration>();
+                this.m_migrations = new List<IConfigurationMigration>();
 
                 this.m_tracer.TraceInfo("Scanning for data migrations...");
 
@@ -64,10 +64,10 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
                         try
                         {
                             if (dbm.AsType() == typeof(DataMigrator) ||
-                                !typeof(IDbMigration).GetTypeInfo().IsAssignableFrom(dbm))
+                                !typeof(IConfigurationMigration).GetTypeInfo().IsAssignableFrom(dbm))
                                 continue;
 
-                            IDbMigration migration = Activator.CreateInstance(dbm.AsType()) as IDbMigration;
+                            IConfigurationMigration migration = Activator.CreateInstance(dbm.AsType()) as IConfigurationMigration;
                             if (migration != null)
                             {
                                 this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
@@ -109,9 +109,9 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
         /// Get the list of data migrations that need to occur for the application to be in the most recent state
         /// </summary>
         /// <returns>The proposal.</returns>
-        public List<IDbMigration> GetProposal()
+        public List<IConfigurationMigration> GetProposal()
         {
-            List<IDbMigration> retVal = new List<IDbMigration>();
+            List<IConfigurationMigration> retVal = new List<IConfigurationMigration>();
 
             this.m_tracer.TraceInfo("Generating data migration proposal...");
             foreach (var itm in this.m_migrations.OrderBy(o => o.Id))

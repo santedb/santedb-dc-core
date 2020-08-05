@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-12-24
  */
-using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SQLite.Net.Attributes;
 using System;
 using System.Collections.Generic;

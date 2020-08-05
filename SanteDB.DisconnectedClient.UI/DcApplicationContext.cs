@@ -37,6 +37,7 @@ using SanteDB.DisconnectedClient.Backup;
 using SanteDB.DisconnectedClient.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
@@ -122,7 +123,7 @@ namespace SanteDB.DisconnectedClient.UI
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DisconnectedClient.DcApplicationContext"/> class.
+        /// Initializes a new instance of the <see cref="DcApplicationContext"/> class.
         /// </summary>
         /// <param name="dialogProvider">Dialog provider.</param>
         public DcApplicationContext(IDialogProvider dialogProvider, String instanceName, SecurityApplication applicationId, SanteDBHostType hostType)
@@ -241,6 +242,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
                     catch(Exception e)
                     {
+                        Trace.TraceWarning("Error loading configuration: {0}", e);
                         if (retVal.ConfigurationPersister.HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))
                         {
                             retVal.ConfigurationPersister.Restore();

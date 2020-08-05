@@ -32,7 +32,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using SanteDB.DisconnectedClient.SQLite.Model;
 
-namespace SanteDB.Core.Data.QueryBuilder
+namespace SanteDB.DisconnectedClient.SQLite.Query
 {
 
     /// <summary>
@@ -56,7 +56,7 @@ namespace SanteDB.Core.Data.QueryBuilder
     {
         // Regex to extract property, guards and cast
         public static readonly Regex ExtractionRegex = new Regex(@"^(\w*?)(\[(.*?)\])?(\@(\w*))?(\.(.*))?$");
-
+        
         private const int PropertyRegexGroup = 1;
         private const int GuardRegexGroup = 3;
         private const int CastRegexGroup = 5;
@@ -161,6 +161,12 @@ namespace SanteDB.Core.Data.QueryBuilder
 
         // Join cache
         private Dictionary<String, KeyValuePair<SqlStatement, List<TableMapping>>> s_joinCache = new Dictionary<String, KeyValuePair<SqlStatement, List<TableMapping>>>();
+        
+        // Filter function regex
+        public static readonly Regex ExtendedFunctionRegex = new Regex(@"^:\((\w*?)(\|(.*?)\)|\))(.*)");
+
+        // Filter functions
+        private static Dictionary<String, IDbFilterFunction> s_filterFunctions = null;
 
         // Mapper
         private ModelMapper m_mapper;
@@ -559,6 +565,26 @@ namespace SanteDB.Core.Data.QueryBuilder
         }
 
         /// <summary>
+        /// Gets the filter function
+        /// </summary>
+        public IDbFilterFunction GetFilterFunction(string name)
+        {
+            if (s_filterFunctions == null)
+            {
+                s_filterFunctions = AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(a => !a.IsDynamic)
+                        .SelectMany(a => a.ExportedTypes)
+                        .Where(t => typeof(IDbFilterFunction).IsAssignableFrom(t) && !t.IsAbstract)
+                        .Select(t => Activator.CreateInstance(t) as IDbFilterFunction)
+                        .ToDictionary(o => o.Name, o => o);
+            }
+            IDbFilterFunction retVal = null;
+            s_filterFunctions.TryGetValue(name, out retVal);
+            return retVal;
+        }
+
+      
+        /// <summary>
         /// Create a single where condition based on the property info
         /// </summary>
         public SqlStatement CreateWhereCondition(Type tmodel, String propertyPath, Object value, String tablePrefix, List<TableMapping> scopedTables, String tableAlias = null)
@@ -602,6 +628,28 @@ namespace SanteDB.Core.Data.QueryBuilder
                     var sValue = itm as String;
                     switch (sValue[0])
                     {
+                        case ':': // function
+                            var opMatch = ExtendedFunctionRegex.Match(sValue);
+                            if (opMatch.Success)
+                            {
+                                // Extract
+                                String fnName = opMatch.Groups[1].Value,
+                                    parms = opMatch.Groups[3].Value,
+                                    operand = opMatch.Groups[4].Value;
+
+                                // Now find the function
+                                var filterFn = GetFilterFunction(fnName);
+                                if (filterFn == null)
+                                    retVal.Append($" = ? ", CreateParameterValue(sValue, domainProperty.PropertyType));
+                                else
+                                {
+                                    retVal.RemoveLast();
+                                    retVal = filterFn.CreateSqlStatement(retVal, $"{tableAlias}.{columnData.Name}", parms.Split(','), operand, domainProperty.PropertyType).Build();
+                                }
+                            }
+                            else
+                                retVal.Append($" = ? ", CreateParameterValue(sValue, domainProperty.PropertyType));
+                            break;
                         case '<':
                             semantic = " AND ";
                             if (sValue[1] == '=')
@@ -678,7 +726,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// <summary>
         /// Create a parameter value
         /// </summary>
-        private static object CreateParameterValue(object value, Type toType)
+        internal static object CreateParameterValue(object value, Type toType)
         {
             object retVal = null;
             if (value is Guid)

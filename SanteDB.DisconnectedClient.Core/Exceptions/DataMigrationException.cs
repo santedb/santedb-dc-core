@@ -41,14 +41,14 @@ namespace SanteDB.DisconnectedClient.Exceptions
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.DataMigrationException"/> class.
         /// </summary>
-        public DataMigrationException(IDbMigration offender) : this(offender, null)
+        public DataMigrationException(IConfigurationMigration offender) : this(offender, null)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.DataMigrationException"/> class.
         /// </summary>
-        public DataMigrationException(IDbMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
+        public DataMigrationException(IConfigurationMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
         {
             this.MigrationId = offender.Id;
         }

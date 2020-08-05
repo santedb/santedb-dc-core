@@ -24,6 +24,9 @@ using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using SanteDB.DisconnectedClient.SQLite.Query;
+using TableMapping = SQLite.Net.TableMapping;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -53,6 +56,22 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             base(sqlitePlatform, connectionString.GetComponent("dbfile"), openFlags, storeDateTimeAsTicks, serializer, tableMappings, extraTypeMappings, resolver, connectionString.GetComponent("encrypt")?.ToLower() == "true" ? ApplicationContext.Current.GetCurrentContextSecurityKey() : null)
         {
             this.ConnectionString = connectionString;
+
+            try
+            {
+                // Try to init extended filters
+                foreach (var f in AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(a => !a.IsDynamic)
+                        .SelectMany(a => { try { return a.ExportedTypes; } catch { return Type.EmptyTypes; } })
+                        .Where(t => typeof(IDbFilterFunction).IsAssignableFrom(t) && !t.IsAbstract)
+                        .Select(t => Activator.CreateInstance(t) as IDbFilterFunction))
+                    f.Initialize(this);
+                        
+            }
+            catch
+            {
+
+            }
         }
 
         /// <summary>

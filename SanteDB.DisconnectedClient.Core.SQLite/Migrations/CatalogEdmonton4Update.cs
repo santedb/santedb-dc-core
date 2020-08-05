@@ -31,7 +31,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// Update for migrating Edmonton CTP5 to f4
     /// </summary>
-    public class CatalogEdmonton4Update : IDbMigration
+    public class CatalogEdmonton4Update : IConfigurationMigration
     {
         /// <summary>
         /// Gets the description

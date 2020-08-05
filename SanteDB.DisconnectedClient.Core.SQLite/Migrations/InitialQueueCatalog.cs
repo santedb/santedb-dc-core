@@ -36,7 +36,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// <summary>
     /// Initial queue catalog migration.
     /// </summary>
-    public class InitialQueueCatalog : IDbMigration
+    public class InitialQueueCatalog : IConfigurationMigration
     {
         private Tracer tracer = Tracer.GetTracer(typeof(InitialQueueCatalog));
 

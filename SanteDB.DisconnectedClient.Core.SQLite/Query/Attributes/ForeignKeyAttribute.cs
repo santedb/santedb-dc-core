@@ -19,13 +19,31 @@
  */
 using System;
 
-namespace SanteDB.Core.Data.QueryBuilder.Attributes
+namespace SanteDB.DisconnectedClient.SQLite.Query.Attributes
 {
     /// <summary>
-    /// Instructs the query planner to always join another reference table when executing queries
+    /// Represents a foreign key
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    public class AlwaysJoinAttribute : Attribute
+    public class ForeignKeyAttribute : Attribute
     {
+        /// <summary>
+        /// Creates a new foreign key attribute
+        /// </summary>
+        public ForeignKeyAttribute(Type table, String column)
+        {
+            this.Table = table;
+            this.Column = column;
+        }
+
+        /// <summary>
+        /// Gets or sets the table to which the key applies
+        /// </summary>
+        public Type Table { get; set; }
+
+        /// <summary>
+        /// Gets or sets the column to which the key applies
+        /// </summary>
+        public String Column { get; set; }
     }
 }

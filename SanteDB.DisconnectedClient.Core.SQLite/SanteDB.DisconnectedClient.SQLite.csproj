@@ -264,6 +264,7 @@
           <Project>{39E61451-F4FE-493D-B754-5F06EB284AAC}</Project>
           <Name>SanteDB.Core.Applets</Name>
         </ProjectReference>
+		<ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
       </ItemGroup>
     </When>
     <Otherwise>
@@ -271,6 +272,7 @@
         <PackageReference Include="SanteDB.BI" Version="2.0.27.0" />
         <PackageReference Include="SanteDB.Core.Api" Version="2.0.27.0" />
         <PackageReference Include="SanteDB.Core.Model" Version="2.0.27.0" />
+        <PackageReference Include="SanteDB.Matcher" Version="2.0.27.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>

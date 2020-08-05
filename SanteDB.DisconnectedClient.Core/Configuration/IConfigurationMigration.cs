@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
  * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
@@ -19,31 +19,36 @@
  */
 using System;
 
-namespace SanteDB.Core.Data.QueryBuilder.Attributes
+namespace SanteDB.DisconnectedClient.Configuration.Data
 {
     /// <summary>
-    /// Represents a foreign key
+    /// Identifies a database migration script in code
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class ForeignKeyAttribute : Attribute
+    public interface IConfigurationMigration
     {
+
+
         /// <summary>
-        /// Creates a new foreign key attribute
+        /// Gets the identifier of the migration
         /// </summary>
-        public ForeignKeyAttribute(Type table, String column)
+        String Id
         {
-            this.Table = table;
-            this.Column = column;
+            get;
         }
 
-        /// <summary>
-        /// Gets or sets the table to which the key applies
-        /// </summary>
-        public Type Table { get; set; }
 
         /// <summary>
-        /// Gets or sets the column to which the key applies
+        /// A human readable description of the migration
         /// </summary>
-        public String Column { get; set; }
+        /// <value>The description.</value>
+        String Description { get; }
+
+        /// <summary>
+        /// Install the migration package
+        /// </summary>
+        bool Install();
+
     }
+
 }
+

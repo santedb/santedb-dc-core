@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;

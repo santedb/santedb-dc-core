@@ -19,7 +19,7 @@
  */
 using System;
 
-namespace SanteDB.Core.Data.QueryBuilder.Attributes
+namespace SanteDB.DisconnectedClient.SQLite.Query.Attributes
 {
     /// <summary>
     /// Indicates that another table is associated with the current table through a third

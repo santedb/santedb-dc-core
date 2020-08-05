@@ -18,7 +18,7 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core;
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -203,11 +203,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 if (typeof(TQueryResult) != typeof(TDomain))
                 {
 
-                    var tableMap = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(TDomain));
-                    var resultMap = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(TQueryResult));
+                    var tableMap = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(typeof(TDomain));
+                    var resultMap = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(typeof(TQueryResult));
                     queryStatement = new SqlStatement<TDomain>().SelectFrom(resultMap.Columns.Select(o => $"{(typeof(TDomain).GetRuntimeProperty(o.SourceProperty.Name) != null ? tableMap.TableName + "." : "")}{o.Name}").ToArray());
 
-                    var fkStack = new Stack<SanteDB.Core.Data.QueryBuilder.TableMapping>();
+                    var fkStack = new Stack<SanteDB.DisconnectedClient.SQLite.Query.TableMapping>();
                     fkStack.Push(tableMap);
                     var scopedTables = new HashSet<Object>();
                     // Always join tables?
@@ -216,7 +216,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         var dt = fkStack.Pop();
                         foreach (var jt in dt.Columns.Where(o => o.IsAlwaysJoin))
                         {
-                            var fkTbl = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(jt.ForeignKey.Table);
+                            var fkTbl = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(jt.ForeignKey.Table);
                             var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
                             queryStatement.InnerJoin(dt.OrmType, fkTbl.OrmType);
                             if (!scopedTables.Contains(fkTbl))

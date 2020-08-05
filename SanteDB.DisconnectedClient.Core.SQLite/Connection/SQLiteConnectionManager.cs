@@ -344,6 +344,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
                 ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
                 var retVal = this.GetOrCreatePooledConnection(dataSource, false);
+                
                 this.m_tracer.TraceVerbose("Write connection to {0} established, {1} active connections", dataSource, this.m_connections.Count + this.m_readonlyConnections.Count);
 #if DEBUG_SQL
                 conn.TraceListener = new TracerTraceListener();

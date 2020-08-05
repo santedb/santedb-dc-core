@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
  * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
@@ -18,37 +18,27 @@
  * Date: 2019-11-27
  */
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
-namespace SanteDB.DisconnectedClient.Configuration.Data
+namespace SanteDB.DisconnectedClient.SQLite.Query
 {
     /// <summary>
-    /// Identifies a database migration script in code
+    /// Query builder hack
     /// </summary>
-    public interface IDbMigration
+    public interface IQueryBuilderHack
     {
 
-
         /// <summary>
-        /// Gets the identifier of the migration
+        /// Hacks the query in some manner
         /// </summary>
-        String Id
-        {
-            get;
-        }
-
-
-        /// <summary>
-        /// A human readable description of the migration
-        /// </summary>
-        /// <value>The description.</value>
-        String Description { get; }
-
-        /// <summary>
-        /// Install the migration package
-        /// </summary>
-        bool Install();
+        /// <param name="sqlStatement">The current vanilla (no WHERE clause) query</param>
+        /// <param name="whereClause">The current where clause</param>
+        /// <param name="property">The property which is currently being hacked</param>
+        /// <param name="predicate">The current predicate</param>
+        /// <param name="scopedTables">The tables that are scoped for the current query</param>
+        /// <returns></returns>
+        bool HackQuery(QueryBuilder builder, SqlStatement sqlStatement, SqlStatement whereClause, Type tmodel, PropertyInfo property, String queryPrefix, QueryPredicate predicate, Object values, IEnumerable<TableMapping> scopedTables);
 
     }
-
 }
-
