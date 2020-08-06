@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }
             foreach (var itm in properties)
                 if (itm.GetValue(domainObject) == null)
-                    throw new ArgumentNullException(itm.Name, "Requires a value");
+                    throw new ArgumentNullException(itm.Name, $"On object ({data})");
 
 
             // Does this already exist?
