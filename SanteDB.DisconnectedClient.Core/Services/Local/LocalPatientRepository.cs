@@ -26,7 +26,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
     /// <summary>
     /// Local patient repository service
     /// </summary>
-    public class LocalPatientRepository : GenericLocalNullifiedRepository<Patient>, IPatientRepositoryService, IRepositoryService<Patient>
+    public class LocalPatientRepository : GenericLocalNullifiedRepository<Patient>, IRepositoryService<Patient>
     {
 
 
