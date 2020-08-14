@@ -152,7 +152,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(
+            return SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(
                 ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().MessageQueueConnectionStringName
             ));
         }
@@ -200,13 +200,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 try
                 {
-                    using (conn.Lock())
-                    {
-                        conn.BeginTransaction();
-                        // Persist the queue entry
-                        this.m_tracer.TraceInfo("Enqueue {0} successful. Queue item {1}", entry, conn.Insert(entry));
-                        conn.Commit();
-                    }
+                    conn.BeginTransaction();
+                    // Persist the queue entry
+                    this.m_tracer.TraceInfo("Enqueue {0} successful. Queue item {1}", entry, conn.Insert(entry));
+                    conn.Commit();
 
                     var postEventArgs = new DataPersistedEventArgs<ISynchronizationQueueEntry>(entry, AuthenticationContext.Current.Principal);
                     this.Enqueued?.Invoke(this, postEventArgs);
@@ -310,8 +307,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 try
                 {
-                    using (conn.Lock())
-                        return conn.Table<TQueueEntry>().OrderBy(i => i.Id).Skip(skip).FirstOrDefault();
+                    return conn.Table<TQueueEntry>().OrderBy(i => i.Id).Skip(skip).FirstOrDefault();
                 }
                 catch (Exception e)
                 {
@@ -360,9 +356,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 try
                 {
-
-                    using (conn.Lock())
-                        return conn.ExecuteScalar<Int32>($"SELECT COUNT(*) FROM {conn.GetMapping<TQueueEntry>().TableName}");
+                    return conn.ExecuteScalar<Int32>($"SELECT COUNT(*) FROM {conn.GetMapping<TQueueEntry>().TableName}");
                 }
                 catch (Exception e)
                 {
@@ -382,8 +376,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 try
                 {
-                    using (conn.Lock())
-                    {
                         var tdata = conn.Table<TQueueEntry>().Where(o => o.Id == id).FirstOrDefault();
                         if (tdata != null)
                         {
@@ -392,7 +384,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         }
                         else
                             this.m_tracer.TraceWarning("Could not find queue item {0} to be deleted", id);
-                    }
                 }
                 catch (Exception e)
                 {
@@ -453,7 +444,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         ISynchronizationQueueEntry ISynchronizationQueue.Enqueue(IdentifiedData data, SynchronizationOperationType operation)
         {
             // SanteDB Policy prevents certain dangerous items from flowing to the server from clients
-            if(data is Bundle)
+            if (data is Bundle)
             {
                 var bund = data as Bundle;
                 bund.Item.RemoveAll(i => this.m_configuration.ForbiddenResouces.Any(o => o.Operations.HasFlag(operation) && o.ResourceName == data.Type));

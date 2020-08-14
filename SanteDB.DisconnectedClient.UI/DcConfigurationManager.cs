@@ -50,6 +50,7 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using SanteDB.DisconnectedClient.UI.Services;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -385,6 +386,7 @@ namespace SanteDB.DisconnectedClient.UI
         {
             try
             {
+                // HACK: For some reason the DCG doesn't like to backup the configuration file
                 using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
                     configuration.Save(lzs);
             }

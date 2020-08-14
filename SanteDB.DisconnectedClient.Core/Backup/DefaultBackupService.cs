@@ -211,7 +211,7 @@ namespace SanteDB.DisconnectedClient.Backup
                             writer.Write("DISCLAIMER.TXT", ms, DateTime.Now);
 
                         // Output databases
-                        var dcc = ApplicationServiceContext.Current.GetService<IDataConnectionManager>();
+                        var dcc = ApplicationServiceContext.Current.GetService<IDataManagementService>();
                         var dbBackupLocation = dcc.Backup("");
                         this.BackupDirectory(writer, dbBackupLocation, dbBackupLocation);
                         try
@@ -366,7 +366,7 @@ namespace SanteDB.DisconnectedClient.Backup
                     }
 
                     // Restore passkeys
-                    var dcc = ApplicationServiceContext.Current.GetService<IDataConnectionManager>();
+                    var dcc = ApplicationServiceContext.Current.GetService<IDataManagementService>();
                     dcc?.RekeyDatabases();
                 }
                 finally

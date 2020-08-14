@@ -150,7 +150,6 @@ namespace SanteDB.DisconnectedClient.SQLite
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteMailPersistenceService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteQueueManagerService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteSynchronizationLog)));
-            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteDatawarehouse)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteBiDataSource)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteRoleProviderService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteIdentityService)));
@@ -262,7 +261,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         {
             try
             {
-                using (var conn = SQLiteConnectionManager.Current.GetConnection(connectionString))
+                using (var conn = SQLiteConnectionManager.Current.GetReadWriteConnection(connectionString))
                     return true;
             }
             catch

@@ -10,9 +10,8 @@
 
 namespace SanteDB.DisconnectedClient.i18n {
     using System;
-    using System.Reflection;
-
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -24,15 +23,15 @@ namespace SanteDB.DisconnectedClient.i18n {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Strings {
-
+        
         private static global::System.Resources.ResourceManager resourceMan;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
-
+        
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Strings() {
         }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -40,13 +39,13 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SanteDB.DisconnectedClient.i18n.Strings", typeof(Strings).GetTypeInfo().Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SanteDB.DisconnectedClient.i18n.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -60,63 +59,7 @@ namespace SanteDB.DisconnectedClient.i18n {
                 resourceCulture = value;
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The server has detected a change conflict on an object you&apos;re attempting to update..
-        /// </summary>
-        public static string Conflict {
-            get {
-                return ResourceManager.GetString("Conflict", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The server has a newer version of the object you&apos;re trying to update.
-        /// </summary>
-        public static string DBPE002 {
-            get {
-                return ResourceManager.GetString("DBPE002", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        /// Local sync auth error
-        /// </summary>
-        public static string locale_syncAuthError
-        {
-            get
-            {
-                return ResourceManager.GetString("locale_syncAuthError", resourceCulture);
-
-            }
-        }
-
-        public static string locale_updateInstalled
-        {
-            get
-            {
-                return ResourceManager.GetString("locale_updateInstalled", resourceCulture);
-            }
-        }
-
-        public static string locale_updateCheckFailed
-        {
-            get
-            {
-                return ResourceManager.GetString("locale_updateCheckFailed", resourceCulture);
-            }
-        }
-        /// <summary>
-        /// Local sync auth error
-        /// </summary>
-        public static string locale_syncUploadError
-        {
-            get
-            {
-                return ResourceManager.GetString("locale_syncUploadError", resourceCulture);
-
-            }
-        }
+        
         /// <summary>
         ///   Looks up a localized string similar to The care plan service is already calculating your facility plan....
         /// </summary>
@@ -388,11 +331,11 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;p&gt;The server encountered an internal error while processing your request. Please contact the system administrator for more information. Include the following diagnostic error data:&lt;/p&gt;&lt;pre&gt;{0}&lt;/pre&gt;.
+        ///   Looks up a localized string similar to Uploads to the central server are temporary not working due to a {0} error..
         /// </summary>
-        public static string InternalServerError {
+        public static string local_syncUploadError {
             get {
-                return ResourceManager.GetString("InternalServerError", resourceCulture);
+                return ResourceManager.GetString("local_syncUploadError", resourceCulture);
             }
         }
         
@@ -404,18 +347,7 @@ namespace SanteDB.DisconnectedClient.i18n {
                 return ResourceManager.GetString("locale_accountLocked", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Account is locked - Please try again in a few minutes.
-        /// </summary>
-        public static string locale_syncRestored
-        {
-            get
-            {
-                return ResourceManager.GetString("locale_syncRestored", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Account was deleted - Please contact your system administrator.
         /// </summary>
@@ -851,6 +783,33 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Automatic pull from the central server has completed.
+        /// </summary>
+        public static string locale_sync_complete {
+            get {
+                return ResourceManager.GetString("locale_sync_complete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Initial synchronization with the central server has completed.
+        /// </summary>
+        public static string locale_sync_initial {
+            get {
+                return ResourceManager.GetString("locale_sync_initial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your gateway cannot authenticate against the central server. Outbound items will be held until this can be resolved..
+        /// </summary>
+        public static string locale_syncAuthError {
+            get {
+                return ResourceManager.GetString("locale_syncAuthError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;p&gt;Error synchronizing data with remote server. This is usually caused by a conflict where this device tried to send an object ({1}) to the server but the server had a different version of that object.&lt;/p&gt;&lt;p&gt;For your reference, the error is:&lt;br/&gt;{0}&lt;/p&gt;.
         /// </summary>
         public static string locale_syncErrorBody {
@@ -865,6 +824,24 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_syncErrorSubject {
             get {
                 return ResourceManager.GetString("locale_syncErrorSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remote download functionality has been restored!.
+        /// </summary>
+        public static string locale_syncRestored {
+            get {
+                return ResourceManager.GetString("locale_syncRestored", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Uploads to the remote server are not working due to a {0} error. Try again later..
+        /// </summary>
+        public static string locale_syncUploadError {
+            get {
+                return ResourceManager.GetString("locale_syncUploadError", resourceCulture);
             }
         }
         
@@ -910,6 +887,24 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_updateCheck {
             get {
                 return ResourceManager.GetString("locale_updateCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not check for software updates due to {0} error.
+        /// </summary>
+        public static string locale_updateCheckFailed {
+            get {
+                return ResourceManager.GetString("locale_updateCheckFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package {0} was updated to version {1}.
+        /// </summary>
+        public static string locale_updateInstalled {
+            get {
+                return ResourceManager.GetString("locale_updateInstalled", resourceCulture);
             }
         }
         

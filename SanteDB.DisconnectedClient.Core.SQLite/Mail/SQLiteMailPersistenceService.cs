@@ -89,7 +89,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection()
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore)), AuthenticationContext.SystemPrincipal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MailDataStore)), AuthenticationContext.SystemPrincipal);
         }
 
         /// <summary>

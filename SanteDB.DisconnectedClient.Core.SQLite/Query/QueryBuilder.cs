@@ -56,7 +56,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
     {
         // Regex to extract property, guards and cast
         public static readonly Regex ExtractionRegex = new Regex(@"^(\w*?)(\[(.*?)\])?(\@(\w*))?(\.(.*))?$");
-        
+
         private const int PropertyRegexGroup = 1;
         private const int GuardRegexGroup = 3;
         private const int CastRegexGroup = 5;
@@ -161,7 +161,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
 
         // Join cache
         private Dictionary<String, KeyValuePair<SqlStatement, List<TableMapping>>> s_joinCache = new Dictionary<String, KeyValuePair<SqlStatement, List<TableMapping>>>();
-        
+
         // Filter function regex
         public static readonly Regex ExtendedFunctionRegex = new Regex(@"^:\((\w*?)(\|(.*?)\)|\))(.*)");
 
@@ -200,7 +200,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
         /// <summary>
         /// Create query
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, ModelSort<TModel>[] orderBy, params ColumnMapping[] selector)
         {
             return CreateQuery<TModel>(query, null, orderBy, selector);
         }
@@ -208,7 +208,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
         /// <summary>
         /// Create query 
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, ModelSort<TModel>[] orderBy, params ColumnMapping[] selector)
         {
             return CreateQuery<TModel>(query, null, false, orderBy, selector);
         }
@@ -217,7 +217,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
         /// Query query 
         /// </summary>
         /// <param name="query"></param>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, bool skipJoins, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, bool skipJoins, ModelSort<TModel>[] orderBy, params ColumnMapping[] selector)
         {
             var tableType = m_mapper.MapModelType(typeof(TModel));
             var tableMap = TableMapping.Get(tableType);
@@ -248,7 +248,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
                             var fkTbl = TableMapping.Get(jt.ForeignKey.Table);
                             var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
 
-                            if(typeof(IDbHideable).IsAssignableFrom(fkTbl.OrmType))
+                            if (typeof(IDbHideable).IsAssignableFrom(fkTbl.OrmType))
                                 selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name} AND {tablePrefix}{fkAtt.Table.TableName}.hidden = 0) ");
                             else
                                 selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
@@ -573,7 +573,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
             {
                 s_filterFunctions = AppDomain.CurrentDomain.GetAssemblies()
                         .Where(a => !a.IsDynamic)
-                        .SelectMany(a => a.ExportedTypes)
+                        .SelectMany(a =>
+                        {
+                            try
+                            {
+                                return a.ExportedTypes;
+                            }
+                            catch { return Type.EmptyTypes; }
+                        })
                         .Where(t => typeof(IDbFilterFunction).IsAssignableFrom(t) && !t.IsAbstract)
                         .Select(t => Activator.CreateInstance(t) as IDbFilterFunction)
                         .ToDictionary(o => o.Name, o => o);
@@ -583,7 +590,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
             return retVal;
         }
 
-      
+
         /// <summary>
         /// Create a single where condition based on the property info
         /// </summary>
@@ -683,7 +690,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
                                     retVal.Append($" > ?", CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType));
                             }
                             break;
-                            
+
                         case '!':
                             semantic = " AND ";
                             if (sValue.Equals("!null"))
@@ -740,7 +747,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
             // Dates in SQLite are UTC so lets convert
             if (retVal is DateTime)
                 retVal = ((DateTime)retVal).ToUniversalTime();
-            else if(retVal is DateTimeOffset)
+            else if (retVal is DateTimeOffset)
                 retVal = ((DateTimeOffset)retVal).ToUniversalTime();
 
             return retVal;

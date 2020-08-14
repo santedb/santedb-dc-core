@@ -53,11 +53,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
         {
 
             // Database for the SQL Lite connection
-            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString("santeDbSearch"));
+            var db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString("santeDbSearch"));
             using (db.Lock())
                 this.Install(db);
 
-            db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
+            db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
             using (db.Lock())
                 return this.Install(db);
         }

@@ -67,6 +67,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                             connection.ExecuteScalar<Int32>("SELECT editdist3('__sfEditCost');");
                     }
                 }
+                catch(Exception e) when (e.Message == "SQL logic error")
+                {
+                }
                 catch (Exception e)
                 {
                     Tracer.GetTracer(typeof(LevenshteinFilterFunction)).TraceWarning("Could not initialize SpellFix - {0}", e);

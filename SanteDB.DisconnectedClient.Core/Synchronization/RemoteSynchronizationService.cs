@@ -125,6 +125,23 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
             this.m_networkInfoService.NetworkStatusChanged += (o, e) => this.Pull(SynchronizationPullTriggerType.OnNetworkChange);
 
+            // Notification for tickles when the pull is completed
+            this.PullCompleted += (o, e) =>
+            {
+                if (e.Type == null) // general pull complete 
+                {
+                    var tickleService = ApplicationContext.Current.GetService<ITickleService>();
+                    if (e.IsInitial)
+                        tickleService.SendTickle(
+                            new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Task | Tickler.TickleType.Toast, Strings.locale_sync_initial, DateTime.Now.Add(this.m_configuration.PollInterval))
+                        );
+                    else
+                        tickleService.SendTickle(
+                            new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Task | Tickler.TickleType.Toast, Strings.locale_sync_complete, DateTime.Now.Add(this.m_configuration.PollInterval))
+                        );
+                }
+            };
+
             ApplicationServiceContext.Current.Started += (xo, xe) =>
             {
                 try
@@ -152,7 +169,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                 }
             };
 
-                this.Started?.Invoke(this, EventArgs.Empty);
+            this.Started?.Invoke(this, EventArgs.Empty);
 
             return true;
 
@@ -236,8 +253,6 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
                         if (totalResults > 0 && initialSync)
                         {
-                            var tickleService = ApplicationContext.Current.GetService<ITickleService>();
-                            tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_importDoneBody, new DateTime().AddMinutes(5)));
                             this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
                         }
                         else if (totalResults > 0)
@@ -308,7 +323,8 @@ namespace SanteDB.DisconnectedClient.Synchronization
                 var lastModificationDate = logSvc.GetLastTime(modelType, filter.ToString());
                 if (always)
                     lastModificationDate = null;
-                if (lastModificationDate != null) {
+                if (lastModificationDate != null)
+                {
                     lastModificationDate = lastModificationDate.Value;
 
                     // Get the time drift
@@ -374,13 +390,13 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         perfTimer.Start();
 
                         result = this.m_integrationService.Find(modelType, filter, i, count, new IntegrationQueryOptions() { IfModifiedSince = lastModificationDate, Timeout = 120000, Lean = true, InfrastructureOptions = infopt, QueryId = qid });
-                        if(!startTime.HasValue)
+                        if (!startTime.HasValue)
                             startTime = DateTime.Now;
 
                         // Queue the act of queueing
                         if (result != null)
                         {
-                            
+
                             if (this.m_configuration.BigBundles && (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
                                 count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000))
                                 count = 5000;

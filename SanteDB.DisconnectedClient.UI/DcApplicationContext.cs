@@ -46,6 +46,8 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Linq;
+using SanteDB.Core.Exceptions;
+using System.Xml;
 
 namespace SanteDB.DisconnectedClient.UI
 {
@@ -236,11 +238,11 @@ namespace SanteDB.DisconnectedClient.UI
                         retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
                         ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
                         //retVal.AddServiceProvider(typeof(ConfigurationManager));
-                        if(retVal.ConfigurationPersister == null)
+                        if (retVal.ConfigurationPersister == null)
                             throw new InvalidOperationException("Missing configuration persistence service");
                         retVal.ConfigurationPersister.Backup(retVal.Configuration);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Trace.TraceWarning("Error loading configuration: {0}", e);
                         if (retVal.ConfigurationPersister.HasBackup() && retVal.Confirm(Strings.err_configuration_invalid_restore_prompt))

@@ -77,7 +77,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     ApplicationContext.Current.AddServiceProvider(typeof(SQLiteSearchIndexService), true);
 
                 // Get a connection to the search database
-                var conn = SQLiteConnectionManager.Current.GetConnection(connStr);
+                var conn = SQLiteConnectionManager.Current.GetReadWriteConnection(connStr);
                 using (conn.Lock())
                 {
                     conn.CreateTable<SearchEntityType>();

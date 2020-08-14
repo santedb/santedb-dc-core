@@ -239,21 +239,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             else
             {
                 queryStatement = m_builder.CreateQuery(query, orderBy);
-               
                 queryStatement = queryStatement.Build();
             }
 
             queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();
 
             m_tracer.TraceVerbose("Built Query: {0}", queryStatement.SQL);
-
-            // Is this a cached query?
-            var retVal = context.CacheQuery(queryStatement)?.OfType<TModel>();
-            if (retVal != null && !countResults)
-            {
-                totalResults = 0;
-                return retVal;
-            }
 
             // Preare SQLite Args
             var args = queryStatement.Arguments.Select(o =>
@@ -295,7 +286,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     {
                         this.m_queryPersistence?.AddResults(queryId, conn2.Connection.Query<TQueryResult>(originalQuery.SQL, args).Select(o => o.Key));
                     }
-                }, this.CreateConnection(context.Principal));
+                }, this.CreateReadonlyConnection(context.Principal));
             }
 
             queryStatement.Limit(count);
@@ -305,7 +296,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Exec query
             var domainList = context.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).ToList();
             var modelList = domainList.Select(o => this.CacheConvert(o, context)).ToList();
-            context.AddQuery(queryStatement, modelList);
 
             //foreach (var i in modelList)
             //    context.AddCacheCommit(i);

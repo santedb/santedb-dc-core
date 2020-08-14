@@ -104,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(
+            return SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(
                 "santeDbAudit"
             ));
         }
@@ -436,11 +436,16 @@ namespace SanteDB.DisconnectedClient.Security.Audit
 
                     return audit;
                 }
+                catch (SQLiteException e)
+                {
+                    this.m_tracer.TraceError("Error inserting audit ({1}): {0}", e, conn);
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     conn.Rollback();
                     this.m_tracer.TraceError("Error inserting audit: {0}", ex);
-                    throw;
+                    throw new Exception($"Error inserting audit {audit.ActionCode}", ex);
                 }
             }
         }

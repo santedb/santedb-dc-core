@@ -43,6 +43,7 @@
     
   <ItemGroup>
     <Compile Remove="Connection\LockedSQLiteConnection.cs" />
+    <Compile Remove="Connection\SQLiteConnectionManager.cs" />
   </ItemGroup>  
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />

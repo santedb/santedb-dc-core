@@ -275,61 +275,63 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             var connParts = new SqliteConnectionStringBuilder(connectionString.Value);
             var file = connParts["dbfile"];
             var enc = connParts["encrypt"];
-            using(var conn = new SqliteConnection($"Data Source=\"{file}\""))
-            {
-                try
+            using (SQLiteConnectionManager.Current.ExternLock(connectionString.Name))
+                using (var conn = new SqliteConnection($"Data Source=\"{file}\""))
                 {
-                    // Decrypt database 
-                    var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
-                    if (securityKey != null && (enc ?? "true").Equals("true"))
-                        conn.SetPassword(Encoding.UTF8.GetString(securityKey, 0, securityKey.Length));
-
-                    // Open the database
-                    conn.Open();
-
-                    // Attach any other connection sources
-                    foreach (var itm in queryDefinition.DataSources.Skip(1))
+                    try
                     {
-                        using (var attcmd = conn.CreateCommand())
+                        // Decrypt database 
+                        var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
+                        if (securityKey != null && (enc ?? "true").Equals("true"))
+                            conn.SetPassword(Encoding.UTF8.GetString(securityKey, 0, securityKey.Length));
+
+                        // Open the database
+                        conn.Open();
+
+                        // Attach any other connection sources
+                        foreach (var itm in queryDefinition.DataSources.Skip(1))
                         {
+                            using (var attcmd = conn.CreateCommand())
+                            {
 
-                            var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.ConnectionString);
-                            if (cstr.GetComponent("encrypt") == "true")
-                                attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY ''";
-                            else
-                                attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'";
+                                var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.ConnectionString);
+                                if (cstr.GetComponent("encrypt") == "true")
+                                    attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY ''";
+                                else
+                                    attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'";
 
-                            attcmd.CommandType = System.Data.CommandType.Text;
-                            attcmd.ExecuteNonQuery();
+                                attcmd.CommandType = System.Data.CommandType.Text;
+                                attcmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // Start time
+                        DateTime startTime = DateTime.Now;
+                        var sqlStmt = new SqlStatement(stmt, values.ToArray()).Limit(count ?? 10000).Offset(offset).Build();
+                        this.m_tracer.TraceInfo("Executing BI Query: {0}", sqlStmt.Build().SQL);
+
+                        // Create command for execution
+                        using (var cmd = this.CreateCommand(conn, sqlStmt.SQL, sqlStmt.Arguments.ToArray()))
+                        {
+                            var results = new List<ExpandoObject>();
+                            using (var rdr = cmd.ExecuteReader())
+                                while (rdr.Read())
+                                    results.Add(this.MapExpando(rdr));
+                            return new BisResultContext(
+                                queryDefinition,
+                                parameters,
+                                this,
+                                results,
+                                startTime);
                         }
                     }
-
-                    // Start time
-                    DateTime startTime = DateTime.Now;
-                    var sqlStmt = new SqlStatement(stmt, values.ToArray()).Limit(count ?? 10000).Offset(offset).Build();
-                    this.m_tracer.TraceInfo("Executing BI Query: {0}", sqlStmt.Build().SQL);
-
-                    // Create command for execution
-                    using (var cmd = this.CreateCommand(conn, sqlStmt.SQL, sqlStmt.Arguments.ToArray()))
+                    catch (Exception e)
                     {
-                        var results = new List<ExpandoObject>();
-                        using (var rdr = cmd.ExecuteReader())
-                            while (rdr.Read())
-                                results.Add(this.MapExpando(rdr));
-                        return new BisResultContext(
-                            queryDefinition,
-                            parameters,
-                            this,
-                            results,
-                            startTime);
+                        this.m_tracer.TraceError("Error executing BIS data query: {0}", e);
+                        throw new DataPersistenceException($"Error executing BIS data query", e);
                     }
                 }
-                catch (Exception e)
-                {
-                    this.m_tracer.TraceError("Error executing BIS data query: {0}", e);
-                    throw new DataPersistenceException($"Error executing BIS data query", e);
-                }
-            }
+            
         }
 
         /// <summary>

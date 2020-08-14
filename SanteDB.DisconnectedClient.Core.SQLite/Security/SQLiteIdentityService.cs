@@ -107,7 +107,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     // Password service
                     IPasswordHashingService passwordHash = ApplicationContext.Current.GetService(typeof(IPasswordHashingService)) as IPasswordHashingService;
 
-                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower());
+                    DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower() && !o.ObsoletionTime.HasValue);
                     if (dbs == null)
                         throw new SecurityException(Strings.locale_invalidUserNamePassword);
                     else if (config?.MaxInvalidLogins.HasValue == true && dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
@@ -157,8 +157,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             {
                 this.m_tracer.TraceError("Error establishing session: {0}", ex);
                 this.Authenticated?.Invoke(e, new AuthenticatedEventArgs(userName, retVal, false));
-
-                throw;
+                throw new DataPersistenceException($"Error establishing session", ex);
             }
 
             return retVal;
@@ -216,13 +215,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public void ChangePassword(string userName, string password, System.Security.Principal.IPrincipal principal)
         {
             // We must demand the change password permission
+            IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+
+            if (userName != principal.Identity.Name)
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword, principal);
+
             try
             {
-                IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-
-                if (userName != principal.Identity.Name)
-                    ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword, principal);
-                var conn = this.CreateConnection();
+                                var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
                     var dbu = conn.Table<DbSecurityUser>().Where(o => o.UserName == userName).FirstOrDefault();
@@ -241,10 +241,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             }
             catch (Exception e)
             {
-
-
                 this.m_tracer.TraceError("Error changing password for user {0} : {1}", userName, e);
-                throw;
+                throw new DataPersistenceException($"Error changing password for {userName}", e);
             }
         }
 
@@ -286,12 +284,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <exception cref="PolicyViolationException"></exception>
         public IIdentity CreateIdentity(SecurityUser securityUser, string password, IPrincipal principal)
         {
+            var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
+
             try
             {
-                var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
-
-
+                
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
 
@@ -312,16 +310,40 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 }
                 return new SQLiteIdentity(securityUser.UserName, false);
             }
-            catch
+            catch(Exception e)
             {
-                throw;
+                throw new DataPersistenceException($"Error creating {securityUser}", e);
             }
         }
 
-
+        /// <summary>
+        /// Deletes an identity
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <param name="principal"></param>
         public void DeleteIdentity(string userName, IPrincipal principal)
         {
-            throw new NotImplementedException();
+            var pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
+
+            try
+            {
+               
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                {
+                    var dbs = conn.Table<DbSecurityUser>().Where(o => o.UserName == userName).FirstOrDefault();
+                    if (dbs == null)
+                        throw new KeyNotFoundException($"User {userName} doesn't exist");
+                    dbs.ObsoletionTime = DateTime.Now;
+                    dbs.ObsoletedByUuid = conn.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName == AuthenticationContext.Current?.Principal?.Identity?.Name)?.Uuid;
+                    conn.Update(dbs);
+                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Unable to obsolete user {0} with principal {1}", userName, principal);
+            }
         }
 
         /// <summary>
@@ -345,7 +367,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error getting identity {0}", e);
-                throw;
+                throw new DataPersistenceException($"Error getting identity {uuid}", e);
             }
         }
 
@@ -371,7 +393,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error getting identity {0}", e);
-                throw;
+                throw new DataPersistenceException($"Error getting identity {userName}", e);
             }
         }
 
@@ -380,13 +402,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// </summary>
         public void SetLockout(string userName, bool v, IPrincipal principal)
         {
-            
+
+            IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterIdentity, principal);
+
             try
             {
-                IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-
-                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterIdentity, principal);
-
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -403,13 +424,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                             userData.InvalidLoginAttempts = 0;
                         }
                         conn.Update(userData);
+
+                        ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(userData.Key);
                     }
                 }
             }
             catch (Exception e)
             {
-                this.m_tracer.TraceError("Error getting identity {0}", e);
-                throw;
+                this.m_tracer.TraceError("Error locking identity {0}", e);
+                throw new DataPersistenceException($"Error locking identity {userName}", e);
             }
         }
 
@@ -419,7 +442,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <returns>The connection.</returns>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
+            return SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(this.m_configuration.MainDataSourceConnectionStringName));
         }
 
         /// <summary>
@@ -431,12 +454,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public void ChangePin(string userName, byte[] pin, IPrincipal principal)
         {
             // We must demand the change password permission
+            IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
+
+            if (userName != principal.Identity.Name)
+                throw new SecurityException("Can only change PIN number of your own account");
+            else if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o < 0 || o > 9))
+                throw new ArgumentOutOfRangeException("PIN numbers must be between 4 and 8 digits");
+
             try
             {
-                if (userName != principal.Identity.Name)
-                    throw new SecurityException("Can only change PIN number of your own account");
-                else if (pin.Length < 4 || pin.Length > 8 || pin.Any(o => o < 0 || o > 9))
-                    throw new ArgumentOutOfRangeException("PIN numbers must be between 4 and 8 digits");
+
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -457,9 +484,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             catch (Exception e)
             {
 
-
                 this.m_tracer.TraceError("Error changing password for user {0} : {1}", userName, e);
-                throw;
+                throw new DataPersistenceException($"Error changing password for {userName}", e);
             }
         }
 

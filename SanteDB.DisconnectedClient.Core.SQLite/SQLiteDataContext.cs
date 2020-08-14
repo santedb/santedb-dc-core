@@ -45,9 +45,6 @@ namespace SanteDB.DisconnectedClient.SQLite
         // Prepared
         private Dictionary<String, IDbStatement> m_prepared = new Dictionary<string, IDbStatement>();
 
-        // Cached query
-        private Dictionary<String, IEnumerable<Object>> m_cachedQuery = new Dictionary<string, IEnumerable<object>>();
-
         // Transaction items
         private Dictionary<Guid, IdentifiedData> m_transactionItems = new Dictionary<Guid, IdentifiedData>();
 
@@ -195,29 +192,6 @@ namespace SanteDB.DisconnectedClient.SQLite
         public String GetQueryLiteral(SqlStatement query)
         {
             return query.ToString();
-        }
-
-
-        /// <summary>
-        /// Add a cached set of query results
-        /// </summary>
-        public void AddQuery(SqlStatement domainQuery, IEnumerable<object> results)
-        {
-            var key = this.GetQueryLiteral(domainQuery);
-            lock (this.m_cachedQuery)
-                if (!this.m_cachedQuery.ContainsKey(key))
-                    this.m_cachedQuery.Add(key, results);
-        }
-
-        /// <summary>
-        /// Cache a query 
-        /// </summary>
-        public IEnumerable<Object> CacheQuery(SqlStatement domainQuery)
-        {
-            var key = this.GetQueryLiteral(domainQuery);
-            IEnumerable<Object> retVal = null;
-            this.m_cachedQuery.TryGetValue(key, out retVal);
-            return retVal;
         }
 
         /// <summary>

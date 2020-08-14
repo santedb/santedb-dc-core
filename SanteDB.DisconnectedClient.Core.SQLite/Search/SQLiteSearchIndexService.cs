@@ -97,7 +97,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// </summary>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbSearch"));
+            return SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbSearch"));
         }
 
         /// <summary>
@@ -186,16 +186,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
                     totalResults = results.Count();
 
-                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal));
+                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal)).OfType<TEntity>();
 
                     // Sorting (well as best we can for FTS)
                     if(orderBy.Length > 0)
                     {
                         var order = orderBy.First();
                         if(order.SortOrder == SanteDB.Core.Model.Map.SortOrderType.OrderBy)
-                            retVal = retVal.OrderBy(order.SortProperty.Compile());
+                            return retVal.OrderBy(order.SortProperty.Compile());
                         else
-                            retVal = retVal.OrderByDescending(order.SortProperty.Compile());
+                            return retVal.OrderByDescending(order.SortProperty.Compile());
                     }
 
                     return retVal;

@@ -78,7 +78,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 base.FireInserting(new DataPersistingEventArgs<Bundle>(data, principal));
                 var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData");
                 // Memory connection
-                using (var memConnection = new WriteableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), new SanteDB.Core.Configuration.Data.ConnectionString()
+                using (var memConnection = new LockableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), new SanteDB.Core.Configuration.Data.ConnectionString()
                 {
                     Value = "dbfile=:memory:"
                 }, SQLiteOpenFlags.ReadWrite))

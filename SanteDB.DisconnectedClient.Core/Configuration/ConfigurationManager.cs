@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.Exceptions;
@@ -28,6 +29,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Configuration
@@ -59,19 +61,24 @@ namespace SanteDB.DisconnectedClient.Configuration
             {
                 this.Configuration = persister.Load();
             }
-            catch (Exception e)
+            catch (ConfigurationException e)
             {
-                Trace.TraceError("Could not load configuration file - Will attempt restore - {0}", e);
-                try {
-                    if(persister.HasBackup())
-                        (defaultPersister ?? ApplicationContext.Current.ConfigurationPersister).Restore();
+                Trace.TraceError("Could not load configuration file");
+                if (persister.HasBackup()) {
+                    Trace.TraceInformation("Will attempt to restore persisted backup");
+                    persister.Restore();
                     this.Configuration = persister.Load();
                 }
-                catch(Exception e2)
+                else
                 {
-                    throw new InvalidOperationException("Cannot load configuration file", e2);
+                    Trace.TraceInformation("No backup could be found, attempting to correct configuration issues");
+                    e.Configuration.Sections.RemoveAll(o => o is XmlNode[]);
+                    persister.Save(e.Configuration);
+                    this.Configuration = e.Configuration;
+                    Trace.TraceInformation("No backup could be found, attempting to correct configuration issues");
                 }
             }
+            
         }
  
         /// <summary>
