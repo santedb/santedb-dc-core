@@ -48,7 +48,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         public static String Delete(Type objectType)
         {
             StringBuilder sb = new StringBuilder("DELETE FROM ");
-            var mapping = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(objectType);
+            var mapping = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(objectType);
             sb.Append(mapping.TableName);
             sb.Append(" WHERE ");
             sb.Append(mapping.Columns.FirstOrDefault(o => o.IsPrimaryKey).Name);
@@ -62,7 +62,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         public static String Delete<T>(params Expression<Func<T, dynamic>>[] whereProperties)
         {
             StringBuilder sb = new StringBuilder("DELETE FROM ");
-            var mapping = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(T));
+            var mapping = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(typeof(T));
             sb.Append(mapping.TableName);
             sb.Append(" WHERE ");
 
@@ -99,7 +99,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         public static string Insert(Type objectType)
         {
             StringBuilder sb = new StringBuilder("INSERT INTO ");
-            var mapping = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(objectType);
+            var mapping = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(objectType);
             sb.Append(mapping.TableName);
             sb.Append("(");
             var columns = mapping.Columns.ToArray();
@@ -181,7 +181,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
-            var mapping = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(value.GetType());
+            var mapping = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(value.GetType());
 
             object[] values = new object[mapping.Columns.Count()];
             int idx = 0;

@@ -50,6 +50,7 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using SanteDB.DisconnectedClient.UI.Services;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -94,8 +95,10 @@ namespace SanteDB.DisconnectedClient.UI
             var oldPath = this.m_configPath.Replace(
                 Environment.GetFolderPath(Environment.SpecialFolder.Windows),
                 Path.Combine(Path.ChangeExtension(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "OLD"), "Windows"))
-                .ToUpper()
-                .Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
+                .ToUpper();
+                
+            if(Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
+                oldPath = oldPath.Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
                 ;
 
             try
@@ -381,8 +384,17 @@ namespace SanteDB.DisconnectedClient.UI
         /// </summary>
         public void Backup(SanteDBConfiguration configuration)
         {
-            using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
-                configuration.Save(lzs);
+            try
+            {
+                // HACK: For some reason the DCG doesn't like to backup the configuration file
+                using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
+                    configuration.Save(lzs);
+            }
+            catch(Exception e)
+            {
+                File.Delete(Path.ChangeExtension(this.m_configPath, "bak.bz2"));
+                throw new InvalidOperationException($"Could not backup to {Path.ChangeExtension(this.m_configPath, "bak.bz2")}", e);
+            }
         }
 
         /// <summary>
@@ -402,7 +414,7 @@ namespace SanteDB.DisconnectedClient.UI
             {
                 var retVal = SanteDBConfiguration.Load(lzs);
                 this.Save(retVal);
-                ApplicationContext.Current.ConfigurationManager.Reload();
+                ApplicationContext.Current.ConfigurationManager?.Reload();
                 return retVal;
             }
         }

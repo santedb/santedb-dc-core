@@ -17,13 +17,13 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SQLite.Net.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace SanteDB.Core.Data.QueryBuilder
+namespace SanteDB.DisconnectedClient.SQLite.Query
 {
     /// <summary>
     /// Column mapping

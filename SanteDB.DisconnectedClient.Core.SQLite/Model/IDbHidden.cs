@@ -17,15 +17,19 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using System;
-
-namespace SanteDB.Core.Data.QueryBuilder.Attributes
+namespace SanteDB.DisconnectedClient.SQLite.Model
 {
+
     /// <summary>
-    /// Instructs the query planner to always join another reference table when executing queries
+    /// Represents a database object that can be hidden
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class AlwaysJoinAttribute : Attribute
+    internal interface IDbHideable
     {
+
+        /// <summary>
+        /// When true, hide the result from search results
+        /// </summary>
+        bool Hidden { get; set; }
+
     }
 }

@@ -203,8 +203,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                             var local = EntitySource.Current.Get<Entity>(rel.SourceEntityKey);
                             if (local != null && !local.ObsoletionTime.HasValue)
                             {
-                                local.ObsoletionTime = DateTime.Now;
-                                local.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
+                                //local.ObsoletionTime = DateTime.Now;
+                                //local.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
+                                local.AddTag("$sys.hidden", "true");
                                 //entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
                                 (data as Bundle).Item.Add(local);
                             }

@@ -24,7 +24,7 @@ namespace SanteDB.DisconnectedClient.Services
     /// <summary>
     /// Represents a data connection manager
     /// </summary>
-    public interface IDataConnectionManager : IDaemonService
+    public interface IDataManagementService
     {
         /// <summary>
         /// Instructs the data connection manager to compact data

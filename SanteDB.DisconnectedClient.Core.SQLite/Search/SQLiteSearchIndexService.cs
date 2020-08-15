@@ -39,6 +39,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using SanteDB.Matcher.Configuration;
+using System.IO;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.SQLite.Search
 {
@@ -94,7 +97,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// </summary>
         private LockableSQLiteConnection CreateConnection()
         {
-            return SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbSearch"));
+            return SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbSearch"));
         }
 
         /// <summary>
@@ -115,14 +118,55 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         conn.GetMapping<Model.SearchEntityType>().TableName,
                         typeof(TEntity).FullName);
 
-                    foreach (var tkn in tokens)
+                    var approxConfig = ApplicationContext.Current.Configuration.GetSection<ApproximateMatchingConfigurationSection>();
+                    var hasSoundex = conn.ExecuteScalar<Int32>("select sqlite_compileoption_used('SQLITE_SOUNDEX');") == 1;
+                    bool hasSpellFix = false;
+                    if (conn.ExecuteScalar<Int32>("SELECT sqlite_compileoption_used('SQLITE_ENABLE_LOAD_EXTENSION')") == 1)
+                    {
+                        conn.Platform.SQLiteApi.EnableLoadExtension(conn.Handle, 1);
+                        try
+                        {
+                            try
+                            {
+                                conn.ExecuteScalar<Int32>("SELECT editdist3('__sfEditCost');");
+                                hasSpellFix = conn.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
+
+                            }
+                            catch
+                            {
+                                conn.ExecuteScalar<String>("SELECT load_extension('spellfix');");
+                                hasSpellFix = conn.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
+                            }
+                        }
+                        catch(Exception e) {
+                            this.m_tracer.TraceWarning("Will not be using SpellFix plugin for SQLite - {0}", e.Message);
+                        }
+                    }
+
+                    foreach (var tkn in tokens.SelectMany(t=>t.Split(' ')))
                     {
                         queryBuilder.AppendFormat("SELECT {0}.entity FROM {0} INNER JOIN {1} ON ({0}.term = {1}.key) WHERE ",
-                            conn.GetMapping<Model.SearchTermEntity>().TableName,
-                            conn.GetMapping<Model.SearchTerm>().TableName,
-                            typeof(TEntity).FullName);
+                                conn.GetMapping<Model.SearchTermEntity>().TableName,
+                                conn.GetMapping<Model.SearchTerm>().TableName,
+                                typeof(TEntity).FullName);
+                        
+                        if (approxConfig != null)
+                        {
+                            queryBuilder.Append("(");
+                            foreach(var alg in approxConfig.ApproxSearchOptions.Where(o=>o.Enabled))
+                            {
+                                if (alg is ApproxPatternOption pattern)
+                                    queryBuilder.AppendFormat("{0}.term LIKE '{1}' OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''").Replace("*", "%"));
+                                else if (alg is ApproxPhoneticOption phonetic && hasSoundex)
+                                    queryBuilder.AppendFormat("SOUNDEX({0}.term) = SOUNDEX('{1}') OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''"));
+                                else if (alg is ApproxDifferenceOption difference && hasSpellFix)
+                                    queryBuilder.AppendFormat("(length({0}.term) > {2} * 2 and editdist3(trim(lower({0}.term)), trim(lower('{1}'))) <= {2}) OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''"), difference.MaxDifference);
 
-                        if (tkn.Contains("*"))
+                            }
+                            queryBuilder.Remove(queryBuilder.Length - 3, 3);
+                            queryBuilder.Append(")");
+                        }
+                        else if (tkn.Contains("*"))
                             queryBuilder.AppendFormat("{0}.term LIKE '{1}' ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''").Replace("*", "%"));
                         else
                             queryBuilder.AppendFormat("{0}.term = '{1}' ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.ToLower().Replace("'", "''"));
@@ -142,16 +186,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
                     totalResults = results.Count();
 
-                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal));
+                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal)).OfType<TEntity>();
 
                     // Sorting (well as best we can for FTS)
                     if(orderBy.Length > 0)
                     {
                         var order = orderBy.First();
                         if(order.SortOrder == SanteDB.Core.Model.Map.SortOrderType.OrderBy)
-                            retVal = retVal.OrderBy(order.SortProperty.Compile());
+                            return retVal.OrderBy(order.SortProperty.Compile());
                         else
-                            retVal = retVal.OrderByDescending(order.SortProperty.Compile());
+                            return retVal.OrderByDescending(order.SortProperty.Compile());
                     }
 
                     return retVal;
@@ -189,7 +233,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                         var tokens = (e.Names ?? new List<EntityName>()).SelectMany(o => o.Component.SelectMany(c => c.Value.Split(' ')).Select(c=>c.Trim().ToLower()))
                         .Union((e.Identifiers ?? new List<EntityIdentifier>()).Select(o => o.Value.ToLower()))
-                        .Union((e.Addresses ?? new List<EntityAddress>()).SelectMany(o => o.Component.Select(c => c.Value.Trim().ToLower())))
+                        .Union((e.Addresses ?? new List<EntityAddress>()).SelectMany(o => o.Component.Select(c => c.Value.Trim().ToLower()).Where(c=>c.Length > 2)))
                         .Union((e.Telecoms ?? new List<EntityTelecomAddress>()).Select(o => o.Value.ToLower()))
                         .Union((e.Relationships ?? new List<EntityRelationship>()).Where(o => o.TargetEntity is Person).SelectMany(o => (o.TargetEntity.Names ?? new List<EntityName>()).SelectMany(n => n.Component?.Select(c => c.Value?.Trim().ToLower()))))
                         .Union((e.Relationships ?? new List<EntityRelationship>()).Where(o => o.TargetEntity is Person).SelectMany(o => (o.TargetEntity.Telecoms ?? new List<EntityTelecomAddress>()).Select(c => c.Value?.Trim().ToLower())))

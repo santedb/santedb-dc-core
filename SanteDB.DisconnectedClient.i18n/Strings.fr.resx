@@ -117,13 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="locale_setting_deploy" xml:space="preserve">
-    <value>&lt;&lt;TO_TRANSLATE&gt;&gt;</value>
-  </data>
-  <data name="locale_setting_migration" xml:space="preserve">
-    <value>&lt;&lt;TO_TRANSLATE&gt;&gt;</value>
-  </data>
-  <data name="locale_setting_table" xml:space="preserve">
-    <value>&lt;&lt;TO_TRANSLATE&gt;&gt;</value>
+  <data name="locale_sync" xml:space="preserve">
+    <value>Telechargement du {0} {1} sur {2}...</value>
   </data>
 </root>

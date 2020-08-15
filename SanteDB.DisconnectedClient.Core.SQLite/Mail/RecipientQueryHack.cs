@@ -18,7 +18,7 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core;
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;

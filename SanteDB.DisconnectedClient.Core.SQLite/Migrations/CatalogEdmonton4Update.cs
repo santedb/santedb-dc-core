@@ -31,7 +31,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// Update for migrating Edmonton CTP5 to f4
     /// </summary>
-    public class CatalogEdmonton4Update : IDbMigration
+    public class CatalogEdmonton4Update : IConfigurationMigration
     {
         /// <summary>
         /// Gets the description
@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
             var tracer = Tracer.GetTracer(this.GetType());
 
             // Database for the SQL Lite connection
-            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
+            var db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
             using (db.Lock())
             {
                 try

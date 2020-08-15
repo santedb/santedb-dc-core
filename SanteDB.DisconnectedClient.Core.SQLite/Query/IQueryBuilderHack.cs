@@ -21,7 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace SanteDB.Core.Data.QueryBuilder
+namespace SanteDB.DisconnectedClient.SQLite.Query
 {
     /// <summary>
     /// Query builder hack

@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
@@ -31,7 +31,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
     /// </summary>
     [Table("act")]
     [AssociativeTable(typeof(DbSecurityPolicy), typeof(DbActSecurityPolicy))]
-    public class DbAct : DbVersionedData
+    public class DbAct : DbVersionedData, IDbHideable
     {
         /// <summary>
         /// Gets or sets the template
@@ -93,5 +93,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Acts
         [Column("typeConcept"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
         public byte[] TypeConceptUuid { get; set; }
 
+        /// <summary>
+        /// Hidden column
+        /// </summary>
+        [Column("hidden")]
+        public bool Hidden { get; set; }
     }
 }

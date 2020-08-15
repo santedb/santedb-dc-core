@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// Data migration that inserts the initial search catalog
     /// </summary>
-    public class InitialSearchCatalog : IDbMigration
+    public class InitialSearchCatalog : IConfigurationMigration
     {
         // Initial search catalog
         private Tracer m_tracer = Tracer.GetTracer(typeof(InitialSearchCatalog));
@@ -77,7 +77,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     ApplicationContext.Current.AddServiceProvider(typeof(SQLiteSearchIndexService), true);
 
                 // Get a connection to the search database
-                var conn = SQLiteConnectionManager.Current.GetConnection(connStr);
+                var conn = SQLiteConnectionManager.Current.GetReadWriteConnection(connStr);
                 using (conn.Lock())
                 {
                     conn.CreateTable<SearchEntityType>();

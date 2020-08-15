@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
@@ -42,6 +42,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
+using SQLite.Net;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -151,13 +153,13 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <returns>The connection.</returns>
         protected SQLiteDataContext CreateConnection(IPrincipal principal)
         {
-            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName)), principal);
+            return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName)), principal);
         }
 
         /// <summary>
         /// Create readonly connection
         /// </summary>
-        private SQLiteDataContext CreateReadonlyConnection(IPrincipal principal)
+        protected SQLiteDataContext CreateReadonlyConnection(IPrincipal principal)
         {
             return new SQLiteDataContext(SQLiteConnectionManager.Current.GetReadonlyConnection(ApplicationContext.Current.ConfigurationManager.GetConnectionString(m_configuration.MainDataSourceConnectionStringName)), principal);
         }
@@ -221,7 +223,15 @@ namespace SanteDB.DisconnectedClient.SQLite
                     this.Inserted?.Invoke(this, new DataPersistedEventArgs<TData>(data, principal));
                     return data;
                 }
-                catch { throw; }
+                catch (SQLiteException e)
+                {
+                    this.m_tracer.TraceError("Error inserting data {1} : {0}", e, context.Connection);
+                    throw new DataPersistenceException($"Database error inserting {data}", e);
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException($"Error inserting {data}", e);
+                }
 
 #if PERFMON
             finally
@@ -289,7 +299,14 @@ namespace SanteDB.DisconnectedClient.SQLite
                     this.Updated?.Invoke(this, new DataPersistedEventArgs<TData>(data,principal));
                     return data;
                 }
-                catch { throw; }
+                catch (SQLiteException e)
+                {
+                    this.m_tracer.TraceError("Error updating data {1} : {0}", e, context.Connection);
+                    throw new DataPersistenceException($"Database error obsoleting {data}", e);
+                }
+                catch (Exception e) {
+                    throw new DataPersistenceException($"Error updating {data}", e);
+                }
 #if PERFMON
                 finally
                 {
@@ -355,7 +372,12 @@ namespace SanteDB.DisconnectedClient.SQLite
 
                     return data;
                 }
-                catch { throw; }
+                catch (SQLiteException e)
+                {
+                    this.m_tracer.TraceError("Error obsoleting data {1} : {0}", e, context.Connection);
+                    throw new DataPersistenceException($"Database error obsoleting {data}", e);
+                }
+                catch (Exception e) { throw new DataPersistenceException($"Error obsoleting {data}", e); }
 #if PERFMON
                 finally
                 {
@@ -475,10 +497,15 @@ namespace SanteDB.DisconnectedClient.SQLite
 
 
                 }
+                catch(SQLiteException e)
+                {
+                    this.m_tracer.TraceError("Error executing query {1} : {0}", e, context.Connection);
+                    throw new DataPersistenceException($"Data error executing query againt {typeof(TData)}", e);
+                }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Error : {0}", e);
-                    throw;
+                    throw new DataPersistenceException($"Error executing query against {typeof(TData)}", e);
                 }
 #if PERFMON
                 finally

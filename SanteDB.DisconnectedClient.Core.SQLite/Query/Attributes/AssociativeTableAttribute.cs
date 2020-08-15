@@ -19,31 +19,34 @@
  */
 using System;
 
-namespace SanteDB.Core.Data.QueryBuilder.Attributes
+namespace SanteDB.DisconnectedClient.SQLite.Query.Attributes
 {
     /// <summary>
-    /// Represents a foreign key
+    /// Indicates that another table is associated with the current table through a third
+    /// table
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class ForeignKeyAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class AssociativeTableAttribute : Attribute
     {
+
         /// <summary>
-        /// Creates a new foreign key attribute
+        /// Creates an associative table attribute
         /// </summary>
-        public ForeignKeyAttribute(Type table, String column)
+        public AssociativeTableAttribute(Type targetTable, Type associativeTable)
         {
-            this.Table = table;
-            this.Column = column;
+            this.TargetTable = targetTable;
+            this.AssociationTable = associativeTable;
         }
 
         /// <summary>
-        /// Gets or sets the table to which the key applies
+        /// Gets or sets the target table
         /// </summary>
-        public Type Table { get; set; }
+        public Type TargetTable { get; set; }
 
         /// <summary>
-        /// Gets or sets the column to which the key applies
+        /// Gets or sets the table whicih associates the target table with the current table
         /// </summary>
-        public String Column { get; set; }
+        public Type AssociationTable { get; set; }
+
     }
 }

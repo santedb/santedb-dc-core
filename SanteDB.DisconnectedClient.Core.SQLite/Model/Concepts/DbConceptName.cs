@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SQLite.Net.Attributes;
 using System;
 
@@ -63,27 +63,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Concepts
             set;
         }
 
-        /// <summary>
-        /// Gets or sets the phonetic code.
-        /// </summary>
-        /// <value>The phonetic code.</value>
-        [Column("phoneticCode")]
-        public String PhoneticCode
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets the phonetic algorithm identifier.
-        /// </summary>
-        /// <value>The phonetic algorithm identifier.</value>
-        [Column("phoneticAlgorithm"), MaxLength(16)]
-        public byte[] PhoneticAlgorithmUuid
-        {
-            get;
-            set;
-        }
     }
 }
 

@@ -18,7 +18,7 @@
  * Date: 2019-11-27
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Data.QueryBuilder.Attributes;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SanteDB.Core.Mail;
 using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient;

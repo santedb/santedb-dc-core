@@ -18,7 +18,7 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core;
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -137,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }
             foreach (var itm in properties)
                 if (itm.GetValue(domainObject) == null)
-                    throw new ArgumentNullException(itm.Name, "Requires a value");
+                    throw new ArgumentNullException(itm.Name, $"On object ({data})");
 
 
             // Does this already exist?
@@ -203,11 +203,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 if (typeof(TQueryResult) != typeof(TDomain))
                 {
 
-                    var tableMap = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(TDomain));
-                    var resultMap = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(typeof(TQueryResult));
+                    var tableMap = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(typeof(TDomain));
+                    var resultMap = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(typeof(TQueryResult));
                     queryStatement = new SqlStatement<TDomain>().SelectFrom(resultMap.Columns.Select(o => $"{(typeof(TDomain).GetRuntimeProperty(o.SourceProperty.Name) != null ? tableMap.TableName + "." : "")}{o.Name}").ToArray());
 
-                    var fkStack = new Stack<SanteDB.Core.Data.QueryBuilder.TableMapping>();
+                    var fkStack = new Stack<SanteDB.DisconnectedClient.SQLite.Query.TableMapping>();
                     fkStack.Push(tableMap);
                     var scopedTables = new HashSet<Object>();
                     // Always join tables?
@@ -216,7 +216,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         var dt = fkStack.Pop();
                         foreach (var jt in dt.Columns.Where(o => o.IsAlwaysJoin))
                         {
-                            var fkTbl = SanteDB.Core.Data.QueryBuilder.TableMapping.Get(jt.ForeignKey.Table);
+                            var fkTbl = SanteDB.DisconnectedClient.SQLite.Query.TableMapping.Get(jt.ForeignKey.Table);
                             var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
                             queryStatement.InnerJoin(dt.OrmType, fkTbl.OrmType);
                             if (!scopedTables.Contains(fkTbl))
@@ -233,23 +233,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 //queryStatement = new SqlStatement<TDomain>().SelectFrom()
                 queryStatement = queryStatement.Where<TDomain>(expression);
 
+                if (typeof(IDbHideable).IsAssignableFrom(typeof(TQueryResult)))
+                    queryStatement.And(" hidden = 0");
             }
             else
             {
-                queryStatement = m_builder.CreateQuery(query, orderBy).Build();
+                queryStatement = m_builder.CreateQuery(query, orderBy);
+                queryStatement = queryStatement.Build();
             }
 
             queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();
 
             m_tracer.TraceVerbose("Built Query: {0}", queryStatement.SQL);
-
-            // Is this a cached query?
-            var retVal = context.CacheQuery(queryStatement)?.OfType<TModel>();
-            if (retVal != null && !countResults)
-            {
-                totalResults = 0;
-                return retVal;
-            }
 
             // Preare SQLite Args
             var args = queryStatement.Arguments.Select(o =>
@@ -291,7 +286,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     {
                         this.m_queryPersistence?.AddResults(queryId, conn2.Connection.Query<TQueryResult>(originalQuery.SQL, args).Select(o => o.Key));
                     }
-                }, this.CreateConnection(context.Principal));
+                }, this.CreateReadonlyConnection(context.Principal));
             }
 
             queryStatement.Limit(count);
@@ -301,7 +296,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Exec query
             var domainList = context.Connection.Query<TQueryResult>(queryStatement.Build().SQL, args).ToList();
             var modelList = domainList.Select(o => this.CacheConvert(o, context)).ToList();
-            context.AddQuery(queryStatement, modelList);
 
             //foreach (var i in modelList)
             //    context.AddCacheCommit(i);

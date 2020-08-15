@@ -24,22 +24,36 @@ using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using SanteDB.DisconnectedClient.SQLite.Query;
+using TableMapping = SQLite.Net.TableMapping;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
     /// <summary>
     /// Lockable sqlite connection
     /// </summary>
-    public abstract class LockableSQLiteConnection : SQLiteConnection
+    public class LockableSQLiteConnection : SQLiteConnection
     {
 
         // Lock count
         protected int m_lockCount = 0;
 
+        // Lock object
+        private object m_lockObject = new object();
+
+#if DEBUG
+        private Int32? m_claimedBy;
+#endif
+
+        // Available event
+        private ManualResetEventSlim m_availableEvent = new ManualResetEventSlim(true);
+
         /// <summary>
-        /// When true the connection stays open
+        /// Get the number of locks
         /// </summary>
-        public bool Persistent { get; set; }
+        internal int LockCount => m_lockCount;
 
         /// <summary>
         /// Get the connection string
@@ -47,17 +61,124 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         public ConnectionString ConnectionString { get; }
 
         /// <summary>
+        /// True if the connection is readonly
+        /// </summary>
+        public bool IsReadonly { get; }
+
+        /// <summary>
+        /// True if the connection is entered on this thread
+        /// </summary>
+        public bool IsEntered => Monitor.IsEntered(this.m_lockObject);
+
+        /// <summary>
+        /// True if disposed
+        /// </summary>
+        public bool IsDisposed { get; private set; }
+
+        /// <summary>
         /// Constructor for locable sqlite connection
         /// </summary>
         public LockableSQLiteConnection(ISQLitePlatform sqlitePlatform, ConnectionString connectionString, SQLiteOpenFlags openFlags, bool storeDateTimeAsTicks = true, IBlobSerializer serializer = null, IDictionary<String, TableMapping> tableMappings = null, IDictionary<Type, String> extraTypeMappings = null, IContractResolver resolver = null) :
             base(sqlitePlatform, connectionString.GetComponent("dbfile"), openFlags, storeDateTimeAsTicks, serializer, tableMappings, extraTypeMappings, resolver, connectionString.GetComponent("encrypt")?.ToLower() == "true" ? ApplicationContext.Current.GetCurrentContextSecurityKey() : null)
         {
+            this.BusyTimeout = new TimeSpan(0, 0, 10);
             this.ConnectionString = connectionString;
+            this.IsReadonly = openFlags.HasFlag(SQLiteOpenFlags.ReadOnly);
+
+            try
+            {
+                // Try to init extended filters
+                foreach (var f in AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(a => !a.IsDynamic)
+                        .SelectMany(a => { try { return a.ExportedTypes; } catch { return Type.EmptyTypes; } })
+                        .Where(t => typeof(IDbFilterFunction).IsAssignableFrom(t) && !t.IsAbstract)
+                        .Select(t => Activator.CreateInstance(t) as IDbFilterFunction))
+                    f.Initialize(this);
+
+            }
+            catch
+            {
+
+            }
+        }
+
+        /// <summary>
+        /// Represents a sqlite lock box
+        /// </summary>
+        private class SQLiteLockBox : IDisposable
+        {
+
+            // The connection
+            private LockableSQLiteConnection m_connection;
+
+            /// <summary>
+            /// Call to lock box increases lock
+            /// </summary>
+            /// <param name="wrappedConnection"></param>
+            public SQLiteLockBox(LockableSQLiteConnection wrappedConnection)
+            {
+                this.m_connection = wrappedConnection;
+                Monitor.Enter(this.m_connection.m_lockObject);
+                this.m_connection.m_claimedBy = Thread.CurrentThread.ManagedThreadId;
+                this.m_connection.m_lockCount++;
+                this.m_connection.m_availableEvent.Reset();
+            }
+
+            /// <summary>
+            /// Dispose of the lock
+            /// </summary>
+            public void Dispose()
+            {
+                Monitor.Exit(this.m_connection.m_lockObject);
+                this.m_connection.m_lockCount--;
+                if (this.m_connection.m_lockCount == 0)
+                {
+                    this.m_connection.m_claimedBy = null;
+                    this.m_connection.m_availableEvent.Set();
+                }
+               
+            }
         }
 
         /// <summary>
         /// Locks the connection file
         /// </summary>
-        public abstract IDisposable Lock();
+        public IDisposable Lock()
+        {
+            return new SQLiteLockBox(this);
+        }
+
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            lock (this.m_lockObject)
+            {
+#if DEBUG
+                this.m_claimedBy = null;
+#endif
+                base.Dispose(disposing);
+                this.IsDisposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Wait for the connection to become available
+        /// </summary>
+        public bool Wait()
+        {
+            if(!this.IsEntered)
+                this.m_availableEvent.Wait();
+            return true;
+        }
+
+        /// <summary>
+        /// Represent this as a string
+        /// </summary>
+        public override string ToString()
+        {
+            return $"DB = {this.ConnectionString.Name} ; IsDisposed = {this.IsDisposed} ; IsEntered = {this.IsEntered} ; Lock = {this.LockCount} ; {this.m_claimedBy} - {Thread.CurrentThread.ManagedThreadId} ";
+        }
     }
 }

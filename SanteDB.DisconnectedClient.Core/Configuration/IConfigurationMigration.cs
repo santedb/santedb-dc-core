@@ -24,7 +24,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// <summary>
     /// Identifies a database migration script in code
     /// </summary>
-    public interface IDbMigration
+    public interface IConfigurationMigration
     {
 
 

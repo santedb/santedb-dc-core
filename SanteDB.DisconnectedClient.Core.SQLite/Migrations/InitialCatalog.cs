@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// This class is responsible for setting up an initial catalog of items in the SQL Lite database
     /// </summary>
-    internal class InitialCatalog : IDbMigration
+    internal class InitialCatalog : IConfigurationMigration
     {
 
         #region IDbMigration implementation
@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
         {
 
             // Database for the SQL Lite connection
-            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
+            var db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
             using (db.Lock())
             {
                 return this.Install(db, false);
@@ -167,7 +167,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     db.Insert(new DbSecurityUser()
                     {
                         Key = uid,
-                        Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash("SanteDB123"),
+                        Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(Guid.NewGuid().ToString()),
                         SecurityHash = Guid.NewGuid().ToString(),
                         Lockout = DateTime.MaxValue,
                         UserName = "LocalAdministrator",

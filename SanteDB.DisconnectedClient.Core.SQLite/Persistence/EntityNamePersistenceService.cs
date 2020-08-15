@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
@@ -190,8 +190,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 ComponentTypeKey = new Guid(entName.ComponentTypeUuid ?? Guid.Empty.ToByteArray()),
                 Value = nameValue.Value,
                 Key = entName.Key,
-                PhoneticAlgorithmKey = new Guid(nameValue.PhoneticAlgorithmUuid ?? Guid.Empty.ToByteArray()),
-                PhoneticCode = nameValue.PhoneticCode,
+                //PhoneticAlgorithmKey = new Guid(nameValue.PhoneticAlgorithmUuid ?? Guid.Empty.ToByteArray()),
+                //PhoneticCode = nameValue.PhoneticCode,
                 SourceEntityKey = new Guid(entName.NameUuid)
             };
         }
@@ -219,14 +219,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.ValueUuid = existing.Uuid;
                 else if (!String.IsNullOrEmpty(modelInstance.Value))
                 {
-                    var phoneticCoder = ApplicationContext.Current.GetService<IPhoneticAlgorithmHandler>();
+                    //var phoneticCoder = ApplicationContext.Current.GetService<IPhoneticAlgorithmHandler>();
                     retVal.ValueUuid = Guid.NewGuid().ToByteArray();
                     context.Connection.Insert(new DbPhoneticValue()
                     {
                         Uuid = retVal.ValueUuid,
-                        Value = modelInstance.Value,
-                        PhoneticAlgorithmUuid = (phoneticCoder?.AlgorithmId ?? PhoneticAlgorithmKeys.None).ToByteArray(),
-                        PhoneticCode = phoneticCoder?.GenerateCode(modelInstance.Value)
+                        Value = modelInstance.Value
+                        //PhoneticAlgorithmUuid = (phoneticCoder?.AlgorithmId ?? PhoneticAlgorithmKeys.None).ToByteArray(),
+                       // PhoneticCode = phoneticCoder?.GenerateCode(modelInstance.Value)
                     });
                 }
 

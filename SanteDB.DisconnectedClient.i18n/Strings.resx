@@ -117,12 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Conflict" xml:space="preserve">
-    <value>The server has detected a change conflict on an object you're attempting to update.</value>
-  </data>
-  <data name="DBPE002" xml:space="preserve">
-    <value>The server has a newer version of the object you're trying to update</value>
-  </data>
   <data name="locale_downloadError" xml:space="preserve">
     <value>Remote downloads are temporarily not working</value>
   </data>
@@ -205,9 +199,6 @@ Sincerely,
   </data>
   <data name="locale_calculateImportedCareplan" xml:space="preserve">
     <value>Preparing imported data...</value>
-  </data>
-  <data name="InternalServerError" xml:space="preserve">
-    <value>&lt;p&gt;The server encountered an internal error while processing your request. Please contact the system administrator for more information. Include the following diagnostic error data:&lt;/p&gt;&lt;pre&gt;{0}&lt;/pre&gt;</value>
   </data>
   <data name="locale_processBundle" xml:space="preserve">
     <value>Importing {0} from bundle ({1} of {2})...</value>
@@ -418,5 +409,11 @@ Sincerely,
   </data>
   <data name="locale_updateInstalled" xml:space="preserve">
     <value>Package {0} was updated to version {1}</value>
+  </data>
+  <data name="locale_sync_complete" xml:space="preserve">
+    <value>Automatic pull from the central server has completed</value>
+  </data>
+  <data name="locale_sync_initial" xml:space="preserve">
+    <value>Initial synchronization with the central server has completed</value>
   </data>
 </root>

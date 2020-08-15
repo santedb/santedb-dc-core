@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// <summary>
     /// Represents an initial alert catalog
     /// </summary>
-    public class InitialMessageCatalog : IDbMigration
+    public class InitialMessageCatalog : IConfigurationMigration
     {
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
             // Database for the SQL Lite connection
             var tracer = Tracer.GetTracer(typeof(InitialMessageCatalog));
 
-            var db = SQLiteConnectionManager.Current.GetConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MailDataStore));
+            var db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MailDataStore));
             try
             {
                 using (db.Lock())

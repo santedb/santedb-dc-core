@@ -30,8 +30,9 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using SanteDB.DisconnectedClient.SQLite.Model;
 
-namespace SanteDB.Core.Data.QueryBuilder
+namespace SanteDB.DisconnectedClient.SQLite.Query
 {
 
     /// <summary>
@@ -161,6 +162,12 @@ namespace SanteDB.Core.Data.QueryBuilder
         // Join cache
         private Dictionary<String, KeyValuePair<SqlStatement, List<TableMapping>>> s_joinCache = new Dictionary<String, KeyValuePair<SqlStatement, List<TableMapping>>>();
 
+        // Filter function regex
+        public static readonly Regex ExtendedFunctionRegex = new Regex(@"^:\((\w*?)(\|(.*?)\)|\))(.*)");
+
+        // Filter functions
+        private static Dictionary<String, IDbFilterFunction> s_filterFunctions = null;
+
         // Mapper
         private ModelMapper m_mapper;
         private const int PropertyRegexGroup = 1;
@@ -193,7 +200,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// <summary>
         /// Create query
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, ModelSort<TModel>[] orderBy, params ColumnMapping[] selector)
         {
             return CreateQuery<TModel>(query, null, orderBy, selector);
         }
@@ -201,7 +208,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// <summary>
         /// Create query 
         /// </summary>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, ModelSort<TModel>[] orderBy, params ColumnMapping[] selector)
         {
             return CreateQuery<TModel>(query, null, false, orderBy, selector);
         }
@@ -210,7 +217,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// Query query 
         /// </summary>
         /// <param name="query"></param>
-        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, bool skipJoins, ModelSort<TModel>[] orderBy,  params ColumnMapping[] selector)
+        public SqlStatement CreateQuery<TModel>(IEnumerable<KeyValuePair<String, Object>> query, String tablePrefix, bool skipJoins, ModelSort<TModel>[] orderBy, params ColumnMapping[] selector)
         {
             var tableType = m_mapper.MapModelType(typeof(TModel));
             var tableMap = TableMapping.Get(tableType);
@@ -240,7 +247,11 @@ namespace SanteDB.Core.Data.QueryBuilder
                         {
                             var fkTbl = TableMapping.Get(jt.ForeignKey.Table);
                             var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
-                            selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
+
+                            if (typeof(IDbHideable).IsAssignableFrom(fkTbl.OrmType))
+                                selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name} AND {tablePrefix}{fkAtt.Table.TableName}.hidden = 0) ");
+                            else
+                                selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
                             if (!scopedTables.Contains(fkTbl))
                                 fkStack.Push(fkTbl);
                             scopedTables.Add(fkAtt.Table);
@@ -554,6 +565,33 @@ namespace SanteDB.Core.Data.QueryBuilder
         }
 
         /// <summary>
+        /// Gets the filter function
+        /// </summary>
+        public IDbFilterFunction GetFilterFunction(string name)
+        {
+            if (s_filterFunctions == null)
+            {
+                s_filterFunctions = AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(a => !a.IsDynamic)
+                        .SelectMany(a =>
+                        {
+                            try
+                            {
+                                return a.ExportedTypes;
+                            }
+                            catch { return Type.EmptyTypes; }
+                        })
+                        .Where(t => typeof(IDbFilterFunction).IsAssignableFrom(t) && !t.IsAbstract)
+                        .Select(t => Activator.CreateInstance(t) as IDbFilterFunction)
+                        .ToDictionary(o => o.Name, o => o);
+            }
+            IDbFilterFunction retVal = null;
+            s_filterFunctions.TryGetValue(name, out retVal);
+            return retVal;
+        }
+
+
+        /// <summary>
         /// Create a single where condition based on the property info
         /// </summary>
         public SqlStatement CreateWhereCondition(Type tmodel, String propertyPath, Object value, String tablePrefix, List<TableMapping> scopedTables, String tableAlias = null)
@@ -597,6 +635,28 @@ namespace SanteDB.Core.Data.QueryBuilder
                     var sValue = itm as String;
                     switch (sValue[0])
                     {
+                        case ':': // function
+                            var opMatch = ExtendedFunctionRegex.Match(sValue);
+                            if (opMatch.Success)
+                            {
+                                // Extract
+                                String fnName = opMatch.Groups[1].Value,
+                                    parms = opMatch.Groups[3].Value,
+                                    operand = opMatch.Groups[4].Value;
+
+                                // Now find the function
+                                var filterFn = GetFilterFunction(fnName);
+                                if (filterFn == null)
+                                    retVal.Append($" = ? ", CreateParameterValue(sValue, domainProperty.PropertyType));
+                                else
+                                {
+                                    retVal.RemoveLast();
+                                    retVal = filterFn.CreateSqlStatement(retVal, $"{tableAlias}.{columnData.Name}", parms.Split(','), operand, domainProperty.PropertyType).Build();
+                                }
+                            }
+                            else
+                                retVal.Append($" = ? ", CreateParameterValue(sValue, domainProperty.PropertyType));
+                            break;
                         case '<':
                             semantic = " AND ";
                             if (sValue[1] == '=')
@@ -630,7 +690,7 @@ namespace SanteDB.Core.Data.QueryBuilder
                                     retVal.Append($" > ?", CreateParameterValue(sValue.Substring(1), propertyInfo.PropertyType));
                             }
                             break;
-                            
+
                         case '!':
                             semantic = " AND ";
                             if (sValue.Equals("!null"))
@@ -673,7 +733,7 @@ namespace SanteDB.Core.Data.QueryBuilder
         /// <summary>
         /// Create a parameter value
         /// </summary>
-        private static object CreateParameterValue(object value, Type toType)
+        internal static object CreateParameterValue(object value, Type toType)
         {
             object retVal = null;
             if (value is Guid)
@@ -687,7 +747,7 @@ namespace SanteDB.Core.Data.QueryBuilder
             // Dates in SQLite are UTC so lets convert
             if (retVal is DateTime)
                 retVal = ((DateTime)retVal).ToUniversalTime();
-            else if(retVal is DateTimeOffset)
+            else if (retVal is DateTimeOffset)
                 retVal = ((DateTimeOffset)retVal).ToUniversalTime();
 
             return retVal;

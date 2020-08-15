@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
     /// <summary>
     /// SQLiteConnectionManager
     /// </summary>
-    public class SQLiteConnectionManager : IDataConnectionManager
+    public class SQLiteConnectionManagerOld : IDataManagementService
     {
 
         /// <summary>
@@ -164,7 +164,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             mre.Reset();
             // Wait for readonly connections to go to 0
             while (connections.Count > 0)
+            {
+                if (Monitor.IsEntered(s_lockObject))
+                    Monitor.Wait(s_lockObject);
                 Task.Delay(100).Wait();
+            }
 
         }
 
@@ -344,6 +348,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
                 ISQLitePlatform platform = ApplicationContext.Current.GetService<ISQLitePlatform>();
                 var retVal = this.GetOrCreatePooledConnection(dataSource, false);
+
                 this.m_tracer.TraceVerbose("Write connection to {0} established, {1} active connections", dataSource, this.m_connections.Count + this.m_readonlyConnections.Count);
 #if DEBUG_SQL
                 conn.TraceListener = new TracerTraceListener();
@@ -354,6 +359,27 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
                 this.m_tracer.TraceError("Error getting connection: {0}", e);
                 throw;
+            }
+        }
+
+
+        /// <summary>
+        /// Locks the specified database but only if it exists
+        /// </summary>
+        public IDisposable ExternLock(string dsName)
+        {
+            lock (s_lockObject)
+            {
+                this.m_writeConnections.TryGetValue(dsName, out WriteableSQLiteConnection writePrimary);
+                this.m_readonlyConnections.TryGetValue(dsName, out List<LockableSQLiteConnection> readSecondary);
+
+                // Let the readonly connections die off
+                while (this.m_readonlyConnections.Count > 0)
+                {
+                    Monitor.Wait(s_lockObject);
+                    Thread.Sleep(100);
+                }
+                return writePrimary.Lock();
             }
         }
 

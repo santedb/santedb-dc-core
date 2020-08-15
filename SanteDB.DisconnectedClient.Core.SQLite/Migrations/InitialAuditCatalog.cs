@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// Database migration for audit
     /// </summary>
-    public class InitialAuditCatalog : IDbMigration
+    public class InitialAuditCatalog : IConfigurationMigration
     {
         /// <summary>
         /// Gets the description
@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
             var connStr = ApplicationContext.Current?.ConfigurationManager.GetConnectionString("santeDbAudit");
             if (connStr==null)
                 return true;
-            var db = SQLiteConnectionManager.Current.GetConnection(connStr);
+            var db = SQLiteConnectionManager.Current.GetReadWriteConnection(connStr);
             using (db.Lock())
             {
                 try

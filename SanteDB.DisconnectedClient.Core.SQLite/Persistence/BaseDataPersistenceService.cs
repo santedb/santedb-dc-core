@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core.Data.QueryBuilder;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.SQLite.Model;
@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
+using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -73,6 +74,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             data.CreationTime = (DateTimeOffset)domainObject.CreationTime;
             domainObject.UpdatedByKey = domainObject.CreatedByKey == Guid.Empty || domainObject.CreatedByKey == null ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
             domainObject.UpdatedTime = DateTime.Now;
+
+            // Special case system hiding of record
+            if (data is ITaggable taggable)
+            {
+                var hideTag = taggable.Tags.FirstOrDefault(o => o.TagKey == "$sys.hidden")?.Value;
+                if ("true".Equals(hideTag, StringComparison.OrdinalIgnoreCase) && domainObject is IDbHideable hideable)
+                    hideable.Hidden = true;
+            }
+
             if (!context.Connection.Table<TDomain>().Where(o => o.Uuid == domainObject.Uuid).Any())
                 context.Connection.Insert(domainObject);
             else
@@ -110,6 +120,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 //var model = TableMapping.Get(domainObject.GetType());
                 //context.Connection.Execute($"UPDATE {model.TableName} SET {model.GetColumn(nameof(DbBaseData.ObsoletionTime)).Name} = null, {model.GetColumn(nameof(DbBaseData.ObsoletedByUuid)).Name} = null WHERE {model.GetColumn(nameof(DbBaseData.Uuid)).Name} = X'{BitConverter.ToString(domainObject.Uuid).Replace("-", "")}'");
             }
+
+            // Special case system hiding of record
+            if(data is ITaggable taggable)
+            {
+                var hideTag = taggable.Tags.FirstOrDefault(o => o.TagKey == "$sys.hidden")?.Value;
+                if ("true".Equals(hideTag, StringComparison.OrdinalIgnoreCase) && domainObject is IDbHideable hideable)
+                    hideable.Hidden = true;
+            }
+
             context.Connection.Update(domainObject);
             context.AddTransactedItem(data);
 

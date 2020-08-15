@@ -167,7 +167,7 @@ namespace SanteDB.DisconnectedClient
             {
                 var serviceTypeInfo = serviceType.GetTypeInfo();
                 ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-                candidateService = this.GetServices().FirstOrDefault(o => o.GetType() != null && serviceTypeInfo.IsAssignableFrom(o.GetType().GetTypeInfo()));
+                candidateService = this.GetServices().ToArray().FirstOrDefault(o => o.GetType() != null && serviceTypeInfo.IsAssignableFrom(o.GetType().GetTypeInfo()));
                 // Candidate service not found? Look in configuration
                 if (candidateService == null)
                 {
