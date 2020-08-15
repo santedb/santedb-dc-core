@@ -99,28 +99,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
     {
 
         /// <summary>
-        /// Gets or sets the phonetic code.
-        /// </summary>
-        /// <value>The phonetic code.</value>
-        [Column("phoneticCode")]
-        public String PhoneticCode
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets the phonetic algorithm identifier.
-        /// </summary>
-        /// <value>The phonetic algorithm identifier.</value>
-        [Column("phoneticAlgorithm")]
-        public byte[] PhoneticAlgorithmUuid
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// Value of the phonetic table
         /// </summary>
         [Column("value"), NotNull]
