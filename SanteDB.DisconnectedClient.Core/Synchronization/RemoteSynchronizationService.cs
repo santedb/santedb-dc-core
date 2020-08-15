@@ -332,7 +332,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     if (Math.Abs(serverDrift.TotalMinutes) > 5) // More than 5 min drift
                     {
                         this.m_tracer.TraceWarning("Server time is {0} milliseconds drifted", serverDrift.TotalMilliseconds);
-                        lastModificationDate.Value.Add(serverDrift);
+                        lastModificationDate = lastModificationDate.Value.Add(serverDrift);
                     }
                 }
 
