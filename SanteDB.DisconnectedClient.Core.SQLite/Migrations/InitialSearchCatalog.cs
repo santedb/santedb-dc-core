@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// Data migration that inserts the initial search catalog
     /// </summary>
-    public class InitialSearchCatalog : IConfigurationMigration
+    public class InitialSearchCatalog : IDataMigration
     {
         // Initial search catalog
         private Tracer m_tracer = Tracer.GetTracer(typeof(InitialSearchCatalog));

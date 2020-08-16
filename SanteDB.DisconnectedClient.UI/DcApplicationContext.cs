@@ -338,7 +338,7 @@ namespace SanteDB.DisconnectedClient.UI
                     ApplicationServiceContext.Current = ApplicationContext.Current;
 
                     // Ensure data migration exists
-                    if (retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0)
+                    bool hasDatabase = retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0;
                         try
                         {
                             // If the DB File doesn't exist we have to clear the migrations
@@ -349,8 +349,8 @@ namespace SanteDB.DisconnectedClient.UI
                             }
                             retVal.SetProgress("Migrating databases", 0.6f);
 
-                            DataMigrator migrator = new DataMigrator();
-                            migrator.Ensure();
+                        ConfigurationMigrator migrator = new ConfigurationMigrator();
+                            migrator.Ensure(hasDatabase);
 
 
                             // Prepare clinical protocols

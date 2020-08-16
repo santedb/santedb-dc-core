@@ -45,8 +45,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
         /// </summary>
         public void Initialize(SQLiteConnection connection)
         {
-            if (File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "SpellFix.dll")) ||
-                File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "spellfix.so")))
+            if (Assembly.GetEntryAssembly() != null &&
+                !String.IsNullOrEmpty(Assembly.GetEntryAssembly().Location) &&
+                (File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "SpellFix.dll")) ||
+                File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "spellfix.so"))))
             {
                 try
                 {

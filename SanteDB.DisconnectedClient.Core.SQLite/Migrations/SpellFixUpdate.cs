@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// <summary>
     /// Spell fix update
     /// </summary>
-    public class SpellFixUpdate : IConfigurationMigration
+    public class SpellFixUpdate : IDataMigration
     {
         private Tracer m_tracer = Tracer.GetTracer(typeof(SpellFixUpdate));
 

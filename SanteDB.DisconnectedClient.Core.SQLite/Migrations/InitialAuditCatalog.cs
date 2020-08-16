@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
     /// <summary>
     /// Database migration for audit
     /// </summary>
-    public class InitialAuditCatalog : IConfigurationMigration
+    public class InitialAuditCatalog : IDataMigration
     {
         /// <summary>
         /// Gets the description
