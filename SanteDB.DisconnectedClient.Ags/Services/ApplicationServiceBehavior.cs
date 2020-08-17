@@ -75,7 +75,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     sw.WriteLine("// Generated Routes ");
                     sw.WriteLine("// Loaded Applets");
                     foreach (var apl in appletService.Applets)
+                    {
                         sw.WriteLine("// \t {0}", apl.Info.Id);
+                        foreach(var ast in apl.Assets)
+                        {
+                            var cont = ast.Content ?? appletService.Applets.Resolver?.Invoke(ast);
+                            if(cont is AppletAssetHtml html)
+                                sw.WriteLine("// \t\t {0}", html.ViewState.Name);
+                        }
+                    }
                     sw.WriteLine("// Include States: ");
                     foreach (var vs in viewStates)
                         sw.WriteLine("// \t{0}", vs.Name);
