@@ -66,9 +66,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             IAppletManagerService appletService = ApplicationContext.Current.GetService<IAppletManagerService>();
 
             // Calculate routes
-#if !DEBUG
-            if (this.m_routes == null)
-#endif
                 using (MemoryStream ms = new MemoryStream())
                 {
                     using (StreamWriter sw = new StreamWriter(ms))
