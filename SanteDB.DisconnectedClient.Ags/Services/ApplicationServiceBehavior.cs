@@ -66,49 +66,58 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             IAppletManagerService appletService = ApplicationContext.Current.GetService<IAppletManagerService>();
 
             // Calculate routes
-                using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (StreamWriter sw = new StreamWriter(ms))
                 {
-                    using (StreamWriter sw = new StreamWriter(ms))
+                    IEnumerable<AppletAsset> viewStates = appletService.Applets.ViewStateAssets.Select(o => new { Asset = o, Html = (o.Content ?? appletService.Applets.Resolver?.Invoke(o)) as AppletAssetHtml }).GroupBy(o => o.Html.ViewState.Name).Select(g => g.OrderByDescending(o => o.Html.ViewState.Priority).First().Asset);
+
+                    sw.WriteLine("// Generated Routes ");
+                    sw.WriteLine("// Loaded Applets");
+                    foreach (var apl in appletService.Applets)
+                        sw.WriteLine("// \t {0}", apl.Info.Id);
+                    sw.WriteLine("// Include States: ");
+                    foreach (var vs in viewStates)
+                        sw.WriteLine("// \t{0}", vs.Name);
+
+                    sw.WriteLine("SanteDB = SanteDB || {}");
+                    sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
+                    sw.WriteLine("SanteDB.UserInterface.states = [");
+
+
+                    // Collect routes
+                    foreach (var itm in viewStates)
                     {
-                        sw.WriteLine("SanteDB = SanteDB || {}");
-                        sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
-                        sw.WriteLine("SanteDB.UserInterface.states = [");
-
-                        IEnumerable<AppletAsset> viewStates = appletService.Applets.ViewStateAssets.Select(o => new { Asset = o, Html = (o.Content ?? appletService.Applets.Resolver?.Invoke(o)) as AppletAssetHtml }).GroupBy(o => o.Html.ViewState.Name).Select(g => g.OrderByDescending(o => o.Html.ViewState.Priority).First().Asset);
-
-                        // Collect routes
-                        foreach (var itm in viewStates)
+                        var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
+                        var viewState = htmlContent.ViewState;
+                        sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
+                        var displayName = htmlContent.GetTitle(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+                        if (!String.IsNullOrEmpty(displayName))
+                            sw.Write($", displayName: '{displayName }'");
+                        if (itm.Policies.Count > 0)
+                            sw.Write($", demand: [{String.Join(",", itm.Policies.Select(o => $"'{o}'"))}] ");
+                        if (viewState.View.Count > 0)
                         {
-                            var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
-                            var viewState = htmlContent.ViewState;
-                            sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
-                            var displayName = htmlContent.GetTitle(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
-                            if(!String.IsNullOrEmpty(displayName))
-                                sw.Write($", displayName: '{displayName }'");
-                            if (itm.Policies.Count > 0)
-                                sw.Write($", demand: [{String.Join(",", itm.Policies.Select(o=>$"'{o}'"))}] ");
-                            if (viewState.View.Count > 0)
+                            sw.Write(", views: {");
+                            foreach (var view in viewState.View)
                             {
-                                sw.Write(", views: {");
-                                foreach (var view in viewState.View)
+                                sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
+                                var dynScripts = appletService.Applets.GetLazyScripts(itm);
+                                if (dynScripts.Any())
                                 {
-                                    sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
-                                    var dynScripts = appletService.Applets.GetLazyScripts(itm);
-                                    if (dynScripts.Any())
-                                    {
-                                        int i = 0;
-                                        sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
-                                    }
-                                    sw.WriteLine(" }, ");
+                                    int i = 0;
+                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
                                 }
-                                sw.WriteLine("}");
+                                sw.WriteLine(" }, ");
                             }
-                            sw.WriteLine("} ,");
+                            sw.WriteLine("}");
                         }
-                        sw.Write("];");
+                        sw.WriteLine("} ,");
                     }
-                    this.m_routes = ms.ToArray();
+                    sw.Write("];");
                 }
+                this.m_routes = ms.ToArray();
+            }
             return new MemoryStream(this.m_routes);
         }
 
@@ -127,7 +136,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             return retVal;
 
         }
-       
+
         /// <summary>
         /// Perform an update
         /// </summary>
@@ -229,7 +238,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>()?.IsAvailable()?? true }
                 };
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceWarning("Cannot determine online state: {0}", e.Message);
                 return new Dictionary<string, bool>();
