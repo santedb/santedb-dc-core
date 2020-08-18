@@ -80,8 +80,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         foreach(var ast in apl.Assets)
                         {
                             var cont = ast.Content ?? appletService.Applets.Resolver?.Invoke(ast);
-                            if(cont is AppletAssetHtml html)
-                                sw.WriteLine("// \t\t {0}", html.ViewState.Name);
+                            if(cont is AppletAssetHtml html && html.ViewState != null)
+                                    sw.WriteLine("// \t\t {0}", html.ViewState?.Name);
                         }
                     }
                     sw.WriteLine("// Include States: ");
