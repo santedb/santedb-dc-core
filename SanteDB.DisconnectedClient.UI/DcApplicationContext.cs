@@ -253,7 +253,9 @@ namespace SanteDB.DisconnectedClient.UI
                         else
                             throw new Exception("Could not load or backup configuration", e);
                     }
-                    retVal.AddServiceProvider(typeof(DefaultBackupService));
+
+                    if(retVal.GetService<IBackupService>() == null)
+                        retVal.AddServiceProvider(typeof(DefaultBackupService));
 
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();

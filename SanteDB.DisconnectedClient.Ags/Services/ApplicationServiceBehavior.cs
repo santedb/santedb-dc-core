@@ -81,7 +81,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         {
                             var cont = ast.Content ?? appletService.Applets.Resolver?.Invoke(ast);
                             if(cont is AppletAssetHtml html && html.ViewState != null)
-                                    sw.WriteLine("// \t\t {0}", html.ViewState?.Name);
+                                sw.WriteLine("// \t\t {0}", html.ViewState?.Name);
                         }
                     }
                     sw.WriteLine("// Include States: ");
