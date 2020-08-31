@@ -54,6 +54,9 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
     public class HdsiIntegrationService : IClinicalIntegrationService
     {
 
+        // Last ping
+        private DateTime m_lastPing;
+
         /// <summary>
         /// Service name
         /// </summary>
@@ -323,19 +326,24 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 var networkInformationService = ApplicationContext.Current.GetService<INetworkInformationService>();
                 if (networkInformationService.IsNetworkAvailable)
                 {
-                    HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
-                    client.Client.Credentials = new NullCredentials();
-                    client.Client.Description.Endpoint[0].Timeout = 10000;
+                    if (this.m_lastPing < DateTime.Now.AddSeconds(-30))
+                    {
+                        HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
+                        client.Client.Credentials = new NullCredentials();
+                        client.Client.Description.Endpoint[0].Timeout = 30000;
 
-                    return this.IsValidVersion(client) &&
-                        client.Ping();
+                        return this.IsValidVersion(client) &&
+                            client.Ping();
+                    }
+                    else 
+                        return true;
                 }
                 else
                     return false;
             }
             catch (Exception e)
             {
-                this.m_tracer.TraceError($"Unable to determine network state: {e}");
+                this.m_tracer.TraceInfo($"Unable to determine network state: {e}");
                 return false;
             }
         }
@@ -556,7 +564,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 {
                     HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
                     client.Client.Credentials = new NullCredentials();
-                    client.Client.Description.Endpoint[0].Timeout = 10000;
+                    client.Client.Description.Endpoint[0].Timeout = 20000;
                     TimeSpan drift = TimeSpan.MinValue;
                     client.Client.Responded += (o, e) =>
                     {
@@ -572,12 +580,12 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     return drift;
                 }
                 else
-                    return TimeSpan.MinValue;
+                    return TimeSpan.Zero;
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError($"Unable to determine server time drift: {e}");
-                return TimeSpan.MinValue;
+                return TimeSpan.Zero;
             }
         }
     }

@@ -205,7 +205,7 @@ namespace SanteDB.DisconnectedClient.Configuration
                     // Check for new applications
                     var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                     amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
-                    amiClient.Client.Description.Endpoint[0].Timeout = 10000;
+                    amiClient.Client.Description.Endpoint[0].Timeout = 30000;
                     if (amiClient.Ping())
                     {
                         var solution = this.m_configuration.AppletSolution;

@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                     var authHeader = $"Bearer realm=\"{RestOperationContext.Current.IncomingRequest.Url.Host}\" error_code=\"insufficient_scope\" scope=\"{pve.PolicyId}\"";
                     if (enableBehavior)
                         RestOperationContext.Current.OutgoingResponse.AddHeader("WWW-Authenticate", authHeader);
-                    
+
                     return 401;
                 }
                 else
@@ -111,6 +111,8 @@ namespace SanteDB.DisconnectedClient.Ags.Util
                 return 501;
             else if (error is NotSupportedException)
                 return 405;
+            else if (error is DomainStateException)
+                return 503;
             else
                 return 500;
 

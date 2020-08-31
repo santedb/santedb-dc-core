@@ -217,7 +217,7 @@ namespace SanteDB.DisconnectedClient.Jobs
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Could not pull alerts: {0}", ex.Message);
-                this.CurrentState = JobStateType.Aborted;
+                this.CurrentState = JobStateType.Cancelled;
             }
 
         }

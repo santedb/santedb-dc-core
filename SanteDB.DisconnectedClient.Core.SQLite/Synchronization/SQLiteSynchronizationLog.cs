@@ -210,5 +210,25 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             }
         }
 
+
+        /// <summary>
+        /// Delete the specified synchronization log entry
+        /// </summary>
+        public void Delete(ISynchronizationLogEntry itm)
+        {
+            var conn = this.CreateConnection();
+            using (conn.Lock())
+            {
+                try
+                {
+                    conn.Table<SynchronizationLogEntry>().Delete(o => o.ResourceType == itm.ResourceType && o.Filter == itm.Filter);
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error removing query data {0} : {1}", itm.ResourceType, e);
+                    throw;
+                }
+            }
+        }
     }
 }
