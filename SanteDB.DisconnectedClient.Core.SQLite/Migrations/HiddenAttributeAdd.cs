@@ -16,7 +16,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
         /// <summary>
         /// Get the database migration
         /// </summary>
-        public string Id => "santedb-kelowna-hidden-attribute";
+        public string Id => "santedb-Langley-hidden-attribute";
 
         /// <summary>
         /// Gets the description

@@ -23,7 +23,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.DisconnectedClient.SQLite</PackageId>
     <Title>SanteDB.DisconnectedClient.SQLite</Title>
-    <Version>2.0.31</Version>
+    <Version>2.0.32</Version>
     <Description>SanteDB Disconnected Client Legacy SQLite Services</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>
@@ -270,10 +270,10 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.BI" Version="2.0.31.0" />
-        <PackageReference Include="SanteDB.Core.Api" Version="2.0.31.0" />
-        <PackageReference Include="SanteDB.Core.Model" Version="2.0.31.0" />
-        <PackageReference Include="SanteDB.Matcher" Version="2.0.31.0" />
+        <PackageReference Include="SanteDB.BI" Version="2.0.32.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="2.0.32.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="2.0.32.0" />
+        <PackageReference Include="SanteDB.Matcher" Version="2.0.32.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>

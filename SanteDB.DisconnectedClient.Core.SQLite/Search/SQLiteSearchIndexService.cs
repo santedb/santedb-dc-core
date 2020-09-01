@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// <summary>
         /// Search based on already tokenized string
         /// </summary>
-        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData
+        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, Guid queryId, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData, new()
         {
             try
             {
@@ -157,7 +157,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                             {
                                 if (alg is ApproxPatternOption pattern)
                                     queryBuilder.AppendFormat("{0}.term LIKE '{1}' OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''").Replace("*", "%"));
-                                else if (alg is ApproxPhoneticOption phonetic && hasSoundex)
+                                else if (alg is ApproxPhoneticOption phonetic && hasSoundex &&
+                                    tkn.Count(c=> c >= '0' && c <= '9') < tkn.Length / 2)
                                     queryBuilder.AppendFormat("SOUNDEX({0}.term) = SOUNDEX('{1}') OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''"));
                                 else if (alg is ApproxDifferenceOption difference && hasSpellFix)
                                     queryBuilder.AppendFormat("(length({0}.term) > {2} * 2 and editdist3(trim(lower({0}.term)), trim(lower('{1}'))) <= {2}) OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''"), difference.MaxDifference);

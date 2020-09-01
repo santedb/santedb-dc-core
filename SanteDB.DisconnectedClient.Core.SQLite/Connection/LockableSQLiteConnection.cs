@@ -119,7 +119,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
             {
                 this.m_connection = wrappedConnection;
                 Monitor.Enter(this.m_connection.m_lockObject);
+#if DEBUG
                 this.m_connection.m_claimedBy = Thread.CurrentThread.ManagedThreadId;
+#endif
                 this.m_connection.m_lockCount++;
                 this.m_connection.m_availableEvent.Reset();
             }
@@ -133,7 +135,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                 this.m_connection.m_lockCount--;
                 if (this.m_connection.m_lockCount == 0)
                 {
+#if DEBUG
                     this.m_connection.m_claimedBy = null;
+#endif
                     this.m_connection.m_availableEvent.Set();
                 }
                
@@ -178,7 +182,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         public override string ToString()
         {
-            return $"DB = {this.ConnectionString.Name} ; IsDisposed = {this.IsDisposed} ; IsEntered = {this.IsEntered} ; Lock = {this.LockCount} ; {this.m_claimedBy} - {Thread.CurrentThread.ManagedThreadId} ";
+            return $"DB = {this.ConnectionString.Name} ; IsDisposed = {this.IsDisposed} ; IsEntered = {this.IsEntered} ; Lock = {this.LockCount} ; - {Thread.CurrentThread.ManagedThreadId} ";
         }
     }
 }
