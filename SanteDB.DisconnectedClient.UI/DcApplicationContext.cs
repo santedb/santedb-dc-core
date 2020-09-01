@@ -253,7 +253,9 @@ namespace SanteDB.DisconnectedClient.UI
                         else
                             throw new Exception("Could not load or backup configuration", e);
                     }
-                    retVal.AddServiceProvider(typeof(DefaultBackupService));
+
+                    if(retVal.GetService<IBackupService>() == null)
+                        retVal.AddServiceProvider(typeof(DefaultBackupService));
 
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();
@@ -338,7 +340,7 @@ namespace SanteDB.DisconnectedClient.UI
                     ApplicationServiceContext.Current = ApplicationContext.Current;
 
                     // Ensure data migration exists
-                    if (retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0)
+                    bool hasDatabase = retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0;
                         try
                         {
                             // If the DB File doesn't exist we have to clear the migrations
@@ -349,8 +351,8 @@ namespace SanteDB.DisconnectedClient.UI
                             }
                             retVal.SetProgress("Migrating databases", 0.6f);
 
-                            DataMigrator migrator = new DataMigrator();
-                            migrator.Ensure();
+                        ConfigurationMigrator migrator = new ConfigurationMigrator();
+                            migrator.Ensure(hasDatabase);
 
 
                             // Prepare clinical protocols

@@ -25,7 +25,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// <summary>
     /// Data migration exception
     /// </summary>
-    public class DataMigrationException : Exception
+    public class ConfigurationMigrationException : Exception
     {
 
         /// <summary>
@@ -39,16 +39,16 @@ namespace SanteDB.DisconnectedClient.Exceptions
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.DataMigrationException"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.ConfigurationMigrationException"/> class.
         /// </summary>
-        public DataMigrationException(IConfigurationMigration offender) : this(offender, null)
+        public ConfigurationMigrationException(IConfigurationMigration offender) : this(offender, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.DataMigrationException"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.ConfigurationMigrationException"/> class.
         /// </summary>
-        public DataMigrationException(IConfigurationMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
+        public ConfigurationMigrationException(IConfigurationMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
         {
             this.MigrationId = offender.Id;
         }

@@ -312,6 +312,8 @@ namespace SanteDB.DisconnectedClient.Http
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 #endif
+                // Get request object
+               
                 // Body was provided?
                 try
                 {
@@ -324,25 +326,34 @@ namespace SanteDB.DisconnectedClient.Http
                         Stream requestStream = null;
                         try
                         {
-                            // Get request object
-                            using (var requestTask = Task.Run(async () => { return await requestObj.GetRequestStreamAsync(); }))
-                            {
-                                try
-                                {
-                                    if (!requestTask.Wait(this.Description.Endpoint[0].Timeout))
-                                    {
-                                        requestObj.Abort();
-                                        throw new TimeoutException();
-                                    }
+                            var cancelTokenSource = new CancellationTokenSource();
+                            CancellationToken ct = cancelTokenSource.Token;
 
-                                    requestStream = requestTask.Result;
-                                }
-                                catch (AggregateException e)
+                            // Get request object
+                            var requestTask = Task.Run(requestObj.GetRequestStreamAsync, ct);
+
+                            try
+                            {
+                                if (!requestTask.Wait(this.Description.Endpoint[0].Timeout))
                                 {
+                                    cancelTokenSource.Cancel();
                                     requestObj.Abort();
-                                    throw e.InnerExceptions.First();
+                                    throw new TimeoutException();
                                 }
+
+                                requestStream = requestTask.Result;
                             }
+                            catch (AggregateException e)
+                            {
+                                requestObj.Abort();
+                                throw e.InnerExceptions.First();
+                            }
+                            finally
+                            {
+                                try { requestTask.Dispose(); }
+                                catch { }
+                            }
+                           
 
                             if (contentType == null && typeof(TResult) != typeof(Object))
                                 throw new ArgumentNullException(nameof(contentType));
@@ -405,30 +416,35 @@ namespace SanteDB.DisconnectedClient.Http
                     try
                     {
 
-                        // Get request object
                         var cancelTokenSource = new CancellationTokenSource();
                         CancellationToken ct = cancelTokenSource.Token;
 
-                        using (var responseTask = Task.Run(async () => { try { return await requestObj.GetResponseAsync(); } catch (Exception e) { this.m_tracer.TraceWarning("HTTP RESPONSE: {0}", e.Message); throw; } } ,cancelTokenSource.Token))
+                        var responseTask = Task.Run(requestObj.GetResponseAsync, ct);
+                        try
                         {
-                            try
-                            {
-                                if (!responseTask.Wait(this.Description.Endpoint[0].Timeout))
-                                {
-                                    requestObj.Abort();
-                                    cancelTokenSource.Cancel();
-                                    throw new TimeoutException();
-                                }
-                                response = (HttpWebResponse)responseTask.Result;
-                            }
-                            catch (AggregateException e)
+                            if (!responseTask.Wait(this.Description.Endpoint[0].Timeout))
                             {
                                 requestObj.Abort();
                                 cancelTokenSource.Cancel();
-                                throw e.InnerExceptions.First();
+                                throw new TimeoutException();
                             }
+                            response = (HttpWebResponse)responseTask.Result;
                         }
-
+                        catch (AggregateException e)
+                        {
+                            try
+                            {
+                                requestObj.Abort();
+                                cancelTokenSource.Cancel();
+                            }
+                            catch { }
+                            throw e.InnerExceptions.First();
+                        }
+                        finally
+                        {
+                            try { responseTask.Dispose(); }
+                            catch { }
+                        }
 
 #if PERFMON
                         sw.Stop();

@@ -291,7 +291,10 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public IIdentity GetIdentity(string name)
         {
-            return ApplicationServiceContext.Current.GetService<IOfflineDeviceIdentityProviderService>()?.GetIdentity(name);
+            var offlineIdService = ApplicationServiceContext.Current.GetService<IOfflineDeviceIdentityProviderService>();
+            if (offlineIdService == null)
+                throw new InvalidOperationException("Offline identity provider service is not available");
+            return offlineIdService.GetIdentity(name);
         }
 
         /// <summary>

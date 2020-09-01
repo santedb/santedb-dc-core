@@ -151,6 +151,18 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         [Post("/Sync")]
         void SynchronizeNow();
 
+        /// <summary>
+        /// Reset the queue and try sync complete
+        /// </summary>
+        [Delete("/Queue")]
+        void ResetRetry();
+
+
+        /// <summary>
+        /// Reset the queue and try sync complete
+        /// </summary>
+        [Delete("/Queue/{resourceType}")]
+        void ResetRetry(String resourceType);
 
         /// <summary>
         /// Force requeue of all queue

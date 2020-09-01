@@ -173,12 +173,19 @@ namespace SanteDB.DisconnectedClient.Security.Audit
             Action<Object> timerQueue = null;
             timerQueue = o =>
             {
+                IEnumerable<AuditData> auditSubmission = null;
                 lock (sendAudit)
-                    if (sendAudit.Audit.Count > 0)
-                    {
-                        ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(new AuditSubmission() { Audit = new List<AuditData>(sendAudit.Audit) }, SynchronizationOperationType.Insert);
-                        sendAudit.Audit.Clear();
-                    }
+                {
+                    auditSubmission = new List<AuditData>(sendAudit.Audit);
+                    sendAudit.Audit.Clear();
+                }
+
+                while (auditSubmission.Any())
+                {
+                    var submission = new AuditSubmission() { Audit = new List<AuditData>(auditSubmission.Take(2)) };
+                    ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(submission, SynchronizationOperationType.Insert);
+                    auditSubmission = auditSubmission.Skip(2);
+                }
                 ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 0, 30), timerQueue, null);
             };
 

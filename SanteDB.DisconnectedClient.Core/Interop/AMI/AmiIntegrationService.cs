@@ -50,6 +50,9 @@ namespace SanteDB.DisconnectedClient.Interop.AMI
 	public class AmiIntegrationService : IAdministrationIntegrationService
     {
 
+        // Last Ping
+        private DateTime m_lastPing;
+
         /// <summary>
         /// AMI Integration Service
         /// </summary>
@@ -242,17 +245,23 @@ namespace SanteDB.DisconnectedClient.Interop.AMI
                 var networkInformationService = ApplicationContext.Current.GetService<INetworkInformationService>();
                 if (networkInformationService.IsNetworkAvailable)
                 {
-                    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-                    amiClient.Client.Credentials = new NullCredentials();
-                    amiClient.Client.Description.Endpoint[0].Timeout = 5000;
-                    return amiClient.Ping();
+                    if (this.m_lastPing < DateTime.Now.AddSeconds(60))
+                    {
+                        var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                        amiClient.Client.Credentials = new NullCredentials();
+                        amiClient.Client.Description.Endpoint[0].Timeout = 30000;
+                        this.m_lastPing = DateTime.Now;
+                        return amiClient.Ping();
+                    }
+                    else
+                        return true;
                 }
                 else
                     return false;
             }
             catch (Exception e)
             {
-                this.m_tracer.TraceError($"Unable to determine network state: {e}");
+                this.m_tracer.TraceInfo($"Unable to determine network state: {e}");
                 return false;
             }
         }

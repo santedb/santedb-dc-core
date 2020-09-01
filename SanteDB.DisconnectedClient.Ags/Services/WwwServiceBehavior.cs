@@ -32,6 +32,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -45,12 +46,23 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         private static Dictionary<String, AppletAsset> m_cacheApplets = new Dictionary<string, AppletAsset>();
         // Lock object
         private static object m_lockObject = new object();
-        
+
+
+        /// <summary>
+        /// Throw exception if not running
+        /// </summary>
+        private void ThrowIfNotRunning()
+        {
+            if (!ApplicationServiceContext.Current.IsRunning)
+                throw new DomainStateException();
+        }
+
         /// <summary>
         /// Get the icon for the SanteDB server
         /// </summary>
         public Stream GetIcon()
         {
+            
             var ms = new MemoryStream();
             typeof(WwwServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.icon.ico").CopyTo(ms);
             ms.Seek(0, SeekOrigin.Begin);
@@ -62,6 +74,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public Stream Get()
         {
+            this.ThrowIfNotRunning();
+
             // Navigate asset
             AppletAsset navigateAsset = null;
             var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();

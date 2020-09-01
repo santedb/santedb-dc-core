@@ -48,6 +48,7 @@ using System.Threading;
 using SanteDB.Core.Model;
 using SanteDB.Core.Api.Security;
 using SanteDB.Core.Http;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -60,10 +61,20 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         private Tracer m_tracer = Tracer.GetTracer(typeof(AuthenticationServiceBehavior));
 
         /// <summary>
+        /// Throw exception if not running
+        /// </summary>
+        private void ThrowIfNotRunning()
+        {
+            if (!ApplicationServiceContext.Current.IsRunning)
+                throw new DomainStateException();
+        }
+
+        /// <summary>
         /// Extract claims
         /// </summary>
         public List<IClaim> ExtractClaims(NameValueCollection headers)
         {
+
             var claimsHeaders = headers[HeaderTypes.HttpClaims];
             if (claimsHeaders == null)
                 return new List<IClaim>();
@@ -76,6 +87,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public void AbandonSession()
         {
+            this.ThrowIfNotRunning();
             // Get the session
             if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
             {
@@ -89,6 +101,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public OAuthTokenResponse AuthenticateOAuth(NameValueCollection request)
         {
+            this.ThrowIfNotRunning();
+
             try
             {
                 var sessionService = ApplicationContext.Current.GetService<ISessionProviderService>();
@@ -253,6 +267,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public SessionInfo GetSession()
         {
+            this.ThrowIfNotRunning();
+
             if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
                 return new SessionInfo(session as ISession);
             return null;
@@ -263,6 +279,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public void AclPreCheck(string policyId)
         {
+            this.ThrowIfNotRunning();
+
             ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(policyId);
         }
     }

@@ -11,7 +11,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// <summary>
     /// Add the hidden attribute to acts and entities
     /// </summary>
-    public class HiddenAttributeAdd : IConfigurationMigration
+    public class HiddenAttributeAdd : IDataMigration
     {
         /// <summary>
         /// Get the database migration

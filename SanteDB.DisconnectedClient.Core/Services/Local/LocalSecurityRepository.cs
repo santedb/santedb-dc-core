@@ -167,9 +167,11 @@ namespace SanteDB.DisconnectedClient.Services.Local
         public SecurityUser GetUser(String userName)
         {
             int tr = 0;
+            var repositoryService = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>();
+            if (repositoryService == null)
+                throw new InvalidOperationException("User repository service is not initialized or not available");
             // As the identity service may be LDAP, best to call it to get an identity name
-            var identity = ApplicationContext.Current.GetService<IIdentityProviderService>().GetIdentity(userName);
-            return ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>().Find(u => u.UserName == identity.Name, 0, 1, out tr).FirstOrDefault();
+            return repositoryService.Find(u => u.UserName.ToLower() == userName.ToLower(), 0, 1, out tr).FirstOrDefault();
         }
 
         /// <summary>

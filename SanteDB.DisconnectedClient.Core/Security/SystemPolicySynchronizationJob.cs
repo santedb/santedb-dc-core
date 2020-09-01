@@ -114,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Security
             }
             catch (Exception ex)
             {
-                this.CurrentState = JobStateType.Aborted;
+                this.CurrentState = JobStateType.Cancelled;
                 if (!this.m_serviceTickle)
                 {
                     ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", "Security Policy")));

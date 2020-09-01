@@ -110,6 +110,9 @@ namespace SanteDB.DisconnectedClient.Synchronization
         /// </summary>
         public List<ISynchronizationLogEntry> Log => ApplicationContext.Current.GetService<ISynchronizationLogService>().GetAll();
 
+        // Server drift
+        private TimeSpan? m_serverDrift = null;
+
         /// <summary>
         /// Start the service
         /// </summary>
@@ -209,6 +212,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
             this.m_threadPool.QueueUserWorkItem((state) =>
             {
 
+                this.m_serverDrift = null;
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
 
                 var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
@@ -328,12 +332,11 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     lastModificationDate = lastModificationDate.Value;
 
                     // Get the time drift
-                    var serverDrift = this.m_integrationService.GetServerTimeDrift();
-                    if (Math.Abs(serverDrift.TotalMinutes) > 5) // More than 5 min drift
-                    {
-                        this.m_tracer.TraceWarning("Server time is {0} milliseconds drifted", serverDrift.TotalMilliseconds);
-                        lastModificationDate = lastModificationDate.Value.Add(serverDrift);
-                    }
+                    if (!this.m_serverDrift.HasValue)
+                        this.m_serverDrift = this.m_integrationService.GetServerTimeDrift();
+
+                    this.m_tracer.TraceWarning("Server time is {0} milliseconds drifted", this.m_serverDrift.Value.TotalMilliseconds);
+                    lastModificationDate = lastModificationDate.Value.Add(this.m_serverDrift.Value);
                 }
 
                 // Performance timer for more intelligent query control
@@ -493,5 +496,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
+
+     
     }
 }

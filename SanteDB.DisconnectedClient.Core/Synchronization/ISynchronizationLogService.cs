@@ -61,5 +61,10 @@ namespace SanteDB.DisconnectedClient.Synchronization
         /// Find the query data
         /// </summary>
         ISynchronizationLogQuery FindQueryData(Type modelType, String filter);
+
+        /// <summary>
+        /// Deletes the specified log entry
+        /// </summary>
+        void Delete(ISynchronizationLogEntry itm);
     }
 }

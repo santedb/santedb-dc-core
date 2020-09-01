@@ -420,7 +420,6 @@ namespace SanteDB.DisconnectedClient
             // Set the application secret to the configured value
             this.Application.ApplicationSecret = this.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ?? this.Application.ApplicationSecret;
 
-            this.m_running = true;
 
             if (!this.m_cache.ContainsKey(typeof(IServiceManager)))
                 this.m_cache.Add(typeof(IServiceManager), this);
@@ -451,8 +450,10 @@ namespace SanteDB.DisconnectedClient
             }
 
             this.m_tracer.TraceInfo("STAGE 3: Broadcasting startup event to services...");
+            this.m_running = true;
             this.Started?.Invoke(this, EventArgs.Empty);
             this.StartTime = DateTime.Now;
+
 
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
 

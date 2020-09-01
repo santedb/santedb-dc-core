@@ -60,6 +60,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
         }
 
+
         /// <summary>
         /// Get all queues data
         /// </summary>
@@ -107,10 +108,37 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-		/// <summary>
+        /// <summary>
+        /// Reset the queues and retry sync
+        /// </summary>
+        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public void ResetRetry()
+        {
+            var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
+            foreach(var itm in logSvc.GetAll().ToArray())
+            {
+                logSvc.Delete(itm);
+            }
+        }
+
+        /// <summary>
+        /// Reset the queues and retry sync
+        /// </summary>
+        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public void ResetRetry(String resourceType)
+        {
+            var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
+            foreach (var itm in logSvc.GetAll().ToArray())
+            {
+                if(itm.ResourceType == resourceType)
+                    logSvc.Delete(itm);
+            }
+        }
+
+        /// <summary>
         /// Get the specified queue entry
         /// </summary>
-		private ISynchronizationQueueEntry GetQueueEntry(String queueName, int id)
+        private ISynchronizationQueueEntry GetQueueEntry(String queueName, int id)
         {
             var queueManager = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
 

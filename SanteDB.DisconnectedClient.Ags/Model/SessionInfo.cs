@@ -44,6 +44,7 @@ using System.Security;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Serialization;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {
@@ -57,18 +58,6 @@ namespace SanteDB.DisconnectedClient.Ags.Model
 
         // The principal
         private IPrincipal m_cachedPrincipal;
-
-        // The entity 
-        private UserEntity m_entity;
-
-        // The user
-        private SecurityUser m_user;
-
-        // The roles of the user
-        private string[] m_roles;
-
-        // The general token
-        private string m_idToken;
 
         // Lock
         private object m_syncLock = new object();
@@ -121,48 +110,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         [JsonProperty("entity"), XmlElement("entity")]
         public UserEntity UserEntity
         {
-            get
-            {
-                if (this.m_entity != null)
-                    return this.m_entity;
-
-                // HACK: Find a better way
-                var userService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-                var sessionService = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>();
-
-                if (ApplicationContext.Current.ConfigurationPersister.IsConfigured)
-                {
-                    UserEntity entity = null;
-                    try
-                    {
-                        var identities = sessionService.GetIdentities(this.Session);
-                        entity = userService.GetUserEntity(identities.First());
-
-                        if (entity == null && this.SecurityUser != null)
-                            entity = new UserEntity()
-                            {
-                                SecurityUserKey = this.SecurityUser.Key,
-                                LanguageCommunication = new List<PersonLanguageCommunication>() { new PersonLanguageCommunication(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, true) },
-                                Telecoms = new List<EntityTelecomAddress>()
-                            {
-                                                    new EntityTelecomAddress(TelecomAddressUseKeys.Public, this.SecurityUser.Email ?? this.SecurityUser.PhoneNumber)
-                            },
-                                Names = new List<EntityName>()
-                            {
-                                                    new EntityName() { NameUseKey =  NameUseKeys.OfficialRecord, Component = new List<EntityNameComponent>() { new EntityNameComponent(NameComponentKeys.Given, this.SecurityUser.UserName) } }
-                            }
-                            };
-                        else
-                            this.m_entity = entity;
-                        return entity;
-                    }
-                    catch { return null; }
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            get; set;
         }
 
         /// <summary>
@@ -171,18 +119,8 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         [JsonProperty("user"), XmlElement("user")]
         public SecurityUser SecurityUser
         {
-            get
-            {
-                if (this.m_user == null)
-                {
-                    var sessionService = ApplicationContext.Current.GetService<ISessionIdentityProviderService>();
-                    var identities = sessionService.GetIdentities(this.Session);
-                    var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-                    this.m_user = userService.GetUser(identities.First());
-                }
-                return this.m_user;
-            }
-            set { }
+            get;
+            set;
         }
 
         /// <summary>
@@ -272,6 +210,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             // Try to get user entity
             try
             {
+
                 var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
                 var sid = Guid.Parse(this.Session.Claims.First(o => o.Type == SanteDBClaimTypes.NameIdentifier).Value);
@@ -299,16 +238,16 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     this.SecurityUser = securityUser;
 
                 // User entity available?
-                this.m_entity = userService.GetUserEntity(this.GetPrincipal().Identity);
+                this.UserEntity = userService.GetUserEntity(this.GetPrincipal().Identity);
 
                 // Attempt to download if the user entity is null
                 // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity 
-                if (this.m_entity == null || this.m_entity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
+                if (this.UserEntity == null || this.UserEntity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
                     if (amiService != null && amiService.IsAvailable())
                     {
-                        this.m_entity = amiService?.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
+                        this.UserEntity = amiService?.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
                         // Update the local user 
                         ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
                         {
@@ -324,26 +263,27 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                             {
                                 this.m_tracer.TraceError("Could not create / update user entity for logged in user: {0}", e);
                             }
-                        }, this.m_entity);
+                        }, this.UserEntity);
                     }
                     else
-                        this.m_entity = ApplicationContext.Current.GetService<IRepositoryService<UserEntity>>().Find(o => o.SecurityUserKey == sid, 0, 1, out int t).FirstOrDefault();
+                        this.UserEntity = ApplicationContext.Current.GetService<IRepositoryService<UserEntity>>().Find(o => o.SecurityUserKey == sid, 0, 1, out int t).FirstOrDefault();
                 }
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error getting extended session information: {0}", e);
                 errDetail = String.Format("dbErr={0}", e.Message);
+                throw new SecurityException(e.Message, e);
             }
 
             // Only subscribed faciliites
             if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().RestrictLoginToFacilityUsers)
             {
                 var subFacl = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities;
-                var isInSubFacility = this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.Value)) == true;
+                var isInSubFacility = this.UserEntity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.Value)) == true;
                 if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(this.GetPrincipal(), PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {
-                    if (this.m_entity == null)
+                    if (this.UserEntity == null)
                     {
                         this.m_tracer.TraceError("User facility check could not be done : entity null");
                         errDetail += " entity_null";
@@ -351,10 +291,10 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     else
                     {
                         this.m_tracer.TraceError("User is in facility {0} but tablet only allows login from {1}",
-                            String.Join(",", this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
+                            String.Join(",", this.UserEntity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
                             String.Join(",", subFacl)
                             );
-                        errDetail += String.Format(" entity={0}, facility={1}", String.Join(",", this.m_entity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
+                        errDetail += String.Format(" entity={0}, facility={1}", String.Join(",", this.UserEntity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
                             String.Join(",", subFacl));
                     }
                     throw new SecurityException(String.Format(Strings.locale_loginFromUnsubscribedFacility, errDetail));

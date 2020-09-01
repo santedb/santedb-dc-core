@@ -36,6 +36,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Principal;
 using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.Exceptions;
+using System.Data;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -101,17 +103,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                             memConnection.BeginTransaction();
 
                             //// Names & Address
-                            memConnection.Execute($"INSERT OR REPLACE INTO phonetic_value SELECT * FROM file_db.phonetic_value");
-                            memConnection.Execute($"INSERT OR REPLACE INTO entity_addr_val SELECT * FROM file_db.entity_addr_val");
+                            memConnection.Execute($"INSERT OR REPLACE INTO phonetic_value (uuid, value) SELECT uuid, value FROM file_db.phonetic_value");
+                            memConnection.Execute($"INSERT OR REPLACE INTO entity_addr_val (uuid, value) SELECT uuid, value FROM file_db.entity_addr_val");
 
                             //foreach (var itm in memConnection.Query<String>("SELECT NAME FROM SQLITE_MASTER WHERE TYPE = 'index' AND SQL IS NOT NULL"))
                             //    memConnection.Execute(String.Format("DROP INDEX {0};", itm));
                             memConnection.Commit();
                         }
-                        catch
+                        catch (Exception e)
                         {
                             memConnection.Rollback();
-                            throw;
+                            throw new DataException("Error inserting bundle", e);
                         }
 
                         memConnection.Execute("DETACH DATABASE file_db");
@@ -147,7 +149,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                                 memConnection.Commit();
                             }
-                            catch
+                            catch 
                             {
                                 memConnection.Rollback();
                                 throw;
@@ -156,7 +158,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     }
                     catch (Exception e)
                     {
-                        this.m_tracer.TraceError("Error inserting bundle: {0}", e);
+                        this.m_tracer.TraceWarning("Error inserting bundle using fast insert method - Will use slow method: {0}", e);
                         return base.Insert(data, mode, principal); // Attempt to do a slow insert 
                         // TODO: Figure out why the copy command sometimes is missing UUIDs
                         //throw new LocalPersistenceException(Synchronization.Model.DataOperationType.Insert, data, e);

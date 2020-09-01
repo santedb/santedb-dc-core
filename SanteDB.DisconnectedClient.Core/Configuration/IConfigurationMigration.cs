@@ -50,5 +50,12 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
 
     }
 
+    /// <summary>
+    /// A special migration that requires database access
+    /// </summary>
+    public interface IDataMigration : IConfigurationMigration
+    {
+
+    }
 }
 

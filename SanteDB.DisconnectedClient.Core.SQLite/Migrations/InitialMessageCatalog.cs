@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
     /// <summary>
     /// Represents an initial alert catalog
     /// </summary>
-    public class InitialMessageCatalog : IConfigurationMigration
+    public class InitialMessageCatalog : IDataMigration
     {
 
         /// <summary>
