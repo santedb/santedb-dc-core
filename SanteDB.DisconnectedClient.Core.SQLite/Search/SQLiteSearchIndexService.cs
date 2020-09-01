@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// <summary>
         /// Search based on already tokenized string
         /// </summary>
-        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData
+        public IEnumerable<TEntity> Search<TEntity>(String[] tokens, Guid queryId, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData, new()
         {
             try
             {
