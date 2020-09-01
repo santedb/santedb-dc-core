@@ -375,7 +375,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
 
                     // Enqueue
-                    for (int i = result.Count; i < result.TotalResults; i += result.Count)
+                    for (int i = result.Count; i < result.TotalResults; i += result.Item.Count)
                     {
                         float perc = i / (float)result.TotalResults;
 
