@@ -416,4 +416,10 @@ Sincerely,
   <data name="locale_sync_initial" xml:space="preserve">
     <value>Initial synchronization with the central server has completed</value>
   </data>
+  <data name="locale_backupCompleted" xml:space="preserve">
+    <value>Automatic System Backup Completed - Service quality has been restored</value>
+  </data>
+  <data name="locale_backupStarted" xml:space="preserve">
+    <value>Automatic System Backup Started - Data access may take longer than usual</value>
+  </data>
 </root>

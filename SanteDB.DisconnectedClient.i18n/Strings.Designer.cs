@@ -412,6 +412,24 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Automatic System Backup Completed - Service quality has been restored.
+        /// </summary>
+        public static string locale_backupCompleted {
+            get {
+                return ResourceManager.GetString("locale_backupCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Automatic System Backup Started - Data access may take longer than usual.
+        /// </summary>
+        public static string locale_backupStarted {
+            get {
+                return ResourceManager.GetString("locale_backupStarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Preparing imported data....
         /// </summary>
         public static string locale_calculateImportedCareplan {

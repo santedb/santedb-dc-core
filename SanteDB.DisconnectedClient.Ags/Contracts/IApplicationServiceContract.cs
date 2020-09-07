@@ -117,7 +117,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Delete("/Tickle/{id}")]
         void DeleteTickle(Guid id);
-       
+
 
         /// <summary>
         /// Instruct the service to do an update
@@ -235,5 +235,31 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Post("/Configuration/Service/{serviceType}")]
         void EnableService(String serviceType);
+
+        /// <summary>
+        /// Get all templates
+        /// </summary>
+        [Get("/Template")]
+        List<AppletTemplateDefinition> GetTemplates();
+
+        /// <summary>
+        /// Gets the specified template identifier
+        /// </summary>
+        [Get("/Template/{templateId}")]
+        IdentifiedData GetTemplateDefinition(String templateId);
+
+        /// <summary>
+        /// Get the view for the specified template
+        /// </summary>
+        [Get("/Template/{templateId}/ui/view.html")]
+        Stream GetTemplateView(String templateId);
+
+        /// <summary>
+        /// Get the form for the specified template
+        /// </summary>
+        [Get("/Template/{templateId}/ui/form.html")]
+        Stream GetTemplateForm(String templateId);
+
+
     }
 }
