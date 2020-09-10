@@ -119,29 +119,36 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         typeof(TEntity).FullName);
 
                     var approxConfig = ApplicationContext.Current.Configuration.GetSection<ApproximateMatchingConfigurationSection>();
-                    var hasSoundex = conn.ExecuteScalar<Int32>("select sqlite_compileoption_used('SQLITE_SOUNDEX');") == 1;
-                    bool hasSpellFix = false;
-                    if (conn.ExecuteScalar<Int32>("SELECT sqlite_compileoption_used('SQLITE_ENABLE_LOAD_EXTENSION')") == 1)
-                    {
-                        conn.Platform.SQLiteApi.EnableLoadExtension(conn.Handle, 1);
-                        try
+                    bool hasSoundex = false, hasSpellFix = false;
+
+                    try
+                    { 
+                        // This section is for Android because its SQLite implementation doesn't like this function
+                        hasSoundex = conn.ExecuteScalar<Int32>("select sqlite_compileoption_used('SQLITE_SOUNDEX');") == 1;
+                        if (conn.ExecuteScalar<Int32>("SELECT sqlite_compileoption_used('SQLITE_ENABLE_LOAD_EXTENSION')") == 1)
                         {
+                            conn.Platform.SQLiteApi.EnableLoadExtension(conn.Handle, 1);
                             try
                             {
-                                conn.ExecuteScalar<Int32>("SELECT editdist3('__sfEditCost');");
-                                hasSpellFix = conn.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
+                                try
+                                {
+                                    conn.ExecuteScalar<Int32>("SELECT editdist3('__sfEditCost');");
+                                    hasSpellFix = conn.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
 
+                                }
+                                catch
+                                {
+                                    conn.ExecuteScalar<String>("SELECT load_extension('spellfix');");
+                                    hasSpellFix = conn.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
+                                }
                             }
-                            catch
+                            catch (Exception e)
                             {
-                                conn.ExecuteScalar<String>("SELECT load_extension('spellfix');");
-                                hasSpellFix = conn.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
+                                this.m_tracer.TraceWarning("Will not be using SpellFix plugin for SQLite - {0}", e.Message);
                             }
-                        }
-                        catch(Exception e) {
-                            this.m_tracer.TraceWarning("Will not be using SpellFix plugin for SQLite - {0}", e.Message);
                         }
                     }
+                    catch { }
 
                     foreach (var tkn in tokens.SelectMany(t=>t.Split(' ')))
                     {

@@ -19,6 +19,19 @@ namespace SanteDB.DisconnectedClient.Security
         public string ServiceName => "Default Data Signature Service";
 
         /// <summary>
+        /// Get whether the signature is symmetric
+        /// </summary>
+        public bool IsSymmetric => true;
+
+        /// <summary>
+        /// Get all keys
+        /// </summary>
+        public IEnumerable<string> GetKeys()
+        {
+            return new String[0];
+        }
+
+        /// <summary>
         /// Gets the signature algorithm
         /// </summary>
         public string GetSignatureAlgorithm(string keyId = null)

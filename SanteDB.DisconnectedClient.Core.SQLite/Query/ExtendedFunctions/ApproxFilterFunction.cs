@@ -97,7 +97,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                                 m_hasSpellFix = connection.ExecuteScalar<Int32>("SELECT editdist3('test','test1');") > 0;
                             }
                         }
-                        catch (Exception e) { m_hasSpellFix = false; }
+                        catch { m_hasSpellFix = false; }
                     }
                 }
                 catch {

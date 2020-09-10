@@ -462,7 +462,7 @@ namespace SanteDB.DisconnectedClient.Http
                         }
 
                         // No content - does the result want a pointer maybe?
-                        if (response.StatusCode == HttpStatusCode.NoContent)
+                        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.Continue)
                         {
                             return default(TResult);
                         }

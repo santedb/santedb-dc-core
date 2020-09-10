@@ -42,6 +42,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using SanteDB.Core;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.DataTypes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -59,6 +63,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 
         // Error tickle has been rai
         private bool m_errorTickle = false;
+        // Template correction keys
+        private Dictionary<String, Guid> m_templateCorrection = new Dictionary<string, Guid>();
         private Object m_inboundLock = new object();
         private Object m_outboundLock = new object();
         private Object m_adminLock = new object();
@@ -380,6 +386,31 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         }
 
         /// <summary>
+        /// Map local template to server template key
+        /// </summary>
+        private Guid MapServerTemplateKey(IIntegrationService integrationService, TemplateDefinition localDefinition)
+        {
+            // Attempt to correct template definition
+            if (!m_templateCorrection.TryGetValue(localDefinition.Mnemonic, out Guid updated))
+            {
+                var remoteTpl = integrationService.Find<TemplateDefinition>(o => o.Mnemonic == localDefinition.Mnemonic, 0, 1);
+                if (!remoteTpl.Item.Any())
+                {
+                    integrationService.Insert(localDefinition);
+                    return localDefinition.Key.Value;
+                }
+                else
+                {
+                    updated = remoteTpl.Item.First().Key.Value;
+                    m_templateCorrection.Add(localDefinition.Mnemonic, updated);
+                    return updated;
+                }
+            }
+            else
+                return updated;
+        }
+
+        /// <summary>
         /// Exhaust the outbound queue
         /// </summary>
         public void ExhaustOutboundQueue()
@@ -389,7 +420,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 locked = Monitor.TryEnter(this.m_outboundLock, 100);
                 if (!locked) return;
-                List<Guid> exportKeys = new List<Guid>();
+                List<Guid> auditExportKeys = new List<Guid>();
                 // Exhaust the queue
                 while (SynchronizationQueue.Outbound.Count() > 0)
                 {
@@ -409,10 +440,39 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     // try to send
                     try
                     {
+
+                        IEnumerable<Guid> objectKeys = null;
                         // Reconstitute bundle
-                        var bundle = dpe as Bundle;
-                        bundle?.Reconstitute();
-                        dpe = bundle?.Entry ?? dpe;
+                        if (dpe is Bundle bundle)
+                        {
+                            bundle.Reconstitute();
+                            dpe = bundle.Entry ?? dpe;
+
+                            // If the sync item is a retry , perhaps there is missing information from the bundle , let's include it
+                            if (syncItm.IsRetry)
+                                this.AddContextualInformation(bundle);
+                            objectKeys = bundle.Item.Select(o => o.Key.Value);
+
+                            // Now we want to correct any template keys we may have 
+                            foreach (var itm in bundle.Item)
+                            {
+                                if (itm is TemplateDefinition)
+                                    this.MapServerTemplateKey(integrationService, itm as TemplateDefinition);
+                                else if (itm is Entity bEntity && bEntity.TemplateKey.HasValue)
+                                    bEntity.TemplateKey = this.MapServerTemplateKey(integrationService, bEntity.LoadProperty<TemplateDefinition>(nameof(Entity.Template)));
+                                else if (itm is Act bAct && bAct.TemplateKey.HasValue)
+                                    bAct.TemplateKey = this.MapServerTemplateKey(integrationService, bAct.LoadProperty<TemplateDefinition>(nameof(Act.Template)));
+                            }
+                        }
+                        else
+                        {
+                            objectKeys = new Guid[] { dpe.Key.Value };
+                            if (dpe is Entity entity && entity.TemplateKey.HasValue)
+                                entity.TemplateKey = this.MapServerTemplateKey(integrationService, entity.LoadProperty<TemplateDefinition>(nameof(entity.Template)));
+                            else if (dpe is Act act && act.TemplateKey.HasValue)
+                                act.TemplateKey = this.MapServerTemplateKey(integrationService, act.LoadProperty<TemplateDefinition>(nameof(act.Template)));
+
+                        }
 
                         // Send the object to the remote host
                         switch (syncItm.Operation)
@@ -429,10 +489,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         }
 
 
-                        if (bundle != null)
-                            exportKeys.AddRange(bundle?.Item.Select(o => o.Key.Value));
-                        else
-                            exportKeys.Add(dpe.Key.Value);
+                        // operation was successful
+                        auditExportKeys.AddRange(objectKeys);
 
                         SynchronizationQueue.Outbound.Delete(syncItm.Id); // Get rid of object from queue
                     }
@@ -531,12 +589,43 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         throw;
                     }
                 }
-                this.QueueExhausted?.Invoke(this, new QueueExhaustedEventArgs("outbound", exportKeys.ToArray()));
+                this.QueueExhausted?.Invoke(this, new QueueExhaustedEventArgs("outbound", auditExportKeys.ToArray()));
 
             }
             finally
             {
                 if (locked) Monitor.Exit(this.m_outboundLock);
+            }
+        }
+
+        /// <summary>
+        /// Adds additional contextual information to <paramref name="bundle"/> so the server 
+        /// can process the records.
+        /// </summary>
+        private void AddContextualInformation(Bundle bundle)
+        {
+            bundle.Item = bundle?.Item.OfType<IdentifiedData>().ToList();
+            this.m_tracer.TraceInfo("RETRY: Will try with all available data");
+            // Try to grab all references in the bundle
+            foreach (var itm in bundle.Item.OfType<Act>().ToList())
+            {
+                foreach (var ptcpt in itm.Participations.ToList())
+                    if (!bundle.Item.Any(i => i.Key == ptcpt.PlayerEntityKey))
+                    {
+                        var loadedItm = ptcpt.LoadProperty<Entity>(nameof(ActParticipation.PlayerEntity));
+                        if (loadedItm != null)
+                            bundle.Item.Add(loadedItm);
+                    }
+            }
+            foreach (var itm in bundle.Item.OfType<Patient>().ToList())
+            {
+                foreach (var rel in itm.Relationships.ToList())
+                    if (!bundle.Item.Any(i => i.Key == rel.TargetEntityKey))
+                    {
+                        var loadedItm = rel.LoadProperty<Entity>(nameof(EntityRelationship.TargetEntity));
+                        if (loadedItm != null)
+                            bundle.Item.Add(loadedItm);
+                    }
             }
         }
 
