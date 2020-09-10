@@ -59,6 +59,8 @@ namespace SanteDB.DisconnectedClient.UI
             if (navigateAsset.MimeType == "text/javascript" ||
                         navigateAsset.MimeType == "text/css" ||
                         navigateAsset.MimeType == "application/json" ||
+                navigateAsset.MimeType == "text/json" ||
+
                         navigateAsset.MimeType == "text/xml")
             {
                 var script = File.ReadAllText(itmPath);
