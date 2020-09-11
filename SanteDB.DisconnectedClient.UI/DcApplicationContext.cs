@@ -369,7 +369,29 @@ namespace SanteDB.DisconnectedClient.UI
                             retVal.ConfigurationPersister.Save(retVal.Configuration);
                         }
 
-                    if(retVal.GetService<IThreadPoolService>() == null)
+                    // Update the applets if there are new versions
+                    foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Applets")))
+                        try
+                        {
+                            using (var fs = File.OpenRead(appPath))
+                            {
+                                AppletPackage package = AppletPackage.Load(fs);
+                                var existing = appletService.GetApplet(package.Meta.Id);
+                                if (existing == null || new Version(existing.Info.Version) < new Version(package.Meta.Version))
+                                {
+                                    retVal.m_tracer.TraceInfo("Upgrading applet {0} from {1} to {2}", package.Meta.Id, existing.Info.Version, package.Meta.Version);
+                                    appletService.Install(package, true);
+                                }
+                                
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            retVal.m_tracer.TraceError("Loading applet {0} failed: {1}", appPath, e.ToString());
+                            throw;
+                        }
+
+                    if (retVal.GetService<IThreadPoolService>() == null)
                         throw new InvalidOperationException(("Missing thread pool service(s)"));
                     // Start daemons
                     updateService?.AutoUpdate();
@@ -387,21 +409,6 @@ namespace SanteDB.DisconnectedClient.UI
                 return true;
             }
         }
-
-        private static Dictionary<String, String> mime = new Dictionary<string, string>()
-        {
-            { ".eot", "application/vnd.ms-fontobject" },
-            { ".woff", "application/font-woff" },
-            { ".woff2", "application/font-woff2" },
-            { ".ttf", "application/octet-stream" },
-            { ".svg", "image/svg+xml" },
-            { ".jpg", "image/jpeg" },
-            { ".jpeg", "image/jpeg" },
-            { ".gif", "image/gif" },
-            { ".png", "image/png" },
-            { ".bmp", "image/bmp" },
-            { ".json", "application/json" }
-        };
 
         /// <summary>
         /// Resolve the specified applet name

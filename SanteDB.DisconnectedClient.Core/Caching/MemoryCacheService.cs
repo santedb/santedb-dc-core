@@ -289,14 +289,17 @@ namespace SanteDB.DisconnectedClient.Caching
         /// </summary>
         public void Add(IdentifiedData data)
         {
+            if (data == null) 
+                return;
             IdentifiedData[] elements = null;
             if (data is Bundle bundle)
                 elements = bundle.Item.ToArray();
             else
                 elements = new IdentifiedData[1] { data };
 
-            foreach (var d in elements)
+            foreach (var d in elements.OfType<IdentifiedData>())
             {
+                // Hidden records should not be put into the cache
                 var exist = MemoryCache.Current.TryGetEntry(d.Key);
                 MemoryCache.Current.AddUpdateEntry(d);
                 if (exist != null)

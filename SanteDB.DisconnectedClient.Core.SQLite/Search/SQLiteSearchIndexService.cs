@@ -42,6 +42,7 @@ using System.Threading;
 using SanteDB.Matcher.Configuration;
 using System.IO;
 using System.Reflection;
+using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.DisconnectedClient.SQLite.Search
 {
@@ -183,7 +184,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                     queryBuilder.Remove(queryBuilder.Length - 11, 11);
                     queryBuilder.Append(")");
-
                     
                     // Search now!
                     this.m_tracer.TraceVerbose("FREETEXT SEARCH: {0}", queryBuilder);
@@ -194,7 +194,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
                     totalResults = results.Count();
 
-                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal)).OfType<TEntity>();
+                    var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal)).OfType<TEntity>().ToList();
 
                     // Sorting (well as best we can for FTS)
                     if(orderBy.Length > 0)
@@ -235,7 +235,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         var entityUuid = e.Key.Value.ToByteArray();
                         var entityVersionUuid = e.VersionKey.Value.ToByteArray();
 
-                        if (conn.Table<SearchEntityType>().Where(o => o.Key == entityUuid && o.VersionKey == entityVersionUuid).Count() > 0) continue; // no change
+                        // Hidden?
+                        if (e is ITaggable taggable && taggable.Tags.Any(o => o.TagKey == "$sys.hidden" && o.Value == "true"))
+                        {
+                            conn.Execute(String.Format(String.Format("DELETE FROM {0} WHERE entity = ?", conn.GetMapping<SearchTermEntity>().TableName), e.Key.Value.ToByteArray()));
+                            conn.Delete<SearchEntityType>(e.Key.Value.ToByteArray());
+
+                            continue;
+                        }
+                        else if (conn.Table<SearchEntityType>().Where(o => o.Key == entityUuid && o.VersionKey == entityVersionUuid).Count() > 0) continue; // no change
                         else if (e.LoadCollection<EntityTag>("Tags").Any(t => t.TagKey == "isAnonymous")) // Anonymous?
                             continue;
 

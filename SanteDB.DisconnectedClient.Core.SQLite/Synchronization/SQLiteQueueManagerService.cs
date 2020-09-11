@@ -46,6 +46,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Auditing;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -140,6 +141,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 // Exhaust the queue
                 int remain = SynchronizationQueue.Inbound.Count();
                 int maxTotal = 0;
+                var remote = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.Domain;
 
                 InboundQueueEntry nextPeek = null;
                 IdentifiedData nextDpe = null;
@@ -207,6 +209,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                             //}
                             //else
                             this.ImportElement(dpe);
+
+                            AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.Success, dpe);
                         }
                         catch (Exception e)
                         {
@@ -215,6 +219,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                                 this.m_tracer.TraceError("Error processing inbound queue entry: {0}", e);
                                 //this.CreateUserAlert(Strings.locale_importErrorSubject, Strings.locale_importErrorBody, )
                                 SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(queueEntry, Encoding.UTF8.GetBytes(e.ToString())) { OriginalQueue = "inbound" });
+                                AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.MinorFail, dpe);
+
                             }
                             catch (Exception e2)
                             {
@@ -420,7 +426,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 locked = Monitor.TryEnter(this.m_outboundLock, 100);
                 if (!locked) return;
-                List<Guid> auditExportKeys = new List<Guid>();
+                List<Guid> notifyExportKeys = new List<Guid>();
                 // Exhaust the queue
                 while (SynchronizationQueue.Outbound.Count() > 0)
                 {
@@ -437,6 +443,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         return;
                     }
 
+                    OutcomeIndicator? outcome = null;
                     // try to send
                     try
                     {
@@ -490,8 +497,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 
 
                         // operation was successful
-                        auditExportKeys.AddRange(objectKeys);
+                        notifyExportKeys.AddRange(objectKeys);
 
+                        outcome = OutcomeIndicator.Success;
                         SynchronizationQueue.Outbound.Delete(syncItm.Id); // Get rid of object from queue
                     }
                     catch (WebException ex)
@@ -504,6 +512,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         var we = ie as WebException;
                         if (we?.Response == null)
                         {
+                            outcome = OutcomeIndicator.MinorFail;
                             SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                             SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
                         }
@@ -517,11 +526,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                                         SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
                                     else
                                     {
+                                        outcome = OutcomeIndicator.MinorFail;
                                         SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                                         SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
                                     }
                                     break;
                                 default:
+                                    outcome = OutcomeIndicator.MinorFail;
                                     SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                                     SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
                                     break;
@@ -541,6 +552,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         // Re-queue
                         if (syncItm.RetryCount > 3) // TODO: Make this configurable
                         {
+                            outcome = OutcomeIndicator.MinorFail;
                             SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                             SynchronizationQueue.Outbound.DequeueRaw(); // Get rid of the last item
                             //this.CreateUserAlert(Strings.locale_syncErrorSubject, Strings.locale_syncErrorBody, ex, dpe);
@@ -550,15 +562,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                             SynchronizationQueue.Outbound.UpdateRaw(syncItm);
                         }
                     }
-                    catch (SecurityException e) {
-                        if(!this.m_errorTickle)
+                    catch (SecurityException e)
+                    {
+                        if (!this.m_errorTickle)
                         {
                             ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, e.GetType().Name)));
                             this.m_errorTickle = true;
                         }
                         this.m_tracer.TraceError("Error upload data to central server: {0}", e);
                     }
-                    catch (ZlibException e) {
+                    catch (ZlibException e)
+                    {
                         if (!this.m_errorTickle)
                         {
                             ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, e.GetType().Name)));
@@ -566,7 +580,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         }
                         this.m_tracer.TraceError("Error uploading data to central server: {0}", e);
                     }
-                    catch (XmlException e) {
+                    catch (XmlException e)
+                    {
                         if (!this.m_errorTickle)
                         {
                             ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_syncUploadError, e.GetType().Name)));
@@ -578,6 +593,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     {
                         this.m_tracer.TraceError("Error sending object to IMS: {0}", ex);
                         //this.CreateUserAlert(Strings.locale_syncErrorSubject, Strings.locale_syncErrorBody, ex, dpe);
+                        outcome = OutcomeIndicator.MinorFail;
                         SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                         SynchronizationQueue.Outbound.DequeueRaw();
                         if (!this.m_errorTickle)
@@ -588,8 +604,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 
                         throw;
                     }
+                    finally
+                    {
+                        if (outcome.HasValue)
+                        {
+                            var remote = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.Domain;
+                            AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Export, remote, outcome.Value, dpe);
+                        }
+                    }
                 }
-                this.QueueExhausted?.Invoke(this, new QueueExhaustedEventArgs("outbound", auditExportKeys.ToArray()));
+                this.QueueExhausted?.Invoke(this, new QueueExhaustedEventArgs("outbound", notifyExportKeys.ToArray()));
 
             }
             finally
@@ -655,13 +679,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         svc.Update(data);
                     }
                 }
-                AuditUtil.AuditDataAction(EventTypeCodes.ApplicationActivity, SanteDB.Core.Auditing.ActionType.Update, SanteDB.Core.Auditing.AuditableObjectLifecycle.Import, SanteDB.Core.Auditing.EventIdentifierType.Import, SanteDB.Core.Auditing.OutcomeIndicator.Success, null, (data as Bundle)?.Item.ToArray() ?? new IdentifiedData[] { data });
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error inserting object data: {0}", e);
-                AuditUtil.AuditDataAction(EventTypeCodes.ApplicationActivity, SanteDB.Core.Auditing.ActionType.Update, SanteDB.Core.Auditing.AuditableObjectLifecycle.Import, SanteDB.Core.Auditing.EventIdentifierType.Import, SanteDB.Core.Auditing.OutcomeIndicator.MinorFail, null, (data as Bundle)?.Item.ToArray() ?? new IdentifiedData[] { data });
-
                 throw;
             }
         }

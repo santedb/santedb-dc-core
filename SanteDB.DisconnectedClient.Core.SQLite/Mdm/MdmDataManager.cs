@@ -44,10 +44,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
 {
 
     /// <summary>
+    /// Master entity
+    /// </summary>
+    public interface IMasterEntity { }
+
+    /// <summary>
     /// Stub class for receiving MDM Entities
     /// </summary>
     [XmlType(Namespace = "http://santedb.org/model")]
-    public class EntityMaster<T> : Entity
+    public class EntityMaster<T> : Entity, IMasterEntity
         where T : IdentifiedData, new()
     { }
 
@@ -55,7 +60,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
     /// Stub class for receiving MDM Acts
     /// </summary>
     [XmlType(Namespace = "http://santedb.org/model")]
-    public class ActMaster<T> : Act
+    public class ActMaster<T> : Act, IMasterEntity
         where T : IdentifiedData, new()
     { }
 
@@ -138,12 +143,25 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                 if (qms != null)
                     qms.Inbound.Enqueuing += OnEnqueueInbound;
 
-                //var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
-                //if (clinDi != null)
-                //    clinDi.Responded += ClinicalRepositoryResponded;
+                var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
+                if (clinDi != null)
+                    clinDi.Responded += ClinicalRepositoryResponded;
             };
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
+        }
+
+        /// <summary>
+        /// Clinical data repository has responded
+        /// </summary>
+        private void ClinicalRepositoryResponded(object sender, IntegrationResultEventArgs e)
+        {
+            if (e.ResponseData is Bundle bundle && e.SubmittedData != null && this.CorrectMdmData(bundle))
+            {
+                // Update the data
+                ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Insert(bundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+            }
+
         }
 
 
@@ -182,7 +200,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
             if (data is Bundle bundle)
                 toProcess = bundle.Item.ToArray();
             else
+            {
                 toProcess = new IdentifiedData[] { data };
+                bundle = null;
+            }
 
             bool hasChanged = false;
             // Process the objects
@@ -198,18 +219,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         // The source of these point to the master, we need to correct all inbound relationships to point to me instead of the local which originally pointed at
                         foreach (var rel in masterRelation.ToArray())
                         {
-
-                            // Do we have a local object? 
-                            var local = EntitySource.Current.Get<Entity>(rel.SourceEntityKey);
-                            if (local != null && !local.ObsoletionTime.HasValue)
-                            {
-                                //local.ObsoletionTime = DateTime.Now;
-                                //local.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
-                                local.AddTag("$sys.hidden", "true");
-                                //entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
-                                (data as Bundle).Item.Add(local);
-                            }
-
+                            bundle?.Item.Add(this.HideCurrentLocal(rel));
                             // Rewrite all relationships
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
                         }
@@ -242,9 +252,51 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         hasChanged = true;
                     }
                 }
+                else if (itm is EntityRelationship er && er.RelationshipTypeKey == MasterRecordRelationship)
+                {
+                    // Is there a master entity this points to in the bundle? if so, we need to insert it as a patient
+                    var master = bundle?.Item.FirstOrDefault(o => o.Key == er.TargetEntityKey);
+                    // Master found?
+                    if(master != null)
+                    {
+                        // Find the local in the bundle
+                        var local = bundle?.Item.FirstOrDefault(o => o.Key == er.SourceEntityKey);
+                        if(local != null)
+                        {
+                            bundle?.Item.Remove(master);
+                            var newEntity = Activator.CreateInstance(local.GetType()) as IdentifiedData;
+                            newEntity.CopyObjectData(master, false, true);
+                            newEntity.SemanticCopy(local, master);
+                            bundle?.Item.Add(newEntity);
+                        }
+                    }
+                    var existing = bundle?.Item.RemoveAll(o => o.Key == er.SourceEntityKey);
+                    bundle?.Item.Add(this.HideCurrentLocal(er));
+                    hasChanged = true;
+                }
             }
 
             return hasChanged;
+        }
+
+        /// <summary>
+        /// Correct local data to hide it
+        /// </summary>
+        private IdentifiedData HideCurrentLocal(EntityRelationship rel)
+        {
+
+            // Do we have a local object? 
+            var local = EntitySource.Current.Get<Entity>(rel.SourceEntityKey);
+            if (local != null && !local.ObsoletionTime.HasValue)
+            {
+                //local.ObsoletionTime = DateTime.Now;
+                //local.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
+                local.AddTag("$sys.hidden", "true");
+                //entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
+                
+            }
+            return local;
+
         }
 
         /// <summary>

@@ -26,6 +26,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core;
+using SanteDB.Core.Services;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -76,11 +78,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             domainObject.UpdatedTime = DateTime.Now;
 
             // Special case system hiding of record
+            IDbHideable hideable = domainObject as IDbHideable;
             if (data is ITaggable taggable)
             {
                 var hideTag = taggable.Tags.FirstOrDefault(o => o.TagKey == "$sys.hidden")?.Value;
-                if ("true".Equals(hideTag, StringComparison.OrdinalIgnoreCase) && domainObject is IDbHideable hideable)
+                if ("true".Equals(hideTag, StringComparison.OrdinalIgnoreCase) && hideable != null)
+                {
                     hideable.Hidden = true;
+                }
             }
 
             if (!context.Connection.Table<TDomain>().Where(o => o.Uuid == domainObject.Uuid).Any())
@@ -88,7 +93,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             else
                 context.Connection.Update(domainObject);
 
-            context.AddTransactedItem(data);
+            if (hideable?.Hidden == true)
+                ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(data.Key.Value);
+            else
+                context.AddTransactedItem(data);
             return data;
         }
 
@@ -122,15 +130,21 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             }
 
             // Special case system hiding of record
-            if(data is ITaggable taggable)
+            IDbHideable hideable = domainObject as IDbHideable;
+            if (data is ITaggable taggable)
             {
                 var hideTag = taggable.Tags.FirstOrDefault(o => o.TagKey == "$sys.hidden")?.Value;
-                if ("true".Equals(hideTag, StringComparison.OrdinalIgnoreCase) && domainObject is IDbHideable hideable)
+                if ("true".Equals(hideTag, StringComparison.OrdinalIgnoreCase) && domainObject != null)
                     hideable.Hidden = true;
             }
 
             context.Connection.Update(domainObject);
-            context.AddTransactedItem(data);
+
+            // Hack: Remove from cache
+            if(hideable?.Hidden == true)
+                ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(data.Key.Value);
+            else
+                context.AddTransactedItem(data);
 
             return data;
         }

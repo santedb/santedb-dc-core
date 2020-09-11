@@ -302,11 +302,22 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 method = method.MakeGenericMethod(new Type[] { submission.GetType() });
 
                 this.m_tracer.TraceVerbose("Performing HDSI INSERT {0}", submission);
-                var iver = method.Invoke(client, new object[] { submission }) as IVersionedEntity;
+                var result = method.Invoke(client, new object[] { submission }) as IdentifiedData;
 
-                if (iver != null)
+                if (result is IVersionedEntity iver)
                     this.UpdateToServerCopy(iver, data as IVersionedEntity);
-                this.Responded?.Invoke(this, new IntegrationResultEventArgs(data, iver as IdentifiedData));
+                else if(result is Bundle bundle)
+                {
+                    var submissionBundle = data as Bundle;
+                    foreach(var itm in bundle.Item)
+                    {
+                        var original = submissionBundle.Item.FirstOrDefault(o => o.Key == itm.Key);
+                        if(itm is IVersionedEntity itmVer)
+                        this.UpdateToServerCopy(itmVer, original as IVersionedEntity);
+
+                    }
+                }
+                this.Responded?.Invoke(this, new IntegrationResultEventArgs(data, result));
             }
             catch (TargetInvocationException e)
             {
@@ -565,7 +576,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
                     client.Client.Credentials = new NullCredentials();
                     client.Client.Description.Endpoint[0].Timeout = 20000;
-                    TimeSpan drift = TimeSpan.MinValue;
+                    TimeSpan drift = TimeSpan.Zero;
                     client.Client.Responded += (o, e) =>
                     {
                         if (e.Headers != null)

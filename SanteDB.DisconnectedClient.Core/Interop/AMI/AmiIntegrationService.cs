@@ -214,11 +214,6 @@ namespace SanteDB.DisconnectedClient.Interop.AMI
                         if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkWifi ||
                             ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Count() > 10)
                         {
-                            if (data is AuditSubmission)
-                                foreach (var a in (data as AuditSubmission).Audit)
-                                {
-                                    AuditUtil.AddLocalDeviceActor(a);
-                                }
                             amiClient.SubmitAudit(data as AuditSubmission);
                         }
                         break;

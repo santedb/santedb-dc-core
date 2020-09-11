@@ -339,6 +339,25 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         }
 
         /// <summary>
+        /// Get or create audit code
+        /// </summary>
+        private DbAuditCode GetOrCreateAuditCode(LockableSQLiteConnection context, AuditCode messageCode)
+        {
+            if (messageCode == null) return null;
+            var existing = context.Table<DbAuditCode>().Where(o => o.Code == messageCode.Code && o.CodeSystem == messageCode.CodeSystem).FirstOrDefault();
+            if (existing == null)
+            {
+                byte[] codeId = Guid.NewGuid().ToByteArray();
+                var retVal = new DbAuditCode() { Code = messageCode.Code, CodeSystem = messageCode.CodeSystem, Id = codeId };
+                context.Insert(retVal);
+                return retVal;
+            }
+            else
+                return existing;
+        }
+
+
+        /// <summary>
         /// Insert audit data
         /// </summary>
         public AuditData Insert(AuditData audit)
@@ -354,18 +373,10 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                     // Insert core
                     var dbAudit = this.m_mapper.MapModelInstance<AuditData, DbAuditData>(audit);
 
-                    var eventId = audit.EventTypeCode;
-                    if (eventId != null)
+                    if (audit.EventTypeCode != null)
                     {
-                        var existing = conn.Table<DbAuditCode>().Where(o => o.Code == eventId.Code && o.CodeSystem == eventId.CodeSystem).FirstOrDefault();
-                        if (existing == null)
-                        {
-                            Guid codeId = Guid.NewGuid();
-                            dbAudit.EventTypeCode = codeId.ToByteArray();
-                            conn.Insert(new DbAuditCode() { Code = eventId.Code, CodeSystem = eventId.CodeSystem, Id = codeId.ToByteArray() });
-                        }
-                        else
-                            dbAudit.EventTypeCode = existing.Id;
+                        var auditCode = this.GetOrCreateAuditCode(conn, audit.EventTypeCode);
+                        dbAudit.EventTypeCode = auditCode.Id;
                     }
 
                     dbAudit.CreationTime = DateTime.Now;
@@ -377,23 +388,20 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                     if (audit.Actors != null)
                         foreach (var act in audit.Actors)
                         {
-                            var dbAct = conn.Table<DbAuditActor>().Where(o => o.UserName == act.UserName).FirstOrDefault();
+
+                            var roleCode = this.GetOrCreateAuditCode(conn, act.ActorRoleCode.FirstOrDefault());
+
+                            DbAuditActor dbAct = null;
+                            if(roleCode != null)
+                                dbAct = conn.Table<DbAuditActor>().Where(o => o.UserName == act.UserName && o.ActorRoleCode == roleCode.Id).FirstOrDefault();
+                            else 
+                                dbAct = conn.Table<DbAuditActor>().Where(o => o.UserName == act.UserName && o.ActorRoleCode == null).FirstOrDefault();
+                            
                             if (dbAct == null)
                             {
                                 dbAct = this.m_mapper.MapModelInstance<AuditActorData, DbAuditActor>(act);
                                 dbAct.Id = Guid.NewGuid().ToByteArray();
-                                var roleCode = act.ActorRoleCode?.FirstOrDefault();
-                                if (roleCode != null)
-                                {
-                                    var existing = conn.Table<DbAuditCode>().Where(o => o.Code == roleCode.Code && o.CodeSystem == roleCode.CodeSystem).FirstOrDefault();
-                                    if (existing == null)
-                                    {
-                                        dbAct.ActorRoleCode = Guid.NewGuid().ToByteArray();
-                                        conn.Insert(new DbAuditCode() { Code = roleCode.Code, CodeSystem = roleCode.CodeSystem, Id = dbAct.ActorRoleCode });
-                                    }
-                                    else
-                                        dbAct.ActorRoleCode = existing.Id;
-                                }
+                                dbAct.ActorRoleCode = roleCode?.Id;
                                 conn.Insert(dbAct);
 
                             }

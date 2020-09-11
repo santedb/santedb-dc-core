@@ -179,26 +179,35 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             for (int i = 0; i < data.Item.Count; i++)
             {
                 var itm = data.Item[i];
+                if (itm is null)
+                    continue; 
+                try
+                {
+                    
 #if SHOW_STATUS || PERFMON
                 Stopwatch itmSw = new Stopwatch();
                 itmSw.Start();
 #endif
-                var idp = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { itm.GetType() });
-                var svc = ApplicationContext.Current.GetService(idp);
-                if (svc == null) continue; // can't insert
-                String method = "Insert";
-                if (context.Connection.DatabasePath != ":memory:" && itm.TryGetExisting(context, true) != null)
-                    method = "Update";
-                var mi = svc.GetType().GetRuntimeMethod(method, new Type[] { typeof(SQLiteDataContext), itm.GetType() });
-                data.Item[i] = mi.Invoke(svc, new object[] { context, itm }) as IdentifiedData;
+                    var idp = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { itm.GetType() });
+                    var svc = ApplicationContext.Current.GetService(idp) as ISQLitePersistenceService;
+                    if (svc == null) continue; // can't insert
+                    if (context.Connection.DatabasePath != ":memory:" && itm.TryGetExisting(context, true) != null)
+                        data.Item[i] = svc.Update(context, itm) as IdentifiedData;
+                    else
+                        data.Item[i] = svc.Insert(context, itm) as IdentifiedData;
 #if SHOW_STATUS || PERFMON
                 itmSw.Stop();
 #endif
-                if (i % 100 == 0 && data.Item.Count > 500)
-                    ApplicationContext.Current.SetProgress(String.Format(Strings.locale_processBundle, itm.GetType().Name, i, data.Item.Count), i / (float)data.Item.Count);
+                    if (i % 100 == 0 && data.Item.Count > 500)
+                        ApplicationContext.Current.SetProgress(String.Format(Strings.locale_processBundle, itm.GetType().Name, i, data.Item.Count), i / (float)data.Item.Count);
 #if PERFMON
                 ApplicationContext.Current.PerformanceLog(nameof(BundlePersistenceService), nameof(InsertInternal), $"Insert{itm.GetType().Name}", itmSw.Elapsed);
 #endif
+                }
+                catch(Exception e)
+                {
+                    throw new DataException($"Error inserting bundle item {itm} (item #{i})", e);
+                }
             }
 
 
@@ -213,8 +222,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             foreach (var itm in data.Item)
             {
                 var idp = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { itm.GetType() });
-                var mi = idp.GetRuntimeMethod("Update", new Type[] { typeof(SQLiteConnectionWithLock), itm.GetType() });
-                itm.CopyObjectData(mi.Invoke(ApplicationContext.Current.GetService(idp), new object[] { context, itm }));
+                var instance = ApplicationContext.Current.GetService(idp) as ISQLitePersistenceService;
+                if(instance != null)
+                    itm.CopyObjectData(instance.Update(context, itm));
             }
             return data;
         }
@@ -227,8 +237,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             foreach (var itm in data.Item)
             {
                 var idp = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { itm.GetType() });
-                var mi = idp.GetRuntimeMethod("Obsolete", new Type[] { typeof(SQLiteConnectionWithLock), itm.GetType() });
-                itm.CopyObjectData(mi.Invoke(ApplicationContext.Current.GetService(idp), new object[] { context, itm }));
+                var instance = ApplicationContext.Current.GetService(idp) as ISQLitePersistenceService;
+                if(instance != null)
+                    itm.CopyObjectData(instance.Obsolete(context, itm));
             }
             return data;
         }

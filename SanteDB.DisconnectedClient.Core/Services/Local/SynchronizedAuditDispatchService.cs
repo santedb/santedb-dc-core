@@ -142,23 +142,6 @@ namespace SanteDB.DisconnectedClient.Security.Audit
 
                     AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
 
-                    // Queue has been exhausted
-                    ApplicationContext.Current.GetService<IQueueManagerService>().QueueExhausted += (so, se) =>
-                    {
-                        if (se.Objects.Count() > 0)
-                            switch (se.Queue)
-                            {
-                                case "inbound":
-                                    if (ApplicationContext.Current.GetService<IQueueManagerService>().Inbound.Count() == 0)
-                                        AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Import, EventIdentifierType.Import, OutcomeIndicator.Success, null, se.Objects.ToArray());
-                                    break;
-                                case "outbound":
-                                    if (ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Count() == 0)
-                                        AuditUtil.AuditDataAction(EventTypeCodes.Export, ActionType.Execute, AuditableObjectLifecycle.Export, EventIdentifierType.Export, OutcomeIndicator.Success, null, se.Objects.ToArray());
-                                    break;
-                            }
-                    };
-
                 }
                 catch (Exception ex)
                 {
