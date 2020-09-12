@@ -240,6 +240,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 queryStatement = m_builder.CreateQuery(query, orderBy);
                 queryStatement = queryStatement.Build();
+
             }
 
             queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();

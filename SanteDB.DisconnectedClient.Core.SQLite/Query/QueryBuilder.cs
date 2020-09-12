@@ -225,49 +225,40 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
 
             bool skipParentJoin = true;
             SqlStatement selectStatement = null;
-            KeyValuePair<SqlStatement, List<TableMapping>> cacheHit;
             if (skipJoins)
             {
                 selectStatement = new SqlStatement($" FROM {tableMap.TableName} AS {tablePrefix}{tableMap.TableName} ");
-
             }
             else
             {
-                if (!s_joinCache.TryGetValue($"{tablePrefix}.{typeof(TModel).Name}", out cacheHit))
-                {
-                    selectStatement = new SqlStatement($" FROM {tableMap.TableName} AS {tablePrefix}{tableMap.TableName} ");
+                selectStatement = new SqlStatement($" FROM {tableMap.TableName} AS {tablePrefix}{tableMap.TableName} ");
 
-                    Stack<TableMapping> fkStack = new Stack<TableMapping>();
-                    fkStack.Push(tableMap);
-                    // Always join tables?
-                    do
+                Stack<TableMapping> fkStack = new Stack<TableMapping>();
+                fkStack.Push(tableMap);
+                // Always join tables?
+                do
+                {
+                    var dt = fkStack.Pop();
+                    foreach (var jt in dt.Columns.Where(o => o.IsAlwaysJoin))
                     {
-                        var dt = fkStack.Pop();
-                        foreach (var jt in dt.Columns.Where(o => o.IsAlwaysJoin))
-                        {
-                            var fkTbl = TableMapping.Get(jt.ForeignKey.Table);
-                            var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
+                        var fkTbl = TableMapping.Get(jt.ForeignKey.Table);
+                        var fkAtt = fkTbl.GetColumn(jt.ForeignKey.Column);
 
-                            if (typeof(IDbHideable).IsAssignableFrom(fkTbl.OrmType))
-                                selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name} AND {tablePrefix}{fkAtt.Table.TableName}.hidden = 0) ");
-                            else
-                                selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
-                            if (!scopedTables.Contains(fkTbl))
-                                fkStack.Push(fkTbl);
-                            scopedTables.Add(fkAtt.Table);
-                        }
-                    } while (fkStack.Count > 0);
+                        if (typeof(IDbHideable).IsAssignableFrom(fkTbl.OrmType))
+                            selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name} AND {tablePrefix}{fkAtt.Table.TableName}.hidden = 0) ");
+                        else
+                            selectStatement.Append($"INNER JOIN {fkAtt.Table.TableName} AS {tablePrefix}{fkAtt.Table.TableName} ON ({tablePrefix}{jt.Table.TableName}.{jt.Name} = {tablePrefix}{fkAtt.Table.TableName}.{fkAtt.Name}) ");
+                        if (!scopedTables.Contains(fkTbl))
+                            fkStack.Push(fkTbl);
+                        scopedTables.Add(fkAtt.Table);
+                    }
+                } while (fkStack.Count > 0);
 
-                    // Add the heavy work to the cache
-                    lock (s_joinCache)
-                        if (!s_joinCache.ContainsKey($"{tablePrefix}.{typeof(TModel).Name}"))
-                            s_joinCache.Add($"{tablePrefix}.{typeof(TModel).Name}", new KeyValuePair<SqlStatement, List<TableMapping>>(selectStatement.Build(), scopedTables));
-                }
-                else
-                {
-                    selectStatement = cacheHit.Key.Build();
-                    scopedTables = cacheHit.Value;
-                }
+                // Add the heavy work to the cache
+                lock (s_joinCache)
+                    if (!s_joinCache.ContainsKey($"{tablePrefix}.{typeof(TModel).Name}"))
+                        s_joinCache.Add($"{tablePrefix}.{typeof(TModel).Name}", new KeyValuePair<SqlStatement, List<TableMapping>>(selectStatement.Build(), scopedTables));
+
             }
 
             // Column definitions
@@ -498,6 +489,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
                 }
             }
             retVal.Append(selectStatement.Where(whereClause));
+
+            // Is the type hideable
+            if (typeof(IDbHideable).IsAssignableFrom(tableType))
+                retVal.And(" hidden = 0");
 
             // TODO: Order by?
             if (orderBy != null && orderBy.Length > 0)

@@ -118,7 +118,7 @@ namespace SanteDB.DisconnectedClient.UI.Services
         /// <summary>
         /// Let's resolve the specified resource
         /// </summary>
-        public IdentifiedData ResolveResource(string data)
+        public IdentifiedData ResolveResource(string data, bool validate = true)
         {
             try
             {
@@ -164,7 +164,7 @@ namespace SanteDB.DisconnectedClient.UI.Services
                 }
 
                 // Validate the signature
-                if (!signatureService.Verify(Encoding.UTF8.GetBytes($"{match.Groups[1].Value}.{match.Groups[2].Value}"), signatureBytes, result.Key.Value.ToString()))
+                if (validate && !signatureService.Verify(Encoding.UTF8.GetBytes($"{match.Groups[1].Value}.{match.Groups[2].Value}"), signatureBytes, result.Key.Value.ToString()))
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
 
                 // Return the result

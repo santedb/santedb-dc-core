@@ -22,6 +22,7 @@ using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Ags.Util;
@@ -82,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                         ie.GetType().FullName, ie.Message);
 
-                    if (ie is RestClientException<RestServiceFault> || ie is SecurityException)
+                    if (ie is RestClientException<RestServiceFault> || ie is SecurityException || ie is DetectedIssueException)
                         error = ie;
                     ie = ie.InnerException;
                 }
