@@ -49,6 +49,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Api.Security;
 using SanteDB.Core.Http;
 using SanteDB.Core.Exceptions;
+using SanteDB.DisconnectedClient.Configuration;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -184,6 +185,19 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes, request["ui_locales"]);
                             else
                                 throw new SecurityException("Could not authenticate principal");
+                            break;
+                        }
+                    case "client_credentials": // Someone is asking to use the device credentials ... Make sure they can login on their current service
+                        {
+                            var devAuthSvc = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>();
+                            var pep = ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>();
+
+                            // Is the user allowed to use just the device credential?
+                            pep.Demand(PermissionPolicyIdentifiers.LoginImpersonateApplication);
+
+                            var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+                            var rmtPrincipal = devAuthSvc.Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                            session = sessionService.Establish(rmtPrincipal, remoteEp, false, null, scopes.Union(new String[] { PermissionPolicyIdentifiers.LoginImpersonateApplication }).ToArray(), request["ui_locales"]);
                             break;
                         }
                 }

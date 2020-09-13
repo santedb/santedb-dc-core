@@ -32,6 +32,11 @@ using SanteDB.Rest.HDSI;
 using SanteDB.Rest.HDSI.Resources;
 using System;
 using System.Linq;
+using System.Collections.Specialized;
+using SanteDB.DisconnectedClient.Ags.Model;
+using System.Collections.Generic;
+using SanteDB.Core.Model.Interfaces;
+using System.Net;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -72,6 +77,49 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public HdsiServiceBehavior() 
         {
+        }
+
+        /// <summary>
+        /// Resolve the specified code
+        /// </summary>
+        /// <param name="parms"></param>
+        public override void ResolveCode(NameValueCollection parms)
+        {
+            // create only on the external server
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                parms["_upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        
+                        var result = restClient.Invoke<CodeSearchRequest, IdentifiedData>("SEARCH", "_code", "application/x-www-form-urlencoded", new CodeSearchRequest(parms));
+                        if (result != null)
+                        {
+                            RestOperationContext.Current.OutgoingResponse.StatusCode = (int)HttpStatusCode.SeeOther;
+                            if (result is IVersionedEntity versioned)
+                                RestOperationContext.Current.OutgoingResponse.AddHeader("Location", this.CreateContentLocation(result.GetType().GetSerializationName(), versioned.Key.Value, "_history", versioned.VersionKey.Value));
+                            else
+                                RestOperationContext.Current.OutgoingResponse.AddHeader("Location", this.CreateContentLocation(result.GetType().GetSerializationName(), result.Key.Value));
+                        }
+                        else
+                            throw new KeyNotFoundException($"Object not found");
+
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                base.ResolveCode(parms);
+            }
         }
 
         /// <summary>

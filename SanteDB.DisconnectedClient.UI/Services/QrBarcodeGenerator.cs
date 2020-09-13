@@ -30,13 +30,9 @@ namespace SanteDB.DisconnectedClient.UI.Services
     /// <summary>
     /// Barcode generator service that generates a QR code
     /// </summary>
+    [ServiceProvider("QR Code Barcode Generator", Dependencies = new Type[] { typeof(IResourcePointerService) })]
     public class QrBarcodeGenerator : IBarcodeProviderService
     {
-
-        /// <summary>
-        /// JWS format regex
-        /// </summary>
-        private readonly Regex m_jwsFormat = new Regex(@"^(.*?)\.(.*?)\.(.*?)$");
 
         /// <summary>
         /// Get the name of the service
@@ -52,41 +48,13 @@ namespace SanteDB.DisconnectedClient.UI.Services
                 return null; // Cannot generate
             try
             {
-                var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
-                var sourceKey = identifers.First().SourceEntityKey.Value.ToString();
 
-                // Append the header to the token
-                // Append authorities to identifiers
-                var header = new
-                {
-                    alg = signatureService.GetSignatureAlgorithm(),
-                    typ = $"x-santedb+{identifers.First().LoadProperty<TEntity>("SourceEntity")?.Type}",
-                    key = sourceKey.Substring(0, 8)
-                };
+                var pointerService = ApplicationServiceContext.Current.GetService<IResourcePointerService>();
+                if (pointerService == null)
+                    throw new InvalidOperationException("Cannot find resource pointer generator");
 
-                // From RFC7515
-                var hdrString= Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(header)).Base64UrlEncode();
-                StringBuilder identityToken = new StringBuilder($"{hdrString}.");
-
-                var domainList = new
-                {
-                    id = identifers.Select(o => new
-                    {
-                        value = o.Value,
-                        ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName
-                    }).ToList()
-                };
-
-                // From RFC7515
-                var bodyString = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(domainList)).Base64UrlEncode();
-                identityToken.Append(bodyString);
-
-                // Sign the data
-                // From RFC7515
-                var tokenData = Encoding.UTF8.GetBytes(identityToken.ToString());
-                var signature = signatureService.SignData(tokenData, sourceKey);
-                identityToken.AppendFormat(".{0}", signature.Base64UrlEncode());
-
+                // Generate the pointer
+                var identityToken = pointerService.GeneratePointer(identifers);
                 // Now generate the token
                 var writer = new BarcodeWriter()
                 {
@@ -115,67 +83,6 @@ namespace SanteDB.DisconnectedClient.UI.Services
             }
         }
 
-        /// <summary>
-        /// Let's resolve the specified resource
-        /// </summary>
-        public IdentifiedData ResolveResource(string data, bool validate = true)
-        {
-            try
-            {
-                var match = this.m_jwsFormat.Match(data);
-                if (!match.Success)
-                    throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid", "Invalid Barcode Format", DetectedIssueKeys.InvalidDataIssue));
-
-                // Get the parts of the header
-                byte[] headerBytes = match.Groups[1].Value.ParseBase64UrlEncode(),
-                    bodyBytes = match.Groups[2].Value.ParseBase64UrlEncode(),
-                    signatureBytes = match.Groups[3].Value.ParseBase64UrlEncode();
-
-                // Now lets parse the JSON objects
-                dynamic header = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(headerBytes));
-                dynamic body = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(bodyBytes));
-
-                // Now validate the payload
-                if (!header.typ.ToString().StartsWith("x-santedb+"))
-                    throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Barcode Type", DetectedIssueKeys.InvalidDataIssue));
-                var type = new ModelSerializationBinder().BindToType(null, header.typ.ToString().Substring(10));
-                var algorithm = header.alg.ToString();
-                var keyId = header.key.ToString();
-
-                // Validate the signature service can service the algorithm
-                var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
-                if (signatureService.GetSignatureAlgorithm(keyId) != algorithm)
-                    throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", "Algorithm Not Supported", DetectedIssueKeys.SecurityIssue));
-
-                // Attempt to locate the record
-                var domainQuery = new NameValueCollection();
-                foreach (var id in body.id)
-                    domainQuery.Add($"identifier[{id.ns.ToString()}].value", id.value.ToString());
-
-                IdentifiedData result = null;
-                if (typeof(Entity).IsAssignableFrom(type)) {
-                    var query = QueryExpressionParser.BuildLinqExpression<Entity>(domainQuery);
-                    result = ApplicationServiceContext.Current.GetService<IRepositoryService<Entity>>().Find(query, 0, 2, out int tr).SingleOrDefault();
-                }
-                else if(typeof(Act).IsAssignableFrom(type))
-                {
-                    var query = QueryExpressionParser.BuildLinqExpression<Entity>(domainQuery);
-                    result = ApplicationServiceContext.Current.GetService<IRepositoryService<Entity>>().Find(query, 0, 2, out int tr).SingleOrDefault();
-                }
-
-                // Validate the signature
-                if (validate && !signatureService.Verify(Encoding.UTF8.GetBytes($"{match.Groups[1].Value}.{match.Groups[2].Value}"), signatureBytes, result.Key.Value.ToString()))
-                    throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
-
-                // Return the result
-                return result;
-
-            }
-            catch(DetectedIssueException) { throw; }
-            catch (Exception e)
-            {
-                throw new Exception("Cannot resolve QR code", e);
-            }
-        }
+        
     }
 }
