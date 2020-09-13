@@ -46,6 +46,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
     /// Represents a base class for entity repository services
     /// </summary>
     public class GenericLocalRepository<TEntity> :
+        IRepositoryService,
         IValidatingRepositoryService<TEntity>,
         IPersistableQueryRepositoryService<TEntity>,
         IFastQueryRepositoryService<TEntity>,
@@ -491,6 +492,53 @@ namespace SanteDB.DisconnectedClient.Services.Local
         public virtual void DemandQuery()
         {
             this.Demand(this.QueryPolicy);
+        }
+        /// <summary>
+        /// Get the specified data
+        /// </summary>
+        IdentifiedData IRepositoryService.Get(Guid key)
+        {
+            return this.Get(key);
+        }
+
+        /// <summary>
+        /// Find specified data
+        /// </summary>
+        IEnumerable<IdentifiedData> IRepositoryService.Find(Expression query)
+        {
+            return this.Find((Expression<Func<TEntity, bool>>)query).OfType<IdentifiedData>();
+        }
+
+        /// <summary>
+        /// Find specified data
+        /// </summary>
+        IEnumerable<IdentifiedData> IRepositoryService.Find(Expression query, int offset, int? count, out int totalResults)
+        {
+            return this.Find((Expression<Func<TEntity, bool>>)query, offset, count, out totalResults).OfType<IdentifiedData>();
+        }
+
+        /// <summary>
+        /// Insert the specified data
+        /// </summary>
+        IdentifiedData IRepositoryService.Insert(object data)
+        {
+            return this.Insert((TEntity)data);
+        }
+
+        /// <summary>
+        /// Save specified data
+        /// </summary>
+        IdentifiedData IRepositoryService.Save(object data)
+        {
+            return this.Save((TEntity)data);
+        }
+
+        /// <summary>
+        /// Obsolete
+        /// </summary>
+        IdentifiedData IRepositoryService.Obsolete(Guid key)
+        {
+            return this.Obsolete(key);
         }
     }
 }
