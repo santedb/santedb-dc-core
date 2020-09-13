@@ -243,6 +243,9 @@ namespace SanteDB.DisconnectedClient.Http
             // Set user agent
             var asm = Assembly.GetEntryAssembly() ?? typeof(RestClient).Assembly;
             retVal.UserAgent = String.Format("{0} {1} ({2})", asm.GetCustomAttribute<AssemblyTitleAttribute>()?.Title, asm.GetName().Version, asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+
+            retVal.AllowAutoRedirect = false;
+
             return retVal;
         }
 
@@ -466,6 +469,10 @@ namespace SanteDB.DisconnectedClient.Http
                         {
                             return default(TResult);
                         }
+                        else if (response.StatusCode == HttpStatusCode.RedirectKeepVerb)
+                            return this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, additionalHeaders, out responseHeaders, body, query);
+                        else if (response.StatusCode == HttpStatusCode.RedirectMethod)
+                            return this.InvokeInternal<TBody, TResult>("GET", response.Headers[HttpResponseHeader.Location], contentType, additionalHeaders, out responseHeaders, default(TBody), query);
                         else
                         {
                             // De-serialize
@@ -480,7 +487,7 @@ namespace SanteDB.DisconnectedClient.Http
                                 return default(TResult);
 
                             serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
-                            
+
                             TResult retVal = default(TResult);
                             // Compression?
                             using (MemoryStream ms = new MemoryStream())

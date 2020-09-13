@@ -95,14 +95,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
                         
-                        var result = restClient.Invoke<CodeSearchRequest, IdentifiedData>("SEARCH", "_code", "application/x-www-form-urlencoded", new CodeSearchRequest(parms));
+                        var result = restClient.Invoke<CodeSearchRequest, IdentifiedData>("SEARCH", "_ptr", "application/x-www-form-urlencoded", new CodeSearchRequest(parms));
                         if (result != null)
                         {
                             RestOperationContext.Current.OutgoingResponse.StatusCode = (int)HttpStatusCode.SeeOther;
                             if (result is IVersionedEntity versioned)
-                                RestOperationContext.Current.OutgoingResponse.AddHeader("Location", this.CreateContentLocation(result.GetType().GetSerializationName(), versioned.Key.Value, "_history", versioned.VersionKey.Value));
+                                RestOperationContext.Current.OutgoingResponse.AddHeader("Location", this.CreateContentLocation(result.GetType().GetSerializationName(), versioned.Key.Value, "_history", versioned.VersionKey.Value) + "?_upstream=true");
                             else
-                                RestOperationContext.Current.OutgoingResponse.AddHeader("Location", this.CreateContentLocation(result.GetType().GetSerializationName(), result.Key.Value));
+                                RestOperationContext.Current.OutgoingResponse.AddHeader("Location", this.CreateContentLocation(result.GetType().GetSerializationName(), result.Key.Value) + "?_upstream=true");
                         }
                         else
                             throw new KeyNotFoundException($"Object not found");
@@ -249,7 +249,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Get<IdentifiedData>($"{resourceType}/{id}/history/{versionId}");
+                        return restClient.Get<IdentifiedData>($"{resourceType}/{id}/_history/{versionId}");
                     }
                     catch (Exception e)
                     {

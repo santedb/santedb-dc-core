@@ -1,7 +1,12 @@
-﻿using SanteDB.Core.Security;
+﻿using SanteDB.Core.Model;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
+using SanteDB.DisconnectedClient.Configuration;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +18,12 @@ namespace SanteDB.DisconnectedClient.Security
     /// <remarks>This service is a simple data signature service</remarks>
     public class DefaultDataSigningService : IDataSigningService
     {
+
+        /// <summary>
+        /// Keys for the signing of data
+        /// </summary>
+        private ConcurrentDictionary<String, byte[]> m_keys = new ConcurrentDictionary<string, byte[]>();
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -24,11 +35,40 @@ namespace SanteDB.DisconnectedClient.Security
         public bool IsSymmetric => true;
 
         /// <summary>
+        /// Get the default data signing service (ctor)
+        /// </summary>
+        public DefaultDataSigningService()
+        {
+            try
+            {
+                var app = ApplicationContext.Current.Application;
+                var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
+                    ApplicationContext.Current.Application.ApplicationSecret;
+
+                var keyData = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(secret).ParseHexString();
+                m_keys.TryAdd($"SA.{app.Key.ToString()}", keyData);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Add a signing key
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <param name="keyData"></param>
+        /// <param name="signatureAlgorithm"></param>
+        public void AddSigningKey(string keyId, byte[] keyData, string signatureAlgorithm)
+        {
+            if (!this.m_keys.TryAdd(keyId, keyData))
+                throw new InvalidOperationException("Cannot add signing key");
+        }
+
+        /// <summary>
         /// Get all keys
         /// </summary>
         public IEnumerable<string> GetKeys()
         {
-            return new String[0];
+            return m_keys.Keys;
         }
 
         /// <summary>

@@ -61,6 +61,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
         // Configuration
         private DcDataConfigurationSection m_configuration = ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>();
+        // Security configuration
+        private SecurityConfigurationSection m_securityConfiguration = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
         // Local tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteIdentityService));
@@ -139,7 +141,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         var additionalClaims = new List<IClaim>()
                         {
                             new SanteDBClaim(SanteDBClaimTypes.NameIdentifier, dbs.Key.ToString()),
-                            new SanteDBClaim(SanteDBClaimTypes.DefaultNameClaimType, dbs.UserName)
+                            new SanteDBClaim(SanteDBClaimTypes.DefaultNameClaimType, dbs.UserName),
+                            new SanteDBClaim(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, ApplicationContext.Current.Application.Key.ToString()), // Local application only allows
+                            new SanteDBClaim(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim, ApplicationContext.Current.Device.Key.ToString())
                         };
 
                         // Create the principal

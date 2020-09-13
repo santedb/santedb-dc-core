@@ -160,6 +160,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         List<IClaim> additionalClaims = new List<IClaim>();
                         additionalClaims.AddRange(pip.GetActivePolicies(dbd).Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBGrantedPolicyClaim, o.Policy.Oid)));
                         additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim, dbd.Key.ToString()));
+                        additionalClaims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, ApplicationContext.Current.Application.Key.ToString())); // Local application only for SQLite
                         // Create the principal
                         retVal = new SQLitePrincipal(new SQLiteDeviceIdentity(dbd.PublicId, true, DateTime.Now, DateTime.Now.Add(config?.MaxLocalSession ?? new TimeSpan(0, 15, 0)), additionalClaims), new string[] { });
 
