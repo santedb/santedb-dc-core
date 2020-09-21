@@ -1,0 +1,63 @@
+﻿using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Interop;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace SanteDB.DisconnectedClient.Services.Remote
+{
+    /// <summary>
+    /// Represents a freetext service which passes queries to an upstream server
+    /// </summary> 
+    public class RemoteFreetextSearchService : IFreetextSearchService
+    {
+        /// <summary>
+        /// Gets the service name
+        /// </summary>
+        public string ServiceName => "Remote Freetext Search Service";
+
+        // Tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteBiService));
+
+        /// <summary>
+        /// Gets the rest client
+        /// </summary>
+        /// <returns></returns>
+        public IRestClient GetRestClient()
+        {
+            var retVal = ApplicationContext.Current.GetRestClient("hdsi");
+            retVal.Accept = "application/json";
+            return retVal;
+        }
+
+        /// <summary>
+        /// Search the upstream service for the specified object in a freetext manner
+        /// </summary>
+        public IEnumerable<TEntity> Search<TEntity>(string[] term, Guid queryId, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData, new()
+        {
+            try
+            {
+                using(var client = this.GetRestClient())
+                {
+                    var parms = term.Select(o => new KeyValuePair<String, Object>("_any", o)).ToList();
+                    parms.Add(new KeyValuePair<string, object>("_offset", offset));
+                    parms.Add(new KeyValuePair<string, object>("_count", count ?? 100));
+                    var result = client.Get<Bundle>(typeof(TEntity).GetSerializationName(), parms.ToArray());
+                    totalResults = result.TotalResults;
+                    return result.Item.OfType<TEntity>();
+                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Error performing freetext search service: {0}", e);
+                throw new Exception($"Error performing freetext search {String.Join(",", term)}", e);
+            }
+        }
+    }
+}
