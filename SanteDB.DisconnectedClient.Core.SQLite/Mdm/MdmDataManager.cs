@@ -268,6 +268,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                             newEntity.CopyObjectData(master, false, true);
                             newEntity.SemanticCopy(local, master);
                             bundle?.Item.Add(newEntity);
+                            this.RewriteRelationships(newEntity, local.Key, newEntity.Key);
                         }
                     }
                     var existing = bundle?.Item.RemoveAll(o => o.Key == er.SourceEntityKey);

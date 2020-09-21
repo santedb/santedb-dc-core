@@ -1,6 +1,8 @@
 ﻿using SanteDB.Core.Model;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using System;
 using System.Collections.Concurrent;
@@ -39,16 +41,22 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public DefaultDataSigningService()
         {
-            try
+            ApplicationContext.Current.Started += (o, e) =>
             {
-                var app = ApplicationContext.Current.Application;
-                var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
-                    ApplicationContext.Current.Application.ApplicationSecret;
+                try
+                {
+                    var appName = ApplicationContext.Current.Application.Name;
+                    var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>().Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault();
+                    if (app == null)
+                        app = ApplicationContext.Current.Application;
+                    var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
+                        ApplicationContext.Current.Application.ApplicationSecret;
 
-                var keyData = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(secret).ParseHexString();
-                m_keys.TryAdd($"SA.{app.Key.ToString()}", keyData);
-            }
-            catch { }
+                    var keyData = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(secret).ParseHexString();
+                    m_keys.TryAdd($"SA.{app.Key.ToString()}", keyData);
+                }
+                catch { }
+            };
         }
 
         /// <summary>

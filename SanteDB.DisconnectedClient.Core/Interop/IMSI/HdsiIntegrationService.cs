@@ -312,9 +312,8 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     foreach(var itm in bundle.Item)
                     {
                         var original = submissionBundle.Item.FirstOrDefault(o => o.Key == itm.Key);
-                        if(itm is IVersionedEntity itmVer)
-                        this.UpdateToServerCopy(itmVer, original as IVersionedEntity);
-
+                        if(itm is IVersionedEntity itmVer && original is IVersionedEntity)
+                            this.UpdateToServerCopy(itmVer, original as IVersionedEntity);
                     }
                 }
                 this.Responded?.Invoke(this, new IntegrationResultEventArgs(data, result));
