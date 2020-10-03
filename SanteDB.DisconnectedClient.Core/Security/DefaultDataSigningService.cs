@@ -53,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Security
                             this.m_keys.TryAdd(k.KeyName, k);
 
                     var appName = ApplicationContext.Current.Application.Name;
-                    var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>().Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault();
+                    var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>().Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault() ?? ApplicationContext.Current.Application;
                     if (!this.m_keys.TryGetValue($"SA.{app.Key.ToString()}", out SecuritySignatureConfiguration _))
                     {
                         if (app == null)
