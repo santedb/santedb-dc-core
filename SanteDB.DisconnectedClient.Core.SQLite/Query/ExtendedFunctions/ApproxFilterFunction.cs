@@ -16,7 +16,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
     /// <summary>
     /// Approximate filter function
     /// </summary>
-    public class ApproxFilterFunction : IDbFilterFunction    
+    public class ApproxFilterFunction : IDbFilterFunction
     {
 
         // Has spellfix?
@@ -49,6 +49,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                 };
 
             var filter = new SqlStatement();
+
             foreach (var alg in config.ApproxSearchOptions.Where(o => o.Enabled))
             {
                 if (alg is ApproxDifferenceOption difference && m_hasSpellFix.GetValueOrDefault())
@@ -59,14 +60,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                     if (!phonetic.MinSimilaritySpecified) min = 1.0f;
                     if (phonetic.Algorithm == ApproxPhoneticOption.PhoneticAlgorithmType.Soundex || phonetic.Algorithm == ApproxPhoneticOption.PhoneticAlgorithmType.Auto)
                         filter.Or($"((4 - editdist3(soundex({filterColumn}), soundex(?)))/4.0) >= {min}", QueryBuilder.CreateParameterValue(parms[0], typeof(String)));
-                    else if(phonetic.Algorithm == ApproxPhoneticOption.PhoneticAlgorithmType.Metaphone)
+                    else if (phonetic.Algorithm == ApproxPhoneticOption.PhoneticAlgorithmType.Metaphone)
                         filter.Or($"((length(spellfix1_phonehash({filterColumn})) - editdist3(spellfix1_phonehash({filterColumn}), spellfix1_phonehash(?)))/length(spellfix1_phonehash({filterColumn}))) >= {min}", QueryBuilder.CreateParameterValue(parms[0], typeof(String)));
                     else
                         throw new InvalidOperationException($"Phonetic algorithm {phonetic.Algorithm} is not valid");
                 }
                 else if (alg is ApproxPatternOption pattern)
                 {
-                    filter.Or($"{filterColumn} like ?", parms[0].Replace("*", "%").Replace("?", "_"));
+                    filter.Or($"({filterColumn} like ?)", QueryBuilder.CreateParameterValue(parms[0].Replace("*", "%").Replace("?", "_"), typeof(String)));
                 }
             }
 
@@ -100,7 +101,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                         catch { m_hasSpellFix = false; }
                     }
                 }
-                catch {
+                catch
+                {
                     m_hasSoundex = false;
                 }
         }

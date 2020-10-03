@@ -375,8 +375,11 @@ namespace SanteDB.DisconnectedClient.UI
                         {
                             using (var fs = File.OpenRead(appPath))
                             {
+                                retVal.m_tracer.TraceInfo("Checking if {0} is upgradable", appPath);
                                 AppletPackage package = AppletPackage.Load(fs);
                                 var existing = appletService.GetApplet(package.Meta.Id);
+                                retVal.m_tracer.TraceInfo("{0} = {1} , existing = {2}", appPath, package.Meta, existing?.Info);
+
                                 if (existing == null || new Version(existing.Info.Version) < new Version(package.Meta.Version))
                                 {
                                     retVal.m_tracer.TraceInfo("Upgrading applet {0} from {1} to {2}", package.Meta.Id, existing.Info.Version, package.Meta.Version);
@@ -387,8 +390,7 @@ namespace SanteDB.DisconnectedClient.UI
                         }
                         catch (Exception e)
                         {
-                            retVal.m_tracer.TraceError("Loading applet {0} failed: {1}", appPath, e.ToString());
-                            throw;
+                            retVal.m_tracer.TraceError("Checking upgrade for applet {0} failed: {1}", appPath, e.ToString());
                         }
 
                     if (retVal.GetService<IThreadPoolService>() == null)

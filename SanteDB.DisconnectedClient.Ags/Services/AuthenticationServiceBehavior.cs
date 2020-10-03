@@ -264,7 +264,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }))));
 
             var signingService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
-            var hash = UrlEncodeUtil(Convert.ToBase64String(signingService.SignData(Encoding.UTF8.GetBytes($"{header}.{payload}"), ApplicationContext.Current.Application.ApplicationSecret)));
+            var hash = UrlEncodeUtil(Convert.ToBase64String(signingService.SignData(Encoding.UTF8.GetBytes($"{header}.{payload}"))));
             return $"{header}.{payload}.{hash}";
 
         }

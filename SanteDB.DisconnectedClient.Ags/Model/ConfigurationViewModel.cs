@@ -66,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         {
             if (config == null) return;
             this.RealmName = config.GetSection<SecurityConfigurationSection>()?.Domain;
-            this.Security = config.GetSection<SecurityConfigurationSection>();
+            this.Security = config.GetSection<SecurityConfigurationSection>()?.RemoveSensitiveInformation();
 
             this.Data = config.GetSection<DcDataConfigurationSection>();
             this.Applet = config.GetSection<AppletConfigurationSection>();
@@ -89,6 +89,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// </summary>
         [JsonProperty("security")]
         public SecurityConfigurationSection Security { get; set; }
+
         /// <summary>
         /// Realm name
         /// </summary>

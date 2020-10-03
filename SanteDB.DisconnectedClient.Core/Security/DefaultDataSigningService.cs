@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core.Model;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
@@ -24,7 +25,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// <summary>
         /// Keys for the signing of data
         /// </summary>
-        private ConcurrentDictionary<String, byte[]> m_keys = new ConcurrentDictionary<string, byte[]>();
+        private ConcurrentDictionary<String, SecuritySignatureConfiguration> m_keys = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
 
         /// <summary>
         /// Gets the service name
@@ -45,15 +46,33 @@ namespace SanteDB.DisconnectedClient.Security
             {
                 try
                 {
+                    // Load keys from configuration
+                    var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
+                    if (configuredKeys != null)
+                        foreach (var k in configuredKeys)
+                            this.m_keys.TryAdd(k.KeyName, k);
+
                     var appName = ApplicationContext.Current.Application.Name;
                     var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>().Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault();
-                    if (app == null)
-                        app = ApplicationContext.Current.Application;
-                    var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
-                        ApplicationContext.Current.Application.ApplicationSecret;
+                    if (!this.m_keys.TryGetValue($"SA.{app.Key.ToString()}", out SecuritySignatureConfiguration _))
+                    {
+                        if (app == null)
+                            app = ApplicationContext.Current.Application;
+                        var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
+                            ApplicationContext.Current.Application.ApplicationSecret;
 
-                    var keyData = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(secret).ParseHexString();
-                    m_keys.TryAdd($"SA.{app.Key.ToString()}", keyData);
+                        var meKey = new SecuritySignatureConfiguration()
+                        {
+                            KeyName = $"SA.{app.Key.ToString()}",
+                            Algorithm = SignatureAlgorithm.HS256,
+                            HmacSecret = secret
+                        };
+                        m_keys.TryAdd($"SA.{app.Key.ToString()}", meKey);
+                        if (!m_keys.ContainsKey("default"))
+                            m_keys.TryAdd("default", meKey);
+                        configuredKeys.Add(meKey);
+                    }
+                    
                 }
                 catch { }
             };
@@ -62,13 +81,27 @@ namespace SanteDB.DisconnectedClient.Security
         /// <summary>
         /// Add a signing key
         /// </summary>
-        /// <param name="keyId"></param>
-        /// <param name="keyData"></param>
-        /// <param name="signatureAlgorithm"></param>
         public void AddSigningKey(string keyId, byte[] keyData, string signatureAlgorithm)
         {
-            if (!this.m_keys.TryAdd(keyId, keyData))
-                throw new InvalidOperationException("Cannot add signing key");
+            if (!this.m_keys.ContainsKey(keyId))
+            {
+                var keyConfig = new SecuritySignatureConfiguration()
+                {
+                    KeyName = keyId,
+                    Algorithm = (SignatureAlgorithm)Enum.Parse(typeof(SignatureAlgorithm), signatureAlgorithm),
+                    Secret = signatureAlgorithm == "HS256" ? keyData : null,
+                    FindType = System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint,
+                    FindValue = signatureAlgorithm != "HS256" ? BitConverter.ToString(keyData).Replace("-", "") : null,
+                    StoreLocation = System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
+                    StoreName = System.Security.Cryptography.X509Certificates.StoreName.My,
+                    FindTypeSpecified = signatureAlgorithm != "HS256",
+                    StoreLocationSpecified = signatureAlgorithm != "HS256",
+                    StoreNameSpecified = signatureAlgorithm != "HS256"
+                };
+
+                if(!this.m_keys.TryAdd(keyId, keyConfig))
+                    throw new InvalidOperationException("Cannot add signing key");
+            }
         }
 
         /// <summary>
@@ -84,7 +117,9 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public string GetSignatureAlgorithm(string keyId = null)
         {
-            return "HS256";
+            if (this.m_keys.TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration config))
+                return config.Algorithm.ToString();
+            return null;
         }
 
         /// <summary>
@@ -92,23 +127,36 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public byte[] SignData(byte[] data, string keyId = null)
         {
-            // TODO: Actually use the private key and RS256
-            byte[] key = ApplicationContext.Current.GetCurrentContextSecurityKey();
-            if (key == null) // NOCRYPT is turned on 
-                key = System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(ApplicationContext.Current.Application.ApplicationSecret));
+            // Fetch the key from the repository
+            if (!this.m_keys.TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration configuration))
+                throw new InvalidOperationException($"Key {keyId ?? "default"} not found");
 
-            if (!String.IsNullOrEmpty(keyId))
+            switch (configuration.Algorithm)
             {
-                // TODO: Actually have a key store
-                key = Encoding.UTF8.GetBytes(keyId);
+                case SignatureAlgorithm.HS256:
+                    {
+                        var key = configuration.Secret;
+                        // Ensure 128 bit
+                        while (key.Length < 16)
+                            key = key.Concat(key).ToArray();
+
+                        var hmac = new System.Security.Cryptography.HMACSHA256(key);
+                        return hmac.ComputeHash(data);
+                    }
+                case SignatureAlgorithm.RS256:
+                case SignatureAlgorithm.RS512:
+                    {
+
+                        if (!configuration.Certificate.HasPrivateKey)
+                            throw new InvalidOperationException("You must have the private key to sign data with this certificate");
+                        var csp = (RSACryptoServiceProvider)configuration.Certificate.PrivateKey;
+                        RSAPKCS1SignatureFormatter formatter = new RSAPKCS1SignatureFormatter(csp);
+                        formatter.SetHashAlgorithm(configuration.Algorithm == SignatureAlgorithm.RS256 ? "SHA256" : "SHA512");
+                        return formatter.CreateSignature(data);
+                    }
+                default:
+                    throw new InvalidOperationException("Cannot generate digital signature");
             }
-
-            // Ensure 128 bit
-            while (key.Length < 16)
-                key = key.Concat(key).ToArray();
-
-            var hmac = new System.Security.Cryptography.HMACSHA256(key);
-            return hmac.ComputeHash(data);
         }
 
         /// <summary>
@@ -116,8 +164,36 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public bool Verify(byte[] data, byte[] signature, string keyId = null)
         {
-            var newSig = this.SignData(data, keyId);
-            return newSig.SequenceEqual(signature);
+            // Fetch the key from the repository
+            if (!this.m_keys.TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration configuration))
+                throw new InvalidOperationException($"Key {keyId ?? "default"} not found");
+
+            switch (configuration.Algorithm)
+            {
+                case SignatureAlgorithm.HS256:
+                    {
+                        var key = configuration.Secret;
+                        // Ensure 128 bit
+                        while (key.Length < 16)
+                            key = key.Concat(key).ToArray();
+
+                        var hmac = new System.Security.Cryptography.HMACSHA256(key);
+                        return hmac.ComputeHash(data).SequenceEqual(signature);
+                    }
+                case SignatureAlgorithm.RS256:
+                case SignatureAlgorithm.RS512:
+                    {
+                        var csp = (RSACryptoServiceProvider)configuration.Certificate.PublicKey.Key;
+                        RSAPKCS1SignatureDeformatter formatter = new RSAPKCS1SignatureDeformatter(csp);
+                        formatter.SetHashAlgorithm(configuration.Algorithm == SignatureAlgorithm.RS256 ? "SHA256" : "SHA512");
+                        // Compute SHA hash
+                        HashAlgorithm sha = configuration.Algorithm == SignatureAlgorithm.RS256 ? (HashAlgorithm)SHA256.Create() : (HashAlgorithm)SHA512.Create();
+                        var hashValue = sha.ComputeHash(data);
+                        return formatter.VerifySignature(hashValue, signature);
+                    }
+                default:
+                    throw new InvalidOperationException("Cannot generate digital signature");
+            }
         }
     }
 }

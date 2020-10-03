@@ -632,6 +632,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
                     {
                         case ':': // function
                             var opMatch = ExtendedFunctionRegex.Match(sValue);
+                            List<String> extendedParms = new List<string>();
+
                             if (opMatch.Success)
                             {
                                 // Extract
@@ -639,14 +641,21 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
                                     parms = opMatch.Groups[3].Value,
                                     operand = opMatch.Groups[4].Value;
 
+                                var parmExtract = QueryFilterExtensions.ParameterExtractRegex.Match(parms + ",");
+                                while (parmExtract.Success)
+                                {
+                                    extendedParms.Add(parmExtract.Groups[1].Value);
+                                    parmExtract = QueryFilterExtensions.ParameterExtractRegex.Match(parmExtract.Groups[2].Value);
+                                }
+
                                 // Now find the function
                                 var filterFn = GetFilterFunction(fnName);
                                 if (filterFn == null)
-                                    retVal.Append($" = ? ", CreateParameterValue(sValue, domainProperty.PropertyType));
+                                    throw new EntryPointNotFoundException($"No extended filter {fnName} found");
                                 else
                                 {
                                     retVal.RemoveLast();
-                                    retVal = filterFn.CreateSqlStatement(retVal, $"{tableAlias}.{columnData.Name}", parms.Split(','), operand, domainProperty.PropertyType).Build();
+                                    retVal = filterFn.CreateSqlStatement(retVal, $"{tableAlias}.{columnData.Name}", extendedParms.ToArray(), operand, domainProperty.PropertyType).Build();
                                 }
                             }
                             else
@@ -731,6 +740,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
         internal static object CreateParameterValue(object value, Type toType)
         {
             object retVal = null;
+
+            if (value is String str && str.StartsWith("\"") && str.EndsWith("\"")) // quoted string
+                value = str.Substring(1, str.Length - 2).Replace("\\\"", "\"");
+
             if (value is Guid)
                 retVal = ((Guid)value).ToByteArray();
             else if (value.GetType() == toType ||

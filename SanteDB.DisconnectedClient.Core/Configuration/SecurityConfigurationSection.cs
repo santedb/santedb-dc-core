@@ -19,6 +19,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
@@ -72,6 +73,48 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
         /// <summary>
+        /// Returns a copy of this object with sensitive information removed
+        /// </summary>
+        public SecurityConfigurationSection RemoveSensitiveInformation()
+        {
+            return new SecurityConfigurationSection()
+            {
+                ApplicationSecret = null,
+                ApplicationSecretXml = null,
+                AuditRetention = this.AuditRetention,
+                DeviceName = this.DeviceName,
+                DeviceCertificate = null,
+                DeviceSecret = null,
+                Domain = this.Domain,
+                DomainAuthentication = this.DomainAuthentication,
+                Facilities = this.Facilities.ToList(),
+                Hasher = this.Hasher,
+                MaxInvalidLogins = this.MaxInvalidLogins,
+                MaxLocalSession = this.MaxLocalSession,
+                Owners = this.Owners.ToList(),
+                PlainTextSecret = false,
+                RestrictLoginToFacilityUsers = this.RestrictLoginToFacilityUsers,
+                TokenAlgorithms = this.TokenAlgorithms.ToList(),
+                TokenType = this.TokenType,
+                SigningKeys = this.SigningKeys.Select(o => new SecuritySignatureConfiguration()
+                {
+                    Algorithm = o.Algorithm,
+                    FindType = o.FindType,
+                    FindTypeSpecified = o.FindTypeSpecified,
+                    FindValue = o.FindValue,
+                    HmacSecret = null,
+                    IssuerName = o.IssuerName,
+                    KeyName = o.KeyName,
+                    Secret = null,
+                    StoreLocation = o.StoreLocation,
+                    StoreLocationSpecified = o.StoreLocationSpecified,
+                    StoreName = o.StoreName,
+                    StoreNameSpecified = o.StoreNameSpecified
+                }).ToList()
+            };
+        }
+
+        /// <summary>
         /// Gets the real/domain to which the application is currently joined
         /// </summary>
         [XmlElement("domain"), JsonProperty("domain")]
@@ -114,14 +157,12 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the token symmetric secrets.
+        /// Signature configuration
         /// </summary>
-        /// <value>The token symmetric secrets.</value>
-        [XmlElement("secret"), JsonIgnore]
-        public List<Byte[]> TokenSymmetricSecrets
-        {
-            get; set;
-        }
+        [XmlArray("signingKeys"), XmlArrayItem("add")]
+        [JsonProperty("signingKeys")]
+        public List<SecuritySignatureConfiguration> SigningKeys { get; set; }
+
 
         /// <summary>
         /// Gets or sets the configured device name
