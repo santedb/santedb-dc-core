@@ -17,6 +17,8 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.Core.Security;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Linq;
@@ -97,6 +99,15 @@ namespace SanteDB.DisconnectedClient.Security
                 aes.GenerateKey();
                 return aes.Key;
             }
+        }
+
+        /// <summary>
+        /// Get the context default key
+        /// </summary>
+        public byte[] GetContextKey()
+        {
+            return SHA256.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
+                            ApplicationContext.Current.Application.ApplicationSecret));
         }
     }
 }

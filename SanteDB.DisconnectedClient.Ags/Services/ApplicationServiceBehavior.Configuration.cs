@@ -75,6 +75,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Messaging.HDSI.Client;
 using System.Net;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Security.Configuration;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -869,6 +870,17 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             if (configuration.Security.Owners?.Count > 0)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Owners = configuration.Security.Owners;
 
+            // Is there any special keys to be configured?
+            if(configuration.Security.SigningKeys?.Count > 0)
+            {
+                var keyCollection = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.SigningKeys ?? new List<SecuritySignatureConfiguration>();
+                foreach(var itm in configuration.Security.SigningKeys)
+                {
+                    var existing = keyCollection.RemoveAll(o => o.KeyName == itm.KeyName);
+                    keyCollection.Add(itm);
+                }
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().SigningKeys = keyCollection;
+            }
             // Proxy
             if (!String.IsNullOrEmpty(configuration.Network.ProxyAddress))
                 ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>().ProxyAddress = configuration.Network.ProxyAddress;

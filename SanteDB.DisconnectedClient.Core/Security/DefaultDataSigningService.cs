@@ -51,28 +51,30 @@ namespace SanteDB.DisconnectedClient.Security
                     if (configuredKeys != null)
                         foreach (var k in configuredKeys)
                             this.m_keys.TryAdd(k.KeyName, k);
+                    else
+                        configuredKeys = new List<SecuritySignatureConfiguration>(); // Temporary list
 
                     var appName = ApplicationContext.Current.Application.Name;
-                    var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>().Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault() ?? ApplicationContext.Current.Application;
-                    if (!this.m_keys.TryGetValue($"SA.{app.Key.ToString()}", out SecuritySignatureConfiguration _))
+                    var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault() ?? ApplicationContext.Current.Application;
+                    if (!this.m_keys.TryGetValue($"SA.{app.Key.ToString()}", out SecuritySignatureConfiguration meKey))
                     {
                         if (app == null)
                             app = ApplicationContext.Current.Application;
                         var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
                             ApplicationContext.Current.Application.ApplicationSecret;
 
-                        var meKey = new SecuritySignatureConfiguration()
+                        meKey = new SecuritySignatureConfiguration()
                         {
                             KeyName = $"SA.{app.Key.ToString()}",
                             Algorithm = SignatureAlgorithm.HS256,
                             HmacSecret = secret
                         };
                         m_keys.TryAdd($"SA.{app.Key.ToString()}", meKey);
-                        if (!m_keys.ContainsKey("default"))
-                            m_keys.TryAdd("default", meKey);
+                        
                         configuredKeys.Add(meKey);
                     }
-                    
+                    if (!m_keys.ContainsKey("default"))
+                        m_keys.TryAdd("default", meKey);
                 }
                 catch { }
             };
@@ -89,7 +91,6 @@ namespace SanteDB.DisconnectedClient.Security
                 {
                     KeyName = keyId,
                     Algorithm = (SignatureAlgorithm)Enum.Parse(typeof(SignatureAlgorithm), signatureAlgorithm),
-                    Secret = signatureAlgorithm == "HS256" ? keyData : null,
                     FindType = System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint,
                     FindValue = signatureAlgorithm != "HS256" ? BitConverter.ToString(keyData).Replace("-", "") : null,
                     StoreLocation = System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine,
@@ -99,7 +100,10 @@ namespace SanteDB.DisconnectedClient.Security
                     StoreNameSpecified = signatureAlgorithm != "HS256"
                 };
 
-                if(!this.m_keys.TryAdd(keyId, keyConfig))
+                if (signatureAlgorithm == "HS256")
+                    keyConfig.SetSecret(keyData);
+
+                if (!this.m_keys.TryAdd(keyId, keyConfig))
                     throw new InvalidOperationException("Cannot add signing key");
             }
         }
@@ -135,7 +139,7 @@ namespace SanteDB.DisconnectedClient.Security
             {
                 case SignatureAlgorithm.HS256:
                     {
-                        var key = configuration.Secret;
+                        var key = configuration.GetSecret();
                         // Ensure 128 bit
                         while (key.Length < 16)
                             key = key.Concat(key).ToArray();
@@ -172,7 +176,7 @@ namespace SanteDB.DisconnectedClient.Security
             {
                 case SignatureAlgorithm.HS256:
                     {
-                        var key = configuration.Secret;
+                        var key = configuration.GetSecret();
                         // Ensure 128 bit
                         while (key.Length < 16)
                             key = key.Concat(key).ToArray();

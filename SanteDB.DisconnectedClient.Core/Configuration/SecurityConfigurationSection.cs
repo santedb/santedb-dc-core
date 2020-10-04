@@ -19,6 +19,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using System;
@@ -87,16 +88,16 @@ namespace SanteDB.DisconnectedClient.Configuration
                 DeviceSecret = null,
                 Domain = this.Domain,
                 DomainAuthentication = this.DomainAuthentication,
-                Facilities = this.Facilities.ToList(),
+                Facilities = this.Facilities?.ToList(),
                 Hasher = this.Hasher,
                 MaxInvalidLogins = this.MaxInvalidLogins,
                 MaxLocalSession = this.MaxLocalSession,
-                Owners = this.Owners.ToList(),
+                Owners = this.Owners?.ToList(),
                 PlainTextSecret = false,
                 RestrictLoginToFacilityUsers = this.RestrictLoginToFacilityUsers,
-                TokenAlgorithms = this.TokenAlgorithms.ToList(),
+                TokenAlgorithms = this.TokenAlgorithms?.ToList(),
                 TokenType = this.TokenType,
-                SigningKeys = this.SigningKeys.Select(o => new SecuritySignatureConfiguration()
+                SigningKeys = this.SigningKeys?.Select(o => new SecuritySignatureConfiguration()
                 {
                     Algorithm = o.Algorithm,
                     FindType = o.FindType,

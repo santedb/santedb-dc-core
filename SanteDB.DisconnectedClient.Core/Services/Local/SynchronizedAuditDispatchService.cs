@@ -182,7 +182,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                 {
                     try
                     {
-                        this.m_resetEvent.WaitOne();
+                        this.m_resetEvent.WaitOne(1000);
                         while (this.m_auditQueue.Count > 0)
                         {
                             AuditData ad = null;
