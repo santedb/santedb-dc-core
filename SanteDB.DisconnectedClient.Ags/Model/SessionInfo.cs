@@ -242,7 +242,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
 
                 // Attempt to download if the user entity is null
                 // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity 
-                if (this.UserEntity == null || this.UserEntity?.Relationships.All(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
+                if (this.UserEntity == null || this.UserEntity?.Relationships.Any(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
                     if (amiService != null && amiService.IsAvailable())
