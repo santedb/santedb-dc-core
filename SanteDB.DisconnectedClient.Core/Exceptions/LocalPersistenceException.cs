@@ -17,8 +17,9 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.Synchronization;
+
 using System;
+using SanteDB.DisconnectedClient.Synchronization;
 
 namespace SanteDB.DisconnectedClient.Exceptions
 {
@@ -27,65 +28,53 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class LocalPersistenceException : Exception
     {
+	    // Data object
 
-        // Data object
-        private Object m_data;
-
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.LocalPersistenceException"/> class.
         /// </summary>
         /// <param name="operation">Operation.</param>
         /// <param name="data">Data.</param>
-        public LocalPersistenceException(SynchronizationOperationType operation, Object data) : this(operation, data, null)
+        public LocalPersistenceException(SynchronizationOperationType operation, object data) : this(operation, data, null)
         {
 
         }
 
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.LocalPersistenceException"/> class.
         /// </summary>
         /// <param name="operation">Operation.</param>
         /// <param name="data">Data.</param>
         /// <param name="causedBy">Caused by.</param>
-        public LocalPersistenceException(SynchronizationOperationType operation, Object data, Exception causedBy) : base(null, causedBy)
+        public LocalPersistenceException(SynchronizationOperationType operation, object data, Exception causedBy) : base(null, causedBy)
         {
             this.DataObject = data;
             this.Operation = operation;
         }
 
-        /// <summary>
+	    /// <summary>
+        /// Gets or sets the data object.
+        /// </summary>
+        /// <value>The data object.</value>
+        public object DataObject { get; private set; }
+
+	    /// <summary>
         /// Gets a message that describes the current exception.
         /// </summary>
         /// <returns>The error message that explains the reason for the exception, or an empty string ("").</returns>
         /// <filterpriority>1</filterpriority>
         /// <value>The message.</value>
-        public override string Message
-        {
-            get
-            {
-                return String.Format("{0} {1}", this.Operation, this.DataObject);
-            }
-        }
+        public override string Message => string.Format("{0} {1}", this.Operation, this.DataObject);
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the operation.
         /// </summary>
         /// <value>The operation.</value>
         public SynchronizationOperationType Operation
         {
-            get { return (SynchronizationOperationType)this.Data["operation"]; }
-            private set { this.Data.Add("operation", value); }
-        }
-
-        /// <summary>
-        /// Gets or sets the data object.
-        /// </summary>
-        /// <value>The data object.</value>
-        public Object DataObject
-        {
-            get { return this.m_data; }
-            private set { this.m_data = value; }
-        }
+            get => (SynchronizationOperationType)this.Data["operation"];
+            private set => this.Data.Add("operation", value);
+	    }
     }
 }
 

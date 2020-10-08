@@ -17,12 +17,8 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+
 using SanteDB.Core.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -31,11 +27,9 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public interface IInitialConfigurationProvider
     {
-
-        /// <summary>
+	    /// <summary>
         /// Provide additional settings
         /// </summary>
         SanteDBConfiguration Provide(SanteDBConfiguration existing);
-
     }
 }

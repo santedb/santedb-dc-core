@@ -17,10 +17,11 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using Newtonsoft.Json;
+
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace SanteDB.DisconnectedClient.Configuration.Data
 {
@@ -31,8 +32,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     [XmlRoot(nameof(DataMigrationLog), Namespace = "http://santedb.org/mobile/configuration")]
     public class DataMigrationLog
     {
-
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog"/> class.
         /// </summary>
         public DataMigrationLog()
@@ -40,24 +40,23 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             this.Entry = new List<DataMigrationEntry>();
         }
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the entry.
         /// </summary>
-        [XmlElement("entry"), JsonProperty("entry")]
+        [XmlElement("entry")][JsonProperty("entry")]
         public List<DataMigrationEntry> Entry
         {
             get;
             set;
         }
 
-        /// <summary>
+	    /// <summary>
         /// Data migration entry
         /// </summary>
         [XmlType(nameof(DataMigrationLog), Namespace = "http://santedb.org/mobile/data")]
         public class DataMigrationEntry
         {
-
-            /// <summary>
+	        /// <summary>
             /// Initializes a new instance of the
             /// <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
             /// </summary>
@@ -66,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
 
             }
 
-            /// <summary>
+	        /// <summary>
             /// Initializes a new instance of the
             /// <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrationLog+DataMigrationEntry"/> class.
             /// </summary>
@@ -77,28 +76,26 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
                 this.Date = DateTime.Now;
             }
 
-            /// <summary>
-            /// Gets or sets the identifier of the migration
-            /// </summary>
-            /// <value>The identifier.</value>
-            [XmlAttribute("id"), JsonProperty("id")]
-            public String Id
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
+	        /// <summary>
             /// Gets or sets the date when the entry was installed
             /// </summary>
-            [XmlAttribute("date"), JsonProperty("date")]
+            [XmlAttribute("date")][JsonProperty("date")]
             public DateTime Date
             {
                 get;
                 set;
             }
 
-
+	        /// <summary>
+            /// Gets or sets the identifier of the migration
+            /// </summary>
+            /// <value>The identifier.</value>
+            [XmlAttribute("id")][JsonProperty("id")]
+            public string Id
+            {
+                get;
+                set;
+            }
         }
     }
 }

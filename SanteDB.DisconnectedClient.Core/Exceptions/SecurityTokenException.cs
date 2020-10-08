@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using System;
+
 using System.Security;
 
 namespace SanteDB.DisconnectedClient.Exceptions
@@ -42,8 +42,28 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class SecurityTokenException : SecurityException
     {
+	    /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.TokenSecurityException"/> class.
+        /// </summary>
+        /// <param name="type">Type.</param>
+        /// <param name="detail">Detail.</param>
+        public SecurityTokenException(SecurityTokenExceptionType type, string detail) : base($"{type} - {detail}")
+        {
+            this.Type = type;
+            this.Detail = detail;
+        }
 
-        /// <summary>
+	    /// <summary>
+        /// Details of the exception
+        /// </summary>
+        /// <value>The detail.</value>
+        public string Detail
+        {
+            get;
+            set;
+        }
+
+	    /// <summary>
         /// Gets or sets the type of exception.
         /// </summary>
         /// <value>The type.</value>
@@ -52,28 +72,6 @@ namespace SanteDB.DisconnectedClient.Exceptions
             get;
             set;
         }
-
-        /// <summary>
-        /// Details of the exception
-        /// </summary>
-        /// <value>The detail.</value>
-        public String Detail
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.TokenSecurityException"/> class.
-        /// </summary>
-        /// <param name="type">Type.</param>
-        /// <param name="detail">Detail.</param>
-        public SecurityTokenException(SecurityTokenExceptionType type, String detail) : base($"{type} - {detail}")
-        {
-            this.Type = type;
-            this.Detail = detail;
-        }
-
     }
 }
 

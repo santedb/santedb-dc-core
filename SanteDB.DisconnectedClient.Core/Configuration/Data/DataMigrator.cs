@@ -17,16 +17,15 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.Core;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.i18n;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Diagnostics;
+using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.i18n;
 
 namespace SanteDB.DisconnectedClient.Configuration.Data
 {
@@ -35,14 +34,13 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// </summary>
     public class ConfigurationMigrator
     {
+	    // Migrations
+	    private readonly List<IConfigurationMigration> m_migrations;
 
-        // Tracer
-        private Tracer m_tracer;
+	    // Tracer
+	    private readonly Tracer m_tracer;
 
-        // Migrations
-        private List<IConfigurationMigration> m_migrations;
-
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrator"/> class.
         /// </summary>
         /// <param name="configuration">Configuration.</param>
@@ -59,25 +57,29 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
                 var migrations = ApplicationContext.Current.Configuration.GetSection<ApplicationServiceContextConfigurationSection>()?.ServiceProviders
                     ?.Select(o => o?.Type?.GetTypeInfo().Assembly).OfType<Assembly>().Distinct().SelectMany(a => a?.DefinedTypes).ToArray();
                 if (migrations != null)
-                    foreach (var dbm in migrations)
-                    {
-                        try
-                        {
-                            if (dbm.AsType() == typeof(ConfigurationMigrator) ||
-                                !typeof(IConfigurationMigration).GetTypeInfo().IsAssignableFrom(dbm))
-                                continue;
+                {
+	                foreach (var dbm in migrations)
+	                {
+		                try
+		                {
+			                if (dbm.AsType() == typeof(ConfigurationMigrator) ||
+			                    !typeof(IConfigurationMigration).GetTypeInfo().IsAssignableFrom(dbm))
+			                {
+				                continue;
+			                }
 
-                            IConfigurationMigration migration = Activator.CreateInstance(dbm.AsType()) as IConfigurationMigration;
-                            if (migration != null)
-                            {
-                                this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
-                                this.m_migrations.Add(migration);
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
+			                var migration = Activator.CreateInstance(dbm.AsType()) as IConfigurationMigration;
+			                if (migration != null)
+			                {
+				                this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
+				                this.m_migrations.Add(migration);
+			                }
+		                }
+		                catch
+		                {
+		                }
+	                }
+                }
             }
             catch(Exception e)
             {
@@ -85,7 +87,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             }
         }
 
-        /// <summary>
+	    /// <summary>
         /// Assert that all data migrations have occurred
         /// </summary>
         public void Ensure(bool includeDataMigrations)
@@ -98,29 +100,37 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
                 ApplicationContext.Current.SetProgress(Strings.locale_setting_migration, 0);
                 this.m_tracer.TraceVerbose("Will Install {0}", m.Id);
                 if (!m.Install())
-                    throw new ConfigurationMigrationException(m);
-                else
-                    ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
+                {
+	                throw new ConfigurationMigrationException(m);
+                }
+
+                ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
             }
 
         }
 
-        /// <summary>
+	    /// <summary>
         /// Get the list of data migrations that need to occur for the application to be in the most recent state
         /// </summary>
         /// <returns>The proposal.</returns>
         public List<IConfigurationMigration> GetProposal(bool includeDataMigrations)
         {
-            List<IConfigurationMigration> retVal = new List<IConfigurationMigration>();
+            var retVal = new List<IConfigurationMigration>();
 
             this.m_tracer.TraceInfo("Generating data migration proposal...");
             foreach (var itm in this.m_migrations.OrderBy(o => o.Id))
             {
-                if (itm is IDataMigration && !includeDataMigrations) continue;
+                if (itm is IDataMigration && !includeDataMigrations)
+                {
+	                continue;
+                }
+
                 var migrationLog = ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Find(o => o.Id == itm.Id);
-                this.m_tracer.TraceVerbose("Migration {0} ... {1}", itm.Id, migrationLog == null ? "Install" : "Skip - Installed on " + migrationLog.Date.ToString());
+                this.m_tracer.TraceVerbose("Migration {0} ... {1}", itm.Id, migrationLog == null ? "Install" : "Skip - Installed on " + migrationLog.Date);
                 if (migrationLog == null)
-                    retVal.Add(itm);
+                {
+	                retVal.Add(itm);
+                }
             }
             return retVal;
         }

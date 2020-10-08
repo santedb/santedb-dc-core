@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Exceptions
 {
@@ -9,8 +7,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class RemoteOperationException : Exception
     {
-
-        /// <summary>
+	    /// <summary>
         /// Creates a new remote operation exception
         /// </summary>
         public RemoteOperationException()
@@ -18,18 +15,18 @@ namespace SanteDB.DisconnectedClient.Exceptions
 
         }
 
-        /// <summary>
+	    /// <summary>
         /// Creates a new remote operation exception
         /// </summary>
-        public RemoteOperationException(String message) : base(message)
+        public RemoteOperationException(string message) : base(message)
         {
 
         }
 
-        /// <summary>
+	    /// <summary>
         /// Creates a new remote operation exception
         /// </summary>
-        public RemoteOperationException(String message, Exception cause) : base (message, cause)
+        public RemoteOperationException(string message, Exception cause) : base (message, cause)
         {
 
         }

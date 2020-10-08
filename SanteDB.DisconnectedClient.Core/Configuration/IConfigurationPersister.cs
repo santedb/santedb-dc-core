@@ -17,6 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+
 using SanteDB.Core.Configuration;
 
 namespace SanteDB.DisconnectedClient.Configuration
@@ -26,40 +27,40 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public interface IConfigurationPersister
     {
-        /// <summary>
+	    /// <summary>
+        /// Application data directory
+        /// </summary>
+        string ApplicationDataDirectory { get; }
+
+	    /// <summary>
         /// Returns true if SanteDB is configured
         /// </summary>
         bool IsConfigured { get; }
 
-        /// <summary>
-        /// Load the configuration
-        /// </summary>
-        SanteDBConfiguration Load();
-
-        /// <summary>
-        /// Save the configuration to the default location
-        /// </summary>
-        void Save(SanteDBConfiguration configuration);
-        
-        /// <summary>
+	    /// <summary>
         /// Backs up the configuration
         /// </summary>
         void Backup(SanteDBConfiguration configuration);
 
-        /// <summary>
+	    /// <summary>
         /// Has a backup?
         /// </summary>
         bool HasBackup();
 
-        /// <summary>
+	    /// <summary>
+        /// Load the configuration
+        /// </summary>
+        SanteDBConfiguration Load();
+
+	    /// <summary>
         /// Restore a backup
         /// </summary>
         SanteDBConfiguration Restore();
 
-        /// <summary>
-        /// Application data directory
+	    /// <summary>
+        /// Save the configuration to the default location
         /// </summary>
-        string ApplicationDataDirectory { get; }
+        void Save(SanteDBConfiguration configuration);
     }
 }
 

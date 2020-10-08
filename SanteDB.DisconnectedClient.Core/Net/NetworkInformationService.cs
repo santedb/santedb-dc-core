@@ -50,33 +50,6 @@ namespace SanteDB.DisconnectedClient.Net
                 this.m_networkAvailable = e.IsAvailable;
                 this.NetworkStatusChanged?.Invoke(this, e);
             };
-
-            // TODO: Discuss the ramifications of this
-            // this.NetworkStatusChanged += NetworkInformationService_NetworkStatusChanged;
-        }
-
-        /// <summary>
-        /// Updates the registered services in the application context when the network status changes.
-        /// </summary>
-        /// <param name="sender">The sender of the event.</param>
-        /// <param name="e">The event arguments.</param>
-        private void NetworkInformationService_NetworkStatusChanged(object sender, EventArgs e)
-        {
-            INetworkInformationService networkInformationService = (INetworkInformationService)sender;
-
-            //         // Because we may have network connectivity
-            //if (networkInformationService.IsNetworkAvailable)
-            //{
-            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.RemoveAll(o => o == typeof(LocalPolicyInformationService).AssemblyQualifiedName);
-            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(AmiPolicyInformationService).AssemblyQualifiedName);
-            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(OAuthIdentityProvider).AssemblyQualifiedName);
-            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(HdsiPersistenceService).AssemblyQualifiedName);
-            //}
-            //else
-            //{
-            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalPersistenceService).AssemblyQualifiedName);
-            //	ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().ServiceTypes.Add(typeof(LocalIdentityService).AssemblyQualifiedName);
-            //}
         }
 
         /// <summary>
@@ -93,26 +66,19 @@ namespace SanteDB.DisconnectedClient.Net
         /// <summary>
         /// Return whether the network is available
         /// </summary>
-        public virtual bool IsNetworkAvailable
-        {
-            get
-            {
-                return NetworkInterface.GetIsNetworkAvailable();
-            }
-        }
+        public virtual bool IsNetworkAvailable => NetworkInterface.GetIsNetworkAvailable();
 
         /// <summary>
         /// Gets whether the network is connected.
         /// </summary>
-        public bool IsNetworkConnected
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public bool IsNetworkConnected => throw new NotImplementedException();
 
-        public string ServiceName => throw new NotImplementedException();
+		/// <summary>
+		/// Gets the service name.
+		/// </summary>
+		/// <value>The name of the service.</value>
+		/// <exception cref="NotImplementedException"></exception>
+		public string ServiceName => throw new NotImplementedException();
 
         /// <summary>
         /// Network status has changed
@@ -158,11 +124,11 @@ namespace SanteDB.DisconnectedClient.Net
             try
             {
 
-                System.Net.NetworkInformation.Ping p = new System.Net.NetworkInformation.Ping();
+                var p = new Ping();
                 var reply = p.Send(hostName);
                 return reply.Status == IPStatus.Success ? reply.RoundtripTime : -1;
             }
-            catch(Exception e)
+            catch
             {
                 return -1;
             }

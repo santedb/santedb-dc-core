@@ -17,47 +17,49 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Http;
-using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using System;
 
 namespace SanteDB.DisconnectedClient.Interop
 {
-    /// <summary>
-    /// Configuration sections
-    /// </summary>
-    public static class ConfigurationExtensions
+	/// <summary>
+	/// Configuration sections
+	/// </summary>
+	public static class ConfigurationExtensions
     {
-        /// <summary>
-        /// Gets the service description.
-        /// </summary>
-        /// <returns>The service description.</returns>
-        /// <param name="me">Me.</param>
-        public static ServiceClientDescription GetServiceDescription(this SanteDBConfiguration me, String clientName)
-        {
-
-            var configSection = me.GetSection<ServiceClientConfigurationSection>();
-            return configSection.Client.Find(o => clientName == o.Name)?.Clone();
-
-        }
-
-        /// <summary>
+	    /// <summary>
         /// Gets the rest client.
         /// </summary>
         /// <returns>The rest client.</returns>
         /// <param name="me">Me.</param>
         /// <param name="clientName">Client name.</param>
-        public static IRestClient GetRestClient(this ApplicationContext me, String clientName)
+        public static IRestClient GetRestClient(this ApplicationContext me, string clientName)
         {
             var configSection = me.Configuration.GetSection<ServiceClientConfigurationSection>();
             var description = me.Configuration.GetServiceDescription(clientName);
             if (description == null)
-                return null;
+            {
+	            return null;
+            }
 
-            IRestClient client = Activator.CreateInstance(configSection.RestClientType, description) as IRestClient;
+            var client = Activator.CreateInstance(configSection.RestClientType, description) as IRestClient;
             return client;
+        }
+
+	    /// <summary>
+        /// Gets the service description.
+        /// </summary>
+        /// <returns>The service description.</returns>
+        /// <param name="me">Me.</param>
+        public static ServiceClientDescription GetServiceDescription(this SanteDBConfiguration me, string clientName)
+        {
+
+            var configSection = me.GetSection<ServiceClientConfigurationSection>();
+            return configSection.Client.Find(o => clientName == o.Name)?.Clone();
+
         }
     }
 }

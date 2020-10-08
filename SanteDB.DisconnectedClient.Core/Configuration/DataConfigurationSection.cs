@@ -17,12 +17,11 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
-using System;
+
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
+using SanteDB.Core.Configuration.Data;
 
 namespace SanteDB.DisconnectedClient.Configuration.Data
 {
@@ -30,10 +29,9 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// Data configuration section
     /// </summary>
     [XmlType(nameof(DcDataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
-    public class DcDataConfigurationSection : SanteDB.Core.Configuration.Data.DataConfigurationSection
+    public class DcDataConfigurationSection : DataConfigurationSection
     {
-
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the data configuration section
         /// </summary>
         public DcDataConfigurationSection()
@@ -41,63 +39,62 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             this.MigrationLog = new DataMigrationLog();
         }
 
-        
-        /// <summary>
+	    /// <summary>
+        /// Gets or sets the name of the alerts data store
+        /// </summary>
+        [XmlAttribute("mailDataStore")][JsonIgnore]
+        public string MailDataStore
+        {
+            get;
+            set;
+        }
+
+
+	    /// <summary>
         /// Gets or sets the name of the main data source connection string.
         /// </summary>
         /// <value>The name of the main data source connection string.</value>
-        [XmlAttribute("clinicalDataStore"), JsonIgnore]
-        public String MainDataSourceConnectionStringName
+        [XmlAttribute("clinicalDataStore")][JsonIgnore]
+        public string MainDataSourceConnectionStringName
         {
             get;
             set;
         }
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the name of the message queue connection string.
         /// </summary>
         /// <value>The name of the message queue connection string.</value>
-        [XmlAttribute("messageQueue"), JsonIgnore]
-        public String MessageQueueConnectionStringName
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets the name of the alerts data store
-        /// </summary>
-        [XmlAttribute("mailDataStore"), JsonIgnore]
-        public String MailDataStore
+        [XmlAttribute("messageQueue")][JsonIgnore]
+        public string MessageQueueConnectionStringName
         {
             get;
             set;
         }
 
 
-        /// <summary>
+	    /// <summary>
         /// Migration log 
         /// </summary>
         /// <value>The migration log.</value>
-        [XmlElement("migration"), JsonProperty("migration")]
+        [XmlElement("migration")][JsonProperty("migration")]
         public DataMigrationLog MigrationLog
         {
             get;
             set;
         }
 
-        /// <summary>
-        /// Gets the configuration view model provider
-        /// </summary>
-        [XmlIgnore, JsonProperty("provider")]
-        public String Provider { get; set; }
-
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the options
         /// </summary>
-        [XmlIgnore, JsonProperty("options")]
-        public Dictionary<String, Object> Options { get; set; }
+        [XmlIgnore][JsonProperty("options")]
+        public Dictionary<string, object> Options { get; set; }
 
+	    /// <summary>
+        /// Gets the configuration view model provider
+        /// </summary>
+        [XmlIgnore][JsonProperty("provider")]
+        public string Provider { get; set; }
     }
     
 

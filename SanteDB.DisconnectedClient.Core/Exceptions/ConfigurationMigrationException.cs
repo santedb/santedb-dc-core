@@ -17,8 +17,9 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.Configuration.Data;
+
 using System;
+using SanteDB.DisconnectedClient.Configuration.Data;
 
 namespace SanteDB.DisconnectedClient.Exceptions
 {
@@ -27,32 +28,29 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class ConfigurationMigrationException : Exception
     {
-
-        /// <summary>
-        /// Gets or sets the migration id
-        /// </summary>
-        /// <value>The migration identifier.</value>
-        public String MigrationId
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.ConfigurationMigrationException"/> class.
         /// </summary>
         public ConfigurationMigrationException(IConfigurationMigration offender) : this(offender, null)
         {
         }
 
-        /// <summary>
+	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.ConfigurationMigrationException"/> class.
         /// </summary>
-        public ConfigurationMigrationException(IConfigurationMigration offender, Exception inner) : base(String.Format("Migration of {0} failed", offender.Id), inner)
+        public ConfigurationMigrationException(IConfigurationMigration offender, Exception inner) : base(string.Format("Migration of {0} failed", offender.Id), inner)
         {
             this.MigrationId = offender.Id;
         }
 
+	    /// <summary>
+        /// Gets or sets the migration id
+        /// </summary>
+        /// <value>The migration identifier.</value>
+        public string MigrationId
+        {
+            get;
+	    }
     }
 }
 

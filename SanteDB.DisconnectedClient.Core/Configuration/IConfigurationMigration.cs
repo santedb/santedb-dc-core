@@ -17,7 +17,6 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using System;
 
 namespace SanteDB.DisconnectedClient.Configuration.Data
 {
@@ -26,36 +25,31 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// </summary>
     public interface IConfigurationMigration
     {
+	    /// <summary>
+        /// A human readable description of the migration
+        /// </summary>
+        /// <value>The description.</value>
+        string Description { get; }
 
 
-        /// <summary>
+	    /// <summary>
         /// Gets the identifier of the migration
         /// </summary>
-        String Id
+        string Id
         {
             get;
         }
 
-
-        /// <summary>
-        /// A human readable description of the migration
-        /// </summary>
-        /// <value>The description.</value>
-        String Description { get; }
-
-        /// <summary>
+	    /// <summary>
         /// Install the migration package
         /// </summary>
         bool Install();
-
     }
 
     /// <summary>
     /// A special migration that requires database access
     /// </summary>
     public interface IDataMigration : IConfigurationMigration
-    {
-
-    }
+    {}
 }
 

@@ -17,8 +17,9 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using SanteDB.DisconnectedClient.i18n;
+
 using System.Security;
+using SanteDB.DisconnectedClient.i18n;
 
 namespace SanteDB.DisconnectedClient.Exceptions
 {
@@ -27,7 +28,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class SessionExpiredException : SecurityException
     {
-        /// <summary>
+	    /// <summary>
         /// Session has expired
         /// </summary>
         public SessionExpiredException() : base(Strings.locale_session_expired)

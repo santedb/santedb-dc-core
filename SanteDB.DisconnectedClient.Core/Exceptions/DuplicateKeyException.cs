@@ -17,6 +17,7 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+
 using System;
 
 namespace SanteDB.DisconnectedClient.Exceptions
@@ -26,11 +27,10 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class DuplicateKeyException : Exception
     {
-
-        /// <summary>
+	    /// <summary>
         /// Duplicate key exception
         /// </summary>
-        public DuplicateKeyException(String key) : base(key)
+        public DuplicateKeyException(string key) : base(key)
         {
 
         }

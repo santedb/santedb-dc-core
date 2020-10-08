@@ -17,20 +17,15 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+
+using System;
+using System.Diagnostics;
+using System.Xml;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Xml;
-using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -40,23 +35,12 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public class ConfigurationManager : IConfigurationManager
     {
-
-        /// <summary>
-        /// Get the service name
-        /// </summary>
-        public String ServiceName => "Default Disconnected Client Configuration Manager";
-
-        /// <summary>
-        /// Gets the configuration object
-        /// </summary>
-        public SanteDBConfiguration Configuration { get; private set; }
-
-        /// <summary>
+	    /// <summary>
         /// SanteDB configuration
         /// </summary>
         public ConfigurationManager(IConfigurationPersister defaultPersister = null)
         {
-            var persister = (defaultPersister ?? ApplicationContext.Current.ConfigurationPersister);
+            var persister = defaultPersister ?? ApplicationContext.Current.ConfigurationPersister;
             try
             {
                 this.Configuration = persister.Load();
@@ -80,16 +64,38 @@ namespace SanteDB.DisconnectedClient.Configuration
             }
             
         }
- 
-        /// <summary>
+
+	    /// <summary>
+        /// Gets the configuration object
+        /// </summary>
+        public SanteDBConfiguration Configuration { get; private set; }
+
+	    /// <summary>
         /// Get app setting
         /// </summary>
         public string GetAppSetting(string key)
         {
             return this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings?.Find(o => o.Key == key)?.Value;
         }
-        
-        /// <summary>
+
+	    /// <summary>
+        /// Get connection string
+        /// </summary>
+        /// <returns>The connection string.</returns>
+        /// <param name="name">Name.</param>
+        public ConnectionString GetConnectionString(string name)
+        {
+            var dcs = this.GetSection<DcDataConfigurationSection>();
+            var cs = dcs?.ConnectionString.Find(o => o.Name == name);
+            if (cs == null)
+            {
+	            return null;
+            }
+
+            return cs.Clone();
+        }
+
+	    /// <summary>
         /// Get the specified section
         /// </summary>
         /// <returns>The section.</returns>
@@ -99,7 +105,41 @@ namespace SanteDB.DisconnectedClient.Configuration
             return this.Configuration.GetSection<T>();
         }
 
-        /// <summary>
+	    /// <summary>
+        /// Reload the configuration
+        /// </summary>
+        public void Reload()
+        {
+            this.Configuration = ApplicationContext.Current.ConfigurationPersister.Load();
+        }
+
+	    /// <summary>
+        /// Get the service name
+        /// </summary>
+        public string ServiceName => "Default Disconnected Client Configuration Manager";
+
+	    /// <summary>
+        /// Set application setting
+        /// </summary>
+        public void SetAppSetting(string key, string value)
+        {
+            var setting = this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings?.Find(o => o.Key == key);
+            if (setting == null)
+            {
+	            this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings.Add(new AppSettingKeyValuePair { Key = key, Value = value });
+            }
+            else
+            {
+	            setting.Value = value;
+            }
+
+            if(ApplicationContext.Current.ConfigurationPersister.IsConfigured)
+            {
+	            ApplicationContext.Current.ConfigurationPersister.Save(this.Configuration);
+            }
+        }
+
+	    /// <summary>
         /// Gets the section of specified type.
         /// </summary>
         /// <returns>The section.</returns>
@@ -107,44 +147,6 @@ namespace SanteDB.DisconnectedClient.Configuration
         public object GetSection(Type t)
         {
             return this.Configuration.GetSection(t);
-        }
-
-        /// <summary>
-        /// Get connection string
-        /// </summary>
-        /// <returns>The connection string.</returns>
-        /// <param name="name">Name.</param>
-        public ConnectionString GetConnectionString(String name)
-        {
-            var dcs = this.GetSection<DcDataConfigurationSection>();
-            var cs = dcs?.ConnectionString.Find(o => o.Name == name);
-            if (cs == null)
-                return null;
-            else
-                return cs.Clone();
-        }
-
-        /// <summary>
-        /// Set application setting
-        /// </summary>
-        public void SetAppSetting(string key, String value)
-        {
-            var setting = this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings?.Find(o => o.Key == key);
-            if (setting == null)
-                this.GetSection<ApplicationServiceContextConfigurationSection>()?.AppSettings.Add(new AppSettingKeyValuePair() { Key = key, Value = value.ToString() });
-            else
-                setting.Value = value.ToString();
-
-            if(ApplicationContext.Current.ConfigurationPersister.IsConfigured)
-                ApplicationContext.Current.ConfigurationPersister.Save(this.Configuration);
-        }
-
-        /// <summary>
-        /// Reload the configuration
-        /// </summary>
-        public void Reload()
-        {
-            this.Configuration = ApplicationContext.Current.ConfigurationPersister.Load();
         }
     }
 }

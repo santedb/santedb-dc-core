@@ -17,15 +17,16 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Synchronization;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Model;
+using SanteDB.DisconnectedClient.Synchronization;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -35,7 +36,7 @@ namespace SanteDB.DisconnectedClient.Configuration
 	[XmlType(nameof(SynchronizationConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
     public class SynchronizationConfigurationSection : IConfigurationSection
     {
-        /// <summary>
+	    /// <summary>
         /// Synchronization configuration section ctor
         /// </summary>
         public SynchronizationConfigurationSection()
@@ -45,79 +46,82 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.ForbiddenResouces = new List<SynchronizationForbidConfiguration>();
         }
 
-        /// <summary>
+	    /// <summary>
+        /// TRue it use big bundles (> 1000)
+        /// </summary>
+        [XmlAttribute("bigBundles")][JsonProperty("bigBundles")]
+        public bool BigBundles { get; set; }
+
+
+	    /// <summary>
+        /// Resources which are forbidden from being sychronized
+        /// </summary>
+        [XmlArray("forbidSync")][XmlArrayItem("add")]
+        public List<SynchronizationForbidConfiguration> ForbiddenResouces { get; set; }
+
+	    /// <summary>
         /// Time between polling requests
         /// </summary>
-        [XmlElement("pollInterval"), JsonProperty("pollInterval")]
-        public String PollIntervalXml
+        [XmlElement("pollInterval")][JsonProperty("pollInterval")]
+        public string PollIntervalXml
         {
-            get
-            {
-                return this.PollInterval.ToString();
-            }
+            get => this.PollInterval.ToString();
             set
             {
                 if (value == null)
-                    this.PollInterval = TimeSpan.MinValue;
+                {
+	                this.PollInterval = TimeSpan.MinValue;
+                }
                 else
-                    this.PollInterval = TimeSpan.Parse(value);
+                {
+	                this.PollInterval = TimeSpan.Parse(value);
+                }
             }
         }
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the mode of operation
         /// </summary>
-        [XmlElement("mode"), JsonProperty("mode")]
+        [XmlElement("mode")][JsonProperty("mode")]
         public SynchronizationMode Mode { get; set; }
 
-        /// <summary>
+	    /// <summary>
         /// Poll interval
         /// </summary>
-        [XmlIgnore, JsonIgnore]
+        [XmlIgnore][JsonIgnore]
         public TimeSpan PollInterval { get; set; }
 
-        /// <summary>
-        /// Gets or sets the list of synchronization queries
-        /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add"),  JsonProperty("resources")]
-        public List<SynchronizationResource> SynchronizationResources { get; set; }
 
-        /// <summary>
+	    /// <summary>
         /// Subscription
         /// </summary>
-        [XmlArray("subscribeTo"), XmlArrayItem("add"), JsonProperty("subscribeTo")]
-        public List<String> SubscribeTo { get; set; }
+        [XmlElement("subscribeType")][JsonProperty("subscribeType")]
+        public string SubscribeType { get; set; }
 
-        /// <summary>
-        /// Subscription
-        /// </summary>
-        [XmlElement("subscribeType"), JsonProperty("subscribeType")]
-        public String SubscribeType { get; set; }
-
-        /// <summary>
+	    /// <summary>
         /// When true never force a patch
         /// </summary>
-        [XmlElement("safePatchOnly"), JsonProperty("safePatch")]
+        [XmlElement("safePatchOnly")][JsonProperty("safePatch")]
         public bool SafePatchOnly { get; set; }
 
-
-        /// <summary>
-        /// Resources which are forbidden from being sychronized
+	    /// <summary>
+        /// Subscription
         /// </summary>
-        [XmlArray("forbidSync"), XmlArrayItem("add")]
-        public List<SynchronizationForbidConfiguration> ForbiddenResouces { get; set; }
+        [XmlArray("subscribeTo")][XmlArrayItem("add")][JsonProperty("subscribeTo")]
+        public List<string> SubscribeTo { get; set; }
 
-        /// <summary>
+
+	    /// <summary>
+        /// Gets or sets the list of synchronization queries
+        /// </summary>
+        [XmlArray("resources")][XmlArrayItem("add")][JsonProperty("resources")]
+        public List<SynchronizationResource> SynchronizationResources { get; set; }
+
+	    /// <summary>
         /// Use patches instead of full submission
         /// </summary>
-        [XmlElement("allowPatch"), JsonProperty("allowPatch")]
+        [XmlElement("allowPatch")][JsonProperty("allowPatch")]
         public bool UsePatches { get; set; }
-
-        /// <summary>
-        /// TRue it use big bundles (> 1000)
-        /// </summary>
-        [XmlAttribute("bigBundles"), JsonProperty("bigBundles")]
-        public bool BigBundles { get; set; }
     }
 
     /// <summary>
@@ -126,9 +130,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(SynchronizationForbidConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
     public class SynchronizationForbidConfiguration
     {
-
-
-        /// <summary>
+	    /// <summary>
         /// Forbid ctor for serialization
         /// </summary>
         public SynchronizationForbidConfiguration()
@@ -136,28 +138,28 @@ namespace SanteDB.DisconnectedClient.Configuration
 
         }
 
-        /// <summary>
+	    /// <summary>
         /// Forbid ctor
         /// </summary>
         /// <param name="op"></param>
         /// <param name="name"></param>
-        public SynchronizationForbidConfiguration(SynchronizationOperationType op, String name)
+        public SynchronizationForbidConfiguration(SynchronizationOperationType op, string name)
         {
             this.Operations = op;
             this.ResourceName = name;
         }
 
-        /// <summary>
+	    /// <summary>
         /// Forbidden operations
         /// </summary>
         [XmlAttribute("op")]
         public SynchronizationOperationType Operations { get; set; }
 
-        /// <summary>
+	    /// <summary>
         /// Forbidden resource type
         /// </summary>
         [XmlText]
-        public String ResourceName { get; set; }
+        public string ResourceName { get; set; }
     }
 
     /// <summary>
@@ -185,7 +187,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(SynchronizationResource), Namespace = "http://santedb.org/mobile/configuration")]
     public class SynchronizationResource
     {
-        /// <summary>
+	    /// <summary>
         /// default ctor
         /// </summary>
         public SynchronizationResource()
@@ -193,55 +195,51 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.Filters = new List<string>();
         }
 
-        /// <summary>
-        /// Gets the resource type
+	    /// <summary>
+        /// Always pull?
         /// </summary>
-        [XmlIgnore, JsonIgnore]
-        public Type ResourceType
-        {
-            get; set;
-        }
+        [XmlAttribute("ignoreModifiedOn")][JsonProperty("ignoreModifiedOn")]
+        public bool Always { get; set; }
 
-        /// <summary>
-        /// Represents the triggers
+	    /// <summary>
+        /// One or more filters 
         /// </summary>
-        [XmlAttribute("trigger"), JsonProperty("trigger")]
-        public SynchronizationPullTriggerType Triggers { get; set; }
+        [XmlArray("filters")][XmlArrayItem("add")][JsonProperty("filters")]
+        public List<string> Filters { get; set; }
 
-        /// <summary>
+	    /// <summary>
+        /// The friendly name
+        /// </summary>
+        [XmlAttribute("name")][JsonProperty("name")]
+        public string Name { get; set; }
+
+	    /// <summary>
         /// Gets or sets the resource type
         /// </summary>
-        [XmlAttribute("resourceType"), JsonProperty("resource")]
+        [XmlAttribute("resourceType")][JsonProperty("resource")]
         public string ResourceAqn
         {
-            get
-            {
-                return this.ResourceType.GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>().TypeName;
-            }
+            get => this.ResourceType.GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>().TypeName;
             set
             {
                 this.ResourceType = typeof(IdentifiedData).GetTypeInfo().Assembly.ExportedTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>()?.TypeName == value);
             }
         }
 
-        /// <summary>
-        /// One or more filters 
+	    /// <summary>
+        /// Gets the resource type
         /// </summary>
-        [XmlArray("filters"), XmlArrayItem("add"), JsonProperty("filters")]
-        public List<string> Filters { get; set; }
+        [XmlIgnore][JsonIgnore]
+        public Type ResourceType
+        {
+            get; set;
+        }
 
-        /// <summary>
-        /// Always pull?
+	    /// <summary>
+        /// Represents the triggers
         /// </summary>
-        [XmlAttribute("ignoreModifiedOn"), JsonProperty("ignoreModifiedOn")]
-        public bool Always { get; set; }
-
-        /// <summary>
-        /// The friendly name
-        /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
-        public String Name { get; set; }
-
+        [XmlAttribute("trigger")][JsonProperty("trigger")]
+        public SynchronizationPullTriggerType Triggers { get; set; }
     }
 
 

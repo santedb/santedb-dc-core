@@ -17,6 +17,11 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Principal;
 using SanteDB.Core;
 using SanteDB.Core.Api.Security;
 using SanteDB.Core.Applets.Model;
@@ -29,18 +34,10 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Messaging.AMI.Client;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Principal;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Tickler;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -49,148 +46,20 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public class AmiUpdateManager : IUpdateManager, IDaemonService
     {
+	    // Cached credential
+	    private IPrincipal m_cachedCredential;
 
-        /// <summary>
-        /// Get the service name
-        /// </summary>
-        public String ServiceName => "AMI Update Manager";
+	    private bool m_checkedForUpdates;
 
-        // Cached credential
-        private IPrincipal m_cachedCredential = null;
+	    private readonly AppletConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().Configuration.GetSection<AppletConfigurationSection>();
 
-        private bool m_checkedForUpdates = false;
+	    // Error tickle
+	    private bool m_errorTickle;
 
-        private AppletConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().Configuration.GetSection<AppletConfigurationSection>();
+	    // Tracer
+	    private readonly Tracer m_tracer = Tracer.GetTracer(typeof(AmiUpdateManager));
 
-        // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(AmiUpdateManager));
-
-        // Error tickle
-        private bool m_errorTickle = false;
-
-        // Start events
-        public event EventHandler Starting;
-        public event EventHandler Started;
-        public event EventHandler Stopping;
-        public event EventHandler Stopped;
-
-        /// <summary>
-        /// True if running
-        /// </summary>
-        public bool IsRunning
-        {
-            get
-            {
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Gets current credentials
-        /// </summary>
-        private Credentials GetCredentials(IRestClient client)
-        {
-            var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-
-            AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
-
-            // TODO: Clean this up - Login as device account
-            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
-            {
-                AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                this.m_cachedCredential = AuthenticationContext.Current.Principal;
-            }
-            return client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
-        }
-
-        /// <summary>
-        /// Get the server version of a package
-        /// </summary>
-        public AppletInfo GetServerVersion(string packageId)
-        {
-            try
-            {
-                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
-                {
-                    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-                    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
-
-                    if (String.IsNullOrEmpty(this.m_configuration.AppletSolution))
-                        return amiClient.StatUpdate(packageId);
-                    else
-                    {
-                        var headers = amiClient.Client.Head($"AppletSolution/{this.m_configuration.AppletSolution}/applet/{packageId}");
-                        headers.TryGetValue("X-SanteDB-PakID", out string packId);
-                        headers.TryGetValue("ETag", out string versionKey);
-
-                        return new AppletInfo()
-                        {
-                            Id = packageId,
-                            Version = versionKey
-                        };
-                    }
-                }
-                else
-                    return null;
-            }
-            catch (Exception ex)
-            {
-                this.m_tracer.TraceError("Error contacting AMI: {0}", ex.Message);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Install the specified package
-        /// </summary>
-        public void Install(string packageId)
-        {
-            try
-            {
-                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
-                {
-
-                    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-                    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
-                    amiClient.Client.ProgressChanged += (o, e) => ApplicationContext.Current.SetProgress(String.Format(Strings.locale_downloading, packageId), e.Progress);
-                    amiClient.Client.Description.Endpoint[0].Timeout = 30000;
-
-                    // Fetch the applet package
-                    if (String.IsNullOrEmpty(this.m_configuration.AppletSolution))
-                        using (var ms = amiClient.DownloadApplet(packageId))
-                        {
-                            var package = AppletPackage.Load(ms);
-                            this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
-                            ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
-                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, String.Format(Strings.locale_updateInstalled, package.Meta.Id, package.Meta.Version)));
-
-                            // ApplicationContext.Current.Exit(); // restart
-                        }
-                    else
-                    {
-                        using (var ms = new MemoryStream(amiClient.Client.Get($"AppletSolution/{this.m_configuration.AppletSolution}/applet/{packageId}")))
-                        {
-                            var package = AppletPackage.Load(ms);
-                            this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
-                            ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
-                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, String.Format(Strings.locale_updateInstalled, package.Meta.Id, package.Meta.Version)));
-
-                            // ApplicationContext.Current.Exit(); // restart
-                        }
-                    }
-                }
-                else
-                    return;
-            }
-            catch (Exception ex)
-            {
-                this.m_tracer.TraceError("Error contacting AMI: {0}", ex.Message);
-                throw new InvalidOperationException(Strings.err_updateFailed);
-            }
-        }
-
-        /// <summary>
+	    /// <summary>
         /// Check for updates
         /// </summary>
         public void AutoUpdate()
@@ -210,12 +79,14 @@ namespace SanteDB.DisconnectedClient.Configuration
                     {
                         var solution = this.m_configuration.AppletSolution;
                         IEnumerable<AppletManifestInfo> infos = null;
-                        if (!String.IsNullOrEmpty(solution))
+                        if (!string.IsNullOrEmpty(solution))
                         {
                             infos = amiClient.Client.Get<AmiCollection>($"AppletSolution/{solution}/applet").CollectionItem.OfType<AppletManifestInfo>();
                         }
                         else
-                            infos = amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>();
+                        {
+	                        infos = amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>();
+                        }
 
                         amiClient.Client.Description.Endpoint[0].Timeout = 30000;
                         foreach (var i in infos)
@@ -224,8 +95,10 @@ namespace SanteDB.DisconnectedClient.Configuration
                             if (installed == null ||
                                 new Version(installed.Info.Version) < new Version(i.AppletInfo.Version) &&
                                 this.m_configuration.AutoUpdateApplets &&
-                                ApplicationContext.Current.Confirm(String.Format(Strings.locale_upgradeConfirm, i.AppletInfo.Names[0].Value, i.AppletInfo.Version, installed.Info.Version)))
-                                this.Install(i.AppletInfo.Id);
+                                ApplicationContext.Current.Confirm(string.Format(Strings.locale_upgradeConfirm, i.AppletInfo.Names[0].Value, i.AppletInfo.Version, installed.Info.Version)))
+                            {
+	                            this.Install(i.AppletInfo.Id);
+                            }
                         }
                     }
                 }
@@ -233,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Configuration
                 {
                     if (!this.m_errorTickle)
                     {
-                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.locale_updateCheckFailed, ex.GetType().Name)));
+                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickle(Guid.Empty, TickleType.Danger, string.Format(Strings.locale_updateCheckFailed, ex.GetType().Name)));
                         this.m_errorTickle = true;
                     }
                     this.m_tracer.TraceError("Error checking for updates: {0}", ex.Message);
@@ -247,7 +120,103 @@ namespace SanteDB.DisconnectedClient.Configuration
 
         }
 
-        /// <summary>
+	    /// <summary>
+        /// Get the server version of a package
+        /// </summary>
+        public AppletInfo GetServerVersion(string packageId)
+        {
+            try
+            {
+	            if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                {
+                    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
+
+                    if (string.IsNullOrEmpty(this.m_configuration.AppletSolution))
+                    {
+	                    return amiClient.StatUpdate(packageId);
+                    }
+
+                    var headers = amiClient.Client.Head($"AppletSolution/{this.m_configuration.AppletSolution}/applet/{packageId}");
+                    headers.TryGetValue("X-SanteDB-PakID", out string packId);
+                    headers.TryGetValue("ETag", out string versionKey);
+
+                    return new AppletInfo
+                    {
+	                    Id = packageId,
+	                    Version = versionKey
+                    };
+                }
+
+	            return null;
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("Error contacting AMI: {0}", ex.Message);
+                throw;
+            }
+        }
+
+	    /// <summary>
+        /// Install the specified package
+        /// </summary>
+        public void Install(string packageId)
+        {
+            try
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                {
+
+                    var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
+                    amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
+                    amiClient.Client.ProgressChanged += (o, e) => ApplicationContext.Current.SetProgress(string.Format(Strings.locale_downloading, packageId), e.Progress);
+                    amiClient.Client.Description.Endpoint[0].Timeout = 30000;
+
+                    // Fetch the applet package
+                    if (string.IsNullOrEmpty(this.m_configuration.AppletSolution))
+                    {
+	                    using (var ms = amiClient.DownloadApplet(packageId))
+	                    {
+		                    var package = AppletPackage.Load(ms);
+		                    this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
+		                    ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
+		                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickle(Guid.Empty, TickleType.Information, string.Format(Strings.locale_updateInstalled, package.Meta.Id, package.Meta.Version)));
+
+		                    // ApplicationContext.Current.Exit(); // restart
+	                    }
+                    }
+                    else
+                    {
+                        using (var ms = new MemoryStream(amiClient.Client.Get($"AppletSolution/{this.m_configuration.AppletSolution}/applet/{packageId}")))
+                        {
+                            var package = AppletPackage.Load(ms);
+                            this.m_tracer.TraceInfo("Upgrading {0}...", package.Meta.ToString());
+                            ApplicationContext.Current.GetService<IAppletManagerService>().Install(package, true);
+                            ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickle(Guid.Empty, TickleType.Information, string.Format(Strings.locale_updateInstalled, package.Meta.Id, package.Meta.Version)));
+
+                            // ApplicationContext.Current.Exit(); // restart
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("Error contacting AMI: {0}", ex.Message);
+                throw new InvalidOperationException(Strings.err_updateFailed);
+            }
+        }
+
+	    /// <summary>
+        /// True if running
+        /// </summary>
+        public bool IsRunning => true;
+
+	    /// <summary>
+        /// Get the service name
+        /// </summary>
+        public string ServiceName => "AMI Update Manager";
+
+	    /// <summary>
         /// Application startup
         /// </summary>
         public bool Start()
@@ -256,13 +225,20 @@ namespace SanteDB.DisconnectedClient.Configuration
 
             if (!this.m_checkedForUpdates &&
                 ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AutoUpdateApplets)
-                this.AutoUpdate();
+            {
+	            this.AutoUpdate();
+            }
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
-        /// <summary>
+	    public event EventHandler Started;
+
+	    // Start events
+	    public event EventHandler Starting;
+
+	    /// <summary>
         /// Stop the service
         /// </summary>
         public bool Stop()
@@ -272,6 +248,28 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.Stopped?.Invoke(this, EventArgs.Empty);
 
             return true;
+        }
+
+	    public event EventHandler Stopped;
+	    public event EventHandler Stopping;
+
+	    /// <summary>
+        /// Gets current credentials
+        /// </summary>
+        private Credentials GetCredentials(IRestClient client)
+        {
+            var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
+
+            AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
+
+            // TODO: Clean this up - Login as device account
+            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
+                ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+            {
+                AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
+                this.m_cachedCredential = AuthenticationContext.Current.Principal;
+            }
+            return client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
         }
     }
 }
