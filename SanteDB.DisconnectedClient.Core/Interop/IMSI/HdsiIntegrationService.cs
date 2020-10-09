@@ -43,6 +43,7 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Services;
+using SanteDB.Messaging.HDSI.Client;
 
 namespace SanteDB.DisconnectedClient.Interop.HDSI
 {

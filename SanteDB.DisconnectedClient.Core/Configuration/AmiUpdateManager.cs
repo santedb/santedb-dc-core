@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Principal;
 using SanteDB.Core;
 using SanteDB.Core.Api.Security;
@@ -38,6 +39,7 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Interop;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Tickler;
+using SanteDB.Messaging.AMI.Client;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
