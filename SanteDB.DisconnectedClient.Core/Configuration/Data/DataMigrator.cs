@@ -97,14 +97,22 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             // Migration order
             foreach (var m in this.GetProposal(includeDataMigrations))
             {
-                ApplicationContext.Current.SetProgress(Strings.locale_setting_migration, 0);
-                this.m_tracer.TraceVerbose("Will Install {0}", m.Id);
-                if (!m.Install())
+                try
                 {
-	                throw new ConfigurationMigrationException(m);
-                }
+                    ApplicationContext.Current.SetProgress(Strings.locale_setting_migration, 0);
+                    this.m_tracer.TraceVerbose("Will Install {0}", m.Id);
+                    if (!m.Install())
+                    {
+                        throw new ConfigurationMigrationException(m);
+                    }
 
-                ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
+                    ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
+                }
+                catch(Exception e)
+                {
+                    this.m_tracer.TraceError("Error running migration {0} - {1}", m.Id, e);
+                    throw new ConfigurationMigrationException(m, e);
+                }
             }
 
         }
