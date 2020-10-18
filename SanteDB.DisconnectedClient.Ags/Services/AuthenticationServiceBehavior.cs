@@ -197,6 +197,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                             var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
                             var rmtPrincipal = devAuthSvc.Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                            scopes = scopes ?? new String[] { "*" };
                             session = sessionService.Establish(rmtPrincipal, remoteEp, false, null, scopes.Union(new String[] { PermissionPolicyIdentifiers.LoginImpersonateApplication }).ToArray(), request["ui_locales"]);
                             break;
                         }

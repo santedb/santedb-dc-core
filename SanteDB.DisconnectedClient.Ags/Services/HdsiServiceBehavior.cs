@@ -83,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// Resolve the specified code
         /// </summary>
         /// <param name="parms"></param>
-        public override void ResolveCode(NameValueCollection parms)
+        public override void ResolvePointer(NameValueCollection parms)
         {
             // create only on the external server
             if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
@@ -118,7 +118,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
             else
             {
-                base.ResolveCode(parms);
+                base.ResolvePointer(parms);
             }
         }
 
