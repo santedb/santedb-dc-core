@@ -163,9 +163,9 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Expiry time
         /// </summary>
         [JsonProperty("exp"), XmlElement("exp")]
-        public DateTime Expiry
+        public DateTimeOffset Expiry
         {
-            get => this.Session.NotAfter.DateTime;
+            get => this.Session.NotAfter;
             set { }
         }
 
@@ -173,9 +173,9 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// Issued time
         /// </summary>
         [JsonProperty("nbf")]
-        public DateTime Issued
+        public DateTimeOffset Issued
         {
-            get => this.Session.NotBefore.DateTime;
+            get => this.Session.NotBefore;
             set { }
         }
 
