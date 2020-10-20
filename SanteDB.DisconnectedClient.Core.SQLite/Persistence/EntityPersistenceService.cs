@@ -35,6 +35,7 @@ using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -631,5 +632,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
             }
         }
+
     }
 }

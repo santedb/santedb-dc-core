@@ -37,6 +37,14 @@ using SanteDB.DisconnectedClient.Ags.Model;
 using System.Collections.Generic;
 using SanteDB.Core.Model.Interfaces;
 using System.Net;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core;
+using SanteDB.Core.Model.Roles;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Security;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Acts;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -75,7 +83,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// HDSI service behavior
         /// </summary>
-        public HdsiServiceBehavior() 
+        public HdsiServiceBehavior()
         {
         }
 
@@ -94,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        
+
                         var result = restClient.Invoke<CodeSearchRequest, IdentifiedData>("SEARCH", "_ptr", "application/x-www-form-urlencoded", new CodeSearchRequest(parms));
                         if (result != null)
                         {
@@ -234,6 +242,104 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 return base.Get(resourceType, id);
             }
+        }
+
+        /// <summary>
+        /// Copy the specified resource from the remote to this instance
+        /// </summary>
+        public override IdentifiedData Copy(string resourceType, string id)
+        {
+            if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                try
+                {
+                    var integrationService = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
+                    var handler = this.GetResourceHandler().GetResourceHandler<IHdsiServiceContract>(resourceType);
+
+                    ApplicationContext.Current.SetProgress(Strings.locale_downloading, 0.0f);
+                    var remote = integrationService.Get(handler.Type, Guid.Parse(id), null);
+                    ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(remote.Key.Value);
+                    ApplicationContext.Current.SetProgress(Strings.locale_downloading, 0.25f);
+
+                    Bundle insertBundle = new Bundle();
+                    insertBundle.Add(remote);
+
+                    // Fetch all missing relationships
+                    if(remote is Entity entity)
+                    {
+                        var persistence = ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>();
+                        foreach (var itm in entity.Relationships.ToArray())
+                        {
+                            if (!typeof(EntityRelationshipTypeKeyStrings).GetFields().Any(f => itm.RelationshipTypeKey.ToString().Equals((String)f.GetValue(null), StringComparison.OrdinalIgnoreCase)))
+                            {
+                                entity.Relationships.Remove(itm);
+                                continue;
+                            }
+
+                            var record = persistence.Get(itm.TargetEntityKey.Value, null, true, AuthenticationContext.Current.Principal);
+                            if(record == null) // Download and insert
+                            {
+                                record = integrationService.Get<Entity>(itm.TargetEntityKey.Value, null);
+                                insertBundle.Add(record);
+                                ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(record.Key.Value);
+                            }
+                        }
+                    }   
+                    else if(remote is Act act)
+                    {
+                        var persistence = ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>();
+                        foreach (var itm in act.Relationships)
+                        {
+                            var record = persistence.Get(itm.TargetActKey.Value, null, true, AuthenticationContext.Current.Principal);
+                            if (record == null) // Download and insert
+                            {
+                                record = integrationService.Get<Act>(itm.TargetActKey.Value, null);
+                                insertBundle.Add(record);
+                            }
+                        }
+                    }
+
+                    ApplicationContext.Current.SetProgress(Strings.locale_downloading, 0.5f);
+
+                    // Now we want to fetch all participations which have a relationship with the downloaded object if the object is a patient
+                    if (remote is Patient patient)
+                    {
+                        // We want to update the patient so that this SDL is linked
+                        int ofs = 0, tr = 1;
+                        while (ofs < tr)
+                        {
+                            var related = integrationService.Find<Act>(o => o.Participations.Any(p => p.PlayerEntityKey == patient.Key), ofs, 25);
+                            related.Item.ForEach(o => ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(o.Key.Value));
+
+                            tr = related.TotalResults;
+                            ofs += related.Item.Count;
+                            insertBundle.Item.AddRange(related.Item);
+                        }
+
+                        // Handle MDM just in case
+                        while (ofs < tr)
+                        {
+                            var related = integrationService.Find<Act>(o => o.Participations.Any(p => p.PlayerEntity.Relationships.Where(r=>r.RelationshipType.Mnemonic == "MDM-Master").Any(r=>r.SourceEntityKey == patient.Key)), ofs, 25);
+                            related.Item.ForEach(o => ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(o.Key.Value));
+
+                            tr = related.TotalResults;
+                            ofs += related.Item.Count;
+                            insertBundle.Item.AddRange(related.Item);
+                        }
+                    }
+
+                    // Insert 
+                    ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>()?.Insert(insertBundle, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
+                    return remote;
+                }
+                catch (Exception e)
+                {
+                    this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                    throw;
+                }
+            else
+                throw new FaultException(502);
+
         }
 
         /// <summary>
