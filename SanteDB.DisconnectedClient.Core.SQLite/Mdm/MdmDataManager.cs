@@ -161,6 +161,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                 // Update the data
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Insert(bundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
             }
+            else if(e.ResponseData is Entity entity && entity.Tags.Any(o=>o.TagKey == "$generated" && o.Value == "true"))
+            {
+                foreach (var rel in entity.Relationships.Where(o => o.RelationshipTypeKey == MasterRecordRelationship))
+                    this.RewriteRelationships(entity, rel.SourceEntityKey, rel.TargetEntityKey);
+            }
 
         }
 
