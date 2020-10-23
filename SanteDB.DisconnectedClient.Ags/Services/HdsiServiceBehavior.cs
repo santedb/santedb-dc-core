@@ -45,6 +45,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Security;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Rest.Common.Attributes;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -247,6 +248,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Copy the specified resource from the remote to this instance
         /// </summary>
+        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
         public override IdentifiedData Copy(string resourceType, string id)
         {
             if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
