@@ -149,8 +149,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
             var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
             var currentUserEntity = userService.GetUserEntity(AuthenticationContext.Current.Principal.Identity);
-            if (data.Participations.All(o => o.ParticipationRoleKey != ActParticipationKey.Authororiginator))
-                data.Participations.Add(new ActParticipation(ActParticipationKey.Authororiginator, currentUserEntity));
 
             return data;
         }

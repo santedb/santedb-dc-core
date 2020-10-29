@@ -280,7 +280,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().RestrictLoginToFacilityUsers)
             {
                 var subFacl = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities;
-                var isInSubFacility = this.UserEntity?.LoadCollection<EntityRelationship>("Relationships").Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.Value)) == true;
+                var isInSubFacility = this.UserEntity?.GetRelationships().Any(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation && subFacl.Contains(o.TargetEntityKey.Value)) == true;
                 if (!isInSubFacility && ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(this.GetPrincipal(), PermissionPolicyIdentifiers.AccessClientAdministrativeFunction) != PolicyGrantType.Grant)
                 {
                     if (this.UserEntity == null)
@@ -291,10 +291,10 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     else
                     {
                         this.m_tracer.TraceError("User is in facility {0} but tablet only allows login from {1}",
-                            String.Join(",", this.UserEntity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
+                            String.Join(",", this.UserEntity?.GetRelationships().Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
                             String.Join(",", subFacl)
                             );
-                        errDetail += String.Format(" entity={0}, facility={1}", String.Join(",", this.UserEntity?.LoadCollection<EntityRelationship>("Relationships").Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
+                        errDetail += String.Format(" entity={0}, facility={1}", String.Join(",", this.UserEntity?.GetRelationships().Where(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation).Select(o => o.TargetEntityKey).ToArray()),
                             String.Join(",", subFacl));
                     }
                     throw new SecurityException(String.Format(Strings.locale_loginFromUnsubscribedFacility, errDetail));

@@ -166,11 +166,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override ActParticipation InsertInternal(SQLiteDataContext context, ActParticipation data)
         {
             // Ensure we haven't already persisted this
-            if (data.PlayerEntity != null) data.PlayerEntity = data.PlayerEntity.EnsureExists(context);
             data.PlayerEntityKey = data.PlayerEntity?.Key ?? data.PlayerEntityKey;
-            if (data.ParticipationRole != null) data.ParticipationRole = data.ParticipationRole.EnsureExists(context);
+            if (data.ParticipationRole != null) data.ParticipationRole = data.ParticipationRole.EnsureExists(context, false);
             data.ParticipationRoleKey = data.ParticipationRole?.Key ?? data.ParticipationRoleKey;
-            if (data.Act != null) data.Act = data.Act.EnsureExists(context);
             data.ActKey = data.Act?.Key ?? data.ActKey;
 
             byte[] target = data.PlayerEntityKey.Value.ToByteArray(),
@@ -215,11 +213,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override ActParticipation UpdateInternal(SQLiteDataContext context, ActParticipation data)
         {
-            if (data.PlayerEntity != null) data.PlayerEntity = data.PlayerEntity.EnsureExists(context);
             data.PlayerEntityKey = data.PlayerEntity?.Key ?? data.PlayerEntityKey;
-            if (data.ParticipationRole != null) data.ParticipationRole = data.ParticipationRole.EnsureExists(context);
+            if (data.ParticipationRole != null) data.ParticipationRole = data.ParticipationRole.EnsureExists(context, false);
             data.ParticipationRoleKey = data.ParticipationRole?.Key ?? data.ParticipationRoleKey;
-            if (data.Act != null) data.Act = data.Act.EnsureExists(context);
             data.ActKey = data.Act?.Key ?? data.ActKey;
 
             return base.UpdateInternal(context, data);

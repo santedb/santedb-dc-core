@@ -60,9 +60,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override ActRelationship InsertInternal(SQLiteDataContext context, ActRelationship data)
         {
             // Ensure we haven't already persisted this
-            if (data.TargetAct != null) data.TargetAct = data.TargetAct.EnsureExists(context);
             data.TargetActKey = data.TargetAct?.Key ?? data.TargetActKey;
-            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context);
+            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context, false);
             data.RelationshipTypeKey = data.RelationshipType?.Key ?? data.RelationshipTypeKey;
 
             byte[] target = data.TargetActKey.Value.ToByteArray(),
@@ -107,9 +106,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override ActRelationship UpdateInternal(SQLiteDataContext context, ActRelationship data)
         {
-            if (data.TargetAct != null) data.TargetAct = data.TargetAct.EnsureExists(context);
             data.TargetActKey = data.TargetAct?.Key ?? data.TargetActKey;
-            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context);
+            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context, false);
             data.RelationshipTypeKey = data.RelationshipType?.Key ?? data.RelationshipTypeKey;
 
             return base.UpdateInternal(context, data);

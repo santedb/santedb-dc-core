@@ -4,7 +4,12 @@ using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
+
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +23,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// </summary>
     public partial class ApplicationServiceBehavior
     {
+
+        // Security repository
+        private ISecurityRepositoryService m_securityRepository = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
 
         /// <summary>
         /// Get all templates from the host
@@ -40,6 +48,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // First, get the template definition
             var appletManager = ApplicationServiceContext.Current.GetService<IAppletManagerService>();
             var parameters = RestOperationContext.Current.IncomingRequest.QueryString.Keys.OfType<String>().ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.QueryString[o]);
+
+            // Add context parameters
+            var userEntity = this.m_securityRepository.GetUserEntity(AuthenticationContext.Current.Principal.Identity);
+            if (!parameters.ContainsKey("userEntityId")) 
+                parameters.Add("userEntityId", userEntity?.Key.ToString());
+            if (!parameters.ContainsKey("facilityId"))
+                parameters.Add("facilityId", userEntity.GetRelationships().FirstOrDefault(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation)?.TargetEntityKey?.ToString());
+
             return appletManager.Applets.GetTemplateInstance(templateId, parameters);
         }
         

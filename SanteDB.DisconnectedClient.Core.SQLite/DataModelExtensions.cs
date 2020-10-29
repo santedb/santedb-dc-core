@@ -348,7 +348,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Ensure the specified object exists
         /// </summary>
-        public static TModel EnsureExists<TModel>(this TModel me, SQLiteDataContext context) where TModel : IIdentifiedEntity
+        public static TModel EnsureExists<TModel>(this TModel me, SQLiteDataContext context, bool createIfNotExists = true) where TModel : IIdentifiedEntity
         {
 
             // Me
@@ -361,7 +361,7 @@ namespace SanteDB.DisconnectedClient.SQLite
 
 
             // Existing exists?
-            if (existing == null && !m_readonlyTypes.Contains(typeof(TModel)))
+            if (existing == null && !m_readonlyTypes.Contains(typeof(TModel)) && createIfNotExists)
             {
                 IIdentifiedEntity inserted = ((TModel)idpInstance.Insert(context, me)) as IIdentifiedEntity;
                 me.Key = inserted.Key;

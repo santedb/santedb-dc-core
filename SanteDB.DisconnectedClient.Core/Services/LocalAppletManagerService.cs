@@ -115,6 +115,7 @@ namespace SanteDB.DisconnectedClient.Services
             applet.Initialize();
             this.m_appletCollection.Add(applet);
             AppletCollection.ClearCaches();
+
             return true;
         }
 

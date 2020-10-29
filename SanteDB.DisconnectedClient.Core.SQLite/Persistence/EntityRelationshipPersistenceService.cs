@@ -109,9 +109,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
 
             // Ensure we haven't already persisted this
-            if (data.TargetEntity != null && !data.InversionIndicator) data.TargetEntity = data.TargetEntity.EnsureExists(context);
             data.TargetEntityKey = data.TargetEntity?.Key ?? data.TargetEntityKey;
-            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context);
+            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context, false);
             data.RelationshipTypeKey = data.RelationshipType?.Key ?? data.RelationshipTypeKey;
 
             //byte[] target = data.TargetEntityKey.Value.ToByteArray(),
@@ -159,7 +158,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Ensure we haven't already persisted this
             //if (data.TargetEntity != null) data.TargetEntity = data.TargetEntity.EnsureExists(context);
             data.TargetEntityKey = data.TargetEntity?.Key ?? data.TargetEntityKey;
-            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context);
+            if (data.RelationshipType != null) data.RelationshipType = data.RelationshipType.EnsureExists(context, false);
             data.RelationshipTypeKey = data.RelationshipType?.Key ?? data.RelationshipTypeKey;
             return base.UpdateInternal(context, data);
         }
