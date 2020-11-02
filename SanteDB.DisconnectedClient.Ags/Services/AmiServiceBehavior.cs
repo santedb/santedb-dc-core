@@ -399,7 +399,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 serviceOptions.Endpoints.RemoveAll(o => o.ServiceType == ServiceEndpointType.AuthenticationService);
 
                 // Get the resources which are supported
-                foreach (var itm in this.m_resourceHandler.Handlers)
+                foreach (var itm in this.GetResourceHandler().Handlers)
                 {
                     var svc = this.ResourceOptions(itm.ResourceName);
                     serviceOptions.Resources.Add(svc);
@@ -417,8 +417,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     ServiceType = s.ServiceType == typeof(AmiServiceBehavior) ? ServiceEndpointType.AdministrationIntegrationService :
                     s.ServiceType == typeof(HdsiServiceBehavior) ? ServiceEndpointType.HealthDataService :
                     s.ServiceType == typeof(AuthenticationServiceBehavior) ? ServiceEndpointType.AuthenticationService :
-                    (ServiceEndpointType)0
-                }).Where(o => o.ServiceType > 0));
+                    (ServiceEndpointType)999
+                }).Where(o => (int)o.ServiceType < 999));
                 return serviceOptions;
             }
         }
