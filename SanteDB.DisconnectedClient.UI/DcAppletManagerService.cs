@@ -127,7 +127,11 @@ namespace SanteDB.DisconnectedClient.UI
                 tw.WriteLine("}");
 
                 tw.WriteLine("__SanteDBAppService.GetTemplates = function() {");
-                tw.WriteLine("return '[{0}]'", String.Join(",", this.Applets.SelectMany(o => o.Templates).Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
+                tw.WriteLine("return '[{0}]'", String.Join(",", this.Applets
+                    .SelectMany(o => o.Templates)
+                    .GroupBy(o=>o.Mnemonic)
+                    .Select(o=>o.OrderByDescending(t=>t.Priority).FirstOrDefault())
+                    .Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
                 tw.WriteLine("}");
 
                 tw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");
