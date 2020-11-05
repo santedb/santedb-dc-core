@@ -156,16 +156,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// </summary>
         private void ClinicalRepositoryResponded(object sender, IntegrationResultEventArgs e)
         {
-            //if (e.ResponseData is Bundle bundle && e.SubmittedData != null && this.CorrectMdmData(bundle))
-            //{
-            //    // Update the data
-            //    ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Insert(bundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-            //}
-            //else if(e.ResponseData is Entity entity && entity.Tags.Any(o=>o.TagKey == "$generated" && o.Value == "true"))
-            //{
-            //    foreach (var rel in entity.Relationships.Where(o => o.RelationshipTypeKey == MasterRecordRelationship))
-            //        this.RewriteRelationships(entity, rel.SourceEntityKey, rel.TargetEntityKey);
-            //}
+            if (e.ResponseData is Bundle bundle && e.SubmittedData != null && this.CorrectMdmData(bundle))
+            {
+                // Update the data
+                ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Insert(bundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+            }
+            else if (e.ResponseData is Entity entity && entity.Tags.Any(o => o.TagKey == "$generated" && o.Value == "true"))
+            {
+                foreach (var rel in entity.Relationships.Where(o => o.RelationshipTypeKey == MasterRecordRelationship))
+                    this.RewriteRelationships(entity, rel.SourceEntityKey, rel.TargetEntityKey);
+
+                // TODO: Save the resulting object here.
+            }
 
         }
 
@@ -224,14 +226,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         // The source of these point to the master, we need to correct all inbound relationships to point to me instead of the local which originally pointed at
                         foreach (var rel in masterRelation.ToArray())
                         {
-                            bundle?.Item.Add(this.HideCurrentLocal(rel));
+                            var currentLocal = this.HideCurrentLocal(rel);
+                            if (currentLocal != null)
+                            {
+                                bundle?.Item.Add(currentLocal);
+                                // Store an MDM local relationship between the hidden local and the new mdm master
+                                bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, entity) { SourceEntityKey = currentLocal.Key });
+                            }
                             // Rewrite all relationships
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
                         }
 
                         // Remove all MDM links as these make no sense in this context
                         entity.Relationships.RemoveAll(o => o.RelationshipTypeKey == MasterRecordRelationship || o.RelationshipTypeKey == MasterRecordOfTruthRelationship || o.RelationshipTypeKey == CandidateLocalRelationship);
-
                         hasChanged = true;
                     }
                     else if (itm is Act act)
@@ -276,8 +283,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                             this.RewriteRelationships(newEntity, local.Key, newEntity.Key);
                         }
                     }
+                    else 
+                        master = EntitySource.Current.Get<Entity>(er.TargetEntityKey);
                     var existing = bundle?.Item.RemoveAll(o => o.Key == er.SourceEntityKey);
-                    bundle?.Item.Add(this.HideCurrentLocal(er));
+                    var currentLocal = this.HideCurrentLocal(er);
+                    if (currentLocal != null)
+                    {
+                        bundle?.Item.Add(currentLocal);
+                        // Store an MDM local relationship between the hidden local and the new mdm master
+                        bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, (Entity)master) { SourceEntityKey = currentLocal.Key });
+                    }
                     hasChanged = true;
                 }
             }

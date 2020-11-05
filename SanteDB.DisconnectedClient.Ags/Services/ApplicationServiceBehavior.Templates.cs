@@ -36,7 +36,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             var httpQuery = NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
             var query = QueryExpressionParser.BuildLinqExpression<AppletTemplateDefinition>(httpQuery, null, true);
-            return appletManager.Applets.SelectMany(o => o.Templates).Where(query.Compile()).ToList();
+            return appletManager.Applets
+                .SelectMany(o => o.Templates)
+                .GroupBy(o=>o.Mnemonic)
+                .Select(o=>o.OrderByDescending(t=>t.Priority).FirstOrDefault())
+                .Where(query.Compile()).ToList();
 
         }
 
