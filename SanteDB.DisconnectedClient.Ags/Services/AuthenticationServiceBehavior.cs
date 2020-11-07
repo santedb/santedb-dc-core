@@ -145,6 +145,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             else
                                 principal = identityService.Authenticate(request["username"], request["password"]);
 
+                            AuthenticationContext.Current = new AuthenticationContext(principal);
+
                             var lanugageCode = request["ui_locales"] ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
                             try

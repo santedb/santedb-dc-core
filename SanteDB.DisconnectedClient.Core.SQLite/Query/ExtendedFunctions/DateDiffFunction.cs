@@ -36,11 +36,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                 switch (unit)
                 {
                     case "y":
-                        unit = "year";
                         qtyParse *= TimeSpan.TicksPerDay * 365;
                         break;
                     case "M":
-                        unit = "mon";
                         qtyParse *= TimeSpan.TicksPerDay * 30;
                         break;
                     case "d":

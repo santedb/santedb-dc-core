@@ -150,8 +150,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 return amiClient.SubmitDiagnosticReport(new DiagnosticReport()
                 {
                     ApplicationInfo = (report.ApplicationInfo as ApplicationInfo)?.ToDiagnosticReport(),
-                    CreatedBy = report.CreatedBy,
-                    CreatedByKey = report.CreatedByKey,
                     CreationTime = DateTime.Now,
                     Attachments = attachments,
                     Note = report.Note,
