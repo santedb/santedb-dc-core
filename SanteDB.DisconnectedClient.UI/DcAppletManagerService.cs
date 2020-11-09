@@ -19,6 +19,8 @@
  */
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Configuration;
@@ -100,16 +102,26 @@ namespace SanteDB.DisconnectedClient.UI
                 tw.WriteLine("__SanteDBAppService.GetMagic = function() {{ return '{0}'; }}", ApplicationContext.Current.ExecutionUuid);
                 tw.WriteLine("__SanteDBAppService.GetVersion = function() {{ return '{0} ({1})'; }}", typeof(SanteDBConfiguration).Assembly.GetName().Version, typeof(SanteDBConfiguration).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
                 tw.WriteLine("__SanteDBAppService.GetString = function(key) {");
-                tw.WriteLine("\tswitch(key) {");
-                foreach (var itm in this.Applets.GetStrings(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
-                {
-                    tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Key, itm.Value?.EncodeAscii().Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
-                }
-                tw.WriteLine("\t}");
+                tw.WriteLine("\tvar strData = __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()] || __SanteDBAppService._stringData['en'];");
+                tw.WriteLine("\treturn strData[key] || key;");
                 tw.WriteLine("}");
+
+                tw.WriteLine("__SanteDBAppService._stringData = {};");
+                var languages = this.Applets.SelectMany(a => a.Strings).Select(o => o.Language).Distinct();
+                foreach (var lang in languages)
+                {
+                    tw.WriteLine("\t__SanteDBAppService._stringData['{0}'] = {{", lang);
+                    foreach (var itm in this.Applets.GetStrings(lang))
+                    {
+                        tw.WriteLine("\t\t'{0}': '{1}',", itm.Key, itm.Value?.EncodeAscii().Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
+                    }
+                    tw.WriteLine("\t\t'none':'none' };");
+                }
+
 
                 tw.WriteLine("__SanteDBAppService.GetTemplateForm = function(templateId) {");
                 tw.WriteLine("\tswitch(templateId) {");
+
                 foreach (var itm in this.Applets.SelectMany(o => o.Templates))
                 {
                     tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.Form);

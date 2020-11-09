@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -78,7 +79,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             if (widget.Count() == 0)
                 throw new KeyNotFoundException(widgetId);
             else
-                return new MemoryStream(appletCollection.RenderAssetContent(widget.OrderByDescending(o=>o.W.Priority).First().A, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+                return new MemoryStream(appletCollection.RenderAssetContent(widget.OrderByDescending(o=>o.W.Priority).First().A, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
 
         }
     }

@@ -36,6 +36,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -99,7 +100,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
                         var viewState = htmlContent.ViewState;
                         sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
-                        var displayName = htmlContent.GetTitle(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+                        var displayName = htmlContent.GetTitle(AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
                         if (!String.IsNullOrEmpty(displayName))
                             sw.Write($", displayName: '{displayName }'");
                         if (itm.Policies.Count > 0)
@@ -210,7 +211,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 return;
 
             // Get text for menu item
-            string menuText = menu.GetText(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            string menuText = menu.GetText(AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
             var existing = retVal.Find(o => o.Text == menuText && o.Icon == menu.Icon);
             if (existing == null)
             {

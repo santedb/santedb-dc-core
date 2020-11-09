@@ -33,6 +33,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -126,7 +128,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
             // Write asset
-            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset,  CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
+            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
             {
                 { "csp_nonce", RestOperationContext.Current.ServiceEndpoint.Behaviors.OfType<SecurityPolicyHeadersBehavior>().FirstOrDefault()?.Nonce },
 #if DEBUG

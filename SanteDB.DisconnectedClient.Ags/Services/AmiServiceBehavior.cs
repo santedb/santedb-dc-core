@@ -130,7 +130,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         using (FileStream fs = File.OpenRead(logFileName))
                             fs.CopyTo(gz);
                         var logFile = new FileInfo(logFileName);
-                        DiagnosticBinaryAttachment retVal = new DiagnosticBinaryAttachment()
+                        attachments.Add(new DiagnosticBinaryAttachment()
                         {
                             Id = Path.GetFileName(logFileName),
                             FileDescription = Path.GetFileName(logFileName) + ".gz",
@@ -138,7 +138,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             LastWriteDate = logFile.LastWriteTime,
                             FileSize = logFile.Length,
                             Content = ms.ToArray()
-                        };
+                        });
                     }
                 }
             }
