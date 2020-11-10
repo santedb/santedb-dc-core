@@ -154,7 +154,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 // TODO: Authenticate the device 
                                 var userEntity = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>()?.GetUserEntity(principal.Identity);
                                 if (userEntity != null)
-                                    lanugageCode = userEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode;
+                                    lanugageCode = userEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode ?? lanugageCode;
                             }
                             catch(Exception e) {
                                 this.m_tracer.TraceWarning("Cannot set the language of session from user preferences - {0}", e);

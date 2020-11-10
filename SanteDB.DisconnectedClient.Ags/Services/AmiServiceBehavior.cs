@@ -93,7 +93,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Submits a diagnostic report
         /// </summary>
-        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [Demand(PermissionPolicyIdentifiers.Login)]
         public override DiagnosticReport CreateDiagnosticReport(DiagnosticReport report)
         {
             report.ApplicationInfo = new ApplicationInfo(false);
@@ -113,11 +113,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             Content = ms.ToArray(),
                             FileDescription = "Configuration file",
                             FileName = "SanteDB.config.gz",
-                            Id = "config"
+                            Id = "config",
+                            ContentType= "application/x-gzip"
                         });
                     }
                 }
-                else // Some other file
+                else if (att is DiagnosticBinaryAttachment bin && bin.Content.Length > 0)
+                    attachments.Add(att);
+                else  // Some other file
                 {
                     var logFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "log", att.FileName);
                     if (!File.Exists(logFileName))
@@ -134,10 +137,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         {
                             Id = Path.GetFileName(logFileName),
                             FileDescription = Path.GetFileName(logFileName) + ".gz",
-                            FileName = logFile.FullName + ".gz",
+                            FileName = Path.GetFileName(logFileName) + ".gz",
                             LastWriteDate = logFile.LastWriteTime,
                             FileSize = logFile.Length,
-                            Content = ms.ToArray()
+                            Content = ms.ToArray(),
+                            ContentType = "application/x-gzip"
                         });
                     }
                 }
