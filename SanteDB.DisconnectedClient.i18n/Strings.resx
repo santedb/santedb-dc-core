@@ -422,4 +422,7 @@ Sincerely,
   <data name="locale_backupStarted" xml:space="preserve">
     <value>Automatic System Backup Started - Data access may take longer than usual</value>
   </data>
+  <data name="err_prune_audit_failed" xml:space="preserve">
+    <value>Running audit retention job failed with error {0}</value>
+  </data>
 </root>

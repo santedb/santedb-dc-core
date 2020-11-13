@@ -143,6 +143,11 @@ namespace SanteDB.DisconnectedClient.Services
         /// Get the server time drift
         /// </summary>
         TimeSpan GetServerTimeDrift();
+
+        /// <summary>
+        /// Determine if the object exists
+        /// </summary>
+        bool Exists<T>(Guid value);
     }
 
     /// <summary>

@@ -159,7 +159,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
         /// </summary>
         public OutboundQueueEntry(DeadLetterQueueEntry retryEntry) : base(retryEntry)
         {
-
+            this.IsRetry = true;
         }
         /// <summary>
         /// Indicates the fail count
@@ -237,6 +237,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
         /// </summary>
         public InboundQueueEntry(DeadLetterQueueEntry retryEntry) : base(retryEntry)
         {
+            this.IsRetry = true;
 
         }
     }
@@ -260,6 +261,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
         /// </summary>
         public OutboundAdminQueueEntry(DeadLetterQueueEntry retryEntry) : base(retryEntry)
         {
+            this.IsRetry = true;
 
         }
     }

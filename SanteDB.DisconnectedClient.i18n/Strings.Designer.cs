@@ -241,6 +241,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Running audit retention job failed with error {0}.
+        /// </summary>
+        public static string err_prune_audit_failed {
+            get {
+                return ResourceManager.GetString("err_prune_audit_failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A purge is not permitted on this application configuration. Perhaps you&apos;re set to online mode only?.
         /// </summary>
         public static string err_purgeNotPermitted {

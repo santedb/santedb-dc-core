@@ -448,20 +448,18 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     try
                     {
 
+                        // Sync item is a retry, so we want to bundle the dependent objects
+                        if (syncItm.IsRetry)
+                            dpe = this.BundleDependentObjects(dpe, integrationService);
+
                         IEnumerable<Guid> objectKeys = null;
                         // Reconstitute bundle
                         if (dpe is Bundle bundle)
                         {
-                            bundle.Reconstitute();
-                            dpe = bundle.Entry ?? dpe;
-
-                            // If the sync item is a retry , perhaps there is missing information from the bundle , let's include it
-                            if (syncItm.IsRetry)
-                                this.AddContextualInformation(bundle);
-                            objectKeys = bundle.Item.Select(o => o.Key.Value);
+                            objectKeys = bundle.Item.Select(o => o.Key.Value).ToArray();
 
                             // Now we want to correct any template keys we may have 
-                            foreach (var itm in bundle.Item)
+                            foreach (var itm in bundle.Item.ToArray())
                             {
                                 if (itm is TemplateDefinition)
                                     this.MapServerTemplateKey(integrationService, itm as TemplateDefinition);
@@ -478,7 +476,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                                 entity.TemplateKey = this.MapServerTemplateKey(integrationService, entity.LoadProperty<TemplateDefinition>(nameof(entity.Template)));
                             else if (dpe is Act act && act.TemplateKey.HasValue)
                                 act.TemplateKey = this.MapServerTemplateKey(integrationService, act.LoadProperty<TemplateDefinition>(nameof(act.Template)));
-
                         }
 
                         // Send the object to the remote host
@@ -623,34 +620,52 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         }
 
         /// <summary>
-        /// Adds additional contextual information to <paramref name="bundle"/> so the server 
-        /// can process the records.
+        /// Bundle dependent objects for resubmit
         /// </summary>
-        private void AddContextualInformation(Bundle bundle)
+        private IdentifiedData BundleDependentObjects(IdentifiedData data, IClinicalIntegrationService integrationService, Bundle currentBundle = null)
         {
-            bundle.Item = bundle?.Item.OfType<IdentifiedData>().ToList();
-            this.m_tracer.TraceInfo("RETRY: Will try with all available data");
-            // Try to grab all references in the bundle
-            foreach (var itm in bundle.Item.OfType<Act>().ToList())
+            // Bundle establishment
+            currentBundle = currentBundle ?? new Bundle();
+            if (data is Bundle dataBundle)
+                currentBundle.Item.AddRange(dataBundle.Item);
+
+            if (data is Person entity) // Fix entity key
             {
-                foreach (var ptcpt in itm.Participations.ToList())
-                    if (!bundle.Item.Any(i => i.Key == ptcpt.PlayerEntityKey))
+                foreach (var rel in entity.Relationships)
+                    if (!currentBundle.Item.Any(i => i.Key == rel.TargetEntityKey) && !integrationService.Exists<Entity>(rel.TargetEntityKey.Value))
                     {
-                        var loadedItm = ptcpt.LoadProperty<Entity>(nameof(ActParticipation.PlayerEntity));
-                        if (loadedItm != null)
-                            bundle.Item.Add(loadedItm);
+                        var loaded = rel.LoadProperty<Entity>(nameof(EntityRelationship.TargetEntity));
+                        currentBundle.Item.Insert(0, loaded);
+                        this.BundleDependentObjects(loaded, integrationService, currentBundle); // cascade load
+                    }
+
+            }
+            else if (data is Act act)
+            {
+                foreach (var rel in act.Relationships)
+                    if (!currentBundle.Item.Any(i => i.Key == rel.TargetActKey) && !integrationService.Exists<Act>(rel.TargetActKey.Value))
+                    {
+                        var loaded = rel.LoadProperty<Act>(nameof(ActRelationship.TargetAct));
+                        currentBundle.Item.Insert(0, loaded);
+                        this.BundleDependentObjects(loaded, integrationService, currentBundle);
+                    }
+                foreach (var rel in act.Participations)
+                    if (!currentBundle.Item.Any(i => i.Key == rel.PlayerEntityKey) && !integrationService.Exists<Entity>(rel.PlayerEntityKey.Value))
+                    {
+                        var loaded = rel.LoadProperty<Entity>(nameof(ActParticipation.PlayerEntity));
+                        currentBundle.Item.Insert(0, loaded);
+                        this.BundleDependentObjects(loaded, integrationService, currentBundle);
                     }
             }
-            foreach (var itm in bundle.Item.OfType<Patient>().ToList())
+            else if (data is Bundle bundle)
             {
-                foreach (var rel in itm.Relationships.ToList())
-                    if (!bundle.Item.Any(i => i.Key == rel.TargetEntityKey))
-                    {
-                        var loadedItm = rel.LoadProperty<Entity>(nameof(EntityRelationship.TargetEntity));
-                        if (loadedItm != null)
-                            bundle.Item.Add(loadedItm);
-                    }
+                foreach (var itm in bundle.Item.ToArray())
+                {
+                    this.BundleDependentObjects(itm, integrationService, currentBundle);
+                }
             }
+
+            return currentBundle;
         }
 
         /// <summary>

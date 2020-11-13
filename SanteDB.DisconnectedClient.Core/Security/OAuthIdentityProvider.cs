@@ -331,7 +331,7 @@ namespace SanteDB.DisconnectedClient.Security
                         {
                             this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
 
-                            if (ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") != "true")
+                            if (ex.Result.ErrorDescription == "AUTH_INV" || ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") != "true")
                             {
 
                                 var se = new SecurityException(

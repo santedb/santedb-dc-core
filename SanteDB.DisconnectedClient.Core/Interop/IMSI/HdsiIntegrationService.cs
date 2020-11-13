@@ -19,6 +19,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -67,8 +68,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 	    // Last ping
 	    private DateTime m_lastPing;
 
-	    // Options
-	    private ServiceOptions m_options;
+        // Known uuids from the server
+        private HashSet<Guid> m_knownUuids = new HashSet<Guid>();
+
+        // Options
+        private ServiceOptions m_options;
 
 	    // Have we let the user know?
 	    private bool m_tickleSent;
@@ -670,6 +674,34 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 submittedData.VersionSequence = newData.VersionSequence;
                 submittedData.PreviousVersionKey = newData.PreviousVersionKey;
                 idpService.Update(submittedData);
+            }
+        }
+
+        /// <summary>
+        /// PErform a HEAD operation
+        /// </summary>
+        public bool Exists<TModel>(Guid key)
+        {
+            try
+            {
+                if (m_knownUuids.Contains(key)) return true; // Already tested
+                else if (m_knownUuids.Count > 1000) m_knownUuids.Clear();
+
+                HdsiServiceClient client = this.GetServiceClient(); //new ImsiServiceClient(ApplicationContext.Current.GetRestClient("imsi"));
+                client.Client.Responding += (o, e) => this.Responding?.Invoke(o, e);
+                client.Client.Credentials = this.GetCredentials(client.Client);
+                if (client.Client.Credentials == null) return false;
+
+                this.m_tracer.TraceVerbose("Performing HDSI HEAD ({0}):{1}", typeof(TModel).FullName, key);
+                var retVal = client.Client.Head($"{typeof(TModel).Name}/{key}");
+
+                if (retVal.ContainsKey("ETag"))
+                    m_knownUuids.Add(key);
+                return retVal.ContainsKey("ETag");
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
     }

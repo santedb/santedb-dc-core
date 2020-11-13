@@ -41,6 +41,8 @@ using SanteDB.BI.Model;
 using SanteDB.DisconnectedClient.SQLite;
 using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using SanteDB.Core.Model;
+using SanteDB.Core.Jobs;
+using SanteDB.DisconnectedClient.SQLite.Security.Audit;
 
 namespace SanteDB.DisconnectedClient.Security.Audit
 {
@@ -69,7 +71,8 @@ namespace SanteDB.DisconnectedClient.Security.Audit
             {
                 try
                 {
-                    this.Prune();
+
+                    ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new SQLiteAuditPruneJob(), new TimeSpan(1, 0, 0, 0), JobStartType.DelayStart);
 
                     // Bind BI stuff
                     ApplicationServiceContext.Current.GetService<IBiMetadataRepository>()?.Insert(new SanteDB.BI.Model.BiDataSourceDefinition()
@@ -109,47 +112,6 @@ namespace SanteDB.DisconnectedClient.Security.Audit
             ));
         }
 
-        /// <summary>
-        /// Prune the audit database
-        /// </summary>
-        public void Prune()
-        {
-            var config = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-
-            try
-            {
-                this.m_tracer.TraceInfo("Prune audits older than {0}", config?.AuditRetention);
-                if (config?.AuditRetention == null) return; // keep audits forever
-
-                var conn = this.CreateConnection();
-                using (conn.Lock())
-                {
-                    try
-                    {
-                        conn.BeginTransaction();
-                        DateTime cutoff = DateTime.Now.Subtract(config.AuditRetention);
-                        Expression<Func<DbAuditData, bool>> epred = o => o.CreationTime < cutoff;
-                        conn.Table<DbAuditData>().Delete(epred);
-
-                        // Delete objects
-                        conn.Execute($"DELETE FROM {conn.GetMapping<DbAuditObject>().TableName} WHERE NOT({conn.GetMapping<DbAuditObject>().FindColumnWithPropertyName(nameof(DbAuditObject.AuditId)).Name} IN " +
-                            $"(SELECT {conn.GetMapping<DbAuditData>().FindColumnWithPropertyName(nameof(DbAuditData.Id)).Name} FROM {conn.GetMapping<DbAuditData>().TableName})" +
-                            ")");
-
-                        conn.Commit();
-                    }
-                    catch
-                    {
-                        conn.Rollback();
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Error pruning audit database: {0}", e);
-                throw;
-            }
-        }
 
         /// <summary>
         /// Finds the specified audit in the data repository

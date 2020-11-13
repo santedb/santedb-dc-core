@@ -231,7 +231,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                             {
                                 bundle?.Item.Add(currentLocal);
                                 // Store an MDM local relationship between the hidden local and the new mdm master
-                                bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, entity) { SourceEntityKey = currentLocal.Key });
+                                bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, entity.Key) { SourceEntityKey = currentLocal.Key });
                             }
                             // Rewrite all relationships
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
@@ -291,7 +291,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                     {
                         bundle?.Item.Add(currentLocal);
                         // Store an MDM local relationship between the hidden local and the new mdm master
-                        bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, (Entity)master) { SourceEntityKey = currentLocal.Key });
+                        if(master != null)
+                            bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, master.Key) { SourceEntityKey = currentLocal.Key });
+                        else
+                            bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, er.TargetEntityKey) { SourceEntityKey = currentLocal.Key });
+
                     }
                     hasChanged = true;
                 }
