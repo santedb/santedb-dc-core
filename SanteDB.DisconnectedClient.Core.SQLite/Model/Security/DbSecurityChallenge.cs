@@ -1,4 +1,4 @@
-﻿using SanteDB.OrmLite.Attributes;
+﻿using SQLite.Net.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,19 +31,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
         /// <summary>
         /// Gets the user that is associated with this challenge
         /// </summary>
-        [Column("user_uuid"), ForeignKey(typeof(DbSecurityUser), nameof(DbSecurityUser.Uuid))]
+        [Column("user_uuid")]
         public byte[] UserUuid { get; set; }
 
         /// <summary>
         /// Gets or sets the associated challenge text
         /// </summary>
-        [Column("challenge_uuid"), ForeignKey(typeof(DbSecurityChallenge), nameof(DbSecurityChallenge.Uuid))]
+        [Column("challenge_uuid")]
         public byte[] ChallengeUuid { get; set; }
 
         /// <summary>
         /// Challenge response
         /// </summary>
-        [Column("response"), Secret]
+        [Column("response")]
         public String ChallengeResponse { get; set; }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
             /// <summary>
             /// Challenge response
             /// </summary>
-            [Column("response"), Secret]
+            [Column("response")]
             public String ChallengeResponse { get; set; }
         }
 

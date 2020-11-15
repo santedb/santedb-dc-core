@@ -175,7 +175,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <param name="tfaSecret">Tfa secret.</param>
         public System.Security.Principal.IPrincipal Authenticate(string userName, string password, string tfaSecret)
         {
-            throw new NotImplementedException();
+            return this.AuthenticateInternal(userName, password, null);
         }
 
         /// <summary>

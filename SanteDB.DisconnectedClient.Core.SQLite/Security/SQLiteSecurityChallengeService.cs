@@ -197,7 +197,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 {
                     var userUuid = key.ToByteArray();
 
-                    var sql = "select security_challenge.* from security_user inner join security_user_challenge inner join security_challenge on (security_challenge.uuid = security_user_challenge.challenge_uuid) WHERE user_uuid = ? and security_user.obsoletionTime is null";
+                    var sql = "select security_challenge.* from security_challenge inner join security_user_challenge on (security_challenge.uuid = security_user_challenge.challenge_uuid) WHERE user_uuid = ?";
                     var retVal = conn.Query<DbSecurityChallenge>(sql, userUuid, DateTime.Now)
                         .ToList()
                         .Select(this.MapDbSecurityChallenge)
