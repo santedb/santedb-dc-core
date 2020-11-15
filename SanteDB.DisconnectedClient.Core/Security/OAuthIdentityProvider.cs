@@ -257,134 +257,140 @@ namespace SanteDB.DisconnectedClient.Security
             }
 
             var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
+
             IPrincipal retVal = null;
 
             // Authenticate
             try
             {
-                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
-                {
-
-                    // Construct oauth req
-                    OAuthTokenRequest request = null;
-                    if (refreshPrincipal != null)
-                        request = new OAuthTokenRequest(refreshPrincipal, "*");
-                    else if (!String.IsNullOrEmpty(password))
-                        request = new OAuthTokenRequest(userName, password, "*");
-                    else
-                        request = new OAuthTokenRequest(userName, null, "*");
-
-                    // Explicit policies
-                    if (policies != null)
-                        request.Scope = String.Join(" ", policies);
-
-                    // Set credentials for oauth req
-                    if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
-                        restClient.Credentials = new OAuthTokenServiceCredentials(null);
-                    else
+                // Is the user a LOCAL_USER only?
+                if (localIdp.IsLocalUser(userName))
+                    retVal = localIdp.Authenticate(userName, password, tfaSecret);
+                else using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
                     {
-                        request.ClientId = ApplicationContext.Current.Application.Name;
-                        request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
+
+                        // Construct oauth req
+                        OAuthTokenRequest request = null;
+                        if (refreshPrincipal != null)
+                            request = new OAuthTokenRequest(refreshPrincipal, "*");
+                        else if (!String.IsNullOrEmpty(password))
+                            request = new OAuthTokenRequest(userName, password, "*");
+                        else
+                            request = new OAuthTokenRequest(userName, null, "*");
+
+                        // Explicit policies
+                        if (policies != null)
+                            request.Scope = String.Join(" ", policies);
+
+                        // Set credentials for oauth req
+                        if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
+                            restClient.Credentials = new OAuthTokenServiceCredentials(null);
+                        else
+                        {
+                            request.ClientId = ApplicationContext.Current.Application.Name;
+                            request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
+                        }
+
+                        restClient.Requesting += (o, p) =>
+                        {
+                            if (!String.IsNullOrEmpty(tfaSecret))
+                                p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
+                            if (isOverride)
+                                p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                                    $"{SanteDBClaimTypes.PurposeOfUse}={purposeOfUse};{SanteDBClaimTypes.SanteDBOverrideClaim}=true"
+                                    )));
+                        };
+
+
+                        if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                        {
+                            // Try OAUTH server
+                            try
+                            {
+                                restClient.Description.Endpoint[0].Timeout = 5000;
+                                restClient.Invoke<Object, Object>("PING", "/", null, null);
+
+                                if (userName == ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName)
+                                    restClient.Description.Endpoint[0].Timeout = restClient.Description.Endpoint[0].Timeout * 2;
+                                else
+                                    restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
+
+                                // GEt configuration 
+                                var configuration = this.GetConfigurationInfo();
+                                if (configuration == null) // default action
+                                {
+                                    var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                                    retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                                }
+                                else
+                                {
+                                    if (!configuration.GrantTypesSupported.Contains("password"))
+                                        throw new InvalidOperationException("Password grants not supported by this provider");
+
+                                    var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
+                                    retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                                }
+                            }
+                            catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
+                            {
+                                this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
+
+                                if (ex.Result.ErrorDescription == "AUTH_INV")
+                                {
+
+                                    var se = new SecurityException(
+                                    String.Format("err_oauth2_{0}", ex.Result.Error),
+                                        ex
+                                    );
+                                    se.Data.Add("oauth_result", ex.Result);
+                                    throw se;
+                                }
+                            }
+                            catch (SecurityException ex)
+                            {
+                                this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
+                                throw;
+                            }
+                            catch (Exception ex) // All others, try local
+                            {
+                                this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
+
+                            }
+
+                            if (retVal == null) // Some error occurred, use local
+                            {
+                                this.m_tracer.TraceWarning("Network unavailable, trying local");
+                                try
+                                {
+                                    if (localIdp == null)
+                                        throw new SecurityException(Strings.err_offline_no_local_available);
+
+                                    retVal = localIdp.Authenticate(userName, password);
+                                }
+                                catch (Exception ex2)
+                                {
+                                    this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
+                                    throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
+                                }
+                            }
+
+                            // We have a match! Lets make sure we cache this data
+                            // TODO: Clean this up
+                            if (!(retVal is IOfflinePrincipal))
+                                try
+                                {
+                                    ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
+                                }
+                                catch (Exception e2)
+                                {
+                                    this.m_tracer.TraceError("An error occurred when inserting the local credential: {0}", e2);
+                                }
+                        }
+
                     }
 
-                    restClient.Requesting += (o, p) =>
-                    {
-                        if (!String.IsNullOrEmpty(tfaSecret))
-                            p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
-                        if (isOverride)
-                            p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
-                                $"{SanteDBClaimTypes.PurposeOfUse}={purposeOfUse};{SanteDBClaimTypes.SanteDBOverrideClaim}=true"
-                                )));
-                    };
+                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
 
-                    // Invoke
-                    if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
-                    {
-                        // Try OAUTH server
-                        try
-                        {
-                            restClient.Description.Endpoint[0].Timeout = 5000;
-                            restClient.Invoke<Object, Object>("PING", "/", null, null);
-
-                            if (userName == ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName)
-                                restClient.Description.Endpoint[0].Timeout = restClient.Description.Endpoint[0].Timeout * 2;
-                            else
-                                restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
-
-                            // GEt configuration 
-                            var configuration = this.GetConfigurationInfo();
-                            if (configuration == null) // default action
-                            {
-                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
-                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
-                            }
-                            else
-                            {
-                                if (!configuration.GrantTypesSupported.Contains("password"))
-                                    throw new InvalidOperationException("Password grants not supported by this provider");
-
-                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
-                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
-                            }
-                        }
-                        catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
-                        {
-                            this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-
-                            if (ex.Result.ErrorDescription == "AUTH_INV" || ApplicationContext.Current.ConfigurationManager.GetAppSetting("security.localUsers") != "true")
-                            {
-
-                                var se = new SecurityException(
-                                String.Format("err_oauth2_{0}", ex.Result.Error),
-                                    ex
-                                );
-                                se.Data.Add("oauth_result", ex.Result);
-                                throw se;
-                            }
-                        }
-                        catch (SecurityException ex)
-                        {
-                            this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
-                            throw;
-                        }
-                        catch (Exception ex) // All others, try local
-                        {
-                            this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
-
-                        }
-                    }
-
-
-                    if (retVal == null) // Some error occurred, use local
-                    {
-                        this.m_tracer.TraceWarning("Network unavailable, trying local");
-                        try
-                        {
-                            if (localIdp == null)
-                                throw new SecurityException(Strings.err_offline_no_local_available);
-
-                            retVal = localIdp.Authenticate(userName, password);
-                        }
-                        catch (Exception ex2)
-                        {
-                            this.m_tracer.TraceError("Error falling back to local IDP: {0}", ex2);
-                            throw new SecurityException(String.Format(Strings.err_offline_use_cache_creds, ex2.Message), ex2);
-                        }
-                    }
-                    this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
-
-                    // We have a match! Lets make sure we cache this data
-                    // TODO: Clean this up
-                    if (!(retVal is IOfflinePrincipal))
-                        try
-                        {
-                            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o => this.SynchronizeSecurity(password, o as IPrincipal), retVal);
-                        }
-                        catch (Exception e2)
-                        {
-                            this.m_tracer.TraceError("An error occurred when inserting the local credential: {0}", e2);
-                        }
-                }
 
             }
             catch (Exception ex)
@@ -417,10 +423,10 @@ namespace SanteDB.DisconnectedClient.Security
 
                 // Get the user's identity
                 var securityUserService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
-                var offlineIdService = ApplicationContext.Current.GetService<IOfflineRoleProviderService>();
-                if (offlineIdService?.IsUserInRole(userName, "LOCAL_USERS") == true) // User is a local user, so we only change password on local
+                var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
+                if (localIdp?.IsLocalUser(userName) == true) // User is a local user, so we only change password on local
                 {
-                    ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().ChangePassword(userName, newPassword, principal);
+                    localIdp.ChangePassword(userName, newPassword, principal);
                 }
                 else
                 {
@@ -468,7 +474,6 @@ namespace SanteDB.DisconnectedClient.Security
                         client.Client.Credentials = ApplicationContext.Current.Configuration.GetServiceDescription("ami").Binding.Security.CredentialProvider.GetCredentials(principal);
 
                         client.UpdateUser(userId, user);
-                        var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
 
                         // Change locally
                         localIdp?.ChangePassword(userName, newPassword, principal);
@@ -559,92 +564,99 @@ namespace SanteDB.DisconnectedClient.Security
             }
 
             var localIdp = ApplicationContext.Current.GetService<IOfflineIdentityProviderService>();
+            IPrincipal retVal = null;
 
             // Get the scope being requested
             try
             {
-                using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
+                if (localIdp?.IsLocalUser(userName) == true)
                 {
-
-                    // Create grant information
-                    OAuthTokenRequest request = new OAuthResetTokenRequest(userName, challengeKey.ToString(), response);
-
-                    // Set credentials
-                    if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
-                        restClient.Credentials = new OAuthTokenServiceCredentials(null);
-                    else
+                    var localScIdp = ApplicationServiceContext.Current.GetService<IOfflineSecurityChallengeIdentityService>();
+                    retVal = localScIdp.Authenticate(userName, challengeKey, response, tfaSecret);
+                }
+                else using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
                     {
-                        request.ClientId = ApplicationContext.Current.Application.Name;
-                        request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
-                    }
 
-                    try
-                    {
-                        restClient.Requesting += (o, p) =>
+                        // Create grant information
+                        OAuthTokenRequest request = new OAuthResetTokenRequest(userName, challengeKey.ToString(), response);
+
+                        // Set credentials
+                        if (ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication == DomainClientAuthentication.Basic)
+                            restClient.Credentials = new OAuthTokenServiceCredentials(null);
+                        else
                         {
+                            request.ClientId = ApplicationContext.Current.Application.Name;
+                            request.ClientSecret = ApplicationContext.Current.Application.ApplicationSecret;
+                        }
+
+                        try
+                        {
+                            restClient.Requesting += (o, p) =>
+                            {
 
                             // Add device credential
                             if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
-                                p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
+                                    p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
 
-                            if (!String.IsNullOrEmpty(tfaSecret))
-                                p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
-                        };
+                                if (!String.IsNullOrEmpty(tfaSecret))
+                                    p.AdditionalHeaders.Add(HeaderTypes.HttpTfaSecret, tfaSecret);
+                            };
 
-                        // Invoke
-                        if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
-                        {
-                            restClient.Description.Endpoint[0].Timeout = 5000;
-                            restClient.Invoke<Object, Object>("PING", "/", null, null);
-                            restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
-
-                            // Swap out the endpoint and authenticate
-                            var configuration = this.GetConfigurationInfo();
-                            IPrincipal retVal = null;
-                            if (configuration == null) // default action
+                            // Invoke
+                            if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                             {
-                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
-                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                                restClient.Description.Endpoint[0].Timeout = 5000;
+                                restClient.Invoke<Object, Object>("PING", "/", null, null);
+                                restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
+
+                                // Swap out the endpoint and authenticate
+                                var configuration = this.GetConfigurationInfo();
+                                if (configuration == null) // default action
+                                {
+                                    var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>("oauth2_token", "application/x-www-form-urlencoded", request);
+                                    retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                                }
+                                else
+                                {
+                                    if (!configuration.GrantTypesSupported.Contains("password"))
+                                        throw new InvalidOperationException("Password grants not supported by this provider");
+
+                                    var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
+                                    retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                                }
+
+                                return retVal;
                             }
                             else
                             {
-                                if (!configuration.GrantTypesSupported.Contains("password"))
-                                    throw new InvalidOperationException("Password grants not supported by this provider");
-
-                                var oauthResponse = restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(configuration.TokenEndpoint, "application/x-www-form-urlencoded", request);
-                                retVal = new TokenClaimsPrincipal(oauthResponse.AccessToken, oauthResponse.IdToken ?? oauthResponse.AccessToken, oauthResponse.TokenType, oauthResponse.RefreshToken, configuration);
+                                throw new InvalidOperationException("Cannot send reset credential while offline");
                             }
 
-                            this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
-                            return retVal;
                         }
-                        else
+                        catch (RestClientException<OAuthTokenResponse> ex)
                         {
-                            throw new InvalidOperationException("Cannot send reset credential while offline");
+                            this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
+                            var se = new SecurityException(
+                                String.Format("err_oauth2_{0}", ex.Result.Error),
+                                ex
+                            );
+                            se.Data.Add("oauth_result", ex.Result);
+                            throw se;
+                        }
+                        catch (SecurityException ex)
+                        {
+                            this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
+                            throw;
+                        }
+                        catch (Exception ex) // fallback to local
+                        {
+                            throw new SecurityException($"General authentication error occurred: {ex.Message}", ex);
                         }
 
                     }
-                    catch (RestClientException<OAuthTokenResponse> ex)
-                    {
-                        this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-                        var se = new SecurityException(
-                            String.Format("err_oauth2_{0}", ex.Result.Error),
-                            ex
-                        );
-                        se.Data.Add("oauth_result", ex.Result);
-                        throw se;
-                    }
-                    catch (SecurityException ex)
-                    {
-                        this.m_tracer.TraceError("Server was contacted however the token is invalid: {0}", ex.Message);
-                        throw;
-                    }
-                    catch (Exception ex) // fallback to local
-                    {
-                        throw new SecurityException($"General authentication error occurred: {ex.Message}", ex);
-                    }
 
-                }
+                this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
+
             }
             catch (Exception ex)
             {
@@ -652,6 +664,8 @@ namespace SanteDB.DisconnectedClient.Security
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, null, false));
                 throw;
             }
+
+            return retVal;
 
         }
 

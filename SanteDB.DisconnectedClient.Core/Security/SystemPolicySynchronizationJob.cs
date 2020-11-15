@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
@@ -101,6 +102,17 @@ namespace SanteDB.DisconnectedClient.Security
                     foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
                         localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
 
+                }
+
+                // Query for challenges
+                var localScs = ApplicationServiceContext.Current.GetService<IDataPersistenceService<SecurityChallenge>>();
+                if(localScs != null)
+                {
+                    var amiIntegrationService = ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>();
+                    var challenges = amiIntegrationService.Find<SecurityChallenge>(o => o.ObsoletionTime == null, 0, 10);
+                    foreach (var itm in challenges.Item.OfType<SecurityChallenge>())
+                        if (localScs.Get(itm.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                            localScs.Insert(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
 
                 if (this.m_serviceTickle)

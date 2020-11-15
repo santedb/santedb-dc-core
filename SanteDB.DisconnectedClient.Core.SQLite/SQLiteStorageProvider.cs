@@ -157,6 +157,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteAuditRepositoryService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteDeviceIdentityProviderService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(MdmDataManager)));
+            configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteSecurityChallengeService)));
             // SQLite provider
 #if NOCRYPT
 			appSection.ServiceTypes.Add(typeof(SQLite.Net.Platform.Generic.SQLitePlatformGeneric).AssemblyQualifiedName);

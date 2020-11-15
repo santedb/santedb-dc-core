@@ -29,6 +29,15 @@
 		<property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
 		<property modelName="ObsoletedByKey" domainName="ObsoletedByUuid"/>
 	</class>
+  <!-- Security Users -->
+  <class modelClass="SanteDB.Core.Model.Security.SecurityChallenge, SanteDB.Core.Model, Version=1.0.1.0"
+		domainClass="SanteDB.DisconnectedClient.SQLite.Model.Security.DbSecurityChallenge, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
+    <property modelName="Key" domainName="Uuid"/>
+    <property modelName="ObsoletionTime" domainName="ObsoletionTime"/>
+    <property modelName="CreatedByKey" domainName="CreatedByUuid"/>
+    <property modelName="UpdatedByKey" domainName="UpdatedByUuid"/>
+    <property modelName="ObsoletedByKey" domainName="ObsoletedByUuid"/>
+  </class>
 
   <!-- Security Application -->
   <class modelClass="SanteDB.Core.Model.Security.SecurityApplication, SanteDB.Core.Model, Version=1.0.1.0"

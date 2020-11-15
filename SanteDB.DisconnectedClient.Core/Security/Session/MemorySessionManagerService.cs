@@ -143,20 +143,20 @@ namespace SanteDB.DisconnectedClient.Security.Session
                             throw new PolicyViolationException(cprincipal, pol, grant);
                     }
                 }
-                else
-                {
-                    List<IPolicyInstance> oizPrincipalPolicies = new List<IPolicyInstance>();
-                    foreach (var pol in pip.GetActivePolicies(cprincipal).GroupBy(o => o.Policy.Oid))
-                        oizPrincipalPolicies.Add(pol.FirstOrDefault(o => (int)o.Rule == pol.Min(r => (int)r.Rule)));
-                    // Scopes user is allowed to access
-                    claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
-                }
+
+
+                // Add default policy claims
+                List<IPolicyInstance> oizPrincipalPolicies = new List<IPolicyInstance>();
+                foreach (var pol in pip.GetActivePolicies(cprincipal).GroupBy(o => o.Policy.Oid))
+                    oizPrincipalPolicies.Add(pol.FirstOrDefault(o => (int)o.Rule == pol.Min(r => (int)r.Rule)));
+                // Scopes user is allowed to access
+                claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
 
                 var sessionKey = Guid.NewGuid();
                 var sessionRefresh = Guid.NewGuid();
                 claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, sessionKey.ToString()));
 
-                if(!String.IsNullOrEmpty(language))
+                if (!String.IsNullOrEmpty(language))
                     claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, language));
 
                 // Is the principal a remote principal (i.e. not issued by us?)
@@ -194,7 +194,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
 
             // Refresh the principal
             var principal = ApplicationServiceContext.Current.GetService<IIdentityProviderService>().ReAuthenticate(session.Principal);
-            
+
             // First, we want to abandon the session
             this.Abandon(session);
             session = this.Establish(principal,
@@ -202,7 +202,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
                 false,
                 null,
                 null,
-                session.Claims.FirstOrDefault(o=>o.Type == SanteDBClaimTypes.Language)?.Value) as MemorySession;
+                session.Claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.Language)?.Value) as MemorySession;
 
             return session;
         }

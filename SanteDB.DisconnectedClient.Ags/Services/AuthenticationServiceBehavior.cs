@@ -140,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             IPrincipal principal = null;
                             if (isOverride && identityService is IElevatableIdentityProviderService elevatedAuth)
                                 principal = elevatedAuth.ElevatedAuthenticate(request["username"], request["password"], tfa, purposeOfUse, scopes);
-                            if (!String.IsNullOrEmpty(tfa))
+                            else if (!String.IsNullOrEmpty(tfa))
                                 principal = identityService.Authenticate(request["username"], request["password"], tfa);
                             else
                                 principal = identityService.Authenticate(request["username"], request["password"]);

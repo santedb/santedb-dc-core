@@ -37,5 +37,14 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         IIdentity CreateIdentity(Guid sid, string username, string password, IPrincipal principal);
 
+        /// <summary>
+        /// Is the user a local user?
+        /// </summary>
+        bool IsLocalUser(String userName);
+
+        /// <summary>
+        /// Is the user a local user?
+        /// </summary>
+        bool IsLocalUser(Guid key);
     }
 }

@@ -539,6 +539,44 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 throw new SecurityException("Cannot extend a session that wasn't authenticated");
         }
 
+        /// <summary>
+        /// Determine if the user is a local user
+        /// </summary>
+        public bool IsLocalUser(string userName)
+        {
+            try
+            {
+
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                    return conn.Query<DbSecurityUser>("SELECT 1 FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) INNER JOIN security_user ON (security_user.uuid = security_user_role.user_id) WHERE LOWER(security_user.username) = LOWER(?) AND security_role.name = 'LOCAL_USERS'", userName).Any();
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error determining local status for user {0} : {1}", userName, e);
+                throw new DataPersistenceException($"Error determining local status for user  {userName}", e);
+            }
+        }
+
+        /// <summary>
+        /// Determine if the user is a local user (not a central user)
+        /// </summary>
+        public bool IsLocalUser(Guid key)
+        {
+            try
+            {
+
+                var conn = this.CreateConnection();
+                using (conn.Lock())
+                    return conn.Query<DbSecurityUser>("SELECT 1 FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE user_id = ? AND security_role.name = 'LOCAL_USERS'", key.ToByteArray()).Any();
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error determining local status for user {0} : {1}", key, e);
+                throw new DataPersistenceException($"Error determining local status for user  {key}", e);
+            }
+        }
+
 
         #endregion IIdentityProviderService implementation
     }
