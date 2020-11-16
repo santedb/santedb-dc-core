@@ -290,7 +290,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                     }
                     sql = sql.Build();
                     var itm = conn.Query<DbAuditData.QueryResult>(sql.SQL, sql.Arguments.ToArray());
-                    return itm.Select(o => this.ToModelInstance(conn, o)).ToList();
+                    return itm.Select(o => this.ToModelInstance(conn, o, false)).ToList();
                 }
             }
             catch (Exception e)
@@ -387,6 +387,8 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                             dbAo.Role = (int)(ao.Role ?? 0);
                             dbAo.Type = (int)(ao.Type);
                             dbAo.AuditId = dbAudit.Id;
+                            dbAo.NameData = ao.NameData;
+                            dbAo.QueryData = ao.QueryData ?? (ao.ObjectData != null ? String.Join(";", ao.ObjectData.Select(o => $"{o.Key}")) : null);
                             dbAo.Id = Guid.NewGuid().ToByteArray();
                             conn.Insert(dbAo);
                         }

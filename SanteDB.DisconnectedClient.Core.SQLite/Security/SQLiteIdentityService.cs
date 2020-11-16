@@ -222,7 +222,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             // We must demand the change password permission
             IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
 
-            if (userName != principal.Identity.Name)
+            if (!userName.Equals(principal.Identity.Name, StringComparison.OrdinalIgnoreCase))
                 ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword, principal);
 
             // Password failed validation
@@ -235,7 +235,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                    var dbu = conn.Table<DbSecurityUser>().Where(o => o.UserName == userName).FirstOrDefault();
+                    var dbu = conn.Table<DbSecurityUser>().Where(o => o.UserName.ToLower() == userName.ToLower()).FirstOrDefault();
                     if (dbu == null)
                         throw new KeyNotFoundException();
                     else

@@ -479,7 +479,7 @@ namespace SanteDB.DisconnectedClient.Security
                         localIdp?.ChangePassword(userName, newPassword, principal);
 
                         // Audit - Local IDP has alerted this already
-                        AuditUtil.AuditSecurityAttributeAction(new object[] { user }, true, new string[] { "password" });
+                        AuditUtil.AuditSecurityAttributeAction(new object[] { user.ToIdentifiedData() }, true, new string[] { "password" });
                     }
                 }
             }
