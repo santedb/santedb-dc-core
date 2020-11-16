@@ -146,11 +146,14 @@ namespace SanteDB.DisconnectedClient.Security.Session
 
 
                 // Add default policy claims
-                List<IPolicyInstance> oizPrincipalPolicies = new List<IPolicyInstance>();
-                foreach (var pol in pip.GetActivePolicies(cprincipal).GroupBy(o => o.Policy.Oid))
-                    oizPrincipalPolicies.Add(pol.FirstOrDefault(o => (int)o.Rule == pol.Min(r => (int)r.Rule)));
-                // Scopes user is allowed to access
-                claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
+                if (pip != null)
+                {
+                    List<IPolicyInstance> oizPrincipalPolicies = new List<IPolicyInstance>();
+                    foreach (var pol in pip.GetActivePolicies(cprincipal).GroupBy(o => o.Policy.Oid))
+                        oizPrincipalPolicies.Add(pol.FirstOrDefault(o => (int)o.Rule == pol.Min(r => (int)r.Rule)));
+                    // Scopes user is allowed to access
+                    claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
+                }
 
                 var sessionKey = Guid.NewGuid();
                 var sessionRefresh = Guid.NewGuid();
@@ -174,10 +177,10 @@ namespace SanteDB.DisconnectedClient.Security.Session
                 this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, memorySession, true, isOverride, purpose, policyDemands));
                 return memorySession;
             }
-            catch
+            catch(Exception e)
             {
                 this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, null, false, isOverride, purpose, policyDemands));
-                throw;
+                throw new Exception($"Error establishing session for {principal.Identity.Name}", e);
             }
         }
 

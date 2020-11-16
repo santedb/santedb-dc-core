@@ -264,7 +264,7 @@ namespace SanteDB.DisconnectedClient.Security
             try
             {
                 // Is the user a LOCAL_USER only?
-                if (localIdp.IsLocalUser(userName))
+                if (localIdp?.IsLocalUser(userName) == true)
                     retVal = localIdp.Authenticate(userName, password, tfaSecret);
                 else using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
                     {
@@ -476,7 +476,9 @@ namespace SanteDB.DisconnectedClient.Security
                         client.UpdateUser(userId, user);
 
                         // Change locally
-                        localIdp?.ChangePassword(userName, newPassword, principal);
+                        var userInfo = localIdp?.GetIdentity(userName);
+                        if(userInfo != null)
+                            localIdp?.ChangePassword(userName, newPassword, principal);
 
                         // Audit - Local IDP has alerted this already
                         AuditUtil.AuditSecurityAttributeAction(new object[] { user.ToIdentifiedData() }, true, new string[] { "password" });

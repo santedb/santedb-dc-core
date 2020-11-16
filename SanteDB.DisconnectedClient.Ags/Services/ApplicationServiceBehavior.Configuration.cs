@@ -870,8 +870,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             if (configuration.Security.Owners?.Count > 0)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Owners = configuration.Security.Owners;
 
+            ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().PasswordRegex = configuration.Security.PasswordRegex;
+
             // Is there any special keys to be configured?
-            if(configuration.Security.SigningKeys?.Count > 0)
+            if (configuration.Security.SigningKeys?.Count > 0)
             {
                 var keyCollection = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.SigningKeys ?? new List<SecuritySignatureConfiguration>();
                 foreach(var itm in configuration.Security.SigningKeys)

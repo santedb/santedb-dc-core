@@ -1,6 +1,8 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Security;
@@ -53,7 +55,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                 // Is the search service registered?
                 if (ApplicationContext.Current.GetService<SQLiteSecurityChallengeService>() == null)
                     ApplicationContext.Current.AddServiceProvider(typeof(SQLiteSecurityChallengeService), true);
-
+                if (ApplicationContext.Current.GetService<IPasswordValidatorService>() == null)
+                    ApplicationContext.Current.AddServiceProvider(typeof(DefaultPasswordValidationService), true);
                 // Get a connection to the search database
                 var conn = SQLiteConnectionManager.Current.GetReadWriteConnection(connStr);
                 using (conn.Lock())
