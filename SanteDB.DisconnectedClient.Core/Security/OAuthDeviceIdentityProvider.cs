@@ -155,7 +155,7 @@ namespace SanteDB.DisconnectedClient.Security
                         {
                             this.SynchronizeSecurity(deviceSecret, deviceId, retVal);
                         }
-                        catch(Exception e2 )
+                        catch (Exception e2)
                         {
                             this.m_tracer.TraceError("Error synchronizing the local device security: {0}", e2);
                         }
@@ -164,15 +164,7 @@ namespace SanteDB.DisconnectedClient.Security
                     else if (authMethod.HasFlag(AuthenticationMethod.Local))
                     {
                         // Is this another device authenticating against me?
-                        if (deviceId != ApplicationContext.Current.Device.Name)
-                        {
-                            return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);
-                        }
-                        else
-                        {
-                            this.m_tracer.TraceWarning("Network unavailable, skipping authentication - Authenticating as SELF");
-                            throw new SecurityException(Strings.err_network_securityNotAvailable);
-                        }
+                        return ApplicationContext.Current.GetService<IOfflineDeviceIdentityProviderService>().Authenticate(deviceId, deviceSecret);
                     }
                     else
                         throw new InvalidOperationException("Cannot determine authentication method");

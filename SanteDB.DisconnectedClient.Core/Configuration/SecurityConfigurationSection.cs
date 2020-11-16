@@ -411,8 +411,14 @@ namespace SanteDB.DisconnectedClient.Configuration
         [JsonProperty("signingKeys")]
         public List<SecuritySignatureConfiguration> SigningKeys { get; set; }
 
+        /// <summary>
+        /// Gets or sets the password validation regex
+        /// </summary>
+        [XmlElement("passwordRegex"), JsonProperty("passwordRegex")]
+        public string PasswordRegex { get; set; }
 
-	    /// <summary>
+
+        /// <summary>
         /// Returns a copy of this object with sensitive information removed
         /// </summary>
         public SecurityConfigurationSection RemoveSensitiveInformation()

@@ -88,7 +88,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                    var query = "select * from security_user inner join security_user_challenge on (security_user.uuid = security_user_challenge.user_uuid) where lower(security_user.username) = lower(?) and challenge_uuid = ? and security_user.obsoletionTime is null and (security_user_challenge.expiry is null or security_user_challenge.expiry > ?)";
+                    var query = "select * from security_user inner join security_user_challenge on (security_user.uuid = security_user_challenge.user_uuid) where lower(security_user.username) = lower(?) and challenge_uuid = ? and security_user.obsoletionTime is null and (security_user_challenge.expiration is null or security_user_challenge.expiration > ?)";
                     var dbUser = conn.Query<DbSecurityUserChallengeAssoc.QueryResult>(query, userName, challengeKey.ToByteArray(), DateTime.Now).FirstOrDefault();
 
                     // User found?

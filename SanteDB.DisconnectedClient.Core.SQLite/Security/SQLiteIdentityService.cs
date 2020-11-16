@@ -46,6 +46,7 @@ using SanteDB.Core;
 using SanteDB.Core.Security.Principal;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.Core.Api.Security;
+using SanteDB.Core.BusinessRules;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -224,9 +225,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             if (userName != principal.Identity.Name)
                 ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.ChangePassword, principal);
 
+            // Password failed validation
+            if (ApplicationServiceContext.Current.GetService<IPasswordValidatorService>()?.Validate(password) == false)
+                throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "err.password.complexity", "Password does not meet complexity requirements", DetectedIssueKeys.SecurityIssue));
+
+
             try
             {
-                                var conn = this.CreateConnection();
+                var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
                     var dbu = conn.Table<DbSecurityUser>().Where(o => o.UserName == userName).FirstOrDefault();

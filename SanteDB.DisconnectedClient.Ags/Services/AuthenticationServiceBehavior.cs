@@ -156,7 +156,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 if (userEntity != null)
                                     lanugageCode = userEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode ?? lanugageCode;
                             }
-                            catch(Exception e) {
+                            catch (Exception e)
+                            {
                                 this.m_tracer.TraceWarning("Cannot set the language of session from user preferences - {0}", e);
                             } // Minor problem
 
@@ -195,7 +196,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             var pep = ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>();
 
                             // Is the user allowed to use just the device credential?
-                            pep.Demand(PermissionPolicyIdentifiers.LoginImpersonateApplication);
+                            if (!scopes.All(o => o == PermissionPolicyIdentifiers.LoginPasswordOnly))
+                                pep.Demand(PermissionPolicyIdentifiers.LoginImpersonateApplication);
+                            else
+                                scopes = new string[]
+                                {
+                                    PermissionPolicyIdentifiers.ReadMetadata
+                                };
 
                             var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
                             var rmtPrincipal = devAuthSvc.Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
@@ -205,7 +212,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         }
                 }
 
-               
+
                 var retVal = new OAuthTokenResponse()
                 {
                     // TODO: Sign the access token
