@@ -386,7 +386,8 @@ namespace SanteDB.DisconnectedClient.Security
                                     this.m_tracer.TraceError("An error occurred when inserting the local credential: {0}", e2);
                                 }
                         }
-
+                        else
+                            retVal = localIdp?.Authenticate(userName, password);
                     }
 
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
