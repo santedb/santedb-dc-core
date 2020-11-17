@@ -196,13 +196,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             var pep = ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>();
 
                             // Is the user allowed to use just the device credential?
-                            if (!scopes.All(o => o == PermissionPolicyIdentifiers.LoginPasswordOnly))
-                                pep.Demand(PermissionPolicyIdentifiers.LoginImpersonateApplication);
-                            else
+                            if (scopes?.All(o => o == PermissionPolicyIdentifiers.LoginPasswordOnly) == true)
                                 scopes = new string[]
-                                {
+                                    {
                                     PermissionPolicyIdentifiers.ReadMetadata
-                                };
+                                    };
+                            else
+                                pep.Demand(PermissionPolicyIdentifiers.LoginImpersonateApplication);
 
                             var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
                             var rmtPrincipal = devAuthSvc.Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
