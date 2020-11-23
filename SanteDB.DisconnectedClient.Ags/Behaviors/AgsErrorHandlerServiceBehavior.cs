@@ -76,6 +76,14 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             {
 #if DEBUG
                 this.m_tracer.TraceWarning("Error on pipeline: {0}", error);
+                
+#else
+                if (error is TargetInvocationException)
+                    this.m_tracer.TraceWarning("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
+                else
+                    this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
+#endif
+
                 var ie = error;
                 while (ie != null)
                 {
@@ -87,16 +95,9 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         error = ie;
                     ie = ie.InnerException;
                 }
-#else
-            if (error is TargetInvocationException)
-                this.m_tracer.TraceWarning("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
-            else
-                this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
-#endif
-
                 faultMessage.StatusCode = WebErrorUtility.ClassifyException(ie);
 
-           
+
                 object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
                 if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
@@ -105,10 +106,10 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 var formatter = RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type);
                 formatter.SerializeResponse(faultMessage, null, fault);
 
-                if(ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem != OperatingSystemID.Android)
+                if (ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem != OperatingSystemID.Android)
                     AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error providing fault: {0}", e);
             }
