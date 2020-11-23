@@ -24,13 +24,14 @@ using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
     /// <summary>
     /// Act participation persistence service
     /// </summary>
-    public class ActParticipationPersistenceService : IdentifiedPersistenceService<ActParticipation, DbActParticipation>
+    public class ActParticipationPersistenceService : IdentifiedPersistenceService<ActParticipation, DbActParticipation>, ISQLiteAssociativePersistenceService
     {
 
         // Name sequence
@@ -219,6 +220,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             data.ActKey = data.Act?.Key ?? data.ActKey;
 
             return base.UpdateInternal(context, data);
+        }
+
+        /// <summary>
+        /// Get participations from source
+        /// </summary>
+        public IEnumerable GetFromSource(SQLiteDataContext context, Guid id, decimal? versionSequenceId)
+        {
+            return this.Query(context, o => o.SourceEntityKey == id);
         }
 
         /// <summary>

@@ -112,47 +112,8 @@ namespace SanteDB.DisconnectedClient.Services.Local
                     (irsi as ISecuredRepositoryService).DemandAlter(itm);
             }
 
-            // Demand permission
-            this.DemandAlter(data);
+            return base.Save(data);
 
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<Bundle>>();
-            var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<Bundle>>();
-
-            if (persistenceService == null)
-                throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<Bundle>)}");
-
-            data = this.Validate(data);
-
-            data = businessRulesService?.BeforeUpdate(data) ?? data;
-
-            // Before we update we need to get a reference to the old object so we can patch
-            // Entry point
-            IdentifiedData old = null;
-            if (data.EntryKey != null)
-            {
-                var type = data.Entry.GetType();
-                var idps = typeof(IDataPersistenceService<>).MakeGenericType(type);
-                var dataService = ApplicationContext.Current.GetService(idps) as IDataPersistenceService;
-                old = (dataService.Get(data.EntryKey.Value) as IdentifiedData).Clone();
-            }
-
-            data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-
-            // Patch
-            if (old != null && ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().UsePatches)
-            {
-                //This can cause issues on the MDM handler, need to fix this first  before re-enabling it
-                var diff = ApplicationContext.Current.GetService<IPatchService>()?.Diff(old, data.Entry);
-                if (diff != null)
-                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(diff, SynchronizationOperationType.Update);
-                else
-                    ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
-            }
-            else
-                ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Update);
-
-            businessRulesService?.AfterUpdate(data);
-            return data;
         }
     }
 }

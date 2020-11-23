@@ -94,7 +94,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
 #endif
 
-                faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
+                faultMessage.StatusCode = WebErrorUtility.ClassifyException(ie);
 
            
                 object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);

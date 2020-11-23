@@ -67,46 +67,18 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         protected Tracer m_traceSource = Tracer.GetTracer(typeof(GenericLocalRepository<TEntity>));
 
-        /// <summary>
-        /// Record is inserted
-        /// </summary>
-        public event EventHandler<RepositoryEventArgs<TEntity>> Inserted;
-        /// <summary>
-        /// Record has been saved
-        /// </summary>
-        public event EventHandler<RepositoryEventArgs<TEntity>> Saved;
-        /// <summary>
-        /// Record has been retrieved
-        /// </summary>
-        public event EventHandler<RepositoryEventArgs<TEntity>> Retrieved;
-        /// <summary>
-        /// Query has been executed
-        /// </summary>
-        public event EventHandler<RepositoryEventArgs<IEnumerable<TEntity>>> Queried;
-        /// <summary>
-        /// Record is being inserted
-        /// </summary>
         public event EventHandler<DataPersistingEventArgs<TEntity>> Inserting;
-        /// <summary>
-        /// Record is being saved
-        /// </summary>
+        public event EventHandler<DataPersistedEventArgs<TEntity>> Inserted;
         public event EventHandler<DataPersistingEventArgs<TEntity>> Saving;
-        /// <summary>
-        /// Record is being obsoleted
-        /// </summary>
+        public event EventHandler<DataPersistedEventArgs<TEntity>> Saved;
         public event EventHandler<DataPersistingEventArgs<TEntity>> Obsoleting;
-        /// <summary>
-        /// Record has been obsoleted
-        /// </summary>
         public event EventHandler<DataPersistedEventArgs<TEntity>> Obsoleted;
-        /// <summary>
-        /// Record 
-        /// </summary>
         public event EventHandler<DataRetrievingEventArgs<TEntity>> Retrieving;
-        /// <summary>
-        /// Record is being queried
-        /// </summary>
+        public event EventHandler<DataRetrievedEventArgs<TEntity>> Retrieved;
         public event EventHandler<QueryRequestEventArgs<TEntity>> Querying;
+        public event EventHandler<QueryResultEventArgs<TEntity>> Queried;
+
+
 
         /// <summary>
         /// Gets the policy required for querying
@@ -129,58 +101,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         protected virtual String AlterPolicy => PermissionPolicyIdentifiers.LoginAsService;
 
-        event EventHandler<DataPersistedEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Inserted
-        {
-            add
-            {
-                throw new NotImplementedException();
-            }
-
-            remove
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        event EventHandler<DataPersistedEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Saved
-        {
-            add
-            {
-                throw new NotImplementedException();
-            }
-
-            remove
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        event EventHandler<DataRetrievedEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Retrieved
-        {
-            add
-            {
-                throw new NotImplementedException();
-            }
-
-            remove
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        event EventHandler<QueryResultEventArgs<TEntity>> INotifyRepositoryService<TEntity>.Queried
-        {
-            add
-            {
-                throw new NotImplementedException();
-            }
-
-            remove
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         /// <summary>
         /// Find with stored query parameters
         /// </summary>
@@ -191,14 +111,21 @@ namespace SanteDB.DisconnectedClient.Services.Local
             this.DemandQuery();
 
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
-
             if (persistenceService == null)
-            {
                 throw new InvalidOperationException($"Unable to locate {typeof(IDataPersistenceService<TEntity>).FullName}");
+
+
+            // Fire pre event
+            var preEvtArgs = new QueryRequestEventArgs<TEntity>(query, offset, count, queryId, AuthenticationContext.Current.Principal);
+            this.Querying?.Invoke(this, preEvtArgs);
+            if(preEvtArgs.Cancel)
+            {
+                this.m_traceSource.TraceWarning("Pre-query event indicates cancel");
+                totalResults = preEvtArgs.TotalResults;
+                return preEvtArgs.Results;
             }
 
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
-
             IEnumerable<TEntity> results = null;
             if(persistenceService is IStoredQueryDataPersistenceService<TEntity>)
                 results = (persistenceService as IStoredQueryDataPersistenceService<TEntity>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
@@ -206,7 +133,9 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
 
             var retVal = businessRulesService != null ? businessRulesService.AfterQuery(results) : results;
-            this.Queried?.Invoke(this, new RepositoryEventArgs<IEnumerable<TEntity>>(retVal));
+            
+            this.Queried?.Invoke(this, new QueryResultEventArgs<TEntity>(query, results, offset, count, totalResults, queryId, AuthenticationContext.AnonymousPrincipal));
+            
             return retVal;
         }
 
@@ -221,9 +150,16 @@ namespace SanteDB.DisconnectedClient.Services.Local
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
 
             if (persistenceService == null)
-            {
                 throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<TEntity>)}");
+
+            var preEvent = new DataPersistingEventArgs<TEntity>(data, AuthenticationContext.Current.Principal);
+            this.Inserting?.Invoke(this, preEvent);
+            if(preEvent.Cancel)
+            {
+                this.m_traceSource.TraceWarning("Pre-persistence event indicates cancel");
+                return preEvent.Data;
             }
+            data = preEvent.Data;
 
             data = this.Validate(data);
 
@@ -232,7 +168,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
             data = businessRulesService?.AfterInsert(data) ?? data;
-            this.Inserted?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+            this.Inserted?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
             return data;
         }
 
@@ -247,16 +183,22 @@ namespace SanteDB.DisconnectedClient.Services.Local
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
 
             if (persistenceService == null)
-            {
                 throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<TEntity>)}");
-            }
+
 
             var entity = persistenceService.Get(key, null, false, AuthenticationContext.SystemPrincipal);
 
             if (entity == null)
-            {
                 throw new KeyNotFoundException($"Entity {key} not found");
+
+            var preEvent = new DataPersistingEventArgs<TEntity>(entity, AuthenticationContext.Current.Principal);
+            this.Obsoleting?.Invoke(this, preEvent);
+            if (preEvent.Cancel)
+            {
+                this.m_traceSource.TraceWarning("Pre-persistence event indicates cancel");
+                return preEvent.Data;
             }
+            entity = preEvent.Data;
 
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
 
@@ -266,7 +208,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Enqueue(entity, SynchronizationOperationType.Obsolete);
 
             entity = businessRulesService?.AfterObsolete(entity) ?? entity;
-            this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(entity));
+            this.Obsoleted?.Invoke(this, new DataPersistedEventArgs<TEntity>(entity, AuthenticationContext.Current.Principal));
             return entity;
         }
 
@@ -288,16 +230,19 @@ namespace SanteDB.DisconnectedClient.Services.Local
             var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<TEntity>>();
 
             if (persistenceService == null)
-            {
                 throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<TEntity>)}");
+
+            var preEventArg = new DataRetrievingEventArgs<TEntity>(key, versionKey, AuthenticationContext.Current.Principal);
+            this.Retrieving?.Invoke(this, preEventArg);
+            if(preEventArg.Cancel)
+            {
+                this.m_traceSource.TraceWarning("Pre-retrieve event indicates cancel");
+                return preEventArg.Result;
             }
-
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
-
             var result = persistenceService.Get(key, null, false, AuthenticationContext.Current.Principal);
-
             var retVal = businessRulesService?.AfterRetrieve(result) ?? result;
-            this.Retrieved?.Invoke(this, new RepositoryEventArgs<TEntity>(result));
+            this.Retrieved?.Invoke(this, new DataRetrievedEventArgs<TEntity>(retVal, AuthenticationContext.Current.Principal));
             return retVal;
         }
 
@@ -322,6 +267,15 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
             try
             {
+                var preEvent = new DataPersistingEventArgs<TEntity>(data, AuthenticationContext.Current.Principal);
+                this.Saving?.Invoke(this, preEvent);
+                if (preEvent.Cancel)
+                {
+                    this.m_traceSource.TraceWarning("Pre-persistence event indicates cancel");
+                    return preEvent.Data;
+                }
+                data = preEvent.Data;
+
                 // We need to know what the old version looked like so we can patch it
                 TEntity old = null;
 
@@ -344,13 +298,13 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 }
 
                 // Old does not exist
-                if(old == null)
+                if (old == null)
                 {
                     data = businessRulesService?.BeforeInsert(data) ?? data;
                     data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
                     data = businessRulesService?.AfterInsert(data) ?? data;
-                    this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
                 }
                 else
                 {
@@ -371,7 +325,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
 
                     data = businessRulesService?.AfterUpdate(data) ?? data;
-                    this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
                 }
                 
                 return data;
@@ -382,7 +336,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
                 data = businessRulesService?.AfterInsert(data) ?? data;
-                this.Saved?.Invoke(this, new RepositoryEventArgs<TEntity>(data));
+                this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
                 return data;
             }
         }

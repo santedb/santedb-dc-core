@@ -19,6 +19,7 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
@@ -104,6 +105,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         public static readonly Guid MasterRecordOfTruthRelationship = Guid.Parse("1C778948-2CB6-4696-BC04-4A6ECA140C20");
 
         /// <summary>
+        /// Disposables
+        /// </summary>
+        private List<IDisposable> m_linkedDisposables;
+
+        /// <summary>
         /// True if this service is running
         /// </summary>
         public bool IsRunning => true;
@@ -131,6 +137,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         public event EventHandler Stopped;
 
         /// <summary>
+        /// Create a mdm repository 
+        /// </summary>
+        private IDisposable CreateRepositoryListener(Type bindType)
+        {
+            var repoService = typeof(INotifyRepositoryService<>).MakeGenericType(bindType);
+            if (ApplicationServiceContext.Current.GetService(repoService) != null)
+                return Activator.CreateInstance(typeof(MdmRepositoryListener<>).MakeGenericType(bindType)) as IDisposable;
+            return null;
+        }
+
+        /// <summary>
         /// Start the service - monitor the incoming queues
         /// </summary>
         public bool Start()
@@ -146,6 +163,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                 var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
                 if (clinDi != null)
                     clinDi.Responded += ClinicalRepositoryResponded;
+
+                // We want to attach to the repository services so we can redirect writes which are actually against a MDM controlled piece of data
+                // This is because the user interface or API callers on the dCDR may inadvertantly try to update from an old UUID, 
+                // not realizing that the MDM layer had rewritten the UUID to the master copy UUID
+                var types = ApplicationServiceContext.Current.GetService<IServiceManager>()
+                    .GetAllTypes().Where(t => typeof(Entity).IsAssignableFrom(t));
+                this.m_linkedDisposables = types.Select(t => this.CreateRepositoryListener(t)).OfType<IDisposable>().ToList();
+                this.m_linkedDisposables.Add(new MdmRepositoryListener<Bundle>());
             };
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
@@ -228,11 +253,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         {
                             var currentLocal = this.HideCurrentLocal(rel);
                             if (currentLocal != null)
-                            {
                                 bundle?.Item.Add(currentLocal);
-                                // Store an MDM local relationship between the hidden local and the new mdm master
-                                bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, entity.Key) { SourceEntityKey = currentLocal.Key });
-                            }
+                            bundle?.Item.Add(rel.Clone()); // Add rel
                             // Rewrite all relationships
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
                         }
@@ -249,6 +271,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         foreach (var rel in masterRelation)
                         {
                             // Rewrite all relationships
+                            bundle?.Item.Add(rel.Clone());
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
                             // Do we have a local object? 
                             if (rel.LoadProperty<Entity>(nameof(EntityRelationship.SourceEntity)) != null)
@@ -365,6 +388,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
             var qms = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
             if (qms != null)
                 qms.Inbound.Enqueuing -= OnEnqueueInbound;
+
+            this.m_linkedDisposables.ForEach(o => o.Dispose());
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
