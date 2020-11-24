@@ -30,6 +30,8 @@ using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Fault;
 using SanteDB.Rest.Common.Serialization;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security;
@@ -91,11 +93,12 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                         ie.GetType().FullName, ie.Message);
 
-                    if (ie is RestClientException<RestServiceFault> || ie is SecurityException || ie is DetectedIssueException)
+                    if (ie is RestClientException<RestServiceFault> || ie is SecurityException || ie is DetectedIssueException
+                        || ie is FileNotFoundException || ie is KeyNotFoundException)
                         error = ie;
                     ie = ie.InnerException;
                 }
-                faultMessage.StatusCode = WebErrorUtility.ClassifyException(ie);
+                faultMessage.StatusCode = WebErrorUtility.ClassifyException(error);
 
 
                 object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
