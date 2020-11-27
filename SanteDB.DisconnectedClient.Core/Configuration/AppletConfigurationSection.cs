@@ -1,5 +1,4 @@
 /*
- * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
  * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
@@ -17,7 +16,6 @@
  * User: fyfej
  * Date: 2019-11-27
  */
-
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
