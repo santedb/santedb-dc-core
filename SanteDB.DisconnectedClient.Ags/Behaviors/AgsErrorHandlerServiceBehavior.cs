@@ -93,6 +93,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
                         ie.GetType().FullName, ie.Message);
 
+                    // TODO: Do we need this or can we just capture the innermost exception as the cause?
                     if (ie is RestClientException<RestServiceFault> || ie is SecurityException || ie is DetectedIssueException
                         || ie is FileNotFoundException || ie is KeyNotFoundException)
                         error = ie;
