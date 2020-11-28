@@ -413,7 +413,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         {
 
             IPolicyDecisionService pdp = ApplicationContext.Current.GetService<IPolicyDecisionService>();
-            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterIdentity, principal);
+            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AlterLocalIdentity, principal);
 
             try
             {

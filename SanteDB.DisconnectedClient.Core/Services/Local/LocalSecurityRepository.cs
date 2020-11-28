@@ -204,7 +204,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <param name="userId">The id of the user to lock.</param>
 		public void LockUser(Guid userId)
         {
-            this.Demand(PermissionPolicyIdentifiers.AlterIdentity);
+            this.Demand(PermissionPolicyIdentifiers.AlterLocalIdentity);
 
             this.m_traceSource.TraceWarning("Locking user {0}", userId);
 
@@ -233,7 +233,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <param name="userId">The id of the user to be unlocked.</param>
         public void UnlockUser(Guid userId)
         {
-            this.Demand(PermissionPolicyIdentifiers.AlterIdentity);
+            this.Demand(PermissionPolicyIdentifiers.AlterLocalIdentity);
             this.m_traceSource.TraceWarning("Unlocking user {0}", userId);
 
             var iids = ApplicationContext.Current.GetService<IIdentityProviderService>();

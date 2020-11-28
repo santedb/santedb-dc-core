@@ -103,23 +103,33 @@ namespace SanteDB.DisconnectedClient.Security
                 // Synchronize the groups
                 foreach (var rol in localRp.GetAllRoles().Union(systemRoles))
                 {
-                    var group = securityRepository.GetRole(rol);
-                    if (group == null)
+                    try
                     {
-                        localRp.CreateRole(rol, AuthenticationContext.SystemPrincipal);
-                        group = securityRepository.GetRole(rol);
+                        var group = securityRepository.GetRole(rol);
+                        if (group == null)
+                        {
+                            localRp.CreateRole(rol, AuthenticationContext.SystemPrincipal);
+                            group = securityRepository.GetRole(rol);
+                        }
+
+                        var activePolicies = amiPip.GetActivePolicies(group);
+                        // Create local policy if not exists
+                        foreach (var pol in activePolicies)
+                            if (localPip.GetPolicy(pol.Policy.Oid) == null)
+                                localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
+
+                        // Clear policies
+                        var localPol = localPip.GetActivePolicies(group);
+                        localPip.RemovePolicies(group, AuthenticationContext.SystemPrincipal, localPol.Select(o => o.Policy.Oid).ToArray());
+                        // Assign policies
+                        foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
+                            localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
+
                     }
-
-                    var activePolicies = amiPip.GetActivePolicies(group);
-                    // Create local policy if not exists
-                    foreach (var pol in activePolicies)
-                        if (localPip.GetPolicy(pol.Policy.Oid) == null)
-                            localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
-
-                    // Assign policies
-                    foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
-                        localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
-
+                    catch(Exception ex)
+                    {
+                        this.m_tracer.TraceWarning("Could not sync {rol}");
+                    }
                 }
 
                 // Query for challenges

@@ -30,8 +30,8 @@ namespace SanteDB.DisconnectedClient.Services.Local
     public class LocalSecurityUserRepository : GenericLocalSecurityRepository<SecurityUser>
     {
 
-        protected override string WritePolicy => PermissionPolicyIdentifiers.CreateIdentity;
-        protected override string DeletePolicy => PermissionPolicyIdentifiers.AlterIdentity;
+        protected override string WritePolicy => PermissionPolicyIdentifiers.CreateLocalIdentity;
+        protected override string DeletePolicy => PermissionPolicyIdentifiers.AlterLocalIdentity;
 
         /// <summary>
         /// Demand altering
@@ -41,7 +41,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         {
             var su = data as SecurityUser;
             if (!su.UserName.Equals(AuthenticationContext.Current.Principal.Identity.Name, StringComparison.OrdinalIgnoreCase))
-                this.Demand(PermissionPolicyIdentifiers.AlterIdentity);
+                this.Demand(PermissionPolicyIdentifiers.AlterLocalIdentity);
         }
 
         /// <summary>

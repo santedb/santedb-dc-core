@@ -37,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         {
             var user = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>()?.GetUser(AuthenticationContext.Current.Principal.Identity);
             if (user.Key != entity.SecurityUserKey)
-                this.Demand(PermissionPolicyIdentifiers.AlterIdentity);
+                this.Demand(PermissionPolicyIdentifiers.AlterLocalIdentity);
         }
 
         /// <summary>
