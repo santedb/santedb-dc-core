@@ -182,9 +182,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             /// </summary>
             public int GetHashCode(EntityRelationship obj)
             {
-                int result = obj.SourceEntityKey.GetHashCode();
-                result = 37 * result + obj.RelationshipTypeKey.GetHashCode();
-                result = 37 * result + obj.TargetEntityKey.GetHashCode();
+                int result = obj.SourceEntityKey.GetValueOrDefault().GetHashCode();
+                result = 37 * result + obj.RelationshipTypeKey.GetValueOrDefault().GetHashCode();
+                result = 37 * result + obj.TargetEntityKey.GetValueOrDefault().GetHashCode();
                 result = 37 * result + (obj.RelationshipType?.Mnemonic.GetHashCode() ?? 0);
                 return result;
             }
