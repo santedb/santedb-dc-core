@@ -120,7 +120,9 @@ namespace SanteDB.DisconnectedClient.Security
 
                         // Clear policies
                         var localPol = localPip.GetActivePolicies(group);
-                        localPip.RemovePolicies(group, AuthenticationContext.SystemPrincipal, localPol.Select(o => o.Policy.Oid).ToArray());
+                        // Remove policies which no longer are granted
+                        var noLongerGrant = localPol.Where(o => !activePolicies.Any(a => a.Policy.Oid == o.Policy.Oid));
+                        localPip.RemovePolicies(group, AuthenticationContext.SystemPrincipal, noLongerGrant.Select(o => o.Policy.Oid).ToArray());
                         // Assign policies
                         foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
                             localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());

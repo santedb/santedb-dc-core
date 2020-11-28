@@ -75,8 +75,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             //            data.SecurityUser?.EnsureExists(context);
             //            data.SecurityUserKey = data.SecurityUser?.Key ?? data.SecurityUserKey;
-            this.m_personPersister.Update(context, data);
-            return base.UpdateInternal(context, data);
+            if (data.SecurityUserKey.GetValueOrDefault() != Guid.Empty) // User is a sync of a local user from the server so don't update it
+            {
+                this.m_personPersister.Update(context, data);
+                return base.UpdateInternal(context, data);
+            }
+            return data;
         }
 
         /// <summary>
