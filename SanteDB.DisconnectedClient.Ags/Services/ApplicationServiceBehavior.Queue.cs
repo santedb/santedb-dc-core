@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Get synchronization logs
         /// </summary>
-		[DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+		[DemandAttribute(PermissionPolicyIdentifiers.LoginAsService)]
         public List<ISynchronizationLogEntry> GetSynchronizationLogs()
         {
             var syncService = ApplicationServiceContext.Current.GetService<ISynchronizationService>();
@@ -84,7 +84,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Gets the queue entries
         /// </summary>
-		[DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+		[DemandAttribute(PermissionPolicyIdentifiers.LoginAsService)]
         public List<ISynchronizationQueueEntry> GetQueue(String queueName)
         {
             var queueManager = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
@@ -272,7 +272,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Retry the queue item
         /// </summary>
-        [DemandAttribute(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        [DemandAttribute(PermissionPolicyIdentifiers.LoginAsService)]
         public void Retry(int id)
         {
             var queueItem = this.GetQueueEntry("dead", id) as ISynchronizationQueueRetryEntry;
