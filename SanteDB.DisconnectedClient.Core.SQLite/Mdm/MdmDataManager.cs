@@ -30,6 +30,7 @@ using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Services.Local;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections;
@@ -153,24 +154,27 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            ApplicationServiceContext.Current.Started += (o, e) =>
-            {
-                var qms = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
-                if (qms != null)
-                    qms.Inbound.Enqueuing += OnEnqueueInbound;
+            // Subscribe to the local repository service
+            var repo = ApplicationServiceContext.Current.GetService<LocalRepositoryService>();
+            if(repo != null)
+                repo.Started += (o, e) =>
+                {
+                    var qms = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
+                    if (qms != null)
+                        qms.Inbound.Enqueuing += OnEnqueueInbound;
 
-                var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
-                if (clinDi != null)
-                    clinDi.Responded += ClinicalRepositoryResponded;
+                    var clinDi = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>();
+                    if (clinDi != null)
+                        clinDi.Responded += ClinicalRepositoryResponded;
 
-                // We want to attach to the repository services so we can redirect writes which are actually against a MDM controlled piece of data
-                // This is because the user interface or API callers on the dCDR may inadvertantly try to update from an old UUID, 
-                // not realizing that the MDM layer had rewritten the UUID to the master copy UUID
-                var types = ApplicationServiceContext.Current.GetService<IServiceManager>()
-                    .GetAllTypes().Where(t => typeof(Entity).IsAssignableFrom(t));
-                this.m_linkedDisposables = types.Select(t => this.CreateRepositoryListener(t)).OfType<IDisposable>().ToList();
-                this.m_linkedDisposables.Add(new MdmRepositoryListener<Bundle>());
-            };
+                    // We want to attach to the repository services so we can redirect writes which are actually against a MDM controlled piece of data
+                    // This is because the user interface or API callers on the dCDR may inadvertantly try to update from an old UUID, 
+                    // not realizing that the MDM layer had rewritten the UUID to the master copy UUID
+                    var types = ApplicationServiceContext.Current.GetService<IServiceManager>()
+                        .GetAllTypes().Where(t => typeof(Entity).IsAssignableFrom(t)).ToArray();
+                    this.m_linkedDisposables = types.Select(t => this.CreateRepositoryListener(t)).OfType<IDisposable>().ToList();
+                    this.m_linkedDisposables.Add(new MdmRepositoryListener<Bundle>());
+                };
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }

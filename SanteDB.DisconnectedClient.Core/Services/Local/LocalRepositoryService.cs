@@ -136,9 +136,11 @@ namespace SanteDB.DisconnectedClient.Services.Local
                         }
                     }
                 }
+
+                this.Started?.Invoke(this, EventArgs.Empty);
+
             };
 
-            this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
