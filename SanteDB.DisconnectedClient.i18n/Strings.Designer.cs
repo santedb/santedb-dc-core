@@ -666,6 +666,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Pull operation completed....
+        /// </summary>
+        public static string locale_pullComplete {
+            get {
+                return ResourceManager.GetString("locale_pullComplete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Preparing to update facility plan....
         /// </summary>
         public static string locale_refreshCarePlan {

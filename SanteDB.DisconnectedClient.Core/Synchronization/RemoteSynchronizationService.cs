@@ -249,11 +249,6 @@ namespace SanteDB.DisconnectedClient.Synchronization
                                 totalResults += this.Pull(syncResource.ResourceType, new NameValueCollection(), false, syncResource.Name);
 
                         }
-                        ApplicationContext.Current.SetProgress(Strings.locale_startingPoll, 1.0f);
-
-                        // Pull complete?
-                        this.IsSynchronizing = false;
-
                         if (totalResults > 0 && initialSync)
                         {
                             this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
@@ -271,6 +266,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     finally
                     {
                         this.IsSynchronizing = false;
+                        ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
 
                         Monitor.Exit(this.m_lock);
                     }

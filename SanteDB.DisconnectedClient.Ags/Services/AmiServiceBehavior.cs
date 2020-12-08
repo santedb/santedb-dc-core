@@ -128,9 +128,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     // Memmory stream
                     using (MemoryStream ms = new MemoryStream())
                     {
-                        using (GZipStream gz = new GZipStream(ms, CompressionMode.Compress))
+                        using (GZipStream gz = new GZipStream(ms, CompressionLevel.Optimal, true))
                         using (FileStream fs = File.OpenRead(logFileName))
+                        {
+                            if (fs.Length > 4194304) // file is larger than 4 MB
+                                fs.Seek(fs.Length - 4194304, SeekOrigin.Begin);
                             fs.CopyTo(gz);
+                        }
+
                         var logFile = new FileInfo(logFileName);
                         attachments.Add(new DiagnosticBinaryAttachment()
                         {

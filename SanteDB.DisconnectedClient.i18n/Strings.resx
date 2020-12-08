@@ -425,4 +425,7 @@ Sincerely,
   <data name="err_prune_audit_failed" xml:space="preserve">
     <value>Running audit retention job failed with error {0}</value>
   </data>
+  <data name="locale_pullComplete" xml:space="preserve">
+    <value>Pull operation completed...</value>
+  </data>
 </root>
