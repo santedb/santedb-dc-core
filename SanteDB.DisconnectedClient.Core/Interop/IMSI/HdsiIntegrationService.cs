@@ -187,9 +187,9 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     retVal = (retVal as Bundle).Entry;
                 }
 
-                this.Responded?.Invoke(this, new IntegrationResultEventArgs(null, retVal));
-
-                return retVal as TModel;
+                var integrationEvent = new IntegrationResultEventArgs(null, retVal);
+                this.Responded?.Invoke(this, integrationEvent);
+                return integrationEvent.ResponseData as TModel;
             }
             catch (TargetInvocationException e)
             {

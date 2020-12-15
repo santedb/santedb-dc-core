@@ -228,7 +228,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Get<IdentifiedData>($"{resourceType}/{id}");
+                        var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{id}");
+                        // Do we have a local?
+                        if (retVal is Entity entity &&
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null) 
+                            entity.AddTag("$upstream", "true");
+                        else if (retVal is Act act &&
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>().Get(act.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null) 
+                            act.AddTag("$upstream", "true");
+                        return retVal;
                     }
                     catch (Exception e)
                     {
@@ -331,6 +339,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     // Insert 
                     ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>()?.Insert(insertBundle, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
+                    // Clear cache
+                    ApplicationServiceContext.Current.GetService<IDataCachingService>().Clear();
                     return remote;
                 }
                 catch (Exception e)
