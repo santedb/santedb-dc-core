@@ -30,7 +30,7 @@
     <IncludeSymbols>true</IncludeSymbols>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-	    <Product>SanteDB</Product>
+	    <Product>SanteDB Disconnected Client</Product>
     <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
     <Company>SanteSuite Contributors</Company>
     <RootNamespace>SanteDB.DisconnectedClient</RootNamespace>
