@@ -78,26 +78,32 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Roles
         /// <summary>
         /// Gets or sets the marital status code
         /// </summary>
-        [Column("marital_status")]
+        [Column("marital_status"), MaxLength(16)]
         public byte[] MaritalStatusUuid { get; set; }
 
         /// <summary>
         /// Gets or sets the education level key
         /// </summary>
-        [Column("education_level")]
+        [Column("education_level"), MaxLength(16)]
         public byte[] EducationLevelUuid { get; set; }
 
         /// <summary>
         /// Gets or sets the living arrangement key
         /// </summary>
-        [Column("living_arrangement")]
+        [Column("living_arrangement"), MaxLength(16)]
         public byte[] LivingArrangementUuid { get; set; }
 
         /// <summary>
         /// Gets or sets the ethnic group code id
         /// </summary>
-        [Column("ethnicity")]
+        [Column("ethnicity"), MaxLength(16)]
         public byte[] EthnicGroupCodeUuid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ethnic group code id
+        /// </summary>
+        [Column("vip_status"), MaxLength(16)]
+        public byte[] VipStatusUuid { get; set; }
 
         /// <summary>
         /// Query result for patient
@@ -148,6 +154,37 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Roles
                 get;
                 set;
             }
+
+            /// <summary>
+            /// Gets or sets the ethnic group code id
+            /// </summary>
+            [Column("vip_status"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Key))]
+            public byte[] VipStatusUuid { get; set; }
+
+            /// <summary>
+            /// Gets or sets the marital status code
+            /// </summary>
+            [Column("marital_status"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Key))]
+            public byte[] MaritalStatusUuid { get; set; }
+
+            /// <summary>
+            /// Gets or sets the education level key
+            /// </summary>
+            [Column("education_level"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Key))]
+            public byte[] EducationLevelUuid { get; set; }
+
+            /// <summary>
+            /// Gets or sets the living arrangement key
+            /// </summary>
+            [Column("living_arrangement"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Key))]
+            public byte[] LivingArrangementUuid { get; set; }
+
+            /// <summary>
+            /// Gets or sets the ethnic group code id
+            /// </summary>
+            [Column("ethnicity"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Key))]
+            public byte[] EthnicGroupCodeUuid { get; set; }
+
         }
     }
 }

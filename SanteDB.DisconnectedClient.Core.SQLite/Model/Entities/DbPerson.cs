@@ -16,6 +16,8 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SQLite.Net.Attributes;
 using System;
 
@@ -50,6 +52,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
             set;
         }
 
+
+        /// <summary>
+        /// Gets or sets the ethnic group code id
+        /// </summary>
+        [Column("occupation"), MaxLength(16)]
+        public byte[] OccupationUuid { get; set; }
+
         /// <summary>
         /// Quey result
         /// </summary>
@@ -76,6 +85,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
                 get;
                 set;
             }
+
+            /// <summary>
+            /// Gets or sets the ethnic group code id
+            /// </summary>
+            [Column("occupation"), MaxLength(16), ForeignKey(typeof(DbConcept), nameof(DbConcept.Uuid))]
+            public byte[] OccupationUuid { get; set; }
         }
 
     }

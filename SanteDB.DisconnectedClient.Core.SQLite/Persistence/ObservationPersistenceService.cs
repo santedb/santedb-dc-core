@@ -164,7 +164,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             return new DbCodedObservation()
             {
                 Uuid = modelInstance.Key?.ToByteArray(),
-                Value = modelInstance.ValueKey?.ToByteArray()
+                Value = modelInstance.ValueKey.ToByteArray()
             };
         }
 

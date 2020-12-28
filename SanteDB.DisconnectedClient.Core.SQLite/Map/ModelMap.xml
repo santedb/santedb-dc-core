@@ -277,6 +277,8 @@
   <class modelClass="SanteDB.Core.Model.Entities.Person, SanteDB.Core.Model, Version=1.0.1.0"
        domainClass="SanteDB.DisconnectedClient.SQLite.Model.Entities.DbPerson, SanteDB.DisconnectedClient.SQLite, Version=0.5.0.0">
     <property modelName="Key" domainName="Uuid"/>
+    <property modelName="OccupationKey" domainName="OccupationUuid"/>
+
   </class>
 
   <class modelClass="SanteDB.Core.Model.Entities.PersonLanguageCommunication, SanteDB.Core.Model, Version=1.0.1.0"
@@ -294,6 +296,7 @@
     <property modelName="EducationLevelKey" domainName="EducationLevelUuid"/>
     <property modelName="LivingArrangementKey" domainName="LivingArrangementUuid"/>
     <property modelName="EthnicGroupCodeKey" domainName="EthnicGroupCodeUuid"/>
+    <property modelName="VipStatusKey" domainName="VipStatusUuid"/>
   </class>
 
   <!-- Material Maps -->
