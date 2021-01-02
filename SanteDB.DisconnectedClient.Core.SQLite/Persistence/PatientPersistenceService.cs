@@ -53,7 +53,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 DeceasedDate = modelInstance.DeceasedDate,
                 DeceasedDatePrecision = modelInstance.DeceasedDatePrecision.HasValue ? PersonPersistenceService.PrecisionMap[modelInstance.DeceasedDatePrecision.Value] : null,
                 GenderConceptUuid = modelInstance.GenderConceptKey?.ToByteArray(),
-                MultipleBirthOrder = modelInstance.MultipleBirthOrder
+                MultipleBirthOrder = modelInstance.MultipleBirthOrder,
+                EducationLevelUuid = modelInstance.EducationLevelKey?.ToByteArray(),
+                EthnicGroupCodeUuid = modelInstance.EthnicGroupCodeKey?.ToByteArray(),
+                LivingArrangementUuid = modelInstance.LivingArrangementKey?.ToByteArray(),
+                MaritalStatusUuid = modelInstance.MaritalStatusKey?.ToByteArray(),
+                VipStatusUuid = modelInstance.VipStatusKey?.ToByteArray()
             };
         }
 
@@ -82,6 +87,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             retVal.MultipleBirthOrder = patient.MultipleBirthOrder;
             retVal.GenderConceptKey = new Guid(patient.GenderConceptUuid);
 
+            retVal.EducationLevelKey = patient.EducationLevelUuid?.ToGuid();
+            retVal.EthnicGroupCodeKey = patient.EthnicGroupCodeUuid?.ToGuid();
+            retVal.LivingArrangementKey = patient.LivingArrangementUuid?.ToGuid();
+            retVal.MaritalStatusKey = patient.MaritalStatusUuid?.ToGuid();
+            retVal.VipStatusKey = patient.VipStatusUuid?.ToGuid();
+            retVal.OccupationKey = dbp.OccupationUuid?.ToGuid();
+                
             //retVal.LoadAssociations(context);
 
             return retVal;
@@ -94,6 +106,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         {
             if (data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
             data.GenderConceptKey = data.GenderConcept?.Key ?? data.GenderConceptKey;
+            if (data.VipStatus != null) data.VipStatus = data.VipStatus?.EnsureExists(context, false);
+            data.VipStatusKey = data.VipStatus?.Key ?? data.VipStatusKey;
 
             var inserted = this.m_personPersister.Insert(context, data);
             return base.InsertInternal(context, data);
@@ -107,6 +121,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Ensure exists
             if (data.GenderConcept != null) data.GenderConcept = data.GenderConcept?.EnsureExists(context);
             data.GenderConceptKey = data.GenderConcept?.Key ?? data.GenderConceptKey;
+            if (data.VipStatus != null) data.VipStatus = data.VipStatus?.EnsureExists(context, false);
+            data.VipStatusKey = data.VipStatus?.Key ?? data.VipStatusKey;
 
             this.m_personPersister.Update(context, data);
             return base.UpdateInternal(context, data);

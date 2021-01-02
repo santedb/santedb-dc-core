@@ -60,7 +60,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 DateOfBirth = modelInstance.DateOfBirth,
                 DateOfBirthPrecision = modelInstance.DateOfBirthPrecision.HasValue ? PrecisionMap[modelInstance.DateOfBirthPrecision.Value] : null,
-                Uuid = modelInstance.Key?.ToByteArray()
+                Uuid = modelInstance.Key?.ToByteArray(),
+                OccupationUuid = modelInstance.OccupationKey?.ToByteArray()
             };
         }
 
@@ -79,6 +80,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (!String.IsNullOrEmpty(person.DateOfBirthPrecision))
                 retVal.DateOfBirthPrecision = PrecisionMap.Where(o => o.Value == person.DateOfBirthPrecision).Select(o => o.Key).First();
 
+            retVal.OccupationKey = person.OccupationUuid?.ToGuid();
+
             //etVal.LoadAssociations(context);
 
             return retVal;
@@ -92,6 +95,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// <returns></returns>
         protected override Person InsertInternal(SQLiteDataContext context, Person data)
         {
+            if (data.Occupation != null) data.Occupation = data.Occupation?.EnsureExists(context, false);
+            data.OccupationKey = data.Occupation?.Key ?? data.OccupationKey;
+
             var retVal = base.InsertInternal(context, data);
             byte[] sourceKey = retVal.Key.Value.ToByteArray();
 
@@ -112,6 +118,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Person UpdateInternal(SQLiteDataContext context, Person data)
         {
+            if (data.Occupation != null) data.Occupation = data.Occupation?.EnsureExists(context, false);
+            data.OccupationKey = data.Occupation?.Key ?? data.OccupationKey;
+
             var retVal = base.UpdateInternal(context, data);
             var sourceKey = retVal.Key.Value.ToByteArray();
 
