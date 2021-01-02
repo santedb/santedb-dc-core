@@ -111,26 +111,30 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         {
             try
             {
-                HdsiServiceClient client = this.GetServiceClient();
-                client.Client.Requesting += IntegrationQueryOptions.CreateRequestingHandler(options);
-                client.Client.Responding += (o, e) => this.Responding?.Invoke(o, e);
-                client.Client.Credentials = this.GetCredentials(client.Client);
-                if (client.Client.Credentials == null)
+                if (this.IsAvailable())
                 {
-	                return null;
+                    HdsiServiceClient client = this.GetServiceClient();
+                    client.Client.Requesting += IntegrationQueryOptions.CreateRequestingHandler(options);
+                    client.Client.Responding += (o, e) => this.Responding?.Invoke(o, e);
+                    client.Client.Credentials = this.GetCredentials(client.Client);
+                    if (client.Client.Credentials == null)
+                    {
+                        return null;
+                    }
+
+                    if (options?.Timeout.HasValue == true)
+                    {
+                        client.Client.Description.Endpoint[0].Timeout = options.Timeout.Value;
+                    }
+
+                    this.m_tracer.TraceVerbose("Performing HDSI query ({0}):{1}", typeof(TModel).FullName, predicate);
+
+                    var retVal = client.Query<TModel>(predicate, offset, count, queryId: options?.QueryId);
+                    this.Responded?.Invoke(this, new IntegrationResultEventArgs(null, retVal));
+                    //retVal?.Reconstitute();
+                    return retVal;
                 }
-
-                if (options?.Timeout.HasValue == true)
-                {
-	                client.Client.Description.Endpoint[0].Timeout = options.Timeout.Value;
-                }
-
-                this.m_tracer.TraceVerbose("Performing HDSI query ({0}):{1}", typeof(TModel).FullName, predicate);
-
-                var retVal = client.Query<TModel>(predicate, offset, count, queryId: options?.QueryId);
-                this.Responded?.Invoke(this, new IntegrationResultEventArgs(null, retVal));
-                //retVal?.Reconstitute();
-                return retVal;
+                return null;
             }
             catch (TargetInvocationException e)
             {
@@ -331,7 +335,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     {
                         HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
                         client.Client.Credentials = new NullCredentials();
-                        client.Client.Description.Endpoint[0].Timeout = 2000;
+                        client.Client.Description.Endpoint[0].Timeout = 5000;
 
                         return this.IsValidVersion(client) &&
                             client.Ping();
@@ -612,7 +616,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             }
             catch (Exception e)
             {
-
                 this.m_tracer.TraceError("Error authentication for synchronization: {0}", e);
                 throw new SecurityException("Error authenticating for synchronization. Perhaps the device has been reconfigured?", e);
             }

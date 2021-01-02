@@ -373,6 +373,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     // Enqueue
                     for (int i = result.Count; i < result.TotalResults; i += result.Item.Count)
                     {
+                        if (!this.m_integrationService.IsAvailable()) break; // Integration service not available.
                         float perc = i / (float)result.TotalResults;
 
                         if (result.TotalResults > result.Offset + result.Count + 1)

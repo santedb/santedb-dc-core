@@ -140,9 +140,10 @@ namespace SanteDB.DisconnectedClient.Security
                 {
                     var amiIntegrationService = ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>();
                     var challenges = amiIntegrationService.Find<SecurityChallenge>(o => o.ObsoletionTime == null, 0, 10);
-                    foreach (var itm in challenges.Item.OfType<SecurityChallenge>())
-                        if (localScs.Get(itm.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
-                            localScs.Insert(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    if(challenges != null)
+                        foreach (var itm in challenges.Item.OfType<SecurityChallenge>())
+                            if (localScs.Get(itm.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                                localScs.Insert(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
 
                 if (this.m_serviceTickle)
