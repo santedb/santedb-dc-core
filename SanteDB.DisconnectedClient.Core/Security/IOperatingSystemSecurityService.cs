@@ -41,7 +41,11 @@ namespace SanteDB.DisconnectedClient.Security
         /// <summary>
         /// The application is demanding permission to access the camera
         /// </summary>
-        Camera
+        Camera,
+        /// <summary>
+        /// Send an SMS message
+        /// </summary>
+        SendSms
     }
 
     /// <summary>
