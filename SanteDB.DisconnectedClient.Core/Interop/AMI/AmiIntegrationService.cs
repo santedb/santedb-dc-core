@@ -236,7 +236,7 @@ public bool IsAvailable()
             {
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                 amiClient.Client.Credentials = new NullCredentials();
-                amiClient.Client.Description.Endpoint[0].Timeout = 30000;
+                amiClient.Client.Description.Endpoint[0].Timeout = 2000;
                 this.m_lastPing = DateTime.Now;
                 return amiClient.Ping();
             }

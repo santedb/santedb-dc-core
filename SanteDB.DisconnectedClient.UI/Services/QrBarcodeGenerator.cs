@@ -55,27 +55,7 @@ namespace SanteDB.DisconnectedClient.UI.Services
 
                 // Generate the pointer
                 var identityToken = pointerService.GeneratePointer(identifers);
-                // Now generate the token
-                var writer = new BarcodeWriter()
-                {
-                    Format = BarcodeFormat.QR_CODE,
-                    Options = new QrCodeEncodingOptions()
-                    {
-                        Width = 300,
-                        Height = 300,
-                        PureBarcode = true,
-                        Margin = 1
-                        
-                    }
-                };
-                
-                using (var bmp = writer.Write(identityToken.ToString()))
-                {
-                    var retVal = new MemoryStream();
-                    bmp.Save(retVal, ImageFormat.Png);
-                    retVal.Seek(0, SeekOrigin.Begin);
-                    return retVal;
-                }
+                return this.Generate(identityToken.ToString());
             }
             catch(Exception e)
             {
@@ -83,6 +63,32 @@ namespace SanteDB.DisconnectedClient.UI.Services
             }
         }
 
-        
+        /// <summary>
+        /// Generate a barcode from raw data
+        /// </summary>
+        public Stream Generate(string rawData)
+        {
+            // Now generate the token
+            var writer = new BarcodeWriter()
+            {
+                Format = BarcodeFormat.QR_CODE,
+                Options = new QrCodeEncodingOptions()
+                {
+                    Width = 300,
+                    Height = 300,
+                    PureBarcode = true,
+                    Margin = 1
+
+                }
+            };
+
+            using (var bmp = writer.Write(rawData))
+            {
+                var retVal = new MemoryStream();
+                bmp.Save(retVal, ImageFormat.Png);
+                retVal.Seek(0, SeekOrigin.Begin);
+                return retVal;
+            }
+        }
     }
 }

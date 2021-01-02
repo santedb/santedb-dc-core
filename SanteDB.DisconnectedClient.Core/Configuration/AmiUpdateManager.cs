@@ -111,6 +111,10 @@ namespace SanteDB.DisconnectedClient.Configuration
                     }
                     this.m_tracer.TraceError("Error checking for updates: {0}", ex.Message);
                 }
+                finally
+                {
+                    ApplicationContext.Current.SetProgress(Strings.locale_idle, 1.0f);
+                }
                 this.m_checkedForUpdates = true;
             }
             else

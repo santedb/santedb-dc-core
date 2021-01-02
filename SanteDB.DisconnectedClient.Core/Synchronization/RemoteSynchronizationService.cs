@@ -132,6 +132,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
             {
                 if (e.Type == null) // general pull complete 
                 {
+                    ApplicationContext.Current.SetProgress(Strings.locale_idle, 1.0f);
                     var tickleService = ApplicationContext.Current.GetService<ITickleService>();
                     if (e.IsInitial)
                         tickleService.SendTickle(
@@ -249,10 +250,11 @@ namespace SanteDB.DisconnectedClient.Synchronization
                                 totalResults += this.Pull(syncResource.ResourceType, new NameValueCollection(), false, syncResource.Name);
 
                         }
+
+                        ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
+
                         if (totalResults > 0 && initialSync)
-                        {
                             this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
-                        }
                         else if (totalResults > 0)
                             this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(totalResults, lastSync));
                         else
@@ -267,7 +269,6 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     {
                         this.IsSynchronizing = false;
                         ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
-
                         Monitor.Exit(this.m_lock);
                     }
                 }

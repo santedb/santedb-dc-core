@@ -428,4 +428,7 @@ Sincerely,
   <data name="locale_pullComplete" xml:space="preserve">
     <value>Pull operation completed...</value>
   </data>
+  <data name="locale_idle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
 </root>

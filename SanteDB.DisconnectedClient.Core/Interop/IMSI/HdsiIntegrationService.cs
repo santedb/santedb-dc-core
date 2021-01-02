@@ -331,7 +331,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     {
                         HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
                         client.Client.Credentials = new NullCredentials();
-                        client.Client.Description.Endpoint[0].Timeout = 30000;
+                        client.Client.Description.Endpoint[0].Timeout = 2000;
 
                         return this.IsValidVersion(client) &&
                             client.Ping();

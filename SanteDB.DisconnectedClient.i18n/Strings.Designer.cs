@@ -547,6 +547,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Idle.
+        /// </summary>
+        public static string locale_idle {
+            get {
+                return ResourceManager.GetString("locale_idle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Importing Data....
         /// </summary>
         public static string locale_import {
