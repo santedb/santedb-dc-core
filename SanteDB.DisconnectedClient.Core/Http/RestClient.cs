@@ -255,7 +255,8 @@ namespace SanteDB.DisconnectedClient.Http
         {
             if (sslPolicyErrors == SslPolicyErrors.None)
                 return true;
-
+            else
+                this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate);
             lock (m_trustedCerts)
             {
                 if (m_trustedCerts.Contains(certificate.Subject))
