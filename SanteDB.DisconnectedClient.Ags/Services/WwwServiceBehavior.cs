@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         private void ThrowIfNotRunning()
         {
-            if (!ApplicationServiceContext.Current.IsRunning)
+            if (!ApplicationServiceContext.Current.GetService<AgsService>().IsRunning)
                 throw new DomainStateException();
         }
 

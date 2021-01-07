@@ -333,17 +333,7 @@ namespace SanteDB.DisconnectedClient.Security
                             catch (RestClientException<OAuthTokenResponse> ex) // there was an actual OAUTH problem
                             {
                                 this.m_tracer.TraceError("REST client exception: {0}", ex.Message);
-
-                                if (ex.Result.ErrorDescription == "AUTH_INV")
-                                {
-
-                                    var se = new SecurityException(
-                                    String.Format("err_oauth2_{0}", ex.Result.Error),
-                                        ex
-                                    );
-                                    se.Data.Add("oauth_result", ex.Result);
-                                    throw se;
-                                }
+                                throw new SecurityException($"err_oauth_{ex.Result.Error}", ex);
                             }
                             catch (SecurityException ex)
                             {

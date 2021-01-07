@@ -69,6 +69,16 @@ namespace SanteDB.DisconnectedClient.Configuration
             {
                 try
                 {
+                    // Determine if the auto-update has already occurred?
+                    var lastCheck = ApplicationContext.Current.ConfigurationManager.GetAppSetting("update.auto.lastCheck");
+                    if (DateTime.TryParse(lastCheck, out DateTime lastCheckDt) && lastCheckDt.Date >= DateTime.Now.Date)
+                    {
+                        this.m_tracer.TraceWarning("Skipping automatic update check");
+                        return;
+                    }
+                    else
+                        ApplicationContext.Current.ConfigurationManager.SetAppSetting("update.auto.lastCheck", DateTime.Now.Date.ToString("o"));
+
                     ApplicationContext.Current.SetProgress(Strings.locale_updateCheck, 0.5f);
 
                     // Check for new applications
