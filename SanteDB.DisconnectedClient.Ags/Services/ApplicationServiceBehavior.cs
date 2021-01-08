@@ -48,6 +48,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         // Routes
         private byte[] m_routes;
 
+        /// Last Online query
+        private DateTime m_lastOnlineQuery;
+
+        // Last online state
+        private Dictionary<string, bool> m_lastOnlineState;
+
         /// <summary>
         /// Get storage providers
         /// </summary>
@@ -238,13 +244,18 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             try
             {
-                return new Dictionary<string, bool>()
+                if (this.m_lastOnlineState == null || DateTime.Now.Subtract(this.m_lastOnlineQuery).TotalSeconds > 30)
                 {
-                    // Connected to internet
-                    { "online", ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable },
-                    { "ami", ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() ?? true},
-                    { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>()?.IsAvailable()?? true }
-                };
+                    this.m_lastOnlineState = new Dictionary<string, bool>()
+                    {
+                        // Connected to internet
+                        { "online", ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable },
+                        { "ami", ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() ?? true},
+                        { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>()?.IsAvailable()?? true }
+                    };
+                    this.m_lastOnlineQuery = DateTime.Now;
+                }
+                return this.m_lastOnlineState;
             }
             catch (Exception e)
             {

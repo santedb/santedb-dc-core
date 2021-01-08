@@ -71,7 +71,7 @@ namespace SanteDB.DisconnectedClient.Security
                     throw new SecurityException("Server access token is expired");
             }
             else
-                throw new SecurityException();
+                throw new SecurityException("Invalid authentication principal - Offline principal used to access server");
             return null;
         }
 
