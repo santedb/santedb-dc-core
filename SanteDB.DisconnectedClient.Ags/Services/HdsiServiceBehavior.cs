@@ -45,6 +45,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Rest.Common.Attributes;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
