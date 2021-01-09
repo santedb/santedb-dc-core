@@ -98,15 +98,17 @@ namespace SanteDB.DisconnectedClient.Configuration
 	                        infos = amiClient.GetApplets().CollectionItem.OfType<AppletManifestInfo>();
                         }
 
+                        var agreeConfirm = false;
                         amiClient.Client.Description.Endpoint[0].Timeout = 30000;
                         foreach (var i in infos)
                         {
                             var installed = ApplicationContext.Current.GetService<IAppletManagerService>().GetApplet(i.AppletInfo.Id);
-                            if (installed == null ||
+                            if ((installed == null ||
                                 new Version(installed.Info.Version) < new Version(i.AppletInfo.Version) &&
-                                this.m_configuration.AutoUpdateApplets &&
-                                ApplicationContext.Current.Confirm(string.Format(Strings.locale_upgradeConfirm, i.AppletInfo.Names[0].Value, i.AppletInfo.Version, installed.Info.Version)))
+                                this.m_configuration.AutoUpdateApplets) &&
+                                (agreeConfirm || ApplicationContext.Current.Confirm(string.Format(Strings.locale_upgradeConfirm, String.Join(",", infos.Select(o=>o.AppletInfo.GetName("en", true)))))))
                             {
+                                agreeConfirm = true;
 	                            this.Install(i.AppletInfo.Id);
                             }
                         }

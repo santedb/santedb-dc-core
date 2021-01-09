@@ -548,7 +548,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override void ThrowIfNotReady()
         {
-            ; // This does nothing
+            if (!ApplicationServiceContext.Current.GetService<AgsService>().IsRunning)
+                throw new DomainStateException();
         }
 
         public override IdentifiedData Update(string resourceType, string id, IdentifiedData body)
