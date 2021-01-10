@@ -42,5 +42,10 @@ namespace SanteDB.DisconnectedClient.Services
         /// Check for updates
         /// </summary>
         void AutoUpdate();
+
+        /// <summary>
+        /// Update all apps
+        /// </summary>
+        void UpdateAll();
     }
 }

@@ -154,6 +154,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Perform an update
         /// </summary>
+        public void PerformUpdate()
+        {
+            // Update
+            ApplicationContext.Current.GetService<IUpdateManager>().UpdateAll();
+        }
+
+        /// <summary>
+        /// Perform an update
+        /// </summary>
         /// <param name="appId"></param>
         public void PerformUpdate(string appId)
         {
