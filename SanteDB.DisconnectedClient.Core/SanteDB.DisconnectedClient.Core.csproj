@@ -19,7 +19,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.DisconnectedClient</PackageId>
     <Title>SanteDB.DisconnectedClient</Title>
-    <Version>2.0.62</Version>
+    <Version>2.0.62.3</Version>
     <Description>SanteDB Disconnected Client Core API Services</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>

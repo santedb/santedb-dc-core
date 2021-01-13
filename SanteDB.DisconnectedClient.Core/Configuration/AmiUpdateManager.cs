@@ -140,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Configuration
                             toInstall.Add(i);
                     }
 
-                    if (ApplicationContext.Current.Confirm(string.Format(Strings.locale_upgradeConfirm, String.Join(",", toInstall.Select(o => o.AppletInfo.GetName("en", true))))))
+                    if (toInstall.Count > 0 && ApplicationContext.Current.Confirm(string.Format(Strings.locale_upgradeConfirm, String.Join(",", toInstall.Select(o => o.AppletInfo.GetName("en", true))))))
                         foreach (var i in toInstall)
                             this.Install(i.AppletInfo.Id);
                 }
