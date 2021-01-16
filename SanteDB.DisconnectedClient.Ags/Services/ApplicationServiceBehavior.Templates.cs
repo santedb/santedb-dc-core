@@ -81,14 +81,28 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             return appletManager.Applets.GetTemplateInstance(templateId, parameters);
         }
         
-        public Stream GetTemplateView(string templateId)
+        /// <summary>
+        /// Get the template view
+        /// </summary>
+        public void GetTemplateView(string templateId)
         {
-            throw new NotImplementedException();
+            var appletManager = ApplicationServiceContext.Current.GetService<IAppletManagerService>();
+            var template = appletManager.Applets.GetTemplateDefinition(templateId);
+            if (template == null)
+                throw new KeyNotFoundException($"Template {templateId} not found");
+            RestOperationContext.Current.OutgoingResponse.Redirect(template.View);
         }
 
-        public Stream GetTemplateForm(string templateId)
+        /// <summary>
+        /// Get the specified template form
+        /// </summary>
+        public void GetTemplateForm(string templateId)
         {
-            throw new NotImplementedException();
+            var appletManager = ApplicationServiceContext.Current.GetService<IAppletManagerService>();
+            var template = appletManager.Applets.GetTemplateDefinition(templateId);
+            if (template == null)
+                throw new KeyNotFoundException($"Template {templateId} not found");
+            RestOperationContext.Current.OutgoingResponse.Redirect(template.Form);
         }
     }
 }

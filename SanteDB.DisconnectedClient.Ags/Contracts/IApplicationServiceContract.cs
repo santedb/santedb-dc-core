@@ -256,13 +256,13 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// Get the view for the specified template
         /// </summary>
         [Get("/Template/{templateId}/ui/view.html")]
-        Stream GetTemplateView(String templateId);
+        void GetTemplateView(String templateId);
 
         /// <summary>
         /// Get the form for the specified template
         /// </summary>
         [Get("/Template/{templateId}/ui/form.html")]
-        Stream GetTemplateForm(String templateId);
+        void GetTemplateForm(String templateId);
 
 
     }
