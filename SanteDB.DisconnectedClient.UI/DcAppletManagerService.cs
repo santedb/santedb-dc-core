@@ -25,6 +25,7 @@ using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.UI.Services;
 using System;
 using System.Globalization;
 using System.IO;
@@ -38,6 +39,7 @@ namespace SanteDB.DisconnectedClient.UI
     /// </summary>
     public class DcAppletManagerService : LocalAppletManagerService
     {
+
         /// <summary>
         /// Default ctor
         /// </summary>
@@ -46,12 +48,12 @@ namespace SanteDB.DisconnectedClient.UI
             this.m_appletCollection.Resolver = this.ResolveAppletAsset;
             this.m_appletCollection.CachePages = true;
         }
+
         /// <summary>
         /// Resolve asset
         /// </summary>
         public object ResolveAppletAsset(AppletAsset navigateAsset)
         {
-
             String itmPath = System.IO.Path.Combine(
                                         ApplicationContext.Current.Configuration.GetSection<AppletConfigurationSection>().AppletDirectory,
                                         "assets",
@@ -92,74 +94,75 @@ namespace SanteDB.DisconnectedClient.UI
         /// <returns></returns>
         private String GetShimMethods()
         {
-
-            // Load the default SHIM
-            // Write the generated shims
-            using (StringWriter tw = new StringWriter())
-            {
-                tw.WriteLine("/// START SANTEDB MINI IMS SHIM");
-                // Version
-                tw.WriteLine("__SanteDBAppService.GetMagic = function() {{ return '{0}'; }}", ApplicationContext.Current.ExecutionUuid);
-                tw.WriteLine("__SanteDBAppService.GetVersion = function() {{ return '{0} ({1})'; }}", typeof(SanteDBConfiguration).Assembly.GetName().Version, typeof(SanteDBConfiguration).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
-                tw.WriteLine("__SanteDBAppService.GetString = function(key) {");
-                tw.WriteLine("\tvar strData = __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()] || __SanteDBAppService._stringData['en'];");
-                tw.WriteLine("\treturn strData[key] || key;");
-                tw.WriteLine("}");
-
-                tw.WriteLine("__SanteDBAppService._stringData = {};");
-                var languages = this.Applets.SelectMany(a => a.Strings).Select(o => o.Language).Distinct();
-                foreach (var lang in languages)
+            var shimGen = ApplicationContext.Current.GetService<IShimGenerator>();
+            if (shimGen == null) // legacy - default SHIM 
+                using (StringWriter tw = new StringWriter())
                 {
-                    tw.WriteLine("\t__SanteDBAppService._stringData['{0}'] = {{", lang);
-                    foreach (var itm in this.Applets.GetStrings(lang))
+                    tw.WriteLine("/// START SANTEDB MINI IMS SHIM");
+                    // Version
+                    tw.WriteLine("__SanteDBAppService.GetMagic = function() {{ return '{0}'; }}", ApplicationContext.Current.ExecutionUuid);
+                    tw.WriteLine("__SanteDBAppService.GetVersion = function() {{ return '{0} ({1})'; }}", typeof(SanteDBConfiguration).Assembly.GetName().Version, typeof(SanteDBConfiguration).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+                    tw.WriteLine("__SanteDBAppService.GetString = function(key) {");
+                    tw.WriteLine("\tvar strData = __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()] || __SanteDBAppService._stringData['en'];");
+                    tw.WriteLine("\treturn strData[key] || key;");
+                    tw.WriteLine("}");
+
+                    tw.WriteLine("__SanteDBAppService._stringData = {};");
+                    var languages = this.Applets.SelectMany(a => a.Strings).Select(o => o.Language).Distinct();
+                    foreach (var lang in languages)
                     {
-                        tw.WriteLine("\t\t'{0}': '{1}',", itm.Key, itm.Value?.EncodeAscii().Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
+                        tw.WriteLine("\t__SanteDBAppService._stringData['{0}'] = {{", lang);
+                        foreach (var itm in this.Applets.GetStrings(lang))
+                        {
+                            tw.WriteLine("\t\t'{0}': '{1}',", itm.Key, itm.Value?.EncodeAscii().Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
+                        }
+                        tw.WriteLine("\t\t'none':'none' };");
                     }
-                    tw.WriteLine("\t\t'none':'none' };");
+
+
+                    tw.WriteLine("__SanteDBAppService.GetTemplateForm = function(templateId) {");
+                    tw.WriteLine("\tswitch(templateId) {");
+
+                    foreach (var itm in this.Applets.SelectMany(o => o.Templates))
+                    {
+                        tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.Form);
+                    }
+                    tw.WriteLine("\t}");
+                    tw.WriteLine("}");
+
+                    tw.WriteLine("__SanteDBAppService.GetTemplateView = function(templateId) {");
+                    tw.WriteLine("\tswitch(templateId) {");
+                    foreach (var itm in this.Applets.SelectMany(o => o.Templates))
+                    {
+                        tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.View);
+                    }
+                    tw.WriteLine("\t}");
+                    tw.WriteLine("}");
+
+                    tw.WriteLine("__SanteDBAppService.GetTemplates = function() {");
+                    tw.WriteLine("return '[{0}]'", String.Join(",", this.Applets
+                        .SelectMany(o => o.Templates)
+                        .GroupBy(o => o.Mnemonic)
+                        .Select(o => o.OrderByDescending(t => t.Priority).FirstOrDefault())
+                        .Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
+                    tw.WriteLine("}");
+
+                    tw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");
+                    tw.WriteLine("\tswitch(assetId) {");
+                    foreach (var itm in this.Applets.SelectMany(o => o.Assets).Where(o => o.Name.StartsWith("data/")))
+                        tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Name.Replace("data/", ""), Convert.ToBase64String(this.Applets.RenderAssetContent(itm)).Replace("'", "\\'"));
+                    tw.WriteLine("\t}");
+                    tw.WriteLine("}");
+
+                    // Read the static shim
+                    var manifestName = Assembly.GetEntryAssembly().GetManifestResourceNames().FirstOrDefault(o => o.EndsWith("shim.js"));
+                    using (StreamReader shim = new StreamReader(Assembly.GetEntryAssembly().GetManifestResourceStream(manifestName)))
+                        tw.Write(shim.ReadToEnd());
+
+                    return tw.ToString();
                 }
-
-
-                tw.WriteLine("__SanteDBAppService.GetTemplateForm = function(templateId) {");
-                tw.WriteLine("\tswitch(templateId) {");
-
-                foreach (var itm in this.Applets.SelectMany(o => o.Templates))
-                {
-                    tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.Form);
-                }
-                tw.WriteLine("\t}");
-                tw.WriteLine("}");
-
-                tw.WriteLine("__SanteDBAppService.GetTemplateView = function(templateId) {");
-                tw.WriteLine("\tswitch(templateId) {");
-                foreach (var itm in this.Applets.SelectMany(o => o.Templates))
-                {
-                    tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.View);
-                }
-                tw.WriteLine("\t}");
-                tw.WriteLine("}");
-
-                tw.WriteLine("__SanteDBAppService.GetTemplates = function() {");
-                tw.WriteLine("return '[{0}]'", String.Join(",", this.Applets
-                    .SelectMany(o => o.Templates)
-                    .GroupBy(o=>o.Mnemonic)
-                    .Select(o=>o.OrderByDescending(t=>t.Priority).FirstOrDefault())
-                    .Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
-                tw.WriteLine("}");
-
-                tw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");
-                tw.WriteLine("\tswitch(assetId) {");
-                foreach (var itm in this.Applets.SelectMany(o => o.Assets).Where(o => o.Name.StartsWith("data/")))
-                    tw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Name.Replace("data/", ""), Convert.ToBase64String(this.Applets.RenderAssetContent(itm)).Replace("'", "\\'"));
-                tw.WriteLine("\t}");
-                tw.WriteLine("}");
-
-                // Read the static shim
-                var manifestName = Assembly.GetEntryAssembly().GetManifestResourceNames().FirstOrDefault(o => o.EndsWith("shim.js"));
-                using (StreamReader shim = new StreamReader(Assembly.GetEntryAssembly().GetManifestResourceStream(manifestName)))
-                    tw.Write(shim.ReadToEnd());
-
-                return tw.ToString();
-            }
+            else // Load the provided shim
+                return shimGen.GetShimMethods();
         }
 
 
