@@ -634,7 +634,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
-                                || o is IAuditRepositoryService
+                                || o is IRepositoryService<AuditData>
                                 || o is IJobManagerService
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
@@ -691,7 +691,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
                                 || o is IJobManagerService
-                                || o is IAuditRepositoryService
+                                || o is IRepositoryService<AuditData>
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());

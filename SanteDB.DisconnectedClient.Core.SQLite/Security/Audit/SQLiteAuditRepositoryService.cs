@@ -48,7 +48,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
     /// <summary>
     /// Local audit repository service
     /// </summary>
-    public class SQLiteAuditRepositoryService : IAuditRepositoryService
+    public class SQLiteAuditRepositoryService : IRepositoryService<AuditData>
     {
         /// <summary>
         /// Get the service name
@@ -124,7 +124,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         /// <summary>
         /// Get the specified audit data from the database
         /// </summary>
-        public AuditData Get(object id)
+        public AuditData Get(Guid id)
         {
             try
             {
@@ -419,6 +419,30 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                     throw new Exception($"Error inserting audit {audit.ActionCode}", ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// Get the specified audit
+        /// </summary>
+        public AuditData Get(Guid key, Guid versionKey)
+        {
+            return this.Get(key);
+        }
+
+        /// <summary>
+        /// Save the specified audit data
+        /// </summary>
+        public AuditData Save(AuditData data)
+        {
+            throw new NotSupportedException("Updating of security audit is not permitted");
+        }
+
+        /// <summary>
+        /// Obsolete the specified object
+        /// </summary>
+        public AuditData Obsolete(Guid key)
+        {
+            throw new NotSupportedException("Deleting of security audits is not permitted");
         }
     }
 }

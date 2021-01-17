@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     /// <summary>
     /// Represents a remote audit repository service that usses the AMI to communicate audits
     /// </summary>
-    public class RemoteAuditRepositoryService : AmiRepositoryBaseService, IAuditRepositoryService
+    public class RemoteAuditRepositoryService : AmiRepositoryBaseService, IRepositoryService<AuditData>
     {
 
         /// <summary>
@@ -65,16 +65,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Get the specified audit
         /// </summary>
-        public AuditData Get(object correlationKey)
+        public AuditData Get(Guid correlationKey)
         {
             using (var client = this.GetClient())
             {
-                if (correlationKey is Guid || correlationKey is Guid?)
-                    return client.GetAudit((Guid)correlationKey);
-                else if (correlationKey is String)
-                    return client.GetAudit(Guid.Parse(correlationKey.ToString()));
-                else
-                    throw new ArgumentException("Improper type supplied", nameof(correlationKey));
+                return client.GetAudit((Guid)correlationKey);
             }
         }
 
@@ -88,6 +83,33 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             return audit;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="versionKey"></param>
+        /// <returns></returns>
+        public AuditData Get(Guid key, Guid versionKey)
+        {
+            return this.Get(key, Guid.Empty);
+        }
 
+        /// <summary>
+        /// Update the specified audit data 
+        /// </summary>
+        public AuditData Save(AuditData data)
+        {
+            using (var client = this.GetClient())
+                client.SubmitAudit(new AuditSubmission(data));
+            return data;
+        }
+
+        /// <summary>
+        /// Obsolete the specified audit
+        /// </summary>
+        public AuditData Obsolete(Guid key)
+        {
+            throw new NotImplementedException("Remote audits cannot be deleted");
+        }
     }
 }
