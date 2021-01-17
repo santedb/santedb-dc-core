@@ -100,6 +100,7 @@ namespace SanteDB.DisconnectedClient.UI
                 {
                     tw.WriteLine("/// START SANTEDB MINI IMS SHIM");
                     // Version
+                    tw.WriteLine("__SanteDBAppService.ExecutionEnvironment ='{0}';", ApplicationContext.Current.HostType);
                     tw.WriteLine("__SanteDBAppService.GetMagic = function() {{ return '{0}'; }}", ApplicationContext.Current.ExecutionUuid);
                     tw.WriteLine("__SanteDBAppService.GetVersion = function() {{ return '{0} ({1})'; }}", typeof(SanteDBConfiguration).Assembly.GetName().Version, typeof(SanteDBConfiguration).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
                     tw.WriteLine("__SanteDBAppService.GetString = function(key) {");

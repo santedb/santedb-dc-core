@@ -17,7 +17,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.DisconnectedClient.UI</PackageId>
     <Title>SanteDB.DisconnectedClient.UI</Title>
-    <Version>2.0.64.1</Version>
+    <Version>2.0.64.2</Version>
     <Description>SanteDB Disconnected User Interface Core</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>
@@ -36,8 +36,8 @@
   </PropertyGroup>  
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="ZXing.Net" Version="0.16.5" />
-    <PackageReference Include="ZXing.Net.Bindings.CoreCompat.System.Drawing" Version="0.16.5-beta" />
+    <PackageReference Include="ZXing.Net" Version="0.16.6" />
+    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.7" />
   </ItemGroup>        
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
