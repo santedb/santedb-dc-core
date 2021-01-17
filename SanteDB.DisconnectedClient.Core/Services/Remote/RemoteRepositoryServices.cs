@@ -16,14 +16,17 @@
  * User: fyfej
  * Date: 2020-5-1
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -32,6 +35,7 @@ using SanteDB.DisconnectedClient.Interop;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.HDSI.Client;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -47,6 +51,48 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     /// </summary>
     public class RemoteRepositoryService : IDaemonService
     {
+
+        /// <summary>
+        /// Template keys
+        /// </summary>
+        private static ConcurrentDictionary<String, Guid> s_templateKeys = new ConcurrentDictionary<string, Guid>();
+
+        /// <summary>
+        /// Master entity
+        /// </summary>
+        internal interface IMasterEntity { }
+
+        /// <summary>
+        /// Stub class for receiving MDM Entities
+        /// </summary>
+        [XmlType(Namespace = "http://santedb.org/model")]
+        public class EntityMaster<T> : Entity, IMasterEntity
+            where T : IdentifiedData, new()
+        { }
+
+        /// <summary>
+        /// Stub class for receiving MDM Acts
+        /// </summary>
+        [XmlType(Namespace = "http://santedb.org/model")]
+        public class ActMaster<T> : Act, IMasterEntity
+            where T : IdentifiedData, new()
+        { }
+
+
+
+        /// <summary>
+        /// Get all types from core classes of entity and act and create shims in the model serialization binder
+        /// </summary>
+        static RemoteRepositoryService()
+        {
+            foreach (var t in typeof(Entity).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
+                ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
+            foreach (var t in typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
+                ModelSerializationBinder.RegisterModelType(typeof(ActMaster<>).MakeGenericType(t));
+        }
+
+
+
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -54,12 +100,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteRepositoryService));
-
-        // Constructor
-        public RemoteRepositoryService()
-        {
-
-        }
 
         /// <summary>
         /// Return true if running
@@ -102,6 +142,14 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     if (ApplicationContext.Current.GetService(idpType) == null)
                         ApplicationContext.Current.AddServiceProvider(pclass);
                 }
+
+                // Get client for device user
+                using(var client = GetClient())
+                {
+                    var retVal =client.Query<TemplateDefinition>(o => o.ObsoletionTime == null);
+                    retVal.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
+                }
+
             }
             catch (Exception e)
             {
@@ -124,7 +172,46 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
+
+        /// <summary>
+        /// Get the client
+        /// </summary>
+        private static HdsiServiceClient GetClient()
+        {
+            var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
+            retVal.Client.Requesting += (o, e) =>
+            {
+                e.Query.Add("_expand", new List<String>() {
+                        "typeConcept",
+                        "address.use",
+                        "name.use"
+                });
+            };
+
+            var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+            var rmtPrincipal = ApplicationServiceContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+            retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(rmtPrincipal);
+            return retVal;
+        }
+
+        /// <summary>
+        /// Get the specified template by mnemonic
+        /// </summary>
+        internal static Guid? GetTemplate(string mnemonic)
+        {
+            if(!s_templateKeys.TryGetValue(mnemonic, out Guid retVal))
+            {
+                // Get client for device user
+                using (var client = GetClient())
+                {
+                    var itm = client.Query<TemplateDefinition>(o => o.Mnemonic == mnemonic);
+                    itm.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
+                }
+            }
+            return retVal;
+        }
     }
+
 
     /// <summary>
     /// Generic versioned persister service for any non-customized persister
@@ -210,10 +297,29 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
 
         /// <summary>
+        /// Harmonize the template identifiers
+        /// </summary>
+        private void HarmonizeTemplateId(IHasTemplate template)
+        {
+            if(template.Template != null && 
+                !template.TemplateKey.HasValue)
+            {
+                // Lookup 
+                template.TemplateKey = RemoteRepositoryService.GetTemplate(template.Template.Mnemonic);
+            }
+        }
+
+        /// <summary>
         /// Inserts the specified typed data
         /// </summary>
         public TModel Insert(TModel data)
         {
+
+            if (data is IHasTemplate template)
+                this.HarmonizeTemplateId(template);
+            else if (data is Bundle bundle)
+                bundle.Item.OfType<IHasTemplate>().ToList().ForEach(o => this.HarmonizeTemplateId(o));
+
             using (var client = this.GetClient())
             {
                 var retVal = client.Create(data);
@@ -282,6 +388,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public TModel Save(TModel data)
         {
+            if (data is IHasTemplate template)
+                this.HarmonizeTemplateId(template);
+            else if (data is Bundle bundle)
+                bundle.Item.OfType<IHasTemplate>().ToList().ForEach(o => this.HarmonizeTemplateId(o));
+
             using (var client = this.GetClient())
             {
                 var retVal = client.Update(data);

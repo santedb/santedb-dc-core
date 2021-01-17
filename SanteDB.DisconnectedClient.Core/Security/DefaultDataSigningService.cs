@@ -60,18 +60,19 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public DefaultDataSigningService()
         {
+            // Load keys from configuration
+            var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
+            if (configuredKeys != null)
+                foreach (var k in configuredKeys)
+                    this.m_keys.TryAdd(k.KeyName, k);
+            else
+                configuredKeys = new List<SecuritySignatureConfiguration>(); // Temporary list
+
             ApplicationContext.Current.Started += (o, e) =>
             {
                 try
                 {
-                    // Load keys from configuration
-                    var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
-                    if (configuredKeys != null)
-                        foreach (var k in configuredKeys)
-                            this.m_keys.TryAdd(k.KeyName, k);
-                    else
-                        configuredKeys = new List<SecuritySignatureConfiguration>(); // Temporary list
-
+                   
                     var appName = ApplicationContext.Current.Application.Name;
                     var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault() ?? ApplicationContext.Current.Application;
                     if (!this.m_keys.TryGetValue($"SA.{app.Key.ToString()}", out SecuritySignatureConfiguration meKey))
@@ -94,7 +95,9 @@ namespace SanteDB.DisconnectedClient.Security
                     if (!m_keys.ContainsKey("default"))
                         m_keys.TryAdd("default", meKey);
                 }
-                catch { }
+                catch(Exception ex) {
+                    throw new Exception("Error starting up data signing service", ex);
+                }
             };
         }
 
