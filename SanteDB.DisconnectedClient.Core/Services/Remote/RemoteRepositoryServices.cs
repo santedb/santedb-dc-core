@@ -144,12 +144,18 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 }
 
                 // Get client for device user
-                using(var client = GetClient())
+                try
                 {
-                    var retVal =client.Query<TemplateDefinition>(o => o.ObsoletionTime == null);
-                    retVal.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
+                    using (var client = GetClient())
+                    {
+                        var retVal = client.Query<TemplateDefinition>(o => o.ObsoletionTime == null);
+                        retVal.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
+                    }
                 }
-
+                catch(Exception e)
+                {
+                    this.m_tracer.TraceWarning("Cannot map local template keys");
+                }
             }
             catch (Exception e)
             {
@@ -242,7 +248,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         "name.use"
                 });
             };
-            retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+            retVal.Client.Credentials = retVal.Client.Description.Binding.Security?.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
             return retVal;
         }
 
