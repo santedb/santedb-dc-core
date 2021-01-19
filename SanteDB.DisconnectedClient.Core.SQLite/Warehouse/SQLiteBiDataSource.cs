@@ -300,7 +300,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                         // Decrypt database 
                         var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
                         if (securityKey != null && (enc ?? "true").Equals("true"))
-                            conn.SetPassword(Encoding.UTF8.GetString(securityKey, 0, securityKey.Length));
+                            conn.SetPassword(securityKey);
 
                         // Open the database
                         conn.Open();

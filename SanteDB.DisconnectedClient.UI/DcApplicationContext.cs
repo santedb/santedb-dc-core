@@ -382,7 +382,8 @@ namespace SanteDB.DisconnectedClient.UI
 
                                 if (existing == null || new Version(existing.Info.Version) < new Version(package.Meta.Version))
                                 {
-                                    retVal.m_tracer.TraceInfo("Upgrading applet {0} from {1} to {2}", package.Meta.Id, existing.Info.Version, package.Meta.Version);
+                                    if(existing != null)
+                                        retVal.m_tracer.TraceInfo("Upgrading applet {0} from {1} to {2}", package.Meta.Id, existing.Info.Version, package.Meta.Version);
                                     appletService.Install(package, true);
                                 }
                                 
