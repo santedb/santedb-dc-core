@@ -46,7 +46,6 @@ namespace SanteDB.DisconnectedClient.Data
                         .Select(t => Activator.CreateInstance(t) as IDataConfigurationProvider).ToArray();
             return m_existing;
         }
-                        
 
         /// <summary>
         /// Gets the specified storage provider

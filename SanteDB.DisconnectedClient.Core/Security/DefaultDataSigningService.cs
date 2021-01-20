@@ -58,6 +58,26 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public bool IsSymmetric => true;
 
+        /// <summary>
+        /// Try to get the specified key
+        /// </summary>
+        private bool TryGetKey(String key, out SecuritySignatureConfiguration config)
+        {
+            if (!this.GetKeyData().TryGetValue(key, out config))
+            {
+                lock (this.m_lock)
+                {
+                    this.m_keyData.Clear();
+                    this.m_keyData = null;
+                    return this.TryGetKey(key, out config);
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Try to get the specified key
+        /// </summary>
         private IDictionary<String, SecuritySignatureConfiguration> GetKeyData()
         {
             if (this.m_keyData == null)
@@ -145,7 +165,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public string GetSignatureAlgorithm(string keyId = null)
         {
-            if (this.GetKeyData().TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration config))
+            if (this.TryGetKey(keyId ?? "default", out SecuritySignatureConfiguration config))
                 return config.Algorithm.ToString();
             return null;
         }
@@ -156,7 +176,7 @@ namespace SanteDB.DisconnectedClient.Security
         public byte[] SignData(byte[] data, string keyId = null)
         {
             // Fetch the key from the repository
-            if (!this.GetKeyData().TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration configuration))
+            if (!this.TryGetKey(keyId ?? "default", out SecuritySignatureConfiguration configuration))
                 throw new InvalidOperationException($"Key {keyId ?? "default"} not found");
 
             switch (configuration.Algorithm)
@@ -193,7 +213,7 @@ namespace SanteDB.DisconnectedClient.Security
         public bool Verify(byte[] data, byte[] signature, string keyId = null)
         {
             // Fetch the key from the repository
-            if (!this.GetKeyData().TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration configuration))
+            if (!this.TryGetKey(keyId ?? "default", out SecuritySignatureConfiguration configuration))
                 throw new InvalidOperationException($"Key {keyId ?? "default"} not found");
 
             switch (configuration.Algorithm)
