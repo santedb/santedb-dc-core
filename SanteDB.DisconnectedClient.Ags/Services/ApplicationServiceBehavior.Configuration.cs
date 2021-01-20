@@ -646,6 +646,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteMailRepositoryService), true);
+                        ApplicationContext.Current.RemoveServiceProvider(typeof(AppletBiRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteBiService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteJobManager), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteFreetextSearchService), true);

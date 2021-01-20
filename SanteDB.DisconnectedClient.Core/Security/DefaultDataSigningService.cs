@@ -63,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Security
             if (!this.m_keyData.TryGetValue(key, out config))
             {
                 var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
-                config = configuredKeys.FirstOrDefault(k => k.KeyName == key);
+                config = configuredKeys?.FirstOrDefault(k => k.KeyName == key);
                 if (config != null)
                 {
                     this.m_keyData.TryAdd(config.KeyName, config);
