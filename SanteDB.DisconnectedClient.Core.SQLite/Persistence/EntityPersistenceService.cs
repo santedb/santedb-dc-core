@@ -107,7 +107,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Alright first, which type am I mapping to?
             var dbEntity = dataInstance as DbEntity;
             if (dbEntity != null)
-                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToUpper())
+                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToLower())
                 {
                     case EntityClassKeyStrings.Device:
                         return new DeviceEntityPersistenceService().ToModelInstance(dataInstance, context);
@@ -205,7 +205,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             IDataCachingService cache = ApplicationContext.Current.GetService<IDataCachingService>();
 
             if (dbEntity != null)
-                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToUpper())
+                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToLower())
                 {
                     case EntityClassKeyStrings.Device:
                         retVal = cache?.GetCacheItem<DeviceEntity>(dbEntity.Key);
@@ -540,7 +540,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Entity InsertInternal(SQLiteDataContext context, Entity data)
         {
-            switch (data.ClassConceptKey.ToString().ToUpper())
+            switch (data.ClassConceptKey.ToString().ToLower())
             {
                 case EntityClassKeyStrings.Device:
                     return new DeviceEntityPersistenceService().Insert(context, data as DeviceEntity);
@@ -580,7 +580,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Entity UpdateInternal(SQLiteDataContext context, Entity data)
         {
-            switch (data.ClassConceptKey.ToString().ToUpper())
+            switch (data.ClassConceptKey.ToString().ToLower())
             {
                 case EntityClassKeyStrings.Device:
                     return new DeviceEntityPersistenceService().Update(context, data as DeviceEntity);
