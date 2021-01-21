@@ -75,6 +75,7 @@ using SanteDB.Messaging.HDSI.Client;
 using System.Net;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Security.Configuration;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -946,5 +947,46 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
         }
+
+
+        /// <summary>
+        /// Update configuration
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public List<AppSettingKeyValuePair> GetAppSetting(String scope, String keyMatch)
+        {
+            var configService = ApplicationServiceContext.Current.GetService<IConfigurationManager>();
+            var keyRegex = new Regex($"^{keyMatch}$");
+            if ("global".Equals(scope, StringComparison.OrdinalIgnoreCase))
+            {
+                return configService.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.Where(s => keyRegex.IsMatch(s.Key)).ToList();
+            }
+            else 
+            {
+                throw new NotImplementedException("IUserPreferenceManager not found");
+            }
+        }
+
+        /// <summary>
+        /// Update configuration
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public ConfigurationViewModel SetAppSetting(String scope, List<AppSettingKeyValuePair> settings)
+        {
+
+            var configService = ApplicationServiceContext.Current.GetService<IConfigurationManager>();
+            if ("global".Equals(scope, StringComparison.OrdinalIgnoreCase))
+            {
+                foreach(var s in settings)
+                    configService.SetAppSetting(s.Key, s.Value);
+                return new ConfigurationViewModel(configService.Configuration);
+            }
+            else
+            {
+                throw new NotImplementedException("IUserPreferenceManager not found");
+            }
+        }
+
     }
+
 }

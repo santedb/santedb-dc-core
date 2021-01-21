@@ -19,9 +19,9 @@
 using Newtonsoft.Json.Linq;
 using RestSrvr.Attributes;
 using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Patch;
-using SanteDB.Core.Model.Subscription;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.DisconnectedClient.Tickler;
@@ -57,28 +57,29 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         ConfigurationViewModel UpdateConfiguration(ConfigurationViewModel configuration);
 
         /// <summary>
+        /// Update configuration
+        /// </summary>
+        [Get("/Configuration/{scope}/setting/{keyMatch}")]
+        List<AppSettingKeyValuePair> GetAppSetting(String scope, String keyMatch);
+
+        /// <summary>
+        /// Update configuration
+        /// </summary>
+        [Post("/Configuration/{scope}/setting")]
+        ConfigurationViewModel SetAppSetting(String scope, List<AppSettingKeyValuePair> settings);
+
+        /// <summary>
         /// Get the data storage providers
         /// </summary>
         [Get("/DataProviders")]
         List<StorageProviderViewModel> GetDataStorageProviders();
 
-        /// <summary>
-        /// Get user configuration
-        /// </summary>
-        [Get("/Configuration/User")]
-        ConfigurationViewModel GetUserConfiguration();
-
+       
         /// <summary>
         /// Get locale assets
         /// </summary>
         [Get("/Locale")]
         Dictionary<String, String[]> GetLocaleAssets();
-
-        /// <summary>
-        /// Save the user configuration
-        /// </summary>
-        [Post("/Configuration/User")]
-        void SaveUserConfiguration(ConfigurationViewModel configuration);
 
         /// <summary>
         /// Join the realm
