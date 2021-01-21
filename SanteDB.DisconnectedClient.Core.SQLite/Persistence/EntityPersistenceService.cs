@@ -123,7 +123,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     case EntityClassKeyStrings.CityOrTown:
                     case EntityClassKeyStrings.Country:
                     case EntityClassKeyStrings.CountyOrParish:
-                    case EntityClassKeyStrings.PrecinctOrBurrogh:
+                    case EntityClassKeyStrings.PrecinctOrBorough:
                     case EntityClassKeyStrings.State:
                     case EntityClassKeyStrings.ServiceDeliveryLocation:
                         return new PlacePersistenceService().ToModelInstance(dataInstance, context);
@@ -231,7 +231,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     case EntityClassKeyStrings.CountyOrParish:
                     case EntityClassKeyStrings.State:
                     case EntityClassKeyStrings.ServiceDeliveryLocation:
-                    case EntityClassKeyStrings.PrecinctOrBurrogh:
+                    case EntityClassKeyStrings.PrecinctOrBorough:
                         retVal = cache?.GetCacheItem<Place>(dbEntity.Key);
 
                         break;
@@ -561,7 +561,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 case EntityClassKeyStrings.CountyOrParish:
                 case EntityClassKeyStrings.State:
                 case EntityClassKeyStrings.ServiceDeliveryLocation:
-                case EntityClassKeyStrings.PrecinctOrBurrogh:
+                case EntityClassKeyStrings.PrecinctOrBorough:
                     return new PlacePersistenceService().Insert(context, data as Place);
                 case EntityClassKeyStrings.Organization:
                     return new OrganizationPersistenceService().Insert(context, data as Organization);
@@ -601,7 +601,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 case EntityClassKeyStrings.CountyOrParish:
                 case EntityClassKeyStrings.State:
                 case EntityClassKeyStrings.ServiceDeliveryLocation:
-                case EntityClassKeyStrings.PrecinctOrBurrogh:
+                case EntityClassKeyStrings.PrecinctOrBorough:
                     return new PlacePersistenceService().Update(context, data as Place);
                 case EntityClassKeyStrings.Organization:
                     return new OrganizationPersistenceService().Update(context, data as Organization);
