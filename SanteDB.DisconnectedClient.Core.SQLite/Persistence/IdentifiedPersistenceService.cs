@@ -234,6 +234,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                 if (typeof(IDbHideable).IsAssignableFrom(typeof(TQueryResult)))
                     queryStatement.And(" hidden = 0");
+                queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();
             }
             else
             {
@@ -242,7 +243,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
             }
 
-            queryStatement = this.AppendOrderByStatement(queryStatement, orderBy).Build();
+            
 
             m_tracer.TraceVerbose("Built Query: {0}", queryStatement.SQL);
 

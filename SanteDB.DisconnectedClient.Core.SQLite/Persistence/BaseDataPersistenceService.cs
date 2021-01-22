@@ -53,7 +53,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         protected override SqlStatement AppendOrderByStatement(SqlStatement domainQuery, ModelSort<TModel>[] orderBy)
         {
             domainQuery = base.AppendOrderByStatement(domainQuery, orderBy);
-            return domainQuery.OrderBy<TDomain>(o => o.CreationTime, SanteDB.Core.Model.Map.SortOrderType.OrderByDescending);
+            if (orderBy == null)
+                return domainQuery.OrderBy<TDomain>(o => o.CreationTime, SanteDB.Core.Model.Map.SortOrderType.OrderByDescending);
+            else return domainQuery;
         }
 
         /// <summary>
