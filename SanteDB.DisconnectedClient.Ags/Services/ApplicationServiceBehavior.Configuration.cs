@@ -234,7 +234,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         Endpoint = urlInfo.Select(o => new ServiceClientEndpoint()
                         {
                             Address = o.Replace("0.0.0.0", realmUri),
-                            Timeout = itm.ServiceType == ServiceEndpointType.HealthDataService ? 60000 : 30000
+                            Timeout = itm.ServiceType == ServiceEndpointType.HealthDataService ? 180000 : 60000
                         }).ToList(),
                         Trace = enableTrace,
                         Name = serviceName
@@ -419,7 +419,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     },
                     Endpoint = new System.Collections.Generic.List<ServiceClientEndpoint>() {
                         new ServiceClientEndpoint() {
-                            Address = amiUri, Timeout = 30000
+                            Address = amiUri, Timeout = 120000
                         }
                     },
                     Name = "ami",
@@ -433,7 +433,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     },
                     Endpoint = new System.Collections.Generic.List<ServiceClientEndpoint>() {
                         new ServiceClientEndpoint() {
-                            Address = hdsiUri, Timeout = 30000
+                            Address = hdsiUri, Timeout = 120000
                         }
                     },
                     Name = "hdsi",
