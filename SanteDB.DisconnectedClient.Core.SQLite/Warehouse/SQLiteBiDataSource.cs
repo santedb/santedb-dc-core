@@ -191,6 +191,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                         case BiDataType.Boolean:
                             if (string.IsNullOrEmpty(kv.Value?.ToString()))
                                 parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => Boolean.Parse(o)).ToArray();
                             else
                                 parameters[kv.Key] = Boolean.Parse(kv.Value.ToString());
                             break;
@@ -198,24 +200,32 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                         case BiDataType.DateTime:
                             if (string.IsNullOrEmpty(kv.Value?.ToString()))
                                 parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => DateTime.Parse(o)).ToArray();
                             else
                                 parameters[kv.Key] = DateTime.Parse(kv.Value.ToString());
                             break;
                         case BiDataType.Integer:
                             if (string.IsNullOrEmpty(kv.Value?.ToString()))
                                 parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => Int32.Parse(o)).ToArray();
                             else
                                 parameters[kv.Key] = Int32.Parse(kv.Value.ToString());
                             break;
                         case BiDataType.String:
                             if (string.IsNullOrEmpty(kv.Value?.ToString()))
                                 parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.ToArray();
                             else
-                                parameters[kv.Key] = kv.Value.ToString();
+                                parameters[kv.Key] = kv.Value;
                             break;
                         case BiDataType.Uuid:
                             if (string.IsNullOrEmpty(kv.Value?.ToString()))
                                 parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => Guid.Parse(o)).ToArray();
                             else
                                 parameters[kv.Key] = Guid.Parse(kv.Value.ToString());
                             break;
@@ -240,8 +250,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             {
                 object pValue = null;
                 parameters.TryGetValue(m.Groups[1].Value, out pValue);
-                values.Add(pValue);
-                return "?";
+                if (pValue is Array arr)
+                {
+                    values.AddRange(arr.OfType<Object>());
+                    return string.Join(",", arr.OfType<Object>().Select(o=>"?"));
+
+                }
+                else
+                {
+                    values.Add(pValue);
+                    return "?";
+                }
             });
 
             // Aggregation definitions

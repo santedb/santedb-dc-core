@@ -522,7 +522,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 {
                                     // Do we have a local?
                                     if (o is Entity entity &&
-                                        ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                                        ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>()?.Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
                                         return o;
                                     o.AddTag("$upstream", "true");
                                     return o;
