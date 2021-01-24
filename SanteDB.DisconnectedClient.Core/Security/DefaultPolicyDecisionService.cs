@@ -171,5 +171,13 @@ namespace SanteDB.DisconnectedClient.Security
                     }
             return rule;
         }
+
+        /// <summary>
+        /// Clear the specified policy cache
+        /// </summary>
+        public void ClearCache(IPrincipal principal)
+        {
+            this.m_policyCache.TryRemove(principal.Identity.Name, out ConcurrentDictionary<String, dynamic> _);
+        }
     }
 }

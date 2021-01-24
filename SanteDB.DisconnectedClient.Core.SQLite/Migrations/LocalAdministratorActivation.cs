@@ -48,46 +48,49 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
 
                         // App setting
                         var activateLocalAdmin = ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("security.enableLocalAdmin") == "true";
-
                         ApplicationContext.Current.GetService<IConfigurationManager>().SetAppSetting("security.enableLocalAdmin", "false");
-                        // System user
-                        db.Insert(new DbSecurityUser()
+
+                        if (!db.Table<DbSecurityUser>().Where(o => o.UserName == "LocalAdministrator").Any())
                         {
-                            Key = uid,
-                            Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash("ChangeMe123"),
-                            SecurityHash = Guid.NewGuid().ToString(),
-                            Lockout = activateLocalAdmin ? null : (DateTime?)DateTime.MaxValue,
-                            UserName = "LocalAdministrator",
-                            CreationTime = DateTime.Now,
-                            CreatedByKey = Guid.Empty
-                        });
-                        db.Table<DbSecurityRole>().Where(o => o.Name == "LOCAL_ADMINISTRATORS" || o.Name == "LOCAL_USERS").ToList()
-                            .ForEach(r => db.Insert(new DbSecurityUserRole()
+                            // System user
+                            db.Insert(new DbSecurityUser()
                             {
-                                Key = Guid.NewGuid(),
-                                RoleUuid = r.Uuid,
-                                UserUuid = uid.ToByteArray()
-                            }));
+                                Key = uid,
+                                Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash("ChangeMe123"),
+                                SecurityHash = Guid.NewGuid().ToString(),
+                                Lockout = activateLocalAdmin ? null : (DateTime?)DateTime.MaxValue,
+                                UserName = "LocalAdministrator",
+                                CreationTime = DateTime.Now,
+                                CreatedByKey = Guid.Empty
+                            });
+                            db.Table<DbSecurityRole>().Where(o => o.Name == "LOCAL_ADMINISTRATORS" || o.Name == "LOCAL_USERS").ToList()
+                                .ForEach(r => db.Insert(new DbSecurityUserRole()
+                                {
+                                    Key = Guid.NewGuid(),
+                                    RoleUuid = r.Uuid,
+                                    UserUuid = uid.ToByteArray()
+                                }));
+                        }
 
-                    }
-
-                    // GRANT LOGIN TO LOCAL USERS
-                    var adminIsGod = ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("security.adminIsGod") == "true";
-                    if (adminIsGod) {
-                        var adminRole = db.Table<DbSecurityRole>().Where(o => o.Name == "LOCAL_ADMINISTRATORS").FirstOrDefault();
-                        
-                        var policy = db.Table<DbSecurityPolicy>().Where(o => o.Oid == "1.3.6.1.4.1.33349.3.1.5.9.2").FirstOrDefault();
-                        db.Table<DbSecurityRolePolicy>().Delete(o => o.RoleId == adminRole.Uuid);
-                        db.Insert(new DbSecurityRolePolicy()
+                        // GRANT LOGIN TO LOCAL USERS
+                        var adminIsGod = ApplicationContext.Current.GetService<IConfigurationManager>().GetAppSetting("security.adminIsGod") == "true";
+                        if (adminIsGod)
                         {
-                            GrantType = 2,
-                            PolicyId = policy.Uuid,
-                            RoleId = adminRole.Uuid,
-                            Key = Guid.NewGuid()
-                        });
+                            var adminRole = db.Table<DbSecurityRole>().Where(o => o.Name == "LOCAL_ADMINISTRATORS").FirstOrDefault();
+
+                            var policy = db.Table<DbSecurityPolicy>().Where(o => o.Oid == "1.3.6.1.4.1.33349.3.1.5.9.2").FirstOrDefault();
+                            db.Table<DbSecurityRolePolicy>().Delete(o => o.RoleId == adminRole.Uuid);
+                            db.Insert(new DbSecurityRolePolicy()
+                            {
+                                GrantType = 2,
+                                PolicyId = policy.Uuid,
+                                RoleId = adminRole.Uuid,
+                                Key = Guid.NewGuid()
+                            });
+
+                        }
 
                     }
-
                     return true;
                 }
                 catch (Exception e)
