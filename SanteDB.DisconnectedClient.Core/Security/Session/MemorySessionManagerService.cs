@@ -94,6 +94,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
             if (this.m_session.TryGetValue(this.GetSessionKey(session.Id), out MemorySession ses))
             {
                 this.m_session.Remove(this.GetSessionKey(session.Id));
+                ApplicationServiceContext.Current.GetService<IPolicyDecisionService>()?.ClearCache(ses.Principal);
                 this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(ses.Principal, ses, true, false, null, null));
             }
             else

@@ -105,18 +105,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 }
 
-#if DEBUG
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "no-cache");
-#else
-            if (RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".js") || RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".css") ||
-                RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".png") || RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".woff2"))
-            {
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "public");
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Expires", DateTime.UtcNow.AddHours(1).ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'"));
-            }
-            else
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "no-cache");
-#endif
 
                 // Navigate policy?
                 if (navigateAsset.Policies != null)
@@ -127,6 +115,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 }
 
+                RestOperationContext.Current.OutgoingResponse.AddHeader("ETag", $"W/{ApplicationContext.Current.ExecutionUuid}");
                 RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
                 // Write asset
