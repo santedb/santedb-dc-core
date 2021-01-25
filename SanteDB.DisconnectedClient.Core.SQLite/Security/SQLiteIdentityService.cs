@@ -112,7 +112,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     DbSecurityUser dbs = connection.Table<DbSecurityUser>().FirstOrDefault(o => o.UserName.ToLower() == userName.ToLower() && !o.ObsoletionTime.HasValue);
                     if (dbs == null)
                         throw new SecurityException(Strings.locale_invalidUserNamePassword);
-                    else if (config?.MaxInvalidLogins.HasValue == true && dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
+                    else if (dbs.Lockout.HasValue && dbs.Lockout > DateTime.Now)
                         throw new SecurityException(Strings.locale_accountLocked);
                     else if (dbs.ObsoletionTime != null)
                         throw new SecurityException(Strings.locale_accountObsolete);
