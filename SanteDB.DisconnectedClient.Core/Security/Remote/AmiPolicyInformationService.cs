@@ -158,7 +158,15 @@ namespace SanteDB.DisconnectedClient.Security
         /// <returns></returns>
         public IEnumerable<IPolicy> GetPolicies()
         {
-            throw new NotImplementedException();
+            using (var client = this.GetClient())
+                try
+                {
+                    return client.FindPolicy(p => p.ObsoletionTime == null).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride));
+                }
+                catch (Exception e)
+                {
+                    throw new RemoteOperationException($"Error getting policy information", e);
+                }
         }
 
         /// <summary>

@@ -31,6 +31,9 @@ using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SanteDB.Core;
+using SanteDB.Core.Security.Services;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -336,6 +339,42 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.Key,
                     context);
 
+            // Persist policies
+            if (data.Policies != null && data.Policies.Any())
+            {
+                foreach (var p in data.Policies)
+                {
+                    var pol = p.Policy?.EnsureExists(context);
+                    var polKey = pol?.Key ?? p.PolicyKey;
+
+                    if (polKey == null) // maybe we can retrieve it from the PIP?
+                    {
+                        var pipInfo = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(p.PolicyKey.ToString());
+                        if (pipInfo != null)
+                        {
+                            p.Policy = new Core.Model.Security.SecurityPolicy()
+                            {
+                                Oid = pipInfo.Oid,
+                                Name = pipInfo.Name,
+                                CanOverride = pipInfo.CanOverride
+                            };
+                            pol = p.Policy.EnsureExists(context);
+                            polKey = pol.Key;
+                        }
+                        else throw new InvalidOperationException("Cannot find policy information");
+                    }
+
+                    // Insert
+                    context.Connection.Insert(new DbActSecurityPolicy()
+                    {
+                        Key = Guid.NewGuid(),
+                        PolicyId = polKey.Value.ToByteArray(),
+                        ActId = retVal.Key.Value.ToByteArray(),
+                        GrantType = 0
+                    });
+                }
+            }
+
             return retVal;
         }
 
@@ -431,6 +470,50 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.Protocols,
                     retVal.Key,
                     context);
+
+            // Persist policies
+            if (data.Policies != null && data.Policies.Any())
+            {
+                // Delete / obsolete any old policies
+                foreach (var pol in context.Connection.Table<DbActSecurityPolicy>().Where(o => o.ActId == ruuid))
+                    if (!data.Policies.Any(o => o.PolicyKey.Value.ToByteArray() == pol.PolicyId))
+                    {
+                        context.Connection.Delete(pol);
+                    }
+
+                // Now update any policies that don't exist
+                foreach (var p in data.Policies)
+                {
+                    var pol = p.Policy?.EnsureExists(context);
+                    var polKey = pol?.Key ?? p.PolicyKey;
+
+                    if (pol == null) // maybe we can retrieve it from the PIP?
+                    {
+                        var pipInfo = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(p.PolicyKey.ToString());
+                        if (pipInfo != null)
+                        {
+                            p.Policy = new Core.Model.Security.SecurityPolicy()
+                            {
+                                Oid = pipInfo.Oid,
+                                Name = pipInfo.Name,
+                                CanOverride = pipInfo.CanOverride
+                            };
+                            pol = p.Policy.EnsureExists(context);
+                            polKey = pol.Key;
+                        }
+                        else throw new InvalidOperationException("Cannot find policy information");
+                    }
+                    var polUuid = polKey.Value.ToByteArray();
+                    // Insert
+                    if (!context.Connection.Table<DbActSecurityPolicy>().Where(o => o.ActId == ruuid && o.PolicyId == polUuid).Any())
+                        context.Connection.Insert(new DbActSecurityPolicy()
+                        {
+                            Key = Guid.NewGuid(),
+                            PolicyId = polUuid,
+                            ActId = ruuid
+                        });
+                }
+            }
 
             return retVal;
         }

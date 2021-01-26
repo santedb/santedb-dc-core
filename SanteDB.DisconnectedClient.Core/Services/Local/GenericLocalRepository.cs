@@ -132,10 +132,11 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
 
             var retVal = businessRulesService != null ? businessRulesService.AfterQuery(results) : results;
-            
-            this.Queried?.Invoke(this, new QueryResultEventArgs<TEntity>(query, results, offset, count, totalResults, queryId, AuthenticationContext.AnonymousPrincipal));
-            
-            return retVal;
+
+            var postEvt = new QueryResultEventArgs<TEntity>(query, retVal, offset, count, totalResults, queryId, AuthenticationContext.AnonymousPrincipal);
+            this.Queried?.Invoke(this, postEvt);
+            totalResults = postEvt.TotalResults;
+            return postEvt.Results;
         }
 
         /// <summary>
@@ -241,8 +242,9 @@ namespace SanteDB.DisconnectedClient.Services.Local
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
             var result = persistenceService.Get(key, null, false, AuthenticationContext.Current.Principal);
             var retVal = businessRulesService?.AfterRetrieve(result) ?? result;
-            this.Retrieved?.Invoke(this, new DataRetrievedEventArgs<TEntity>(retVal, AuthenticationContext.Current.Principal));
-            return retVal;
+            var postEvt = new DataRetrievedEventArgs<TEntity>(retVal, AuthenticationContext.Current.Principal);
+            this.Retrieved?.Invoke(this, postEvt);
+            return postEvt.Data;
         }
 
         /// <summary>

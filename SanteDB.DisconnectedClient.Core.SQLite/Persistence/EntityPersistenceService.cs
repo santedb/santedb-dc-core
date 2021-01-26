@@ -16,11 +16,13 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.Core;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Exceptions;
@@ -30,6 +32,7 @@ using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -73,6 +76,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             retVal.LoadAssociations(context,
                 // Exclude
                 nameof(SanteDB.Core.Model.Entities.Entity.Participations),
+                nameof(SanteDB.Core.Model.Entities.Entity.Policies),
                 nameof(SanteDB.Core.Model.Entities.UserEntity.SecurityUser)
                 );
 
@@ -382,7 +386,43 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.Key,
                     context);
 
-            
+            // Persist policies
+            if (data.Policies != null && data.Policies.Any())
+            {
+                foreach (var p in data.Policies)
+                {
+                    var pol = p.Policy?.EnsureExists(context);
+                    var polKey = p.Policy?.Key ?? p.PolicyKey;
+                    if (polKey == null) // maybe we can retrieve it from the PIP?
+                    {
+                        var pipInfo = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(pol.Oid);
+                        if (pipInfo != null)
+                        {
+                            p.Policy = new Core.Model.Security.SecurityPolicy()
+                            {
+                                Oid = pipInfo.Oid,
+                                Name = pipInfo.Name,
+                                CanOverride = pipInfo.CanOverride
+                            };
+                            pol = p.Policy.EnsureExists(context);
+                            polKey = pol.Key;
+
+                        }
+                        else throw new InvalidOperationException("Cannot find policy information");
+                    }
+
+                    // Insert
+                    context.Connection.Insert(new DbEntitySecurityPolicy()
+                    {
+                        Key = Guid.NewGuid(),
+                        PolicyId = polKey.Value.ToByteArray(),
+                        EntityId = retVal.Key.Value.ToByteArray(),
+                        GrantType = 0
+                    });
+                }
+            }
+
+
             // Participations = The source is not the patient so we don't touch
             //if (data.Participations != null)
             //    foreach (var itm in data.Participations)
@@ -498,6 +538,51 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     data.Tags.Where(o => !o.TagKey.StartsWith("$")),
                     retVal.Key,
                     context);
+
+            // Persist policies
+            if (data.Policies != null && data.Policies.Any())
+            {
+                // Delete / obsolete any old policies
+                foreach (var pol in context.Connection.Table<DbEntitySecurityPolicy>().Where(o => o.EntityId == entityUuid))
+                    if (!data.Policies.Any(o => o.PolicyKey.Value.ToByteArray() == pol.PolicyId))
+                    {
+                        context.Connection.Delete(pol);
+                    }
+
+                // Now update any policies that don't exist
+                foreach (var p in data.Policies)
+                {
+                    var pol = p.Policy?.EnsureExists(context);
+                    var polKey = pol?.Key ?? p.PolicyKey;
+                    if (polKey == null) // maybe we can retrieve it from the PIP?
+                    {
+                        var pipInfo = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(p.PolicyKey.ToString());
+                        if (pipInfo != null)
+                        {
+                            p.Policy = new Core.Model.Security.SecurityPolicy()
+                            {
+                                Oid = pipInfo.Oid,
+                                Name = pipInfo.Name,
+                                CanOverride = pipInfo.CanOverride
+                            };
+                            pol = p.Policy.EnsureExists(context);
+                            polKey = pol.Key;
+
+                        }
+                        else throw new InvalidOperationException("Cannot find policy information");
+                    }
+                    var polUuid = polKey.Value.ToByteArray();
+
+                    // Insert
+                    if (!context.Connection.Table<DbEntitySecurityPolicy>().Where(o => o.EntityId == entityUuid && o.PolicyId == polUuid).Any())
+                        context.Connection.Insert(new DbEntitySecurityPolicy()
+                        {
+                            Key = Guid.NewGuid(),
+                            PolicyId = polUuid,
+                            EntityId = entityUuid
+                        });
+                }
+            }
 
             // Participations - We don't touch as Act > Participation
             //if(data.Participations != null)
