@@ -43,9 +43,9 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         Camera,
         /// <summary>
-        /// Send an SMS message
+        /// Bluetooth permissions
         /// </summary>
-        SendSms
+        Bluetooth
     }
 
     /// <summary>

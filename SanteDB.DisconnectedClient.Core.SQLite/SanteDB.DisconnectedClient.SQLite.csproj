@@ -39,6 +39,7 @@
 	    <Product>SanteDB</Product>
     <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
     <Company>SanteSuite Contributors</Company>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
     
   <ItemGroup>

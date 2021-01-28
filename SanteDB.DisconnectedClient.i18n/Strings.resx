@@ -431,4 +431,10 @@ Sincerely,
   <data name="locale_idle" xml:space="preserve">
     <value>Idle</value>
   </data>
+  <data name="err_signature_failed_ignore" xml:space="preserve">
+    <value>The signature of the data from the remote machine failed. This could mean data was tampered in transit. Do you want to trust this data anyways?</value>
+  </data>
+  <data name="locale_ignore_signatures_from_host" xml:space="preserve">
+    <value>Would you like to ignore all future data validation errors whenever {0} sends you data?</value>
+  </data>
 </root>
