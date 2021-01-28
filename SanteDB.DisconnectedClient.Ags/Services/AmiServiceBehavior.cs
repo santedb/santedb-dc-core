@@ -52,6 +52,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Linq.Expressions;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -435,6 +436,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         protected override void ThrowIfNotReady()
         {
+            if (!ApplicationServiceContext.Current.GetService<AgsService>().IsRunning)
+                throw new DomainStateException();
         }
 
 

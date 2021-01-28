@@ -972,7 +972,7 @@ namespace SanteDB.DisconnectedClient.i18n {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Would you like to upgrade {0} to version {1} from version {2}?.
+        ///   Looks up a localized string similar to There are updates for the following packages: {0}, would you like to install them?.
         /// </summary>
         public static string locale_upgradeConfirm {
             get {

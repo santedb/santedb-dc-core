@@ -22,8 +22,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using ZXing;
 using ZXing.Common;
-using ZXing.CoreCompat.System.Drawing;
 using ZXing.QrCode;
+using ZXing.Windows.Compatibility;
 
 namespace SanteDB.DisconnectedClient.UI.Services
 {
@@ -68,6 +68,7 @@ namespace SanteDB.DisconnectedClient.UI.Services
         /// </summary>
         public Stream Generate(string rawData)
         {
+
             // Now generate the token
             var writer = new BarcodeWriter()
             {

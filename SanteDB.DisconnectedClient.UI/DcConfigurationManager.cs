@@ -51,6 +51,7 @@ using System.Linq;
 using System.Diagnostics;
 using SanteDB.DisconnectedClient.UI.Services;
 using System.Threading;
+using SanteDB.Core.Security.Privacy;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -187,6 +188,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(AesSymmetricCrypographicProvider)),
                     new TypeReferenceConfiguration(typeof(MemoryTickleService)),
                     new TypeReferenceConfiguration(typeof(DefaultPolicyDecisionService)),
+                    new TypeReferenceConfiguration(typeof(DataPolicyFilterService)),
                     new TypeReferenceConfiguration(typeof(NetworkInformationService)),
                     new TypeReferenceConfiguration(typeof(BusinessRulesDaemonService)),
                     new TypeReferenceConfiguration(typeof(AgsService)),

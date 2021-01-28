@@ -136,7 +136,7 @@ namespace SanteDB.DisconnectedClient.Security
                 if (policyInstance == null)
                 {
                     // TODO: Configure OptIn or OptOut
-                    rule = PolicyGrantType.Deny;
+                    rule = principal == AuthenticationContext.SystemPrincipal ? PolicyGrantType.Grant : PolicyGrantType.Deny;
                 }
                 else if (!policyInstance.Policy.CanOverride && policyInstance.Rule == PolicyGrantType.Elevate)
                 {
@@ -170,6 +170,14 @@ namespace SanteDB.DisconnectedClient.Security
                         return rule;
                     }
             return rule;
+        }
+
+        /// <summary>
+        /// Clear the specified policy cache
+        /// </summary>
+        public void ClearCache(IPrincipal principal)
+        {
+            this.m_policyCache.TryRemove(principal.Identity.Name, out ConcurrentDictionary<String, dynamic> _);
         }
     }
 }

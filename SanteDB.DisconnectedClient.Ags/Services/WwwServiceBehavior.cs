@@ -34,6 +34,7 @@ using System.Text;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.DisconnectedClient.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -54,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         private void ThrowIfNotRunning()
         {
-            if (!ApplicationServiceContext.Current.IsRunning)
+            if (!ApplicationServiceContext.Current.GetService<AgsService>().IsRunning)
                 throw new DomainStateException();
         }
 
@@ -77,57 +78,48 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             this.ThrowIfNotRunning();
 
-            // Navigate asset
-            AppletAsset navigateAsset = null;
-            var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
-
-            String appletPath = RestOperationContext.Current.IncomingRequest.Url.AbsolutePath.ToLower();
-            if (!m_cacheApplets.TryGetValue(appletPath, out navigateAsset))
+            try
             {
+                // Navigate asset
+                AppletAsset navigateAsset = null;
+                var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
 
-                if (appletPath == "/") // startup asset
-                    navigateAsset = appletManagerService.Applets.DefaultApplet?.Assets.FirstOrDefault(o => o.Name == "index.html");
-                else
-                    navigateAsset = appletManagerService.Applets.ResolveAsset(appletPath);
-
-                if (navigateAsset == null)
-                    throw new FileNotFoundException(appletPath);
-
-                lock (m_lockObject)
+                String appletPath = RestOperationContext.Current.IncomingRequest.Url.AbsolutePath.ToLower();
+                if (!m_cacheApplets.TryGetValue(appletPath, out navigateAsset))
                 {
-                    if (!m_cacheApplets.ContainsKey(appletPath) && appletManagerService.Applets.CachePages)
+
+                    if (appletPath == "/") // startup asset
+                        navigateAsset = appletManagerService.Applets.DefaultApplet?.Assets.FirstOrDefault(o => o.Name == "index.html");
+                    else
+                        navigateAsset = appletManagerService.Applets.ResolveAsset(appletPath);
+
+                    if (navigateAsset == null)
+                        throw new FileNotFoundException(appletPath);
+
+                    lock (m_lockObject)
                     {
-                        m_cacheApplets.Add(appletPath, navigateAsset);
+                        if (!m_cacheApplets.ContainsKey(appletPath) && appletManagerService.Applets.CachePages)
+                        {
+                            m_cacheApplets.Add(appletPath, navigateAsset);
+                        }
                     }
                 }
-            }
 
-#if DEBUG
-            RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "no-cache");
-#else
-            if (RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".js") || RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".css") ||
-                RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".png") || RestOperationContext.Current.IncomingRequest.Url.ToString().EndsWith(".woff2"))
-            {
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "public");
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Expires", DateTime.UtcNow.AddHours(1).ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'"));
-            }
-            else
-                RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "no-cache");
-#endif
 
-            // Navigate policy?
-            if (navigateAsset.Policies != null)
-            {
-                foreach (var policy in navigateAsset.Policies)
+                // Navigate policy?
+                if (navigateAsset.Policies != null)
                 {
-                    new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policy).Demand();
+                    foreach (var policy in navigateAsset.Policies)
+                    {
+                        new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policy).Demand();
+                    }
                 }
-            }
 
-            RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
+                RestOperationContext.Current.OutgoingResponse.AddHeader("ETag", $"W/{ApplicationContext.Current.ExecutionUuid}");
+                RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
-            // Write asset
-            var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
+                // Write asset
+                var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
             {
                 { "csp_nonce", RestOperationContext.Current.ServiceEndpoint.Behaviors.OfType<SecurityPolicyHeadersBehavior>().FirstOrDefault()?.Nonce },
 #if DEBUG
@@ -138,7 +130,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 { "host_type", ApplicationServiceContext.Current.HostType.ToString() }
 
             });
-            return new MemoryStream(content);
+                return new MemoryStream(content);
+            }
+            catch(RemoteOperationException ex) // The page demanded something upstream but the upstream service isn't responding
+            {
+                throw new DomainStateException($"The remote server is currently unavailable", ex);
+            }
         }
     }
 }

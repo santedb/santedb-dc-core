@@ -241,6 +241,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                             var dbFile = cstr.GetComponent("dbfile");
                             try
                             {
+                                if (!File.Exists(dbFile)) continue; // could not find file
+                                
                                 File.Move(dbFile, Path.ChangeExtension(dbFile, "old"));
 
                                 // Create new encrypted database

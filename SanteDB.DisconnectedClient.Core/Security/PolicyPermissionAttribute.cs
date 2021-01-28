@@ -115,7 +115,7 @@ namespace SanteDB.DisconnectedClient.Security
         {
             var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
             var principal = this.m_principal ?? AuthenticationContext.Current.Principal;
-            var action = PolicyGrantType.Deny;
+            var action = AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ? PolicyGrantType.Grant : PolicyGrantType.Deny;
 
             // Non system principals must be authenticated
             if (!principal.Identity.IsAuthenticated &&

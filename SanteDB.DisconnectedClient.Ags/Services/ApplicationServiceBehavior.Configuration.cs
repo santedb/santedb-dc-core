@@ -75,6 +75,7 @@ using SanteDB.Messaging.HDSI.Client;
 using System.Net;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Security.Configuration;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -233,7 +234,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         Endpoint = urlInfo.Select(o => new ServiceClientEndpoint()
                         {
                             Address = o.Replace("0.0.0.0", realmUri),
-                            Timeout = itm.ServiceType == ServiceEndpointType.HealthDataService ? 60000 : 30000
+                            Timeout = itm.ServiceType == ServiceEndpointType.HealthDataService ? 180000 : 60000
                         }).ToList(),
                         Trace = enableTrace,
                         Name = serviceName
@@ -418,7 +419,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     },
                     Endpoint = new System.Collections.Generic.List<ServiceClientEndpoint>() {
                         new ServiceClientEndpoint() {
-                            Address = amiUri, Timeout = 30000
+                            Address = amiUri, Timeout = 120000
                         }
                     },
                     Name = "ami",
@@ -432,7 +433,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     },
                     Endpoint = new System.Collections.Generic.List<ServiceClientEndpoint>() {
                         new ServiceClientEndpoint() {
-                            Address = hdsiUri, Timeout = 30000
+                            Address = hdsiUri, Timeout = 120000
                         }
                     },
                     Name = "hdsi",
@@ -634,7 +635,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
-                                || o is IAuditRepositoryService
+                                || o is IRepositoryService<AuditData>
                                 || o is IJobManagerService
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
@@ -646,6 +647,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteMailRepositoryService), true);
+                        ApplicationContext.Current.RemoveServiceProvider(typeof(AppletBiRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteBiService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteJobManager), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteFreetextSearchService), true);
@@ -691,7 +693,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
                                 || o is IJobManagerService
-                                || o is IAuditRepositoryService
+                                || o is IRepositoryService<AuditData>
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
                             ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
@@ -945,5 +947,46 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
         }
+
+
+        /// <summary>
+        /// Update configuration
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public List<AppSettingKeyValuePair> GetAppSetting(String scope, String keyMatch)
+        {
+            var configService = ApplicationServiceContext.Current.GetService<IConfigurationManager>();
+            var keyRegex = new Regex($"^{keyMatch}$");
+            if ("global".Equals(scope, StringComparison.OrdinalIgnoreCase))
+            {
+                return configService.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.Where(s => keyRegex.IsMatch(s.Key)).ToList();
+            }
+            else 
+            {
+                throw new NotImplementedException("IUserPreferenceManager not found");
+            }
+        }
+
+        /// <summary>
+        /// Update configuration
+        /// </summary>
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public ConfigurationViewModel SetAppSetting(String scope, List<AppSettingKeyValuePair> settings)
+        {
+
+            var configService = ApplicationServiceContext.Current.GetService<IConfigurationManager>();
+            if ("global".Equals(scope, StringComparison.OrdinalIgnoreCase))
+            {
+                foreach(var s in settings)
+                    configService.SetAppSetting(s.Key, s.Value);
+                return new ConfigurationViewModel(configService.Configuration);
+            }
+            else
+            {
+                throw new NotImplementedException("IUserPreferenceManager not found");
+            }
+        }
+
     }
+
 }

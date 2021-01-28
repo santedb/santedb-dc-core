@@ -35,6 +35,7 @@ using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
 using System.Collections;
@@ -133,7 +134,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public void CreatePolicy(IPolicy policy, IPrincipal principal)
         {
             // Demand local admin
-            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
+            if(principal != AuthenticationContext.SystemPrincipal)
+                ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 
             var conn = this.CreateConnection();
@@ -149,9 +151,49 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                             CanOverride = policy.CanOverride,
                             Name = policy.Name,
                             Oid = policy.Oid,
-                            Key = Guid.NewGuid()
+                            Key = policy.Key
                         };
                         conn.Insert(polId);
+                    }
+                    else if (polId.Key != policy.Key)
+                    {
+                        conn.Delete(polId);
+                        polId.Key = policy.Key;
+                        conn.Insert(polId);
+                        // Update any records we have
+                        var updates = conn.Table<DbAssigningAuthority>().Where(o => o.PolicyUuid == polId.Uuid).ToList().Select(o =>
+                          {
+                              o.PolicyUuid = policy.Key.ToByteArray();
+                              return o;
+                          }).OfType<Object>().Union(
+                            conn.Table<DbSecurityRolePolicy>().Where(o => o.PolicyId == polId.Uuid).ToList().Select(o =>
+                            {
+                                o.PolicyId = policy.Key.ToByteArray();
+                                return o;
+                            })).Union(
+                            conn.Table<DbSecurityApplicationPolicy>().Where(o => o.PolicyId == polId.Uuid).ToList().Select(o =>
+                            {
+                                o.PolicyId = policy.Key.ToByteArray();
+                                return o;
+                            })).Union(
+                            conn.Table<DbSecurityDevicePolicy>().Where(o => o.PolicyId == polId.Uuid).ToList().Select(o =>
+                            {
+                                o.PolicyId = policy.Key.ToByteArray();
+                                return o;
+                            })).Union(
+                            conn.Table<DbEntitySecurityPolicy>().Where(o => o.PolicyId == polId.Uuid).ToList().Select(o =>
+                            {
+                                o.PolicyId = policy.Key.ToByteArray();
+                                return o;
+                            })
+                            ).Union(
+                            conn.Table<DbActSecurityPolicy>().Where(o => o.PolicyId == polId.Uuid).ToList().Select(o =>
+                            {
+                                o.PolicyId = policy.Key.ToByteArray();
+                                return o;
+                            })
+                            );
+                        conn.UpdateAll(updates);
                     }
                 }
                 catch (Exception e)
@@ -241,7 +283,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 using (conn.Lock())
                 {
                     var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM act_security_policy INNER JOIN security_policy ON (security_policy.uuid = act_security_policy.policy_id) WHERE act_id = ?",
-                        pAct.Key).ToList();
+                        pAct.Key.Value.ToByteArray()).ToList();
 
                     return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                 }
@@ -253,7 +295,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 using (conn.Lock())
                 {
                     var policyRaw = conn.Query<DbSecurityPolicy.DbSecurityPolicyInstanceQueryResult>("SELECT security_policy.*, grant_type FROM entity_security_policy INNER JOIN security_policy ON (security_policy.uuid = entity_security_policy.policy_id) WHERE entity_id = ?",
-                        pEntity.Key).ToList();
+                        pEntity.Key.Value.ToByteArray()).ToList();
                     return policyRaw.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Key, o.Oid, o.Name, o.CanOverride), (PolicyGrantType)o.GrantType));
                 }
             }

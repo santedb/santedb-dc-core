@@ -333,6 +333,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 finally
                 {
                     this.m_isDownloading = false;
+                    ApplicationContext.Current.SetProgress(Strings.locale_idle, 1.0f);
+
                 }
             }
         }

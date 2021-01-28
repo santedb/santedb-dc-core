@@ -70,10 +70,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
         public bool Install()
         {
 
+            var search = ApplicationContext.Current?.ConfigurationManager.GetConnectionString("santeDbSearch");
+            LockableSQLiteConnection db = null;
             // Database for the SQL Lite connection
-            var db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString("santeDbSearch"));
-            using (db.Lock())
-                this.Install(db);
+            if (search != null)
+            {
+                db = SQLiteConnectionManager.Current.GetReadWriteConnection(search);
+                using (db.Lock())
+                    this.Install(db);
+            }
 
             db = SQLiteConnectionManager.Current.GetReadWriteConnection(ApplicationContext.Current?.ConfigurationManager.GetConnectionString(ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName));
             using (db.Lock())
@@ -95,6 +100,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                 db.Execute(@"INSERT INTO __sfEditCost VALUES (0,'?','', 1);");
                 db.Execute(@"INSERT INTO __sfEditCost VALUES (0,'?','?', 1);");
                 new LevenshteinFilterFunction().Initialize(db);
+            }
+            catch(SQLiteException e) when (e.Message == "table __sfEditCost already exists")
+            {
+                this.m_tracer.TraceWarning("Spellfix already initialized");
+
             }
             catch (Exception e)
             {

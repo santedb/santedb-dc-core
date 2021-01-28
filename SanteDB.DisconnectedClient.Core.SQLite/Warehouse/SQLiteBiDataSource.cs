@@ -167,7 +167,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                 throw new InvalidOperationException($"ADO.NET BI queries can only source data from 1 connection source, query {queryDefinition.Name} has {queryDefinition.DataSources?.Count}");
 
             // Ensure we have sufficient priviledge
-            foreach (var pol in queryDefinition.DataSources.SelectMany(o => o?.MetaData.Demands).Union(queryDefinition.MetaData?.Demands))
+            var demandList = queryDefinition.DataSources.SelectMany(o => o?.MetaData.Demands);
+            if (queryDefinition.MetaData?.Demands != null)
+                demandList = demandList.Union(queryDefinition.MetaData?.Demands);
+            foreach (var pol in demandList)
                 ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(pol);
 
             // Apply defaults where possible
@@ -186,20 +189,45 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                 else switch (parmDef.Type)
                     {
                         case BiDataType.Boolean:
-                            parameters[kv.Key] = Boolean.Parse(kv.Value.ToString());
+                            if (string.IsNullOrEmpty(kv.Value?.ToString()))
+                                parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => Boolean.Parse(o)).ToArray();
+                            else
+                                parameters[kv.Key] = Boolean.Parse(kv.Value.ToString());
                             break;
                         case BiDataType.Date:
                         case BiDataType.DateTime:
-                            parameters[kv.Key] = DateTime.Parse(kv.Value.ToString());
+                            if (string.IsNullOrEmpty(kv.Value?.ToString()))
+                                parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => DateTime.Parse(o)).ToArray();
+                            else
+                                parameters[kv.Key] = DateTime.Parse(kv.Value.ToString());
                             break;
                         case BiDataType.Integer:
-                            parameters[kv.Key] = Int32.Parse(kv.Value.ToString());
+                            if (string.IsNullOrEmpty(kv.Value?.ToString()))
+                                parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => Int32.Parse(o)).ToArray();
+                            else
+                                parameters[kv.Key] = Int32.Parse(kv.Value.ToString());
                             break;
                         case BiDataType.String:
-                            parameters[kv.Key] = kv.Value.ToString();
+                            if (string.IsNullOrEmpty(kv.Value?.ToString()))
+                                parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.ToArray();
+                            else
+                                parameters[kv.Key] = kv.Value;
                             break;
                         case BiDataType.Uuid:
-                            parameters[kv.Key] = Guid.Parse(kv.Value.ToString());
+                            if (string.IsNullOrEmpty(kv.Value?.ToString()))
+                                parameters[kv.Key] = DBNull.Value;
+                            else if (parmDef.Multiple && parameters[kv.Key] is IEnumerable<String> arr)
+                                parameters[kv.Key] = arr.Select(o => Guid.Parse(o)).ToArray();
+                            else
+                                parameters[kv.Key] = Guid.Parse(kv.Value.ToString());
                             break;
                         default:
                             throw new InvalidOperationException($"Cannot determine how to parse {parmDef.Type}");
@@ -222,8 +250,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             {
                 object pValue = null;
                 parameters.TryGetValue(m.Groups[1].Value, out pValue);
-                values.Add(pValue);
-                return "?";
+                if (pValue is Array arr)
+                {
+                    values.AddRange(arr.OfType<Object>());
+                    return string.Join(",", arr.OfType<Object>().Select(o=>"?"));
+
+                }
+                else
+                {
+                    values.Add(pValue);
+                    return "?";
+                }
             });
 
             // Aggregation definitions
@@ -282,7 +319,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                         // Decrypt database 
                         var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
                         if (securityKey != null && (enc ?? "true").Equals("true"))
-                            conn.SetPassword(Encoding.UTF8.GetString(securityKey, 0, securityKey.Length));
+                            conn.SetPassword(securityKey);
 
                         // Open the database
                         conn.Open();

@@ -158,29 +158,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     CreatedByKey = Guid.Empty
                 });
 
-                // Need to create a local admin?
-                if (ApplicationContext.Current.GetService<SQLiteIdentityService>() != null)
-                {
-                    Guid uid = Guid.NewGuid();
-                    // System user
-                    db.Insert(new DbSecurityUser()
-                    {
-                        Key = uid,
-                        Password = ApplicationContext.Current.GetService<IPasswordHashingService>().ComputeHash(Guid.NewGuid().ToString()),
-                        SecurityHash = Guid.NewGuid().ToString(),
-                        Lockout = DateTime.MaxValue,
-                        UserName = "LocalAdministrator",
-                        CreationTime = DateTime.Now,
-                        CreatedByKey = Guid.Empty
-                    });
-                    db.Insert(new DbSecurityUserRole()
-                    {
-                        Key = Guid.NewGuid(),
-                        RoleUuid = new byte[] { 0x8D, 0xF6, 0xD7, 0xE8, 0xB5, 0x5B, 0xE3, 0x41, 0xB7, 0xFB, 0x2E, 0xC3, 0x24, 0x18, 0xB2, 0xE1 },
-                        UserUuid = uid.ToByteArray()
-                    });
-                }
-
+                
                 tracer.TraceInfo("Installing Entity Tables...");
                 db.CreateTable<DbEntity>();
                 db.CreateTable<DbApplicationEntity>();
@@ -252,6 +230,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                         }
                     }
                 }
+
 
                 //ApplicationContext.Current.GetService<ISynchronizationService>().PullCompleted += (o, e) => {
                 //    if (e.IsInitial && !ApplicationContext.Current.GetService<ISynchronizationService>().IsSynchronizing)

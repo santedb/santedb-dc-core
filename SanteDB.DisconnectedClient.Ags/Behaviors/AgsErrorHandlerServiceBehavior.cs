@@ -107,7 +107,10 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                     fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
 
                 var formatter = RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type);
-                formatter.SerializeResponse(faultMessage, null, fault);
+                if (formatter != null)
+                    formatter.SerializeResponse(faultMessage, null, fault);
+                else
+                    RestOperationContext.Current.OutgoingResponse.OutputStream.Write(System.Text.Encoding.UTF8.GetBytes(error.Message), 0, System.Text.Encoding.UTF8.GetByteCount(error.Message));
 
                 if (ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem != OperatingSystemID.Android)
                     AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));

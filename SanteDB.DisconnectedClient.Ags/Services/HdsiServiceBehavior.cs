@@ -18,33 +18,32 @@
  */
 using RestSrvr;
 using RestSrvr.Exceptions;
+using SanteDB.Core;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Ags.Model;
+using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Interop;
 using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common;
+using SanteDB.Rest.Common.Attributes;
 using SanteDB.Rest.HDSI;
 using SanteDB.Rest.HDSI.Resources;
 using System;
-using System.Linq;
-using System.Collections.Specialized;
-using SanteDB.DisconnectedClient.Ags.Model;
 using System.Collections.Generic;
-using SanteDB.Core.Model.Interfaces;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Net;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core;
-using SanteDB.Core.Model.Roles;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Security;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Rest.Common.Attributes;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -511,7 +510,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        var retVal = restClient.Get<IdentifiedData>($"/{resourceType}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
+                        // This NVC is UTF8 compliant
+                        var nvc = SanteDB.Core.Model.Query.NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
+                        var retVal = restClient.Get<IdentifiedData>($"/{resourceType}", nvc.Select(o=>new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
 
                         if(retVal is Bundle bundle)
                         {
@@ -521,7 +522,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 {
                                     // Do we have a local?
                                     if (o is Entity entity &&
-                                        ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                                        ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>()?.Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
                                         return o;
                                     o.AddTag("$upstream", "true");
                                     return o;
@@ -548,7 +549,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override void ThrowIfNotReady()
         {
-            ; // This does nothing
+            if (!ApplicationServiceContext.Current.GetService<AgsService>().IsRunning)
+                throw new DomainStateException();
         }
 
         public override IdentifiedData Update(string resourceType, string id, IdentifiedData body)

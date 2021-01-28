@@ -121,8 +121,10 @@ namespace SanteDB.DisconnectedClient.Caching
                      //ApplicationContext.Current.GetService<IDataPersistenceService<IdentifierType>>().Query(q => true);
                      //ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>().Query(q => true);
 
-                     foreach (var i in ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>().SubscribeTo)
-                         ApplicationContext.Current.GetService<IDataPersistenceService<Place>>().Get(Guid.Parse(i), null, false, AuthenticationContext.SystemPrincipal);
+                     var subscribe = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>();
+                     if(subscribe != null)
+                        foreach (var i in subscribe.SubscribeTo)
+                             ApplicationContext.Current.GetService<IDataPersistenceService<Place>>().Get(Guid.Parse(i), null, false, AuthenticationContext.SystemPrincipal);
 
                      // Seed cache
                      this.m_tracer.TraceInfo("Loading materials dictionary...");

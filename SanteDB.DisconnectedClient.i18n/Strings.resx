@@ -354,7 +354,7 @@ Sincerely,
     <value>Checking for updates...</value>
   </data>
   <data name="locale_upgradeConfirm" xml:space="preserve">
-    <value>Would you like to upgrade {0} to version {1} from version {2}?</value>
+    <value>There are updates for the following packages: {0}, would you like to install them?</value>
   </data>
   <data name="locale_waitForOutbound" xml:space="preserve">
     <value>Sending items to server...</value>

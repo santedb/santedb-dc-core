@@ -32,7 +32,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
         /// <summary>
         /// Gets or sets the security user which is associated with this entity
         /// </summary>
-        [Column("securityUser"), MaxLength(16), Indexed, NotNull, ForeignKey(typeof(DbSecurityUser), nameof(DbSecurityUser.Uuid))]
+        [Column("securityUser"), MaxLength(16), Indexed, ForeignKey(typeof(DbSecurityUser), nameof(DbSecurityUser.Uuid))]
         public byte[] SecurityUserUuid { get; set; }
 
     }

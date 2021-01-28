@@ -16,11 +16,13 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.Core;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Exceptions;
@@ -30,6 +32,7 @@ using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Roles;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
@@ -44,27 +47,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
     public class EntityPersistenceService : VersionedDataPersistenceService<Entity, DbEntity>
     {
         
-        private const String Entity = "E29FCFAD-EC1D-4C60-A055-039A494248AE";
-        private const String ManufacturedMaterial = "FAFEC286-89D5-420B-9085-054ACA9D1EEF";
-        private const String Animal = "61FCBF42-B5E0-4FB5-9392-108A5C6DBEC7";
-        private const String Place = "21AB7873-8EF3-4D78-9C19-4582B3C40631";
-        private const String Device = "1373FF04-A6EF-420A-B1D0-4A07465FE8E8";
-        private const String Organization = "7C08BD55-4D42-49CD-92F8-6388D6C4183F";
-        private const String Food = "E5A09CC2-5AE5-40C2-8E32-687DBA06715D";
-        private const String Material = "D39073BE-0F8F-440E-B8C8-7034CC138A95";
-        private const String Person = "9DE2A846-DDF2-4EBC-902E-84508C5089EA";
-        private const String CityOrTown = "79DD4F75-68E8-4722-A7F5-8BC2E08F5CD6";
-        private const String ChemicalSubstance = "2E9FA332-9391-48C6-9FC8-920A750B25D3";
-        private const String State = "8CF4B0B0-84E5-4122-85FE-6AFA8240C218";
-        private const String Container = "B76FF324-B174-40B7-A6AC-D1FDF8E23967";
-        private const String LivingSubject = "8BA5E5C9-693B-49D4-973C-D7010F3A23EE";
-        private const String Patient = "BACD9C6F-3FA9-481E-9636-37457962804D";
-        private const String ServiceDeliveryLocation = "FF34DFA7-C6D3-4F8B-BC9F-14BCDC13BA6C";
-        private const String Provider = "6B04FED8-C164-469C-910B-F824C2BDA4F0";
-        private const String CountyOrParish = "D9489D56-DDAC-4596-B5C6-8F41D73D8DC5";
-        private const String Country = "48B2FFB3-07DB-47BA-AD73-FC8FB8502471";
-        private const String NonLivingSubject = "9025E5C9-693B-49D4-973C-D7010F3A23EE";
-
         /// <summary>
         /// To model instance
         /// </summary>
@@ -94,6 +76,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             retVal.LoadAssociations(context,
                 // Exclude
                 nameof(SanteDB.Core.Model.Entities.Entity.Participations),
+                nameof(SanteDB.Core.Model.Entities.Entity.Policies),
                 nameof(SanteDB.Core.Model.Entities.UserEntity.SecurityUser)
                 );
 
@@ -128,30 +111,31 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Alright first, which type am I mapping to?
             var dbEntity = dataInstance as DbEntity;
             if (dbEntity != null)
-                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToUpper())
+                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToLower())
                 {
-                    case Device:
+                    case EntityClassKeyStrings.Device:
                         return new DeviceEntityPersistenceService().ToModelInstance(dataInstance, context);
-                    case NonLivingSubject:
+                    case EntityClassKeyStrings.NonLivingSubject:
                         return new ApplicationEntityPersistenceService().ToModelInstance(dataInstance, context);
-                    case Person:
+                    case EntityClassKeyStrings.Person:
                         return new PersonPersistenceService().ToModelInstance(dataInstance, context);
-                    case Patient:
+                    case EntityClassKeyStrings.Patient:
                         return new PatientPersistenceService().ToModelInstance(dataInstance, context);
-                    case Provider:
+                    case EntityClassKeyStrings.Provider:
                         return new ProviderPersistenceService().ToModelInstance(dataInstance, context);
-                    case Place:
-                    case CityOrTown:
-                    case Country:
-                    case CountyOrParish:
-                    case State:
-                    case ServiceDeliveryLocation:
+                    case EntityClassKeyStrings.Place:
+                    case EntityClassKeyStrings.CityOrTown:
+                    case EntityClassKeyStrings.Country:
+                    case EntityClassKeyStrings.CountyOrParish:
+                    case EntityClassKeyStrings.PrecinctOrBorough:
+                    case EntityClassKeyStrings.State:
+                    case EntityClassKeyStrings.ServiceDeliveryLocation:
                         return new PlacePersistenceService().ToModelInstance(dataInstance, context);
-                    case Organization:
+                    case EntityClassKeyStrings.Organization:
                         return new OrganizationPersistenceService().ToModelInstance(dataInstance, context);
-                    case Material:
+                    case EntityClassKeyStrings.Material:
                         return new MaterialPersistenceService().ToModelInstance(dataInstance, context);
-                    case ManufacturedMaterial:
+                    case EntityClassKeyStrings.ManufacturedMaterial:
                         return new ManufacturedMaterialPersistenceService().ToModelInstance(dataInstance, context);
                     default:
                         return this.ToModelInstance<Entity>(dbEntity, context);
@@ -225,44 +209,45 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             IDataCachingService cache = ApplicationContext.Current.GetService<IDataCachingService>();
 
             if (dbEntity != null)
-                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToUpper())
+                switch (new Guid(dbEntity.ClassConceptUuid).ToString().ToLower())
                 {
-                    case Device:
+                    case EntityClassKeyStrings.Device:
                         retVal = cache?.GetCacheItem<DeviceEntity>(dbEntity.Key);
                         break;
-                    case NonLivingSubject:
+                    case EntityClassKeyStrings.NonLivingSubject:
                         retVal = cache?.GetCacheItem<ApplicationEntity>(dbEntity.Key);
                         break;
-                    case Person:
+                    case EntityClassKeyStrings.Person:
                         retVal = cache?.GetCacheItem<UserEntity>(dbEntity.Key);
                         if (retVal == null)
                             retVal = cache?.GetCacheItem<Person>(dbEntity.Key);
                         break;
-                    case Patient:
+                    case EntityClassKeyStrings.Patient:
                         retVal = cache?.GetCacheItem<Patient>(dbEntity.Key);
                         break;
-                    case Provider:
+                    case EntityClassKeyStrings.Provider:
                         retVal = cache?.GetCacheItem<Provider>(dbEntity.Key);
 
                         break;
-                    case Place:
-                    case CityOrTown:
-                    case Country:
-                    case CountyOrParish:
-                    case State:
-                    case ServiceDeliveryLocation:
+                    case EntityClassKeyStrings.Place:
+                    case EntityClassKeyStrings.CityOrTown:
+                    case EntityClassKeyStrings.Country:
+                    case EntityClassKeyStrings.CountyOrParish:
+                    case EntityClassKeyStrings.State:
+                    case EntityClassKeyStrings.ServiceDeliveryLocation:
+                    case EntityClassKeyStrings.PrecinctOrBorough:
                         retVal = cache?.GetCacheItem<Place>(dbEntity.Key);
 
                         break;
-                    case Organization:
+                    case EntityClassKeyStrings.Organization:
                         retVal = cache?.GetCacheItem<Organization>(dbEntity.Key);
 
                         break;
-                    case Material:
+                    case EntityClassKeyStrings.Material:
                         retVal = cache?.GetCacheItem<Material>(dbEntity.Key);
 
                         break;
-                    case ManufacturedMaterial:
+                    case EntityClassKeyStrings.ManufacturedMaterial:
                         retVal = cache?.GetCacheItem<ManufacturedMaterial>(dbEntity.Key);
 
                         break;
@@ -401,7 +386,43 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.Key,
                     context);
 
-            
+            // Persist policies
+            if (data.Policies != null && data.Policies.Any())
+            {
+                foreach (var p in data.Policies)
+                {
+                    var pol = p.Policy?.EnsureExists(context);
+                    var polKey = p.Policy?.Key ?? p.PolicyKey;
+                    if (polKey == null) // maybe we can retrieve it from the PIP?
+                    {
+                        var pipInfo = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(pol.Oid);
+                        if (pipInfo != null)
+                        {
+                            p.Policy = new Core.Model.Security.SecurityPolicy()
+                            {
+                                Oid = pipInfo.Oid,
+                                Name = pipInfo.Name,
+                                CanOverride = pipInfo.CanOverride
+                            };
+                            pol = p.Policy.EnsureExists(context);
+                            polKey = pol.Key;
+
+                        }
+                        else throw new InvalidOperationException("Cannot find policy information");
+                    }
+
+                    // Insert
+                    context.Connection.Insert(new DbEntitySecurityPolicy()
+                    {
+                        Key = Guid.NewGuid(),
+                        PolicyId = polKey.Value.ToByteArray(),
+                        EntityId = retVal.Key.Value.ToByteArray(),
+                        GrantType = 0
+                    });
+                }
+            }
+
+
             // Participations = The source is not the patient so we don't touch
             //if (data.Participations != null)
             //    foreach (var itm in data.Participations)
@@ -518,6 +539,51 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     retVal.Key,
                     context);
 
+            // Persist policies
+            if (data.Policies != null && data.Policies.Any())
+            {
+                // Delete / obsolete any old policies
+                foreach (var pol in context.Connection.Table<DbEntitySecurityPolicy>().Where(o => o.EntityId == entityUuid))
+                    if (!data.Policies.Any(o => o.PolicyKey.Value.ToByteArray() == pol.PolicyId))
+                    {
+                        context.Connection.Delete(pol);
+                    }
+
+                // Now update any policies that don't exist
+                foreach (var p in data.Policies)
+                {
+                    var pol = p.Policy?.EnsureExists(context);
+                    var polKey = pol?.Key ?? p.PolicyKey;
+                    if (polKey == null) // maybe we can retrieve it from the PIP?
+                    {
+                        var pipInfo = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(p.PolicyKey.ToString());
+                        if (pipInfo != null)
+                        {
+                            p.Policy = new Core.Model.Security.SecurityPolicy()
+                            {
+                                Oid = pipInfo.Oid,
+                                Name = pipInfo.Name,
+                                CanOverride = pipInfo.CanOverride
+                            };
+                            pol = p.Policy.EnsureExists(context);
+                            polKey = pol.Key;
+
+                        }
+                        else throw new InvalidOperationException("Cannot find policy information");
+                    }
+                    var polUuid = polKey.Value.ToByteArray();
+
+                    // Insert
+                    if (!context.Connection.Table<DbEntitySecurityPolicy>().Where(o => o.EntityId == entityUuid && o.PolicyId == polUuid).Any())
+                        context.Connection.Insert(new DbEntitySecurityPolicy()
+                        {
+                            Key = Guid.NewGuid(),
+                            PolicyId = polUuid,
+                            EntityId = entityUuid
+                        });
+                }
+            }
+
             // Participations - We don't touch as Act > Participation
             //if(data.Participations != null)
             //{
@@ -559,33 +625,34 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Entity InsertInternal(SQLiteDataContext context, Entity data)
         {
-            switch (data.ClassConceptKey.ToString().ToUpper())
+            switch (data.ClassConceptKey.ToString().ToLower())
             {
-                case Device:
+                case EntityClassKeyStrings.Device:
                     return new DeviceEntityPersistenceService().Insert(context, data as DeviceEntity);
-                case NonLivingSubject:
+                case EntityClassKeyStrings.NonLivingSubject:
                     return new ApplicationEntityPersistenceService().Insert(context, data as ApplicationEntity);
-                case Person:
+                case EntityClassKeyStrings.Person:
                     if(data is UserEntity)
                         return new UserEntityPersistenceService().Insert(context, data as UserEntity);
                     else
                         return new PersonPersistenceService().Insert(context, data as Person);
-                case Patient:
+                case EntityClassKeyStrings.Patient:
                     return new PatientPersistenceService().Insert(context, data as Patient);
-                case Provider:
+                case EntityClassKeyStrings.Provider:
                     return new ProviderPersistenceService().Insert(context, data as Provider);
-                case Place:
-                case CityOrTown:
-                case Country:
-                case CountyOrParish:
-                case State:
-                case ServiceDeliveryLocation:
+                case EntityClassKeyStrings.Place:
+                case EntityClassKeyStrings.CityOrTown:
+                case EntityClassKeyStrings.Country:
+                case EntityClassKeyStrings.CountyOrParish:
+                case EntityClassKeyStrings.State:
+                case EntityClassKeyStrings.ServiceDeliveryLocation:
+                case EntityClassKeyStrings.PrecinctOrBorough:
                     return new PlacePersistenceService().Insert(context, data as Place);
-                case Organization:
+                case EntityClassKeyStrings.Organization:
                     return new OrganizationPersistenceService().Insert(context, data as Organization);
-                case Material:
+                case EntityClassKeyStrings.Material:
                     return new MaterialPersistenceService().Insert(context, data as Material);
-                case ManufacturedMaterial:
+                case EntityClassKeyStrings.ManufacturedMaterial:
                     return new ManufacturedMaterialPersistenceService().Insert(context, data as ManufacturedMaterial);
                 default:
                     return this.InsertCoreProperties(context, data);
@@ -598,33 +665,34 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
         /// </summary>
         protected override Entity UpdateInternal(SQLiteDataContext context, Entity data)
         {
-            switch (data.ClassConceptKey.ToString().ToUpper())
+            switch (data.ClassConceptKey.ToString().ToLower())
             {
-                case Device:
+                case EntityClassKeyStrings.Device:
                     return new DeviceEntityPersistenceService().Update(context, data as DeviceEntity);
-                case NonLivingSubject:
+                case EntityClassKeyStrings.NonLivingSubject:
                     return new ApplicationEntityPersistenceService().Update(context, data as ApplicationEntity);
-                case Person:
+                case EntityClassKeyStrings.Person:
                     if (data is UserEntity)
                         return new UserEntityPersistenceService().Update(context, data as UserEntity);
                     else
                         return new PersonPersistenceService().Update(context, data as Person);
-                case Patient:
+                case EntityClassKeyStrings.Patient:
                     return new PatientPersistenceService().Update(context, data as Patient);
-                case Provider:
+                case EntityClassKeyStrings.Provider:
                     return new ProviderPersistenceService().Update(context, data as Provider);
-                case Place:
-                case CityOrTown:
-                case Country:
-                case CountyOrParish:
-                case State:
-                case ServiceDeliveryLocation:
+                case EntityClassKeyStrings.Place:
+                case EntityClassKeyStrings.CityOrTown:
+                case EntityClassKeyStrings.Country:
+                case EntityClassKeyStrings.CountyOrParish:
+                case EntityClassKeyStrings.State:
+                case EntityClassKeyStrings.ServiceDeliveryLocation:
+                case EntityClassKeyStrings.PrecinctOrBorough:
                     return new PlacePersistenceService().Update(context, data as Place);
-                case Organization:
+                case EntityClassKeyStrings.Organization:
                     return new OrganizationPersistenceService().Update(context, data as Organization);
-                case Material:
+                case EntityClassKeyStrings.Material:
                     return new MaterialPersistenceService().Update(context, data as Material);
-                case ManufacturedMaterial:
+                case EntityClassKeyStrings.ManufacturedMaterial:
                     return new ManufacturedMaterialPersistenceService().Update(context, data as ManufacturedMaterial);
                 default:
                     return this.UpdateCoreProperties(context, data);

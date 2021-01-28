@@ -57,6 +57,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// Fired after this service has merged a record
         /// </summary>
         public event EventHandler<DataMergeEventArgs<T>> Merged;
+        public event EventHandler<DataMergingEventArgs<T>> UnMerging;
+        public event EventHandler<DataMergeEventArgs<T>> UnMerged;
 
 
         /// <summary>
@@ -211,15 +213,25 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         {
             try
             {
+                var preEvt = new DataMergingEventArgs<T>(masterKey, linkedDuplicates);
+                this.Merging?.Invoke(this, preEvt);
+                if(preEvt.Cancel)
+                {
+                    throw new InvalidOperationException("Pre-Event Signals Cancel for Merge"); // TODO: Is this the best way to handle this?
+                }
+
                 using (var client = this.GetClient())
                 {
-                    return client.Client.Post<Bundle, T>($"{typeof(T).GetSerializationName()}/{masterKey}/_merge", "application/xml", new Bundle()
+                    var retVal = client.Client.Post<Bundle, T>($"{typeof(T).GetSerializationName()}/{masterKey}/_merge", "application/xml", new Bundle()
                     {
                         Item = linkedDuplicates.Select(o => new T()
                         {
                             Key = o
                         }).OfType<IdentifiedData>().ToList()
                     });
+
+                    this.Merged?.Invoke(this, new DataMergeEventArgs<T>(masterKey, linkedDuplicates));
+                    return retVal;
                 }
             }
             catch (Exception e)
@@ -261,9 +273,17 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         {
             try
             {
+                var preEvt = new DataMergingEventArgs<T>(masterKey, new Guid[] { unmergeDuplicateKey });
+                this.UnMerging?.Invoke(this, preEvt);
+                if(preEvt.Cancel)
+                {
+                    throw new InvalidOperationException("Pre-Event Signals Cancel on Unmerge"); // TODO: Is this the best way to handle this?
+                }
                 using (var client = this.GetClient())
                 {
-                    return client.Client.Delete<T>($"{typeof(T).GetSerializationName()}/{masterKey}/_merge/{unmergeDuplicateKey}");
+                    var retVal = client.Client.Delete<T>($"{typeof(T).GetSerializationName()}/{masterKey}/_merge/{unmergeDuplicateKey}");
+                    this.UnMerged?.Invoke(this, new DataMergeEventArgs<T>(masterKey, new Guid[] { unmergeDuplicateKey }));
+                    return retVal;
                 }
             }
             catch (Exception e)

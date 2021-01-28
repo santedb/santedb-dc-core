@@ -96,6 +96,18 @@ namespace SanteDB.DisconnectedClient.Security
                 var securityRepository = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
                 var amiPip = new AmiPolicyInformationService();
 
+                try
+                {
+                    foreach (var itm in amiPip.GetPolicies())
+                    {
+                        localPip.CreatePolicy(itm, AuthenticationContext.SystemPrincipal);
+                    }
+                }
+                catch(Exception ex)
+                {
+                    this.m_tracer.TraceError("Error synchronizing system policies - {0}", ex);
+                }
+
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
 
                 var systemRoles = new String[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS", "CLINICAL_STAFF", "LOCAL_USERS" };

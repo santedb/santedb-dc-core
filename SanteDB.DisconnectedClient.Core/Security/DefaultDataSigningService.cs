@@ -43,8 +43,8 @@ namespace SanteDB.DisconnectedClient.Security
         /// <summary>
         /// Keys for the signing of data
         /// </summary>
-        private ConcurrentDictionary<String, SecuritySignatureConfiguration> m_keys = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
-
+        private ConcurrentDictionary<String, SecuritySignatureConfiguration> m_keyData = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
+        
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -56,46 +56,38 @@ namespace SanteDB.DisconnectedClient.Security
         public bool IsSymmetric => true;
 
         /// <summary>
-        /// Get the default data signing service (ctor)
+        /// Try to get the specified key
         /// </summary>
-        public DefaultDataSigningService()
+        private bool TryGetKey(String key, out SecuritySignatureConfiguration config)
         {
-            ApplicationContext.Current.Started += (o, e) =>
+            if (!this.m_keyData.TryGetValue(key, out config))
             {
-                try
+                var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
+                config = configuredKeys?.FirstOrDefault(k => k.KeyName == key);
+                if (config != null)
                 {
-                    // Load keys from configuration
-                    var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
-                    if (configuredKeys != null)
-                        foreach (var k in configuredKeys)
-                            this.m_keys.TryAdd(k.KeyName, k);
-                    else
-                        configuredKeys = new List<SecuritySignatureConfiguration>(); // Temporary list
-
-                    var appName = ApplicationContext.Current.Application.Name;
-                    var app = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Find(a => a.Name == appName, 0, 1, out int tr).FirstOrDefault() ?? ApplicationContext.Current.Application;
-                    if (!this.m_keys.TryGetValue($"SA.{app.Key.ToString()}", out SecuritySignatureConfiguration meKey))
-                    {
-                        if (app == null)
-                            app = ApplicationContext.Current.Application;
-                        var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
-                            ApplicationContext.Current.Application.ApplicationSecret;
-
-                        meKey = new SecuritySignatureConfiguration()
-                        {
-                            KeyName = $"SA.{app.Key.ToString()}",
-                            Algorithm = SignatureAlgorithm.HS256,
-                            HmacSecret = secret
-                        };
-                        m_keys.TryAdd($"SA.{app.Key.ToString()}", meKey);
-                        
-                        configuredKeys.Add(meKey);
-                    }
-                    if (!m_keys.ContainsKey("default"))
-                        m_keys.TryAdd("default", meKey);
+                    this.m_keyData.TryAdd(config.KeyName, config);
+                    return true;
                 }
-                catch { }
-            };
+                else if ("default".Equals(key, StringComparison.OrdinalIgnoreCase))
+                {
+                    var secret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ??
+                        ApplicationContext.Current.Application.ApplicationSecret;
+
+                    config = new SecuritySignatureConfiguration()
+                    {
+                        KeyName = $"default",
+                        Algorithm = SignatureAlgorithm.HS256,
+                        HmacSecret = secret
+                    };
+                    this.m_keyData.TryAdd($"SA.{ApplicationContext.Current.Application.Key.ToString()}", config);
+                    this.m_keyData.TryAdd("default", config);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -103,7 +95,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public void AddSigningKey(string keyId, byte[] keyData, string signatureAlgorithm)
         {
-            if (!this.m_keys.ContainsKey(keyId))
+            if (!this.m_keyData.ContainsKey(keyId))
             {
                 var keyConfig = new SecuritySignatureConfiguration()
                 {
@@ -121,8 +113,7 @@ namespace SanteDB.DisconnectedClient.Security
                 if (signatureAlgorithm == "HS256")
                     keyConfig.SetSecret(keyData);
 
-                if (!this.m_keys.TryAdd(keyId, keyConfig))
-                    throw new InvalidOperationException("Cannot add signing key");
+                this.m_keyData.TryAdd(keyId, keyConfig);
             }
         }
 
@@ -131,7 +122,11 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public IEnumerable<string> GetKeys()
         {
-            return m_keys.Keys;
+            // Force keys to load
+            this.TryGetKey("default", out SecuritySignatureConfiguration _);
+            var configuredKeys = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>()?.SigningKeys;
+            configuredKeys.ForEach(o => this.TryGetKey(o.KeyName, out SecuritySignatureConfiguration _));
+            return this.m_keyData.Keys;
         }
 
         /// <summary>
@@ -139,7 +134,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public string GetSignatureAlgorithm(string keyId = null)
         {
-            if (this.m_keys.TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration config))
+            if (this.TryGetKey(keyId ?? "default", out SecuritySignatureConfiguration config))
                 return config.Algorithm.ToString();
             return null;
         }
@@ -150,7 +145,7 @@ namespace SanteDB.DisconnectedClient.Security
         public byte[] SignData(byte[] data, string keyId = null)
         {
             // Fetch the key from the repository
-            if (!this.m_keys.TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration configuration))
+            if (!this.TryGetKey(keyId ?? "default", out SecuritySignatureConfiguration configuration))
                 throw new InvalidOperationException($"Key {keyId ?? "default"} not found");
 
             switch (configuration.Algorithm)
@@ -187,7 +182,7 @@ namespace SanteDB.DisconnectedClient.Security
         public bool Verify(byte[] data, byte[] signature, string keyId = null)
         {
             // Fetch the key from the repository
-            if (!this.m_keys.TryGetValue(keyId ?? "default", out SecuritySignatureConfiguration configuration))
+            if (!this.TryGetKey(keyId ?? "default", out SecuritySignatureConfiguration configuration))
                 throw new InvalidOperationException($"Key {keyId ?? "default"} not found");
 
             switch (configuration.Algorithm)

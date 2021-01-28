@@ -51,6 +51,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteBiService));
 
         /// <summary>
+        /// This repository is not local
+        /// </summary>
+        public bool IsLocal => false;
+
+        /// <summary>
         /// Gets the rest client
         /// </summary>
         /// <returns></returns>
