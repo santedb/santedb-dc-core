@@ -19,7 +19,7 @@ namespace SanteDB.DisconnectedClient.i18n {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Strings {
@@ -282,6 +282,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string err_restoreNotPermitted {
             get {
                 return ResourceManager.GetString("err_restoreNotPermitted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The signature of the data from the remote machine failed. This could mean data was tampered in transit. Do you want to trust this data anyways?.
+        /// </summary>
+        public static string err_signature_failed_ignore {
+            get {
+                return ResourceManager.GetString("err_signature_failed_ignore", resourceCulture);
             }
         }
         
@@ -552,6 +561,15 @@ namespace SanteDB.DisconnectedClient.i18n {
         public static string locale_idle {
             get {
                 return ResourceManager.GetString("locale_idle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Would you like to ignore all future data validation errors whenever {0} sends you data?.
+        /// </summary>
+        public static string locale_ignore_signatures_from_host {
+            get {
+                return ResourceManager.GetString("locale_ignore_signatures_from_host", resourceCulture);
             }
         }
         
