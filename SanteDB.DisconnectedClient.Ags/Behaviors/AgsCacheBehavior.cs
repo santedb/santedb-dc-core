@@ -42,6 +42,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         public void AfterReceiveRequest(RestRequestMessage request)
         {
+            
         }
 
         /// <summary>
@@ -64,7 +65,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 ext = ext.Substring(ext.LastIndexOf("."));
                 if (this.cacheExtensions.Contains(ext))
                 {
-                    RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "public, max-age=7200");
+                    RestOperationContext.Current.OutgoingResponse.AddHeader("Cache-Control", "public, max-age=28800");
                     RestOperationContext.Current.OutgoingResponse.AddHeader("Expires", DateTime.UtcNow.AddHours(1).ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'"));
                 }
                 else

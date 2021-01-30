@@ -35,6 +35,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.Ags.Behaviors;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -80,6 +81,23 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             try
             {
+                if (!RestOperationContext.Current.Data.TryGetValue("lang", out object lang))
+                    lang = AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                else if (lang is String[] ls)
+                    lang = ls[0];
+                if (!RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object sessionId))
+                    sessionId = AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim);
+                else if (sessionId is ISession ses)
+                    sessionId = BitConverter.ToString(ses.Id);
+
+                var etag = $"{ApplicationContext.Current.ExecutionUuid}.{lang}.{sessionId}";
+
+                if(RestOperationContext.Current.IncomingRequest.Headers["If-None-Match"] == etag)
+                {
+                    RestOperationContext.Current.OutgoingResponse.StatusCode = 304; /// not modified
+                    return null;
+                }    
+
                 // Navigate asset
                 AppletAsset navigateAsset = null;
                 var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
@@ -115,11 +133,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 }
 
-                RestOperationContext.Current.OutgoingResponse.AddHeader("ETag", $"W/{ApplicationContext.Current.ExecutionUuid}");
+                
+                RestOperationContext.Current.OutgoingResponse.AddHeader("ETag", etag);
                 RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
                 // Write asset
-                var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, bindingParameters: new Dictionary<String, String>()
+                var content = appletManagerService.Applets.RenderAssetContent(navigateAsset, lang?.ToString(), bindingParameters: new Dictionary<String, String>()
             {
                 { "csp_nonce", RestOperationContext.Current.ServiceEndpoint.Behaviors.OfType<SecurityPolicyHeadersBehavior>().FirstOrDefault()?.Nonce },
 #if DEBUG

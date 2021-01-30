@@ -47,6 +47,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
             this.NotAfter = notAfter;
             this.RefreshToken = refreshToken;
             this.Principal = principal;
+            
         }
 
         /// <summary>
