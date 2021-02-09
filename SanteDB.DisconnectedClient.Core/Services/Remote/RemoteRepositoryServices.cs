@@ -19,6 +19,7 @@
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
@@ -139,8 +140,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     var pclass = typeof(RemoteRepositoryService<>);
                     pclass = pclass.MakeGenericType(itm);
 
-                    if (ApplicationContext.Current.GetService(idpType) == null)
-                        ApplicationContext.Current.AddServiceProvider(pclass);
+                    if (ApplicationServiceContext.Current.GetService(idpType) == null)
+                        ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(pclass);
                 }
 
                 // Get client for device user

@@ -19,6 +19,7 @@
 using SanteDB.BusinessRules.JavaScript;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Services;
@@ -65,12 +66,12 @@ namespace SanteDB.DisconnectedClient.Rules
                 {
                     ApplicationServiceContext.Current = ApplicationContext.Current;
 
-                    if (ApplicationContext.Current.GetService<IDataReferenceResolver>() == null)
-                        ApplicationContext.Current.AddServiceProvider(typeof(AppletDataReferenceResolver));
+                    if (ApplicationServiceContext.Current.GetService<IDataReferenceResolver>() == null)
+                        ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(AppletDataReferenceResolver));
                     new AppletBusinessRuleLoader().LoadRules();
 
-                    // Attach DCG JNI\
-                    JavascriptBusinessRulesEngine.AddExposedObject("SanteDBDcg", new DisconnectedGatewayJni());
+                    // Attach DCG JNI
+                    JavascriptExecutorPool.Current.ExecuteGlobal(j => j.AddExposedObject("SanteDBDcg", new DisconnectedGatewayJni()));
                 }
                 catch (Exception ex)
                 {

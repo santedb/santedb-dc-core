@@ -92,58 +92,63 @@ namespace SanteDB.DisconnectedClient.UI
         /// over if they exist</remarks>
         private bool AttemptRestore()
         {
-            // Path in Windows.old
-            var oldPath = this.m_configPath.Replace(
-                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                Path.Combine(Path.ChangeExtension(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "OLD"), "Windows"))
-                .ToUpper();
-                
-            if(Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
-                oldPath = oldPath.Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
-                ;
-
-            try
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
+                // Path in Windows.old
+                var oldPath = this.m_configPath.Replace(
+                    Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                    Path.Combine(Path.ChangeExtension(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "OLD"), "Windows"))
+                    .ToUpper();
 
-                Debug.WriteLine($"New configuration at {this.m_configPath} doesn't exist", "RESTORE_UPDATE");
-                Debug.WriteLine($"Checking for old configuration at {oldPath}...", "RESTORE_UPDATE");
+                if (Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
+                    oldPath = oldPath.Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
+                    ;
 
-                if (File.Exists(oldPath))
+                try
                 {
-                    Debug.WriteLine($"Old configuration at {oldPath} found, will restore...", "RESTORE_UPDATE");
 
-                    // Copy the config file
-                    if (!Directory.Exists(Path.GetDirectoryName(this.m_configPath)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(this.m_configPath));
-                    File.Copy(oldPath, this.m_configPath);
+                    Debug.WriteLine($"New configuration at {this.m_configPath} doesn't exist", "RESTORE_UPDATE");
+                    Debug.WriteLine($"Checking for old configuration at {oldPath}...", "RESTORE_UPDATE");
 
-                    // Next copy the data directory
-                    var config = this.Load();
+                    if (File.Exists(oldPath))
+                    {
+                        Debug.WriteLine($"Old configuration at {oldPath} found, will restore...", "RESTORE_UPDATE");
 
-                    var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName);
-                    var oldDataPath = dataPath.Replace(
-                        Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                        Path.Combine(Path.ChangeExtension(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "OLD"), "Windows"))
-                        .ToUpper()
-                        .Replace("SYSTEM32", "SYSWOW64");
+                        // Copy the config file
+                        if (!Directory.Exists(Path.GetDirectoryName(this.m_configPath)))
+                            Directory.CreateDirectory(Path.GetDirectoryName(this.m_configPath));
+                        File.Copy(oldPath, this.m_configPath);
 
-                    if (Directory.Exists(dataPath))
-                        Directory.Delete(dataPath, true);
-                    Directory.Move(oldDataPath, dataPath);
-                    return true;
+                        // Next copy the data directory
+                        var config = this.Load();
+
+                        var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName);
+                        var oldDataPath = dataPath.Replace(
+                            Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                            Path.Combine(Path.ChangeExtension(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "OLD"), "Windows"))
+                            .ToUpper()
+                            .Replace("SYSTEM32", "SYSWOW64");
+
+                        if (Directory.Exists(dataPath))
+                            Directory.Delete(dataPath, true);
+                        Directory.Move(oldDataPath, dataPath);
+                        return true;
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"No configuration at {oldPath} to restore...", "RESTORE_UPDATE");
+
+                        return false;
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    Debug.WriteLine($"No configuration at {oldPath} to restore...", "RESTORE_UPDATE");
-
-                    return false;
+                    Debug.WriteLine($"ERROR: Checking for old configuration at {oldPath}...", "RESTORE_UPDATE");
+                    throw new Exception($"Could not restore files from Windows.Old please consult system administrator", e);
                 }
             }
-            catch(Exception e)
-            {
-                Debug.WriteLine($"ERROR: Checking for old configuration at {oldPath}...", "RESTORE_UPDATE");
-                throw new Exception($"Could not restore files from Windows.Old please consult system administrator", e);
-            }
+            else
+                return false;
         }
 
         /// <summary>

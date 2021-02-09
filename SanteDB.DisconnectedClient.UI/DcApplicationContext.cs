@@ -48,6 +48,7 @@ using System.Text;
 using System.Xml.Linq;
 using SanteDB.Core.Exceptions;
 using System.Xml;
+using SanteDB.Core.Interfaces;
 
 namespace SanteDB.DisconnectedClient.UI
 {
@@ -153,7 +154,7 @@ namespace SanteDB.DisconnectedClient.UI
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
-                retVal.AddServiceProvider(typeof(DefaultBackupService));
+                retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
                 return true;
             }
             catch (Exception e)
@@ -179,7 +180,7 @@ namespace SanteDB.DisconnectedClient.UI
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
                     Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
-                retVal.AddServiceProvider(typeof(DefaultBackupService));
+                retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
 
                 var appletService = retVal.GetService<IAppletManagerService>();
 
@@ -255,7 +256,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                     if(retVal.GetService<IBackupService>() == null)
-                        retVal.AddServiceProvider(typeof(DefaultBackupService));
+                        retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
 
                     // Is there a backup, and if so, does the user want to restore from that backup?
                     var backupSvc = retVal.GetService<IBackupService>();
@@ -446,13 +447,6 @@ namespace SanteDB.DisconnectedClient.UI
             this.m_dialogProvider.Alert(alertText);
         }
 
-
-        /// <summary>
-        /// Performance log!
-        /// </summary>
-        public override void PerformanceLog(string className, string methodName, string tagName, TimeSpan counter)
-        {
-        }
 
         /// <summary>
         /// In the SanteDB DC setting the current context security key is the current windows user SID (since we're storing data in appdata it is 

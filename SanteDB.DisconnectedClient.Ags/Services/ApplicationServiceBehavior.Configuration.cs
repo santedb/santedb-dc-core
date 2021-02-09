@@ -152,7 +152,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Inline;
                     break;
                 case "Peer":
-                    ApplicationContext.Current.RemoveServiceProvider(typeof(OAuthIdentityProvider));
+                    ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(OAuthIdentityProvider));
                     break;
             }
             this.m_tracer.TraceInfo("Joining {0}", realmUri);
@@ -244,15 +244,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 }
 
                 // Re-initialize the service providers
-                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
-                ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRepositoryService));
-                ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAssigningAuthorityService));
-                ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteSecurityRepository));
-                ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService));
-                ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService));
-                ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService));
-                ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository));
-                ApplicationContext.Current.GetService<RemoteRepositoryService>().Start();
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteAssigningAuthorityService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteSecurityRepository));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteAssigningAuthorityService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteSecurityRepository));
+                ApplicationServiceContext.Current.GetService<RemoteRepositoryService>().Start();
 
                 // Cache address types
                 ApplicationContext.Current.GetService<IRepositoryService<Concept>>().Find(o => o.ConceptSets.Any(s => s.Key == ConceptSetKeys.AddressComponentType));
@@ -440,9 +440,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     Trace = enableTrace
                 });
 
-                ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService));
-                ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService));
-                ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteSecurityRepository));
 
                 AmiServiceClient amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 
@@ -511,33 +511,33 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 }
                 finally
                 {
-                    ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
+                    ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 }
             }
             catch (DuplicateNameException) // handles duplicate device name
             {
-                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 throw;
             }
             catch (WebException e) when (e.Message.StartsWith("The remote name could not be resolved"))
             {
-                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Error Joining Domain - {e.Message}", e);
             }
             catch (WebException e) 
             {
-                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Remote server returned error - {e.Message}", e);
             }
             catch (Exception e)
             {
-                ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Could not complete joining context", e);
@@ -632,14 +632,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 case SynchronizationMode.Online:
                     {
                         // Remove all data persistence services
-                        foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
+                        foreach (var idp in ApplicationServiceContext.Current.GetService<IServiceManager>().GetServices().Where(o => o is IDataPersistenceService
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
                                 || o is IRepositoryService<AuditData>
                                 || o is IJobManagerService
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
-                            ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
+                            ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(idp.GetType());
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService), true);
@@ -689,14 +689,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         storageProvider.Configure(ApplicationContext.Current.Configuration, configuration.Data.Options);
 
                         // Remove all data persistence services
-                        foreach (var idp in ApplicationContext.Current.GetServices().Where(o => o is IDataPersistenceService
+                        foreach (var idp in ApplicationServiceContext.Current.GetService<IServiceManager>().GetServices().Where(o => o is IDataPersistenceService
                                 || o is IPolicyInformationService
                                 || o is ISecurityRepositoryService
                                 || o is IJobManagerService
                                 || o is IRepositoryService<AuditData>
                                 || o is ISynchronizationService
                                 || o is IMailMessageRepositoryService).ToArray())
-                            ApplicationContext.Current.RemoveServiceProvider(idp.GetType());
+                            ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(idp.GetType());
 
                         this.m_tracer.TraceInfo("Adding local service provider....");
 
@@ -839,7 +839,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             var pwh = ApplicationContext.Current.GetService<IPasswordHashingService>();
             if (pwh != null)
-                ApplicationContext.Current.RemoveServiceProvider(pwh.GetType());
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(pwh.GetType());
 
             switch (configuration.Security.Hasher)
             {

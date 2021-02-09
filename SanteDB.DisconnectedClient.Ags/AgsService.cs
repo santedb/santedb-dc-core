@@ -280,7 +280,7 @@ namespace SanteDB.DisconnectedClient.Ags
                     apiType = ServiceEndpointType.AuthenticationService;
                 else if (typeof(IApplicationServiceContract).IsAssignableFrom(itm.ServiceType))
                     apiType = ServiceEndpointType.Other | ServiceEndpointType.AdministrationIntegrationService;
-                ApplicationContext.Current.AddServiceProvider(new ApiEndpointProviderShim(itm.ServiceType, apiType, itm.Endpoints.First().Address, (ServiceEndpointCapabilities)this.GetServiceCapabilities(service)));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(new ApiEndpointProviderShim(itm.ServiceType, apiType, itm.Endpoints.First().Address, (ServiceEndpointCapabilities)this.GetServiceCapabilities(service)));
                 // Start the service
                 this.m_services.Add(service);
                 service.Start();

@@ -36,6 +36,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
+using SanteDB.Core.Services.Impl;
 
 namespace SanteDB.DisconnectedClient
 {
@@ -78,11 +79,8 @@ namespace SanteDB.DisconnectedClient
         // configuration maanger
         private IConfigurationManager m_configManager = null;
 
-        // Providers
-        private List<Object> m_providers;
-
-        // A cache of already found providers
-        private Dictionary<Type, Object> m_cache = new Dictionary<Type, object>();
+        // Service manager
+        private DependencyServiceManager m_serviceManager;
 
         // Lock object
         private Object m_lockObject = new object();
@@ -125,8 +123,11 @@ namespace SanteDB.DisconnectedClient
         /// </summary>
         public ApplicationContext(IConfigurationPersister configPersister)
         {
+            this.m_serviceManager = new DependencyServiceManager();
             this.m_configManager = new ConfigurationManager(configPersister);
             this.ConfigurationPersister = configPersister;
+            this.m_serviceManager.AddServiceProvider(configPersister);
+            this.m_serviceManager.AddServiceProvider(this.m_configManager);
         }
 
         #region IServiceProvider implementation
@@ -142,53 +143,14 @@ namespace SanteDB.DisconnectedClient
         /// </summary>
         /// <returns>The service.</returns>
         /// <typeparam name="TService">The 1st type parameter.</typeparam>
-        public TService GetService<TService>()
-        {
-            return (TService)this.GetService(typeof(TService));
-        }
-
-        /// <summary>
-        /// Performance log handler
-        /// </summary>
-        public abstract void PerformanceLog(string className, string methodName, string tagName, TimeSpan counter);
+        public TService GetService<TService>() => this.m_serviceManager.GetService<TService>();
 
         /// <summary>
         /// Gets the service object of the specified type.
         /// </summary>
         /// <returns>The service.</returns>
         /// <param name="serviceType">Service type.</param>
-        public object GetService(Type serviceType)
-        {
-            if (serviceType == null) return null;
-
-            Object candidateService = null;
-            if (!this.m_cache.TryGetValue(serviceType, out candidateService))
-            {
-                var serviceTypeInfo = serviceType.GetTypeInfo();
-                ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-                candidateService = this.GetServices().ToArray().FirstOrDefault(o => o.GetType() != null && serviceTypeInfo.IsAssignableFrom(o.GetType().GetTypeInfo()));
-                // Candidate service not found? Look in configuration
-                if (candidateService == null)
-                {
-                    lock (this.m_lockObject)
-                    {
-                        var cserviceType = appSection.ServiceProviders.Select(o => o.Type).FirstOrDefault(o => o != null && serviceTypeInfo.IsAssignableFrom(o.GetTypeInfo()));
-                        if (cserviceType == null)
-                            return null;
-                        else
-                            candidateService = Activator.CreateInstance(cserviceType);
-                    }
-                }
-                if (candidateService != null)
-                    lock (this.m_lockObject)
-                        if (!this.m_cache.ContainsKey(serviceType))
-                        {
-                            this.m_cache.Add(serviceType, candidateService);
-                        }
-                        else candidateService = this.m_cache[serviceType];
-            }
-            return candidateService;
-        }
+        public object GetService(Type serviceType) => this.m_serviceManager.GetService(serviceType);
 
         #endregion
 
@@ -320,6 +282,7 @@ namespace SanteDB.DisconnectedClient
         /// </summary>
         /// <value>The application.</value>
         public abstract SecurityApplication Application { get; }
+        
         /// <summary>
         /// Gets the device information for the currently running device
         /// </summary>
@@ -341,10 +304,12 @@ namespace SanteDB.DisconnectedClient
         /// Gets the host type
         /// </summary>
         public virtual SanteDBHostType HostType => SanteDBHostType.Client;
+       
         /// <summary>
         /// Gets the allowed synchronization modes
         /// </summary>
         public abstract SynchronizationMode Modes { get; }
+       
         /// <summary>
         /// Execution UUID
         /// </summary>
@@ -370,7 +335,8 @@ namespace SanteDB.DisconnectedClient
                 return;
 
             this.m_tracer.TraceInfo("STAGE1: Base startup initiated...");
-            this.AddServiceProvider(this);
+            this.m_serviceManager.AddServiceProvider(this);
+
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += (o, r) =>
             {
                 var asmLoc = Path.Combine(Path.GetDirectoryName(typeof(ApplicationContext).Assembly.Location), r.Name.Substring(0, r.Name.IndexOf(",")) + ".dll");
@@ -410,49 +376,19 @@ namespace SanteDB.DisconnectedClient
             }
 
             // Authenticate as system principal for startup 
-            AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-
-            // Add this as a provider
-            this.AddServiceProvider(this);
-
             this.m_tracer.TraceInfo("Loading application secret");
             // Set the application secret to the configured value
             this.Application.ApplicationSecret = this.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ?? this.Application.ApplicationSecret;
 
-
-            if (!this.m_cache.ContainsKey(typeof(IServiceManager)))
-                this.m_cache.Add(typeof(IServiceManager), this);
             //ModelSettings.SourceProvider = new EntitySource.DummyEntitySource();
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-
-            ApplicationConfigurationSection config = this.Configuration.GetSection<ApplicationConfigurationSection>();
-
-            var daemons = this.GetServices().OfType<IDaemonService>();
-            Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
-            var nonChangeDaemons = daemons.Distinct().ToArray();
-            this.m_tracer.TraceInfo("STAGE2: Starting Daemon Services...");
-
-            foreach (var d in nonChangeDaemons.Distinct())
-            {
-                try
-                {
-                    tracer.TraceInfo("Starting {0}", d.GetType().Name);
-                    if (!d.Start())
-                        tracer.TraceWarning("{0} reported unsuccessful startup", d.GetType().Name);
-                }
-                catch (Exception e)
-                {
-                    tracer.TraceError("Daemon {0} did not start up successully!: {1}", d, e);
-                    throw new TypeLoadException($"{d} failed startup: {e.Message}", e);
-                }
-            }
-
+            this.m_serviceManager.Start();
+            
             this.m_tracer.TraceInfo("STAGE 3: Broadcasting startup event to services...");
             this.m_running = true;
             this.Started?.Invoke(this, EventArgs.Empty);
             this.StartTime = DateTime.Now;
-
 
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
 
@@ -464,21 +400,9 @@ namespace SanteDB.DisconnectedClient
         public void Stop()
         {
             this.Stopping?.Invoke(this, EventArgs.Empty);
-
+            this.m_serviceManager.Stop();
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStop);
-
-            ApplicationConfigurationSection config = this.Configuration.GetSection<ApplicationConfigurationSection>();
-            var daemons = this.GetServices().OfType<IDaemonService>();
-            Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
-            foreach (var d in daemons)
-            {
-                tracer.TraceInfo("Stopping {0}", d.GetType().Name);
-                if (!d.Stop())
-                    tracer.TraceWarning("{0} reported unsuccessful startup", d.GetType().Name);
-            }
-
             this.Stopped?.Invoke(this, EventArgs.Empty);
-
             this.m_running = false;
         }
 
@@ -490,40 +414,17 @@ namespace SanteDB.DisconnectedClient
         /// <summary>
         /// Adds the specified service types
         /// </summary>
-        public void AddServiceProvider(object serviceInstance)
-        {
-            if(!this.GetServices().Any(o=>o == serviceInstance))
-                lock (this.m_lockObject)
-                    this.m_providers.Add(serviceInstance);
-        }
-
-        /// <summary>
-        /// Remove service provider from the current runtime
-        /// </summary>
-        public void RemoveServiceProvider(object serviceInstance)
-        {
-            if(this.GetServices().Any(o=>o == serviceInstance))
-                lock(this.m_lockObject)
-                {
-                    (serviceInstance as IDaemonService)?.Stop();
-                    (serviceInstance as IDisposable)?.Dispose();
-                    this.m_providers.Remove(serviceInstance);
-                    foreach (var p in this.m_cache.Where(o => o.Value == serviceInstance).ToList())
-                        this.m_cache.Remove(p.Key);
-                }
-        }   
+        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().AddServiceProvider(object)", true)]
+        public void AddServiceProvider(object serviceInstance) => this.m_serviceManager.AddServiceProvider(serviceInstance);
 
         /// <summary>
         /// Add service 
         /// </summary>
         public void AddServiceProvider(Type serviceType, bool addToConfiguration)
         {
-
             this.m_tracer.TraceInfo("Adding service provider {0}", serviceType.FullName);
+            this.m_serviceManager.AddServiceProvider(serviceType);
             ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-            if (!this.GetServices().Any(o => o.GetType() == serviceType))
-                lock (this.m_lockObject)
-                    this.m_providers.Add(Activator.CreateInstance(serviceType));
             if (addToConfiguration && !appSection.ServiceProviders.Any(o => o.Type == serviceType))
                 appSection.ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
         }
@@ -531,34 +432,8 @@ namespace SanteDB.DisconnectedClient
         /// <summary>
         /// Get all services
         /// </summary>
-        public IEnumerable<object> GetServices()
-        {
-            // We have to try to get the configuration
-            if (this.m_providers == null)
-            {
-                lock (this.m_lockObject)
-                {
-                    this.m_providers = new List<object>()
-                    {
-                        this.ConfigurationManager,
-                        this.ConfigurationPersister
-                    };
-                    Tracer tracer = Tracer.GetTracer(typeof(ApplicationContext));
-                    foreach (var itm in this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders)
-                    {
-                        if (itm.Type == null)
-                            tracer.TraceWarning("Could not find provider {0}...", itm);
-                        else
-                        {
-                            tracer.TraceInfo("Adding service provider {0}...", itm.TypeXml);
-                            this.m_providers.Add(Activator.CreateInstance(itm.Type));
-                        }
-                    }
-                }
-            }
-
-            return this.m_providers;
-        }
+        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().GetServices()", true)]
+        public IEnumerable<object> GetServices() => this.m_serviceManager.GetServices();
 
         /// <summary>
         /// Remove a service provider
@@ -569,21 +444,7 @@ namespace SanteDB.DisconnectedClient
                 throw new ArgumentNullException(nameof(serviceType));
 
             ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-            if (this.GetServices().Any(o => o.GetType() == serviceType))
-                lock (this.m_lockObject)
-                    this.m_providers.RemoveAll(o =>
-                    {
-                        if (o.GetType() == serviceType)
-                        {
-                            (o as IDaemonService)?.Stop();
-                            (o as IDisposable)?.Dispose();
-                            return true;
-                        }
-                        return false;
-                    });
-            foreach (var p in this.m_cache.Where(o => o.Value.GetType() == serviceType).ToList())
-                this.m_cache.Remove(p.Key);
-
+            this.m_serviceManager.RemoveServiceProvider(serviceType);
             if (updateConfiguration)
                 appSection.ServiceProviders.RemoveAll(t => t.Type == serviceType);
         }
@@ -597,18 +458,14 @@ namespace SanteDB.DisconnectedClient
         /// <summary>
         /// Add service provider 
         /// </summary>
-        public void AddServiceProvider(Type serviceType)
-        {
-            this.AddServiceProvider(serviceType, false);
-        }
+        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().AddServiceProvider(Type)", true)]
+        public void AddServiceProvider(Type serviceType) => this.m_serviceManager.AddServiceProvider(serviceType);
 
         /// <summary>
         /// Remove the service provider
         /// </summary>
-        public void RemoveServiceProvider(Type serviceType)
-        {
-            this.RemoveServiceProvider(serviceType, false);
-        }
+        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().RemoveServiceProvider()", true)]
+        public void RemoveServiceProvider(Type serviceType) => this.m_serviceManager.RemoveServiceProvider(serviceType);
 
         /// <summary>
         /// Get all types

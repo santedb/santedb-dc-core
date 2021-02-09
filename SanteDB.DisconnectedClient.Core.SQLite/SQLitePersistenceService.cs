@@ -21,6 +21,7 @@ using SanteDB.BI.Services;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
@@ -291,7 +292,9 @@ namespace SanteDB.DisconnectedClient.SQLite
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLitePersistenceService));
 
-        // Constructor
+        /// <summary>
+        /// Construct persistence service for SQLite and register subordinate services
+        /// </summary>
         public SQLitePersistenceService()
         {
             this.m_tracer.TraceInfo("Starting local persistence services...");
@@ -301,7 +304,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                 try
                 {
                     this.m_tracer.TraceVerbose("Loading {0}...", t.AssemblyQualifiedName);
-                    ApplicationContext.Current.AddServiceProvider(t);
+                    ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(t);
                 }
                 catch (Exception e)
                 {
@@ -337,7 +340,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         // Construct a type
                         var pclass = typeof(GenericVersionedPersistenceService<,>);
                         pclass = pclass.MakeGenericType(modelClassType, domainClassType);
-                        ApplicationContext.Current.AddServiceProvider(pclass);
+                        ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(pclass);
                     }
                     else if (modelClassType.GetRuntimeProperty("CreatedByKey") != null &&
                         typeof(DbBaseData).GetTypeInfo().IsAssignableFrom(domainClassType.GetTypeInfo()))
@@ -345,7 +348,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         // Construct a type
                         var pclass = typeof(GenericBasePersistenceService<,>);
                         pclass = pclass.MakeGenericType(modelClassType, domainClassType);
-                        ApplicationContext.Current.AddServiceProvider(pclass);
+                        ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(pclass);
                     }
                     else
                     {
@@ -358,7 +361,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         else
                             pclass = typeof(GenericIdentityPersistenceService<,>);
                         pclass = pclass.MakeGenericType(modelClassType, domainClassType);
-                        ApplicationContext.Current.AddServiceProvider(pclass);
+                        ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(pclass);
                     }
 
                 }

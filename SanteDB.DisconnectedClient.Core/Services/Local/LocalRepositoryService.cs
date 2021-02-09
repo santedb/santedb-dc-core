@@ -16,7 +16,9 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
@@ -106,10 +108,10 @@ namespace SanteDB.DisconnectedClient.Services.Local
             foreach (var t in repositoryServices)
             {
                 this.m_tracer.TraceInfo("Adding repository service for {0}...", t);
-                ApplicationContext.Current.AddServiceProvider(t);
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(t);
             }
 
-            ApplicationContext.Current.Started += (o, e) =>
+            ApplicationServiceContext.Current.Started += (o, e) =>
             {
                 foreach (var t in typeof(Patient).GetTypeInfo().Assembly.ExportedTypes
                                     .Where(t =>
@@ -126,13 +128,13 @@ namespace SanteDB.DisconnectedClient.Services.Local
                         {
                             this.m_tracer.TraceInfo("Adding Act repository service for {0}...", t.Name);
                             var mrst = typeof(GenericLocalActRepository<>).MakeGenericType(t);
-                            ApplicationContext.Current.AddServiceProvider(mrst);
+                            ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(mrst);
                         }
                         else if (typeof(Entity).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()))
                         {
                             this.m_tracer.TraceInfo("Adding Entity repository service for {0}...", t.Name);
                             var mrst = typeof(GenericLocalClinicalDataRepository<>).MakeGenericType(t);
-                            ApplicationContext.Current.AddServiceProvider(mrst);
+                            ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(mrst);
                         }
                     }
                 }
