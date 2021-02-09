@@ -449,13 +449,6 @@ namespace SanteDB.DisconnectedClient.Http
                             catch { }
                         }
 
-#if PERFMON
-                        sw.Stop();
-                        ApplicationContext.Current.PerformanceLog(nameof(RestClient), "InvokeInternal", $"{nameof(TBody)}-RCV", sw.Elapsed);
-                        sw.Reset();
-                        sw.Start();
-#endif
-
                         responseHeaders = response.Headers;
                         var validationResult = this.ValidateResponse(response);
                         if (validationResult != ServiceClientErrorType.Valid)
@@ -497,13 +490,6 @@ namespace SanteDB.DisconnectedClient.Http
 
                                 response.GetResponseStream().CopyTo(ms);
 
-#if PERFMON
-                                sw.Stop();
-                                ApplicationContext.Current.PerformanceLog(nameof(RestClient), "InvokeInternal", $"{nameof(TBody)}-INT", sw.Elapsed);
-                                sw.Reset();
-                                sw.Start();
-#endif
-
                                 ms.Seek(0, SeekOrigin.Begin);
 
                                 // Trace
@@ -534,13 +520,6 @@ namespace SanteDB.DisconnectedClient.Http
                                 }
                                 //retVal = (TResult)serializer.DeSerialize(ms);
                             }
-
-#if PERFMON
-                            sw.Stop();
-                            ApplicationContext.Current.PerformanceLog(nameof(RestClient), "InvokeInternal", $"{nameof(TBody)}-RET", sw.Elapsed);
-                            sw.Reset();
-                            sw.Start();
-#endif
 
                             return retVal;
                         }

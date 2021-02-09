@@ -64,12 +64,6 @@ namespace SanteDB.DisconnectedClient.Services
         /// </summary>
         public IdentifiedData GetQueueData(string pathSpec, Type typeSpec)
         {
-#if PERFMON
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            try
-            {
-#endif
             XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeSpec);
 
             var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().MessageQueueConnectionStringName).GetComponent("dbfile");
@@ -90,14 +84,6 @@ namespace SanteDB.DisconnectedClient.Services
                     return xsz.Deserialize(tr) as IdentifiedData;
             }
             return cached;
-#if PERFMON
-            }
-            finally
-            {
-                sw.Stop();
-                ApplicationContext.Current.PerformanceLog(nameof(SimpleQueueFileProvider), nameof(GetQueueData), typeSpec.Name, sw.Elapsed);
-            }
-#endif
         }
 
 
@@ -106,14 +92,6 @@ namespace SanteDB.DisconnectedClient.Services
         /// </summary>
         public byte[] GetQueueData(string pathSpec)
         {
-#if PERFMON
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            try
-            {
-#endif
-
-
             var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().MessageQueueConnectionStringName).GetComponent("dbfile");
 
             // Create blob path
@@ -130,14 +108,6 @@ namespace SanteDB.DisconnectedClient.Services
                 ms.Flush();
                 return ms.ToArray();
             }
-#if PERFMON
-            }
-            finally
-            {
-                sw.Stop();
-                ApplicationContext.Current.PerformanceLog(nameof(SimpleQueueFileProvider), nameof(GetQueueData), "Raw", sw.Elapsed);
-            }
-#endif
         }
 
         /// <summary>
@@ -164,12 +134,7 @@ namespace SanteDB.DisconnectedClient.Services
         /// </summary>
         public string SaveQueueData(IdentifiedData data)
         {
-#if PERFMON
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            try
-            {
-#endif
+
             XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(data.GetType());
 
             var sqlitePath = ApplicationContext.Current.ConfigurationManager.GetConnectionString(ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().MessageQueueConnectionStringName).GetComponent("dbfile");
@@ -190,14 +155,7 @@ namespace SanteDB.DisconnectedClient.Services
                     this.m_queueCache.Add(blobPath, data);
 
             return Path.GetFileName(blobPath);
-#if PERFMON
-            }
-            finally
-            {
-                sw.Stop();
-                ApplicationContext.Current.PerformanceLog(nameof(SimpleQueueFileProvider), nameof(SaveQueueData), data.GetType().Name, sw.Elapsed);
-            }
-#endif
+
         }
     }
 }
