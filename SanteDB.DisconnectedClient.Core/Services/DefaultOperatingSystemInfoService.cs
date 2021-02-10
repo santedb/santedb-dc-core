@@ -17,6 +17,7 @@
  * Date: 2020-5-2
  */
 using SanteDB.Core;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Collections.Generic;
