@@ -24,6 +24,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security.Audit;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Fault;

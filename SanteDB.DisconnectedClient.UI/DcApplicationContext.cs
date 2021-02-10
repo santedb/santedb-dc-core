@@ -175,7 +175,6 @@ namespace SanteDB.DisconnectedClient.UI
                 var retVal = new DcApplicationContext(dialogProvider, instanceName, applicationId, hostType);
                 retVal.SetProgress("Run setup", 0);
                 //retVal.AddServiceProvider(typeof(ConfigurationManager));
-
                 ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
