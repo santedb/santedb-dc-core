@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.IO;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.Matcher.Configuration;
+using SanteDB.Matcher.Definition;
 using SanteDB.Matcher.Matchers;
 using SanteDB.Matcher.Services;
 
