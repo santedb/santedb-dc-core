@@ -306,8 +306,9 @@
       <Version>2.0.80</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.26.0" />
+    <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
-    <PackageReference Include="System.Security.Permissions" Version="4.7.0" />
+    <PackageReference Include="System.Security.Permissions" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">

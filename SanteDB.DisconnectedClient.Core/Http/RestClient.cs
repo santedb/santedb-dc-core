@@ -450,8 +450,8 @@ namespace SanteDB.DisconnectedClient.Http
                         }
 
                         responseHeaders = response.Headers;
-                        var validationResult = this.ValidateResponse(response);
-                        if (validationResult != ServiceClientErrorType.Valid)
+                        var validationResult = this.CategorizeResponse(response);
+                        if (validationResult != ServiceClientErrorType.Ok)
                         {
                             this.m_tracer.TraceError("Response failed validation : {0}", validationResult);
                             throw new WebException(Strings.err_response_failed_validation, null, WebExceptionStatus.Success, response);
@@ -602,7 +602,7 @@ namespace SanteDB.DisconnectedClient.Http
                     switch (errorResponse.StatusCode)
                     {
                         case HttpStatusCode.Unauthorized: // Validate the response
-                            if (this.ValidateResponse(errorResponse) != ServiceClientErrorType.Valid)
+                            if (this.CategorizeResponse(errorResponse) != ServiceClientErrorType.Ok)
                                 throw exception;
                             break;
                         case HttpStatusCode.NotModified:

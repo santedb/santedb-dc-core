@@ -19,6 +19,7 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
@@ -29,7 +30,12 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Caching;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Caching
 {
@@ -40,9 +46,9 @@ namespace SanteDB.DisconnectedClient.Caching
     {
 
         /// <summary>
-        /// Get the service name
+        /// Gets the service name
         /// </summary>
-        public String ServiceName => "Memory Caching Service";
+        public string ServiceName => "Memory Caching Service";
 
         /// <summary>
         /// Cache of data
@@ -50,10 +56,13 @@ namespace SanteDB.DisconnectedClient.Caching
         private EventHandler<ModelMapEventArgs> m_mappingHandler = null;
         private EventHandler<ModelMapEventArgs> m_mappedHandler = null;
 
-        private object lockInstance = new object();
-
         // Memory cache configuration
         private Tracer m_tracer = Tracer.GetTracer(typeof(MemoryCacheService));
+        private static object s_lock = new object();
+        private MemoryCache m_cache;
+
+        // Non cached types
+        private HashSet<Type> m_nonCached = new HashSet<Type>();
 
         /// <summary>
         /// True when the memory cache is running
@@ -62,15 +71,7 @@ namespace SanteDB.DisconnectedClient.Caching
         {
             get
             {
-                return this.m_mappedHandler != null && m_mappedHandler != null;
-            }
-        }
-
-        public long Size
-        {
-            get
-            {
-                throw new NotImplementedException();
+                return this.m_mappingHandler != null;
             }
         }
 
@@ -94,6 +95,8 @@ namespace SanteDB.DisconnectedClient.Caching
         public event EventHandler<DataCacheEventArgs> Updated;
         public event EventHandler<DataCacheEventArgs> Removed;
 
+
+
         /// <summary>
         /// Start the service
         /// </summary>
@@ -109,87 +112,34 @@ namespace SanteDB.DisconnectedClient.Caching
             this.Updated += (o, e) => this.EnsureCacheConsistency(e);
             this.Removed += (o, e) => this.EnsureCacheConsistency(e);
 
-            // Initialization parameters - Load concept dictionary
-            ApplicationContext.Current.Started += (os, es) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((a) =>
-             {
+            var config = new NameValueCollection();
+            config.Add("pollingInterval", "00:05:00");
 
-                 // Seed the cache
-                 try
-                 {
-                     this.m_tracer.TraceInfo("Loading concept dictionary ...");
-                     //ApplicationContext.Current.GetService<IDataPersistenceService<Concept>>().Query(q => q.StatusConceptKey == StatusKeys.Active);
-                     //ApplicationContext.Current.GetService<IDataPersistenceService<IdentifierType>>().Query(q => true);
-                     //ApplicationContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>().Query(q => true);
+            this.m_cache = new MemoryCache("santedb", config);
 
-                     var subscribe = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>();
-                     if(subscribe != null)
-                        foreach (var i in subscribe.SubscribeTo)
-                             ApplicationContext.Current.GetService<IDataPersistenceService<Place>>().Get(Guid.Parse(i), null, false, AuthenticationContext.SystemPrincipal);
 
-                     // Seed cache
-                     this.m_tracer.TraceInfo("Loading materials dictionary...");
-                     ApplicationContext.Current.GetService<IDataPersistenceService<Material>>()?.Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
-                     ApplicationContext.Current.GetService<IDataPersistenceService<ManufacturedMaterial>>()?.Query(q => q.StatusConceptKey == StatusKeys.Active, AuthenticationContext.SystemPrincipal);
+            // handles when a item is being mapped
+            this.m_mappingHandler = (o, e) =>
+            {
+                var cacheItem = this.m_cache.Get(e.Key.ToString());
+                if (cacheItem != null)
+                {
+                    e.ModelObject = cacheItem as IdentifiedData;
+                    e.Cancel = true;
+                }
+                //this.GetOrUpdateCacheItem(e);
+            };
 
-                     // handles when a item is being mapped
-                     if (this.m_mappingHandler == null)
-                     {
-                         this.m_mappingHandler = (o, e) =>
-                         {
-                             var obj = MemoryCache.Current.TryGetEntry(e.Key);
-                             if (obj != null)
-                             {
-                                 var cVer = obj as IVersionedEntity;
-                                 var dVer = e.ModelObject as IVersionedEntity;
-                                 if (cVer?.VersionSequence <= dVer?.VersionSequence) // Cache is older than this item
-                                 {
-                                     e.ModelObject = obj as IdentifiedData;
-                                     e.Cancel = true;
-                                 }
-                             }
-                             //this.GetOrUpdateCacheItem(e);
-                         };
+            // Subscribe to message mapping
+            ModelMapper.MappingToModel += this.m_mappingHandler;
+            ModelMapper.MappedToModel += this.m_mappedHandler;
 
-                         // Handles when an item is no longer being mapped
-                         this.m_mappedHandler = (o, e) =>
-                         {
-                             //MemoryCache.Current.RegisterCacheType(e.ObjectType);
-                             //this.GetOrUpdateCacheItem(e);
-                         };
 
-                         // Subscribe to message mapping
-                         ModelMapper.MappingToModel += this.m_mappingHandler;
-                         ModelMapper.MappedToModel += this.m_mappedHandler;
 
-                         // Now start the clean timers
-                         this.m_tracer.TraceInfo("Starting clean timers...");
+            // Look for non-cached types
+            foreach (var itm in typeof(IdentifiedData).Assembly.GetTypes().Where(o => o.GetCustomAttribute<NonCachedAttribute>() != null || o.GetCustomAttribute<XmlRootAttribute>() == null))
+                this.m_nonCached.Add(itm);
 
-                         Action<Object> cleanProcess = null, pressureProcess = null;
-
-                         cleanProcess = o =>
-                         {
-                             MemoryCache.Current.Clean();
-                             ApplicationContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(new TimeSpan(ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Cache.MaxDirtyAge), cleanProcess, null);
-                         };
-                         pressureProcess = o =>
-                         {
-                             MemoryCache.Current.ReducePressure();
-                             ApplicationContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(new TimeSpan(ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Cache.MaxDirtyAge), pressureProcess, null);
-                         };
-
-                         // Register processes on a delay
-                         ApplicationContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(new TimeSpan(ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Cache.MaxDirtyAge), pressureProcess, null);
-                         ApplicationContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(new TimeSpan(ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>().Cache.MaxDirtyAge), cleanProcess, null);
-
-                     }
-                 }
-                 catch
-                 {
-                     this.m_tracer.TraceWarning("Caching will be disabled due to cache load error");
-                 }
-
-             });
-            // Now we start timers
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -199,30 +149,31 @@ namespace SanteDB.DisconnectedClient.Caching
         /// </summary>
         private void EnsureCacheConsistency(DataCacheEventArgs e)
         {
-            //// Relationships should always be clean of source/target so the source/target will load the new relationship
-            if (e.Object is ActParticipation)
+            lock (s_lock)
             {
-                var ptcpt = (e.Object as ActParticipation);
-                MemoryCache.Current.RemoveObject(ptcpt.Key.GetValueOrDefault());
-                MemoryCache.Current.RemoveObject(ptcpt.SourceEntityKey.GetValueOrDefault());
-                MemoryCache.Current.RemoveObject(ptcpt.ActKey.GetValueOrDefault());
-            }
-            else if (e.Object is ActRelationship)
-            {
-                var rel = (e.Object as ActRelationship);
-                MemoryCache.Current.RemoveObject(rel.Key.GetValueOrDefault());
-                MemoryCache.Current.RemoveObject(rel.SourceEntityKey.GetValueOrDefault());
-                MemoryCache.Current.RemoveObject(rel.TargetActKey.GetValueOrDefault());
-            }
-            else if (e.Object is EntityRelationship)
-            {
-                var rel = (e.Object as EntityRelationship);
-                MemoryCache.Current.RemoveObject(rel.Key.GetValueOrDefault());
-                MemoryCache.Current.RemoveObject(rel.SourceEntityKey.GetValueOrDefault());
-                MemoryCache.Current.RemoveObject(rel.TargetEntityKey.GetValueOrDefault());
-            }
-            
+                //// Relationships should always be clean of source/target so the source/target will load the new relationship
+                if (e.Object is ActParticipation)
+                {
+                    var ptcpt = (e.Object as ActParticipation);
 
+                    this.Remove(ptcpt.SourceEntityKey.GetValueOrDefault());
+                    this.Remove(ptcpt.PlayerEntityKey.GetValueOrDefault());
+                    //MemoryCache.Current.RemoveObject(ptcpt.PlayerEntity?.GetType() ?? typeof(Entity), ptcpt.PlayerEntityKey);
+                }
+                else if (e.Object is ActRelationship)
+                {
+                    var rel = (e.Object as ActRelationship);
+                    this.Remove(rel.SourceEntityKey.GetValueOrDefault());
+                    this.Remove(rel.TargetActKey.GetValueOrDefault());
+                }
+                else if (e.Object is EntityRelationship)
+                {
+                    var rel = (e.Object as EntityRelationship);
+                    this.Remove(rel.SourceEntityKey.GetValueOrDefault());
+                    this.Remove(rel.TargetEntityKey.GetValueOrDefault());
+                }
+
+            }
         }
 
         /// <summary>
@@ -231,16 +182,16 @@ namespace SanteDB.DisconnectedClient.Caching
         /// <param name="e"></param>
         private void GetOrUpdateCacheItem(ModelMapEventArgs e)
         {
-            var cacheItem = MemoryCache.Current.TryGetEntry(e.Key);
+            var cacheItem = this.m_cache.Get(e.Key.ToString());
             if (cacheItem == null)
-                MemoryCache.Current.AddUpdateEntry(e.ModelObject);
+                this.Add(e.ModelObject);
             else
             {
                 // Obsolete?
                 var cVer = cacheItem as IVersionedEntity;
                 var dVer = e.ModelObject as IVersionedEntity;
                 if (cVer?.VersionSequence < dVer?.VersionSequence) // Cache is older than this item
-                    MemoryCache.Current.AddUpdateEntry(dVer);
+                    this.Add(dVer as IdentifiedData);
                 e.ModelObject = cacheItem as IdentifiedData;
                 e.Cancel = true;
             }
@@ -259,8 +210,7 @@ namespace SanteDB.DisconnectedClient.Caching
 
             this.m_mappingHandler = null;
             this.m_mappedHandler = null;
-
-            MemoryCache.Current.Clear();
+            this.m_cache.Dispose();
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
@@ -272,42 +222,58 @@ namespace SanteDB.DisconnectedClient.Caching
         /// <returns></returns>
         public TData GetCacheItem<TData>(Guid key) where TData : IdentifiedData
         {
-            return MemoryCache.Current.TryGetEntry(key) as TData;
+
+            var retVal = this.GetCacheItem(key);
+            if (retVal is TData dat)
+                return dat;
+            else
+            {
+                this.Remove(key); // wrong type - 
+                return default(TData);
+
+            }
         }
 
         /// <summary>
-        /// Gets the specified cache item
+        /// Get the specified cache item
         /// </summary>
-        /// <returns></returns>
-        public Object GetCacheItem(Guid key)
+        public object GetCacheItem(Guid key)
         {
-            return MemoryCache.Current.TryGetEntry(key);
+            var perUserKey = $"{AuthenticationContext.Current?.Principal?.Identity?.Name}-{key}";
+            return this.m_cache.Get(perUserKey);
         }
-
 
         /// <summary>
         /// Add the specified item to the memory cache
         /// </summary>
         public void Add(IdentifiedData data)
         {
-            if (data == null) 
-                return;
-            IdentifiedData[] elements = null;
-            if (data is Bundle bundle)
-                elements = bundle.Item.ToArray();
-            else
-                elements = new IdentifiedData[1] { data };
-
-            foreach (var d in elements.OfType<IdentifiedData>())
+            // if the data is null, continue
+            if (data == null || !data.Key.HasValue ||
+                    (data as BaseEntityData)?.ObsoletionTime.HasValue == true ||
+                    this.m_nonCached.Contains(data.GetType()))
             {
-                // Hidden records should not be put into the cache
-                var exist = MemoryCache.Current.TryGetEntry(d.Key);
-                MemoryCache.Current.AddUpdateEntry(d);
-                if (exist != null)
-                    this.Updated?.Invoke(this, new DataCacheEventArgs(d));
-                else
-                    this.Added?.Invoke(this, new DataCacheEventArgs(d));
+                return;
             }
+
+            var perUserKey = $"{AuthenticationContext.Current?.Principal?.Identity?.Name}-{data.Key}";
+            var exist = this.m_cache.Get(perUserKey);
+            this.m_cache.Set(perUserKey, data, DateTimeOffset.Now.AddSeconds(120));
+
+            // If this is a relationship class we remove the source entity from the cache
+            if (data is ITargetedAssociation targetedAssociation)
+            {
+                this.m_cache.Remove(targetedAssociation.SourceEntityKey.ToString());
+                this.m_cache.Remove(targetedAssociation.TargetEntityKey.ToString());
+            }
+            else if (data is ISimpleAssociation simpleAssociation)
+                this.m_cache.Remove(simpleAssociation.SourceEntityKey.ToString());
+
+
+            if (exist != null)
+                this.Updated?.Invoke(this, new DataCacheEventArgs(data));
+            else
+                this.Added?.Invoke(this, new DataCacheEventArgs(data));
         }
 
         /// <summary>
@@ -315,10 +281,11 @@ namespace SanteDB.DisconnectedClient.Caching
         /// </summary>
         public void Remove(Guid key)
         {
-            var exist = MemoryCache.Current.TryGetEntry(key);
+            var perUserKey = $"{AuthenticationContext.Current?.Principal?.Identity?.Name}-{key}";
+            var exist = this.m_cache.Get(perUserKey);
             if (exist != null)
             {
-                MemoryCache.Current.RemoveObject(key);
+                this.m_cache.Remove(perUserKey);
                 this.Removed?.Invoke(this, new DataCacheEventArgs(exist));
             }
         }
@@ -328,7 +295,12 @@ namespace SanteDB.DisconnectedClient.Caching
         /// </summary>
         public void Clear()
         {
-            MemoryCache.Current.Clear();
+            this.m_cache.Trim(100);
         }
+
+        /// <summary>
+        /// Get the size of the cache in entries
+        /// </summary>
+        public long Size { get { return this.m_cache.GetLastSize(); } }
     }
 }

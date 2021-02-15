@@ -186,15 +186,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         private static HdsiServiceClient GetClient()
         {
             var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-            retVal.Client.Requesting += (o, e) =>
-            {
-                e.Query.Add("_expand", new List<String>() {
-                        "typeConcept",
-                        "address.use",
-                        "name.use"
-                });
-            };
-
+            
             var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
             var rmtPrincipal = ApplicationServiceContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(rmtPrincipal);
@@ -223,7 +215,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     /// <summary>
     /// Generic versioned persister service for any non-customized persister
     /// </summary>
-    internal class RemoteRepositoryService<TModel> : IRepositoryService<TModel>
+    internal class RemoteRepositoryService<TModel> : IRepositoryService<TModel>, IPersistableQueryRepositoryService<TModel>
         where TModel : IdentifiedData, new()
     {
 
@@ -241,14 +233,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public HdsiServiceClient GetClient()
         {
             var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-            retVal.Client.Requesting += (o, e) =>
-            {
-                e.Query.Add("_expand", new List<String>() {
-                        "typeConcept",
-                        "address.use",
-                        "name.use"
-                });
-            };
+            
             retVal.Client.Credentials = retVal.Client.Description.Binding.Security?.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
             return retVal;
         }
@@ -362,31 +347,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy)
         {
-            using (var client = this.GetClient())
-                try
-                {
-                    var data = client.Query(query, offset, count, false, orderBy: orderBy);
-                    (data as Bundle)?.Reconstitute();
-                    offset = (data as Bundle)?.Offset ?? offset;
-                    count = (data as Bundle)?.Count ?? count;
-                    totalResults = (data as Bundle)?.TotalResults ?? 1;
-
-                    // Reconstitute the bundle
-                    (data as Bundle)?.Reconstitute();
-                    data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
-                    data.ExpansionKeys.Clear();
-                    data.Item.AsParallel().ForAll(o =>
-                    {
-                        ApplicationContext.Current.GetService<IDataCachingService>()?.Add(o as IdentifiedData);
-                    });
-
-                    return (data as Bundle)?.Item.OfType<TModel>() ?? new List<TModel>() { data as TModel };
-                }
-                catch (WebException)
-                {
-                    totalResults = 0;
-                    return new List<TModel>();
-                }
+            return this.Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
 
         }
 
@@ -408,6 +369,37 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             }
         }
 
+        /// <summary>
+        /// Find the specified objects
+        /// </summary>
+        public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<TModel>[] orderBy)
+        {
+            using (var client = this.GetClient())
+                try
+                {
+                    var data = client.Query(query, offset, count, false, queryId: queryId, orderBy: orderBy);
+                    (data as Bundle)?.Reconstitute();
+                    offset = (data as Bundle)?.Offset ?? offset;
+                    count = (data as Bundle)?.Count ?? count;
+                    totalResults = (data as Bundle)?.TotalResults ?? 1;
+
+                    // Reconstitute the bundle
+                    (data as Bundle)?.Reconstitute();
+                    data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
+                    data.ExpansionKeys.Clear();
+                    data.Item.AsParallel().ForAll(o =>
+                    {
+                        ApplicationContext.Current.GetService<IDataCachingService>()?.Add(o as IdentifiedData);
+                    });
+
+                    return (data as Bundle)?.Item.OfType<TModel>() ?? new List<TModel>() { data as TModel };
+                }
+                catch (WebException)
+                {
+                    totalResults = 0;
+                    return new List<TModel>();
+                }
+        }
     }
 
 }
