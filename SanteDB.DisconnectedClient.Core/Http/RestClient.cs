@@ -164,7 +164,7 @@ namespace SanteDB.DisconnectedClient.Http
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Http.RestClient"/> class.
         /// </summary>
-        public RestClient(ServiceClientDescription config) : base(config)
+        public RestClient(ServiceClientDescriptionConfiguration config) : base(config)
         {
             this.m_configurationSection = ApplicationContext.Current?.Configuration?.GetSection<ServiceClientConfigurationSection>();
             this.m_tracer = Tracer.GetTracer(this.GetType());

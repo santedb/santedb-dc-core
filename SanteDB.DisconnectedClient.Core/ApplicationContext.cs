@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient
     /// <summary>
     /// Application context.
     /// </summary>
-    public abstract class ApplicationContext : IServiceProvider, IServiceManager, IApplicationServiceContext, IPolicyEnforcementService
+    public abstract class ApplicationContext : IServiceProvider, IApplicationServiceContext, IPolicyEnforcementService
     {
 
         // Tracer
@@ -412,12 +412,6 @@ namespace SanteDB.DisconnectedClient
         public abstract void Exit();
 
         /// <summary>
-        /// Adds the specified service types
-        /// </summary>
-        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().AddServiceProvider(object)", true)]
-        public void AddServiceProvider(object serviceInstance) => this.m_serviceManager.AddServiceProvider(serviceInstance);
-
-        /// <summary>
         /// Add service 
         /// </summary>
         public void AddServiceProvider(Type serviceType, bool addToConfiguration)
@@ -428,12 +422,6 @@ namespace SanteDB.DisconnectedClient
             if (addToConfiguration && !appSection.ServiceProviders.Any(o => o.Type == serviceType))
                 appSection.ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
         }
-
-        /// <summary>
-        /// Get all services
-        /// </summary>
-        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().GetServices()", true)]
-        public IEnumerable<object> GetServices() => this.m_serviceManager.GetServices();
 
         /// <summary>
         /// Remove a service provider
@@ -454,24 +442,6 @@ namespace SanteDB.DisconnectedClient
         /// SanteDB databases. This should be a consistent key (i.e. generate from machine, user SID, etc.).
         /// </summary>
         public abstract byte[] GetCurrentContextSecurityKey();
-
-        /// <summary>
-        /// Add service provider 
-        /// </summary>
-        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().AddServiceProvider(Type)", true)]
-        public void AddServiceProvider(Type serviceType) => this.m_serviceManager.AddServiceProvider(serviceType);
-
-        /// <summary>
-        /// Remove the service provider
-        /// </summary>
-        [Obsolete("Use ApplicationServiceContext.GetService<IServiceManager>().RemoveServiceProvider()", true)]
-        public void RemoveServiceProvider(Type serviceType) => this.m_serviceManager.RemoveServiceProvider(serviceType);
-
-        /// <summary>
-        /// Get all types
-        /// </summary>
-        public abstract IEnumerable<Type> GetAllTypes();
-
 
         /// <summary>
         /// Demand the policy

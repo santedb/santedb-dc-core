@@ -140,11 +140,14 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         /// <param name="queryId">The identifier of the query to add to</param>
         /// <param name="results">The results to add</param>
-        public void AddResults(Guid queryId, IEnumerable<Guid> results)
+        public void AddResults(Guid queryId, IEnumerable<Guid> results, int totalResults)
         {
             MemoryQueryInfo query = null;
             if (this.m_queryCache.TryGetValue(queryId, out query))
+            {
                 query.Results.AddRange(results);
+                query.TotalResults = totalResults;
+            }
         }
 
         /// <summary>

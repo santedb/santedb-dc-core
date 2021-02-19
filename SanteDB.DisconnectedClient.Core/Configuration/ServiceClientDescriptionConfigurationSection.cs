@@ -39,7 +39,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         /// </summary>
         public ServiceClientConfigurationSection()
         {
-            this.Client = new List<ServiceClientDescription>();
+            this.Client = new List<ServiceClientDescriptionConfiguration>();
         }
 
 	    /// <summary>
@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         /// </summary>
         /// <value>The client.</value>
         [XmlElement("client")][JsonProperty("client")]
-        public List<ServiceClientDescription> Client
+        public List<ServiceClientDescriptionConfiguration> Client
         {
             get;
             set;
@@ -97,13 +97,13 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// <summary>
     /// A service client reprsent a single client to a service 
     /// </summary>
-    [XmlType(nameof(ServiceClientDescription), Namespace = "http://santedb.org/mobile/configuration")]
-    public class ServiceClientDescription : IRestClientDescription
+    [XmlType(nameof(ServiceClientDescriptionConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    public class ServiceClientDescriptionConfiguration : IRestClientDescription
     {
 	    /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClient"/> class.
         /// </summary>
-        public ServiceClientDescription()
+        public ServiceClientDescriptionConfiguration()
         {
             this.Endpoint = new List<ServiceClientEndpoint>();
         }
@@ -161,9 +161,9 @@ namespace SanteDB.DisconnectedClient.Configuration
 	    /// <summary>
         /// Clone the object
         /// </summary>
-        public ServiceClientDescription Clone()
+        public ServiceClientDescriptionConfiguration Clone()
         {
-            var retVal = this.MemberwiseClone() as ServiceClientDescription;
+            var retVal = this.MemberwiseClone() as ServiceClientDescriptionConfiguration;
             retVal.Endpoint = new List<ServiceClientEndpoint>(this.Endpoint.Select(o => new ServiceClientEndpoint
             {
                 Address = o.Address,

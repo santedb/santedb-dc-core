@@ -212,7 +212,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         continue;
 
                     // Description binding
-                    ServiceClientDescription description = new ServiceClientDescription()
+                    ServiceClientDescriptionConfiguration description = new ServiceClientDescriptionConfiguration()
                     {
                         Binding = new ServiceClientBinding()
                         {
@@ -411,7 +411,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     realmUri,
                     port);
 
-                serviceClientSection.Client.Add(new ServiceClientDescription()
+                serviceClientSection.Client.Add(new ServiceClientDescriptionConfiguration()
                 {
                     Binding = new ServiceClientBinding()
                     {
@@ -425,7 +425,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     Name = "ami",
                     Trace = enableTrace
                 });
-                serviceClientSection.Client.Add(new ServiceClientDescription()
+                serviceClientSection.Client.Add(new ServiceClientDescriptionConfiguration()
                 {
                     Binding = new ServiceClientBinding()
                     {
@@ -467,7 +467,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(OAuthIdentityProvider), true);
 
                         // Parse ACS URI
-                        serviceClientSection.Client.Add(new ServiceClientDescription()
+                        serviceClientSection.Client.Add(new ServiceClientDescriptionConfiguration()
                         {
                             Binding = new ServiceClientBinding()
                             {

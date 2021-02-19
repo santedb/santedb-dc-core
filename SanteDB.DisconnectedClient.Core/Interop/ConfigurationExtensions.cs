@@ -52,7 +52,7 @@ namespace SanteDB.DisconnectedClient.Interop
         /// </summary>
         /// <returns>The service description.</returns>
         /// <param name="me">Me.</param>
-        public static ServiceClientDescription GetServiceDescription(this SanteDBConfiguration me, string clientName)
+        public static ServiceClientDescriptionConfiguration GetServiceDescription(this SanteDBConfiguration me, string clientName)
         {
 
             var configSection = me.GetSection<ServiceClientConfigurationSection>();
