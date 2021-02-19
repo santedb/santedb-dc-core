@@ -54,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var queryExpression = QueryExpressionParser.BuildLinqExpression<AppletWidget>(httpq).Compile();
             var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
             var retVal = appletCollection.WidgetAssets
-                .Where(o=>o.Policies?.Any(p=>pdp.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) != SanteDB.Core.Model.Security.PolicyGrantType.Grant) != true)
+                .Where(o=>o.Policies?.Any(p=>pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) != SanteDB.Core.Model.Security.PolicyGrantType.Grant) != true)
                 .Select(o => (o.Content ?? appletCollection.Resolver(o)) as AppletWidget)
                 .Where(queryExpression);
 

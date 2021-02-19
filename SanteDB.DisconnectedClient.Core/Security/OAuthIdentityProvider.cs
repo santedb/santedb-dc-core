@@ -156,7 +156,7 @@ namespace SanteDB.DisconnectedClient.Security
                     // Ensure policy exists
                     try
                     {
-                        var amiPolicies = amiPip.GetActivePolicies(new SecurityRole() { Name = itm.Value }).ToArray();
+                        var amiPolicies = amiPip.GetPolicies(new SecurityRole() { Name = itm.Value }).ToArray();
                         foreach (var pol in amiPolicies)
                             if (localPip.GetPolicy(pol.Policy.Oid) == null)
                             {

@@ -275,8 +275,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 var amiService = SanteDB.DisconnectedClient.ApplicationContext.Current.GetService<IAdministrationIntegrationService>();
                 if (!amiService.IsAvailable())
                 {
-                    // Come back in 30 seconds...
-                    this.m_threadPool.QueueUserWorkItem(new TimeSpan(0, 0, 30), (o) => this.ExhaustOutboundQueue(), null);
                     return;
                 }
 
@@ -434,11 +432,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     var syncItm = SynchronizationQueue.Outbound.PeekRaw();
                     var dpe = SynchronizationQueue.Outbound.DeserializeObject(syncItm);
 
-                    // TODO: Sleep thread here
                     if (!integrationService.IsAvailable())
                     {
                         // Come back in 30 seconds...
-                        this.m_threadPool.QueueUserWorkItem(new TimeSpan(0, 0, 30), (o) => this.ExhaustOutboundQueue(), null);
                         return;
                     }
 
@@ -748,10 +744,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                 this.m_threadPool.QueueUserWorkItem(a => this.ExhaustAdminQueue());
             };
 
+            // Application started 
             ApplicationContext.Current.Started += (o, e) =>
             {
                 // startup
-                Action<Object> startup = (iar) =>
+                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((iar) =>
                 {
                     try
                     {
@@ -763,9 +760,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     {
                         this.m_tracer.TraceError("Error executing initial queues: {0}", ex);
                     }
-                };
-
-                ApplicationContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem(startup, null);
+                }, null);
             };
 
 

@@ -35,6 +35,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using SanteDB.Core;
+using SanteDB.Core.Jobs;
 
 namespace SanteDB.DisconnectedClient.Synchronization
 {
@@ -156,14 +157,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     if (this.m_configuration.SynchronizationResources.Any(o => (o.Triggers & SynchronizationPullTriggerType.PeriodicPoll) != 0) &&
                         this.m_configuration.PollInterval != default(TimeSpan))
                     {
-                        Action<Object> pollFn = null;
-                        pollFn = _ =>
-                        {
-                            this.Pull(SynchronizationPullTriggerType.PeriodicPoll);
-                            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.m_configuration.PollInterval, pollFn, null);
-
-                        };
-                        ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(this.m_configuration.PollInterval, pollFn, null);
+                        ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new RemoteSynchronizationJob(), this.m_configuration.PollInterval, JobStartType.DelayStart);
                     }
                 }
                 catch (Exception e)
@@ -206,7 +200,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
         /// <summary>
         /// Pull from remote
         /// </summary>
-        private void Pull(SynchronizationPullTriggerType trigger)
+        public void Pull(SynchronizationPullTriggerType trigger)
         {
             // Pool startup sync if configured..
             this.m_threadPool.QueueUserWorkItem((state) =>
@@ -230,11 +224,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
                         // Trigger
                         if (!this.m_integrationService.IsAvailable())
-                        {
-                            if (trigger == SynchronizationPullTriggerType.OnStart)
-                                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 5, 0), o => this.Pull(SynchronizationPullTriggerType.OnStart), null);
                             return;
-                        }
 
                         int totalResults = 0;
                         var syncTargets = this.m_configuration.SynchronizationResources.Where(o => (o.Triggers & trigger) != 0).ToList();

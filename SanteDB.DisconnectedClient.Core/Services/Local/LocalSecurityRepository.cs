@@ -110,7 +110,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
         {
-            return ApplicationContext.Current.GetService<IPolicyInformationService>().GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
+            return ApplicationContext.Current.GetService<IPolicyInformationService>().GetPolicies(securable).Select(o => o.ToPolicyInstance());
         }
 
         /// <summary>

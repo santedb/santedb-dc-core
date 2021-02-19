@@ -34,7 +34,7 @@ namespace SanteDB.DisconnectedClient.Threading
     /// Represents a thread pool which is implemented separately from the default .net
     /// threadpool, this is to reduce the load on the .net framework thread pool
     /// </summary>
-    [Obsolete("Use default thread pool in API DLL")]
+    [Obsolete("Use SanteDB.Core.Services.Impl.DefaultThreadPoolService", true)]
     public class SanteDBThreadPool : DefaultThreadPoolService
     {
     }

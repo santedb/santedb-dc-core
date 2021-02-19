@@ -50,8 +50,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// Get the service name
         /// </summary>
         public String ServiceName => "AMI Remote Policy Information Service";
-
-        
+                
         /// <summary>
         /// Remote policies only
         /// </summary>
@@ -101,7 +100,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// <summary>
         /// Get active policies for the specified securable
         /// </summary>
-        public IEnumerable<IPolicyInstance> GetActivePolicies(object securable)
+        public IEnumerable<IPolicyInstance> GetPolicies(object securable)
         {
             try
             {
@@ -131,9 +130,10 @@ namespace SanteDB.DisconnectedClient.Security
                     }
                     else if (securable is IPrincipal || securable is IIdentity)
                     {
-                        var userInfo = client.GetUsers(o => o.UserName == (securable as IPrincipal).Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
+                        var identityName = (securable as IPrincipal)?.Identity.Name ?? (securable as IIdentity)?.Name;
+                        var userInfo = client.GetUsers(o => o.UserName == identityName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
                         if (userInfo != null)
-                            return this.GetActivePolicies(new SecurityRole() { Name = userInfo.Roles.FirstOrDefault() });
+                            return this.GetPolicies(new SecurityRole() { Name = userInfo.Roles.FirstOrDefault() });
                         else
                             return new List<IPolicyInstance>();
 
@@ -192,7 +192,7 @@ namespace SanteDB.DisconnectedClient.Security
         public IPolicyInstance GetPolicyInstance(object securable, string policyOid)
         {
             // TODO: Add caching for this
-            return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
+            return this.GetPolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
         }
     }
 }

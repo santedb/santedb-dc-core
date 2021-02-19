@@ -280,7 +280,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 this.m_queryPersistence?.RegisterQuerySet(queryId, new Guid[0], query, countResults ? totalResults : 0);
                 var originalQuery = queryStatement.Build();
-                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem((parm) =>
+                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((parm) =>
                 {
                     var conn2 = parm as SQLiteDataContext;
                     using (conn2.LockConnection())

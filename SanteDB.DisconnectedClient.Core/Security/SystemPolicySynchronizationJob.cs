@@ -124,14 +124,14 @@ namespace SanteDB.DisconnectedClient.Security
                             group = securityRepository.GetRole(rol);
                         }
 
-                        var activePolicies = amiPip.GetActivePolicies(group);
+                        var activePolicies = amiPip.GetPolicies(group);
                         // Create local policy if not exists
                         foreach (var pol in activePolicies)
                             if (localPip.GetPolicy(pol.Policy.Oid) == null)
                                 localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
 
                         // Clear policies
-                        var localPol = localPip.GetActivePolicies(group);
+                        var localPol = localPip.GetPolicies(group);
                         // Remove policies which no longer are granted
                         var noLongerGrant = localPol.Where(o => !activePolicies.Any(a => a.Policy.Oid == o.Policy.Oid));
                         localPip.RemovePolicies(group, AuthenticationContext.SystemPrincipal, noLongerGrant.Select(o => o.Policy.Oid).ToArray());

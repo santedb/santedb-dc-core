@@ -126,5 +126,6 @@ namespace SanteDB.DisconnectedClient.Services
         /// </summary>
         int Pull(Type modelType, NameValueCollection filter, bool always);
 
+
     }
 }

@@ -181,7 +181,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
         {
-            return new AmiPolicyInformationService().GetActivePolicies(securable).Select(o => o.ToPolicyInstance());
+            return new AmiPolicyInformationService().GetPolicies(securable).Select(o => o.ToPolicyInstance());
         }
 
         /// <summary>

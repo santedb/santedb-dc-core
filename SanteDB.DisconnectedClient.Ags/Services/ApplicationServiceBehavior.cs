@@ -36,6 +36,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -53,6 +54,17 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
         // Last online state
         private Dictionary<string, bool> m_lastOnlineState;
+
+        // Policy decision service
+        private IPolicyDecisionService m_policyDecisionService;
+
+        /// <summary>
+        /// PDP service
+        /// </summary>
+        public ApplicationServiceBehavior()
+        {
+            this.m_policyDecisionService = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
+        }
 
         /// <summary>
         /// Get storage providers
@@ -221,7 +233,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var asset = ApplicationContext.Current.GetService<IAppletManagerService>().Applets.ResolveAsset(menu.Asset, menu.Manifest.Assets[0]);
 
             if (menu.Context != context || menu.Asset != null &&
-                !asset?.Policies?.Any(p => ApplicationContext.Current.PolicyDecisionService.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) == SanteDB.Core.Model.Security.PolicyGrantType.Deny) == false)
+                !asset?.Policies?.Any(p => this.m_policyDecisionService.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) == SanteDB.Core.Model.Security.PolicyGrantType.Deny) == false)
                 return;
 
             // Get text for menu item

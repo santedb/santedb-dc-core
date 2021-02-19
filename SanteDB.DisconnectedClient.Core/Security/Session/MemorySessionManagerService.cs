@@ -114,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
                 var claims = cprincipal.Claims.ToList();
 
                 // Did the caller explicitly set policies?
-                var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
+                var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
 
                 // Is the principal only valid for pwd reset?
                 if (!isOverride && cprincipal.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // Allow the createor to specify
@@ -127,7 +127,6 @@ namespace SanteDB.DisconnectedClient.Security.Session
                     if (!String.IsNullOrEmpty(purpose))
                         claims.Add(new SanteDBClaim(SanteDBClaimTypes.PurposeOfUse, purpose));
 
-                    var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
                     foreach (var pol in policyDemands)
                     {
                         // Get grant
@@ -144,20 +143,18 @@ namespace SanteDB.DisconnectedClient.Security.Session
                     }
                 }
 
-
-                // Add default policy claims
-                if (pip != null)
-                {
-                    List<IPolicyInstance> oizPrincipalPolicies = new List<IPolicyInstance>();
-                    foreach (var pol in pip.GetActivePolicies(cprincipal).GroupBy(o => o.Policy.Oid))
-                        oizPrincipalPolicies.Add(pol.FirstOrDefault(o => (int)o.Rule == pol.Min(r => (int)r.Rule)));
-                    // Scopes user is allowed to access
-                    claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
-                }
-
                 var sessionKey = Guid.NewGuid();
                 var sessionRefresh = Guid.NewGuid();
                 claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, sessionKey.ToString()));
+
+                // Add default policy claims
+                if (pdp != null)
+                {
+                    // Add default policies
+                    var oizPrincipalPolicies = pdp.GetEffectivePolicySet(cprincipal);
+                    // Scopes user is allowed to access
+                    claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
+                }
 
                 if (!String.IsNullOrEmpty(language))
                     claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, language));

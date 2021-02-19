@@ -238,7 +238,7 @@ namespace SanteDB.DisconnectedClient.Data.Warehouse
             this.m_running = true;
 
             // Polling for the doing of work
-            ApplicationContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem((o) =>
+            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((o) =>
             {
                 try
                 {

@@ -20,6 +20,7 @@ using SanteDB.Core;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Security;
@@ -33,6 +34,7 @@ using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -42,7 +44,8 @@ namespace SanteDB.DisconnectedClient.Security.Audit
     /// <summary>
     /// Local auditing service
     /// </summary>
-    public class SynchronizedAuditDispatchService : IAuditDispatchService, IDaemonService
+    /// TODO: Split the job off
+    public class SynchronizedAuditDispatchService : IAuditDispatchService, IDaemonService, IJob
     {
         /// <summary>
         /// Get the service name
@@ -72,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         private Tracer m_tracer = Tracer.GetTracer(typeof(SynchronizedAuditDispatchService));
 
         // Audit queue
-        private Queue<AuditData> m_auditQueue = new Queue<AuditData>();
+        private ConcurrentQueue<AuditData> m_auditQueue = new ConcurrentQueue<AuditData>();
 
         // Reset event
         private AutoResetEvent m_resetEvent = new AutoResetEvent(false);
@@ -87,6 +90,36 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                 return true;
             }
         }
+
+        /// <summary>
+        /// Gets the name of the job
+        /// </summary>
+        public string Name => "Audit Dispatch Job";
+
+        /// <summary>
+        /// Can cancel
+        /// </summary>
+        public bool CanCancel => false;
+
+        /// <summary>
+        /// Current state
+        /// </summary>
+        public JobStateType CurrentState { get; private set; }
+
+        /// <summary>
+        /// Gets type of parmaeters
+        /// </summary>
+        public IDictionary<string, Type> Parameters => null;
+
+        /// <summary>
+        /// Last time started
+        /// </summary>
+        public DateTime? LastStarted { get; private set; }
+
+        /// <summary>
+        /// Last time finished
+        /// </summary>
+        public DateTime? LastFinished { get; private set; }
 
         public event EventHandler Started;
         public event EventHandler Starting;
@@ -119,10 +152,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                             this.m_duplicateGuard.Add(objId, DateTime.Now);
                     }
             }
-
-            lock (this.m_auditQueue)
-                this.m_auditQueue.Enqueue(audit);
-            this.m_resetEvent.Set();
+            this.m_auditQueue.Enqueue(audit);
         }
 
         /// <summary>
@@ -140,7 +170,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                     this.m_tracer.TraceInfo("Binding to service events...");
 
                     AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
-
+                    AuditUtil.SendAudit(securityAlertData);
                 }
                 catch (Exception ex)
                 {
@@ -149,64 +179,9 @@ namespace SanteDB.DisconnectedClient.Security.Audit
             };
             ApplicationServiceContext.Current.Stopping += (o, e) => this.m_safeToStop = true;
 
-            AuditSubmission sendAudit = new AuditSubmission();
-
-            // Send audit
-            Action<Object> timerQueue = null;
-            timerQueue = o =>
-            {
-                IEnumerable<AuditData> auditSubmission = null;
-                lock (sendAudit)
-                {
-                    auditSubmission = new List<AuditData>(sendAudit.Audit);
-                    sendAudit.Audit.Clear();
-                }
-
-                while (auditSubmission.Any())
-                {
-                    var submission = new AuditSubmission() { Audit = new List<AuditData>(auditSubmission.Take(2)) };
-                    ApplicationContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(submission, SynchronizationOperationType.Insert);
-                    auditSubmission = auditSubmission.Skip(2);
-                }
-                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 0, 30), timerQueue, null);
-            };
-
             // Queue user work item for sending
-            ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(new TimeSpan(0, 0, 30), timerQueue, null);
+            ApplicationContext.Current.GetService<IJobManagerService>().AddJob(this, new TimeSpan(0, 5, 0), JobStartType.TimerOnly);
 
-            // Queue pooled item that monitors the audit queue and places them onto the outbound queue for a batch submission
-            ApplicationContext.Current.GetService<IThreadPoolService>().QueueNonPooledWorkItem(o =>
-            {
-                while (!this.m_safeToStop)
-                {
-                    try
-                    {
-                        this.m_resetEvent.WaitOne(1000);
-                        while (this.m_auditQueue.Count > 0)
-                        {
-                            AuditData ad = null;
-
-                            lock (this.m_auditQueue)
-                                ad = this.m_auditQueue.Dequeue();
-
-                            try
-                            {
-                                lock (sendAudit)
-                                    sendAudit.Audit.Add(ad);
-                            }
-                            catch (Exception e)
-                            {
-                                this.m_tracer.TraceError("!!SECURITY ALERT!! >> Error sending audit {0}: {1}", ad, e);
-                            }
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError("!!SECURITY ALERT!! >> Error polling audit task list {0}", e);
-                    }
-                }
-            }, null);
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -230,12 +205,51 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                 AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
                 AuditUtil.AddLocalDeviceActor(securityAlertData);
                 AuditUtil.SendAudit(securityAlertData);
-        }
-            
+            }
+
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
+        /// <summary>
+        /// Run the IJob on a delay
+        /// </summary>
+        public void Run(object sender, EventArgs e, object[] parameters)
+        {
+            try
+            {
+                this.CurrentState = JobStateType.Running;
+                this.LastStarted = DateTime.Now;
+
+                AuditSubmission submission = new AuditSubmission(); // To reduce size only submit 2 at a time
+                while(this.m_auditQueue.TryDequeue(out AuditData data)) {
+                    submission.Audit.Add(data); // Add to submission
+                    if(submission.Audit.Count == 3)
+                    {
+                        ApplicationServiceContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(submission, SynchronizationOperationType.Insert);
+                        submission = new AuditSubmission();
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                this.m_tracer.TraceError("Error running audit dispatch: {0}", ex);
+                this.CurrentState = JobStateType.Aborted;
+            }
+            finally
+            {
+                this.LastFinished = DateTime.Now;
+            }
+
+            
+        }
+
+        /// <summary>
+        /// Cancel the job
+        /// </summary>
+        public void Cancel()
+        {
+        }
     }
 }

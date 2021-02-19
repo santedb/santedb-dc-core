@@ -206,7 +206,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         /// <summary>
         /// Get active policies for the specified securable type
         /// </summary>
-        public IEnumerable<IPolicyInstance> GetActivePolicies(object securable)
+        public IEnumerable<IPolicyInstance> GetPolicies(object securable)
         {
             if (securable is DbSecurityDevice)
                 securable = new SecurityDevice() { Key = (securable as DbSecurityDevice).Key };
@@ -346,7 +346,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public IPolicyInstance GetPolicyInstance(object securable, string policyOid)
         {
             // TODO: Add caching for this
-            return this.GetActivePolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
+            return this.GetPolicies(securable).FirstOrDefault(o => o.Policy.Oid == policyOid);
             throw new NotImplementedException();
         }
 
