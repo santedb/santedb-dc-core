@@ -1,5 +1,5 @@
 ﻿<!--
- - Copyright 2019-2020 SanteSuite Contributors (See NOTICE)
+ - Copyright 2019-2021 SanteSuite Contributors (See NOTICE)
  - 
  - Licensed under the Apache License, Version 2.0 (the "License"); you 
  - may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  - the License.
  - 
  - User: fyfej
- - Date: 2019-11-27
+ - Date: 2021-2-9
  -->
 <modelMap xmlns="http://santedb.org/model/map">
   <class modelClass="SanteDB.Core.Auditing.AuditData, SanteDB.Core.Model, Version=1.0.1.0"
