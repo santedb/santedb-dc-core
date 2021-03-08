@@ -18,7 +18,7 @@
  */
 using SanteDB.Core.Model.AMI;
 
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.AMI.Auth;

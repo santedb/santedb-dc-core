@@ -24,7 +24,7 @@ using System.Net;
 using System.Reflection;
 using System.Security;
 using System.Security.Principal;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;

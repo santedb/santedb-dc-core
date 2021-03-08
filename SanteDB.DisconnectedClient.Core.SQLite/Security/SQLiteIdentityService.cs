@@ -44,7 +44,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core;
 using SanteDB.Core.Security.Principal;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.BusinessRules;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security

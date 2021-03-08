@@ -18,7 +18,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core;
-using SanteDB.Core.Api.Services;
+using SanteDB.Core.Services;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;

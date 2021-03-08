@@ -22,7 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Principal;
 using SanteDB.Core;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;

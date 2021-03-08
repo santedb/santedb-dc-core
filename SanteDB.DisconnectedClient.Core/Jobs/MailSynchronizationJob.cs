@@ -16,7 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;

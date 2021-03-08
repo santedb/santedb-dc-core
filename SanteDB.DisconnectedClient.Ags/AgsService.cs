@@ -42,7 +42,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Ags
 {

@@ -17,7 +17,7 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core;
-using SanteDB.Core.Api.Services;
+using SanteDB.Core.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Configuration.Data;

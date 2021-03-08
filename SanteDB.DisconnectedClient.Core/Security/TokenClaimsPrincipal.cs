@@ -17,7 +17,7 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json.Linq;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;

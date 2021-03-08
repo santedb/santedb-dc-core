@@ -45,7 +45,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using SanteDB.Core.Model;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Http;
 using SanteDB.Core.Exceptions;
 using SanteDB.DisconnectedClient.Configuration;
