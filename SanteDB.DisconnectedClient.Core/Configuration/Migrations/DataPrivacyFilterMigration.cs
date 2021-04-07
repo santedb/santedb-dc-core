@@ -16,6 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Privacy;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using System;
@@ -42,9 +43,14 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
         public bool Install()
         {
 
-            if(ApplicationContext.Current.GetService<DataPolicyFilterService>() == null) 
+            if (ApplicationContext.Current.GetService<DataPolicyFilterService>() == null)
+            {
                 ApplicationContext.Current.AddServiceProvider(typeof(DataPolicyFilterService), true);
-
+                ApplicationContext.Current.Configuration.AddSection(new DataPolicyFilterConfigurationSection()
+                {
+                    DefaultAction = ResourceDataPolicyActionType.Hide
+                });
+            }
             return true;
         }
     }

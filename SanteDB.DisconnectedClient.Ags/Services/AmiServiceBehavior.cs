@@ -79,6 +79,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract));
             return this.m_resourceHandler;
         }
+
         /// <summary>
         /// AMI service behavior
         /// </summary>
