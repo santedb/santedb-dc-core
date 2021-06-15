@@ -233,7 +233,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public HdsiServiceClient GetClient()
         {
             var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-            
             retVal.Client.Credentials = retVal.Client.Description.Binding.Security?.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
             return retVal;
         }
@@ -255,28 +254,17 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 try
                 {
                     var existing = ApplicationContext.Current.GetService<IDataCachingService>()?.GetCacheItem(key) as IdentifiedData;
-                    if (existing != null && (existing is Entity || existing is Act)) // For entities and acts we want to ping the server 
-                    { // check the cache to see if it is stale
-                        string etag = null;
-                        client.Client.Head($"{typeof(TModel).GetTypeInfo().GetCustomAttribute<XmlRootAttribute>().ElementName}/{key}").TryGetValue("ETag", out etag);
-                        if (versionKey != Guid.Empty) // not versioned so who cares!?
-                            ;
-                        else if (etag != (existing as IdentifiedData).Tag) // Versions don't match the latest
-                        {
-                            ApplicationContext.Current.GetService<IDataCachingService>()?.Remove(existing.Key.Value);
-                            existing = null;
-                        }
-                    }
-
-                    if (existing == null || !(existing is TModel) ||
-                        (versionKey != Guid.Empty && (existing as IVersionedEntity)?.VersionKey != versionKey))
+                    String ifNoneMatch = String.Empty;
+                    if (existing != null && existing is IdentifiedData idata) // For entities and acts we want to ping the server 
                     {
-                        existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
-
-                        // Add if existing key is same newest version
-                        if (versionKey == Guid.Empty)
-                            ApplicationContext.Current.GetService<IDataCachingService>()?.Add(existing as IdentifiedData);
+                        client.Client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", idata.Tag);
                     }
+
+                    existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel ?? existing;
+
+                    // Add if existing key is same newest version
+                    if (versionKey == Guid.Empty)
+                        ApplicationContext.Current.GetService<IDataCachingService>()?.Add(existing as IdentifiedData);
                     return (TModel)existing;
                 }
                 catch (WebException)

@@ -329,34 +329,22 @@ namespace SanteDB.DisconnectedClient.Http
                         Stream requestStream = null;
                         try
                         {
-                            var cancelTokenSource = new CancellationTokenSource();
-                            CancellationToken ct = cancelTokenSource.Token;
-
                             // Get request object
-                            var requestTask = Task.Run(requestObj.GetRequestStreamAsync, ct);
-
-                            try
+                            var cancellationTokenSource = new CancellationTokenSource();
+                            cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
+                            using (var requestTask = Task.Run(async () => { return await requestObj.GetRequestStreamAsync(); }, cancellationTokenSource.Token))
                             {
-                                if (!requestTask.Wait(this.Description.Endpoint[0].Timeout))
+                                try
                                 {
-                                    cancelTokenSource.Cancel();
-                                    requestObj.Abort();
-                                    throw new TimeoutException();
+                                    requestStream = requestTask.Result;
                                 }
+                                catch (AggregateException e)
+                                {
+                                    requestObj.Abort();
+                                    throw e.InnerExceptions.First();
+                                }
+                            }
 
-                                requestStream = requestTask.Result;
-                            }
-                            catch (AggregateException e)
-                            {
-                                requestObj.Abort();
-                                throw e.InnerExceptions.First();
-                            }
-                            finally
-                            {
-                                try { requestTask.Dispose(); }
-                                catch { }
-                            }
-                           
 
                             if (contentType == null && typeof(TResult) != typeof(Object))
                                 throw new ArgumentNullException(nameof(contentType));
@@ -419,34 +407,19 @@ namespace SanteDB.DisconnectedClient.Http
                     try
                     {
 
-                        var cancelTokenSource = new CancellationTokenSource();
-                        CancellationToken ct = cancelTokenSource.Token;
-
-                        var responseTask = Task.Run(requestObj.GetResponseAsync, ct);
-                        try
-                        {
-                            if (!responseTask.Wait(this.Description.Endpoint[0].Timeout))
-                            {
-                                requestObj.Abort();
-                                cancelTokenSource.Cancel();
-                                throw new TimeoutException();
-                            }
-                            response = (HttpWebResponse)responseTask.Result;
-                        }
-                        catch (AggregateException e)
+                        var cancellationTokenSource = new CancellationTokenSource();
+                        cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
+                        using (var responseTask = Task.Run(async () => { return await requestObj.GetResponseAsync(); }, cancellationTokenSource.Token))
                         {
                             try
                             {
-                                requestObj.Abort();
-                                cancelTokenSource.Cancel();
+                                response = (HttpWebResponse)responseTask.Result;
                             }
-                            catch { }
-                            throw e.InnerExceptions.First();
-                        }
-                        finally
-                        {
-                            try { responseTask.Dispose(); }
-                            catch { }
+                            catch (AggregateException e)
+                            {
+                                requestObj.Abort();
+                                throw e.InnerExceptions.First();
+                            }
                         }
 
                         responseHeaders = response.Headers;
@@ -458,7 +431,7 @@ namespace SanteDB.DisconnectedClient.Http
                         }
 
                         // No content - does the result want a pointer maybe?
-                        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.Continue)
+                        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.Continue || response.StatusCode == HttpStatusCode.NotModified)
                         {
                             return default(TResult);
                         }

@@ -76,7 +76,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             else
             { // It is cheaper to open a mem-db and let other threads access the main db for the time being
 
-                base.FireInserting(new DataPersistingEventArgs<Bundle>(data, principal));
+                base.FireInserting(new DataPersistingEventArgs<Bundle>(data, mode, principal));
                 var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString("santeDbData");
                 // Memory connection
                 using (var memConnection = new LockableSQLiteConnection(ApplicationContext.Current.GetService<ISQLitePlatform>(), new SanteDB.Core.Configuration.Data.ConnectionString()
@@ -164,7 +164,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     }
                 }
 
-                base.FireInserted(new DataPersistedEventArgs<Bundle>(data, principal));
+                base.FireInserted(new DataPersistedEventArgs<Bundle>(data, mode, principal));
                 return data;
             }
         }

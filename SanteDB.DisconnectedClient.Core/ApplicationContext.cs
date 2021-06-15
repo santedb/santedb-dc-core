@@ -459,6 +459,21 @@ namespace SanteDB.DisconnectedClient
             new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId, principal).Demand();
         }
 
+        /// <summary>
+        /// Demand policy enforcement
+        /// </summary>
+        public bool SoftDemand(string policyId, IPrincipal principal)
+        {
+            try
+            {
+                new PolicyPermission(System.Security.Permissions.PermissionState.Unrestricted, policyId, principal).Demand();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
 

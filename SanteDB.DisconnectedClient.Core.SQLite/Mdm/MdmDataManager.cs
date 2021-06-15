@@ -50,6 +50,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
     public interface IMasterEntity { }
 
     /// <summary>
+    /// Represents a relationship shim for MDM
+    /// </summary>
+    [XmlType(Namespace = "http://santedb.org/model")]
+    public class EntityRelationshipMaster : EntityRelationship
+    { }
+
+    /// <summary>
     /// Stub class for receiving MDM Entities
     /// </summary>
     [XmlType(Namespace = "http://santedb.org/model")]

@@ -579,6 +579,133 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
+        public override object AssociationSearch(string resourceType, string key, string childResourceType)
+        {
+            // Perform only on the external server
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        // This NVC is UTF8 compliant
+                        var nvc = SanteDB.Core.Model.Query.NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
+                        var retVal = restClient.Get<object>($"/{resourceType}/{key}/{childResourceType}", nvc.Select(o => new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
 
+                        if (retVal is Bundle bundle)
+                        {
+                            bundle.Item
+                                .OfType<ITaggable>()
+                                .Select(o =>
+                                {
+                                    // Do we have a local?
+                                    if (o is Entity entity &&
+                                        ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>()?.Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                                        return o;
+                                    o.AddTag("$upstream", "true");
+                                    return o;
+                                }).ToList();
+                        }
+                        return retVal;
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationSearch(resourceType, key, childResourceType);
+            }
+        }
+
+        public override object AssociationRemove(string resourceType, string key, string childResourceType, string scopedEntityKey)
+        {
+            // Only on the remote server
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                        restClient.Requesting += (o, e) => e.AdditionalHeaders.Add("X-Delete-Mode", RestOperationContext.Current.IncomingRequest.Headers["X-Delete-Mode"] ?? "OBSOLETE");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        return restClient.Delete<object>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}");
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationRemove(resourceType, key, childResourceType, scopedEntityKey);
+            }
+        }
+
+        public override object AssociationGet(string resourceType, string key, string childResourceType, string scopedEntityKey)
+        {
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}");
+                        // Do we have a local?
+                        if (retVal is Entity entity &&
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                            entity.AddTag("$upstream", "true");
+                        else if (retVal is Act act &&
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>().Get(act.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                            act.AddTag("$upstream", "true");
+                        return retVal;
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationGet(resourceType, key, childResourceType, scopedEntityKey);
+            }
+        }
+
+        public override object AssociationCreate(string resourceType, string key, string childResourceType, object body)
+        {
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("hdsi");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        return restClient.Post<object, object>($"{resourceType}/{childResourceType}", restClient.Accept, body);
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationCreate(resourceType, key, childResourceType, body);
+            }
+        }
     }
 }

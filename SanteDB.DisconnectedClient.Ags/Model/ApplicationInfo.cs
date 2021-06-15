@@ -164,7 +164,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     }
 
 
-                this.SyncInfo = ApplicationContext.Current.GetService<ISynchronizationLogService>().GetAll().Select(o => new DiagnosticSyncInfo()
+                this.SyncInfo = ApplicationContext.Current.GetService<ISynchronizationLogService>()?.GetAll().Select(o => new DiagnosticSyncInfo()
                 {
                     Etag = o.LastETag,
                     LastSync = o.LastSync,

@@ -172,7 +172,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
 
-            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, principal);
+            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, mode, principal);
             this.Inserting?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -219,7 +219,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                         }
 
                     }
-                    this.Inserted?.Invoke(this, new DataPersistedEventArgs<TData>(data, principal));
+                    this.Inserted?.Invoke(this, new DataPersistedEventArgs<TData>(data, mode, principal));
                     return data;
                 }
                 catch (SQLiteException e)
@@ -253,7 +253,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             else if (!data.Key.HasValue || data.Key == Guid.Empty)
                 throw new InvalidOperationException("Data missing key");
 
-            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, principal);
+            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, mode, principal);
             this.Updating?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -295,7 +295,7 @@ namespace SanteDB.DisconnectedClient.SQLite
 
                         }
                     }
-                    this.Updated?.Invoke(this, new DataPersistedEventArgs<TData>(data,principal));
+                    this.Updated?.Invoke(this, new DataPersistedEventArgs<TData>(data, mode, principal));
                     return data;
                 }
                 catch (SQLiteException e)
@@ -329,7 +329,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             Stopwatch sw = new Stopwatch();
             sw.Start();
 #endif
-            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, principal);
+            DataPersistingEventArgs<TData> preArgs = new DataPersistingEventArgs<TData>(data, mode, principal);
             this.Obsoleting?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
@@ -367,7 +367,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                             throw new LocalPersistenceException(SynchronizationOperationType.Obsolete, data, e);
                         }
                     }
-                    this.Obsoleted?.Invoke(this, new DataPersistedEventArgs<TData>(data, principal));
+                    this.Obsoleted?.Invoke(this, new DataPersistedEventArgs<TData>(data, mode, principal));
 
                     return data;
                 }

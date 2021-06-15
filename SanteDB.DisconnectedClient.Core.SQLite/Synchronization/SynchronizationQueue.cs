@@ -186,7 +186,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         public TQueueEntry EnqueueRaw(TQueueEntry entry)
         {
             // Fire pre-event args
-            var preEventArgs = new DataPersistingEventArgs<ISynchronizationQueueEntry>(entry, AuthenticationContext.Current.Principal);
+            var preEventArgs = new DataPersistingEventArgs<ISynchronizationQueueEntry>(entry, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             this.Enqueuing?.Invoke(this, preEventArgs);
             if (preEventArgs.Cancel)
             {
@@ -204,7 +204,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     this.m_tracer.TraceInfo("Enqueue {0} successful. Queue item {1}", entry, conn.Insert(entry));
                     conn.Commit();
 
-                    var postEventArgs = new DataPersistedEventArgs<ISynchronizationQueueEntry>(entry, AuthenticationContext.Current.Principal);
+                    var postEventArgs = new DataPersistedEventArgs<ISynchronizationQueueEntry>(entry, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     this.Enqueued?.Invoke(this, postEventArgs);
                     return (TQueueEntry)postEventArgs.Data;
 

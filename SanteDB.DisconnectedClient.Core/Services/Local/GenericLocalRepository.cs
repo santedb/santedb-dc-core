@@ -152,7 +152,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             if (persistenceService == null)
                 throw new InvalidOperationException($"Unable to locate {nameof(IDataPersistenceService<TEntity>)}");
 
-            var preEvent = new DataPersistingEventArgs<TEntity>(data, AuthenticationContext.Current.Principal);
+            var preEvent = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             this.Inserting?.Invoke(this, preEvent);
             if(preEvent.Cancel)
             {
@@ -168,7 +168,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
             data = businessRulesService?.AfterInsert(data) ?? data;
-            this.Inserted?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
+            this.Inserted?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
             return data;
         }
 
@@ -191,7 +191,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             if (entity == null)
                 throw new KeyNotFoundException($"Entity {key} not found");
 
-            var preEvent = new DataPersistingEventArgs<TEntity>(entity, AuthenticationContext.Current.Principal);
+            var preEvent = new DataPersistingEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             this.Obsoleting?.Invoke(this, preEvent);
             if (preEvent.Cancel)
             {
@@ -208,7 +208,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             ApplicationContext.Current.GetService<IQueueManagerService>().Outbound.Enqueue(entity, SynchronizationOperationType.Obsolete);
 
             entity = businessRulesService?.AfterObsolete(entity) ?? entity;
-            this.Obsoleted?.Invoke(this, new DataPersistedEventArgs<TEntity>(entity, AuthenticationContext.Current.Principal));
+            this.Obsoleted?.Invoke(this, new DataPersistedEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal));
             return entity;
         }
 
@@ -268,7 +268,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
             try
             {
-                var preEvent = new DataPersistingEventArgs<TEntity>(data, AuthenticationContext.Current.Principal);
+                var preEvent = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 this.Saving?.Invoke(this, preEvent);
                 if (preEvent.Cancel)
                 {
@@ -305,7 +305,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
                     data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
                     data = businessRulesService?.AfterInsert(data) ?? data;
-                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
+                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
                 else
                 {
@@ -326,7 +326,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
 
                     data = businessRulesService?.AfterUpdate(data) ?? data;
-                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
+                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
                 
                 return data;
@@ -337,7 +337,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 ApplicationContext.Current.GetService<IQueueManagerService>()?.Outbound.Enqueue(data, SynchronizationOperationType.Insert);
                 data = businessRulesService?.AfterInsert(data) ?? data;
-                this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, AuthenticationContext.Current.Principal));
+                this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 return data;
             }
         }
