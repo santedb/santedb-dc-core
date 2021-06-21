@@ -80,6 +80,8 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         // Reset event
         private AutoResetEvent m_resetEvent = new AutoResetEvent(false);
 
+        private SecurityConfigurationSection m_securityConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+
         /// <summary>
         ///  True if the service is running
         /// </summary>
