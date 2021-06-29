@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
@@ -34,7 +35,7 @@ namespace SanteDB.DisconnectedClient.Diagnostics
         /// <summary>
         /// Initialize the trace writer
         /// </summary>
-        public LogTraceWriter(EventLevel filter, String initializationData) : base(filter, null)
+        public LogTraceWriter(EventLevel filter, String initializationData) : base(filter, null, new Dictionary<String, EventLevel>())
         {
             this.m_sourceName = initializationData;
         }

@@ -46,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Diagnostics
         /// </summary>
         /// <param name="filter">Filter.</param>
         /// <param name="fileName">File name.</param>
-        public FileTraceWriter(EventLevel filter, String fileName) : base(filter, null)
+        public FileTraceWriter(EventLevel filter, String fileName, IDictionary<String, EventLevel> sources) : base(filter, null, sources)
         {
             // First, we want to remove the oldest log
             String logFileBase = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "log", fileName + ".log");

@@ -151,8 +151,9 @@ namespace SanteDB.DisconnectedClient.UI
 
                 ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
-                foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
-                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
+                var configuration = retVal.Configuration.GetSection<DiagnosticsConfigurationSection>();
+                foreach (var tr in configuration.TraceWriter)
+                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData, configuration.Sources.ToDictionary(o=>o.SourceName, o=>o.Filter)) as TraceWriter, tr.Filter);
                 retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
                 return true;
             }
@@ -176,8 +177,9 @@ namespace SanteDB.DisconnectedClient.UI
                 //retVal.AddServiceProvider(typeof(ConfigurationManager));
                 ApplicationServiceContext.Current = DcApplicationContext.Current = retVal;
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
-                foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
-                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
+                var configuration = retVal.Configuration.GetSection<DiagnosticsConfigurationSection>();
+                foreach (var tr in configuration.TraceWriter)
+                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData, configuration.Sources.ToDictionary(o => o.SourceName, o => o.Filter)) as TraceWriter, tr.Filter);
                 retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
 
                 var appletService = retVal.GetService<IAppletManagerService>();
@@ -278,8 +280,9 @@ namespace SanteDB.DisconnectedClient.UI
                     // Add tracers
                     retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                     retVal.m_tracer.TraceInfo("Starting logging infrastructure");
-                    foreach (var tr in retVal.Configuration.GetSection<DiagnosticsConfigurationSection>().TraceWriter)
-                        Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData) as TraceWriter, tr.Filter);
+                    var configuration = retVal.Configuration.GetSection<DiagnosticsConfigurationSection>();
+                    foreach (var tr in configuration.TraceWriter)
+                        Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData, configuration.Sources.ToDictionary(o => o.SourceName, o => o.Filter)) as TraceWriter, tr.Filter);
 
                     retVal.SetProgress("Loading configuration", 0.2f);
 
