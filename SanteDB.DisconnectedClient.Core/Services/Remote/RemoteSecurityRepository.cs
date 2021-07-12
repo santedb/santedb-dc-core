@@ -39,6 +39,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -1328,5 +1329,71 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 }
         }
 
+        /// <summary>
+        /// Get device by name
+        /// </summary>
+        public SecurityDevice GetDevice(string deviceName)
+        {
+            using (var client = this.GetClient())
+            {
+                try
+                {
+
+                    return client.GetDevices(o=>o.Name == deviceName).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query devices", e);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get application by name
+        /// </summary>
+        public SecurityApplication GetApplication(string applicationName)
+        {
+            using (var client = this.GetClient())
+            {
+                try
+                {
+
+                    return client.GetApplications(o => o.Name == applicationName).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault()?.Entity;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query devices", e);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get device by identity 
+        /// </summary>
+        public SecurityDevice GetDevice(IIdentity identity) => this.GetDevice(identity.Name);
+
+        /// <summary>
+        /// Get application by identity
+        /// </summary>
+        public SecurityApplication GetApplication(IIdentity identity) => this.GetApplication(identity.Name);
+
+        /// <summary>
+        /// Get security entity base don principal
+        /// </summary>
+        public SecurityEntity GetSecurityEntity(IPrincipal principal)
+        {
+            if (principal.Identity is IDeviceIdentity deviceIdentity) // Device credential 
+            {
+                return this.GetDevice(deviceIdentity);
+            }
+            else if (principal.Identity is IApplicationIdentity applicationIdentity) //
+            {
+                return this.GetApplication(applicationIdentity);
+            }
+            else
+            {
+                return this.GetUser(principal.Identity);
+            }
+        }
     }
 }

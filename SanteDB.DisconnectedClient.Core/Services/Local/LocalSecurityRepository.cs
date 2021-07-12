@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
+using SanteDB.Core.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Services.Local
 {
@@ -45,28 +46,63 @@ namespace SanteDB.DisconnectedClient.Services.Local
     {
 
         /// <summary>
-        /// Get the service name
+        /// Gets the service name
         /// </summary>
-        public String ServiceName => "Local Security Repository";
+        public string ServiceName => "Local Security Repository Service";
 
+        // Tracer for this service
         private Tracer m_traceSource = Tracer.GetTracer(typeof(LocalSecurityRepository));
 
-        /// <summary>
-        /// Demand permission
-        /// </summary>
-        protected void Demand(String policyId)
-        {
-            ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(policyId);
+        // User repo
+        private IRepositoryService<SecurityUser> m_userRepository;
+        // App repo
+        private IRepositoryService<SecurityApplication> m_applicationRepository;
+        // Device repo
+        private IRepositoryService<SecurityDevice> m_deviceRepository;
+        // Policy repo
+        private IRepositoryService<SecurityPolicy> m_policyRepository;
+        // Role repository
+        private IRepositoryService<SecurityRole> m_roleRepository;
+        // User Entity repository
+        private IRepositoryService<UserEntity> m_userEntityRepository;
+        // Provenance 
+        private IDataPersistenceService<SecurityProvenance> m_provenancePersistence;
+        // IdP
+        private IIdentityProviderService m_identityProviderService;
+        // App IdP
+        private IApplicationIdentityProviderService m_applicationIdentityProvider;
+        // Dev IdP
+        private IDeviceIdentityProviderService m_deviceIdentityProvider;
+        // Role provider
+        private IRoleProviderService m_roleProvider;
 
-        }
-
         /// <summary>
-        /// Add users to roles
+        /// Creates a new local security repository service
         /// </summary>
-        public void AddUsersToRoles(string[] users, string[] roles)
+        public LocalSecurityRepository(
+            IRepositoryService<SecurityUser> userRepository,
+            IRepositoryService<SecurityApplication> applicationRepository,
+            IRepositoryService<SecurityRole> roleRepository,
+            IRepositoryService<SecurityDevice> deviceRepository,
+            IRepositoryService<SecurityPolicy> policyRepository,
+            IRepositoryService<UserEntity> userEntityRepository,
+            IDataPersistenceService<SecurityProvenance> provenanceRepository,
+            IRoleProviderService roleProviderService,
+            IIdentityProviderService identityProviderService,
+            IApplicationIdentityProviderService applicationIdentityProvider,
+            IDeviceIdentityProviderService deviceIdentityProvider)
         {
-            this.Demand(PermissionPolicyIdentifiers.CreateRoles);
-            ApplicationContext.Current.GetService<IRoleProviderService>().AddUsersToRoles(users, roles, AuthenticationContext.Current.Principal);
+            this.m_userRepository = userRepository;
+            this.m_applicationIdentityProvider = applicationIdentityProvider;
+            this.m_applicationRepository = applicationRepository;
+            this.m_identityProviderService = identityProviderService;
+            this.m_provenancePersistence = provenanceRepository;
+            this.m_deviceIdentityProvider = deviceIdentityProvider;
+            this.m_deviceRepository = deviceRepository;
+            this.m_policyRepository = policyRepository;
+            this.m_roleRepository = roleRepository;
+            this.m_userEntityRepository = userEntityRepository;
+            this.m_roleProvider = roleProviderService;
         }
 
         /// <summary>
@@ -77,19 +113,20 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <returns>Returns the updated user.</returns>
         public SecurityUser ChangePassword(Guid userId, string password)
         {
-
-            this.m_traceSource.TraceWarning("Changing user password");
-            var securityUser = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>()?.Get(userId);
+            this.m_traceSource.TraceVerbose("Changing user password");
+            var securityUser = this.m_userRepository?.Get(userId);
             if (securityUser == null)
                 throw new KeyNotFoundException("Cannot locate security user");
-
-            if (!securityUser.UserName.Equals(AuthenticationContext.Current.Principal.Identity.Name, StringComparison.OrdinalIgnoreCase))
-                this.Demand(PermissionPolicyIdentifiers.ChangePassword);
-
-            var iids = ApplicationContext.Current.GetService<IIdentityProviderService>();
-            if (iids == null) throw new InvalidOperationException("Cannot find identity provider service");
-            iids.ChangePassword(securityUser.UserName, password, AuthenticationContext.Current.Principal);
+            this.m_identityProviderService.ChangePassword(securityUser.UserName, password, AuthenticationContext.Current.Principal);
             return securityUser;
+        }
+
+        /// <summary>
+        /// Change password
+        /// </summary>
+        public void ChangePassword(string userName, string password)
+        {
+            this.m_identityProviderService.ChangePassword(userName, password, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -98,55 +135,30 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <param name="userInfo">The security user.</param>
         /// <param name="password">The password.</param>
         /// <returns>Returns the newly created user.</returns>
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.CreateIdentity)]
         public SecurityUser CreateUser(SecurityUser userInfo, string password)
         {
-            this.Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction);
             userInfo.Password = password;
-            return ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>().Insert(userInfo);
+            return this.m_userRepository.Insert(userInfo);
         }
-
-        /// <summary>
-        /// Get all active policies
-        /// </summary>
-        public IEnumerable<SecurityPolicyInstance> GetActivePolicies(object securable)
-        {
-            return ApplicationContext.Current.GetService<IPolicyInformationService>().GetPolicies(securable).Select(o => o.ToPolicyInstance());
-        }
-
-        /// <summary>
-        /// Get all roles from db
-        /// </summary>
-        public string[] GetAllRoles()
-        {
-            return ApplicationContext.Current.GetService<IRoleProviderService>().GetAllRoles();
-        }
-
 
         /// <summary>
         /// Get the policy information in the model format
         /// </summary>
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
         public SecurityPolicy GetPolicy(string policyOid)
         {
             int tr = 0;
-            return ApplicationContext.Current.GetService<IRepositoryService<SecurityPolicy>>().Find(o => o.Oid == policyOid, 0, 1, out tr).SingleOrDefault();
+            return this.m_policyRepository.Find(o => o.Oid == policyOid, 0, 1, out tr).SingleOrDefault();
         }
+
 
         /// <summary>
         /// Get the security provenance 
         /// </summary>
         public SecurityProvenance GetProvenance(Guid provenanceId)
         {
-            // On the mobile we don't store provenance only attribution
-            // This is a shim to fill out the provenance object with the identity of the user
-            var user = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(provenanceId, null, false, AuthenticationContext.Current.Principal);
-            if (user == null)
-                return null;
-            else
-                return new SecurityProvenance()
-                {
-                    User = user,
-                    Key = provenanceId
-                };
+            return this.m_provenancePersistence.Get(provenanceId, null, true, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -155,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         public SecurityRole GetRole(string roleName)
         {
             int tr = 0;
-            return ApplicationContext.Current.GetService<IRepositoryService<SecurityRole>>()?.Find(o => o.Name == roleName, 0, 1, out tr).SingleOrDefault();
+            return this.m_roleRepository?.Find(o => o.Name == roleName, 0, 1, out tr).SingleOrDefault();
         }
 
         /// <summary>
@@ -163,20 +175,19 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         /// <param name="userName">The id of the user to retrieve.</param>
         /// <returns>Returns the user.</returns>
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
         public SecurityUser GetUser(String userName)
         {
             int tr = 0;
-            var repositoryService = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>();
-            if (repositoryService == null)
-                throw new InvalidOperationException("User repository service is not initialized or not available");
             // As the identity service may be LDAP, best to call it to get an identity name
-            return repositoryService.Find(u => u.UserName.ToLower() == userName.ToLower(), 0, 1, out tr).FirstOrDefault();
+            return this.m_userRepository.Find(u => u.UserName == userName, 0, 1, out tr).FirstOrDefault();
         }
 
         /// <summary>
         /// Get the specified user based on identity
         /// </summary>
-		public SecurityUser GetUser(IIdentity identity)
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
+        public SecurityUser GetUser(IIdentity identity)
         {
             return this.GetUser(identity.Name);
         }
@@ -187,43 +198,23 @@ namespace SanteDB.DisconnectedClient.Services.Local
         public UserEntity GetUserEntity(IIdentity identity)
         {
             int t = 0;
-            return ApplicationContext.Current.GetService<IRepositoryService<UserEntity>>()?.Find(o => o.SecurityUser.UserName == identity.Name, 0, 1, out t).FirstOrDefault();
+            return this.m_userEntityRepository?.Find(o => o.SecurityUser.UserName == identity.Name, 0, 1, out t).FirstOrDefault();
         }
 
-        /// <summary>
-        /// Determine if user is in role
-        /// </summary>
-        public bool IsUserInRole(string user, string role)
-        {
-            return ApplicationContext.Current.GetService<IRoleProviderService>().IsUserInRole(user, role);
-        }
 
         /// <summary>
         /// Locks a specific user.
         /// </summary>
         /// <param name="userId">The id of the user to lock.</param>
-		public void LockUser(Guid userId)
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.AlterIdentity)]
+        public void LockUser(Guid userId)
         {
-            this.Demand(PermissionPolicyIdentifiers.AlterLocalIdentity);
+            this.m_traceSource.TraceVerbose("Locking user {0}", userId);
 
-            this.m_traceSource.TraceWarning("Locking user {0}", userId);
-
-            var iids = ApplicationContext.Current.GetService<IIdentityProviderService>();
-            if (iids == null)
-                throw new InvalidOperationException("Missing identity provider service");
-
-            var securityUser = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>()?.Get(userId);
+            var securityUser = this.m_userRepository.Get(userId);
             if (securityUser == null)
                 throw new KeyNotFoundException(userId.ToString());
-            iids.SetLockout(securityUser.UserName, true, AuthenticationContext.Current.Principal);
-        }
-
-        /// <summary>
-        /// Remove user from roles
-        /// </summary>
-        public void RemoveUsersFromRoles(string[] users, string[] roles)
-        {
-            throw new NotSupportedException();
+            this.m_identityProviderService.SetLockout(securityUser.UserName, true, AuthenticationContext.Current.Principal);
         }
 
 
@@ -231,22 +222,17 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// Unlocks a specific user.
         /// </summary>
         /// <param name="userId">The id of the user to be unlocked.</param>
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.AlterIdentity)]
         public void UnlockUser(Guid userId)
         {
-            this.Demand(PermissionPolicyIdentifiers.AlterLocalIdentity);
-            this.m_traceSource.TraceWarning("Unlocking user {0}", userId);
+            this.m_traceSource.TraceVerbose("Unlocking user {0}", userId);
 
-            var iids = ApplicationContext.Current.GetService<IIdentityProviderService>();
-            if (iids == null)
-                throw new InvalidOperationException("Missing identity provider service");
-
-            var securityUser = ApplicationContext.Current.GetService<IRepositoryService<SecurityUser>>()?.Get(userId);
+            var securityUser = this.m_userRepository?.Get(userId);
             if (securityUser == null)
                 throw new KeyNotFoundException(userId.ToString());
-            iids.SetLockout(securityUser.UserName, false, AuthenticationContext.Current.Principal);
+            this.m_identityProviderService.SetLockout(securityUser.UserName, false, AuthenticationContext.Current.Principal);
 
         }
-
 
         /// <summary>
         /// Get the specified provider entity
@@ -254,105 +240,168 @@ namespace SanteDB.DisconnectedClient.Services.Local
         public Provider GetProviderEntity(IIdentity identity)
         {
             int t;
-            return ApplicationContext.Current.GetService<IRepositoryService<Provider>>()
+            return ApplicationServiceContext.Current.GetService<IRepositoryService<Provider>>()
                 .Find(o => o.Relationships.Where(r => r.RelationshipType.Mnemonic == "AssignedEntity").Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName == identity.Name), 0, 1, out t).FirstOrDefault();
         }
 
         /// <summary>
+        /// Set the user's roles to only those in the roles array
+        /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.AlterRoles)]
+        public void SetUserRoles(SecurityUser user, string[] roles)
+        {
+
+            if (!user.Key.HasValue)
+                user = this.GetUser(user.UserName);
+            this.m_roleProvider.RemoveUsersFromRoles(new String[] { user.UserName }, this.m_roleProvider.GetAllRoles().Where(o => !roles.Contains(o)).ToArray(), AuthenticationContext.Current.Principal);
+            this.m_roleProvider.AddUsersToRoles(new string[] { user.UserName }, roles, AuthenticationContext.Current.Principal);
+        }
+
+
+        /// <summary>
         /// Lock a device
         /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.CreateDevice)]
         public void LockDevice(Guid key)
         {
-            this.Demand(PermissionPolicyIdentifiers.CreateDevice);
-
             this.m_traceSource.TraceWarning("Locking device {0}", key);
 
-            var iids = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>();
-            if (iids == null)
-                throw new InvalidOperationException("Missing identity provider service");
-
-            var securityDevice = ApplicationContext.Current.GetService<IRepositoryService<SecurityDevice>>()?.Get(key);
+            var securityDevice = this.m_deviceRepository?.Get(key);
             if (securityDevice == null)
                 throw new KeyNotFoundException(key.ToString());
-            
-            iids.SetLockout(securityDevice.Name, true, AuthenticationContext.Current.Principal);
+
+            this.m_deviceIdentityProvider.SetLockout(securityDevice.Name, true, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
         /// Locks the specified application
         /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.CreateApplication)]
         public void LockApplication(Guid key)
         {
-            this.Demand(PermissionPolicyIdentifiers.CreateApplication);
-
             this.m_traceSource.TraceWarning("Locking application {0}", key);
-
-            var iids = ApplicationContext.Current.GetService<IApplicationIdentityProviderService>();
-            if (iids == null)
-                throw new InvalidOperationException("Missing identity provider service");
-
-            var securityApplication = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Get(key);
+            var securityApplication = this.m_applicationRepository?.Get(key);
             if (securityApplication == null)
                 throw new KeyNotFoundException(key.ToString());
 
-            iids.SetLockout(securityApplication.Name, true, AuthenticationContext.Current.Principal);
+            this.m_applicationIdentityProvider.SetLockout(securityApplication.Name, true, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
         /// Unlocks the specified device
         /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.CreateDevice)]
         public void UnlockDevice(Guid key)
         {
-            this.Demand(PermissionPolicyIdentifiers.CreateDevice);
-
             this.m_traceSource.TraceWarning("Unlocking device {0}", key);
 
-            var iids = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>();
-            if (iids == null)
-                throw new InvalidOperationException("Missing identity provider service");
-
-            var securityDevice = ApplicationContext.Current.GetService<IRepositoryService<SecurityDevice>>()?.Get(key);
+            var securityDevice = this.m_deviceRepository?.Get(key);
             if (securityDevice == null)
                 throw new KeyNotFoundException(key.ToString());
 
-            iids.SetLockout(securityDevice.Name, false, AuthenticationContext.Current.Principal);
+            this.m_deviceIdentityProvider.SetLockout(securityDevice.Name, false, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
         /// Unlock the specified application
         /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.CreateApplication)]
         public void UnlockApplication(Guid key)
         {
-            this.Demand(PermissionPolicyIdentifiers.CreateApplication);
-
             this.m_traceSource.TraceWarning("Unlocking application {0}", key);
 
-            var iids = ApplicationContext.Current.GetService<IApplicationIdentityProviderService>();
-            if (iids == null)
-                throw new InvalidOperationException("Missing identity provider service");
-
-            var securityApplication = ApplicationContext.Current.GetService<IRepositoryService<SecurityApplication>>()?.Get(key);
+            var securityApplication = this.m_applicationRepository?.Get(key);
             if (securityApplication == null)
                 throw new KeyNotFoundException(key.ToString());
 
-            iids.SetLockout(securityApplication.Name, false, AuthenticationContext.Current.Principal);
+            this.m_applicationIdentityProvider.SetLockout(securityApplication.Name, false, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
-        /// Find the specified provenance object
+        /// Find provenance
         /// </summary>
         public IEnumerable<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityProvenance>[] orderBy)
         {
-            var persistenceService = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityProvenance>>();
-            if (persistenceService is IStoredQueryDataPersistenceService<SecurityProvenance>)
-                return (persistenceService as IStoredQueryDataPersistenceService<SecurityProvenance>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
-            else if (persistenceService != null)
-                return persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
+            if (this.m_provenancePersistence is IStoredQueryDataPersistenceService<SecurityProvenance> isq)
+                return isq.Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
+            else
+                return this.m_provenancePersistence.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
+        }
+
+        /// <summary>
+        /// Get the security entity from the specified principal
+        /// </summary>
+        /// <param name="principal">The principal to be fetched</param>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
+        public SecurityEntity GetSecurityEntity(IPrincipal principal)
+        {
+            if (principal.Identity is IDeviceIdentity deviceIdentity) // Device credential 
+            {
+                return this.GetDevice(deviceIdentity);
+            }
+            else if (principal.Identity is IApplicationIdentity applicationIdentity) //
+            {
+                return this.GetApplication(applicationIdentity);
+            }
             else
             {
-                totalResults = 0;
-                return new List<SecurityProvenance>();
+                return this.GetUser(principal.Identity);
             }
+        }
+
+        /// <summary>
+        /// Get device from name
+        /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
+        public SecurityDevice GetDevice(string deviceName)
+        {
+            if (String.IsNullOrEmpty(deviceName))
+            {
+                throw new ArgumentNullException(nameof(deviceName));
+            }
+            return this.m_deviceRepository.Find(o => o.Name == deviceName, 0, 1, out int _).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Get application from name
+        /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
+        public SecurityApplication GetApplication(string applicationName)
+        {
+            if (String.IsNullOrEmpty(applicationName))
+            {
+                throw new ArgumentNullException(nameof(applicationName));
+            }
+
+            return this.m_applicationRepository.Find(o => o.Name == applicationName, 0, 1, out int _).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Get device 
+        /// </summary>
+        [PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
+        public SecurityDevice GetDevice(IIdentity identity)
+        {
+            if (identity == null)
+            {
+                throw new ArgumentNullException(nameof(identity));
+            }
+
+            return this.GetDevice(identity.Name);
+        }
+
+        /// <summary>
+        /// Get application
+        /// </summary>
+		[PolicyPermission(System.Security.Permissions.SecurityAction.Demand, PolicyId = PermissionPolicyIdentifiers.ReadMetadata)]
+        public SecurityApplication GetApplication(IIdentity identity)
+        {
+            if (identity == null)
+            {
+                throw new ArgumentNullException(nameof(identity));
+            }
+
+            return this.GetApplication(identity.Name);
         }
     }
 }
