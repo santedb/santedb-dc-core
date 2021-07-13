@@ -35,7 +35,7 @@ namespace SanteDB.DisconnectedClient.Diagnostics
         /// <summary>
         /// Initialize the trace writer
         /// </summary>
-        public LogTraceWriter(EventLevel filter, String initializationData) : base(filter, null, new Dictionary<String, EventLevel>())
+        public LogTraceWriter(EventLevel filter, String initializationData, IDictionary<String, EventLevel> settings) : base(filter, null, settings)
         {
             this.m_sourceName = initializationData;
         }
