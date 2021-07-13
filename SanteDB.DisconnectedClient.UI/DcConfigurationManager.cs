@@ -191,6 +191,7 @@ namespace SanteDB.DisconnectedClient.UI
                 ServiceProviders = new List<TypeReferenceConfiguration>() {
                     new TypeReferenceConfiguration(typeof(AesSymmetricCrypographicProvider)),
                     new TypeReferenceConfiguration(typeof(MemoryTickleService)),
+                    new TypeReferenceConfiguration(typeof(SHA256PasswordHasher)),
                     new TypeReferenceConfiguration(typeof(SanteDB.Core.Security.DefaultPolicyDecisionService)),
                     new TypeReferenceConfiguration(typeof(DataPolicyFilterService)),
                     new TypeReferenceConfiguration(typeof(NetworkInformationService)),

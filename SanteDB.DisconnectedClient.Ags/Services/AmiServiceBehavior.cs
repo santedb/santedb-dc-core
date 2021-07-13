@@ -72,11 +72,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <returns></returns>
         protected override ResourceHandlerTool GetResourceHandler()
         {
+            var svcMgr = ApplicationServiceContext.Current.GetService<IServiceManager>();
             if (this.m_resourceHandler == null)
                 this.m_resourceHandler = new Rest.Common.ResourceHandlerTool(
-                    typeof(SecurityUserResourceHandler).Assembly.ExportedTypes
-                    .Union(AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.ExportedTypes))
-                    .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract));
+                    svcMgr.GetAllTypes().Where(t => !t.IsAbstract && !t.IsInterface && typeof(IApiResourceHandler).IsAssignableFrom(t)), typeof(IAmiServiceContract));
             return this.m_resourceHandler;
         }
 
