@@ -315,7 +315,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
                     catch (Exception e)
                     {
-                        throw new InvalidOperationException($"Could not reflect types from {a.FullName}", e);
+                        return Type.EmptyTypes;
                     }
                 })
                 .Where(t => typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface))
