@@ -279,14 +279,19 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 try
                 {
                     var existing = ApplicationContext.Current.GetService<IDataCachingService>()?.GetCacheItem(key) as IdentifiedData;
-                    String ifNoneMatch = String.Empty;
-                    if (existing != null && existing is IdentifiedData idata) // For entities and acts we want to ping the server 
+
+                    if (existing is TModel)
                     {
-                        client.Client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", idata.Tag);
+                        if (existing != null && existing is IdentifiedData idata) // For entities and acts we want to ping the server 
+                        {
+                            client.Client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", idata.Tag);
+                        }
+                        existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel ?? existing;
                     }
-
-                    existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel ?? existing;
-
+                    else
+                    {
+                        existing = client.Get<TModel>(key, versionKey == Guid.Empty ? (Guid?)null : versionKey) as TModel;
+                    }
                     // Add if existing key is same newest version
                     if (versionKey == Guid.Empty)
                         ApplicationContext.Current.GetService<IDataCachingService>()?.Add(existing as IdentifiedData);
