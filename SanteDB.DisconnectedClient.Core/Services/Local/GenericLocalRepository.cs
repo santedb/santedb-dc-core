@@ -347,8 +347,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         public virtual TEntity Validate(TEntity p)
         {
-            p = (TEntity)p.Clean(); // clean up messy data
-
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
 
             var details = businessRulesService?.Validate(p) ?? new List<DetectedIssue>();
