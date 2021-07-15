@@ -64,6 +64,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         internal interface IMasterEntity { }
 
         /// <summary>
+        /// Represents a relationship shim for MDM
+        /// </summary>
+        [XmlType(Namespace = "http://santedb.org/model")]
+        public class EntityRelationshipMaster : EntityRelationship
+        { }
+
+        /// <summary>
         /// Stub class for receiving MDM Entities
         /// </summary>
         [XmlType(Namespace = "http://santedb.org/model")]
@@ -90,6 +97,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
             foreach (var t in typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
                 ModelSerializationBinder.RegisterModelType(typeof(ActMaster<>).MakeGenericType(t));
+            ModelSerializationBinder.RegisterModelType(typeof(EntityRelationshipMaster));
+
         }
 
 
