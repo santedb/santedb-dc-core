@@ -16,6 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using Newtonsoft.Json;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
@@ -54,7 +55,20 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
     /// </summary>
     [XmlType(Namespace = "http://santedb.org/model")]
     public class EntityRelationshipMaster : EntityRelationship
-    { }
+    {
+
+        /// <summary>
+        /// Gets the original relationship
+        /// </summary>
+        [XmlElement("originalHolder"), JsonProperty("originalHolder")]
+        public Guid? OriginalHolderKey { get; set; }
+
+        /// <summary>
+        /// Gets the original relationship
+        /// </summary>
+        [XmlElement("originalTarget"), JsonProperty("originalTarget")]
+        public Guid? OriginalTargetKey { get; set; }
+    }
 
     /// <summary>
     /// Stub class for receiving MDM Entities
