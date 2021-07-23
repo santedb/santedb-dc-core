@@ -403,8 +403,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
                     // Reconstitute the bundle
                     (data as Bundle)?.Reconstitute();
-                    data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
-                    data.ExpansionKeys.Clear();
+                    //data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
+                    //data.ExpansionKeys.Clear();
+                    // TODO: Only process Focal objects 
                     data.Item.AsParallel().ForAll(o =>
                     {
                         ApplicationContext.Current.GetService<IDataCachingService>()?.Add(o as IdentifiedData);

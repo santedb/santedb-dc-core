@@ -401,12 +401,13 @@ namespace SanteDB.DisconnectedClient.Data.Warehouse
             {
                 bundlePersistence.Inserted += (o, e) =>
                 {
-                    if (e.Data.EntryKey.HasValue)
+                    var focal = e.Data.GetFocalObject();
+                    if (focal != null)
                     {
-                        if (e.Data.Entry is Patient)
-                            this.QueueWorkItem(e.Data.Entry as Patient);
-                        else if (e.Data.Entry is Act)
-                            this.QueueWorkItem(e.Data.Entry as Act);
+                        if (focal is Patient patient)
+                            this.QueueWorkItem(patient);
+                        else if (focal is Act act)
+                            this.QueueWorkItem(act);
                     }
                     else
                     {
@@ -415,9 +416,10 @@ namespace SanteDB.DisconnectedClient.Data.Warehouse
                 };
                 bundlePersistence.Updated += (o, e) =>
                 {
-                    if (e.Data.EntryKey.HasValue)
+                    var focal = e.Data.GetFocalObject();
+                    if (focal != null)
                     {
-                        this.QueueWorkItem(e.Data.Entry);
+                        this.QueueWorkItem(focal);
                     }
                     else
                     {

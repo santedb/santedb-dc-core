@@ -188,7 +188,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 if (retVal is Bundle)
                 {
                     (retVal as Bundle)?.Reconstitute();
-                    retVal = (retVal as Bundle).Entry;
+                    retVal = (retVal as Bundle).GetFocalObject();
                 }
 
                 var integrationEvent = new IntegrationResultEventArgs(null, retVal);
@@ -271,11 +271,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 }
 
                 // Special case = Batch submit of data with an entry point
-                var submission = (data as Bundle)?.Entry ?? data;
+                var submission = (data as Bundle)?.GetFocalObject() ?? data;
                 client.Client.Requesting += (o, e) =>
                 {
                     var bund = e.Body as Bundle;
-                    if (!(bund?.Entry is UserEntity)) // not submitting a user entity so we only submit ACT
+                    if (!(bund?.GetFocalObject() is UserEntity)) // not submitting a user entity so we only submit ACT
                     {
 	                    bund?.Item.RemoveAll(i => !(i is Act || i is Person && !(i is UserEntity)));// || i is EntityRelationship));
                     }
@@ -463,7 +463,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 }
 
                 // Special case = Batch submit of data with an entry point
-                var submission = (data as Bundle)?.Entry ?? data;
+                var submission = (data as Bundle)?.GetFocalObject() ?? data;
                 var existing = submission;
                 
                 // Assign a uuid for this submission
