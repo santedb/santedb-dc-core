@@ -231,48 +231,50 @@ namespace SanteDB.DisconnectedClient.Security
                 !String.IsNullOrEmpty(deviceSecret) && principal is IClaimsPrincipal &&
                             ApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
-                AuthenticationContext.Current = new AuthenticationContext(principal);
-                IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
-                var amiPip = new AmiPolicyInformationService();
-
-                // Local device
-                int tr = 0;
-
-                IIdentity localDeviceIdentity = null;
-                lock (this.m_lockObject)
+                using (AuthenticationContext.EnterContext(principal))
                 {
-                    try
-                    {
-                        localDeviceIdentity = localIdp.GetIdentity(deviceName);
-                        Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value);
-                        if (localDeviceIdentity == null)
-                            localDeviceIdentity = localIdp.CreateIdentity(sid, deviceName, deviceSecret, AuthenticationContext.SystemPrincipal);
-                        else
-                            localIdp.ChangeSecret(deviceName, deviceSecret, AuthenticationContext.SystemPrincipal);
-                    }
-                    catch (Exception ex)
-                    {
-                        this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
-                    }
+                    IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
+                    var amiPip = new AmiPolicyInformationService();
 
-                    // Ensure policies exist from the claim
-                    foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim))
+                    // Local device
+                    int tr = 0;
+
+                    IIdentity localDeviceIdentity = null;
+                    lock (this.m_lockObject)
                     {
-                        if (localPip.GetPolicy(itm.Value) == null)
+                        try
                         {
-                            try
+                            localDeviceIdentity = localIdp.GetIdentity(deviceName);
+                            Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.SanteDBDeviceIdentifierClaim).Value);
+                            if (localDeviceIdentity == null)
+                                localDeviceIdentity = localIdp.CreateIdentity(sid, deviceName, deviceSecret, AuthenticationContext.SystemPrincipal);
+                            else
+                                localIdp.ChangeSecret(deviceName, deviceSecret, AuthenticationContext.SystemPrincipal);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
+                        }
+
+                        // Ensure policies exist from the claim
+                        foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim))
+                        {
+                            if (localPip.GetPolicy(itm.Value) == null)
                             {
-                                var policy = amiPip.GetPolicy(itm.Value);
-                                localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
-                            }
-                            catch (Exception e)
-                            {
-                                this.m_tracer.TraceWarning("Cannot update local policy information : {0}", e.Message);
+                                try
+                                {
+                                    var policy = amiPip.GetPolicy(itm.Value);
+                                    localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                                }
+                                catch (Exception e)
+                                {
+                                    this.m_tracer.TraceWarning("Cannot update local policy information : {0}", e.Message);
+                                }
                             }
                         }
-                    }
 
-                    localPip.AddPolicies(localDeviceIdentity, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
+                        localPip.AddPolicies(localDeviceIdentity, PolicyGrantType.Grant, AuthenticationContext.SystemPrincipal, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => o.Value).ToArray());
+                    }
                 }
             }
         }

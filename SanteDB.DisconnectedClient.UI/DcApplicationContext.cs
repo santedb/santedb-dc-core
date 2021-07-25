@@ -408,7 +408,6 @@ namespace SanteDB.DisconnectedClient.UI
                 catch (Exception e)
                 {
                     //ApplicationContext.Current = null;
-                    AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                     throw new Exception("Error starting context", e);
                 }
                 return true;

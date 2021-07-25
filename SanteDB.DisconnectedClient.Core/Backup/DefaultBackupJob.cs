@@ -93,35 +93,38 @@ namespace SanteDB.DisconnectedClient.Backup
         /// </summary>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
-            try
+            using (AuthenticationContext.EnterSystemContext())
             {
-                ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Toast | Tickler.TickleType.Task, Strings.locale_backupStarted)); 
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                this.LastStarted = DateTime.Now;
-                this.CurrentState = JobStateType.Running;
+                try
+                {
+                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Toast | Tickler.TickleType.Task, Strings.locale_backupStarted));
+                    this.LastStarted = DateTime.Now;
+                    this.CurrentState = JobStateType.Running;
 
-                var backupService = ApplicationServiceContext.Current.GetService<IBackupService>();
-                var maxBackups = Int32.Parse(ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetAppSetting("autoBackup.max") ?? "5");
+                    var backupService = ApplicationServiceContext.Current.GetService<IBackupService>();
+                    var maxBackups = Int32.Parse(ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetAppSetting("autoBackup.max") ?? "5");
 
-                // First attempt to backup
-                backupService.Backup(BackupMedia.Private, ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName);
+                    // First attempt to backup
+                    backupService.Backup(BackupMedia.Private, ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceName);
 
-                // Now are there more backups than we like to retain?
-                foreach (var descriptor in backupService.GetBackups(BackupMedia.Private).Skip(maxBackups)) {
-                    this.m_tracer.TraceInfo("Retention of backups from backup job will remove {0}", descriptor);
-                    backupService.RemoveBackup(BackupMedia.Private, descriptor);
+                    // Now are there more backups than we like to retain?
+                    foreach (var descriptor in backupService.GetBackups(BackupMedia.Private).Skip(maxBackups))
+                    {
+                        this.m_tracer.TraceInfo("Retention of backups from backup job will remove {0}", descriptor);
+                        backupService.RemoveBackup(BackupMedia.Private, descriptor);
+                    }
+
+                    this.CurrentState = JobStateType.Completed;
+                    this.LastFinished = DateTime.Now;
+
+                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Toast | Tickler.TickleType.Task, Strings.locale_backupCompleted));
+
                 }
-                    
-                this.CurrentState = JobStateType.Completed;
-                this.LastFinished = DateTime.Now;
-
-                ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Toast | Tickler.TickleType.Task, Strings.locale_backupCompleted));
-
-            }
-            catch (Exception ex)
-            {
-                this.m_tracer.TraceError("Error running backup job: {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceError("Error running backup job: {0}", ex);
+                    this.CurrentState = JobStateType.Aborted;
+                }
             }
         }
     }

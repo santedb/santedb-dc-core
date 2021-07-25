@@ -54,16 +54,14 @@ namespace SanteDB.DisconnectedClient.Security
         {
 
             // TODO: Determine why we're reauthenticating... if it is an expired token we'll need to get the refresh token
-            var tokenCredentials = AuthenticationContext.Current.Principal as TokenClaimsPrincipal;
-            if (tokenCredentials != null)
+            if (AuthenticationContext.Current.Principal is TokenClaimsPrincipal tokenCredentials)
             {
                 var expiryTime = tokenCredentials.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime();
                 if (expiryTime.HasValue && expiryTime < DateTime.Now)
                 {
                     var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
                     var principal = idp.ReAuthenticate(AuthenticationContext.Current.Principal);   // Force a re-issue
-                    AuthenticationContext.Current = new AuthenticationContext(principal);
-                    //ApplicationContext.Current.SetDefaultPrincipal(principal);
+                    AuthenticationContext.EnterContext(principal); // TODO: Figure out if this is still required
                 }
                 else if (expiryTime > DateTime.Now) // Token is good?
                     return this.GetCredentials(context);

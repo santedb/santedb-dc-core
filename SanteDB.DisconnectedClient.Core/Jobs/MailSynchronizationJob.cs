@@ -137,21 +137,19 @@ namespace SanteDB.DisconnectedClient.Jobs
         /// <summary>
         /// Gets current credentials
         /// </summary>
-        private Credentials GetCredentials(IRestClient client)
+        private IDisposable GetCredentials(IRestClient client, out Credentials credentials)
         {
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
-            AuthenticationContext.Current = new AuthenticationContext(this.m_cachedCredential ?? AuthenticationContext.Current.Principal);
-
             // TODO: Clean this up - Login as device account
-            if (!AuthenticationContext.Current.Principal.Identity.IsAuthenticated ||
-                ((AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTimeOffset.MinValue) < DateTimeOffset.Now)
+            if (this.m_cachedCredential == null ||
+                !this.m_cachedCredential.Identity.IsAuthenticated ||
+                ((this.m_cachedCredential as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTimeOffset.MinValue) < DateTimeOffset.Now)
             {
-                AuthenticationContext.Current = new AuthenticationContext(ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret));
-                this.m_cachedCredential = AuthenticationContext.Current.Principal;
+                this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             }
-            return client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
-
+            credentials = client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+            return AuthenticationContext.EnterContext(this.m_cachedCredential);
         }
 
         /// <summary>
@@ -175,62 +173,65 @@ namespace SanteDB.DisconnectedClient.Jobs
 
                 // We are to poll for alerts always (never push supported)
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-                amiClient.Client.Credentials = this.GetCredentials(amiClient.Client);
-                
-                // When was the last time we polled an alert?
-                var syncTime = this.LastFinished.HasValue ? new DateTimeOffset(this.LastFinished.Value) : new DateTimeOffset(new DateTime(1900, 01, 01));
-                // Poll action for all alerts to "everyone"
-                AmiCollection serverAlerts = amiClient.GetMailMessages(a => a.CreationTime >= syncTime && a.RcptTo.Any(o=>o.UserName == "SYSTEM")); // SYSTEM WIDE ALERTS
-
-
-                // TODO: We need to filter by users in which this tablet will be interested in
-                ParameterExpression userParameter = Expression.Parameter(typeof(SecurityUser), "u");
-                // User name filter
-                Expression userNameFilter = Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(this.m_securityConfiguration.DeviceName));
-
-                // Or eith other users which have logged into this tablet
-                foreach (var user in ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Query(u => u.LastLoginTime != null && u.UserName != this.m_securityConfiguration.DeviceName, AuthenticationContext.SystemPrincipal))
-                    userNameFilter = Expression.OrElse(userNameFilter,
-                        Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(user.UserName))
-                        );
-
-                ParameterExpression parmExpr = Expression.Parameter(typeof(MailMessage), "a");
-                Expression timeExpression = Expression.GreaterThanOrEqual(
-                    Expression.Convert(Expression.MakeMemberAccess(parmExpr, parmExpr.Type.GetRuntimeProperty("CreationTime")), typeof(DateTimeOffset)),
-                    Expression.Constant(syncTime)
-                ),
-                // this tablet expression
-                userExpression = Expression.Call(
-                    (MethodInfo)typeof(Enumerable).GetGenericMethod("Any", new Type[] { typeof(SecurityUser) }, new Type[] { typeof(IEnumerable<SecurityUser>), typeof(Func<SecurityUser, bool>) }),
-                    Expression.MakeMemberAccess(parmExpr, parmExpr.Type.GetRuntimeProperty("RcptTo")),
-                    Expression.Lambda<Func<SecurityUser, bool>>(userNameFilter, userParameter));
-
-                serverAlerts.CollectionItem = serverAlerts.CollectionItem.Union(amiClient.GetMailMessages(Expression.Lambda<Func<MailMessage, bool>>(Expression.AndAlso(timeExpression, userExpression), parmExpr)).CollectionItem).ToList();
-
-                // Import the alerts
-                foreach (var itm in serverAlerts.CollectionItem.OfType<MailMessage>())
+                using (this.GetCredentials(amiClient.Client, out Credentials credentials))
                 {
-                    this.m_tracer.TraceVerbose("Importing ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
-                    itm.Body = String.Format("<pre>{0}</pre>", itm.Body);
-                    this.m_mailRepository.Broadcast(itm);
+                    amiClient.Client.Credentials = credentials;
+
+                    // When was the last time we polled an alert?
+                    var syncTime = this.LastFinished.HasValue ? new DateTimeOffset(this.LastFinished.Value) : new DateTimeOffset(new DateTime(1900, 01, 01));
+                    // Poll action for all alerts to "everyone"
+                    AmiCollection serverAlerts = amiClient.GetMailMessages(a => a.CreationTime >= syncTime && a.RcptTo.Any(o => o.UserName == "SYSTEM")); // SYSTEM WIDE ALERTS
+
+
+                    // TODO: We need to filter by users in which this tablet will be interested in
+                    ParameterExpression userParameter = Expression.Parameter(typeof(SecurityUser), "u");
+                    // User name filter
+                    Expression userNameFilter = Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(this.m_securityConfiguration.DeviceName));
+
+                    // Or eith other users which have logged into this tablet
+                    foreach (var user in ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Query(u => u.LastLoginTime != null && u.UserName != this.m_securityConfiguration.DeviceName, AuthenticationContext.SystemPrincipal))
+                        userNameFilter = Expression.OrElse(userNameFilter,
+                            Expression.Equal(Expression.MakeMemberAccess(userParameter, userParameter.Type.GetRuntimeProperty("UserName")), Expression.Constant(user.UserName))
+                            );
+
+                    ParameterExpression parmExpr = Expression.Parameter(typeof(MailMessage), "a");
+                    Expression timeExpression = Expression.GreaterThanOrEqual(
+                        Expression.Convert(Expression.MakeMemberAccess(parmExpr, parmExpr.Type.GetRuntimeProperty("CreationTime")), typeof(DateTimeOffset)),
+                        Expression.Constant(syncTime)
+                    ),
+                    // this tablet expression
+                    userExpression = Expression.Call(
+                        (MethodInfo)typeof(Enumerable).GetGenericMethod("Any", new Type[] { typeof(SecurityUser) }, new Type[] { typeof(IEnumerable<SecurityUser>), typeof(Func<SecurityUser, bool>) }),
+                        Expression.MakeMemberAccess(parmExpr, parmExpr.Type.GetRuntimeProperty("RcptTo")),
+                        Expression.Lambda<Func<SecurityUser, bool>>(userNameFilter, userParameter));
+
+                    serverAlerts.CollectionItem = serverAlerts.CollectionItem.Union(amiClient.GetMailMessages(Expression.Lambda<Func<MailMessage, bool>>(Expression.AndAlso(timeExpression, userExpression), parmExpr)).CollectionItem).ToList();
+
+                    // Import the alerts
+                    foreach (var itm in serverAlerts.CollectionItem.OfType<MailMessage>())
+                    {
+                        this.m_tracer.TraceVerbose("Importing ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
+                        itm.Body = String.Format("<pre>{0}</pre>", itm.Body);
+                        this.m_mailRepository.Broadcast(itm);
+                    }
+
+                    // Push alerts which I have created or updated
+                    //int tc = 0;
+                    //foreach(var itm in this.m_alertRepository.Find(a=> (a.TimeStamp >= lastTime ) && a.Flags != AlertMessageFlags.System, 0, null, out tc))
+                    //{
+                    //    if (!String.IsNullOrEmpty(itm.To))
+                    //    {
+                    //        this.m_tracer.TraceVerbose("Sending ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
+                    //        if (itm.UpdatedTime != null)
+                    //            amiClient.UpdateAlert(itm.Key.ToString(), new AlertMessageInfo(itm));
+                    //        else
+                    //            amiClient.CreateAlert(new AlertMessageInfo(itm));
+                    //    }
+                    //}
+
+                    this.LastFinished = DateTime.Now;
+                    this.CurrentState = JobStateType.Completed;
                 }
-
-                // Push alerts which I have created or updated
-                //int tc = 0;
-                //foreach(var itm in this.m_alertRepository.Find(a=> (a.TimeStamp >= lastTime ) && a.Flags != AlertMessageFlags.System, 0, null, out tc))
-                //{
-                //    if (!String.IsNullOrEmpty(itm.To))
-                //    {
-                //        this.m_tracer.TraceVerbose("Sending ALERT: [{0}]: {1}", itm.TimeStamp, itm.Subject);
-                //        if (itm.UpdatedTime != null)
-                //            amiClient.UpdateAlert(itm.Key.ToString(), new AlertMessageInfo(itm));
-                //        else
-                //            amiClient.CreateAlert(new AlertMessageInfo(itm));
-                //    }
-                //}
-
-                this.LastFinished = DateTime.Now;
-                this.CurrentState = JobStateType.Completed;
             }
             catch (Exception ex)
             {

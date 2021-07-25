@@ -144,27 +144,28 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             else
                                 principal = identityService.Authenticate(request["username"], request["password"]);
 
-                            AuthenticationContext.Current = new AuthenticationContext(principal);
-
-                            var lanugageCode = request["ui_locales"] ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-
-                            try
+                            using (AuthenticationContext.EnterContext(principal))
                             {
-                                // TODO: Authenticate the device 
-                                var userEntity = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>()?.GetUserEntity(principal.Identity);
-                                if (userEntity != null)
-                                    lanugageCode = userEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode ?? lanugageCode;
+
+                                var lanugageCode = request["ui_locales"] ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+                                try
+                                {
+                                    // TODO: Authenticate the device 
+                                    var userEntity = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>()?.GetUserEntity(principal.Identity);
+                                    if (userEntity != null)
+                                        lanugageCode = userEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode ?? lanugageCode;
+                                }
+                                catch (Exception e)
+                                {
+                                    this.m_tracer.TraceWarning("Cannot set the language of session from user preferences - {0}", e);
+                                } // Minor problem
+
+                                if (principal != null)
+                                    session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes, lanugageCode);
+                                else
+                                    throw new SecurityException("Could not authenticate principal");
                             }
-                            catch (Exception e)
-                            {
-                                this.m_tracer.TraceWarning("Cannot set the language of session from user preferences - {0}", e);
-                            } // Minor problem
-
-                            if (principal != null)
-                                session = sessionService.Establish(principal, remoteEp, isOverride, purposeOfUse, scopes, lanugageCode);
-                            else
-                                throw new SecurityException("Could not authenticate principal");
-
                         }
                         break;
                     case "refresh_token":

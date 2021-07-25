@@ -85,98 +85,99 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
-            try
+            using (AuthenticationContext.EnterSystemContext())
             {
-
-                this.CurrentState = JobStateType.Running;
-                this.LastStarted = DateTime.Now;
-                var netService = ApplicationServiceContext.Current.GetService<INetworkInformationService>();
-                var localPip = ApplicationServiceContext.Current.GetService<IOfflinePolicyInformationService>();
-                var localRp = ApplicationServiceContext.Current.GetService<IOfflineRoleProviderService>();
-                var securityRepository = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-                var amiPip = new AmiPolicyInformationService();
-
                 try
                 {
-                    foreach (var itm in amiPip.GetPolicies())
-                    {
-                        localPip.CreatePolicy(itm, AuthenticationContext.SystemPrincipal);
-                    }
-                }
-                catch(Exception ex)
-                {
-                    this.m_tracer.TraceError("Error synchronizing system policies - {0}", ex);
-                }
 
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
+                    this.CurrentState = JobStateType.Running;
+                    this.LastStarted = DateTime.Now;
+                    var netService = ApplicationServiceContext.Current.GetService<INetworkInformationService>();
+                    var localPip = ApplicationServiceContext.Current.GetService<IOfflinePolicyInformationService>();
+                    var localRp = ApplicationServiceContext.Current.GetService<IOfflineRoleProviderService>();
+                    var securityRepository = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
+                    var amiPip = new AmiPolicyInformationService();
 
-                var systemRoles = new String[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS", "CLINICAL_STAFF", "LOCAL_USERS" };
-
-                // Synchronize the groups
-                foreach (var rol in localRp.GetAllRoles().Union(systemRoles))
-                {
                     try
                     {
-                        var group = securityRepository.GetRole(rol);
-                        if (group == null)
+                        foreach (var itm in amiPip.GetPolicies())
                         {
-                            localRp.CreateRole(rol, AuthenticationContext.SystemPrincipal);
-                            group = securityRepository.GetRole(rol);
+                            localPip.CreatePolicy(itm, AuthenticationContext.SystemPrincipal);
                         }
-
-                        var activePolicies = amiPip.GetPolicies(group);
-                        // Create local policy if not exists
-                        foreach (var pol in activePolicies)
-                            if (localPip.GetPolicy(pol.Policy.Oid) == null)
-                                localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
-
-                        // Clear policies
-                        var localPol = localPip.GetPolicies(group);
-                        // Remove policies which no longer are granted
-                        var noLongerGrant = localPol.Where(o => !activePolicies.Any(a => a.Policy.Oid == o.Policy.Oid));
-                        localPip.RemovePolicies(group, AuthenticationContext.SystemPrincipal, noLongerGrant.Select(o => o.Policy.Oid).ToArray());
-                        // Assign policies
-                        foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
-                            localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
-
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
-                        this.m_tracer.TraceWarning("Could not sync {rol}");
+                        this.m_tracer.TraceError("Error synchronizing system policies - {0}", ex);
                     }
-                }
 
-                // Query for challenges
-                var localScs = ApplicationServiceContext.Current.GetService<IDataPersistenceService<SecurityChallenge>>();
-                if(localScs != null)
+                    var systemRoles = new String[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS", "CLINICAL_STAFF", "LOCAL_USERS" };
+
+                    // Synchronize the groups
+                    foreach (var rol in localRp.GetAllRoles().Union(systemRoles))
+                    {
+                        try
+                        {
+                            var group = securityRepository.GetRole(rol);
+                            if (group == null)
+                            {
+                                localRp.CreateRole(rol, AuthenticationContext.SystemPrincipal);
+                                group = securityRepository.GetRole(rol);
+                            }
+
+                            var activePolicies = amiPip.GetPolicies(group);
+                            // Create local policy if not exists
+                            foreach (var pol in activePolicies)
+                                if (localPip.GetPolicy(pol.Policy.Oid) == null)
+                                    localPip.CreatePolicy(pol.Policy, AuthenticationContext.SystemPrincipal);
+
+                            // Clear policies
+                            var localPol = localPip.GetPolicies(group);
+                            // Remove policies which no longer are granted
+                            var noLongerGrant = localPol.Where(o => !activePolicies.Any(a => a.Policy.Oid == o.Policy.Oid));
+                            localPip.RemovePolicies(group, AuthenticationContext.SystemPrincipal, noLongerGrant.Select(o => o.Policy.Oid).ToArray());
+                            // Assign policies
+                            foreach (var pgroup in activePolicies.GroupBy(o => o.Rule))
+                                localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
+
+                        }
+                        catch (Exception ex)
+                        {
+                            this.m_tracer.TraceWarning("Could not sync {rol}");
+                        }
+                    }
+
+                    // Query for challenges
+                    var localScs = ApplicationServiceContext.Current.GetService<IDataPersistenceService<SecurityChallenge>>();
+                    if (localScs != null)
+                    {
+                        var amiIntegrationService = ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>();
+                        var challenges = amiIntegrationService.Find<SecurityChallenge>(o => o.ObsoletionTime == null, 0, 10);
+                        if (challenges != null)
+                            foreach (var itm in challenges.Item.OfType<SecurityChallenge>())
+                                if (localScs.Get(itm.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                                    localScs.Insert(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    }
+
+                    if (this.m_serviceTickle)
+                    {
+                        this.m_serviceTickle = false;
+                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_syncRestored));
+                    }
+                    this.LastFinished = DateTime.Now;
+                    this.CurrentState = JobStateType.Completed;
+
+                }
+                catch (Exception ex)
                 {
-                    var amiIntegrationService = ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>();
-                    var challenges = amiIntegrationService.Find<SecurityChallenge>(o => o.ObsoletionTime == null, 0, 10);
-                    if(challenges != null)
-                        foreach (var itm in challenges.Item.OfType<SecurityChallenge>())
-                            if (localScs.Get(itm.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
-                                localScs.Insert(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                }
+                    this.CurrentState = JobStateType.Cancelled;
+                    if (!this.m_serviceTickle)
+                    {
+                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", "Security Policy")));
+                        this.m_serviceTickle = true;
+                    }
+                    this.m_tracer.TraceWarning("Could not refresh system policies: {0}", ex);
 
-                if (this.m_serviceTickle)
-                {
-                    this.m_serviceTickle = false;
-                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Information, Strings.locale_syncRestored));
                 }
-                this.LastFinished = DateTime.Now;
-                this.CurrentState = JobStateType.Completed;
-
-            }
-            catch (Exception ex)
-            {
-                this.CurrentState = JobStateType.Cancelled;
-                if (!this.m_serviceTickle)
-                {
-                    ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format($"{Strings.locale_downloadError}: {Strings.locale_downloadErrorBody}", "Security Policy")));
-                    this.m_serviceTickle = true;
-                }
-                this.m_tracer.TraceWarning("Could not refresh system policies: {0}", ex);
-
             }
         }
     }

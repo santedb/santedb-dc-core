@@ -57,60 +57,57 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         public void Apply(RestRequestMessage request)
         {
-            try
+
+            // Authorization header
+            if (request.Headers["Authorization"] != null)
             {
-
-                // Authorization header
-                if (request.Headers["Authorization"] != null)
+                var authHeader = request.Headers["Authorization"].Split(' ');
+                switch (authHeader[0].ToLowerInvariant()) // Type / scheme
                 {
-                    var authHeader = request.Headers["Authorization"].Split(' ');
-                    switch (authHeader[0].ToLowerInvariant()) // Type / scheme
-                    {
-                        case "basic":
+                    case "basic":
+                        {
+                            var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
+                            var authString = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader[1])).Split(':');
+                            var principal = idp.Authenticate(authString[0], authString[1]);
+                            if (principal == null)
+                                throw new UnauthorizedAccessException();
+                            else
                             {
-                                var idp = ApplicationContext.Current.GetService<IIdentityProviderService>();
-                                var authString = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader[1])).Split(':');
-                                var principal = idp.Authenticate(authString[0], authString[1]);
-                                if (principal == null)
-                                    throw new UnauthorizedAccessException();
-                                else
-                                    AuthenticationContext.Current = new AuthenticationContext(principal);
-                                this.m_tracer.TraceVerbose("Performed BASIC auth for {0}", AuthenticationContext.Current.Principal.Identity.Name);
-
-                                break;
+                                var contextAuth = AuthenticationContext.EnterContext(principal);
+                                RestOperationContext.Current.Disposed += (o, e) => contextAuth.Dispose();
                             }
-                        case "bearer":
-                            {
-                                this.SetContextFromBearer(authHeader[1]);
-                                break;
-                            }
+                            this.m_tracer.TraceVerbose("Performed BASIC auth for {0}", AuthenticationContext.Current.Principal.Identity.Name);
 
-                    }
-                }
-                else if(request.Url.Query.Contains("_sessionId="))
-                {
-                    var query = NameValueCollection.ParseQueryString(request.Url.Query);
-                    var session = query["_sessionId"][0];
-                    this.SetContextFromBearer(session);
-                }
-                else if(request.Cookies["_s"] != null) // cookie authentication
-                {
-                    var token = request.Cookies["_s"].Value;
-                    if (token.Length == 64) // appropriate length
-                        this.SetContextFromBearer(token);
-                }
+                            break;
+                        }
+                    case "bearer":
+                        {
+                            var contextAuth = this.SetContextFromBearer(authHeader[1]);
+                            RestOperationContext.Current.Disposed += (o, e) => contextAuth.Dispose();
+                            break;
+                        }
 
+                }
             }
-            finally
+            else if (request.Url.Query.Contains("_sessionId="))
             {
-                RestOperationContext.Current.Disposed += (o, e) => AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.AnonymousPrincipal);
+                var query = NameValueCollection.ParseQueryString(request.Url.Query);
+                var session = query["_sessionId"][0];
+                this.SetContextFromBearer(session);
             }
+            else if (request.Cookies["_s"] != null) // cookie authentication
+            {
+                var token = request.Cookies["_s"].Value;
+                if (token.Length == 64) // appropriate length
+                    this.SetContextFromBearer(token);
+            }
+
         }
 
         /// <summary>
         /// Session token
         /// </summary>
-        private void SetContextFromBearer(string bearerToken)
+        private IDisposable SetContextFromBearer(string bearerToken)
         {
             var smgr = ApplicationContext.Current.GetService<ISessionProviderService>();
 
@@ -123,20 +120,22 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
             // Get the session
             var session = ApplicationServiceContext.Current.GetService<ISessionProviderService>().Get(
-                sessionId   
+                sessionId
             );
 
             if (session == null)
-                return;
+            {
+                return AuthenticationContext.EnterContext(AuthenticationContext.AnonymousPrincipal);
+            }
 
             IPrincipal principal = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>().Authenticate(session);
             if (principal == null)
                 throw new SecurityTokenException(SecurityTokenExceptionType.KeyNotFound, "Invalid bearer token");
 
             RestOperationContext.Current.Data.Add(SessionPropertyName, session);
-            AuthenticationContext.Current = new AuthenticationContext(principal);
 
             this.m_tracer.TraceInfo("User {0} authenticated via SESSION BEARER", principal.Identity.Name);
+            return AuthenticationContext.EnterContext(principal);
         }
 
         /// <summary>

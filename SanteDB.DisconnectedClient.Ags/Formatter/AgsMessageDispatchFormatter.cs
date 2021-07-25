@@ -326,7 +326,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                 }
 
                 RestOperationContext.Current.OutgoingResponse.ContentType = RestOperationContext.Current.OutgoingResponse.ContentType ?? contentType;
-                AuthenticationContext.Current = null;
+                
             }
             catch (Exception e)
             {

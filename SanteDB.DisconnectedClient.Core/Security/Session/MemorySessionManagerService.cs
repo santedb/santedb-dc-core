@@ -106,78 +106,80 @@ namespace SanteDB.DisconnectedClient.Security.Session
         /// </summary>
         public ISession Establish(IPrincipal principal, string aud, bool isOverride, string purpose, string[] policyDemands, string language)
         {
-            AuthenticationContext.Current = new AuthenticationContext(principal);
-            try
+            using (AuthenticationContext.EnterContext(principal))
             {
-                // Setup claims
-                var cprincipal = principal as IClaimsPrincipal;
-                var claims = cprincipal.Claims.ToList();
-
-                // Did the caller explicitly set policies?
-                var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
-
-                // Is the principal only valid for pwd reset?
-                if (!isOverride && cprincipal.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // Allow the createor to specify
-                    ;
-                else if (policyDemands?.Length > 0)
+                try
                 {
+                    // Setup claims
+                    var cprincipal = principal as IClaimsPrincipal;
+                    var claims = cprincipal.Claims.ToList();
 
-                    if (isOverride)
-                        claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBOverrideClaim, "true"));
-                    if (!String.IsNullOrEmpty(purpose))
-                        claims.Add(new SanteDBClaim(SanteDBClaimTypes.PurposeOfUse, purpose));
+                    // Did the caller explicitly set policies?
+                    var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
 
-                    foreach (var pol in policyDemands)
+                    // Is the principal only valid for pwd reset?
+                    if (!isOverride && cprincipal.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // Allow the createor to specify
+                        ;
+                    else if (policyDemands?.Length > 0)
                     {
-                        // Get grant
-                        var grant = pdp.GetPolicyOutcome(cprincipal, pol);
-                        if (isOverride && grant == PolicyGrantType.Elevate &&
-                            (pol.StartsWith(PermissionPolicyIdentifiers.SecurityElevations) || // Special security elevations don't require override permission
-                            pdp.GetPolicyOutcome(cprincipal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Grant
-                            )) // We are attempting to override
-                            claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, pol));
-                        else if (grant == PolicyGrantType.Grant)
-                            claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, pol));
-                        else
-                            throw new PolicyViolationException(cprincipal, pol, grant);
+
+                        if (isOverride)
+                            claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBOverrideClaim, "true"));
+                        if (!String.IsNullOrEmpty(purpose))
+                            claims.Add(new SanteDBClaim(SanteDBClaimTypes.PurposeOfUse, purpose));
+
+                        foreach (var pol in policyDemands)
+                        {
+                            // Get grant
+                            var grant = pdp.GetPolicyOutcome(cprincipal, pol);
+                            if (isOverride && grant == PolicyGrantType.Elevate &&
+                                (pol.StartsWith(PermissionPolicyIdentifiers.SecurityElevations) || // Special security elevations don't require override permission
+                                pdp.GetPolicyOutcome(cprincipal, PermissionPolicyIdentifiers.OverridePolicyPermission) == PolicyGrantType.Grant
+                                )) // We are attempting to override
+                                claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, pol));
+                            else if (grant == PolicyGrantType.Grant)
+                                claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, pol));
+                            else
+                                throw new PolicyViolationException(cprincipal, pol, grant);
+                        }
                     }
+
+                    var sessionKey = Guid.NewGuid();
+                    var sessionRefresh = Guid.NewGuid();
+                    claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, sessionKey.ToString()));
+
+                    // Add default policy claims
+                    if (pdp != null)
+                    {
+                        // Add default policies
+                        var oizPrincipalPolicies = pdp.GetEffectivePolicySet(cprincipal);
+                        // Scopes user is allowed to access
+                        claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
+                    }
+
+                    if (!String.IsNullOrEmpty(language))
+                        claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, language));
+
+                    // Is the principal a remote principal (i.e. not issued by us?)
+                    MemorySession memorySession = null;
+                    if (principal is IOfflinePrincipal)
+                        memorySession = new MemorySession(sessionKey, DateTime.Now, DateTime.Now.Add(this.m_securityConfig.MaxLocalSession), sessionRefresh.ToByteArray(), claims.ToArray(), principal);
+                    else
+                    {
+                        DateTime notAfter = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.Expiration).AsDateTime(),
+                            notBefore = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AuthenticationInstant).AsDateTime();
+                        memorySession = new MemorySession(sessionKey, notBefore, notAfter, sessionRefresh.ToByteArray(), claims.ToArray(), principal);
+                    }
+
+                    this.m_session.Add(this.GetSessionKey(sessionKey.ToByteArray()), memorySession);
+                    this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, memorySession, true, isOverride, purpose, policyDemands));
+                    return memorySession;
                 }
-
-                var sessionKey = Guid.NewGuid();
-                var sessionRefresh = Guid.NewGuid();
-                claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBSessionIdClaim, sessionKey.ToString()));
-
-                // Add default policy claims
-                if (pdp != null)
+                catch (Exception e)
                 {
-                    // Add default policies
-                    var oizPrincipalPolicies = pdp.GetEffectivePolicySet(cprincipal);
-                    // Scopes user is allowed to access
-                    claims.AddRange(oizPrincipalPolicies.Where(o => o.Rule == PolicyGrantType.Grant).Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBScopeClaim, o.Policy.Oid)));
+                    this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, null, false, isOverride, purpose, policyDemands));
+                    throw new Exception($"Error establishing session for {principal.Identity.Name}", e);
                 }
-
-                if (!String.IsNullOrEmpty(language))
-                    claims.Add(new SanteDBClaim(SanteDBClaimTypes.Language, language));
-
-                // Is the principal a remote principal (i.e. not issued by us?)
-                MemorySession memorySession = null;
-                if (principal is IOfflinePrincipal)
-                    memorySession = new MemorySession(sessionKey, DateTime.Now, DateTime.Now.Add(this.m_securityConfig.MaxLocalSession), sessionRefresh.ToByteArray(), claims.ToArray(), principal);
-                else
-                {
-                    DateTime notAfter = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.Expiration).AsDateTime(),
-                        notBefore = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AuthenticationInstant).AsDateTime();
-                    memorySession = new MemorySession(sessionKey, notBefore, notAfter, sessionRefresh.ToByteArray(), claims.ToArray(), principal);
-                }
-
-                this.m_session.Add(this.GetSessionKey(sessionKey.ToByteArray()), memorySession);
-                this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, memorySession, true, isOverride, purpose, policyDemands));
-                return memorySession;
-            }
-            catch(Exception e)
-            {
-                this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, null, false, isOverride, purpose, policyDemands));
-                throw new Exception($"Error establishing session for {principal.Identity.Name}", e);
             }
         }
 

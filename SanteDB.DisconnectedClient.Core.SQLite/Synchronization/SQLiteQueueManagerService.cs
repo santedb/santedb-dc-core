@@ -131,54 +131,55 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
         {
 
             bool locked = false;
-            try
+            using (AuthenticationContext.EnterSystemContext())
             {
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                locked = Monitor.TryEnter(this.m_inboundLock, 100);
-                if (!locked) return;
-
-                // Exhaust the queue
-                int remain = SynchronizationQueue.Inbound.Count();
-                int maxTotal = 0;
-                var remote = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.Domain;
-
-                InboundQueueEntry nextPeek = null;
-                IdentifiedData nextDpe = null;
-
-                while (remain > 0)
+                try
                 {
-                    InboundQueueEntry queueEntry = null;
+                    locked = Monitor.TryEnter(this.m_inboundLock, 100);
+                    if (!locked) return;
 
-                    try
+                    // Exhaust the queue
+                    int remain = SynchronizationQueue.Inbound.Count();
+                    int maxTotal = 0;
+                    var remote = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.Domain;
+
+                    InboundQueueEntry nextPeek = null;
+                    IdentifiedData nextDpe = null;
+
+                    while (remain > 0)
                     {
-                        if (remain > maxTotal)
-                            maxTotal = remain;
+                        InboundQueueEntry queueEntry = null;
 
-                        if (maxTotal > 5)
-                            ApplicationContext.Current.SetProgress(String.Format("{0} - [{1}]", Strings.locale_import, remain), (maxTotal - remain) / (float)maxTotal);
+                        try
+                        {
+                            if (remain > maxTotal)
+                                maxTotal = remain;
+
+                            if (maxTotal > 5)
+                                ApplicationContext.Current.SetProgress(String.Format("{0} - [{1}]", Strings.locale_import, remain), (maxTotal - remain) / (float)maxTotal);
 
 #if PERFMON
                         Stopwatch sw = new Stopwatch();
                         sw.Start();
 #endif
-                        IdentifiedData dpe = null;
-                        if (nextPeek != null) // Was this loaded before? {
-                        {
-                            queueEntry = nextPeek;
-                            dpe = nextDpe;
-                            nextPeek = SynchronizationQueue.Inbound.PeekRaw(1);
-                        }
-                        else
-                        {
-                            queueEntry = SynchronizationQueue.Inbound.PeekRaw();
-                            dpe = SynchronizationQueue.Inbound.DeserializeObject(queueEntry);
-                            nextPeek = SynchronizationQueue.Inbound.PeekRaw(1);
-                        }
+                            IdentifiedData dpe = null;
+                            if (nextPeek != null) // Was this loaded before? {
+                            {
+                                queueEntry = nextPeek;
+                                dpe = nextDpe;
+                                nextPeek = SynchronizationQueue.Inbound.PeekRaw(1);
+                            }
+                            else
+                            {
+                                queueEntry = SynchronizationQueue.Inbound.PeekRaw();
+                                dpe = SynchronizationQueue.Inbound.DeserializeObject(queueEntry);
+                                nextPeek = SynchronizationQueue.Inbound.PeekRaw(1);
+                            }
 
-                        // Try to peek off the next queue item while we're doing something else
-                        Task<IdentifiedData> nextPeekTask = null;
-                        if (nextPeek != null)
-                            nextPeekTask = Task<IdentifiedData>.Run(() => SynchronizationQueue.Inbound.DeserializeObject(nextPeek));
+                            // Try to peek off the next queue item while we're doing something else
+                            Task<IdentifiedData> nextPeekTask = null;
+                            if (nextPeek != null)
+                                nextPeekTask = Task<IdentifiedData>.Run(() => SynchronizationQueue.Inbound.DeserializeObject(nextPeek));
 
 #if PERFMON
                         sw.Stop();
@@ -188,76 +189,77 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 #endif
 
 
-                        //(dpe as SanteDB.Core.Model.Collection.Bundle)?.Reconstitute();
-                        var bundle = dpe as Bundle;
-                        dpe = bundle?.Entry ?? dpe;
+                            //(dpe as SanteDB.Core.Model.Collection.Bundle)?.Reconstitute();
+                            var bundle = dpe as Bundle;
+                            dpe = bundle?.GetFocalObject() ?? dpe;
 
-                        try
-                        {
-                            //if (bundle?.Item.Count > 1000)
-                            //{
-                            //    var ofs = 0;
-                            //    while (ofs < bundle.Item.Count)
-                            //    {
-                            //        this.ImportElement(new Bundle()
-                            //        {
-                            //            Item = bundle.Item.Skip(ofs).Take(500).ToList()
-                            //        });
-                            //        ofs += 500;
-                            //    }
-                            //}
-                            //else
-                            this.ImportElement(dpe);
-
-                            AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.Success, dpe);
-                        }
-                        catch (Exception e)
-                        {
                             try
                             {
-                                this.m_tracer.TraceError("Error processing inbound queue entry: {0}", e);
-                                //this.CreateUserAlert(Strings.locale_importErrorSubject, Strings.locale_importErrorBody, )
-                                SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(queueEntry, Encoding.UTF8.GetBytes(e.ToString())) { OriginalQueue = "inbound" });
-                                AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.MinorFail, dpe);
+                                //if (bundle?.Item.Count > 1000)
+                                //{
+                                //    var ofs = 0;
+                                //    while (ofs < bundle.Item.Count)
+                                //    {
+                                //        this.ImportElement(new Bundle()
+                                //        {
+                                //            Item = bundle.Item.Skip(ofs).Take(500).ToList()
+                                //        });
+                                //        ofs += 500;
+                                //    }
+                                //}
+                                //else
+                                this.ImportElement(dpe);
 
+                                AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.Success, dpe);
                             }
-                            catch (Exception e2)
+                            catch (Exception e)
                             {
-                                this.m_tracer.TraceEvent(System.Diagnostics.Tracing.EventLevel.Critical, "Error putting dead item on deadletter queue: {0}", e);
-                                throw;
-                            }
-                        }
-                        finally
-                        {
-                            SynchronizationQueue.Inbound.Delete(queueEntry.Id);
-                        }
+                                try
+                                {
+                                    this.m_tracer.TraceError("Error processing inbound queue entry: {0}", e);
+                                    //this.CreateUserAlert(Strings.locale_importErrorSubject, Strings.locale_importErrorBody, )
+                                    SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(queueEntry, Encoding.UTF8.GetBytes(e.ToString())) { OriginalQueue = "inbound" });
+                                    AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.MinorFail, dpe);
 
-                        this.QueueExhausted?.Invoke(this, new QueueExhaustedEventArgs("inbound", bundle?.Item.AsParallel().Select(o => o.Key.Value).ToArray() ?? new Guid[] { dpe.Key.Value }));
+                                }
+                                catch (Exception e2)
+                                {
+                                    this.m_tracer.TraceEvent(System.Diagnostics.Tracing.EventLevel.Critical, "Error putting dead item on deadletter queue: {0}", e);
+                                    throw;
+                                }
+                            }
+                            finally
+                            {
+                                SynchronizationQueue.Inbound.Delete(queueEntry.Id);
+                            }
+
+                            this.QueueExhausted?.Invoke(this, new QueueExhaustedEventArgs("inbound", bundle?.Item.AsParallel().Select(o => o.Key.Value).ToArray() ?? new Guid[] { dpe.Key.Value }));
 
 #if PERFMON
                         sw.Stop();
                         ApplicationContext.Current.PerformanceLog(nameof(QueueManagerService), nameof(ExhaustInboundQueue), "ImportComplete", sw.Elapsed);
                         sw.Reset();
 #endif
-                        nextPeekTask?.Wait();
-                        nextDpe = nextPeekTask?.Result;
+                            nextPeekTask?.Wait();
+                            nextDpe = nextPeekTask?.Result;
+
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceError("Error processing inbound queue entry: {0}", e);
+                        }
+                        remain = SynchronizationQueue.Inbound.Count();
 
                     }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError("Error processing inbound queue entry: {0}", e);
-                    }
-                    remain = SynchronizationQueue.Inbound.Count();
+
+                    if (maxTotal > 5)
+                        ApplicationContext.Current.SetProgress(String.Format(Strings.locale_import, String.Empty, String.Empty), 1.0f);
 
                 }
-
-                if (maxTotal > 5)
-                    ApplicationContext.Current.SetProgress(String.Format(Strings.locale_import, String.Empty, String.Empty), 1.0f);
-
-            }
-            finally
-            {
-                if (locked) Monitor.Exit(this.m_inboundLock);
+                finally
+                {
+                    if (locked) Monitor.Exit(this.m_inboundLock);
+                }
             }
         }
 

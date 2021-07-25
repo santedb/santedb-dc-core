@@ -207,63 +207,65 @@ namespace SanteDB.DisconnectedClient.Synchronization
             {
 
                 this.m_serverDrift = null;
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-
-                var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
-                bool initialSync = !logSvc.GetAll().Any();
-
-                if (Monitor.TryEnter(this.m_lock, 100)) // Do we have a lock?
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    try
+
+                    var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
+                    bool initialSync = !logSvc.GetAll().Any();
+
+                    if (Monitor.TryEnter(this.m_lock, 100)) // Do we have a lock?
                     {
-                        this.IsSynchronizing = true;
-
-                        DateTime lastSync = DateTime.MinValue;
-                        if (logSvc.GetAll().Count() > 0)
-                            lastSync = logSvc.GetAll().Min(o => o.LastSync);
-
-                        // Trigger
-                        if (!this.m_integrationService.IsAvailable())
-                            return;
-
-                        int totalResults = 0;
-                        var syncTargets = this.m_configuration.SynchronizationResources.Where(o => (o.Triggers & trigger) != 0).ToList();
-                        for (var i = 0; i < syncTargets.Count; i++)
+                        try
                         {
+                            this.IsSynchronizing = true;
 
-                            var syncResource = syncTargets[i];
+                            DateTime lastSync = DateTime.MinValue;
+                            if (logSvc.GetAll().Count() > 0)
+                                lastSync = logSvc.GetAll().Min(o => o.LastSync);
 
-                            ApplicationContext.Current.SetProgress(String.Format(Strings.locale_startingPoll, syncResource.Name), (float)i / syncTargets.Count);
-                            foreach (var fltr in syncResource.Filters)
-                                totalResults += this.Pull(syncResource.ResourceType, NameValueCollection.ParseQueryString(fltr), syncResource.Always, syncResource.Name);
-                            if (syncResource.Filters.Count == 0)
-                                totalResults += this.Pull(syncResource.ResourceType, new NameValueCollection(), false, syncResource.Name);
+                            // Trigger
+                            if (!this.m_integrationService.IsAvailable())
+                                return;
+
+                            int totalResults = 0;
+                            var syncTargets = this.m_configuration.SynchronizationResources.Where(o => (o.Triggers & trigger) != 0).ToList();
+                            for (var i = 0; i < syncTargets.Count; i++)
+                            {
+
+                                var syncResource = syncTargets[i];
+
+                                ApplicationContext.Current.SetProgress(String.Format(Strings.locale_startingPoll, syncResource.Name), (float)i / syncTargets.Count);
+                                foreach (var fltr in syncResource.Filters)
+                                    totalResults += this.Pull(syncResource.ResourceType, NameValueCollection.ParseQueryString(fltr), syncResource.Always, syncResource.Name);
+                                if (syncResource.Filters.Count == 0)
+                                    totalResults += this.Pull(syncResource.ResourceType, new NameValueCollection(), false, syncResource.Name);
+
+                            }
+
+                            ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
+
+                            if (totalResults > 0 && initialSync)
+                                this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
+                            else if (totalResults > 0)
+                                this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(totalResults, lastSync));
+                            else
+                                this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(0, lastSync));
 
                         }
-
-                        ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
-
-                        if (totalResults > 0 && initialSync)
-                            this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(true, totalResults, lastSync));
-                        else if (totalResults > 0)
-                            this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(totalResults, lastSync));
-                        else
-                            this.PullCompleted?.Invoke(this, new SynchronizationEventArgs(0, lastSync));
-
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceError("Cannot process startup command: {0}", e);
+                        }
+                        finally
+                        {
+                            this.IsSynchronizing = false;
+                            ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
+                            Monitor.Exit(this.m_lock);
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError("Cannot process startup command: {0}", e);
-                    }
-                    finally
-                    {
-                        this.IsSynchronizing = false;
-                        ApplicationContext.Current.SetProgress(Strings.locale_pullComplete, 1.0f);
-                        Monitor.Exit(this.m_lock);
-                    }
+                    else
+                        this.m_tracer.TraceWarning("Will not execute {0} due to - already pulling", trigger);
                 }
-                else
-                    this.m_tracer.TraceWarning("Will not execute {0} due to - already pulling", trigger);
             });
 
         }

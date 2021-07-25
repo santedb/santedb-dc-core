@@ -125,90 +125,92 @@ namespace SanteDB.DisconnectedClient.Security
             if (!String.IsNullOrEmpty(password) && principal is IClaimsPrincipal &&
                             ApplicationContext.Current.ConfigurationPersister.IsConfigured)
             {
-                AuthenticationContext.Current = new AuthenticationContext(principal);
-                IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
-                var amiPip = new AmiPolicyInformationService();
-
-                // We want to impersonate SYSTEM
-                //AndroidApplicationContext.Current.SetPrincipal(cprincipal);
-
-                // Ensure policies exist from the claim
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).ToArray())
+                using (AuthenticationContext.EnterContext(principal))
                 {
-                    if (localPip.GetPolicy(itm.Value) == null)
+                    IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
+                    var amiPip = new AmiPolicyInformationService();
+
+                    // We want to impersonate SYSTEM
+                    //AndroidApplicationContext.Current.SetPrincipal(cprincipal);
+
+                    // Ensure policies exist from the claim
+                    foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).ToArray())
                     {
+                        if (localPip.GetPolicy(itm.Value) == null)
+                        {
+                            try
+                            {
+                                var policy = amiPip.GetPolicy(itm.Value);
+                                localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                            }
+                            catch (Exception e)
+                            {
+                                this.m_tracer.TraceWarning("Cannot update local policy information : {0}", e.Message);
+                            }
+                        }
+                    }
+
+                    // Ensure roles exist from the claim
+                    var localRoles = localRp.GetAllRoles();
+                    foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).ToArray())
+                    {
+                        // Ensure policy exists
                         try
                         {
-                            var policy = amiPip.GetPolicy(itm.Value);
-                            localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                            var amiPolicies = amiPip.GetPolicies(new SecurityRole() { Name = itm.Value }).ToArray();
+                            foreach (var pol in amiPolicies)
+                                if (localPip.GetPolicy(pol.Policy.Oid) == null)
+                                {
+                                    var policy = amiPip.GetPolicy(pol.Policy.Oid);
+                                    localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                                }
+
+                            // Local role doesn't exist
+                            if (!localRoles.Contains(itm.Value))
+                            {
+                                localRp.CreateRole(itm.Value, AuthenticationContext.SystemPrincipal);
+                            }
+                            localRp.AddPoliciesToRoles(amiPolicies, new String[] { itm.Value }, AuthenticationContext.SystemPrincipal);
                         }
                         catch (Exception e)
                         {
-                            this.m_tracer.TraceWarning("Cannot update local policy information : {0}", e.Message);
+                            this.m_tracer.TraceWarning("Could not fetch / refresh policies: {0}", e.Message);
                         }
                     }
-                }
 
-                // Ensure roles exist from the claim
-                var localRoles = localRp.GetAllRoles();
-                foreach (var itm in cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).ToArray())
-                {
-                    // Ensure policy exists
+                    var localUser = ApplicationContext.Current.ConfigurationPersister.IsConfigured ? localIdp.GetIdentity(principal.Identity.Name) : null;
+
                     try
                     {
-                        var amiPolicies = amiPip.GetPolicies(new SecurityRole() { Name = itm.Value }).ToArray();
-                        foreach (var pol in amiPolicies)
-                            if (localPip.GetPolicy(pol.Policy.Oid) == null)
-                            {
-                                var policy = amiPip.GetPolicy(pol.Policy.Oid);
-                                localPip.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
-                            }
-
-                        // Local role doesn't exist
-                        if (!localRoles.Contains(itm.Value))
+                        Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.Sid).Value);
+                        if (localUser == null)
                         {
-                            localRp.CreateRole(itm.Value, AuthenticationContext.SystemPrincipal);
+                            localIdp.CreateIdentity(sid, principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
                         }
-                        localRp.AddPoliciesToRoles(amiPolicies, new String[] { itm.Value }, AuthenticationContext.SystemPrincipal);
+                        else
+                        {
+                            localIdp.ChangePassword(principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
+                        }
+
+                        // Copy security attributes
+                        var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.SystemPrincipal);
+                        localSu.Email = cprincipal.FindFirst(SanteDBClaimTypes.Email)?.Value;
+                        localSu.PhoneNumber = cprincipal.FindFirst(SanteDBClaimTypes.Telephone)?.Value;
+                        localSu.LastLoginTime = DateTime.Now;
+                        ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+
+                        // Add user to roles
+                        // TODO: Remove users from specified roles?
+                        localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
+                        // Unlock the account
+                        localIdp.SetLockout(principal.Identity.Name, false, principal);
+
+
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        this.m_tracer.TraceWarning("Could not fetch / refresh policies: {0}", e.Message);
+                        this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
                     }
-                }
-
-                var localUser = ApplicationContext.Current.ConfigurationPersister.IsConfigured ? localIdp.GetIdentity(principal.Identity.Name) : null;
-
-                try
-                {
-                    Guid sid = Guid.Parse(cprincipal.FindFirst(SanteDBClaimTypes.Sid).Value);
-                    if (localUser == null)
-                    {
-                        localIdp.CreateIdentity(sid, principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
-                    }
-                    else
-                    {
-                        localIdp.ChangePassword(principal.Identity.Name, password, AuthenticationContext.SystemPrincipal);
-                    }
-
-                    // Copy security attributes
-                    var localSu = ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Get(sid, null, true, AuthenticationContext.SystemPrincipal);
-                    localSu.Email = cprincipal.FindFirst(SanteDBClaimTypes.Email)?.Value;
-                    localSu.PhoneNumber = cprincipal.FindFirst(SanteDBClaimTypes.Telephone)?.Value;
-                    localSu.LastLoginTime = DateTime.Now;
-                    ApplicationContext.Current.GetService<IDataPersistenceService<SecurityUser>>().Update(localSu, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-
-                    // Add user to roles
-                    // TODO: Remove users from specified roles?
-                    localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
-                    // Unlock the account
-                    localIdp.SetLockout(principal.Identity.Name, false, principal);
-
-
-                }
-                catch (Exception ex)
-                {
-                    this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
                 }
 
 
