@@ -20,6 +20,7 @@ using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Configuration;
@@ -38,7 +39,7 @@ namespace SanteDB.DisconnectedClient.UI
     /// </summary>
     public class DcAppletManagerService : LocalAppletManagerService
     {
-
+        
         /// <summary>
         /// Default ctor
         /// </summary>
@@ -112,7 +113,7 @@ namespace SanteDB.DisconnectedClient.UI
                     foreach (var lang in languages)
                     {
                         tw.WriteLine("\t__SanteDBAppService._stringData['{0}'] = {{", lang);
-                        foreach (var itm in this.Applets.GetStrings(lang))
+                        foreach (var itm in ApplicationContext.Current.GetService<ILocalizationService>().GetStrings(lang))
                         {
                             tw.WriteLine("\t\t'{0}': '{1}',", itm.Key, itm.Value?.EncodeAscii().Replace("'", "\\'").Replace("\r", "").Replace("\n", ""));
                         }

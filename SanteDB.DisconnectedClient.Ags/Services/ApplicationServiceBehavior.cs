@@ -132,7 +132,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 if (dynScripts.Any())
                                 {
                                     int i = 0;
-                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, itm)}'"))}  ]");
+                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, relativeAsset: itm)}'"))}  ]");
                                 }
                                 sw.WriteLine(" }, ");
                             }
@@ -230,7 +230,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         private void ProcessMenuItem(AppletMenu menu, List<MenuInformation> retVal, String context)
         {
             // TODO: Demand permission
-            var asset = ApplicationContext.Current.GetService<IAppletManagerService>().Applets.ResolveAsset(menu.Asset, menu.Manifest.Assets[0]);
+            var asset = ApplicationContext.Current.GetService<IAppletManagerService>().Applets.ResolveAsset(menu.Asset, menu.Manifest);
 
             if (menu.Context != context || menu.Asset != null &&
                 !asset?.Policies?.Any(p => this.m_policyDecisionService.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) == SanteDB.Core.Model.Security.PolicyGrantType.Deny) == false)

@@ -203,6 +203,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),
                     new TypeReferenceConfiguration(typeof(AmiUpdateManager)),
                     new TypeReferenceConfiguration(typeof(AppletClinicalProtocolRepository)),
+                    new TypeReferenceConfiguration(typeof(AppletLocalizationService)),
                     new TypeReferenceConfiguration(typeof(MemoryQueryPersistenceService)),
                     new TypeReferenceConfiguration(typeof(AuditDaemonService)),
                     new TypeReferenceConfiguration(typeof(SimpleQueueFileProvider)),
