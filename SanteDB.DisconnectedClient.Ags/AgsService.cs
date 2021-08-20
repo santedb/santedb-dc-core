@@ -37,7 +37,6 @@ using SanteDB.Rest.BIS;
 using SanteDB.Rest.Common.Behavior;
 using SanteDB.Rest.Common.Behaviors;
 using SanteDB.Rest.HDSI;
-using SanteDB.Rest.RISI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -162,20 +161,6 @@ namespace SanteDB.DisconnectedClient.Ags
                             }
                         }
                     },
-                    // Default Configuration for Report Services
-                    new AgsServiceConfiguration(typeof(RisiServiceBehavior))
-                    {
-                        Behaviors = apiBehaviors,
-                        Endpoints = new List<AgsEndpointConfiguration>()
-                        {
-                            new AgsEndpointConfiguration()
-                            {
-                                Address = "http://127.0.0.1:9200/risi",
-                                Behaviors = endpointBehaviors,
-                                Contract = typeof(IRisiServiceContract)
-                            }
-                        }
-                    },
                     // Default Configuration for Security service
                     new AgsServiceConfiguration(typeof(AuthenticationServiceBehavior))
                     {
@@ -272,8 +257,6 @@ namespace SanteDB.DisconnectedClient.Ags
                     apiType = ServiceEndpointType.AdministrationIntegrationService;
                 else if (typeof(IHdsiServiceContract).IsAssignableFrom(itm.ServiceType))
                     apiType = ServiceEndpointType.HealthDataService;
-                else if (typeof(IRisiServiceContract).IsAssignableFrom(itm.ServiceType))
-                    apiType = ServiceEndpointType.ReportIntegrationService;
                 else if (typeof(IBisServiceContract).IsAssignableFrom(itm.ServiceType))
                     apiType = ServiceEndpointType.BusinessIntelligenceService;
                 else if (typeof(IAuthenticationServiceContract).IsAssignableFrom(itm.ServiceType))

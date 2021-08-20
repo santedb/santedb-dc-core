@@ -41,6 +41,7 @@
   </PropertyGroup>
     
   <ItemGroup>
+    <Compile Remove="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
     <Compile Remove="Services\ServiceHandlers\AdhocWarehouseService.cs" />
     <Compile Remove="Services\ServiceHandlers\AmiService.cs" />
     <Compile Remove="Services\ServiceHandlers\ApplicationService.cs" />

@@ -34,6 +34,8 @@ namespace SanteDB.DisconnectedClient.Services.Local
     [Obsolete("Use SanteDB.Core.Jobs.DefaultJobManagerService", true)]
     public class LocalJobManagerService : DefaultJobManagerService
     {
-
+        public LocalJobManagerService(IThreadPoolService threadPool) : base(threadPool)
+        {
+        }
     }
 }

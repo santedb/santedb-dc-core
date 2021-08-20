@@ -40,6 +40,9 @@
     <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Services\RisiServiceBehavior.cs" />
+  </ItemGroup>
     
   <ItemGroup>
     <None Remove="Resources\icon.ico" />
