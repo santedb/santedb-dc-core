@@ -251,6 +251,7 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
+    <None Include="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
   </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">

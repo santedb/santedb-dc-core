@@ -88,8 +88,6 @@ namespace SanteDB.DisconnectedClient.Data.Warehouse
         // True when the object is subscribed
         private bool m_isSubscribed = false;
 
-        // Warehouse service
-        private IAdHocDatawarehouseService m_warehouseService;
 
         // m_reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
