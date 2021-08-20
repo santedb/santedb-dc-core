@@ -58,6 +58,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 this.LastFinished = job.LastFinish;
                 this.LastStarted = job.LastStart;
                 this.Parameters = job.Parameters?.ToDictionary(o => o.Key, o => Type.GetType(o.Type));
+                this.JobType = Type.GetType(job.JobType);
             }
 
             /// <summary>
@@ -104,6 +105,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             /// Gets the last modified date
             /// </summary>
             public DateTimeOffset ModifiedOn { get; }
+
+            /// <summary>
+            /// Gets or sets the job type
+            /// </summary>
+            public Type JobType { get; }
 
             /// <summary>
             /// Cancel the job
@@ -254,6 +260,15 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 job.Run(this, EventArgs.Empty, parameters);
         }
 
+        /// <summary>
+        /// Start a job
+        /// </summary>
+        public void StartJob(Type job, object[] parameters)
+        {
+            var jobInfo = this.Jobs.OfType<RemoteJob>().FirstOrDefault(o => o.JobType == job);
+            if(jobInfo != null)
+                jobInfo.Run(this, EventArgs.Empty, parameters);
+        }
         /// <summary>
         /// Stop the service
         /// </summary>

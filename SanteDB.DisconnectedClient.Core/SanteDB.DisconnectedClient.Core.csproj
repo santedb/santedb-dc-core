@@ -41,6 +41,7 @@
   </PropertyGroup>
     
   <ItemGroup>
+    <Compile Remove="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
     <Compile Remove="Services\ServiceHandlers\AdhocWarehouseService.cs" />
     <Compile Remove="Services\ServiceHandlers\AmiService.cs" />
     <Compile Remove="Services\ServiceHandlers\ApplicationService.cs" />
@@ -250,6 +251,7 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
+    <None Include="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
   </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
