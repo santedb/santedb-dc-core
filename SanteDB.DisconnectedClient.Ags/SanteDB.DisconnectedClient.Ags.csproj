@@ -116,7 +116,7 @@
   <!-- </ItemGroup> -->
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.3</Version>
+      <Version>13.0.1</Version>
     </PackageReference>
     <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj">
       <Project>{554df209-7744-433f-993a-783e2a2803ef}</Project>
