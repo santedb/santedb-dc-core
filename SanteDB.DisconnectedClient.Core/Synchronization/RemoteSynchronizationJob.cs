@@ -46,6 +46,11 @@ namespace SanteDB.DisconnectedClient.Synchronization
     public class RemoteSynchronizationJob : IJob
     {
 
+        /// <summary>
+        /// Gets the identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("E511689A-98E1-47CD-8933-6A8CEF8AE014");
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteSynchronizationJob));
 

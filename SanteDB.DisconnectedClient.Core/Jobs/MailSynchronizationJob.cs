@@ -48,6 +48,11 @@ namespace SanteDB.DisconnectedClient.Jobs
     public class MailSynchronizationJob : IJob
     {
 
+        /// <summary>
+        /// Gets the unique identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("BE5F5126-AE97-4851-9741-2A329C5E7F79");
+
         // Cached credetials
         private IPrincipal m_cachedCredential = null;
 

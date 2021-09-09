@@ -37,6 +37,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
     /// </summary>
     public class SQLiteAuditPruneJob : IJob
     {
+
+        /// <summary>
+        /// Get the unique identifier for this job
+        /// </summary>
+        public Guid Id => Guid.Parse("5059999F-3488-4A00-BD80-B5E36B3CE83F");
+
+        // Trace writer for the job
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteAuditPruneJob));
 
         /// <summary>

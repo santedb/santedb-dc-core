@@ -62,6 +62,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             }
 
             /// <summary>
+            /// Get the identifier of this job
+            /// </summary>
+            public Guid Id => Guid.Parse(this.Key);
+
+            /// <summary>
             /// Gets the name of the job
             /// </summary>
             public string Name { get; }
@@ -226,9 +231,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Get the job instance
         /// </summary>
-        public IJob GetJobInstance(string jobTypeName)
+        public IJob GetJobInstance(Guid jobId)
         {
-            return this.Jobs.OfType<RemoteJob>().FirstOrDefault(o => o.Key == jobTypeName);
+            return this.Jobs.OfType<RemoteJob>().FirstOrDefault(o => o.Id == jobId);
         }
 
         /// <summary>
@@ -236,7 +241,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public bool IsJobRegistered(Type jobType)
         {
-            return this.GetJobInstance(jobType.FullName) != null;
+            return this.Jobs.OfType<RemoteJob>().Any( o=> o.JobType == jobType);
         }
 
         /// <summary>

@@ -40,6 +40,11 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
     public class SQLiteSearchIndexRefreshJob : IJob
     {
 
+        /// <summary>
+        /// Get the identifier of the job
+        /// </summary>
+        public Guid Id => Guid.Parse("EBC6308D-8BAF-40E5-BC27-D471588A7EDC");
+
         // Tracer for SQLite tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteSearchIndexService));
         // Cancel has been requested

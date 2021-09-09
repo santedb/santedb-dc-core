@@ -47,6 +47,12 @@ namespace SanteDB.DisconnectedClient.Security.Audit
     /// TODO: Split the job off
     public class SynchronizedAuditDispatchService : IAuditDispatchService, IDaemonService, IJob
     {
+
+        /// <summary>
+        /// Get the id of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("4D45ED2F-C67C-4714-9302-FB0B5B9C48F5");
+
         /// <summary>
         /// Get the service name
         /// </summary>

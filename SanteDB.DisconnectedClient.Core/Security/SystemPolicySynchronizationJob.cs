@@ -36,6 +36,12 @@ namespace SanteDB.DisconnectedClient.Security
     /// </summary>
     public class SystemPolicySynchronizationJob : IJob
     {
+
+        /// <summary>
+        /// Gets the unique identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("31C2586A-6DAE-4AFB-8CFB-BAE1F4F26C3F");
+
         // SErvice tickle
         private bool m_serviceTickle = false;
 

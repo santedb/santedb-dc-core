@@ -38,6 +38,11 @@ namespace SanteDB.DisconnectedClient.Backup
     {
 
         /// <summary>
+        /// Get the unique identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("17987F37-451B-4099-B66C-F53F3186547A");
+
+        /// <summary>
         /// Job is starting
         /// </summary>
         public DefaultBackupJob()

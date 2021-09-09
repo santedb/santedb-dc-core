@@ -123,7 +123,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 }
 
-
                 // Navigate policy?
                 if (navigateAsset.Policies != null)
                 {
