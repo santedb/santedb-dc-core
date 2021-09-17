@@ -91,7 +91,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Get the session
             if (RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object session))
             {
-                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", ""));
+                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", "")
+                {
+                    Discard = true,
+                    Expired = true,
+                    Expires = DateTime.Now
+                });
                 ApplicationContext.Current.GetService<ISessionProviderService>().Abandon(session as ISession);
             }
         }
@@ -223,6 +228,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     IdToken = this.HydrateToken(session)
                 };
 
+                // Set cookie for authentication
+                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", retVal.AccessToken)
+                {
+                    HttpOnly = true,
+                    Path = "/",
+                    Expires = session.NotAfter.DateTime
+                });
                 return retVal;
             }
             catch (Exception e)

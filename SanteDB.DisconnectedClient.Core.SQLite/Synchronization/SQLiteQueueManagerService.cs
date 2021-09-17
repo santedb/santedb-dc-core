@@ -750,7 +750,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             ApplicationContext.Current.Started += (o, e) =>
             {
                 // startup
-                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((iar) =>
+                ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(_ =>
                 {
                     try
                     {
@@ -762,7 +762,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                     {
                         this.m_tracer.TraceError("Error executing initial queues: {0}", ex);
                     }
-                }, null);
+                });
             };
 
 

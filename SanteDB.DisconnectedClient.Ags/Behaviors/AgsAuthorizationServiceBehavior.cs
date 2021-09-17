@@ -98,8 +98,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             else if (request.Cookies["_s"] != null) // cookie authentication
             {
                 var token = request.Cookies["_s"].Value;
-                if (token.Length == 64) // appropriate length
-                    this.SetContextFromBearer(token);
+                this.SetContextFromBearer(token);
             }
 
         }
