@@ -115,7 +115,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
 
             // Fire pre event
-            var preEvtArgs = new QueryRequestEventArgs<TEntity>(query, offset, count, queryId, AuthenticationContext.Current.Principal);
+            var preEvtArgs = new QueryRequestEventArgs<TEntity>(query, offset, count, queryId, AuthenticationContext.Current.Principal, orderBy);
             this.Querying?.Invoke(this, preEvtArgs);
             if(preEvtArgs.Cancel)
             {

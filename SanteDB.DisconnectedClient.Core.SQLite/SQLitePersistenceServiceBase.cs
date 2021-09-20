@@ -453,7 +453,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
-            QueryRequestEventArgs<TData> preArgs = new QueryRequestEventArgs<TData>(query, offset, count, queryId, principal);
+            QueryRequestEventArgs<TData> preArgs = new QueryRequestEventArgs<TData>(query, offset, count, queryId, principal, orderBy);
             this.Querying?.Invoke(this, preArgs);
             if (preArgs.Cancel)
             {
