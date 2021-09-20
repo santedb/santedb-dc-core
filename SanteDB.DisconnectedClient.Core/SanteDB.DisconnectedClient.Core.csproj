@@ -309,7 +309,7 @@
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
       <Version>$(VersionNumber)</Version>
     </PackageReference>
-    <PackageReference Include="SharpCompress" Version="0.28.3" />
+    <PackageReference Include="SharpCompress" Version="0.29.0" />
     <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
     <PackageReference Include="System.Security.Permissions" Version="5.0.0" />
