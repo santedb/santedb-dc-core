@@ -16,15 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Net;
-using System.Reflection;
-using System.Security;
-using System.Security.Principal;
-using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
@@ -36,6 +27,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -43,6 +35,14 @@ using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.Messaging.HDSI.Client;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Net;
+using System.Reflection;
+using System.Security;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Interop.HDSI
 {
@@ -51,8 +51,8 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
     /// </summary>
     public class HdsiIntegrationService : IClinicalIntegrationService
     {
-	    // Tests to remove due to the mobile / server auto-calculating them
-	    private readonly string[] m_removePatchTest =
+        // Tests to remove due to the mobile / server auto-calculating them
+        private readonly string[] m_removePatchTest =
         {
             "creationTime",
             "obsoletionTime",
@@ -60,11 +60,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             "sequence"
         };
 
-	    // Cached credential
-	    private IPrincipal m_cachedCredential;
+        // Cached credential
+        private IPrincipal m_cachedCredential;
 
-	    // Last ping
-	    private DateTime m_lastPing;
+        // Last ping
+        private DateTime m_lastPing;
 
         // Known uuids from the server
         private HashSet<Guid> m_knownUuids = new HashSet<Guid>();
@@ -72,13 +72,13 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         // Options
         private ServiceOptions m_options;
 
-	    // Have we let the user know?
-	    private bool m_tickleSent;
+        // Have we let the user know?
+        private bool m_tickleSent;
 
-	    // Tracer
-	    private readonly Tracer m_tracer = Tracer.GetTracer(typeof(HdsiIntegrationService));
+        // Tracer
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(HdsiIntegrationService));
 
-	    /// <summary>
+        /// <summary>
         /// Gets the specified model object
         /// </summary>
         public Bundle Find(Type modelType, NameValueCollection filter, int offset, int? count, IntegrationQueryOptions options = null)
@@ -95,7 +95,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Finds the specified model
         /// </summar>y
         public Bundle Find<TModel>(NameValueCollection filter, int offset, int? count, IntegrationQueryOptions options = null) where TModel : IdentifiedData
@@ -104,7 +104,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             return this.Find(predicate, offset, count, options);
         }
 
-	    /// <summary>
+        /// <summary>
         /// Finds the specified model
         /// </summary>
         public Bundle Find<TModel>(Expression<Func<TModel, bool>> predicate, int offset, int? count, IntegrationQueryOptions options = null) where TModel : IdentifiedData
@@ -144,7 +144,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets the specified model object
         /// </summary>
         public IdentifiedData Get(Type modelType, Guid key, Guid? version, IntegrationQueryOptions options = null)
@@ -161,7 +161,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets a specified model.
         /// </summary>
         /// <typeparam name="TModel">The type of model data to retrieve.</typeparam>
@@ -179,7 +179,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 client.Client.Credentials = this.GetCredentials(client.Client);
                 if (client.Client.Credentials == null)
                 {
-	                return null;
+                    return null;
                 }
 
                 this.m_tracer.TraceVerbose("Performing HDSI GET ({0}):{1}v{2}", typeof(TModel).FullName, key, versionKey);
@@ -202,7 +202,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Get the difference between the server and this device's time
         /// </summary>
         public TimeSpan GetServerTimeDrift()
@@ -223,11 +223,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                         {
                             if (e.Headers.ContainsKey("X-GeneratedOn"))
                             {
-	                            drift = DateTime.Parse(e.Headers["X-GeneratedOn"]).Subtract(DateTime.Now);
+                                drift = DateTime.Parse(e.Headers["X-GeneratedOn"]).Subtract(DateTime.Now);
                             }
                             else if (DateTime.TryParse(e.Headers["Date"], out var serverTime))
                             {
-	                            drift = serverTime.Subtract(DateTime.Now);
+                                drift = serverTime.Subtract(DateTime.Now);
                             }
                         }
                     };
@@ -244,7 +244,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             }
         }
 
-	    /// <summary>
+        /// <summary>
         /// Inserts specified data.
         /// </summary>
         /// <param name="data">The data to be inserted.</param>
@@ -254,12 +254,12 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             {
                 if (!(data is Bundle || data is Entity || data is Act))
                 {
-	                return;
+                    return;
                 }
 
                 if (data is Bundle)
                 {
-	                data.Key = null;
+                    data.Key = null;
                 }
 
                 HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
@@ -267,7 +267,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 client.Client.Responding += (o, e) => this.Responding?.Invoke(o, e);
                 if (client.Client.Credentials == null)
                 {
-	                return;
+                    return;
                 }
 
                 // Special case = Batch submit of data with an entry point
@@ -277,7 +277,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     var bund = e.Body as Bundle;
                     if (!(bund?.GetFocalObject() is UserEntity)) // not submitting a user entity so we only submit ACT
                     {
-	                    bund?.Item.RemoveAll(i => !(i is Act || i is Person && !(i is UserEntity)));// || i is EntityRelationship));
+                        bund?.Item.RemoveAll(i => !(i is Act || i is Person && !(i is UserEntity)));// || i is EntityRelationship));
                     }
 
                     if (bund != null)
@@ -297,17 +297,17 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                 if (result is IVersionedEntity iver)
                 {
-	                this.UpdateToServerCopy(iver, data as IVersionedEntity);
+                    this.UpdateToServerCopy(iver, data as IVersionedEntity);
                 }
-                else if(result is Bundle bundle)
+                else if (result is Bundle bundle)
                 {
                     var submissionBundle = data as Bundle;
-                    foreach(var itm in bundle.Item)
+                    foreach (var itm in bundle.Item)
                     {
                         var original = submissionBundle.Item.FirstOrDefault(o => o.Key == itm.Key);
-                        if(itm is IVersionedEntity itmVer && original is IVersionedEntity)
+                        if (itm is IVersionedEntity itmVer && original is IVersionedEntity)
                         {
-	                        this.UpdateToServerCopy(itmVer, original as IVersionedEntity);
+                            this.UpdateToServerCopy(itmVer, original as IVersionedEntity);
                         }
                     }
                 }
@@ -319,7 +319,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             }
         }
 
-	    /// <summary>
+        /// <summary>
         /// Determines whether the network is available.
         /// </summary>
         /// <returns>Returns true if the network is available.</returns>
@@ -331,7 +331,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 var networkInformationService = ApplicationContext.Current.GetService<INetworkInformationService>();
                 if (networkInformationService.IsNetworkAvailable)
                 {
-	                if (this.m_lastPing < DateTime.Now.AddSeconds(-30))
+                    if (this.m_lastPing < DateTime.Now.AddSeconds(-30))
                     {
                         HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(restClient);
                         client.Client.Credentials = new NullCredentials();
@@ -341,7 +341,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                             client.Ping();
                     }
 
-	                return true;
+                    return true;
                 }
 
                 return false;
@@ -353,7 +353,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             }
         }
 
-	    /// <summary>
+        /// <summary>
         /// Obsoletes specified data.
         /// </summary>
         /// <param name="data">The data to be obsoleted.</param>
@@ -364,7 +364,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                 if (!(data is Bundle || data is Entity || data is Act || data is EntityRelationship)) // || data is EntityRelationship))
                 {
-	                return;
+                    return;
                 }
 
                 HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
@@ -372,17 +372,17 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 client.Client.Responding += (o, e) => this.Responding?.Invoke(o, e);
                 if (client.Client.Credentials == null)
                 {
-	                return;
+                    return;
                 }
 
                 // Force an update
                 if (unsafeObsolete)
                 {
-	                client.Client.Requesting += (o, e) => e.AdditionalHeaders["X-SanteDB-Unsafe"] = "true";
+                    client.Client.Requesting += (o, e) => e.AdditionalHeaders["X-SanteDB-Unsafe"] = "true";
                 }
                 else
                 {
-	                client.Client.Requesting += (o, e) => e.AdditionalHeaders["If-Match"] = data.Tag;
+                    client.Client.Requesting += (o, e) => e.AdditionalHeaders["If-Match"] = data.Tag;
                 }
 
                 var method = typeof(HdsiServiceClient).GetRuntimeMethods().FirstOrDefault(o => o.Name == "Obsolete" && o.GetParameters().Length == 1);
@@ -392,7 +392,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 var iver = method.Invoke(client, new object[] { data }) as IVersionedEntity;
                 if (iver != null)
                 {
-	                this.UpdateToServerCopy(iver, data as IVersionedEntity);
+                    this.UpdateToServerCopy(iver, data as IVersionedEntity);
                 }
 
                 // Indicate that the server has responded
@@ -406,27 +406,27 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Progress has changed
         /// </summary>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-	    /// <summary>
+        /// <summary>
         /// The server has responded to the request
         /// </summary>
         public event EventHandler<IntegrationResultEventArgs> Responded;
 
-	    /// <summary>
+        /// <summary>
         /// Fired on response
         /// </summary>
         public event EventHandler<RestResponseEventArgs> Responding;
 
-	    /// <summary>
+        /// <summary>
         /// Service name
         /// </summary>
         public string ServiceName => "HDSI Clinical Integration Service";
 
-	    /// <summary>
+        /// <summary>
         /// Updates specified data.
         /// </summary>
         /// <param name="data">The data to be updated.</param>
@@ -438,14 +438,14 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 // HACK
                 if (!(data is Bundle || data is Entity || data is Act || data is Patch))
                 {
-	                return;
+                    return;
                 }
 
                 if (data is Patch &&
                     !typeof(Entity).GetTypeInfo().IsAssignableFrom((data as Patch).AppliesTo.Type.GetTypeInfo()) &&
                     !typeof(Act).GetTypeInfo().IsAssignableFrom((data as Patch).AppliesTo.Type.GetTypeInfo()))
                 {
-	                return;
+                    return;
                 }
 
                 HdsiServiceClient client = this.GetServiceClient(); //new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
@@ -453,23 +453,23 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                 client.Client.Responding += (o, e) => this.Responding?.Invoke(o, e);
                 if (client.Client.Credentials == null)
                 {
-	                return;
+                    return;
                 }
 
                 // Force an update
                 if (unsafeUpdate)
                 {
-	                client.Client.Requesting += (o, e) => e.AdditionalHeaders["X-Patch-Force"] = "true";
+                    client.Client.Requesting += (o, e) => e.AdditionalHeaders["X-Patch-Force"] = "true";
                 }
 
                 // Special case = Batch submit of data with an entry point
                 var submission = (data as Bundle)?.GetFocalObject() ?? data;
                 var existing = submission;
-                
+
                 // Assign a uuid for this submission
                 if (data is Bundle && data.Key == null)
                 {
-	                data.Key = Guid.NewGuid();
+                    data.Key = Guid.NewGuid();
                 }
 
                 // TODO: In MDM mode on the server patching will def cause an issue as we don't process the location header sent back from the server
@@ -514,7 +514,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                                     var serverCopy = this.Get(patch.AppliesTo.Type, patch.AppliesTo.Key.Value, null);
                                     if (ApplicationContext.Current.GetService<IPatchService>().Test(patch, serverCopy))
                                     {
-	                                    newUuid = client.Patch(patch);
+                                        newUuid = client.Patch(patch);
                                     }
                                     else
                                     {
@@ -522,17 +522,17 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                                         var serverDiff = ApplicationContext.Current.GetService<IPatchService>().Diff(existing, serverCopy);
                                         if (!serverDiff.Operation.Any(sd => patch.Operation.Any(po => po.Path == sd.Path && sd.OperationType != PatchOperationType.Test)))
                                         {
-	                                        newUuid = client.Patch(patch);
+                                            newUuid = client.Patch(patch);
                                         }
                                         else
                                         {
-	                                        throw;
+                                            throw;
                                         }
                                     }
                                 }
                                 else /// unsafe patch ... meh
                                 {
-	                                newUuid = client.Patch(patch);
+                                    newUuid = client.Patch(patch);
                                 }
 
                                 break;
@@ -546,7 +546,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                                 // First, we have to remove the "replaces version" key as it doesn't make much sense
                                 if (localObject is IVersionedEntity)
                                 {
-	                                (localObject as IVersionedEntity).PreviousVersionKey = null;
+                                    (localObject as IVersionedEntity).PreviousVersionKey = null;
                                 }
 
                                 this.Insert(Bundle.CreateBundle(localObject as IdentifiedData));
@@ -568,20 +568,20 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     // Force an update
                     if (!unsafeUpdate)
                     {
-	                    client.Client.Requesting += (o, e) => e.AdditionalHeaders["If-Match"] = data.Tag;
+                        client.Client.Requesting += (o, e) => e.AdditionalHeaders["If-Match"] = data.Tag;
                     }
 
                     client.Client.Requesting += (o, e) => (e.Body as Bundle)?.Item.RemoveAll(i => !(i is Act || i is Patient || i is Provider || i is UserEntity)); // || i is EntityRelationship));
 
                     var method = typeof(HdsiServiceClient).GetRuntimeMethods().FirstOrDefault(o => o.Name == "Update" && o.GetParameters().Length == 1);
                     method = method.MakeGenericMethod(submission.GetType());
-                    
+
                     this.m_tracer.TraceVerbose("Performing HDSI UPDATE (FULL) {0}", data);
 
                     var iver = method.Invoke(client, new object[] { submission }) as IVersionedEntity;
                     if (iver != null)
                     {
-	                    this.UpdateToServerCopy(iver, submission as IVersionedEntity);
+                        this.UpdateToServerCopy(iver, submission as IVersionedEntity);
                     }
 
                     // Notify updated
@@ -596,7 +596,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets current credentials
         /// </summary>
         private Credentials GetCredentials(IRestClient client)
@@ -605,11 +605,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             {
                 var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
 
-                if(this.m_cachedCredential == null ||
-                    !(this.m_cachedCredential is TokenClaimsPrincipal) ||this.m_cachedCredential is IClaimsPrincipal claimsPrincipal && 
+                if (this.m_cachedCredential == null ||
+                    !(this.m_cachedCredential is TokenClaimsPrincipal) || this.m_cachedCredential is IClaimsPrincipal claimsPrincipal &&
                     (claimsPrincipal.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
                 {
-	                this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                    this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
                 }
 
                 return client.Description.Binding.Security.CredentialProvider.GetCredentials(this.m_cachedCredential);
@@ -621,7 +621,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             }
         }
 
-	    /// <summary>
+        /// <summary>
         /// Get service client
         /// </summary>
         private HdsiServiceClient GetServiceClient()
@@ -631,7 +631,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             return retVal;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Throws an exception if the specified service client has the invalid version
         /// </summary>
         private bool IsValidVersion(HdsiServiceClient client)
@@ -639,12 +639,12 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             var expectedVersion = typeof(IdentifiedData).GetTypeInfo().Assembly.GetName().Version;
             if (this.m_options == null)
             {
-	            this.m_options = client.Options();
+                this.m_options = client.Options();
             }
 
             if (this.m_options == null)
             {
-	            return false;
+                return false;
             }
 
             var version = new Version(this.m_options.InterfaceVersion);
@@ -658,7 +658,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             return version < expectedVersion;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Update the version identifier to the server identifier
         /// </summary>
         public void UpdateToServerCopy(IVersionedEntity newData, IVersionedEntity submittedData)

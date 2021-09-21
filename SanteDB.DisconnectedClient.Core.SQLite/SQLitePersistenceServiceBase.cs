@@ -16,41 +16,37 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Hacks;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Query;
+using SanteDB.DisconnectedClient.Synchronization;
+using SQLite.Net;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using SQLite.Net;
-using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
     /// <summary>
     /// Represents a data persistence service which stores data in the local SQLite data store
     /// </summary>
-    public abstract class SQLitePersistenceServiceBase<TData> : 
-        IDataPersistenceService<TData>, 
+    public abstract class SQLitePersistenceServiceBase<TData> :
+        IDataPersistenceService<TData>,
         IStoredQueryDataPersistenceService<TData>,
         ISQLitePersistenceService,
         IDataPersistenceService
@@ -303,7 +299,8 @@ namespace SanteDB.DisconnectedClient.SQLite
                     this.m_tracer.TraceError("Error updating data {1} : {0}", e, context.Connection);
                     throw new DataPersistenceException($"Database error obsoleting {data}", e);
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     throw new DataPersistenceException($"Error updating {data}", e);
                 }
 #if PERFMON
@@ -444,7 +441,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         {
             return this.Query(query, queryId, offset, count, out totalResults, true, true, principal, null);
         }
-        
+
         /// <summary>
         /// Query function returning results and count control
         /// </summary>
@@ -479,7 +476,7 @@ namespace SanteDB.DisconnectedClient.SQLite
                             context.DelayLoadMode = LoadState.PartialLoad;
                         else
                             context.DelayLoadMode = LoadState.FullLoad;
-                        
+
                         results = this.Query(context, query, queryId.GetValueOrDefault(), offset, count ?? -1, out totalResults, countResults, orderBy);
                     }
 
@@ -496,7 +493,7 @@ namespace SanteDB.DisconnectedClient.SQLite
 
 
                 }
-                catch(SQLiteException e)
+                catch (SQLiteException e)
                 {
                     this.m_tracer.TraceError("Error executing query {1} : {0}", e, context.Connection);
                     throw new DataPersistenceException($"Data error executing query againt {typeof(TData)}", e);
@@ -527,7 +524,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             return tr;
         }
 
-      
+
         #endregion
 
         /// <summary>
@@ -627,7 +624,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             return retVal;
 
         }
-     
+
 
 
         /// <summary>

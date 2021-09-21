@@ -27,7 +27,6 @@ using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Security
 {
@@ -146,7 +145,7 @@ namespace SanteDB.DisconnectedClient.Security
                                 localPip.AddPolicies(group, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
 
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             this.m_tracer.TraceWarning("Could not sync {rol}");
                         }

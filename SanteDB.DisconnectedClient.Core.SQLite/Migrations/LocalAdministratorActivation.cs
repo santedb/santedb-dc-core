@@ -24,9 +24,7 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
@@ -111,7 +109,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                     }
                     return true;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     tracer.TraceError("Could not activate local administrative account");
                     return false;

@@ -17,11 +17,8 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Search;
 using SanteDB.DisconnectedClient.SQLite.Search.Model;
@@ -84,7 +81,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     conn.CreateTable<SearchTermEntity>();
                 } // release lock
 
-             
+
                 return true;
             }
             catch (Exception e)

@@ -22,11 +22,9 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security.Audit;
 using SanteDB.DisconnectedClient.Ags.Util;
-using SanteDB.DisconnectedClient;
 using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors

@@ -23,15 +23,13 @@ using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Contracts;
-using SanteDB.DisconnectedClient.Ags.Formatter;
 using SanteDB.DisconnectedClient.Ags.Metadata;
 using SanteDB.DisconnectedClient.Ags.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.BIS;
 using SanteDB.Rest.Common.Behavior;
@@ -41,7 +39,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.Ags
 {

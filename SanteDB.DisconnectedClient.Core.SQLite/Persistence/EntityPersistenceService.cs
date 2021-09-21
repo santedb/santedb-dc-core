@@ -21,12 +21,8 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
@@ -37,7 +33,6 @@ using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -46,7 +41,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
     /// </summary>
     public class EntityPersistenceService : VersionedDataPersistenceService<Entity, DbEntity>
     {
-        
+
         /// <summary>
         /// To model instance
         /// </summary>
@@ -470,7 +465,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             // Identifiers
             if (data.Identifiers != null)
             {
-               
+
                 base.UpdateAssociatedItems<EntityIdentifier, Entity>(
                     context.Connection.Table<DbEntityIdentifier>().Where(o => o.SourceUuid == entityUuid).ToList().Select(o => m_mapper.MapDomainInstance<DbEntityIdentifier, EntityIdentifier>(o)).ToList(),
                     data.Identifiers,
@@ -632,7 +627,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 case EntityClassKeyStrings.NonLivingSubject:
                     return new ApplicationEntityPersistenceService().Insert(context, data as ApplicationEntity);
                 case EntityClassKeyStrings.Person:
-                    if(data is UserEntity)
+                    if (data is UserEntity)
                         return new UserEntityPersistenceService().Insert(context, data as UserEntity);
                     else
                         return new PersonPersistenceService().Insert(context, data as Person);

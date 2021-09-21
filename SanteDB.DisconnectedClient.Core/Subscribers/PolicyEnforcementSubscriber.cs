@@ -23,8 +23,6 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Linq;

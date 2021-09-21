@@ -16,9 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SQLite.Net.Attributes;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Security

@@ -16,7 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
@@ -24,7 +23,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections;
 using System.Collections.Generic;

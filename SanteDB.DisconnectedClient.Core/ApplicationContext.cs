@@ -20,23 +20,19 @@ using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Configuration;
 //using SanteDB.DisconnectedClient.Data;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Security;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
-using SanteDB.Core.Services.Impl;
 
 namespace SanteDB.DisconnectedClient
 {
@@ -282,12 +278,12 @@ namespace SanteDB.DisconnectedClient
         /// </summary>
         /// <value>The application.</value>
         public abstract SecurityApplication Application { get; }
-        
+
         /// <summary>
         /// Gets the device information for the currently running device
         /// </summary>
         /// <value>The device.</value>
-        public virtual SecurityDevice Device 
+        public virtual SecurityDevice Device
         {
             get
             {
@@ -299,22 +295,22 @@ namespace SanteDB.DisconnectedClient
                 };
             }
         }
-        
+
         /// <summary>
         /// Gets the host type
         /// </summary>
         public virtual SanteDBHostType HostType => SanteDBHostType.Client;
-       
+
         /// <summary>
         /// Gets the allowed synchronization modes
         /// </summary>
         public abstract SynchronizationMode Modes { get; }
-       
+
         /// <summary>
         /// Execution UUID
         /// </summary>
         public virtual Guid ExecutionUuid { get { return s_executionUuid; } }
-       
+
         /// <summary>
         /// Returns true if service is running
         /// </summary>
@@ -366,7 +362,7 @@ namespace SanteDB.DisconnectedClient
                                 Assembly.LoadFile(f);
                             }
                         }
-                        catch (Exception e) { }
+                        catch (Exception) { }
                     }
                 }
             }
@@ -384,7 +380,7 @@ namespace SanteDB.DisconnectedClient
             this.Starting?.Invoke(this, EventArgs.Empty);
 
             this.m_serviceManager.Start();
-            
+
             this.m_tracer.TraceInfo("STAGE 3: Broadcasting startup event to services...");
             this.m_running = true;
             this.Started?.Invoke(this, EventArgs.Empty);
@@ -393,7 +389,7 @@ namespace SanteDB.DisconnectedClient
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
 
         }
-        
+
         /// <summary>
         /// Force stop
         /// </summary>

@@ -16,9 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;

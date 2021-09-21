@@ -21,18 +21,14 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
+using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -375,14 +371,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
             {
                 try
                 {
-                        var tdata = conn.Table<TQueueEntry>().Where(o => o.Id == id).FirstOrDefault();
-                        if (tdata != null)
-                        {
-                            conn.Delete(tdata);
-                            ApplicationContext.Current.GetService<IQueueFileProvider>().RemoveQueueData(tdata?.DataFileKey);
-                        }
-                        else
-                            this.m_tracer.TraceWarning("Could not find queue item {0} to be deleted", id);
+                    var tdata = conn.Table<TQueueEntry>().Where(o => o.Id == id).FirstOrDefault();
+                    if (tdata != null)
+                    {
+                        conn.Delete(tdata);
+                        ApplicationContext.Current.GetService<IQueueFileProvider>().RemoveQueueData(tdata?.DataFileKey);
+                    }
+                    else
+                        this.m_tracer.TraceWarning("Could not find queue item {0} to be deleted", id);
                 }
                 catch (Exception e)
                 {

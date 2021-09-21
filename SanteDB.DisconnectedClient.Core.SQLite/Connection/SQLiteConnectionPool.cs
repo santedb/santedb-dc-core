@@ -19,8 +19,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
@@ -228,7 +226,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         public LockableSQLiteConnection GetWritable()
         {
-             return this.m_pool.Find(o => !o.IsReadonly && !o.IsDisposed);
+            return this.m_pool.Find(o => !o.IsReadonly && !o.IsDisposed);
         }
 
         /// <summary>

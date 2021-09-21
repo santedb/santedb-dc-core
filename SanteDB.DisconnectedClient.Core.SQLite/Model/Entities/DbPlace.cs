@@ -30,7 +30,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Entities
         /// Identifies whether the place is mobile
         /// </summary>
         [Column("isMobile")]
-        public bool IsMobile { get; set; } 
+        public bool IsMobile { get; set; }
 
         /// <summary>
         /// Identifies the known latitude of the place

@@ -16,18 +16,16 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Model.AMI;
-
-using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model.AMI;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Interop;
@@ -38,8 +36,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -262,7 +258,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 }
                 catch (Exception e)
                 {
-                   throw new DataPersistenceException("Could not retrieve user", e);
+                    throw new DataPersistenceException("Could not retrieve user", e);
                 }
         }
 
@@ -1339,7 +1335,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 try
                 {
 
-                    return client.GetDevices(o=>o.Name == deviceName).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
+                    return client.GetDevices(o => o.Name == deviceName).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
                 }
                 catch (Exception e)
                 {

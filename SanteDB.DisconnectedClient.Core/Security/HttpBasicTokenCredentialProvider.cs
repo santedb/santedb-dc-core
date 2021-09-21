@@ -19,8 +19,6 @@
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Security;
 using System.Security.Principal;

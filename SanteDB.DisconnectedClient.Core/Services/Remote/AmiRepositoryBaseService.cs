@@ -17,15 +17,10 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Security;
-using SanteDB.Core.Http;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Security.Principal;
@@ -44,12 +39,12 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Get a service client
         /// </summary>
-        protected AmiServiceClient GetClient (IPrincipal principal = null)
+        protected AmiServiceClient GetClient(IPrincipal principal = null)
         {
             var retVal = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
-            
+
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            if(principal == null)
+            if (principal == null)
                 principal = AuthenticationContext.Current.Principal;
 
             // Don't allow anonymous principals
@@ -59,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 principal = this.m_devicePrincipal;
                 // Expired or not exists
-                if(principal == null || ((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                if (principal == null || ((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
                     this.m_devicePrincipal = principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             }
 
@@ -67,6 +62,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             return retVal;
         }
 
-       
+
     }
 }

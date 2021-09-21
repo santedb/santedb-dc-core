@@ -16,8 +16,8 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
 using SanteDB.DisconnectedClient.Synchronization;
+using System;
 
 namespace SanteDB.DisconnectedClient.Exceptions
 {
@@ -26,9 +26,9 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class LocalPersistenceException : Exception
     {
-	    // Data object
+        // Data object
 
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.LocalPersistenceException"/> class.
         /// </summary>
         /// <param name="operation">Operation.</param>
@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.LocalPersistenceException"/> class.
         /// </summary>
         /// <param name="operation">Operation.</param>
@@ -50,13 +50,13 @@ namespace SanteDB.DisconnectedClient.Exceptions
             this.Operation = operation;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the data object.
         /// </summary>
         /// <value>The data object.</value>
         public object DataObject { get; private set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets a message that describes the current exception.
         /// </summary>
         /// <returns>The error message that explains the reason for the exception, or an empty string ("").</returns>
@@ -64,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
         /// <value>The message.</value>
         public override string Message => string.Format("{0} {1}", this.Operation, this.DataObject);
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the operation.
         /// </summary>
         /// <value>The operation.</value>
@@ -72,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
         {
             get => (SynchronizationOperationType)this.Data["operation"];
             private set => this.Data.Add("operation", value);
-	    }
+        }
     }
 }
 

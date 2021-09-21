@@ -18,7 +18,6 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core;
-using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
@@ -27,23 +26,17 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Serialization;
-using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {

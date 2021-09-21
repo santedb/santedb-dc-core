@@ -17,10 +17,6 @@
  * Date: 2021-2-9
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.UI.Diagnostics.Performance
 {
@@ -30,7 +26,7 @@ namespace SanteDB.DisconnectedClient.UI.Diagnostics.Performance
     static class PerformanceConstants
     {
 
-       
+
         /// <summary>
         /// Gets the thread pooling performance counter
         /// </summary>

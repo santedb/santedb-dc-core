@@ -26,12 +26,9 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Services;
 using SQLite.Net.Interop;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -242,7 +239,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                             try
                             {
                                 if (!File.Exists(dbFile)) continue; // could not find file
-                                
+
                                 File.Move(dbFile, Path.ChangeExtension(dbFile, "old"));
 
                                 // Create new encrypted database
@@ -358,7 +355,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
                     connectionPool.GetFree();
                 if (retVal == null) // Create a connection 
                 {
-                    retVal = new LockableSQLiteConnection(platform, dataSource, SQLiteOpenFlags.ReadOnly | SQLiteOpenFlags.FullMutex );
+                    retVal = new LockableSQLiteConnection(platform, dataSource, SQLiteOpenFlags.ReadOnly | SQLiteOpenFlags.FullMutex);
                     retVal.Execute("PRAGMA synchronous = 1");
                     connectionPool.Add(retVal);
                     //retVal.Wait();

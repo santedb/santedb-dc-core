@@ -20,7 +20,6 @@ using SanteDB.Core;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.DisconnectedClient.Services.Local

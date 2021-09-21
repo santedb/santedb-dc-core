@@ -28,9 +28,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Json.Formatter;
 using SanteDB.Core.Model.Serialization;
-using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
-using SanteDB.DisconnectedClient;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -77,7 +75,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                 }
                 return retVal;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Tracer.GetTracer(typeof(AgsMessageDispatchFormatter)).TraceError("Error creating dispatch formatter : {0}", e);
                 throw new Exception("Could not create AGS Dispatch Formatter: {0}", e);
@@ -105,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         private Tracer m_traceSource = Tracer.GetTracer(typeof(AgsDispatchFormatter<TContract>));
         // Known types
         private static Type[] s_knownTypes = typeof(TContract).GetCustomAttributes<ServiceKnownResourceAttribute>().Select(t => t.Type).ToArray();
-       
+
         // Default view model
         private static ViewModelDescription m_defaultViewModel = null;
 
@@ -298,7 +296,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     contentType = "text/xml";
                     response.Body = ms;
                 }
-                else 
+                else
                 {
                     // Prepare the serializer
                     JsonSerializer jsz = new JsonSerializer();
@@ -326,7 +324,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                 }
 
                 RestOperationContext.Current.OutgoingResponse.ContentType = RestOperationContext.Current.OutgoingResponse.ContentType ?? contentType;
-                
+
             }
             catch (Exception e)
             {

@@ -18,17 +18,15 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Mail;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Mail;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Mail;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
 using System;
-using SanteDB.Core.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {

@@ -16,26 +16,12 @@
  * User: fyfej
  * Date: 2021-2-19
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Event;
-using SanteDB.Core.Http;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
-using SanteDB.Core.Services;
+using SanteDB.Core.Jobs;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.i18n;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using SanteDB.Core;
-using SanteDB.Core.Jobs;
 
 namespace SanteDB.DisconnectedClient.Synchronization
 {
@@ -103,7 +89,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                 ApplicationServiceContext.Current.GetService<RemoteSynchronizationService>().Pull(SynchronizationPullTriggerType.PeriodicPoll);
                 this.CurrentState = JobStateType.Completed;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error running sync job {0}", ex);
                 this.CurrentState = JobStateType.Aborted;

@@ -28,7 +28,6 @@ using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
 {
@@ -74,7 +73,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
         /// <summary>
         /// When the job was last finished
         /// </summary>
-        public DateTime? LastFinished { get; private set;}
+        public DateTime? LastFinished { get; private set; }
 
         /// <summary>
         /// Cancel the job
@@ -121,14 +120,14 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
                         this.LastFinished = DateTime.Now;
                         this.CurrentState = JobStateType.Completed;
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.err_prune_audit_failed, ex.Message)));
                         this.CurrentState = JobStateType.Cancelled;
                         conn.Rollback();
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {

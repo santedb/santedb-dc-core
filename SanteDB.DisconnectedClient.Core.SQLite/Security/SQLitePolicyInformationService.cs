@@ -18,7 +18,6 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
@@ -27,18 +26,12 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
@@ -87,9 +80,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     throw new NotSupportedException("Policies should be assigned to ACTS via the IRepositoryService<Act>");
                 else if (securable is Entity)
                     throw new NotSupportedException("Policies should be assigned to ENTITIES via the IRepositoryService<Entity>");
-
-                // Drop existing policies
-                IEnumerable delObjects = null;
                 byte[] key = (securable as IdentifiedData)?.Key.Value.ToByteArray();
 
                 // Delete existing policy oids
@@ -134,7 +124,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
         public void CreatePolicy(IPolicy policy, IPrincipal principal)
         {
             // Demand local admin
-            if(principal != AuthenticationContext.SystemPrincipal)
+            if (principal != AuthenticationContext.SystemPrincipal)
                 ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>().Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
 
 

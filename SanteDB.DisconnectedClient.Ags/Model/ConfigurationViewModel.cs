@@ -18,12 +18,9 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
-using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;

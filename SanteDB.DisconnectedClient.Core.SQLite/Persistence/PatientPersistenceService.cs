@@ -93,7 +93,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             retVal.MaritalStatusKey = patient.MaritalStatusUuid?.ToGuid();
             retVal.VipStatusKey = patient.VipStatusUuid?.ToGuid();
             retVal.OccupationKey = dbp.OccupationUuid?.ToGuid();
-                
+
             //retVal.LoadAssociations(context);
 
             return retVal;

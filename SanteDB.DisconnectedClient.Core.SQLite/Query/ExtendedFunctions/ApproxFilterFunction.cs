@@ -16,18 +16,13 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using SanteDB.Core;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.Matcher.Configuration;
 using SQLite.Net;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
 {

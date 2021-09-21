@@ -16,17 +16,12 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient.SQLite.Query;
-using SanteDB.DisconnectedClient.SQLite.Connection;
 using SQLite.Net;
+using System;
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
 {
@@ -87,7 +82,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
                             connection.ExecuteScalar<Int32>("SELECT editdist3('__sfEditCost');");
                     }
                 }
-                catch(Exception e) when (e.Message == "SQL logic error")
+                catch (Exception e) when (e.Message == "SQL logic error")
                 {
                 }
                 catch (Exception e)

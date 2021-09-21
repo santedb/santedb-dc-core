@@ -17,7 +17,6 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Diagnostics;
@@ -33,7 +32,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Rules
 {
@@ -57,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Rules
                 .Select(o => ApplicationContext.Current.GetService<IRepositoryService<Place>>().Get(o));
 
             return this.ToViewModel(new Bundle() { Item = facilities.OfType<IdentifiedData>().ToList() });
-            
+
         }
 
         /// <summary>

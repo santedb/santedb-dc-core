@@ -19,9 +19,6 @@
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Privacy;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Configuration.Migrations
 {

@@ -16,14 +16,10 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Security;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Security;
 using System.Security.Principal;

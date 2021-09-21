@@ -16,30 +16,16 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using Newtonsoft.Json;
 using SanteDB.Core;
-using SanteDB.Core.Services;
-using SanteDB.Core.BusinessRules;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Serialization;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Security;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 using ZXing;
-using ZXing.Common;
 using ZXing.QrCode;
 using ZXing.Windows.Compatibility;
 
@@ -75,7 +61,7 @@ namespace SanteDB.DisconnectedClient.UI.Services
                 var identityToken = pointerService.GeneratePointer(identifers);
                 return this.Generate(identityToken.ToString());
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception("Cannot generate QR code for specified identifier list", e);
             }

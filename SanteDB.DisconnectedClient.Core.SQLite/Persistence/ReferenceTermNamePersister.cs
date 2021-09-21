@@ -16,16 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {

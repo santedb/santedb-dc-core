@@ -17,7 +17,6 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Tickler;
@@ -72,12 +71,12 @@ namespace SanteDB.DisconnectedClient.Net
         /// </summary>
         public bool IsNetworkConnected => throw new NotImplementedException();
 
-		/// <summary>
-		/// Gets the service name.
-		/// </summary>
-		/// <value>The name of the service.</value>
-		/// <exception cref="NotImplementedException"></exception>
-		public string ServiceName => throw new NotImplementedException();
+        /// <summary>
+        /// Gets the service name.
+        /// </summary>
+        /// <value>The name of the service.</value>
+        /// <exception cref="NotImplementedException"></exception>
+        public string ServiceName => throw new NotImplementedException();
 
         /// <summary>
         /// Network status has changed
@@ -91,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Net
         {
 
             return NetworkInterface.GetAllNetworkInterfaces().Select(o => new NetworkInterfaceInfo(
-                o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault(a=>a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.Address.ToString(), o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString()
+                o.Name, o.GetPhysicalAddress().ToString(), o.OperationalStatus == OperationalStatus.Up, o.Description, o.GetIPProperties().UnicastAddresses.FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.Address.ToString(), o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString()
             ));
 
         }

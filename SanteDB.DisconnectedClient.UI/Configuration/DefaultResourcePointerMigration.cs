@@ -18,13 +18,9 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.UI.Services;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Configuration.Migrations
 {

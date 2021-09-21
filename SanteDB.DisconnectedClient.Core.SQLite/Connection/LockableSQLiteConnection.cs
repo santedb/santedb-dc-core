@@ -17,16 +17,14 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Configuration.Data;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SanteDB.DisconnectedClient.SQLite.Query;
-using TableMapping = SQLite.Net.TableMapping;
 using System.Threading;
+using TableMapping = SQLite.Net.TableMapping;
 
 namespace SanteDB.DisconnectedClient.SQLite.Connection
 {
@@ -139,7 +137,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
 #endif
                     this.m_connection.m_availableEvent.Set();
                 }
-               
+
             }
         }
 
@@ -171,7 +169,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Connection
         /// </summary>
         public bool Wait()
         {
-            if(!this.IsEntered)
+            if (!this.IsEntered)
                 this.m_availableEvent.Wait();
             return true;
         }

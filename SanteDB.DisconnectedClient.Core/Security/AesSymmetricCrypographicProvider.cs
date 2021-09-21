@@ -18,7 +18,6 @@
  */
 using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
@@ -56,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Security
         private byte[] CorrectKey(byte[] key)
         {
             byte[] retVal = new byte[key.Length * 3];
-            for(int i = 0; i < 32; i += key.Length)
+            for (int i = 0; i < 32; i += key.Length)
                 Array.Copy(key, 0, retVal, i, key.Length);
             return retVal.Take(32).ToArray();
         }

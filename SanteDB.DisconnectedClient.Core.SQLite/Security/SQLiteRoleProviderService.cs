@@ -19,17 +19,10 @@
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
@@ -170,8 +163,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
-                        var pk = Guid.NewGuid();
-                        conn.Insert(new DbSecurityRole() { Name = value, Key = pk });
+                    var pk = Guid.NewGuid();
+                    conn.Insert(new DbSecurityRole() { Name = value, Key = pk });
                 }
             }
             catch (Exception e)

@@ -16,17 +16,16 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
+using SanteDB.Core;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
-using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core;
-using SanteDB.Core.Services;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -120,9 +119,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (data.CreatedBy != null) data.CreatedBy = data.CreatedBy?.EnsureExists(context);
             domainObject.UpdatedByKey = domainObject.CreatedByKey == Guid.Empty || domainObject.CreatedByKey == null ? base.CurrentUserUuid(context) : domainObject.CreatedByKey;
             domainObject.UpdatedTime = DateTime.Now;
-            
+
             // Special case, undelete
-            if(!data.ObsoletedByKey.HasValue && existing.ObsoletionTime.HasValue)
+            if (!data.ObsoletedByKey.HasValue && existing.ObsoletionTime.HasValue)
             {
                 domainObject.ObsoletionTime = null;
                 domainObject.ObsoletedByUuid = null;
@@ -142,7 +141,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             context.Connection.Update(domainObject);
 
             // Hack: Remove from cache
-            if(hideable?.Hidden == true)
+            if (hideable?.Hidden == true)
                 ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(data.Key.Value);
             else
                 context.AddTransactedItem(data);

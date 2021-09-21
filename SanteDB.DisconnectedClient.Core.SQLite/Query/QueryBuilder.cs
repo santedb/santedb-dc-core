@@ -20,6 +20,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,8 +29,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Serialization;
-using SanteDB.DisconnectedClient.SQLite.Model;
 
 namespace SanteDB.DisconnectedClient.SQLite.Query
 {

@@ -16,9 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System.Xml.Serialization;
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -26,88 +26,92 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// <summary>
     /// Represents basic application configuration
     /// </summary>
-    [XmlType(nameof(ApplicationConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")][JsonObject]
+    [XmlType(nameof(ApplicationConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    [JsonObject]
     public class ApplicationConfigurationSection : IConfigurationSection
     {
-	    ///// <summary>
-	    ///// Sets the services.
-	    ///// </summary>
-	    ///// <value>The services.</value>
-	    //[XmlIgnore, JsonIgnore]
-	    //public List<Object> Services {
-	    //	get {
-	    //		if (this.m_services == null) {
-	    //			this.m_services = new List<object> ();
-	    //			foreach (var itm in this.ServiceTypes) {
-	    //				Type t = Type.GetType (itm);
-	    //                      if (t == null)
-	    //                          throw new KeyNotFoundException(itm);
-	    //				this.m_services.Add (Activator.CreateInstance (t));
-	    //			}
-	    //		}
-	    //		return this.m_services;
-	    //	}
-	    //}
+        ///// <summary>
+        ///// Sets the services.
+        ///// </summary>
+        ///// <value>The services.</value>
+        //[XmlIgnore, JsonIgnore]
+        //public List<Object> Services {
+        //	get {
+        //		if (this.m_services == null) {
+        //			this.m_services = new List<object> ();
+        //			foreach (var itm in this.ServiceTypes) {
+        //				Type t = Type.GetType (itm);
+        //                      if (t == null)
+        //                          throw new KeyNotFoundException(itm);
+        //				this.m_services.Add (Activator.CreateInstance (t));
+        //			}
+        //		}
+        //		return this.m_services;
+        //	}
+        //}
 
-	    /// <summary>
+        /// <summary>
         /// The location of the directory where user preferences are stored
         /// </summary>
         /// <value>The user preference dir.</value>
-        [XmlElement("userPrefDir")][JsonProperty("userPrefDir")]
+        [XmlElement("userPrefDir")]
+        [JsonProperty("userPrefDir")]
         public string UserPrefDir
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the style.
         /// </summary>
         /// <value>The style.</value>
-        [XmlElement("style")][JsonProperty("style")]
+        [XmlElement("style")]
+        [JsonProperty("style")]
         public StyleSchemeType Style
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the cache configuration
         /// </summary>
         [XmlElement("caching")]
         public CacheConfiguration Cache { get; set; }
 
 
-        
 
 
-        }
+
+    }
 
     /// <summary>
     /// Cache configuration
     /// </summary>
-    [XmlType(nameof(CacheConfiguration), Namespace = "http://santedb.org/mobile/configuration")][JsonObject]
+    [XmlType(nameof(CacheConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
+    [JsonObject]
     public class CacheConfiguration
     {
-	    /// <summary>
+        /// <summary>
         /// Max age
         /// </summary>
         [XmlAttribute("maxAge")]
         public long MaxAge { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Maximum time that can pass without cleaning
         /// </summary>
         [XmlAttribute("maxDirty")]
         public long MaxDirtyAge { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Maximum time that can pass withut reducing pressure
         /// </summary>
         [XmlAttribute("maxPressure")]
         public long MaxPressureAge { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Maximum size
         /// </summary>
         [XmlAttribute("maxSize")]

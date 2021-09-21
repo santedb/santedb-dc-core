@@ -16,17 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Services;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Security
 {

@@ -25,7 +25,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class RemoteOperationException : Exception
     {
-	    /// <summary>
+        /// <summary>
         /// Creates a new remote operation exception
         /// </summary>
         public RemoteOperationException()
@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Creates a new remote operation exception
         /// </summary>
         public RemoteOperationException(string message) : base(message)
@@ -41,10 +41,10 @@ namespace SanteDB.DisconnectedClient.Exceptions
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Creates a new remote operation exception
         /// </summary>
-        public RemoteOperationException(string message, Exception cause) : base (message, cause)
+        public RemoteOperationException(string message, Exception cause) : base(message, cause)
         {
 
         }

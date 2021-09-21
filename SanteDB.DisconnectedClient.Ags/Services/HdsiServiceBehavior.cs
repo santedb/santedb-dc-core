@@ -230,10 +230,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{id}");
                         // Do we have a local?
                         if (retVal is Entity entity &&
-                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null) 
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
                             entity.AddTag("$upstream", "true");
                         else if (retVal is Act act &&
-                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>().Get(act.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null) 
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>().Get(act.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
                             act.AddTag("$upstream", "true");
                         return retVal;
                     }
@@ -272,7 +272,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     insertBundle.Add(remote);
 
                     // Fetch all missing relationships
-                    if(remote is Entity entity)
+                    if (remote is Entity entity)
                     {
                         var persistence = ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>();
                         foreach (var itm in entity.Relationships.ToArray())
@@ -284,15 +284,15 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             }
 
                             var record = persistence.Get(itm.TargetEntityKey.Value, null, true, AuthenticationContext.Current.Principal);
-                            if(record == null) // Download and insert
+                            if (record == null) // Download and insert
                             {
                                 record = integrationService.Get<Entity>(itm.TargetEntityKey.Value, null);
                                 insertBundle.Add(record);
                                 ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(record.Key.Value);
                             }
                         }
-                    }   
-                    else if(remote is Act act)
+                    }
+                    else if (remote is Act act)
                     {
                         var persistence = ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>();
                         foreach (var itm in act.Relationships)
@@ -326,7 +326,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         // Handle MDM just in case
                         while (ofs < tr)
                         {
-                            var related = integrationService.Find<Act>(o => o.Participations.Any(p => p.PlayerEntity.Relationships.Where(r=>r.RelationshipType.Mnemonic == "MDM-Master").Any(r=>r.SourceEntityKey == patient.Key)), ofs, 25);
+                            var related = integrationService.Find<Act>(o => o.Participations.Any(p => p.PlayerEntity.Relationships.Where(r => r.RelationshipType.Mnemonic == "MDM-Master").Any(r => r.SourceEntityKey == patient.Key)), ofs, 25);
                             related.Item.ForEach(o => ApplicationServiceContext.Current.GetService<IDataCachingService>().Remove(o.Key.Value));
 
                             tr = related.TotalResults;
@@ -512,9 +512,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
                         // This NVC is UTF8 compliant
                         var nvc = SanteDB.Core.Model.Query.NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
-                        var retVal = restClient.Get<IdentifiedData>($"/{resourceType}", nvc.Select(o=>new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
+                        var retVal = restClient.Get<IdentifiedData>($"/{resourceType}", nvc.Select(o => new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
 
-                        if(retVal is Bundle bundle)
+                        if (retVal is Bundle bundle)
                         {
                             bundle.Item
                                 .OfType<ITaggable>()

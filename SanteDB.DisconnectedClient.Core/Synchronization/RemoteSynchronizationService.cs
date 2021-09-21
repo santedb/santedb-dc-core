@@ -16,26 +16,24 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Event;
 using SanteDB.Core.Http;
-using SanteDB.Core.Model;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using SanteDB.Core;
-using SanteDB.Core.Jobs;
 
 namespace SanteDB.DisconnectedClient.Synchronization
 {
@@ -160,7 +158,7 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new RemoteSynchronizationJob(), this.m_configuration.PollInterval, JobStartType.DelayStart);
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     this.m_tracer.TraceError("Error starting remote sync service: {0}");
                 }
@@ -486,6 +484,6 @@ namespace SanteDB.DisconnectedClient.Synchronization
             return true;
         }
 
-     
+
     }
 }

@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class SecurityTokenException : SecurityException
     {
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.TokenSecurityException"/> class.
         /// </summary>
         /// <param name="type">Type.</param>
@@ -51,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
             this.Detail = detail;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Details of the exception
         /// </summary>
         /// <value>The detail.</value>
@@ -61,7 +61,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the type of exception.
         /// </summary>
         /// <value>The type.</value>

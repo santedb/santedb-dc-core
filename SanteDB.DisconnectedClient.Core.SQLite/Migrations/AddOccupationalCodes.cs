@@ -22,8 +22,6 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Roles;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {

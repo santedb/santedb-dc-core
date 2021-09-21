@@ -30,8 +30,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
 {
@@ -142,7 +140,7 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
 
                 var eventArgs = new PeerToPeerDataEventArgs(device.DeviceName, false, entity);
                 this.Sending?.Invoke(this, eventArgs);
-                if(eventArgs.Cancel)
+                if (eventArgs.Cancel)
                 {
                     this.m_tracer.TraceWarning("Pre-event hook indicates cancel");
                     return null;
@@ -173,10 +171,10 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error sending data to {0} - {1}", recipient, e);
-                throw new Exception($"Error sending {entity} to {recipient}",e); // TODO: Make this an exception of its own class PeerToPeerException
+                throw new Exception($"Error sending {entity} to {recipient}", e); // TODO: Make this an exception of its own class PeerToPeerException
             }
         }
 
@@ -196,7 +194,7 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
 
                         var eventArgs = new PeerToPeerEventArgs(connection.RemoteMachineName, true);
                         this.Receiving?.Invoke(this, eventArgs);
-                        if(!eventArgs.Cancel) 
+                        if (!eventArgs.Cancel)
                             // Read the payload
                             using (var stream = connection.GetStream())
                             {
@@ -208,7 +206,7 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
                                     {
                                         payload = PeerToPeer.PeerTransferPayload.Read(ms, this.m_signingSerivce, !m_trustSignatureFailures.Contains(connection.RemoteMachineName));
                                     }
-                                    catch(Exception e)
+                                    catch (Exception)
                                     {
                                         if (m_trustSignatureFailures.Contains(connection.RemoteMachineName) || ApplicationContext.Current.Confirm(Strings.err_signature_failed_ignore))
                                         {
@@ -229,19 +227,19 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
                                     {
                                         payload.Write(stream, this.m_signingSerivce);
                                     }
-                                    catch(Exception e)
+                                    catch (Exception e)
                                     {
                                         this.m_tracer.TraceWarning("Could not send response back {0}", e);
                                     }
                                 }
-                            }   
+                            }
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Fatal Error in Bluetooth Receiver: {0}", e);
-                
+
             }
         }
 
@@ -257,7 +255,8 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
             {
                 this.m_tracer.TraceInfo("Starting Bluetooth Client...");
                 this.m_client = new BluetoothClient();
-                this.m_listener = new BluetoothListener(SERVICE_ID) {
+                this.m_listener = new BluetoothListener(SERVICE_ID)
+                {
                     ServiceName = "SanteDB Peer-to-Peer Receiver"
                 };
                 this.m_listener.Start();

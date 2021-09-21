@@ -16,32 +16,28 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Security;
+using SanteDB.BI.Model;
+using SanteDB.BI.Services;
+using SanteDB.Core;
 using SanteDB.Core.Auditing;
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Jobs;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Map;
-using SanteDB.Core.Security.Services;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Query;
+using SanteDB.DisconnectedClient.SQLite.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite.Security.Audit.Model;
+using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using SQLite.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using SanteDB.Core.Model.Query;
-using SanteDB.Core.Security.Audit;
-using SanteDB.Core;
-using SanteDB.BI.Services;
-using SanteDB.BI.Model;
-using SanteDB.DisconnectedClient.SQLite;
-using SanteDB.DisconnectedClient.SQLite.Warehouse;
-using SanteDB.Core.Model;
-using SanteDB.Core.Jobs;
-using SanteDB.DisconnectedClient.SQLite.Security.Audit;
 
 namespace SanteDB.DisconnectedClient.Security.Audit
 {
@@ -353,11 +349,11 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                             var roleCode = this.GetOrCreateAuditCode(conn, act.ActorRoleCode.FirstOrDefault());
 
                             DbAuditActor dbAct = null;
-                            if(roleCode != null)
+                            if (roleCode != null)
                                 dbAct = conn.Table<DbAuditActor>().Where(o => o.UserName == act.UserName && o.ActorRoleCode == roleCode.Id).FirstOrDefault();
-                            else 
+                            else
                                 dbAct = conn.Table<DbAuditActor>().Where(o => o.UserName == act.UserName && o.ActorRoleCode == null).FirstOrDefault();
-                            
+
                             if (dbAct == null)
                             {
                                 dbAct = this.m_mapper.MapModelInstance<AuditActorData, DbAuditActor>(act);

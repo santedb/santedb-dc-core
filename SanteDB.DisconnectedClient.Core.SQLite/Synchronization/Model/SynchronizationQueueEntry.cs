@@ -18,7 +18,6 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Synchronization;
 using SQLite.Net.Attributes;
 using System;
@@ -118,7 +117,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization.Model
         /// Gets or sets the actual data object
         /// </summary>
         [XmlIgnore, JsonIgnore, Ignore]
-        public IdentifiedData Data {
+        public IdentifiedData Data
+        {
             get
             {
                 if (this.m_transientData == null)

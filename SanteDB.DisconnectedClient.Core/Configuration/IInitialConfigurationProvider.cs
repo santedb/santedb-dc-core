@@ -25,7 +25,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public interface IInitialConfigurationProvider
     {
-	    /// <summary>
+        /// <summary>
         /// Provide additional settings
         /// </summary>
         SanteDBConfiguration Provide(SanteDBConfiguration existing);

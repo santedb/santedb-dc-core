@@ -25,7 +25,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class InvalidVersionException : Exception
     {
-	    public InvalidVersionException(Version expected, Version actual) : base($"Invalid version. Found {actual} but expected {expected}")
+        public InvalidVersionException(Version expected, Version actual) : base($"Invalid version. Found {actual} but expected {expected}")
         {
 
         }

@@ -23,34 +23,31 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security.Audit;
-using SanteDB.Core.Services;
+using SanteDB.Core.Security.Privacy;
 using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Ags;
-using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Backup;
 using SanteDB.DisconnectedClient.Caching;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Security.Remote;
-using SanteDB.DisconnectedClient.Security.Session;
-using SanteDB.DisconnectedClient.Services.Local;
-using SanteDB.DisconnectedClient.Synchronization;
-using SanteDB.DisconnectedClient.Tickler;
-using SanteDB.DisconnectedClient.Backup;
 using SanteDB.DisconnectedClient.Diagnostics;
 using SanteDB.DisconnectedClient.Http;
 using SanteDB.DisconnectedClient.Net;
 using SanteDB.DisconnectedClient.Rules;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Security.Remote;
+using SanteDB.DisconnectedClient.Security.Session;
 using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Services.Local;
+using SanteDB.DisconnectedClient.Synchronization;
+using SanteDB.DisconnectedClient.Tickler;
+using SanteDB.DisconnectedClient.UI.Services;
 using SharpCompress.Compressors.BZip2;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Diagnostics;
-using SanteDB.DisconnectedClient.UI.Services;
-using System.Threading;
-using SanteDB.Core.Security.Privacy;
 
 namespace SanteDB.DisconnectedClient.UI
 
@@ -157,7 +154,7 @@ namespace SanteDB.DisconnectedClient.UI
         {
             // TODO: Bring up initial settings dialog and utility
             var retVal = new SanteDBConfiguration();
-            
+
             // Initial Applet configuration
             AppletConfigurationSection appletSection = new AppletConfigurationSection()
             {
@@ -315,7 +312,7 @@ namespace SanteDB.DisconnectedClient.UI
                     {
                         return a.ExportedTypes;
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         return Type.EmptyTypes;
                     }
@@ -398,7 +395,7 @@ namespace SanteDB.DisconnectedClient.UI
                 using (var lzs = new BZip2Stream(File.Create(Path.ChangeExtension(this.m_configPath, "bak.bz2")), SharpCompress.Compressors.CompressionMode.Compress, false))
                     configuration.Save(lzs);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 File.Delete(Path.ChangeExtension(this.m_configPath, "bak.bz2"));
                 throw new InvalidOperationException($"Could not backup to {Path.ChangeExtension(this.m_configPath, "bak.bz2")}", e);

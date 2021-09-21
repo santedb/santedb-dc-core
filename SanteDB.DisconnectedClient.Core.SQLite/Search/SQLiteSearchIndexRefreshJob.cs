@@ -23,14 +23,10 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.SQLite.Search.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Search
 {
@@ -129,8 +125,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                 var patientService = ApplicationServiceContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
                 Guid queryId = Guid.NewGuid();
                 var since = parameters?.FirstOrDefault() as DateTime? ?? this.LastFinished ?? new DateTime(1970, 01, 01);
-
-                int n = 0;
 
                 while (tr > ofs + 50 && !this.m_cancelRequested)
                 {

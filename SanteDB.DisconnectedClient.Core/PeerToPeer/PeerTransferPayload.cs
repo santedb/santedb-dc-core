@@ -17,13 +17,11 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json;
-using SanteDB.Core;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SharpCompress.Compressors.Deflate;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -94,14 +92,14 @@ namespace SanteDB.DisconnectedClient.PeerToPeer
         /// </summary>
         public void Write(Stream s, IDataSigningService signingProvider)
         {
-            
+
             // Header
             byte[] header = new byte[7];
             Array.Copy(MAGIC_HEADER, header, 5);
             header[5] = VERSION_ID;
             header[6] = (byte)this.Encoding;
             s.Write(header, 0, 7);
-            
+
             var jwsHeader = new
             {
                 alg = signingProvider.GetSignatureAlgorithm(),
@@ -145,7 +143,7 @@ namespace SanteDB.DisconnectedClient.PeerToPeer
             // Read the rest of the stream 
             if (retVal.Encoding.HasFlag(PeerTransferEncodingFlags.Compressed))
                 s = new GZipStream(s, SharpCompress.Compressors.CompressionMode.Decompress);
-            
+
             using (var sr = new StreamReader(s))
             {
                 var data = sr.ReadToEnd();
@@ -170,11 +168,11 @@ namespace SanteDB.DisconnectedClient.PeerToPeer
                 var type = new ModelSerializationBinder().BindToType(null, header.typ.ToString().Substring(10));
                 var algorithm = header.alg.ToString();
                 String keyId = header.key.ToString();
-                
+
                 // Validate the signature if we have the key
                 if (validateSignature)
                 {
-                  
+
                     // We have the key?
                     if (!signingProvider.GetKeys().Any(k => k == keyId))
                     {
@@ -192,7 +190,7 @@ namespace SanteDB.DisconnectedClient.PeerToPeer
 
                 retVal.Payload = JsonConvert.DeserializeObject(System.Text.Encoding.UTF8.GetString(bodyBytes), type);
                 // Return the result
-                return retVal ;
+                return retVal;
             }
         }
     }

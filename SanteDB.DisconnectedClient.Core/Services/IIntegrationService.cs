@@ -42,7 +42,7 @@ namespace SanteDB.DisconnectedClient.Services
             this.SubmittedData = submitted;
             this.ResponseData = result;
         }
-        
+
         /// <summary>
         /// The data that was submitted to the server
         /// </summary>

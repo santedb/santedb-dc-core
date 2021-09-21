@@ -23,12 +23,12 @@ using System;
 
 namespace SanteDB.DisconnectedClient.Interop
 {
-	/// <summary>
-	/// Configuration sections
-	/// </summary>
-	public static class ConfigurationExtensions
+    /// <summary>
+    /// Configuration sections
+    /// </summary>
+    public static class ConfigurationExtensions
     {
-	    /// <summary>
+        /// <summary>
         /// Gets the rest client.
         /// </summary>
         /// <returns>The rest client.</returns>
@@ -40,14 +40,14 @@ namespace SanteDB.DisconnectedClient.Interop
             var description = me.Configuration.GetServiceDescription(clientName);
             if (description == null)
             {
-	            return null;
+                return null;
             }
 
             var client = Activator.CreateInstance(configSection.RestClientType, description) as IRestClient;
             return client;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the service description.
         /// </summary>
         /// <returns>The service description.</returns>

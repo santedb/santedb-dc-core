@@ -21,22 +21,20 @@ using RestSrvr.Attributes;
 using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
-using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Data;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Services;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -95,10 +93,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     foreach (var apl in appletService.Applets)
                     {
                         sw.WriteLine("// \t {0}", apl.Info.Id);
-                        foreach(var ast in apl.Assets)
+                        foreach (var ast in apl.Assets)
                         {
                             var cont = ast.Content ?? appletService.Applets.Resolver?.Invoke(ast);
-                            if(cont is AppletAssetHtml html && html.ViewState != null)
+                            if (cont is AppletAssetHtml html && html.ViewState != null)
                                 sw.WriteLine("// \t\t {0}", html.ViewState?.Name);
                         }
                     }
@@ -131,7 +129,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 var dynScripts = appletService.Applets.GetLazyScripts(itm);
                                 if (dynScripts.Any())
                                 {
-                                    int i = 0;
                                     sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, relativeAsset: itm)}'"))}  ]");
                                 }
                                 sw.WriteLine(" }, ");
@@ -285,6 +282,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-       
+
     }
 }

@@ -18,11 +18,8 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -45,9 +42,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (referenceTerm.DisplayNames != null)
             {
                 base.UpdateAssociatedItems<ReferenceTermName, ReferenceTerm>(
-                    new List<ReferenceTermName>(), 
-                    referenceTerm.DisplayNames, 
-                    data.Key, 
+                    new List<ReferenceTermName>(),
+                    referenceTerm.DisplayNames,
+                    data.Key,
                     context);
             }
 
@@ -70,9 +67,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (referenceTerm.DisplayNames != null)
             {
                 base.UpdateAssociatedItems<ReferenceTermName, ReferenceTerm>(
-                    context.Connection.Table<DbReferenceTermName>().Where(o => o.ReferenceTermUuid == uuid).ToList().Select(o => m_mapper.MapDomainInstance<DbReferenceTermName, ReferenceTermName>(o)).ToList(), 
-                    referenceTerm.DisplayNames, 
-                    data.Key, 
+                    context.Connection.Table<DbReferenceTermName>().Where(o => o.ReferenceTermUuid == uuid).ToList().Select(o => m_mapper.MapDomainInstance<DbReferenceTermName, ReferenceTermName>(o)).ToList(),
+                    referenceTerm.DisplayNames,
+                    data.Key,
                     context);
             }
 

@@ -18,10 +18,19 @@
  */
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SanteDB.BI.Services.Impl;
+using SanteDB.Core;
+using SanteDB.Core.Auditing;
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.Http.Description;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Jobs;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
@@ -29,52 +38,37 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.Data;
+using SanteDB.DisconnectedClient.Diagnostics;
+using SanteDB.DisconnectedClient.Http;
+using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Interop;
 using SanteDB.DisconnectedClient.Interop.AMI;
 using SanteDB.DisconnectedClient.Interop.HDSI;
 using SanteDB.DisconnectedClient.Mail;
 using SanteDB.DisconnectedClient.Security;
-using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Security.Audit;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Services.Local;
 using SanteDB.DisconnectedClient.Services.Remote;
 using SanteDB.DisconnectedClient.Synchronization;
-using SanteDB.DisconnectedClient.Tickler;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Data;
-using SanteDB.DisconnectedClient.Diagnostics;
-using SanteDB.DisconnectedClient.Http;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.AMI.Client;
+using SanteDB.Messaging.HDSI.Client;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Security.Permissions;
 using System.Text;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Security.Services;
-using SanteDB.Core.Data;
-using SanteDB.Core;
-using SanteDB.BI.Services.Impl;
-using SanteDB.Core.Model;
-using SanteDB.DisconnectedClient.Security.Audit;
-using SanteDB.Core.Auditing;
-using SanteDB.DisconnectedClient.Ags.Configuration;
-using SanteDB.Core.Jobs;
-using SanteDB.Messaging.HDSI.Client;
-using System.Net;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Security.Configuration;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
@@ -108,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 if (svc == null) throw new InvalidOperationException("Cannot find configuration push service");
                 return svc.Configure(new Uri(model.RemoteUri), model.UserName, model.Password, model.Parameters).Select(o => o.ToString()).ToList();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error sending configuration details to {0} - {1}", model.RemoteUri, e);
                 throw new Exception($"Failed to push relevant configuration details to {model.RemoteUri}", e);
@@ -281,7 +275,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
 
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret = Encoding.ASCII.GetString(pcharArray);
-                                
+
                 // Create the necessary device user
                 try
                 {
@@ -528,7 +522,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 this.m_tracer.TraceError("Error joining context: {0}", e);
                 throw new Exception($"Error Joining Domain - {e.Message}", e);
             }
-            catch (WebException e) 
+            catch (WebException e)
             {
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Domain = null;
@@ -664,7 +658,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         if (configuration.Security.Facilities?.Count > 0 || configuration.Security.Owners?.Count > 0)
                         {
                             var deviceEntity = ApplicationServiceContext.Current.GetService<IRepositoryService<DeviceEntity>>().Find(o => o.SecurityDevice.Name == ApplicationContext.Current.Device.Name, 0, 1, out int t).FirstOrDefault();
-                            if(deviceEntity != null)
+                            if (deviceEntity != null)
                             {
                                 deviceEntity.Relationships.RemoveAll(r => r.RelationshipTypeKey == EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation || r.RelationshipTypeKey == EntityRelationshipTypeKeys.AssignedEntity);
                                 deviceEntity.Relationships.AddRange(configuration.Security.Facilities?.Select(o => new EntityRelationship(EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation, o)) ?? new EntityRelationship[0]);
@@ -866,8 +860,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             if (configuration.Security.RestrictLoginToFacilityUsers)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().RestrictLoginToFacilityUsers = true;
-            if(configuration.Security.Facilities?.Count > 0)
-                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities= configuration.Security.Facilities;
+            if (configuration.Security.Facilities?.Count > 0)
+                ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Facilities = configuration.Security.Facilities;
             if (configuration.Security.Owners?.Count > 0)
                 ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().Owners = configuration.Security.Owners;
 
@@ -877,7 +871,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             if (configuration.Security.SigningKeys?.Count > 0)
             {
                 var keyCollection = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>()?.SigningKeys ?? new List<SecuritySignatureConfiguration>();
-                foreach(var itm in configuration.Security.SigningKeys)
+                foreach (var itm in configuration.Security.SigningKeys)
                 {
                     var existing = keyCollection.RemoveAll(o => o.KeyName == itm.KeyName);
                     keyCollection.Add(itm);
@@ -915,13 +909,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             this.m_tracer.TraceInfo("Setting additional application settings...");
 
-            if(configuration.Application.AppSettings != null)
+            if (configuration.Application.AppSettings != null)
                 foreach (var i in configuration.Application.AppSettings)
                     ApplicationContext.Current.ConfigurationManager.SetAppSetting(i.Key, i.Value);
 
             // Other sections
             this.m_tracer.TraceInfo("Setting other settings...");
-            if(configuration.OtherSections != null)
+            if (configuration.OtherSections != null)
                 foreach (var oth in configuration.OtherSections)
                 {
                     if (ApplicationContext.Current.ConfigurationManager.Configuration.GetSection(oth.GetType()) != null)
@@ -932,14 +926,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             // Re-binding of AGS endpoints?
             var overrideBinding = configuration.Application.AppSettings.Find(o => o.Key == "http.bindAddress");
-            if(ApplicationServiceContext.Current.HostType == SanteDBHostType.Gateway && !String.IsNullOrEmpty(overrideBinding?.Value))
+            if (ApplicationServiceContext.Current.HostType == SanteDBHostType.Gateway && !String.IsNullOrEmpty(overrideBinding?.Value))
             {
                 var currentAgs = ApplicationContext.Current.Configuration.GetSection<AgsConfigurationSection>();
                 foreach (var svc in currentAgs.Services)
-                    foreach(var ep in svc.Endpoints)
+                    foreach (var ep in svc.Endpoints)
                     {
                         var caddr = new Uri(ep.Address);
-                        ep.Address = new Uri($"{caddr.Scheme}://{overrideBinding.Value}{caddr.AbsolutePath}").ToString() ;
+                        ep.Address = new Uri($"{caddr.Scheme}://{overrideBinding.Value}{caddr.AbsolutePath}").ToString();
                     }
 
             }
@@ -961,7 +955,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 return configService.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.Where(s => keyRegex.IsMatch(s.Key)).ToList();
             }
-            else 
+            else
             {
                 throw new NotImplementedException("IUserPreferenceManager not found");
             }
@@ -977,7 +971,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var configService = ApplicationServiceContext.Current.GetService<IConfigurationManager>();
             if ("global".Equals(scope, StringComparison.OrdinalIgnoreCase))
             {
-                foreach(var s in settings)
+                foreach (var s in settings)
                     configService.SetAppSetting(s.Key, s.Value);
                 return new ConfigurationViewModel(configService.Configuration);
             }

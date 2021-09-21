@@ -21,8 +21,6 @@ using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
@@ -58,7 +56,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                     db.MigrateTable<DbUserEntity>();
                 }
             }
-            catch(Exception e)
+            catch (Exception)
             {
                 tracer.TraceWarning("Could not apply migration to strip required from user entity uuid");
             }

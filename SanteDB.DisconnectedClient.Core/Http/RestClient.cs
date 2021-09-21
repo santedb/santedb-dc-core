@@ -20,7 +20,6 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Security;
@@ -32,7 +31,6 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -316,7 +314,7 @@ namespace SanteDB.DisconnectedClient.Http
                 sw.Start();
 #endif
                 // Get request object
-               
+
                 // Body was provided?
                 try
                 {
@@ -507,19 +505,19 @@ namespace SanteDB.DisconnectedClient.Http
                         //responseTask.Dispose();
                     }
                 }
-                
+
                 catch (TimeoutException e)
                 {
                     this.m_tracer.TraceError("Request timed out:{0}", e.Message);
                     throw;
                 }
-                catch(WebException e) when (e.Response is HttpWebResponse errorResponse && errorResponse.StatusCode == HttpStatusCode.NotModified)
+                catch (WebException e) when (e.Response is HttpWebResponse errorResponse && errorResponse.StatusCode == HttpStatusCode.NotModified)
                 {
                     this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
                     responseHeaders = errorResponse?.Headers;
                     return default(TResult);
                 }
-                catch(WebException e) when (e.Response is HttpWebResponse errorResponse && e.Status == WebExceptionStatus.ProtocolError)
+                catch (WebException e) when (e.Response is HttpWebResponse errorResponse && e.Status == WebExceptionStatus.ProtocolError)
                 {
                     this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
                     // Deserialize
@@ -593,7 +591,7 @@ namespace SanteDB.DisconnectedClient.Http
                     this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
                     throw new TimeoutException($"Timeout executing REST operation {method} {url}", e);
                 }
-                catch(WebException e) when (e.Status == WebExceptionStatus.ConnectFailure)
+                catch (WebException e) when (e.Status == WebExceptionStatus.ConnectFailure)
                 {
                     this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
                     if ((e.InnerException as SocketException)?.SocketErrorCode == SocketError.TimedOut)
@@ -601,7 +599,7 @@ namespace SanteDB.DisconnectedClient.Http
                     else
                         throw;
                 }
-                catch(WebException e)
+                catch (WebException e)
                 {
                     this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
                     throw;

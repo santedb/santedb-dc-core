@@ -21,8 +21,12 @@ using RestSrvr.Attributes;
 using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Contracts;
-using SanteDB.DisconnectedClient;
+using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Behaviors;
 using System;
@@ -30,12 +34,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
-using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.Ags.Behaviors;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -65,7 +63,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public Stream GetIcon()
         {
-            
+
             var ms = new MemoryStream();
             typeof(WwwServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.icon.ico").CopyTo(ms);
             ms.Seek(0, SeekOrigin.Begin);
@@ -92,11 +90,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 var etag = $"{ApplicationContext.Current.ExecutionUuid}.{lang}.{sessionId}";
 
-                if(RestOperationContext.Current.IncomingRequest.Headers["If-None-Match"] == etag)
+                if (RestOperationContext.Current.IncomingRequest.Headers["If-None-Match"] == etag)
                 {
                     RestOperationContext.Current.OutgoingResponse.StatusCode = 304; /// not modified
                     return null;
-                }    
+                }
 
                 // Navigate asset
                 AppletAsset navigateAsset = null;
@@ -132,7 +130,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 }
 
-                
+
                 RestOperationContext.Current.OutgoingResponse.AddHeader("ETag", etag);
                 RestOperationContext.Current.OutgoingResponse.ContentType = navigateAsset.MimeType;
 
@@ -150,7 +148,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             });
                 return new MemoryStream(content);
             }
-            catch(RemoteOperationException ex) // The page demanded something upstream but the upstream service isn't responding
+            catch (RemoteOperationException ex) // The page demanded something upstream but the upstream service isn't responding
             {
                 throw new DomainStateException($"The remote server is currently unavailable", ex);
             }

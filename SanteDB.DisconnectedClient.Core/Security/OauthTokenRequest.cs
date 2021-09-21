@@ -210,7 +210,7 @@ namespace SanteDB.DisconnectedClient.Security
     public class OAuthResetTokenRequest : OAuthTokenRequest
     {
 
-        
+
         /// <summary>
         /// Create a new oauth reset token request
         /// </summary>

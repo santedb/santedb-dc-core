@@ -24,8 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -54,13 +52,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                var retVal = client.Client.Get<AssigningAuthority>($"AssigningAuthority/{key}");
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not retrieve authority", e);
-            }
+                    var retVal = client.Client.Get<AssigningAuthority>($"AssigningAuthority/{key}");
+                    return retVal;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not retrieve authority", e);
+                }
         }
 
         /// <summary>
@@ -77,12 +75,12 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                return client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AssigningAuthority>();
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not query assigning authorities", e);
-            }
+                    return client.Query(query, offset, count, out totalResults, orderBy: orderBy).CollectionItem.OfType<AssigningAuthority>();
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not query assigning authorities", e);
+                }
         }
 
         /// <summary>
@@ -93,13 +91,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                var retVal = client.CreateAssigningAuthority(data);
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create application", e);
-            }
+                    var retVal = client.CreateAssigningAuthority(data);
+                    return retVal;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create application", e);
+                }
         }
 
         /// <summary>
@@ -110,13 +108,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                var retVal = client.UpdateAssigningAuthority(data.Key.Value, data);
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not create authority", e);
-            }
+                    var retVal = client.UpdateAssigningAuthority(data.Key.Value, data);
+                    return retVal;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not create authority", e);
+                }
         }
 
         /// <summary>
@@ -128,13 +126,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                var retVal = client.DeleteAssigningAuthority(key);
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                throw new DataPersistenceException("Could not delete authority", e);
-            }
+                    var retVal = client.DeleteAssigningAuthority(key);
+                    return retVal;
+                }
+                catch (Exception e)
+                {
+                    throw new DataPersistenceException("Could not delete authority", e);
+                }
         }
     }
 }

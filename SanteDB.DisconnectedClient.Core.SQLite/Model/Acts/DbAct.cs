@@ -16,10 +16,10 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SQLite.Net.Attributes;
 using System;
 

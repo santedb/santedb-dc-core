@@ -16,32 +16,30 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
-using SanteDB.DisconnectedClient;
+using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Security.Audit;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Services;
 using SharpCompress.Readers.Tar;
 using SharpCompress.Writers.Tar;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security;
+using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
-using SanteDB.Core.Services;
-using SanteDB.Core;
-using SanteDB.Core.Jobs;
-using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Security;
 
 namespace SanteDB.DisconnectedClient.Backup
 {
@@ -132,11 +130,11 @@ namespace SanteDB.DisconnectedClient.Backup
 
             // Backup
             foreach (var itm in Directory.GetDirectories(dir))
-                if (Path.GetFileName(itm).Equals("backup", StringComparison.OrdinalIgnoreCase) || 
+                if (Path.GetFileName(itm).Equals("backup", StringComparison.OrdinalIgnoreCase) ||
                     Path.GetFileName(itm).Equals("restore", StringComparison.OrdinalIgnoreCase))
                     this.m_tracer.TraceWarning("Skipping {0} ", itm);
                 else
-                     this.BackupDirectory(archive, itm, rootDirectory);
+                    this.BackupDirectory(archive, itm, rootDirectory);
 
             // Add files
             foreach (var itm in Directory.GetFiles(dir))
@@ -221,14 +219,15 @@ namespace SanteDB.DisconnectedClient.Backup
 
                         // Now include the configuration file
                         // HACK: This is a total hack to support restore in place
-                        if(!String.IsNullOrEmpty(password))
-                            using (var ms = new MemoryStream()) {
+                        if (!String.IsNullOrEmpty(password))
+                            using (var ms = new MemoryStream())
+                            {
                                 ApplicationServiceContext.Current.GetService<IConfigurationManager>().Configuration.Save(ms);
                                 ms.Seek(0, SeekOrigin.Begin);
                                 var config = SanteDBConfiguration.Load(ms); /// Load a new copy off the stream
                                 // Set the security system not to encrypt the device secret
                                 config.GetSection<SecurityConfigurationSection>().PlainTextSecret = true;
-                                using(var oms = new MemoryStream())
+                                using (var oms = new MemoryStream())
                                 {
                                     config.Save(oms);
                                     oms.Flush();
@@ -262,7 +261,7 @@ namespace SanteDB.DisconnectedClient.Backup
                                 cryptProvider.GenerateIV();
                                 fileStream.Write(BitConverter.GetBytes(cryptProvider.IV.Length), 0, 4);
                                 fileStream.Write(cryptProvider.IV, 0, cryptProvider.IV.Length);
-                                outStream = new CryptoStream(fileStream, cryptProvider.CreateEncryptor() , CryptoStreamMode.Write);
+                                outStream = new CryptoStream(fileStream, cryptProvider.CreateEncryptor(), CryptoStreamMode.Write);
                             }
                             else
                                 fileStream.WriteByte(0);
@@ -432,7 +431,7 @@ namespace SanteDB.DisconnectedClient.Backup
 
 
             var delayStartType = ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem == OperatingSystemID.Android ? JobStartType.Never : JobStartType.DelayStart;
-            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>()?.AddJob(new DefaultBackupJob(), new TimeSpan(12,0,0), delayStartType);
+            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>()?.AddJob(new DefaultBackupJob(), new TimeSpan(12, 0, 0), delayStartType);
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -480,7 +479,7 @@ namespace SanteDB.DisconnectedClient.Backup
                 {
                     File.Delete(expectedFile);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     this.m_tracer.TraceError("Error removing backup descriptor {0}", backupDescriptor);
                     throw new Exception($"Error removing backup descriptor {backupDescriptor}");

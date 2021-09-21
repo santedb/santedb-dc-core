@@ -16,20 +16,24 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core;
+using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Synchronization.Model;
+using SanteDB.DisconnectedClient.Synchronization;
 using SharpCompress.Compressors.Deflate;
 using System;
 using System.Collections.Generic;
@@ -40,12 +44,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using SanteDB.Core;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Auditing;
 
 namespace SanteDB.DisconnectedClient.SQLite.Synchronization
 {
@@ -222,7 +220,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                                     AuditUtil.AuditSynchronization(AuditableObjectLifecycle.Import, remote, OutcomeIndicator.MinorFail, dpe);
 
                                 }
-                                catch (Exception e2)
+                                catch (Exception)
                                 {
                                     this.m_tracer.TraceEvent(System.Diagnostics.Tracing.EventLevel.Critical, "Error putting dead item on deadletter queue: {0}", e);
                                     throw;
@@ -322,7 +320,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Synchronization
                         var we = ie as WebException;
                         if (we.Status == WebExceptionStatus.ConnectFailure)
                             continue;
-                        else if (we?.Response == null )
+                        else if (we?.Response == null)
                         {
                             SynchronizationQueue.DeadLetter.EnqueueRaw(new DeadLetterQueueEntry(syncItm, Encoding.UTF8.GetBytes(ex.ToString())));
                             SynchronizationQueue.Admin.DequeueRaw(); // Get rid of the last item

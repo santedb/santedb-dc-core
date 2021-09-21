@@ -25,37 +25,37 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public interface IConfigurationPersister
     {
-	    /// <summary>
+        /// <summary>
         /// Application data directory
         /// </summary>
         string ApplicationDataDirectory { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Returns true if SanteDB is configured
         /// </summary>
         bool IsConfigured { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Backs up the configuration
         /// </summary>
         void Backup(SanteDBConfiguration configuration);
 
-	    /// <summary>
+        /// <summary>
         /// Has a backup?
         /// </summary>
         bool HasBackup();
 
-	    /// <summary>
+        /// <summary>
         /// Load the configuration
         /// </summary>
         SanteDBConfiguration Load();
 
-	    /// <summary>
+        /// <summary>
         /// Restore a backup
         /// </summary>
         SanteDBConfiguration Restore();
 
-	    /// <summary>
+        /// <summary>
         /// Save the configuration to the default location
         /// </summary>
         void Save(SanteDBConfiguration configuration);

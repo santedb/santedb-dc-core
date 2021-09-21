@@ -17,21 +17,15 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core;
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.SQLite.Mail.Hacks
 {
@@ -43,7 +37,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail.Hacks
 
         public bool HackQuery(QueryBuilder builder, SqlStatement sqlStatement, SqlStatement whereClause, Type tmodel, PropertyInfo property, string queryPrefix, QueryPredicate predicate, object values, IEnumerable<TableMapping> scopedTables)
         {
-            if(property.Name == "RcptTo" && property.PropertyType.StripGeneric() == typeof(SecurityUser))
+            if (property.Name == "RcptTo" && property.PropertyType.StripGeneric() == typeof(SecurityUser))
             {
                 if (predicate.SubPath == "userName")
                 {
@@ -52,7 +46,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail.Hacks
 
                     var lValues = values as IList;
                     var secRepo = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-                    Guid[] vals = lValues.OfType<String>().Select(u=>secRepo.GetUser(u)?.Key).OfType<Guid>().ToArray();
+                    Guid[] vals = lValues.OfType<String>().Select(u => secRepo.GetUser(u)?.Key).OfType<Guid>().ToArray();
                     whereClause.And($"rcptTo IN ({String.Join(",", vals.Select(o => $"X'{BitConverter.ToString(((Guid)o).ToByteArray()).Replace("-", "")}'").ToArray())})");
                     return true;
                 }

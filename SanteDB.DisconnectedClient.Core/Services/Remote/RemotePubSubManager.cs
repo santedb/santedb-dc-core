@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -79,13 +78,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             try
             {
                 var sub = this.GetSubscription(key);
-                using(var client = this.GetRestClient())
+                using (var client = this.GetRestClient())
                 {
                     sub.IsActive = isActive;
                     return client.Put<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}", client.Accept, sub);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error activating subscription {0} - {1}", key, e);
                 throw new Exception($"Error activating {key}", e);
@@ -267,7 +266,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     {
                         ChannelKey = channelId,
                         Description = description,
-                        Event=events,
+                        Event = events,
                         Filter = new List<string>() { hdsiFilter },
                         Name = name,
                         NotAfter = notAfter,
@@ -325,7 +324,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Update channel
         /// </summary>
-        
+
         public PubSubChannelDefinition UpdateChannel(Guid key, string name, Uri endpoint, IDictionary<string, string> settings)
         {
             try

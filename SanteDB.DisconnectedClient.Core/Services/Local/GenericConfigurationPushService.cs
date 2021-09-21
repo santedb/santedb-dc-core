@@ -20,10 +20,8 @@ using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Services.Local
 {
@@ -53,7 +51,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
                 this.m_tracer.TraceVerbose("Will attempt to push configuration to {0} (package: {1})...", targetUri, target);
                 return target.PushConfiguration(targetUri, userName, password, configuration);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error configuring {0} - {1}", targetUri, e);
                 throw new Exception($"Error configuring target {targetUri}", e);
@@ -68,11 +66,11 @@ namespace SanteDB.DisconnectedClient.Services.Local
         {
             if (targetUri == null) throw new ArgumentNullException("Invalid target URI");
 
-            if(this.m_configurationTargets == null)
+            if (this.m_configurationTargets == null)
                 this.m_configurationTargets = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
                     .Where(o => typeof(IConfigurationTarget).IsAssignableFrom(o) && !o.IsAbstract && !o.IsInterface)
                     .Select(c => Activator.CreateInstance(c) as IConfigurationTarget)
-                    .ToDictionary(o => o.Invariant, o=>o);
+                    .ToDictionary(o => o.Invariant, o => o);
 
             if (this.m_configurationTargets.TryGetValue(targetUri.Scheme, out IConfigurationTarget target))
                 return target;

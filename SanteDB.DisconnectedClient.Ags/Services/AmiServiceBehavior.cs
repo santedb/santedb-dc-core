@@ -20,29 +20,22 @@ using RestSrvr;
 using RestSrvr.Exceptions;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Interop;
-using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Configuration;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.AMI.Wcf;
 using SanteDB.Rest.AMI;
-using SanteDB.Rest.AMI.Resources;
 using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Attributes;
 using System;
@@ -52,7 +45,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Linq.Expressions;
-using SanteDB.Core.Exceptions;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -114,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             FileDescription = "Configuration file",
                             FileName = "SanteDB.config.gz",
                             Id = "config",
-                            ContentType= "application/x-gzip"
+                            ContentType = "application/x-gzip"
                         });
                     }
                 }

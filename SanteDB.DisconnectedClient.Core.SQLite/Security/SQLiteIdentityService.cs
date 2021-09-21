@@ -16,36 +16,29 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core;
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Security.Audit;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Tickler;
+using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Security;
+using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using SanteDB.DisconnectedClient.Tickler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
-using SanteDB.Core.Security.Services;
-using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core;
-using SanteDB.Core.Security.Principal;
-using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.Core.Security;
-using SanteDB.Core.BusinessRules;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -134,7 +127,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                         dbs.LastLoginTime = DateTime.Now;
                         dbs.InvalidLoginAttempts = 0;
                         connection.Update(dbs);
-                        
+
                         var roles = connection.Query<DbSecurityRole>("SELECT security_role.* FROM security_user_role INNER JOIN security_role ON (security_role.uuid = security_user_role.role_id) WHERE lower(security_user_role.user_id) = lower(?)",
                             dbs.Uuid).Select(o => o.Name).ToArray();
 
@@ -298,7 +291,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
             try
             {
-                
+
                 var conn = this.CreateConnection();
                 IPasswordHashingService hash = ApplicationContext.Current.GetService<IPasswordHashingService>();
 
@@ -319,7 +312,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 }
                 return new SQLiteIdentity(securityUser.UserName, false);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException($"Error creating {securityUser}", e);
             }
@@ -337,7 +330,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
 
             try
             {
-               
+
                 var conn = this.CreateConnection();
                 using (conn.Lock())
                 {
@@ -349,7 +342,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                     conn.Update(dbs);
                 }
             }
-            catch(Exception e)
+            catch (Exception)
             {
                 this.m_tracer.TraceError("Unable to obsolete user {0} with principal {1}", userName, principal);
             }

@@ -21,6 +21,9 @@ using RestSrvr;
 using RestSrvr.Attributes;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Http;
+using SanteDB.Core.Model;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
@@ -28,11 +31,7 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
 using SanteDB.DisconnectedClient.Ags.Contracts;
 using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Security.Audit;
-using SanteDB.DisconnectedClient.Security.Session;
-using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Collections.Generic;
@@ -43,12 +42,6 @@ using System.Net;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
-using System.Threading;
-using SanteDB.Core.Model;
-using SanteDB.Core.Security;
-using SanteDB.Core.Http;
-using SanteDB.Core.Exceptions;
-using SanteDB.DisconnectedClient.Configuration;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {

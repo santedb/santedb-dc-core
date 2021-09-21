@@ -18,7 +18,6 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using System;
 using System.Collections;

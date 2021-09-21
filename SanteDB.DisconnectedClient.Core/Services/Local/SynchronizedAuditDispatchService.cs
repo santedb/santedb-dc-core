@@ -19,16 +19,10 @@
 using SanteDB.Core;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Security;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
@@ -231,16 +225,17 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                 this.LastStarted = DateTime.Now;
 
                 AuditSubmission submission = new AuditSubmission(); // To reduce size only submit 2 at a time
-                while(this.m_auditQueue.TryDequeue(out AuditData data)) {
+                while (this.m_auditQueue.TryDequeue(out AuditData data))
+                {
                     submission.Audit.Add(data); // Add to submission
-                    if(submission.Audit.Count == 3)
+                    if (submission.Audit.Count == 3)
                     {
                         ApplicationServiceContext.Current.GetService<IQueueManagerService>().Admin.Enqueue(submission, SynchronizationOperationType.Insert);
                         submission = new AuditSubmission();
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error running audit dispatch: {0}", ex);
                 this.CurrentState = JobStateType.Aborted;
@@ -250,7 +245,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                 this.LastFinished = DateTime.Now;
             }
 
-            
+
         }
 
         /// <summary>

@@ -18,19 +18,16 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
@@ -38,8 +35,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -194,7 +189,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 var pep = ApplicationContext.Current.GetService<IPolicyEnforcementService>();
                 if (pep == null)
                     throw new InvalidOperationException("Cannot find the PolicyEnforcementService");
-                if (deviceName != principal.Identity.Name) 
+                if (deviceName != principal.Identity.Name)
                     pep.Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, principal);
                 var conn = this.CreateConnection();
                 using (conn.Lock())
@@ -223,7 +218,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
                 throw;
             }
         }
-        
+
         /// <summary>
         /// Create the identity
         /// </summary>
@@ -265,15 +260,15 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 var conn = this.CreateConnection();
-                using(conn.Lock())
+                using (conn.Lock())
                 {
                     var dbd = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == name).FirstOrDefault();
-                    if(dbd != null)
+                    if (dbd != null)
                         return new SQLiteDeviceIdentity(name, false);
                     return null;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error retrieving identity {0} : {1}", name, e);
                 throw;
@@ -288,7 +283,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             try
             {
                 var conn = this.CreateConnection();
-                using(conn.Lock())
+                using (conn.Lock())
                 {
                     var dbi = conn.Table<DbSecurityDevice>().Where(o => o.PublicId == name).FirstOrDefault();
                     if (dbi == null)

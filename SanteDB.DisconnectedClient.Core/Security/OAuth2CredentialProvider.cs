@@ -18,7 +18,6 @@
  */
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
-using SanteDB.DisconnectedClient;
 using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Security

@@ -18,14 +18,10 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Serialization;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Xml.Serialization;

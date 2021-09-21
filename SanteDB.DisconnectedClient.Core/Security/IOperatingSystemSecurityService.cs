@@ -16,12 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Security
 {

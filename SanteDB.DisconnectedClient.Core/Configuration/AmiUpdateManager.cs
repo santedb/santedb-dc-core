@@ -16,13 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Principal;
 using SanteDB.Core;
-using SanteDB.Core.Security;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
@@ -38,6 +32,11 @@ using SanteDB.DisconnectedClient.Interop;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Tickler;
 using SanteDB.Messaging.AMI.Client;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -310,7 +309,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         {
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
             // TODO: Clean this up - Login as device account
-            if (this.m_cachedCredential == null || 
+            if (this.m_cachedCredential == null ||
                 !this.m_cachedCredential.Identity.IsAuthenticated ||
                 ((this.m_cachedCredential as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
             {

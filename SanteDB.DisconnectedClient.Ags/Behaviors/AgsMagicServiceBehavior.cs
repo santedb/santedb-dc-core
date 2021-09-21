@@ -20,8 +20,6 @@ using RestSrvr;
 using RestSrvr.Exceptions;
 using RestSrvr.Message;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SharpCompress.Compressors.Deflate;
 using System;
 using System.IO;

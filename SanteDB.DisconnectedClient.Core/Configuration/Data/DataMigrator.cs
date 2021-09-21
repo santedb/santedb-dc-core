@@ -16,14 +16,14 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.i18n;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace SanteDB.DisconnectedClient.Configuration.Data
 {
@@ -32,13 +32,13 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// </summary>
     public class ConfigurationMigrator
     {
-	    // Migrations
-	    private readonly List<IConfigurationMigration> m_migrations;
+        // Migrations
+        private readonly List<IConfigurationMigration> m_migrations;
 
-	    // Tracer
-	    private readonly Tracer m_tracer;
+        // Tracer
+        private readonly Tracer m_tracer;
 
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.Data.DataMigrator"/> class.
         /// </summary>
         /// <param name="configuration">Configuration.</param>
@@ -56,36 +56,36 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
                     ?.Select(o => o?.Type?.GetTypeInfo().Assembly).OfType<Assembly>().Distinct().SelectMany(a => a?.DefinedTypes).ToArray();
                 if (migrations != null)
                 {
-	                foreach (var dbm in migrations)
-	                {
-		                try
-		                {
-			                if (dbm.AsType() == typeof(ConfigurationMigrator) ||
-			                    !typeof(IConfigurationMigration).GetTypeInfo().IsAssignableFrom(dbm))
-			                {
-				                continue;
-			                }
+                    foreach (var dbm in migrations)
+                    {
+                        try
+                        {
+                            if (dbm.AsType() == typeof(ConfigurationMigrator) ||
+                                !typeof(IConfigurationMigration).GetTypeInfo().IsAssignableFrom(dbm))
+                            {
+                                continue;
+                            }
 
-			                var migration = Activator.CreateInstance(dbm.AsType()) as IConfigurationMigration;
-			                if (migration != null)
-			                {
-				                this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
-				                this.m_migrations.Add(migration);
-			                }
-		                }
-		                catch
-		                {
-		                }
-	                }
+                            var migration = Activator.CreateInstance(dbm.AsType()) as IConfigurationMigration;
+                            if (migration != null)
+                            {
+                                this.m_tracer.TraceVerbose("Found data migrator {0}...", migration.Id);
+                                this.m_migrations.Add(migration);
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Won't load migrations: {0}", e);
             }
         }
 
-	    /// <summary>
+        /// <summary>
         /// Assert that all data migrations have occurred
         /// </summary>
         public void Ensure(bool includeDataMigrations)
@@ -106,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
 
                     ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Add(new DataMigrationLog.DataMigrationEntry(m));
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     this.m_tracer.TraceError("Error running migration {0} - {1}", m.Id, e);
                     throw new ConfigurationMigrationException(m, e);
@@ -115,7 +115,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
 
         }
 
-	    /// <summary>
+        /// <summary>
         /// Get the list of data migrations that need to occur for the application to be in the most recent state
         /// </summary>
         /// <returns>The proposal.</returns>
@@ -128,14 +128,14 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             {
                 if (itm is IDataMigration && !includeDataMigrations)
                 {
-	                continue;
+                    continue;
                 }
 
                 var migrationLog = ApplicationContext.Current?.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Find(o => o.Id == itm.Id);
                 this.m_tracer.TraceVerbose("Migration {0} ... {1}", itm.Id, migrationLog == null ? "Install" : "Skip - Installed on " + migrationLog.Date);
                 if (migrationLog == null)
                 {
-	                retVal.Add(itm);
+                    retVal.Add(itm);
                 }
             }
             return retVal;

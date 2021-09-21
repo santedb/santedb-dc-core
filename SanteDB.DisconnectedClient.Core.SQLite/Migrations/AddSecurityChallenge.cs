@@ -17,7 +17,6 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.Security;
@@ -25,8 +24,6 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Security;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {

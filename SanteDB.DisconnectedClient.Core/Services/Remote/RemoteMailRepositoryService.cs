@@ -103,7 +103,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public MailMessage Obsolete(Guid key)
         {
-            
+
             var message = this.Get(key);
             message.Flags = MailMessageFlags.Archived;
             using (var client = this.GetClient())

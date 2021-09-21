@@ -16,8 +16,8 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
 using SanteDB.DisconnectedClient.Configuration.Data;
+using System;
 
 namespace SanteDB.DisconnectedClient.Exceptions
 {
@@ -26,14 +26,14 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class ConfigurationMigrationException : Exception
     {
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.ConfigurationMigrationException"/> class.
         /// </summary>
         public ConfigurationMigrationException(IConfigurationMigration offender) : this(offender, null)
         {
         }
 
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Exceptions.ConfigurationMigrationException"/> class.
         /// </summary>
         public ConfigurationMigrationException(IConfigurationMigration offender, Exception inner) : base(string.Format("Migration of {0} failed", offender.Id), inner)
@@ -41,14 +41,14 @@ namespace SanteDB.DisconnectedClient.Exceptions
             this.MigrationId = offender.Id;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the migration id
         /// </summary>
         /// <value>The migration identifier.</value>
         public string MigrationId
         {
             get;
-	    }
+        }
     }
 }
 

@@ -22,14 +22,10 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.AMI;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Jobs;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -146,7 +142,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         using (var client = RemoteJobManager.GetRestClient())
                         {
                             var ji = new JobInfo(this);
-                            if(ji.Parameters != null)
+                            if (ji.Parameters != null)
                                 for (int i = 0; i < ji.Parameters.Count; i++)
                                     ji.Parameters[i].Value = parameters[i];
                             client.Put<JobInfo, JobInfo>($"JobInfo/{this.Key}", client.Accept, ji);
@@ -182,7 +178,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 try
                 {
-                    using(var client = GetRestClient())
+                    using (var client = GetRestClient())
                         return client.Get<AmiCollection>("JobInfo").CollectionItem.OfType<JobInfo>().Select(o => new RemoteJob(o)).ToList();
                 }
                 catch (Exception e)
@@ -241,7 +237,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public bool IsJobRegistered(Type jobType)
         {
-            return this.Jobs.OfType<RemoteJob>().Any( o=> o.JobType == jobType);
+            return this.Jobs.OfType<RemoteJob>().Any(o => o.JobType == jobType);
         }
 
         /// <summary>
@@ -271,7 +267,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public void StartJob(Type job, object[] parameters)
         {
             var jobInfo = this.Jobs.OfType<RemoteJob>().FirstOrDefault(o => o.JobType == job);
-            if(jobInfo != null)
+            if (jobInfo != null)
                 jobInfo.Run(this, EventArgs.Empty, parameters);
         }
         /// <summary>

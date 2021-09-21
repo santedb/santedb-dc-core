@@ -16,15 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core;
-using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Services.Local
 {

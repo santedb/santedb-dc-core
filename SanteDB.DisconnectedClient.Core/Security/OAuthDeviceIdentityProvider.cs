@@ -24,12 +24,10 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Linq;
 using System.Security;
@@ -98,9 +96,6 @@ namespace SanteDB.DisconnectedClient.Security
                 this.m_tracer.TraceWarning("Pre-Event ordered cancel of auth {0}", deviceId);
                 return e.Principal;
             }
-
-            // Get the scope being requested
-            String scope = "*";
 
             // Authenticate
             IPrincipal retVal = null;
@@ -235,9 +230,6 @@ namespace SanteDB.DisconnectedClient.Security
                 {
                     IClaimsPrincipal cprincipal = principal as IClaimsPrincipal;
                     var amiPip = new AmiPolicyInformationService();
-
-                    // Local device
-                    int tr = 0;
 
                     IIdentity localDeviceIdentity = null;
                     lock (this.m_lockObject)

@@ -19,8 +19,6 @@
 using RestSrvr.Attributes;
 using SanteDB.DisconnectedClient.Ags.Model;
 using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Security.Session;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Fault;
 using System;
 using System.Collections.Specialized;
@@ -39,7 +37,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         /// </summary>
         [Post("oauth2_token"), ServiceConsumes("application/x-www-form-urlencoded"), ServiceProduces("application/json")]
         OAuthTokenResponse AuthenticateOAuth(NameValueCollection request);
-        
+
         /// <summary>
         /// Get the session
         /// </summary>

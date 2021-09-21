@@ -16,14 +16,11 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.SQLite.Model.Entities;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -225,7 +222,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         Uuid = retVal.ValueUuid,
                         Value = modelInstance.Value
                         //PhoneticAlgorithmUuid = (phoneticCoder?.AlgorithmId ?? PhoneticAlgorithmKeys.None).ToByteArray(),
-                       // PhoneticCode = phoneticCoder?.GenerateCode(modelInstance.Value)
+                        // PhoneticCode = phoneticCoder?.GenerateCode(modelInstance.Value)
                     });
                 }
 

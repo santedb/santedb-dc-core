@@ -16,11 +16,8 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using System;
@@ -28,8 +25,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Security
 {
@@ -44,7 +39,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// Keys for the signing of data
         /// </summary>
         private ConcurrentDictionary<String, SecuritySignatureConfiguration> m_keyData = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
-        
+
         /// <summary>
         /// Gets the service name
         /// </summary>

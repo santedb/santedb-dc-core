@@ -19,7 +19,6 @@
 using SanteDB.Core.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
@@ -211,7 +210,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                         PolicyId = itm.PolicyKey.Value.ToByteArray()
                     });
             }
-              
+
 
             return retVal;
         }

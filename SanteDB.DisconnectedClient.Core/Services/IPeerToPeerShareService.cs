@@ -20,7 +20,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Services
 {
@@ -107,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Services
         /// <summary>
         /// Peer to peer data event args
         /// </summary>
-        public PeerToPeerDataEventArgs(String recipient, bool isReceiving, IdentifiedData resource) : base (recipient, isReceiving)
+        public PeerToPeerDataEventArgs(String recipient, bool isReceiving, IdentifiedData resource) : base(recipient, isReceiving)
         {
             this.Resource = resource;
         }
@@ -115,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Services
         /// <summary>
         /// Gets the object that was sent
         /// </summary>
-        IdentifiedData Resource { get; set; } 
+        IdentifiedData Resource { get; set; }
 
     }
 }

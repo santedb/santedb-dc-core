@@ -17,31 +17,23 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Search.Model;
+using SanteDB.Matcher.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using SanteDB.Matcher.Configuration;
-using System.IO;
-using System.Reflection;
-using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.DisconnectedClient.SQLite.Search
 {
@@ -122,7 +114,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     bool hasSoundex = false, hasSpellFix = false;
 
                     try
-                    { 
+                    {
                         // This section is for Android because its SQLite implementation doesn't like this function
                         hasSoundex = conn.ExecuteScalar<Int32>("select sqlite_compileoption_used('SQLITE_SOUNDEX');") == 1;
                         if (conn.ExecuteScalar<Int32>("SELECT sqlite_compileoption_used('SQLITE_ENABLE_LOAD_EXTENSION')") == 1)
@@ -150,22 +142,22 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     }
                     catch { }
 
-                    foreach (var tkn in tokens.SelectMany(t=>t.Split(' ')))
+                    foreach (var tkn in tokens.SelectMany(t => t.Split(' ')))
                     {
                         queryBuilder.AppendFormat("SELECT {0}.entity FROM {0} INNER JOIN {1} ON ({0}.term = {1}.key) WHERE ",
                                 conn.GetMapping<Model.SearchTermEntity>().TableName,
                                 conn.GetMapping<Model.SearchTerm>().TableName,
                                 typeof(TEntity).FullName);
-                        
+
                         if (approxConfig != null)
                         {
                             queryBuilder.Append("(");
-                            foreach(var alg in approxConfig.ApproxSearchOptions.Where(o=>o.Enabled))
+                            foreach (var alg in approxConfig.ApproxSearchOptions.Where(o => o.Enabled))
                             {
                                 if (alg is ApproxPatternOption pattern)
                                     queryBuilder.AppendFormat("{0}.term LIKE '{1}' OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''").Replace("*", "%"));
                                 else if (alg is ApproxPhoneticOption phonetic && hasSoundex &&
-                                    tkn.Count(c=> c >= '0' && c <= '9') < tkn.Length / 2)
+                                    tkn.Count(c => c >= '0' && c <= '9') < tkn.Length / 2)
                                     queryBuilder.AppendFormat("SOUNDEX({0}.term) = SOUNDEX('{1}') OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''"));
                                 else if (alg is ApproxDifferenceOption difference && hasSpellFix)
                                     queryBuilder.AppendFormat("(length({0}.term) > {2} * 2 and editdist3(trim(lower({0}.term)), trim(lower('{1}'))) <= {2}) OR ", conn.GetMapping<Model.SearchTerm>().TableName, tkn.Replace("'", "''"), difference.MaxDifference);
@@ -183,7 +175,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                     queryBuilder.Remove(queryBuilder.Length - 11, 11);
                     queryBuilder.Append(")");
-                    
+
                     // Search now!
                     this.m_tracer.TraceVerbose("FREETEXT SEARCH: {0}", queryBuilder);
 
@@ -196,10 +188,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                     var retVal = results.Skip(offset).Take(count ?? 100).AsParallel().AsOrdered().Select(o => persistence.Get(new Guid(o.Key), null, false, AuthenticationContext.Current.Principal)).OfType<TEntity>().ToList();
 
                     // Sorting (well as best we can for FTS)
-                    if(orderBy.Length > 0)
+                    if (orderBy.Length > 0)
                     {
                         var order = orderBy.First();
-                        if(order.SortOrder == SanteDB.Core.Model.Map.SortOrderType.OrderBy)
+                        if (order.SortOrder == SanteDB.Core.Model.Map.SortOrderType.OrderBy)
                             return retVal.OrderBy(order.SortProperty.Compile());
                         else
                             return retVal.OrderByDescending(order.SortProperty.Compile());
@@ -246,9 +238,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         else if (e.LoadCollection<EntityTag>("Tags").Any(t => t.TagKey == "isAnonymous")) // Anonymous?
                             continue;
 
-                        var tokens = (e.Names ?? new List<EntityName>()).SelectMany(o => o.Component.SelectMany(c => c.Value.Split(' ')).Select(c=>c.Trim().ToLower()))
+                        var tokens = (e.Names ?? new List<EntityName>()).SelectMany(o => o.Component.SelectMany(c => c.Value.Split(' ')).Select(c => c.Trim().ToLower()))
                         .Union((e.Identifiers ?? new List<EntityIdentifier>()).Select(o => o.Value.ToLower()))
-                        .Union((e.Addresses ?? new List<EntityAddress>()).SelectMany(o => o.Component.Select(c => c.Value.Trim().ToLower()).Where(c=>c.Length > 2)))
+                        .Union((e.Addresses ?? new List<EntityAddress>()).SelectMany(o => o.Component.Select(c => c.Value.Trim().ToLower()).Where(c => c.Length > 2)))
                         .Union((e.Telecoms ?? new List<EntityTelecomAddress>()).Select(o => o.Value.ToLower()))
                         .Union((e.Relationships ?? new List<EntityRelationship>()).Where(o => o.TargetEntity is Person).SelectMany(o => (o.TargetEntity.Names ?? new List<EntityName>()).SelectMany(n => n.Component?.Select(c => c.Value?.Trim().ToLower()))))
                         .Union((e.Relationships ?? new List<EntityRelationship>()).Where(o => o.TargetEntity is Person).SelectMany(o => (o.TargetEntity.Telecoms ?? new List<EntityTelecomAddress>()).Select(c => c.Value?.Trim().ToLower())))
@@ -275,7 +267,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         }
 
                         this.m_tracer.TraceInfo("Indexed {0}", e);
-                        
+
                     }
 
                     // Now commit
@@ -368,7 +360,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                         bundlePersistence.Inserted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(doBundleIndex, e.Data);
                         bundlePersistence.Updated += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(doBundleIndex, e.Data);
-                        bundlePersistence.Obsoleted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((data) => {
+                        bundlePersistence.Obsoleted += (o, e) => ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((data) =>
+                        {
                             foreach (var itm in (data as Bundle).Item.OfType<Patient>())
                                 this.DeleteEntity(itm);
                         }, e.Data);
@@ -398,6 +391,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
             return true;
         }
 
-      
+
     }
 }

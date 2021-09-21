@@ -19,7 +19,6 @@
 using SanteDB.Core.Services;
 using System;
 using System.Collections;
-using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.SQLite
 {
@@ -28,7 +27,7 @@ namespace SanteDB.DisconnectedClient.SQLite
     /// </summary>
     public interface ISQLitePersistenceService : IDataPersistenceService
     {
-        
+
         /// <summary>
         /// Inserts the specified object
         /// </summary>

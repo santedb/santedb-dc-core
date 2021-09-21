@@ -19,7 +19,6 @@
 using Newtonsoft.Json;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Http;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -34,7 +33,6 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Collections.Concurrent;
@@ -43,7 +41,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
-using System.Security.Principal;
 using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
@@ -178,7 +175,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         retVal.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
                     }
                 }
-                catch(Exception e)
+                catch (Exception)
                 {
                     this.m_tracer.TraceWarning("Cannot map local template keys");
                 }
@@ -211,7 +208,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         private static HdsiServiceClient GetClient()
         {
             var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-            
+
             var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
             var rmtPrincipal = ApplicationServiceContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(rmtPrincipal);
@@ -223,7 +220,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         internal static Guid? GetTemplate(string mnemonic)
         {
-            if(!s_templateKeys.TryGetValue(mnemonic, out Guid retVal))
+            if (!s_templateKeys.TryGetValue(mnemonic, out Guid retVal))
             {
                 // Get client for device user
                 using (var client = GetClient())
@@ -311,7 +308,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         private void HarmonizeTemplateId(IHasTemplate template)
         {
-            if(template.Template != null && 
+            if (template.Template != null &&
                 !template.TemplateKey.HasValue)
             {
                 // Lookup 

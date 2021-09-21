@@ -16,26 +16,23 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using RestSrvr;
+using SanteDB.Core;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Patch;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
+using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.i18n;
+using SanteDB.DisconnectedClient.Services;
+using SanteDB.DisconnectedClient.Synchronization;
+using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.DisconnectedClient.Synchronization;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Patch;
-using SanteDB.Core;
-using SanteDB.DisconnectedClient.Services;
-using RestSrvr;
-using SanteDB.Rest.Common.Attributes;
-using SanteDB.Core.Security;
-using SanteDB.Core.Services;
-using SanteDB.Core.Exceptions;
-using SanteDB.DisconnectedClient.i18n;
 using System.Threading;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.Core.Model.Query;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -88,11 +85,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public List<ISynchronizationQueueEntry> GetQueue(String queueName)
         {
             var queueManager = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
-            int offset = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_offset"] ?? "0"), 
-				count = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_count"] ?? "100"),
-				total = 0;
-			
-			switch(queueName.ToLower())
+            int offset = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_offset"] ?? "0"),
+                count = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_count"] ?? "100"),
+                total = 0;
+
+            switch (queueName.ToLower())
             {
                 case "admin":
                     return queueManager.Admin.GetAll(offset, count, out total).ToList();
@@ -114,7 +111,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public void ResetRetry()
         {
             var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
-            foreach(var itm in logSvc.GetAll().ToArray())
+            foreach (var itm in logSvc.GetAll().ToArray())
             {
                 logSvc.Delete(itm);
             }
@@ -129,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
             foreach (var itm in logSvc.GetAll().ToArray())
             {
-                if(itm.ResourceType == resourceType)
+                if (itm.ResourceType == resourceType)
                     logSvc.Delete(itm);
             }
         }
@@ -158,10 +155,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
         }
 
-		/// <summary>
+        /// <summary>
         /// Get the queue data
         /// </summary>
-		private IdentifiedData GetQueueData(ISynchronizationQueueEntry queueEntry)
+        private IdentifiedData GetQueueData(ISynchronizationQueueEntry queueEntry)
         {
             var queueData = ApplicationServiceContext.Current.GetService<IQueueFileProvider>().GetQueueData(queueEntry?.DataFileKey, Type.GetType(queueEntry.Type));
             if (queueData == null)
@@ -219,7 +216,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var queueVersion = this.GetQueueData(queueData);
             if (queueVersion == null)
                 throw new KeyNotFoundException($"error.queudata.notfound.{queueData.DataFileKey}");
-            
+
             // Data type
             var idb = typeof(IReadOnlyCollection<>).MakeGenericType(Type.GetType(queueData.Type));
             var persistenceService = ApplicationServiceContext.Current.GetService(idb);
@@ -250,7 +247,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
             var qmgr = ApplicationServiceContext.Current.GetService<IQueueManagerService>();
             // determine queue and remove
-            switch(queueName.ToLower())
+            switch (queueName.ToLower())
             {
                 case "admin":
                     qmgr.Admin.Delete(id);
@@ -317,7 +314,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 try
                 {
                     ApplicationContext.Current.SetProgress(String.Format(Strings.locale_downloading, ""), 0);
-                    var targets =ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().SynchronizationResources.Where(o => o.Triggers.HasFlag(SynchronizationPullTriggerType.Always) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnNetworkChange) || o.Triggers.HasFlag(SynchronizationPullTriggerType.PeriodicPoll) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnStart)).ToList();
+                    var targets = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().SynchronizationResources.Where(o => o.Triggers.HasFlag(SynchronizationPullTriggerType.Always) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnNetworkChange) || o.Triggers.HasFlag(SynchronizationPullTriggerType.PeriodicPoll) || o.Triggers.HasFlag(SynchronizationPullTriggerType.OnStart)).ToList();
                     for (var i = 0; i < targets.Count(); i++)
                     {
                         var itm = targets[i];

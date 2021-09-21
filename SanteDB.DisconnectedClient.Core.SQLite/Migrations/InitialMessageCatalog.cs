@@ -17,9 +17,6 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Mail;

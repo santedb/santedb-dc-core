@@ -16,12 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-using SanteDB.DisconnectedClient.SQLite.Connection;
 using SQLite.Net;
+using System;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
 {
@@ -48,7 +45,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions
             String op = match.Groups[1].Value, value = match.Groups[2].Value;
             if (String.IsNullOrEmpty(op)) op = "=";
 
-            if (parms.Length == 1 ) // There is a threshold
+            if (parms.Length == 1) // There is a threshold
                 return current.Append($"soundex({filterColumn}) {op} soundex(?)", QueryBuilder.CreateParameterValue(parms[0], operandType));
             else
                 return current.Append($"soundex({filterColumn}) {op} soundex(?)", QueryBuilder.CreateParameterValue(value, operandType));

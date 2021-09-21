@@ -18,9 +18,7 @@
  */
 using SanteDB.Core.Http;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {

@@ -26,12 +26,10 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Exceptions;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
@@ -117,7 +115,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
             // Fire pre event
             var preEvtArgs = new QueryRequestEventArgs<TEntity>(query, offset, count, queryId, AuthenticationContext.Current.Principal, orderBy);
             this.Querying?.Invoke(this, preEvtArgs);
-            if(preEvtArgs.Cancel)
+            if (preEvtArgs.Cancel)
             {
                 this.m_traceSource.TraceWarning("Pre-query event indicates cancel");
                 totalResults = preEvtArgs.TotalResults;
@@ -126,7 +124,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
             var businessRulesService = ApplicationContext.Current.GetService<IBusinessRulesService<TEntity>>();
             IEnumerable<TEntity> results = null;
-            if(persistenceService is IStoredQueryDataPersistenceService<TEntity>)
+            if (persistenceService is IStoredQueryDataPersistenceService<TEntity>)
                 results = (persistenceService as IStoredQueryDataPersistenceService<TEntity>).Query(query, queryId, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
             else
                 results = persistenceService.Query(query, offset, count, out totalResults, AuthenticationContext.Current.Principal, orderBy);
@@ -154,7 +152,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
             var preEvent = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             this.Inserting?.Invoke(this, preEvent);
-            if(preEvent.Cancel)
+            if (preEvent.Cancel)
             {
                 this.m_traceSource.TraceWarning("Pre-persistence event indicates cancel");
                 return preEvent.Data;
@@ -234,7 +232,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
 
             var preEventArg = new DataRetrievingEventArgs<TEntity>(key, versionKey, AuthenticationContext.Current.Principal);
             this.Retrieving?.Invoke(this, preEventArg);
-            if(preEventArg.Cancel)
+            if (preEventArg.Cancel)
             {
                 this.m_traceSource.TraceWarning("Pre-retrieve event indicates cancel");
                 return preEventArg.Result;
@@ -328,7 +326,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
                     data = businessRulesService?.AfterUpdate(data) ?? data;
                     this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
-                
+
                 return data;
             }
             catch (KeyNotFoundException)

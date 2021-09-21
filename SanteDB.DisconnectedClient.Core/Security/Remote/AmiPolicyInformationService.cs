@@ -23,13 +23,9 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Services.Remote;
-using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +46,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// Get the service name
         /// </summary>
         public String ServiceName => "AMI Remote Policy Information Service";
-                
+
         /// <summary>
         /// Remote policies only
         /// </summary>
@@ -59,7 +55,7 @@ namespace SanteDB.DisconnectedClient.Security
 
         }
 
-     
+
         /// <summary>
         /// Note supported
         /// </summary>
@@ -77,7 +73,7 @@ namespace SanteDB.DisconnectedClient.Security
                         });
                     }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new RemoteOperationException($"Error attaching policy {String.Join(";", policyOids)} to {securable}", e);
             }
@@ -88,13 +84,13 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public void RemovePolicies(object securable, IPrincipal principal, params string[] policyOids)
         {
-            
+
             using (var client = this.GetClient())
                 foreach (var itm in policyOids)
-            {
-                var pol = this.GetPolicy(itm);
-                client.Client.Delete<object>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy/{pol.Key}");
-            }
+                {
+                    var pol = this.GetPolicy(itm);
+                    client.Client.Delete<object>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy/{pol.Key}");
+                }
         }
 
         /// <summary>
@@ -117,9 +113,9 @@ namespace SanteDB.DisconnectedClient.Security
                         string name = (securable as SecurityRole).Name;
                         var remoteRole = client.FindRole(o => o.Name == name).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
                         // Remote role doesn't exist
-                        if(remoteRole == null)
+                        if (remoteRole == null)
                             return new List<IPolicyInstance>();
-                        else 
+                        else
                             return remoteRole.Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Policy.Key.Value, o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
 
                     }
@@ -146,7 +142,7 @@ namespace SanteDB.DisconnectedClient.Security
                         return new List<IPolicyInstance>();
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new RemoteOperationException($"Error fetching policies from AMI for {securable}", e);
             }
@@ -179,7 +175,7 @@ namespace SanteDB.DisconnectedClient.Security
                 using (var client = this.GetClient())
                     return client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new RemoteOperationException($"Error getting policy information for {policyOid}", e);
             }

@@ -16,13 +16,11 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
 using SanteDB.Core.Diagnostics;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SQLite.Net;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {

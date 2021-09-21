@@ -16,24 +16,23 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
+using SanteDB.Core;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.Acts;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
+using SanteDB.DisconnectedClient.SQLite.Model.Security;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SanteDB.Core;
-using SanteDB.Core.Security.Services;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -328,7 +327,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             if (retVal.Tags != null)
                 base.UpdateAssociatedItems<ActTag, Act>(
                     new List<ActTag>(),
-                    retVal.Tags.Where(o=>!o.TagKey.StartsWith("$")),
+                    retVal.Tags.Where(o => !o.TagKey.StartsWith("$")),
                     retVal.Key,
                     context);
 

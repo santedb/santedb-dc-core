@@ -16,34 +16,12 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.DisconnectedClient.SQLite.Model.Acts;
-using SanteDB.DisconnectedClient.SQLite.Model.Concepts;
-using SanteDB.DisconnectedClient.SQLite.Model.DataType;
-using SanteDB.DisconnectedClient.SQLite.Model.Entities;
-using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
-using SanteDB.DisconnectedClient.SQLite.Model.Roles;
-using SanteDB.DisconnectedClient.SQLite.Model.Security;
 using SanteDB.DisconnectedClient.SQLite.Query.ExtendedFunctions;
-using SanteDB.DisconnectedClient.SQLite.Search;
-using SanteDB.DisconnectedClient.SQLite.Search.Model;
-using SanteDB.DisconnectedClient.SQLite.Security;
-using SanteDB.Matcher.Matchers;
-using SanteDB.Matcher.Services;
 using SQLite.Net;
+using System;
 
 namespace SanteDB.DisconnectedClient.SQLite.Migrations
 {
@@ -101,7 +79,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Migrations
                 db.Execute(@"INSERT INTO __sfEditCost VALUES (0,'?','?', 1);");
                 new LevenshteinFilterFunction().Initialize(db);
             }
-            catch(SQLiteException e) when (e.Message == "table __sfEditCost already exists")
+            catch (SQLiteException e) when (e.Message == "table __sfEditCost already exists")
             {
                 this.m_tracer.TraceWarning("Spellfix already initialized");
 

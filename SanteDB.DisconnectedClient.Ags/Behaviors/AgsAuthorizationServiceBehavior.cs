@@ -20,23 +20,16 @@ using RestSrvr;
 using RestSrvr.Message;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Exceptions;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Exceptions;
 using System;
 using System.Linq;
-using System.Net;
 using System.Security.Principal;
 using System.Text;
-using SanteDB.Core.Model;
-using System.Threading;
-using System.Globalization;
-using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Ags.Behaviors
 {

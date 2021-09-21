@@ -20,7 +20,6 @@ using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -48,7 +47,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query)
         {
-            
+
             int tr = 0;
             return this.Find(query, 0, null, out tr);
         }

@@ -16,8 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Event;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Synchronization;

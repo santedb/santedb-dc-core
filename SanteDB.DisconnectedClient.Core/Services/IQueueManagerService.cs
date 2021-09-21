@@ -16,8 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
@@ -55,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Services
     /// <summary>
     /// Represents a queue manager service
     /// </summary>
-    public interface IQueueManagerService  : IServiceImplementation
+    public interface IQueueManagerService : IServiceImplementation
     {
 
         /// <summary>

@@ -19,7 +19,6 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {

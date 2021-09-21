@@ -17,14 +17,12 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core;
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Model;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using SQLite.Net.Attributes;
 using System;
 using System.Collections;
@@ -33,7 +31,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
@@ -243,7 +240,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
             }
 
-            
+
 
             m_tracer.TraceVerbose("Built Query: {0}", queryStatement.SQL);
 
@@ -498,7 +495,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             sw.Start();
             this.m_tracer.TraceVerbose("EXECUTE: {0}", sb);
             foreach (var v in vals)
-                this.m_tracer.TraceVerbose(" --> {0}", v is byte[] ? BitConverter.ToString(v as Byte[]).Replace("-", "") : v);
+                this.m_tracer.TraceVerbose(" --> {0}", v is byte[]? BitConverter.ToString(v as Byte[]).Replace("-", "") : v);
 #endif
 
             // First get total results before we reduce the result-set size
@@ -544,7 +541,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                     return this.CacheConvert(context.Connection.Table<TDomain>().Where(o => o.Uuid == kuuid).FirstOrDefault(), context);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             }

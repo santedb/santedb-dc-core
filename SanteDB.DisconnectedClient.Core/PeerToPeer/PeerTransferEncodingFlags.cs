@@ -17,8 +17,6 @@
  * Date: 2021-2-9
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.PeerToPeer
 {
@@ -32,6 +30,6 @@ namespace SanteDB.DisconnectedClient.PeerToPeer
         /// When enabled indicates the payload is compressed
         /// </summary>
         Compressed = 0x01
-       
+
     }
 }

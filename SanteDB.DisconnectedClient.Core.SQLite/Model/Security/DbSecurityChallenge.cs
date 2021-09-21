@@ -18,8 +18,6 @@
  */
 using SQLite.Net.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Model.Security
 {
@@ -29,7 +27,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Model.Security
     [Table("security_challenge")]
     public class DbSecurityChallenge : DbBaseData
     {
-        
+
         /// <summary>
         /// Gets or sets the challenge text
         /// </summary>

@@ -18,16 +18,12 @@
  */
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Configuration;
-using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Ags.Util;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.UI.Services;
 using System;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -39,7 +35,7 @@ namespace SanteDB.DisconnectedClient.UI
     /// </summary>
     public class DcAppletManagerService : LocalAppletManagerService
     {
-        
+
         /// <summary>
         /// Default ctor
         /// </summary>

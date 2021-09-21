@@ -16,7 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using System;

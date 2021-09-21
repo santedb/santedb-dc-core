@@ -16,12 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using Newtonsoft.Json.Linq;
-using RestSrvr;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
@@ -29,17 +26,12 @@ using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Interop;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Exceptions;
+using SanteDB.DisconnectedClient.Interop;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Linq;
-using System.Net;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
@@ -469,7 +461,7 @@ namespace SanteDB.DisconnectedClient.Security
 
                         // Change locally
                         var userInfo = localIdp?.GetIdentity(userName);
-                        if(userInfo != null)
+                        if (userInfo != null)
                             localIdp?.ChangePassword(userName, newPassword, principal);
 
                         // Audit - Local IDP has alerted this already
@@ -588,8 +580,8 @@ namespace SanteDB.DisconnectedClient.Security
                             restClient.Requesting += (o, p) =>
                             {
 
-                            // Add device credential
-                            if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
+                                // Add device credential
+                                if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
                                     p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
 
                                 if (!String.IsNullOrEmpty(tfaSecret))

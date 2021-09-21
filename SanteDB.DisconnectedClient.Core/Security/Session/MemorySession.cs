@@ -20,10 +20,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Security.Session
 {
@@ -47,13 +44,13 @@ namespace SanteDB.DisconnectedClient.Security.Session
             this.NotAfter = notAfter;
             this.RefreshToken = refreshToken;
             this.Principal = principal;
-            
+
         }
 
         /// <summary>
         /// Get the refresh token
         /// </summary>
-        internal String RefreshTokenString => BitConverter.ToString(this.RefreshToken).Replace("-", ""); 
+        internal String RefreshTokenString => BitConverter.ToString(this.RefreshToken).Replace("-", "");
 
         /// <summary>
         /// Gets the identifier of the session

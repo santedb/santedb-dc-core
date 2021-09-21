@@ -525,7 +525,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Query
             var tableMap = TableMapping.Get(typeof(T));
             return this.Append(new SqlStatement<T>($"UPDATE {tableMap.TableName} SET "));
         }
-        
+
 
     }
 }

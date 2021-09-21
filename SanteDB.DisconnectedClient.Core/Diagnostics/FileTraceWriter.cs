@@ -17,7 +17,6 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.DisconnectedClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -82,19 +81,19 @@ namespace SanteDB.DisconnectedClient.Diagnostics
         /// <param name="args">Arguments.</param>
         protected override void WriteTrace(System.Diagnostics.Tracing.EventLevel level, string source, string format, params object[] args)
         {
-                    try
-                    {
-                        using (TextWriter tw = File.AppendText(this.m_logFile))
-                                tw.WriteLine("{0}@{1} <{2}> [{3:o}]: {4}", source, Thread.CurrentThread.Name, level, DateTime.Now, String.Format(format, args)); // This allows other threads to add to the write queue
-                    }
-                    catch
-                    {
-                        ;
-                    }
-                   
+            try
+            {
+                using (TextWriter tw = File.AppendText(this.m_logFile))
+                    tw.WriteLine("{0}@{1} <{2}> [{3:o}]: {4}", source, Thread.CurrentThread.Name, level, DateTime.Now, String.Format(format, args)); // This allows other threads to add to the write queue
+            }
+            catch
+            {
+                ;
+            }
+
         }
 
-       
+
     }
 }
 

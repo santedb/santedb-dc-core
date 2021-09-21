@@ -19,21 +19,18 @@
 using SanteDB.BI;
 using SanteDB.BI.Model;
 using SanteDB.BI.Services;
-using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Model.Query;
 using SanteDB.DisconnectedClient.Interop;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using System.Reflection;
-using SanteDB.Core.Model.Query;
 using System.Net;
-using System.IO;
+using System.Reflection;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -61,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <returns></returns>
         public IRestClient GetRestClient()
         {
-            var retVal = ApplicationContext.Current.GetRestClient("bis"); 
+            var retVal = ApplicationContext.Current.GetRestClient("bis");
             retVal.Accept = "application/json";
             return retVal;
         }
@@ -77,7 +74,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 using (var client = this.GetRestClient())
                     return client.Get<TBisDefinition>($"{rootAtt.ElementName}/{id}");
             }
-            catch(System.Net.WebException e)
+            catch (System.Net.WebException e)
             {
                 var wr = e.Response as HttpWebResponse;
                 this.m_tracer.TraceWarning("Remote service indicated failure: {0}", e);
@@ -217,9 +214,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 var parmDict = parameters.ToDictionary(o => o.Key, o => o.Value);
 
-                if(!parmDict.ContainsKey("_count"))
+                if (!parmDict.ContainsKey("_count"))
                     parmDict.Add("_count", count);
-                if(!parmDict.ContainsKey("_offset"))
+                if (!parmDict.ContainsKey("_offset"))
                     parmDict.Add("_offset", offset);
 
                 var startTime = DateTime.Now;
@@ -253,9 +250,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public Stream Render(string reportId, string viewName, string formatName, IDictionary<string, object> parameters, out string mimeType)
         {
-            try 
+            try
             {
-                if(!parameters.ContainsKey("_view"))
+                if (!parameters.ContainsKey("_view"))
                     parameters.Add("_view", viewName);
 
                 using (var client = this.GetRestClient())

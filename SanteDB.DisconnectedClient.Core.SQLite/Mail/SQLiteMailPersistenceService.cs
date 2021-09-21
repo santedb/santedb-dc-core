@@ -16,7 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Mail;
@@ -24,13 +23,10 @@ using SanteDB.Core.Model.Map;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Mail.Hacks;
-using SQLite.Net;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -257,7 +253,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mail
                     }
 
                     totalResults = results.Count();
-                   
+
                     return results.Skip(offset).Take(count ?? 100).ToList().Select(o => o.ToAlert());
                 }
             }

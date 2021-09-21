@@ -16,14 +16,14 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Serialization;
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Http;
 using SanteDB.Core.Http.Description;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -31,10 +31,11 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// <summary>
     /// Service client configuration
     /// </summary>
-    [XmlType(nameof(ServiceClientConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")][JsonObject(nameof(ServiceClientConfigurationSection))]
+    [XmlType(nameof(ServiceClientConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    [JsonObject(nameof(ServiceClientConfigurationSection))]
     public class ServiceClientConfigurationSection : IConfigurationSection
     {
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClientConfigurationSection"/> class.
         /// </summary>
         public ServiceClientConfigurationSection()
@@ -42,56 +43,61 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.Client = new List<ServiceClientDescriptionConfiguration>();
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the proxy address.
         /// </summary>
         /// <value>The proxy address.</value>
-        [XmlElement("proxyAddress")][JsonProperty("proxyAddress")]
+        [XmlElement("proxyAddress")]
+        [JsonProperty("proxyAddress")]
         public string ProxyAddress
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Represents a service client
         /// </summary>
         /// <value>The client.</value>
-        [XmlElement("client")][JsonProperty("client")]
+        [XmlElement("client")]
+        [JsonProperty("client")]
         public List<ServiceClientDescriptionConfiguration> Client
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// The optimization
         /// </summary>
-        [XmlIgnore][JsonProperty("optimize")]
+        [XmlIgnore]
+        [JsonProperty("optimize")]
         public OptimizationMethod Optimize { get; set; }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the rest client implementation
         /// </summary>
         /// <value>The type of the rest client.</value>
-        [XmlIgnore][JsonIgnore]
+        [XmlIgnore]
+        [JsonIgnore]
         public Type RestClientType
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the type which is to be used for rest clients
         /// </summary>
         /// <value>The rest client type xml.</value>
-        [XmlAttribute("clientType")][JsonIgnore]
+        [XmlAttribute("clientType")]
+        [JsonIgnore]
         public string RestClientTypeXml
         {
             get => this.RestClientType?.AssemblyQualifiedName;
             set => this.RestClientType = Type.GetType(value);
-	    }
+        }
     }
 
     /// <summary>
@@ -100,7 +106,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(ServiceClientDescriptionConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
     public class ServiceClientDescriptionConfiguration : IRestClientDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClient"/> class.
         /// </summary>
         public ServiceClientDescriptionConfiguration()
@@ -108,7 +114,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.Endpoint = new List<ServiceClientEndpoint>();
         }
 
-	    /// <summary>
+        /// <summary>
         /// The endpoints of the client
         /// </summary>
         /// <value>The endpoint.</value>
@@ -119,7 +125,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the binding for the service client.
         /// </summary>
         /// <value>The binding.</value>
@@ -131,7 +137,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the name of the service client
         /// </summary>
         /// <value>The name.</value>
@@ -142,23 +148,23 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the binding
         /// </summary>
         IRestClientBindingDescription IRestClientDescription.Binding => this.Binding;
 
-	    /// <summary>
+        /// <summary>
         /// Gets the endpoints
         /// </summary>
         List<IRestClientEndpointDescription> IRestClientDescription.Endpoint => this.Endpoint.OfType<IRestClientEndpointDescription>().ToList();
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the trace
         /// </summary>
         [XmlElement("trace")]
         public bool Trace { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Clone the object
         /// </summary>
         public ServiceClientDescriptionConfiguration Clone()
@@ -179,7 +185,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(ServiceClientBinding), Namespace = "http://santedb.org/mobile/configuration")]
     public class ServiceClientBinding : IRestClientBindingDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the <see cref="ServiceClientBinding"/> class.
         /// </summary>
         public ServiceClientBinding()
@@ -187,7 +193,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.ContentTypeMapper = new DefaultContentTypeMapper();
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the type which dictates how a body maps to a 
         /// </summary>
         /// <value>The serialization binder type xml.</value>
@@ -196,9 +202,9 @@ namespace SanteDB.DisconnectedClient.Configuration
         {
             get => this.ContentTypeMapper?.GetType().AssemblyQualifiedName;
             set => this.ContentTypeMapper = Activator.CreateInstance(Type.GetType(value)) as IContentTypeMapper;
-	    }
+        }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the security configuration
         /// </summary>
         /// <value>The security.</value>
@@ -209,7 +215,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets a value indicating whether this <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClientBinding"/>
         /// is optimized
         /// </summary>
@@ -220,14 +226,14 @@ namespace SanteDB.DisconnectedClient.Configuration
             get; set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the optimization method
         /// </summary>
         [XmlElement("method")]
         public OptimizationMethod OptimizationMethod { get; set; }
 
 
-	    /// <summary>
+        /// <summary>
         /// Content type mapper
         /// </summary>
         /// <value>The content type mapper.</value>
@@ -239,7 +245,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets the security description
         /// </summary>
         IRestClientSecurityDescription IRestClientBindingDescription.Security => this.Security;
@@ -269,7 +275,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(ServiceClientSecurity), Namespace = "http://santedb.org/mobile/configuration")]
     public class ServiceClientSecurity : IRestClientSecurityDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the ICertificateValidator interface which should be called to validate 
         /// certificates 
         /// </summary>
@@ -279,10 +285,10 @@ namespace SanteDB.DisconnectedClient.Configuration
         {
             get => this.CertificateValidator?.GetType().AssemblyQualifiedName;
             set => this.CertificateValidator = Activator.CreateInstance(Type.GetType(value)) as ICertificateValidator;
-	    }
+        }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets the thumbprint the device should use for authentication
         /// </summary>
         [XmlElement("certificate")]
@@ -292,7 +298,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the ICredentialProvider
         /// </summary>
         /// <value>The credential provider xml.</value>
@@ -301,9 +307,9 @@ namespace SanteDB.DisconnectedClient.Configuration
         {
             get => this.CredentialProvider?.GetType().AssemblyQualifiedName;
             set => this.CredentialProvider = Activator.CreateInstance(Type.GetType(value)) as ICredentialProvider;
-	    }
+        }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the authentication realm this client should verify
         /// </summary>
         /// <value>The auth realm.</value>
@@ -314,7 +320,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the certificate validator.
         /// </summary>
         /// <value>The certificate validator.</value>
@@ -325,12 +331,12 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets certificate find
         /// </summary>
         IRestClientCertificateDescription IRestClientSecurityDescription.ClientCertificate => this.ClientCertificate;
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the credential provider.
         /// </summary>
         /// <value>The credential provider.</value>
@@ -341,7 +347,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Security mode
         /// </summary>
         /// <value>The mode.</value>
@@ -352,7 +358,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Preemptive authentication
         /// </summary>
         [XmlElement("preAuth")]
@@ -365,7 +371,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(ServiceCertificateConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
     public class ServiceCertificateConfiguration : IRestClientCertificateDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the type of the find.
         /// </summary>
         /// <value>The type of the find.</value>
@@ -376,7 +382,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the find value.
         /// </summary>
         /// <value>The find value.</value>
@@ -387,7 +393,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the store location.
         /// </summary>
         /// <value>The store location.</value>
@@ -398,7 +404,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the name of the store.
         /// </summary>
         /// <value>The name of the store.</value>
@@ -417,7 +423,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     [XmlType(nameof(ServiceClientEndpoint), Namespace = "http://santedb.org/mobile/configuration")]
     public class ServiceClientEndpoint : IRestClientEndpointDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Timeout of 4 sec
         /// </summary>
         public ServiceClientEndpoint()
@@ -425,7 +431,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.Timeout = 30000;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the service client endpoint's address
         /// </summary>
         /// <value>The address.</value>
@@ -436,7 +442,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the timeout
         /// </summary>
         [XmlAttribute("timeout")]

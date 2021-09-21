@@ -17,24 +17,18 @@
  * Date: 2021-2-9
  */
 using RestSrvr;
-using RestSrvr.Attributes;
 using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
-using SanteDB.DisconnectedClient.Ags.Contracts;
-using SanteDB.DisconnectedClient.Ags.Model;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.Data;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using SanteDB.Core.Security.Claims;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -54,16 +48,16 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var queryExpression = QueryExpressionParser.BuildLinqExpression<AppletWidget>(httpq).Compile();
             var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
             var retVal = appletCollection.WidgetAssets
-                .Where(o=>o.Policies?.Any(p=>pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) != SanteDB.Core.Model.Security.PolicyGrantType.Grant) != true)
+                .Where(o => o.Policies?.Any(p => pdp?.GetPolicyOutcome(AuthenticationContext.Current.Principal, p) != SanteDB.Core.Model.Security.PolicyGrantType.Grant) != true)
                 .Select(o => (o.Content ?? appletCollection.Resolver(o)) as AppletWidget)
                 .Where(queryExpression);
 
             // Filter by permission
             // Now order by priority to get most preferred
             return retVal
-                .GroupBy(o=>o.Name)
-                .Select(o=>o.OrderByDescending(w=>w.Priority).First())
-                .OrderBy(w=>w.Order)
+                .GroupBy(o => o.Name)
+                .Select(o => o.OrderByDescending(w => w.Priority).First())
+                .OrderBy(w => w.Order)
                 .ToList();
         }
 
@@ -73,12 +67,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public Stream GetWidget(String widgetId)
         {
             var appletCollection = ApplicationContext.Current.GetService<IAppletManagerService>().Applets;
-            var widget = appletCollection.WidgetAssets.Select(o => new { W = (o.Content ?? appletCollection.Resolver(o)) as AppletWidget, A = o }).Where(o=>o.W.Name == widgetId);
+            var widget = appletCollection.WidgetAssets.Select(o => new { W = (o.Content ?? appletCollection.Resolver(o)) as AppletWidget, A = o }).Where(o => o.W.Name == widgetId);
 
             if (widget.Count() == 0)
                 throw new KeyNotFoundException(widgetId);
             else
-                return new MemoryStream(appletCollection.RenderAssetContent(widget.OrderByDescending(o=>o.W.Priority).First().A, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+                return new MemoryStream(appletCollection.RenderAssetContent(widget.OrderByDescending(o => o.W.Priority).First().A, AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
 
         }
     }

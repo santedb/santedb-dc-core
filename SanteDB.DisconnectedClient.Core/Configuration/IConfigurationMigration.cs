@@ -23,14 +23,14 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// </summary>
     public interface IConfigurationMigration
     {
-	    /// <summary>
+        /// <summary>
         /// A human readable description of the migration
         /// </summary>
         /// <value>The description.</value>
         string Description { get; }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets the identifier of the migration
         /// </summary>
         string Id
@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             get;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Install the migration package
         /// </summary>
         bool Install();
@@ -48,6 +48,6 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     /// A special migration that requires database access
     /// </summary>
     public interface IDataMigration : IConfigurationMigration
-    {}
+    { }
 }
 

@@ -74,7 +74,7 @@ namespace SanteDB.DisconnectedClient.Ags.Contracts
         [Get("/DataProviders")]
         List<StorageProviderViewModel> GetDataStorageProviders();
 
-       
+
         /// <summary>
         /// Get locale assets
         /// </summary>

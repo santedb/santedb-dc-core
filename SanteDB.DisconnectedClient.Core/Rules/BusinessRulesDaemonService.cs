@@ -21,8 +21,6 @@ using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
 using System;
 
 namespace SanteDB.DisconnectedClient.Rules

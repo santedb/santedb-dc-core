@@ -19,18 +19,9 @@
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
-using SanteDB.Core.Security;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient.Security;
-using SanteDB.DisconnectedClient.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Security
 {
@@ -47,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Security
 
         // Trace logging
         private Tracer m_tracer = Tracer.GetTracer(typeof(SystemPolicySynchronizationDaemon));
-       
+
         /// <summary>
         /// True if this service is running
         /// </summary>
@@ -75,7 +66,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public event EventHandler Stopped;
 
-      
+
 
         /// <summary>
         /// Start this service

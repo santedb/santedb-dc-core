@@ -16,13 +16,13 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System.Collections.Generic;
-using System.IO;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using SanteDB.Matcher.Configuration;
 using SanteDB.Matcher.Definition;
 using SanteDB.Matcher.Matchers;
 using SanteDB.Matcher.Services;
+using System.Collections.Generic;
+using System.IO;
 
 namespace SanteDB.DisconnectedClient.Configuration.Migrations
 {
@@ -31,17 +31,17 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
     /// </summary>
     public class MatchConfigurationMigration : IConfigurationMigration
     {
-	    /// <summary>
+        /// <summary>
         /// Description of the matching
         /// </summary>
         public string Description => "Configures the SanteDB configuration to include simple match services";
 
-	    /// <summary>
+        /// <summary>
         /// Gets the id
         /// </summary>
         public string Id => "add-simple-matching-config";
 
-	    /// <summary>
+        /// <summary>
         /// Install the specified extension
         /// </summary>
         public bool Install()
@@ -52,7 +52,8 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
 
             // Setup the match configurations
             var fileConfig = ApplicationContext.Current.Configuration.GetSection<FileMatchConfigurationSection>();
-            if (fileConfig == null) { 
+            if (fileConfig == null)
+            {
                 fileConfig = new FileMatchConfigurationSection
                 {
                     FilePath = new List<FilePathConfiguration>
@@ -69,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
 
             // Setup the approx configuration
             var approxConfig = ApplicationContext.Current.Configuration.GetSection<ApproximateMatchingConfigurationSection>();
-            if(approxConfig == null)
+            if (approxConfig == null)
             {
                 approxConfig = new ApproximateMatchingConfigurationSection
                 {

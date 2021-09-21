@@ -17,11 +17,7 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Model;
@@ -32,13 +28,11 @@ using SanteDB.DisconnectedClient.SQLite.Model.Entities;
 using SanteDB.DisconnectedClient.SQLite.Model.Extensibility;
 using SanteDB.DisconnectedClient.SQLite.Model.Roles;
 using SanteDB.DisconnectedClient.SQLite.Model.Security;
-using SanteDB.DisconnectedClient.SQLite.Security;
 using SQLite.Net;
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using SanteDB.Core.Security.Services;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -158,7 +152,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                     CreatedByKey = Guid.Empty
                 });
 
-                
+
                 tracer.TraceInfo("Installing Entity Tables...");
                 db.CreateTable<DbEntity>();
                 db.CreateTable<DbApplicationEntity>();

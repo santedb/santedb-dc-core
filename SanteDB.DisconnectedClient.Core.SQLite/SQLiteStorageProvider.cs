@@ -20,10 +20,7 @@ using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Mail;
@@ -101,7 +98,7 @@ namespace SanteDB.DisconnectedClient.SQLite
             string dataDirectory = options["DataDirectory"].ToString();
             if (!options.ContainsKey("encrypt"))
                 options.Add("encrypt", false);
-            
+
             // Connection Strings
             DcDataConfigurationSection dataSection = new DcDataConfigurationSection()
             {

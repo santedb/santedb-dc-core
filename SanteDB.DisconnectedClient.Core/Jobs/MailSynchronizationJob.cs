@@ -16,7 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
@@ -38,7 +37,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Jobs
 {
@@ -102,9 +100,10 @@ namespace SanteDB.DisconnectedClient.Jobs
         /// <summary>
         /// Last time the job was started
         /// </summary>
-        public DateTime? LastStarted { 
-            get; 
-            private set; 
+        public DateTime? LastStarted
+        {
+            get;
+            private set;
         }
 
         /// <summary>

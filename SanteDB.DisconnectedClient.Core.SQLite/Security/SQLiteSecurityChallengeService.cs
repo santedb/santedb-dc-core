@@ -34,7 +34,6 @@ using System.Linq;
 using System.Security;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Security
 {
@@ -263,7 +262,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security
             if (!userName.Equals(principal.Identity.Name)
                 || !principal.Identity.IsAuthenticated)
                 throw new SecurityException($"Users may only modify their own security challenges");
-           
+
             try
             {
                 // Connection to perform auth

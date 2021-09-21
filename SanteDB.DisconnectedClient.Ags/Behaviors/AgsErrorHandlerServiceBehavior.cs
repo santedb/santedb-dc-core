@@ -26,7 +26,6 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Ags.Util;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.Rest.Common.Fault;
 using SanteDB.Rest.Common.Serialization;
 using System;
@@ -78,7 +77,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             {
 #if DEBUG
                 this.m_tracer.TraceWarning("Error on pipeline: {0}", error);
-                
+
 #else
                 if (error is TargetInvocationException)
                     this.m_tracer.TraceWarning("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);

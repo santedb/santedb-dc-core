@@ -17,8 +17,6 @@
  * Date: 2021-2-9
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.UI.Services
 {

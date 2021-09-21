@@ -25,7 +25,7 @@ namespace SanteDB.DisconnectedClient.Exceptions
     /// </summary>
     public class DuplicateKeyException : Exception
     {
-	    /// <summary>
+        /// <summary>
         /// Duplicate key exception
         /// </summary>
         public DuplicateKeyException(string key) : base(key)

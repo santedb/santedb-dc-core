@@ -21,22 +21,17 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.SQLite.Connection;
+using SanteDB.DisconnectedClient.SQLite.Model;
 using SanteDB.DisconnectedClient.SQLite.Model.DataType;
-using SQLite.Net;
 using SQLite.Net.Interop;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Security.Principal;
-using SanteDB.DisconnectedClient.SQLite.Model;
-using SanteDB.DisconnectedClient.Exceptions;
-using System.Data;
 
 namespace SanteDB.DisconnectedClient.SQLite.Persistence
 {
@@ -148,7 +143,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
 
                                 memConnection.Commit();
                             }
-                            catch 
+                            catch
                             {
                                 memConnection.Rollback();
                                 throw;
@@ -179,10 +174,10 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 var itm = data.Item[i];
                 if (itm is null)
-                    continue; 
+                    continue;
                 try
                 {
-                    
+
 #if SHOW_STATUS || PERFMON
                 Stopwatch itmSw = new Stopwatch();
                 itmSw.Start();
@@ -203,7 +198,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
                 ApplicationContext.Current.PerformanceLog(nameof(BundlePersistenceService), nameof(InsertInternal), $"Insert{itm.GetType().Name}", itmSw.Elapsed);
 #endif
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new DataException($"Error inserting bundle item {itm} (item #{i})", e);
                 }
@@ -222,7 +217,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 var idp = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { itm.GetType() });
                 var instance = ApplicationContext.Current.GetService(idp) as ISQLitePersistenceService;
-                if(instance != null)
+                if (instance != null)
                     itm.CopyObjectData(instance.Update(context, itm));
             }
             return data;
@@ -237,7 +232,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Persistence
             {
                 var idp = typeof(IDataPersistenceService<>).MakeGenericType(new Type[] { itm.GetType() });
                 var instance = ApplicationContext.Current.GetService(idp) as ISQLitePersistenceService;
-                if(instance != null)
+                if (instance != null)
                     itm.CopyObjectData(instance.Obsolete(context, itm));
             }
             return data;

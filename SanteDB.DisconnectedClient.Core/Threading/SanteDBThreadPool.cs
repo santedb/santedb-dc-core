@@ -16,17 +16,8 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security;
-using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Threading
 {

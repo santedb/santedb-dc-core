@@ -1,16 +1,13 @@
 ﻿using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Configuration.Migrations
 {
     /// <summary>
     /// Adds localization service 
     /// </summary>
-    public class LocalizationServiceMigration: IConfigurationMigration
+    public class LocalizationServiceMigration : IConfigurationMigration
     {
         /// <summary>
         /// Description of the matching

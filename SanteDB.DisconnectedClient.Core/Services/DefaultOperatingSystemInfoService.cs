@@ -18,12 +18,7 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Security;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.DisconnectedClient.Services
 {
@@ -44,7 +39,7 @@ namespace SanteDB.DisconnectedClient.Services
         {
             get
             {
-                switch(Environment.OSVersion.Platform)
+                switch (Environment.OSVersion.Platform)
                 {
                     case PlatformID.MacOSX:
                         return OperatingSystemID.MacOS;

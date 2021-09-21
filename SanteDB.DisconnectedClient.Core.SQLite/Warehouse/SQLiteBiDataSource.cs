@@ -23,23 +23,17 @@ using SanteDB.BI.Services;
 using SanteDB.BI.Util;
 using SanteDB.Core;
 using SanteDB.Core.Configuration.Data;
-using SanteDB.DisconnectedClient.SQLite.Query;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.SQLite.Connection;
-using SQLite.Net;
+using SanteDB.DisconnectedClient.SQLite.Query;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Dynamic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.DisconnectedClient.SQLite.Warehouse
@@ -113,7 +107,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
 #if DEBUG
             this.m_tracer.TraceVerbose("Created SQL statement: {0}", retVal.CommandText);
             foreach (SqliteParameter v in retVal.Parameters)
-                this.m_tracer.TraceVerbose(" --> [{0}] {1}", v.DbType, v.Value is byte[] ? BitConverter.ToString(v.Value as Byte[]).Replace("-", "") : v.Value);
+                this.m_tracer.TraceVerbose(" --> [{0}] {1}", v.DbType, v.Value is byte[]? BitConverter.ToString(v.Value as Byte[]).Replace("-", "") : v.Value);
 #endif
             return retVal;
         }
@@ -253,7 +247,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                 if (pValue is Array arr)
                 {
                     values.AddRange(arr.OfType<Object>());
-                    return string.Join(",", arr.OfType<Object>().Select(o=>"?"));
+                    return string.Join(",", arr.OfType<Object>().Select(o => "?"));
 
                 }
                 else
@@ -274,7 +268,8 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
                 if (agg == null)
                     throw new InvalidOperationException($"No provided aggregation can be found for {provider}");
 
-                var selector = agg.Columns?.Select(c => {
+                var selector = agg.Columns?.Select(c =>
+                {
                     switch (c.Aggregation)
                     {
                         case BiAggregateFunction.Average:
@@ -312,62 +307,62 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             var file = connParts["dbfile"];
             var enc = connParts["encrypt"];
             using (SQLiteConnectionManager.Current.ExternLock(connectionString.Name))
-                using (var conn = new SqliteConnection($"Data Source=\"{file}\""))
+            using (var conn = new SqliteConnection($"Data Source=\"{file}\""))
+            {
+                try
                 {
-                    try
+                    // Decrypt database 
+                    var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
+                    if (securityKey != null && (enc ?? "true").Equals("true"))
+                        conn.SetPassword(securityKey);
+
+                    // Open the database
+                    conn.Open();
+
+                    // Attach any other connection sources
+                    foreach (var itm in queryDefinition.DataSources.Skip(1))
                     {
-                        // Decrypt database 
-                        var securityKey = ApplicationContext.Current.GetCurrentContextSecurityKey();
-                        if (securityKey != null && (enc ?? "true").Equals("true"))
-                            conn.SetPassword(securityKey);
-
-                        // Open the database
-                        conn.Open();
-
-                        // Attach any other connection sources
-                        foreach (var itm in queryDefinition.DataSources.Skip(1))
+                        using (var attcmd = conn.CreateCommand())
                         {
-                            using (var attcmd = conn.CreateCommand())
-                            {
 
-                                var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.ConnectionString);
-                                if (cstr.GetComponent("encrypt") == "true")
-                                    attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY ''";
-                                else
-                                    attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'";
+                            var cstr = ApplicationContext.Current.ConfigurationManager.GetConnectionString(itm.ConnectionString);
+                            if (cstr.GetComponent("encrypt") == "true")
+                                attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY ''";
+                            else
+                                attcmd.CommandText = $"ATTACH DATABASE '{cstr.GetComponent("dbfile")}' AS {itm.Identifier} KEY X'{BitConverter.ToString(ApplicationContext.Current.GetCurrentContextSecurityKey()).Replace("-", "")}'";
 
-                                attcmd.CommandType = System.Data.CommandType.Text;
-                                attcmd.ExecuteNonQuery();
-                            }
-                        }
-
-                        // Start time
-                        DateTime startTime = DateTime.Now;
-                        var sqlStmt = new SqlStatement(stmt, values.ToArray()).Limit(count ?? 10000).Offset(offset).Build();
-                        this.m_tracer.TraceInfo("Executing BI Query: {0}", sqlStmt.Build().SQL);
-
-                        // Create command for execution
-                        using (var cmd = this.CreateCommand(conn, sqlStmt.SQL, sqlStmt.Arguments.ToArray()))
-                        {
-                            var results = new List<ExpandoObject>();
-                            using (var rdr = cmd.ExecuteReader())
-                                while (rdr.Read())
-                                    results.Add(this.MapExpando(rdr));
-                            return new BisResultContext(
-                                queryDefinition,
-                                parameters,
-                                this,
-                                results,
-                                startTime);
+                            attcmd.CommandType = System.Data.CommandType.Text;
+                            attcmd.ExecuteNonQuery();
                         }
                     }
-                    catch (Exception e)
+
+                    // Start time
+                    DateTime startTime = DateTime.Now;
+                    var sqlStmt = new SqlStatement(stmt, values.ToArray()).Limit(count ?? 10000).Offset(offset).Build();
+                    this.m_tracer.TraceInfo("Executing BI Query: {0}", sqlStmt.Build().SQL);
+
+                    // Create command for execution
+                    using (var cmd = this.CreateCommand(conn, sqlStmt.SQL, sqlStmt.Arguments.ToArray()))
                     {
-                        this.m_tracer.TraceError("Error executing BIS data query: {0}", e);
-                        throw new DataPersistenceException($"Error executing BIS data query", e);
+                        var results = new List<ExpandoObject>();
+                        using (var rdr = cmd.ExecuteReader())
+                            while (rdr.Read())
+                                results.Add(this.MapExpando(rdr));
+                        return new BisResultContext(
+                            queryDefinition,
+                            parameters,
+                            this,
+                            results,
+                            startTime);
                     }
                 }
-            
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error executing BIS data query: {0}", e);
+                    throw new DataPersistenceException($"Error executing BIS data query", e);
+                }
+            }
+
         }
 
         /// <summary>

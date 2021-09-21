@@ -23,8 +23,6 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Exceptions;
 using System;
 using System.Security;
 using System.Security.Permissions;

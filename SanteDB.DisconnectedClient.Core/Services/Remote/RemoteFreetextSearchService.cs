@@ -26,7 +26,6 @@ using SanteDB.DisconnectedClient.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
@@ -61,7 +60,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         {
             try
             {
-                using(var client = this.GetRestClient())
+                using (var client = this.GetRestClient())
                 {
                     var parms = term.Select(o => new KeyValuePair<String, Object>("_any", o)).ToList();
                     parms.Add(new KeyValuePair<string, object>("_offset", offset));
@@ -71,7 +70,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     return result.Item.OfType<TEntity>();
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error performing freetext search service: {0}", e);
                 throw new Exception($"Error performing freetext search {String.Join(",", term)}", e);

@@ -25,12 +25,10 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.Diagnostics;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Synchronization;
-using SanteDB.DisconnectedClient.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -149,7 +147,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     new DiagnosticAttachmentInfo() { FileDescription = "Log File", FileSize = logFile.Length, FileName = logFile.Name, Id = "log", LastWriteDate = logFile.LastWriteTime }
                 };
 
-                if(ApplicationContext.Current.Configuration.SectionTypes.Any(o=>o.Type == typeof(DcDataConfigurationSection)))
+                if (ApplicationContext.Current.Configuration.SectionTypes.Any(o => o.Type == typeof(DcDataConfigurationSection)))
                     foreach (var con in ApplicationContext.Current.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString)
                     {
                         var fi = new FileInfo(con.GetComponent("dbfile"));

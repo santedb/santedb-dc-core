@@ -16,10 +16,10 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using System.Collections.Generic;
-using System.Xml.Serialization;
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration.Data;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Configuration.Data
 {
@@ -29,7 +29,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
     [XmlType(nameof(DcDataConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
     public class DcDataConfigurationSection : DataConfigurationSection
     {
-	    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the data configuration section
         /// </summary>
         public DcDataConfigurationSection()
@@ -37,10 +37,11 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
             this.MigrationLog = new DataMigrationLog();
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the name of the alerts data store
         /// </summary>
-        [XmlAttribute("mailDataStore")][JsonIgnore]
+        [XmlAttribute("mailDataStore")]
+        [JsonIgnore]
         public string MailDataStore
         {
             get;
@@ -48,22 +49,24 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the name of the main data source connection string.
         /// </summary>
         /// <value>The name of the main data source connection string.</value>
-        [XmlAttribute("clinicalDataStore")][JsonIgnore]
+        [XmlAttribute("clinicalDataStore")]
+        [JsonIgnore]
         public string MainDataSourceConnectionStringName
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the name of the message queue connection string.
         /// </summary>
         /// <value>The name of the message queue connection string.</value>
-        [XmlAttribute("messageQueue")][JsonIgnore]
+        [XmlAttribute("messageQueue")]
+        [JsonIgnore]
         public string MessageQueueConnectionStringName
         {
             get;
@@ -71,30 +74,33 @@ namespace SanteDB.DisconnectedClient.Configuration.Data
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Migration log 
         /// </summary>
         /// <value>The migration log.</value>
-        [XmlElement("migration")][JsonProperty("migration")]
+        [XmlElement("migration")]
+        [JsonProperty("migration")]
         public DataMigrationLog MigrationLog
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the options
         /// </summary>
-        [XmlIgnore][JsonProperty("options")]
+        [XmlIgnore]
+        [JsonProperty("options")]
         public Dictionary<string, object> Options { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the configuration view model provider
         /// </summary>
-        [XmlIgnore][JsonProperty("provider")]
+        [XmlIgnore]
+        [JsonProperty("provider")]
         public string Provider { get; set; }
     }
-    
+
 
 }
 

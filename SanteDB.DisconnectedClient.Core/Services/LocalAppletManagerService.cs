@@ -22,9 +22,7 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
@@ -324,7 +322,7 @@ namespace SanteDB.DisconnectedClient.Services
                         Type idpType = typeof(IDataPersistenceService<>);
                         idpType = idpType.MakeGenericType(new Type[] { itm.Element.GetType() });
                         var svc = ApplicationContext.Current.GetService(idpType);
-                        idpType.GetMethod(itm.ActionName).Invoke(svc, new object[] { itm.Element, TransactionMode.Commit, AuthenticationContext.SystemPrincipal  });
+                        idpType.GetMethod(itm.ActionName).Invoke(svc, new object[] { itm.Element, TransactionMode.Commit, AuthenticationContext.SystemPrincipal });
                     }
                 }
 

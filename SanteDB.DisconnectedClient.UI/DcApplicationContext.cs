@@ -21,33 +21,26 @@ using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Configuration.Data;
-//using SanteDB.DisconnectedClient.Data;
-using SanteDB.DisconnectedClient.Services;
-using SanteDB.DisconnectedClient.i18n;
-using SanteDB.DisconnectedClient;
 using SanteDB.DisconnectedClient.Backup;
 using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.i18n;
+//using SanteDB.DisconnectedClient.Data;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Linq;
-using SanteDB.Core.Exceptions;
-using System.Xml;
-using SanteDB.Core.Interfaces;
 
 namespace SanteDB.DisconnectedClient.UI
 {
@@ -153,7 +146,7 @@ namespace SanteDB.DisconnectedClient.UI
                 retVal.m_tracer = Tracer.GetTracer(typeof(DcApplicationContext));
                 var configuration = retVal.Configuration.GetSection<DiagnosticsConfigurationSection>();
                 foreach (var tr in configuration.TraceWriter)
-                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData, configuration.Sources.ToDictionary(o=>o.SourceName, o=>o.Filter)) as TraceWriter, tr.Filter);
+                    Tracer.AddWriter(Activator.CreateInstance(tr.TraceWriter, tr.Filter, tr.InitializationData, configuration.Sources.ToDictionary(o => o.SourceName, o => o.Filter)) as TraceWriter, tr.Filter);
                 retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
                 return true;
             }
@@ -255,7 +248,7 @@ namespace SanteDB.DisconnectedClient.UI
                             throw new Exception("Could not load or backup configuration", e);
                     }
 
-                    if(retVal.GetService<IBackupService>() == null)
+                    if (retVal.GetService<IBackupService>() == null)
                         retVal.GetService<IServiceManager>().AddServiceProvider(typeof(DefaultBackupService));
 
                     // Is there a backup, and if so, does the user want to restore from that backup?
@@ -343,33 +336,33 @@ namespace SanteDB.DisconnectedClient.UI
 
                     // Ensure data migration exists
                     bool hasDatabase = retVal.ConfigurationManager.Configuration.GetSection<DcDataConfigurationSection>().ConnectionString.Count > 0;
-                        try
+                    try
+                    {
+                        // If the DB File doesn't exist we have to clear the migrations
+                        if (hasDatabase && !File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName).GetComponent("dbfile")))
                         {
-                            // If the DB File doesn't exist we have to clear the migrations
-                            if (hasDatabase && !File.Exists(retVal.ConfigurationManager.GetConnectionString(retVal.Configuration.GetSection<DcDataConfigurationSection>().MainDataSourceConnectionStringName).GetComponent("dbfile")))
-                            {
-                                retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
-                                retVal.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Clear();
-                            }
-                            retVal.SetProgress("Migrating databases", 0.6f);
+                            retVal.m_tracer.TraceWarning("Can't find the SanteDB database, will re-install all migrations");
+                            retVal.Configuration.GetSection<DcDataConfigurationSection>().MigrationLog.Entry.Clear();
+                        }
+                        retVal.SetProgress("Migrating databases", 0.6f);
 
                         ConfigurationMigrator migrator = new ConfigurationMigrator();
-                            migrator.Ensure(hasDatabase);
+                        migrator.Ensure(hasDatabase);
 
 
-                            // Prepare clinical protocols
-                            //retVal.GetService<ICarePlanService>().Repository = retVal.GetService<IClinicalProtocolRepositoryService>();
+                        // Prepare clinical protocols
+                        //retVal.GetService<ICarePlanService>().Repository = retVal.GetService<IClinicalProtocolRepositoryService>();
 
-                        }
-                        catch (Exception e)
-                        {
-                            retVal.m_tracer.TraceError(e.ToString());
-                            throw new Exception("Error executing migrations", e);
-                        }
-                        finally
-                        {
-                            retVal.ConfigurationPersister.Save(retVal.Configuration);
-                        }
+                    }
+                    catch (Exception e)
+                    {
+                        retVal.m_tracer.TraceError(e.ToString());
+                        throw new Exception("Error executing migrations", e);
+                    }
+                    finally
+                    {
+                        retVal.ConfigurationPersister.Save(retVal.Configuration);
+                    }
 
                     // Update the applets if there are new versions
                     foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Applets")))
@@ -384,11 +377,11 @@ namespace SanteDB.DisconnectedClient.UI
 
                                 if (existing == null || new Version(existing.Info.Version) < new Version(package.Meta.Version))
                                 {
-                                    if(existing != null)
+                                    if (existing != null)
                                         retVal.m_tracer.TraceInfo("Upgrading applet {0} from {1} to {2}", package.Meta.Id, existing.Info.Version, package.Meta.Version);
                                     appletService.Install(package, true);
                                 }
-                                
+
                             }
                         }
                         catch (Exception e)
@@ -469,6 +462,6 @@ namespace SanteDB.DisconnectedClient.UI
 #endif
         }
 
-       
+
     }
 }

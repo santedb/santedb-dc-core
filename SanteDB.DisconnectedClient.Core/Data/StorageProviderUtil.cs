@@ -40,7 +40,7 @@ namespace SanteDB.DisconnectedClient.Data
         /// </summary>
         public static IEnumerable<IDataConfigurationProvider> GetProviders()
         {
-            if(m_existing == null)
+            if (m_existing == null)
                 m_existing = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
                         .Where(o => typeof(IDataConfigurationProvider).IsAssignableFrom(o) && !o.GetTypeInfo().IsInterface && !o.GetTypeInfo().IsAbstract)
                         .Select(t => Activator.CreateInstance(t) as IDataConfigurationProvider).ToArray();

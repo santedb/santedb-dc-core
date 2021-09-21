@@ -17,10 +17,8 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json;
-using SanteDB.DisconnectedClient.SQLite.Query.Attributes;
 using SanteDB.Core.Mail;
 using SanteDB.Core.Security;
-using SanteDB.DisconnectedClient;
 using SQLite.Net.Attributes;
 using System;
 using System.Xml.Serialization;

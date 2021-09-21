@@ -25,9 +25,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.DisconnectedClient.SQLite.Mdm
 {
@@ -87,9 +85,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// </summary>
         private void OnPrePersistenceEvent(object sender, DataPersistingEventArgs<T> e)
         {
-            if(e.Data is Bundle bundle)
+            if (e.Data is Bundle bundle)
             {
-                foreach(var itm in bundle.Item.ToArray())
+                foreach (var itm in bundle.Item.ToArray())
                 {
                     var masterRel = this.GetMasterRedirect(itm.Key, itm.GetType());
                     if (masterRel != null)
@@ -102,7 +100,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
             else if (e.Data.Key.HasValue) // update/insert 
             {
                 var masterRel = this.GetMasterRedirect(e.Data.Key);
-                if(masterRel != null) // has a master, so update that instead
+                if (masterRel != null) // has a master, so update that instead
                 {
                     if (e.Data is Entity entity) // Add the MDM rel back so it can be saved
                         entity.Relationships.Add(masterRel as EntityRelationship);

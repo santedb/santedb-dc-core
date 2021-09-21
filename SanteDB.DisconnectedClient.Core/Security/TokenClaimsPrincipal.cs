@@ -19,9 +19,6 @@
 using Newtonsoft.Json.Linq;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.DisconnectedClient;
-using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -57,7 +54,7 @@ namespace SanteDB.DisconnectedClient.Security
 
         // Access token
         private String m_accessToken;
-        
+
         /// <summary>
         /// Gets the refresh token
         /// </summary>

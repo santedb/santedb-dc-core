@@ -16,15 +16,15 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using Newtonsoft.Json;
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
-using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Security;
-using SanteDB.Core.Security.Configuration;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
@@ -53,16 +53,17 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// <summary>
     /// Security configuration section
     /// </summary>
-    [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")][JsonObject(nameof(SecurityConfigurationSection))]
+    [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
+    [JsonObject(nameof(SecurityConfigurationSection))]
     public class SecurityConfigurationSection : IConfigurationSection
     {
-	    // Application secret
-	    private string m_applicationSecret;
+        // Application secret
+        private string m_applicationSecret;
 
-	    // Device secret
-	    private string m_deviceSecret;
+        // Device secret
+        private string m_deviceSecret;
 
-	    /// <summary>
+        /// <summary>
         /// Max local session
         /// </summary>
         public SecurityConfigurationSection()
@@ -71,11 +72,12 @@ namespace SanteDB.DisconnectedClient.Configuration
             this.DomainAuthentication = DomainClientAuthentication.Basic;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Sets the application secret.
         /// </summary>
         /// <value>The application secret.</value>
-        [XmlIgnore][JsonProperty("client_secret")]
+        [XmlIgnore]
+        [JsonProperty("client_secret")]
         public string ApplicationSecret
         {
             get
@@ -84,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Configuration
                 {
                     if (this.PlainTextSecret && string.IsNullOrEmpty(this.m_applicationSecret) && this.ApplicationSecretXml != null)
                     {
-	                    this.m_applicationSecret = Encoding.UTF8.GetString(this.ApplicationSecretXml, 0, this.ApplicationSecretXml.Length);
+                        this.m_applicationSecret = Encoding.UTF8.GetString(this.ApplicationSecretXml, 0, this.ApplicationSecretXml.Length);
                     }
                     else if (string.IsNullOrEmpty(this.m_applicationSecret) && this.ApplicationSecretXml != null)
                     {
@@ -98,12 +100,12 @@ namespace SanteDB.DisconnectedClient.Configuration
                             }
                             else
                             {
-	                            this.m_applicationSecret = Encoding.UTF8.GetString(this.ApplicationSecretXml, 0, this.ApplicationSecretXml.Length);
+                                this.m_applicationSecret = Encoding.UTF8.GetString(this.ApplicationSecretXml, 0, this.ApplicationSecretXml.Length);
                             }
                         }
                         else
                         {
-	                        this.m_applicationSecret = Encoding.UTF8.GetString(this.ApplicationSecretXml, 0, this.ApplicationSecretXml.Length);
+                            this.m_applicationSecret = Encoding.UTF8.GetString(this.ApplicationSecretXml, 0, this.ApplicationSecretXml.Length);
                         }
                     }
                     return this.m_applicationSecret;
@@ -120,7 +122,7 @@ namespace SanteDB.DisconnectedClient.Configuration
                     {
                         if (this.PlainTextSecret)
                         {
-	                        this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
+                            this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
                         }
                         else
                         {
@@ -140,22 +142,23 @@ namespace SanteDB.DisconnectedClient.Configuration
                                     }
                                     else
                                     {
-	                                    this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
+                                        this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
                                     }
                                 }
                                 else
                                 {
-	                                this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
+                                    this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
                                 }
                             }
                         }
                     }
                     else
                     {
-	                    this.ApplicationSecretXml = null;
+                        this.ApplicationSecretXml = null;
                     }
                 }
-                catch {
+                catch
+                {
                     this.PlainTextSecret = true;
                     this.ApplicationSecretXml = Encoding.UTF8.GetBytes(value);
 
@@ -164,110 +167,121 @@ namespace SanteDB.DisconnectedClient.Configuration
             }
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the configured device name
         /// </summary>
         /// <value>The name of the device.</value>
-        [XmlElement("deviceName")][JsonProperty("deviceName")]
+        [XmlElement("deviceName")]
+        [JsonProperty("deviceName")]
         public string DeviceName
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Plain text secret
         /// </summary>
-        [XmlElement("plainTextSecret")][JsonProperty("plainTextSecret")]
+        [XmlElement("plainTextSecret")]
+        [JsonProperty("plainTextSecret")]
         public bool PlainTextSecret { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the device secret
         /// </summary>
-        [XmlElement("deviceSecret")][JsonIgnore]
+        [XmlElement("deviceSecret")]
+        [JsonIgnore]
         public byte[] DeviceSecretXml
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the application secret
         /// </summary>
-        [XmlElement("applicationSecret")][JsonIgnore]
+        [XmlElement("applicationSecret")]
+        [JsonIgnore]
         public byte[] ApplicationSecretXml
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Audit retention
         /// </summary>
-        [XmlIgnore][JsonIgnore]
+        [XmlIgnore]
+        [JsonIgnore]
         public TimeSpan AuditRetention { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets teh device certificate
         /// </summary>
-        [XmlElement("deviceCertificate")][JsonIgnore]
+        [XmlElement("deviceCertificate")]
+        [JsonIgnore]
         public ServiceCertificateConfiguration DeviceCertificate { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Audit retention
         /// </summary>
-        [XmlElement("auditRetention")][JsonProperty("auditRetention")]
+        [XmlElement("auditRetention")]
+        [JsonProperty("auditRetention")]
         public string AuditRetentionXml
         {
             get => this.AuditRetention.ToString();
             set => this.AuditRetention = TimeSpan.Parse(value);
-	    }
+        }
 
 
-	    /// <summary>
+        /// <summary>
         /// Domain authentication
         /// </summary>
-        [XmlElement("domainSecurity")][JsonProperty("domainSecurity")]
+        [XmlElement("domainSecurity")]
+        [JsonProperty("domainSecurity")]
         public DomainClientAuthentication DomainAuthentication
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the allowed token type
         /// </summary>
         /// <value>The type of the token.</value>
-        [XmlElement("tokenType")][JsonIgnore]
+        [XmlElement("tokenType")]
+        [JsonIgnore]
         public string TokenType
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the token algorithms.
         /// </summary>
         /// <value>The token algorithms.</value>
-        [XmlElement("tokenAlg")][JsonIgnore]
+        [XmlElement("tokenAlg")]
+        [JsonIgnore]
         public List<string> TokenAlgorithms
         {
             get;
             set;
         }
 
-	    /// <summary>
+        /// <summary>
         /// Sets the device secret.
         /// </summary>
         /// <value>The device secret.</value>
-        [XmlIgnore][JsonIgnore]
+        [XmlIgnore]
+        [JsonIgnore]
         public string DeviceSecret
         {
             get
             {
                 if (this.PlainTextSecret && string.IsNullOrEmpty(this.m_deviceSecret) && this.DeviceSecretXml != null)
                 {
-	                this.m_deviceSecret = Encoding.UTF8.GetString(this.DeviceSecretXml, 0, this.DeviceSecretXml.Length);
+                    this.m_deviceSecret = Encoding.UTF8.GetString(this.DeviceSecretXml, 0, this.DeviceSecretXml.Length);
                 }
                 else if (string.IsNullOrEmpty(this.m_deviceSecret) && this.DeviceSecretXml != null)
                 {
@@ -281,12 +295,12 @@ namespace SanteDB.DisconnectedClient.Configuration
                         }
                         else
                         {
-	                        this.m_deviceSecret = Encoding.UTF8.GetString(this.DeviceSecretXml, 0, this.DeviceSecretXml.Length);
+                            this.m_deviceSecret = Encoding.UTF8.GetString(this.DeviceSecretXml, 0, this.DeviceSecretXml.Length);
                         }
                     }
                     else
                     {
-	                    this.m_deviceSecret = Encoding.UTF8.GetString(this.DeviceSecretXml, 0, this.DeviceSecretXml.Length);
+                        this.m_deviceSecret = Encoding.UTF8.GetString(this.DeviceSecretXml, 0, this.DeviceSecretXml.Length);
                     }
                 }
                 return this.m_deviceSecret;
@@ -300,7 +314,7 @@ namespace SanteDB.DisconnectedClient.Configuration
                     {
                         if (this.PlainTextSecret)
                         {
-	                        this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
+                            this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
                         }
                         else
                         {
@@ -318,21 +332,22 @@ namespace SanteDB.DisconnectedClient.Configuration
                                 }
                                 else
                                 {
-	                                this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
+                                    this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
                                 }
                             }
                             else
                             {
-	                            this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
+                                this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
                             }
                         }
                     }
                     else
                     {
-	                    this.DeviceSecretXml = null;
+                        this.DeviceSecretXml = null;
                     }
                 }
-                catch {
+                catch
+                {
                     this.PlainTextSecret = true;
                     this.DeviceSecretXml = Encoding.UTF8.GetBytes(value);
 
@@ -341,10 +356,11 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Gets the real/domain to which the application is currently joined
         /// </summary>
-        [XmlElement("domain")][JsonProperty("domain")]
+        [XmlElement("domain")]
+        [JsonProperty("domain")]
         public string Domain
         {
             get;
@@ -352,60 +368,68 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Restrict login to only listed facilities
         /// </summary>
-        [XmlElement("restrictLogin")][JsonProperty("restrictLogin")]
+        [XmlElement("restrictLogin")]
+        [JsonProperty("restrictLogin")]
         public bool RestrictLoginToFacilityUsers { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// When true, only allow login from this facility
         /// </summary>
-        [XmlElement("facility")][JsonProperty("facility")]
+        [XmlElement("facility")]
+        [JsonProperty("facility")]
         public List<Guid> Facilities { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the hasher (for JSON view model only)
         /// </summary>
-        [XmlIgnore][JsonProperty("hasher")]
+        [XmlIgnore]
+        [JsonProperty("hasher")]
         public string Hasher { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// When true, only allow login from this facility
         /// </summary>
-        [XmlElement("owner")][JsonProperty("owner")]
+        [XmlElement("owner")]
+        [JsonProperty("owner")]
         public List<Guid> Owners { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Local session length
         /// </summary>
-        [XmlElement("localSessionLength")][JsonProperty("localSessionLength")]
+        [XmlElement("localSessionLength")]
+        [JsonProperty("localSessionLength")]
         public string MaxLocalSessionXml
         {
             get => this.MaxLocalSession.ToString();
             set => this.MaxLocalSession = TimeSpan.Parse(!string.IsNullOrEmpty(value) ? value : "00:30:00");
-	    }
+        }
 
-	    /// <summary>
+        /// <summary>
         /// Maximum invalid logins
         /// </summary>
-        [XmlElement("maxInvalidLogins")][JsonProperty("maxInvalidLogins")]
+        [XmlElement("maxInvalidLogins")]
+        [JsonProperty("maxInvalidLogins")]
         public int? MaxInvalidLogins { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Local session
         /// </summary>
-        [XmlIgnore][JsonIgnore]
+        [XmlIgnore]
+        [JsonIgnore]
         public TimeSpan MaxLocalSession { get; set; }
 
 
-	    // Don't dislose it
-	    public bool ShouldSerializeApplicationSecret => false;
+        // Don't dislose it
+        public bool ShouldSerializeApplicationSecret => false;
 
-	    /// <summary>
+        /// <summary>
         /// Signature configuration
         /// </summary>
-        [XmlArray("signingKeys")][XmlArrayItem("add")]
+        [XmlArray("signingKeys")]
+        [XmlArrayItem("add")]
         [JsonProperty("signingKeys")]
         public List<SecuritySignatureConfiguration> SigningKeys { get; set; }
 

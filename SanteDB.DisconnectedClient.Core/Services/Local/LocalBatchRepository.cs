@@ -16,13 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SanteDB.DisconnectedClient.Configuration;
-using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
