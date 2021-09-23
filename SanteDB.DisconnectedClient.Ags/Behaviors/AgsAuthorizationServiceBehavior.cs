@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using RestSrvr;
 using RestSrvr.Message;
 using SanteDB.Core;
@@ -38,7 +39,6 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
     /// </summary>
     public class AgsAuthorizationServiceBehavior : IServiceBehavior, IServicePolicy
     {
-
         // Tracer for this class
         private Tracer m_tracer = Tracer.GetTracer(typeof(AgsAuthorizationServiceBehavior));
 
@@ -50,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         public void Apply(RestRequestMessage request)
         {
-
+            IDisposable contextAuth = null;
             // Authorization header
             if (request.Headers["Authorization"] != null)
             {
@@ -66,8 +66,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                                 throw new UnauthorizedAccessException();
                             else
                             {
-                                var contextAuth = AuthenticationContext.EnterContext(principal);
-                                RestOperationContext.Current.Disposed += (o, e) => contextAuth.Dispose();
+                                contextAuth = AuthenticationContext.EnterContext(principal);
                             }
                             this.m_tracer.TraceVerbose("Performed BASIC auth for {0}", AuthenticationContext.Current.Principal.Identity.Name);
 
@@ -75,25 +74,28 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                         }
                     case "bearer":
                         {
-                            var contextAuth = this.SetContextFromBearer(authHeader[1]);
-                            RestOperationContext.Current.Disposed += (o, e) => contextAuth.Dispose();
+                            contextAuth = this.SetContextFromBearer(authHeader[1]);
                             break;
                         }
-
                 }
             }
             else if (request.Url.Query.Contains("_sessionId="))
             {
                 var query = NameValueCollection.ParseQueryString(request.Url.Query);
                 var session = query["_sessionId"][0];
-                this.SetContextFromBearer(session);
+                contextAuth = this.SetContextFromBearer(session);
             }
             else if (request.Cookies["_s"] != null) // cookie authentication
             {
                 var token = request.Cookies["_s"].Value;
-                this.SetContextFromBearer(token);
+                contextAuth = this.SetContextFromBearer(token);
             }
 
+            // Dispose the context when the rest operation is disposed
+            if (contextAuth != null)
+            {
+                RestOperationContext.Current.Disposed += (o, e) => contextAuth.Dispose();
+            }
         }
 
         /// <summary>

@@ -296,7 +296,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     contentType = "text/xml";
                     response.Body = ms;
                 }
-                else
+                else if (result != null)
                 {
                     // Prepare the serializer
                     JsonSerializer jsz = new JsonSerializer();
@@ -322,6 +322,8 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     // Prepare reply for the WCF pipeline
                     contentType = "application/json";
                 }
+                else
+                    response.StatusCode = 204; // no content
 
                 RestOperationContext.Current.OutgoingResponse.ContentType = RestOperationContext.Current.OutgoingResponse.ContentType ?? contentType;
 

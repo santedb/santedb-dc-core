@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using RestSrvr;
 using RestSrvr.Attributes;
@@ -67,7 +68,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public List<IClaim> ExtractClaims(NameValueCollection headers)
         {
-
             var claimsHeaders = headers[HeaderTypes.HttpClaims];
             if (claimsHeaders == null)
                 return new List<IClaim>();
@@ -144,12 +144,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                             using (AuthenticationContext.EnterContext(principal))
                             {
-
                                 var lanugageCode = request["ui_locales"] ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
                                 try
                                 {
-                                    // TODO: Authenticate the device 
+                                    // TODO: Authenticate the device
                                     var userEntity = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>()?.GetUserEntity(principal.Identity);
                                     if (userEntity != null)
                                         lanugageCode = userEntity?.LanguageCommunication?.FirstOrDefault(o => o.IsPreferred)?.LanguageCode ?? lanugageCode;
@@ -166,6 +165,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             }
                         }
                         break;
+
                     case "refresh_token":
                         {
                             byte[] refreshTokenData = request["refresh_token"].ParseHexString(),
@@ -174,7 +174,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             if (!signatureService.Verify(refreshToken, signature))
                                 throw new SecurityException("Refresh token signature mismatch");
 
-                            // Get the local session               
+                            // Get the local session
                             session = sessionService.Extend(refreshToken);
                             break;
                         }
@@ -210,23 +210,22 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         }
                 }
 
-
                 var retVal = new OAuthTokenResponse()
                 {
                     // TODO: Sign the access token
                     AccessToken = $"{session.Id.ToHexString()}{signatureService.SignData(session.Id).ToHexString()}",
                     RefreshToken = $"{session.RefreshToken.ToHexString()}{signatureService.SignData(session.RefreshToken).ToHexString()}",
-                    ExpiresIn = (int)DateTime.Now.Subtract(session.NotAfter.DateTime).TotalSeconds,
+                    ExpiresIn = (int)session.NotAfter.DateTime.Subtract(DateTime.Now).TotalSeconds,
                     TokenType = "bearer",
                     IdToken = this.HydrateToken(session)
                 };
 
                 // Set cookie for authentication
-                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", retVal.AccessToken)
+                RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", retVal.AccessToken, "/")
                 {
                     HttpOnly = true,
-                    Path = "/",
-                    Expires = session.NotAfter.DateTime
+                    Expires = session.NotAfter.DateTime.ToUniversalTime(),
+                    Expired = false
                 });
                 return retVal;
             }
@@ -283,7 +282,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             var signingService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
             var hash = UrlEncodeUtil(Convert.ToBase64String(signingService.SignData(Encoding.UTF8.GetBytes($"{header}.{payload}"))));
             return $"{header}.{payload}.{hash}";
-
         }
 
         /// <summary>
