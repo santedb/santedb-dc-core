@@ -37,7 +37,7 @@
     <Company>SanteSuite Contributors</Company>
   </PropertyGroup>  
   <ItemGroup>
-    <PackageReference Include="InTheHand.Net.Bluetooth" Version="4.0.20" />
+    <PackageReference Include="InTheHand.Net.Bluetooth" Version="4.0.21" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.6" />
     <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.7" />
