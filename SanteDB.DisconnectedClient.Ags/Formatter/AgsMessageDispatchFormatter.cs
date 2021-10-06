@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using RestSrvr;
@@ -49,7 +50,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
     /// <remarks>This formatter is common to many different services, therefore the formatter in SanteDB.Rest.Common is not used</remarks>
     public abstract class AgsMessageDispatchFormatter : IDispatchMessageFormatter
     {
-
         // Formatters
         private static Dictionary<Type, AgsMessageDispatchFormatter> m_formatters = new Dictionary<Type, AgsMessageDispatchFormatter>();
 
@@ -98,9 +98,9 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
     /// </summary>
     public class AgsDispatchFormatter<TContract> : AgsMessageDispatchFormatter
     {
-
         // Trace source
         private Tracer m_traceSource = Tracer.GetTracer(typeof(AgsDispatchFormatter<TContract>));
+
         // Known types
         private static Type[] s_knownTypes = typeof(TContract).GetCustomAttributes<ServiceKnownResourceAttribute>().Select(t => t.Type).ToArray();
 
@@ -115,7 +115,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
             foreach (var t in s_knownTypes)
                 ModelSerializationBinder.RegisterModelType(t);
             tracer.TraceInfo("Will generate serializer for {0}", typeof(TContract).FullName);
-
         }
 
         /// <summary>
@@ -123,7 +122,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
         /// </summary>
         public override void DeserializeRequest(EndpointOperation operation, RestRequestMessage request, object[] parameters)
         {
-
             try
             {
 #if DEBUG
@@ -155,7 +153,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                             var serializer = XmlModelSerializerFactory.Current.CreateSerializer(eType);
                             parameters[pNumber] = serializer.Deserialize(request.Body);
                         }
-
                     }
                     else if (contentType?.StartsWith("application/json+sdb-viewmodel") == true && typeof(IdentifiedData).IsAssignableFrom(parm.ParameterType))
                     {
@@ -180,7 +177,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     }
                     else if (contentType?.StartsWith("application/json") == true)
                     {
-
                         using (var sr = new StreamReader(request.Body))
                         using (var jsr = new JsonTextReader(sr))
                         {
@@ -224,7 +220,6 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                 this.m_traceSource.TraceError("Error de-serializing dispatch request: {0}", e.ToString());
                 throw;
             }
-
         }
 
         /// <summary>
@@ -316,17 +311,15 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                         jsw.Flush();
                         sw.Flush();
                         response.Body = new MemoryStream(ms.ToArray());
-
                     }
 
                     // Prepare reply for the WCF pipeline
                     contentType = "application/json";
                 }
-                else
+                else if (response.StatusCode != 304)
                     response.StatusCode = 204; // no content
 
                 RestOperationContext.Current.OutgoingResponse.ContentType = RestOperationContext.Current.OutgoingResponse.ContentType ?? contentType;
-
             }
             catch (Exception e)
             {

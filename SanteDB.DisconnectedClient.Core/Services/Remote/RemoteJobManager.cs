@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
@@ -37,9 +38,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Represents a remote job
         /// </summary>
-        private class RemoteJob : IJob, IAmiIdentified
+        private class RemoteJob : IJob, IAmiIdentified, IReportProgressJob
         {
-
             /// <summary>
             /// Creates a new remote job from an AMI job info class
             /// </summary>
@@ -53,8 +53,10 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 this.CurrentState = job.State;
                 this.LastFinished = job.LastFinish;
                 this.LastStarted = job.LastStart;
-                this.Parameters = job.Parameters?.ToDictionary(o => o.Key, o => Type.GetType(o.Type));
+                this.Parameters = job.Parameters?.ToDictionary(o => o.Key, o => Type.GetType($"System.{o.Type}"));
                 this.JobType = Type.GetType(job.JobType);
+                this.StatusText = job.StatusText;
+                this.Progress = job.Progress;
             }
 
             /// <summary>
@@ -111,6 +113,16 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             /// Gets or sets the job type
             /// </summary>
             public Type JobType { get; }
+
+            /// <summary>
+            /// Gets the progress
+            /// </summary>
+            public float Progress { get; }
+
+            /// <summary>
+            /// Gets the status text
+            /// </summary>
+            public string StatusText { get; }
 
             /// <summary>
             /// Cancel the job
@@ -203,14 +215,17 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// Fired when the service is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Fired when the service is started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Fired when the service is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Fired when the service has stopped
         /// </summary>
@@ -270,6 +285,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             if (jobInfo != null)
                 jobInfo.Run(this, EventArgs.Empty, parameters);
         }
+
         /// <summary>
         /// Stop the service
         /// </summary>

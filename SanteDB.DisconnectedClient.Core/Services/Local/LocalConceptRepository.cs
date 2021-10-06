@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Constants;
@@ -56,7 +57,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
         {
             return base.Find(o => o.ConceptNames.Any(n => n.Name == name && n.Language == language));
         }
-
 
         /// <summary>
         /// Finds a concept by reference term.
@@ -124,9 +124,8 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <summary>
         /// Get the specified reference term for the specified code system
         /// </summary>
-        public ReferenceTerm GetConceptReferenceTerm(Guid conceptId, string codeSystem)
+        public ReferenceTerm GetConceptReferenceTerm(Guid conceptId, string codeSystem, bool exact = true)
         {
-
             var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
             var retVal = adhocCache?.Get<ReferenceTerm>($"refTerm.{conceptId}.{codeSystem}");
 
@@ -162,7 +161,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         public IEnumerable<ConceptReferenceTerm> FindReferenceTermsByConcept(Guid conceptId, string codeSystem)
         {
-
             // Concept is loaded
             var refTermService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ConceptReferenceTerm>>();
 
@@ -199,7 +197,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
         {
             throw new NotImplementedException();
         }
-
 
         /// <summary>
         /// Determine if the concept set contains the specified concept
@@ -244,7 +241,6 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// </summary>
         public ReferenceTerm GetConceptReferenceTerm(string conceptMnemonic, string codeSystem)
         {
-
             var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
             var retVal = adhocCache?.Get<ReferenceTerm>($"refTerm.{conceptMnemonic}.{codeSystem}");
 

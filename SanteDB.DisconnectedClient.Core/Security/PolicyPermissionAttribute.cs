@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -32,12 +33,11 @@ using System.Text;
 namespace SanteDB.DisconnectedClient.Security
 {
     /// <summary>
-    /// Represents a security attribute which requires that a user be in the possession of a 
+    /// Represents a security attribute which requires that a user be in the possession of a
     /// particular claim
     /// </summary>
     public class PolicyPermissionAttribute : CodeAccessSecurityAttribute
     {
-
         /// <summary>
         /// Creates a policy permission attribute
         /// </summary>
@@ -46,18 +46,16 @@ namespace SanteDB.DisconnectedClient.Security
         }
 
         /// <summary>
-        /// The claim type which the user must 
+        /// The claim type which the user must
         /// </summary>
         public String PolicyId { get; set; }
 
         /// <summary>
-        /// Permission 
+        /// Permission
         /// </summary>
         public override IPermission CreatePermission()
         {
-
             return new PolicyPermission(PermissionState.Unrestricted, this.PolicyId);
-
         }
     }
 
@@ -67,9 +65,9 @@ namespace SanteDB.DisconnectedClient.Security
     [Serializable]
     public class PolicyPermission : IPermission, IUnrestrictedPermission
     {
-
         // True if unrestricted
         private bool m_isUnrestricted;
+
         private String m_policyId;
         private IPrincipal m_principal;
 
@@ -122,7 +120,7 @@ namespace SanteDB.DisconnectedClient.Security
                 throw new PolicyViolationException(principal, this.m_policyId, PolicyGrantType.Deny);
             else
             {
-                if (pdp == null) // No way to verify 
+                if (pdp == null) // No way to verify
                     action = PolicyGrantType.Deny;
                 else if (pdp != null)
                     action = pdp.GetPolicyOutcome(principal, this.m_policyId);
@@ -133,7 +131,6 @@ namespace SanteDB.DisconnectedClient.Security
             AuditUtil.AuditAccessControlDecision(principal, m_policyId, action);
             if (action != PolicyGrantType.Grant)
                 throw new PolicyViolationException(principal, this.m_policyId, action);
-
         }
 
         /// <summary>
@@ -205,7 +202,6 @@ namespace SanteDB.DisconnectedClient.Security
             element.AddAttribute("Policy", this.m_policyId);
             element.AddAttribute("Principal", this.m_principal.Identity.Name);
             return element;
-
         }
 
         public IPermission Union(IPermission target)
@@ -214,4 +210,3 @@ namespace SanteDB.DisconnectedClient.Security
         }
     }
 }
-
