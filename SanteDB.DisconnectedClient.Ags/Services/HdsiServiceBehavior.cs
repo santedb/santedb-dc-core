@@ -143,7 +143,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<IdentifiedData, IdentifiedData>($"{resourceType}", restClient.Accept, body);
+                        return restClient.Post<IdentifiedData, IdentifiedData>($"{resourceType}", body);
                     }
                     catch (Exception e)
                     {
@@ -170,7 +170,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<IdentifiedData, IdentifiedData>($"{resourceType}/{id}", restClient.Accept, body);
+                        return restClient.Post<IdentifiedData, IdentifiedData>($"{resourceType}/{id}", body);
                     }
                     catch (Exception e)
                     {
@@ -573,7 +573,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Put<IdentifiedData, IdentifiedData>($"/{resourceType}/{id}", restClient.Accept, body);
+                        return restClient.Put<IdentifiedData, IdentifiedData>($"/{resourceType}/{id}", body);
                     }
                     catch (Exception e)
                     {
@@ -709,7 +709,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<object, object>($"{resourceType}/{childResourceType}", restClient.Accept, body);
+                        return restClient.Post<object, object>($"{resourceType}/{childResourceType}", body);
                     }
                     catch (Exception e)
                     {
@@ -738,7 +738,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<object, object>($"{resourceType}/${operationName}", restClient.Accept, body);
+                        return restClient.Post<object, object>($"{resourceType}/${operationName}", body);
                     }
                     catch (Exception e)
                     {
@@ -767,7 +767,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<object, object>($"{resourceType}/{id}/${operationName}", restClient.Accept, body);
+                        return restClient.Post<object, object>($"{resourceType}/{id}/${operationName}", body);
                     }
                     catch (Exception e)
                     {

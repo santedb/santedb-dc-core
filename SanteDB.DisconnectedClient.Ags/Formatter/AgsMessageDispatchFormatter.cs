@@ -154,7 +154,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                             parameters[pNumber] = serializer.Deserialize(request.Body);
                         }
                     }
-                    else if (contentType?.StartsWith("application/json+sdb-viewmodel") == true && typeof(IdentifiedData).IsAssignableFrom(parm.ParameterType))
+                    else if (contentType?.StartsWith("application/json+sdb-viewmodel") == true)
                     {
                         var viewModel = httpRequest.Headers["X-SanteDB-ViewModel"] ?? httpRequest.QueryString["_viewModel"];
 

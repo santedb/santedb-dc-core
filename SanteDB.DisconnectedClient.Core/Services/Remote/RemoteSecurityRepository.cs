@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.AMI;
@@ -53,7 +54,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         IPersistableQueryRepositoryService<UserEntity>,
         IRepositoryService<SecurityProvenance>
     {
-
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -76,8 +76,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     foreach (var rol in roleKeys)
                         foreach (var usr in users)
                         {
-
-                            client.Client.Post<SecurityUser, SecurityUser>($"SecurityRole/{rol}/user", client.Client.Accept, new SecurityUser()
+                            client.Client.Post<SecurityUser, SecurityUser>($"SecurityRole/{rol}/user", new SecurityUser()
                             {
                                 UserName = usr
                             });
@@ -94,7 +93,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public void ChangePassword(string userName, string password)
         {
-
             using (var client = this.GetClient())
                 try
                 {
@@ -121,7 +119,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <returns></returns>
         public SecurityUser ChangePassword(Guid userId, string password)
         {
-
             using (var client = this.GetClient())
                 try
                 {
@@ -172,7 +169,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             return ((IRepositoryService<SecurityRole>)this).Find(query);
         }
 
-
         /// <summary>
         /// Get active policies for the object
         /// </summary>
@@ -189,13 +185,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             return this.FindRoles(o => o.ObsoletionTime == null).Select(o => o.Name).ToArray();
         }
 
-
         /// <summary>
         /// Get policy by ID
         /// </summary>
         public SecurityPolicy GetPolicy(string policyOid)
         {
-
             using (var client = this.GetClient())
                 try
                 {
@@ -222,7 +216,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     throw new DataPersistenceException("Could not retrieve security provenance information", e);
                 }
         }
-
 
         /// <summary>
         /// Get role by name
@@ -261,7 +254,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     throw new DataPersistenceException("Could not retrieve user", e);
                 }
         }
-
 
         /// <summary>
         /// Get user from identitiy
@@ -304,7 +296,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     throw new DataPersistenceException("Could not lock user", e);
                 }
         }
-
 
         /// <summary>
         /// Remove application from roles
@@ -356,9 +347,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         IEnumerable<UserEntity> IRepositoryService<UserEntity>.Find(Expression<Func<UserEntity, bool>> query, int offset, int? count, out int totalResults, params ModelSort<UserEntity>[] orderBy)
         {
-
             return ((IPersistableQueryRepositoryService<UserEntity>)this).Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
-
         }
 
         /// <summary>
@@ -464,8 +453,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Get(Guid key, Guid versionKey)
         {
-
-
             try
             {
                 using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
@@ -499,7 +486,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     var application = client.GetApplication(key);
                     application.Entity.Policies = application.Policies.Select(o => o.ToPolicyInstance()).ToList();
                     return application.Entity;
-
                 }
                 catch (Exception e)
                 {
@@ -535,7 +521,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
         /// <summary>
         /// Get the specified security role
-        /// </summary> 
+        /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Get(Guid key)
         {
             return ((IRepositoryService<SecurityRole>)this).Get(key, Guid.Empty);
@@ -592,7 +578,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         SecurityPolicy IRepositoryService<SecurityPolicy>.Get(Guid key)
         {
             return ((IRepositoryService<SecurityPolicy>)this).Get(key, Guid.Empty);
-
         }
 
         /// <summary>
@@ -616,7 +601,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         UserEntity IRepositoryService<UserEntity>.Insert(UserEntity userEntity)
         {
-
             try
             {
                 using (var hdsiClient = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi")))
@@ -636,7 +620,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         SecurityApplication IRepositoryService<SecurityApplication>.Insert(SecurityApplication data)
         {
-
             using (var client = this.GetClient())
                 try
                 {
@@ -679,7 +662,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         SecurityRole IRepositoryService<SecurityRole>.Insert(SecurityRole roleInfo)
         {
-
             using (var client = this.GetClient())
                 try
                 {
@@ -711,7 +693,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         SecurityPolicy IRepositoryService<SecurityPolicy>.Insert(SecurityPolicy policy)
         {
-
             using (var client = this.GetClient())
                 try
                 {
@@ -740,7 +721,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 throw new DataPersistenceException("Could not delete user entity", e);
             }
-
         }
 
         /// <summary>
@@ -931,7 +911,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                    var retVal = client.Client.Put<SecurityPolicy, SecurityPolicy>($"SecurityPolicy/{data.Key}", client.Client.Accept, data);
+                    var retVal = client.Client.Put<SecurityPolicy, SecurityPolicy>($"SecurityPolicy/{data.Key}", data);
                     return retVal;
                 }
                 catch (Exception e)
@@ -1020,7 +1000,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityApplicationInfo>().Select(o =>
                     {
                         o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
@@ -1041,7 +1020,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityDeviceInfo>().Select(o =>
                     {
                         o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
@@ -1062,7 +1040,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityRoleInfo>().Select(o =>
                     {
                         o.Entity.Policies = o.Policies.Select(p => p.ToPolicyInstance()).ToList();
@@ -1083,7 +1060,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityPolicy>();
                 }
                 catch (Exception e)
@@ -1132,7 +1108,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     foreach (var usr in users)
                     {
                         // Get the user info
@@ -1155,7 +1130,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     foreach (var usr in users)
                     {
                         // Get the user info
@@ -1180,7 +1154,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.GetRoles(r => r.Name == role).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Users.ToArray();
                 }
                 catch (Exception e)
@@ -1197,14 +1170,12 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.GetRoles(r => r.ObsoletionTime != null).CollectionItem.OfType<SecurityRoleInfo>().Select(o => o.Entity.Name).ToArray();
                 }
                 catch (Exception e)
                 {
                     throw new DataPersistenceException("Could not remove users from roles", e);
                 }
-
         }
 
         /// <summary>
@@ -1218,7 +1189,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.GetUsers(u => u.UserName == principal.Identity.Name && u.Roles.Any(r => r.Name == roleName)).CollectionItem.Count() > 0;
                 }
                 catch (Exception e)
@@ -1226,7 +1196,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     throw new DataPersistenceException("Could not remove users from roles", e);
                 }
         }
-
 
         /// <summary>
         /// Get the specified provider entity
@@ -1246,7 +1215,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     client.Client.Lock<SecurityDeviceInfo>($"SecurityDevice/{key}");
                 }
                 catch (Exception e)
@@ -1264,7 +1232,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     client.Client.Lock<SecurityApplicationInfo>($"SecurityApplication/{key}");
                 }
                 catch (Exception e)
@@ -1281,7 +1248,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     client.Client.Unlock<SecurityDeviceInfo>($"SecurityDevice/{key}");
                 }
                 catch (Exception e)
@@ -1299,7 +1265,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     client.Client.Unlock<SecurityApplicationInfo>($"SecurityApplication/{key}");
                 }
                 catch (Exception e)
@@ -1316,7 +1281,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-
                     return client.Query(query, offset, count, out totalResults, queryId: queryId == Guid.Empty ? null : (Guid?)queryId, orderBy: orderBy).CollectionItem.OfType<SecurityProvenance>();
                 }
                 catch (Exception e)
@@ -1334,7 +1298,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 try
                 {
-
                     return client.GetDevices(o => o.Name == deviceName).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
                 }
                 catch (Exception e)
@@ -1353,7 +1316,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 try
                 {
-
                     return client.GetApplications(o => o.Name == applicationName).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault()?.Entity;
                 }
                 catch (Exception e)
@@ -1364,7 +1326,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
 
         /// <summary>
-        /// Get device by identity 
+        /// Get device by identity
         /// </summary>
         public SecurityDevice GetDevice(IIdentity identity) => this.GetDevice(identity.Name);
 
@@ -1378,7 +1340,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public SecurityEntity GetSecurityEntity(IPrincipal principal)
         {
-            if (principal.Identity is IDeviceIdentity deviceIdentity) // Device credential 
+            if (principal.Identity is IDeviceIdentity deviceIdentity) // Device credential
             {
                 return this.GetDevice(deviceIdentity);
             }

@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
@@ -92,7 +93,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             {
                 throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
-
         }
 
         /// <summary>
@@ -140,9 +140,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             {
                 throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
-
         }
-
 
         /// <summary>
         /// Gets the specified model object
@@ -158,7 +156,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             {
                 throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
-
         }
 
         /// <summary>
@@ -199,7 +196,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
             {
                 throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
-
         }
 
         /// <summary>
@@ -285,7 +281,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                         bund.Key = Guid.NewGuid();
                         e.Cancel = bund.Item.Count == 0;
                     }
-
                 };
 
                 // Create method
@@ -361,7 +356,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         {
             try
             {
-
                 if (!(data is Bundle || data is Entity || data is Act || data is EntityRelationship)) // || data is EntityRelationship))
                 {
                     return;
@@ -397,13 +391,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
 
                 // Indicate that the server has responded
                 this.Responded?.Invoke(this, new IntegrationResultEventArgs(data, iver as IdentifiedData));
-
             }
             catch (TargetInvocationException e)
             {
                 throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
-
         }
 
         /// <summary>
@@ -434,7 +426,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         {
             try
             {
-
                 // HACK
                 if (!(data is Bundle || data is Entity || data is Act || data is Patch))
                 {
@@ -495,7 +486,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     }
                     catch (WebException e)
                     {
-
                         switch ((e.Response as HttpWebResponse).StatusCode)
                         {
                             case HttpStatusCode.Conflict: // Try to resolve the conflict in an automated way
@@ -536,6 +526,7 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                                 }
 
                                 break;
+
                             case HttpStatusCode.NotFound: // We tried to update something that doesn't exist on the server? That's odd
                                 this.m_tracer.TraceWarning("Server reported patch target doesn't exist! {0}", patch);
                                 var svcType = typeof(IDataPersistenceService<>).MakeGenericType(patch.AppliesTo.Type);
@@ -561,9 +552,8 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                         iver.VersionKey = newUuid;
                         idpService.Update(existing);
                     }
-
                 }
-                else // regular update 
+                else // regular update
                 {
                     // Force an update
                     if (!unsafeUpdate)
@@ -587,13 +577,11 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
                     // Notify updated
                     this.Responded?.Invoke(this, new IntegrationResultEventArgs(existing, iver as IdentifiedData));
                 }
-
             }
             catch (TargetInvocationException e)
             {
                 throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
-
         }
 
         /// <summary>
@@ -627,7 +615,6 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         private HdsiServiceClient GetServiceClient()
         {
             var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-            retVal.Client.Accept = "application/xml";
             return retVal;
         }
 

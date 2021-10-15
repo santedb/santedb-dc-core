@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
@@ -43,7 +44,6 @@ namespace SanteDB.DisconnectedClient.Security
     /// </summary>
     public class OAuthIdentityProvider : IElevatableIdentityProviderService, ISecurityChallengeIdentityService
     {
-
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -196,16 +196,12 @@ namespace SanteDB.DisconnectedClient.Security
                         localRp.AddUsersToRoles(new String[] { principal.Identity.Name }, cprincipal.Claims.Where(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray(), AuthenticationContext.SystemPrincipal);
                         // Unlock the account
                         localIdp.SetLockout(principal.Identity.Name, false, principal);
-
-
                     }
                     catch (Exception ex)
                     {
                         this.m_tracer.TraceWarning("Insertion of local cache credential failed: {0}", ex);
                     }
                 }
-
-
             }
         }
 
@@ -235,7 +231,6 @@ namespace SanteDB.DisconnectedClient.Security
             return this.DoAuthenticationInternal(userName, password, tfaSecret: tfaSecret);
         }
 
-
         /// <summary>
         /// Do internal authentication
         /// </summary>
@@ -261,7 +256,6 @@ namespace SanteDB.DisconnectedClient.Security
                     retVal = localIdp.Authenticate(userName, password, tfaSecret);
                 else using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
                     {
-
                         // Construct oauth req
                         OAuthTokenRequest request = null;
                         if (refreshPrincipal != null)
@@ -294,7 +288,6 @@ namespace SanteDB.DisconnectedClient.Security
                                     )));
                         };
 
-
                         if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                         {
                             // Try OAUTH server
@@ -308,7 +301,7 @@ namespace SanteDB.DisconnectedClient.Security
                                 else
                                     restClient.Description.Endpoint[0].Timeout = (int)(restClient.Description.Endpoint[0].Timeout * 0.6666f);
 
-                                // GEt configuration 
+                                // GEt configuration
                                 var configuration = this.GetConfigurationInfo();
                                 if (configuration == null) // default action
                                 {
@@ -337,7 +330,6 @@ namespace SanteDB.DisconnectedClient.Security
                             catch (Exception ex) // All others, try local
                             {
                                 this.m_tracer.TraceWarning("Original OAuth2 request failed trying local - Original Exception : {0}", ex);
-
                             }
 
                             if (retVal == null) // Some error occurred, use local
@@ -374,8 +366,6 @@ namespace SanteDB.DisconnectedClient.Security
                     }
 
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
-
-
             }
             catch (Exception ex)
             {
@@ -385,9 +375,7 @@ namespace SanteDB.DisconnectedClient.Security
             }
 
             return retVal;
-
         }
-
 
         /// <summary>
         /// Changes the users password.
@@ -416,8 +404,6 @@ namespace SanteDB.DisconnectedClient.Security
                 {
                     using (AmiServiceClient client = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami")))
                     {
-                        client.Client.Accept = "application/xml";
-
                         Guid userId = Guid.Empty;
                         if (principal.Identity.Name.ToLowerInvariant() == userName.ToLowerInvariant())
                         {
@@ -454,7 +440,7 @@ namespace SanteDB.DisconnectedClient.Security
                             PasswordOnly = true
                         };
 
-                        // Set the credentials 
+                        // Set the credentials
                         client.Client.Credentials = ApplicationContext.Current.Configuration.GetServiceDescription("ami").Binding.Security.CredentialProvider.GetCredentials(principal);
 
                         client.UpdateUser(userId, user);
@@ -474,7 +460,6 @@ namespace SanteDB.DisconnectedClient.Security
                 this.m_tracer.TraceError("Error changing password for user {0} : {1}", userName, e);
                 throw;
             }
-
         }
 
         /// <summary>
@@ -497,8 +482,8 @@ namespace SanteDB.DisconnectedClient.Security
                 return ApplicationContext.Current.GetService<IOfflineIdentityProviderService>().CreateIdentity(userName, password, principal);
             else
                 throw new InvalidOperationException(Strings.err_local_users_prohibited);
-
         }
+
         /// <summary>
         /// Sets the user's lockout status
         /// </summary>
@@ -562,7 +547,6 @@ namespace SanteDB.DisconnectedClient.Security
                 }
                 else using (IRestClient restClient = ApplicationContext.Current.GetRestClient("acs"))
                     {
-
                         // Create grant information
                         OAuthTokenRequest request = new OAuthResetTokenRequest(userName, challengeKey.ToString(), response);
 
@@ -579,7 +563,6 @@ namespace SanteDB.DisconnectedClient.Security
                         {
                             restClient.Requesting += (o, p) =>
                             {
-
                                 // Add device credential
                                 if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
                                     p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
@@ -617,7 +600,6 @@ namespace SanteDB.DisconnectedClient.Security
                             {
                                 throw new InvalidOperationException("Cannot send reset credential while offline");
                             }
-
                         }
                         catch (RestClientException<OAuthTokenResponse> ex)
                         {
@@ -638,11 +620,9 @@ namespace SanteDB.DisconnectedClient.Security
                         {
                             throw new SecurityException($"General authentication error occurred: {ex.Message}", ex);
                         }
-
                     }
 
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, true));
-
             }
             catch (Exception ex)
             {
@@ -652,7 +632,6 @@ namespace SanteDB.DisconnectedClient.Security
             }
 
             return retVal;
-
         }
 
         /// <summary>
@@ -663,8 +642,6 @@ namespace SanteDB.DisconnectedClient.Security
             return this.DoAuthenticationInternal(userName: userName, password: password, tfaSecret: tfaSecret, isOverride: true, purposeOfUse: purpose, policies: policies);
         }
 
-
-        #endregion
+        #endregion IIdentityProviderService implementation
     }
 }
-

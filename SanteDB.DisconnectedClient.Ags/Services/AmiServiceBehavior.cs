@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using RestSrvr;
 using RestSrvr.Exceptions;
 using SanteDB.Core;
@@ -54,7 +55,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// <remarks>This class implements the service behaviors for the Disconnected Gateway</remarks>
     public class AmiServiceBehavior : AmiServiceBehaviorBase
     {
-
         // Resource handler tool
         private ResourceHandlerTool m_resourceHandler;
 
@@ -76,7 +76,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public AmiServiceBehavior()
         {
-
         }
 
         // Tracer
@@ -156,7 +155,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     Note = report.Note,
                     Submitter = ApplicationContext.Current.GetService<ISecurityRepositoryService>().GetUserEntity(AuthenticationContext.Current.Principal.Identity)
                 });
-
             }
             catch (Exception e)
             {
@@ -195,14 +193,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             {
                 var logFile = new FileInfo(logFileName);
 
-
                 // Verify offset
                 if (offset > logFile.Length) throw new ArgumentOutOfRangeException($"Maximum size of {logFileName} is {logFile.Length}, offset is {offset}");
 
                 using (var fs = File.OpenRead(logFileName))
                 {
-
-                    // Is count specified 
+                    // Is count specified
                     byte[] buffer;
                     if (offset + count > logFile.Length)
                         buffer = new byte[logFile.Length - offset];
@@ -277,7 +273,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 }
             }
 
-            // Now compile any matching 
+            // Now compile any matching
             int offset = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_offset"] ?? "0"),
                 count = Int32.Parse(RestOperationContext.Current.IncomingRequest.QueryString["_count"] ?? "100");
 
@@ -307,7 +303,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         }
 
         /// <summary>
-        /// Get a diagnostic report 
+        /// Get a diagnostic report
         /// </summary>
         /// <returns></returns>
         [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
@@ -331,7 +327,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             new DiagnosticReportTag("sync.allow.offline", ApplicationContext.Current.Modes.HasFlag(SynchronizationMode.Offline).ToString()),
                             new DiagnosticReportTag("sync.allow.online", ApplicationContext.Current.Modes.HasFlag(SynchronizationMode.Online).ToString()),
                             new DiagnosticReportTag("sync.allow.sync", ApplicationContext.Current.Modes.HasFlag(SynchronizationMode.Sync).ToString())
-
                         }
                     };
                 }
@@ -422,7 +417,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-
         /// <summary>
         /// Throw if the service is not ready
         /// </summary>
@@ -431,7 +425,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             if (!ApplicationServiceContext.Current.GetService<AgsService>().IsRunning)
                 throw new DomainStateException();
         }
-
 
         /// <summary>
         /// Create the specified resource
@@ -446,14 +439,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<Object, Object>($"{resourceType}", restClient.Accept, data);
+                        return restClient.Post<Object, Object>($"{resourceType}", data);
                     }
                     catch (Exception e)
                     {
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -473,14 +465,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<Object, Object>($"{resourceType}/{key}", restClient.Accept, data);
+                        return restClient.Post<Object, Object>($"{resourceType}/{key}", data);
                     }
                     catch (Exception e)
                     {
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -510,7 +501,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -543,7 +533,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -573,7 +562,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -603,7 +591,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -634,7 +621,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -663,7 +649,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -686,14 +671,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Put<Object, Object>($"{resourceType}/{key}", restClient.Accept, data);
+                        return restClient.Put<Object, Object>($"{resourceType}/{key}", data);
                     }
                     catch (Exception e)
                     {
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -723,7 +707,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -753,7 +736,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
                         throw;
                     }
-
                 else
                     throw new FaultException(502);
             }
@@ -762,6 +744,5 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 return base.UnLock(resourceType, key);
             }
         }
-
     }
 }

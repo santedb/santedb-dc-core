@@ -33,7 +33,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         private IRestClient GetRestClient()
         {
             var retVal = ApplicationContext.Current.GetRestClient("hdsi");
-            retVal.Accept = "application/xml";
             return retVal;
         }
 
@@ -46,7 +45,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    client.Invoke<Object, Object>("CHECKOUT", $"{typeof(T).GetSerializationName()}/{key}", client.Accept, null);
+                    client.Invoke<Object, Object>("CHECKOUT", $"{typeof(T).GetSerializationName()}/{key}", null);
                     return true;
                 }
             }
@@ -73,7 +72,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    client.Invoke<Object, Object>("CHECKIN", $"{typeof(T).GetSerializationName()}/{key}", client.Accept, null);
+                    client.Invoke<Object, Object>("CHECKIN", $"{typeof(T).GetSerializationName()}/{key}", null);
                     return true;
                 }
             }

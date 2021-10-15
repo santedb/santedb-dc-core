@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
@@ -38,7 +39,6 @@ namespace SanteDB.DisconnectedClient.Security
     /// </summary>
     public class AmiPolicyInformationService : AmiRepositoryBaseService, IPolicyInformationService
     {
-
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(AmiPolicyInformationService));
 
@@ -52,9 +52,7 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public AmiPolicyInformationService()
         {
-
         }
-
 
         /// <summary>
         /// Note supported
@@ -66,7 +64,7 @@ namespace SanteDB.DisconnectedClient.Security
                 using (var client = this.GetClient())
                     foreach (var itm in policyOids)
                     {
-                        client.Client.Post<SecurityPolicyInfo, SecurityPolicyInfo>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy", client.Client.Accept, new SecurityPolicyInfo()
+                        client.Client.Post<SecurityPolicyInfo, SecurityPolicyInfo>($"{securable.GetType().Name}/{(securable as IIdentifiedEntity).Key}/policy", new SecurityPolicyInfo()
                         {
                             Oid = itm,
                             Grant = rule
@@ -84,7 +82,6 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public void RemovePolicies(object securable, IPrincipal principal, params string[] policyOids)
         {
-
             using (var client = this.GetClient())
                 foreach (var itm in policyOids)
                 {
@@ -117,7 +114,6 @@ namespace SanteDB.DisconnectedClient.Security
                             return new List<IPolicyInstance>();
                         else
                             return remoteRole.Policies.Select(o => new GenericPolicyInstance(new GenericPolicy(o.Policy.Key.Value, o.Oid, o.Name, o.CanOverride), o.Grant)).ToList();
-
                     }
                     else if (securable is SecurityApplication)
                     {
@@ -132,7 +128,6 @@ namespace SanteDB.DisconnectedClient.Security
                             return this.GetPolicies(new SecurityRole() { Name = userInfo.Roles.FirstOrDefault() });
                         else
                             return new List<IPolicyInstance>();
-
                     }
                     else if (securable is Act)
                         throw new NotImplementedException();
@@ -180,7 +175,6 @@ namespace SanteDB.DisconnectedClient.Security
                 throw new RemoteOperationException($"Error getting policy information for {policyOid}", e);
             }
         }
-
 
         /// <summary>
         /// Gets the specified policy instance (if applicable) for the specified object

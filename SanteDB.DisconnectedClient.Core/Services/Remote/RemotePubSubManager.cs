@@ -26,35 +26,41 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// Fired when subscribing
         /// </summary>
         public event EventHandler<DataPersistingEventArgs<PubSubSubscriptionDefinition>> Subscribing;
+
         /// <summary>
         /// Fired after subscription
         /// </summary>
         public event EventHandler<DataPersistedEventArgs<PubSubSubscriptionDefinition>> Subscribed;
+
         /// <summary>
         /// Fired when un-subscribing
         /// </summary>
         public event EventHandler<DataPersistingEventArgs<PubSubSubscriptionDefinition>> UnSubscribing;
+
         /// <summary>
         /// Fired when subscribed
         /// </summary>
         public event EventHandler<DataPersistedEventArgs<PubSubSubscriptionDefinition>> UnSubscribed;
+
         /// <summary>
         /// Fired when activating
         /// </summary>
         public event EventHandler<DataPersistingEventArgs<PubSubSubscriptionDefinition>> Activating;
+
         /// <summary>
         /// Fired when de-activating
         /// </summary>
         public event EventHandler<DataPersistingEventArgs<PubSubSubscriptionDefinition>> DeActivating;
+
         /// <summary>
         /// Fired when activated
         /// </summary>
         public event EventHandler<DataPersistedEventArgs<PubSubSubscriptionDefinition>> Activated;
+
         /// <summary>
         /// Fired when de-activated
         /// </summary>
         public event EventHandler<DataPersistedEventArgs<PubSubSubscriptionDefinition>> DeActivated;
-
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteJobManager));
@@ -66,7 +72,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         private IRestClient GetRestClient()
         {
             var retVal = ApplicationContext.Current.GetRestClient("ami");
-            retVal.Accept = "application/xml";
             return retVal;
         }
 
@@ -81,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 using (var client = this.GetRestClient())
                 {
                     sub.IsActive = isActive;
-                    return client.Put<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}", client.Accept, sub);
+                    return client.Put<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}", sub);
                 }
             }
             catch (Exception e)
@@ -206,7 +211,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", client.Accept, new PubSubChannelDefinition()
+                    return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", new PubSubChannelDefinition()
                     {
                         DispatcherFactoryTypeXml = dispatcherFactoryType.AssemblyQualifiedName,
                         Endpoint = endpoint,
@@ -230,7 +235,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", client.Accept, new PubSubChannelDefinition()
+                    return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", new PubSubChannelDefinition()
                     {
                         Endpoint = endpoint,
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
@@ -262,7 +267,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    return client.Post<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription", client.Accept, new PubSubSubscriptionDefinition()
+                    return client.Post<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription", new PubSubSubscriptionDefinition()
                     {
                         ChannelKey = channelId,
                         Description = description,
@@ -331,7 +336,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    return client.Put<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel/{key}", client.Accept, new PubSubChannelDefinition()
+                    return client.Put<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel/{key}", new PubSubChannelDefinition()
                     {
                         Endpoint = endpoint,
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
@@ -354,7 +359,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 using (var client = this.GetRestClient())
                 {
-                    return client.Put<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}", client.Accept, new PubSubSubscriptionDefinition()
+                    return client.Put<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}", new PubSubSubscriptionDefinition()
                     {
                         Description = description,
                         Event = events,

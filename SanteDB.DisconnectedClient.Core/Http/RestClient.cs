@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
@@ -57,7 +58,6 @@ namespace SanteDB.DisconnectedClient.Http
         [XmlRoot(nameof(ErrorResult), Namespace = "http://santedb.org/hdsi")]
         public class ErrorResult : IdentifiedData
         {
-
             /// <summary>
             /// Gets the date this was modified
             /// </summary>
@@ -101,8 +101,10 @@ namespace SanteDB.DisconnectedClient.Http
         {
             [XmlEnum("I")]
             Information,
+
             [XmlEnum("W")]
             Warning,
+
             [XmlEnum("E")]
             Error
         }
@@ -127,6 +129,7 @@ namespace SanteDB.DisconnectedClient.Http
                 this.Type = type;
                 this.Text = text;
             }
+
             /// <summary>
             /// Gets or sets the type of the error
             /// </summary>
@@ -156,7 +159,6 @@ namespace SanteDB.DisconnectedClient.Http
         {
             this.m_tracer = Tracer.GetTracer(this.GetType());
             this.m_configurationSection = ApplicationContext.Current?.Configuration?.GetSection<ServiceClientConfigurationSection>();
-
         }
 
         /// <summary>
@@ -181,8 +183,6 @@ namespace SanteDB.DisconnectedClient.Http
                         config.Binding.Security.ClientCertificate.StoreName));
                 this.ClientCertificates.Add(cert);
             }
-
-
         }
 
         /// <summary>
@@ -218,19 +218,22 @@ namespace SanteDB.DisconnectedClient.Http
                     case OptimizationMethod.Lzma:
                         retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
                         break;
+
                     case OptimizationMethod.Bzip2:
                         retVal.Headers[HttpRequestHeader.AcceptEncoding] = "bzip2,gzip,deflate";
                         break;
+
                     case OptimizationMethod.Gzip:
                         retVal.Headers[HttpRequestHeader.AcceptEncoding] = "gzip,deflate";
                         break;
+
                     case OptimizationMethod.Deflate:
                         retVal.Headers[HttpRequestHeader.AcceptEncoding] = "deflate";
                         break;
+
                     case OptimizationMethod.None:
                         retVal.Headers[HttpRequestHeader.AcceptEncoding] = null;
                         break;
-
                 }
             }
 
@@ -281,7 +284,6 @@ namespace SanteDB.DisconnectedClient.Http
         /// <typeparam name="TResult">The 2nd type parameter.</typeparam>
         protected override TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection additionalHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)
         {
-
             if (String.IsNullOrEmpty(method))
                 throw new ArgumentNullException(nameof(method));
             //if (String.IsNullOrEmpty(url))
@@ -318,12 +320,11 @@ namespace SanteDB.DisconnectedClient.Http
                 // Body was provided?
                 try
                 {
-
                     // Try assigned credentials
                     IBodySerializer serializer = null;
                     if (body != null)
                     {
-                        // GET Stream, 
+                        // GET Stream,
                         Stream requestStream = null;
                         try
                         {
@@ -343,7 +344,6 @@ namespace SanteDB.DisconnectedClient.Http
                                 }
                             }
 
-
                             if (contentType == null && typeof(TResult) != typeof(Object))
                                 throw new ArgumentNullException(nameof(contentType));
 
@@ -360,21 +360,25 @@ namespace SanteDB.DisconnectedClient.Http
                                             using (var df = new LZipStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
                                                 serializer.Serialize(df, body);
                                             break;
+
                                         case OptimizationMethod.Bzip2:
                                             requestObj.Headers.Add("Content-Encoding", "bzip2");
                                             using (var df = new BZip2Stream(new NonDisposingStream(requestStream), CompressionMode.Compress, false))
                                                 serializer.Serialize(df, body);
                                             break;
+
                                         case OptimizationMethod.Gzip:
                                             requestObj.Headers.Add("Content-Encoding", "gzip");
                                             using (var df = new GZipStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
                                                 serializer.Serialize(df, body);
                                             break;
+
                                         case OptimizationMethod.Deflate:
                                             requestObj.Headers.Add("Content-Encoding", "deflate");
                                             using (var df = new DeflateStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
                                                 serializer.Serialize(df, body);
                                             break;
+
                                         case OptimizationMethod.None:
                                         default:
                                             serializer.Serialize(ms, body);
@@ -390,7 +394,6 @@ namespace SanteDB.DisconnectedClient.Http
 
                                 using (var nms = new MemoryStream(ms.ToArray()))
                                     nms.CopyTo(requestStream);
-
                             }
                         }
                         finally
@@ -404,7 +407,6 @@ namespace SanteDB.DisconnectedClient.Http
                     HttpWebResponse response = null;
                     try
                     {
-
                         var cancellationTokenSource = new CancellationTokenSource();
                         cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
                         using (var responseTask = Task.Run(async () => { return await requestObj.GetResponseAsync(); }, cancellationTokenSource.Token))
@@ -473,18 +475,22 @@ namespace SanteDB.DisconnectedClient.Http
                                         using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                             retVal = (TResult)serializer.DeSerialize(df);
                                         break;
+
                                     case "gzip":
                                         using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                             retVal = (TResult)serializer.DeSerialize(df);
                                         break;
+
                                     case "bzip2":
                                         using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
                                             retVal = (TResult)serializer.DeSerialize(bzs);
                                         break;
+
                                     case "lzma":
                                         using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                             retVal = (TResult)serializer.DeSerialize(lzmas);
                                         break;
+
                                     default:
                                         retVal = (TResult)serializer.DeSerialize(ms);
                                         break;
@@ -505,7 +511,6 @@ namespace SanteDB.DisconnectedClient.Http
                         //responseTask.Dispose();
                     }
                 }
-
                 catch (TimeoutException e)
                 {
                     this.m_tracer.TraceError("Request timed out:{0}", e.Message);
@@ -531,7 +536,6 @@ namespace SanteDB.DisconnectedClient.Http
                     errorResponse.GetResponseStream().CopyTo(ms);
                     ms.Seek(0, SeekOrigin.Begin);
 
-
                     try
                     {
                         var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
@@ -542,18 +546,22 @@ namespace SanteDB.DisconnectedClient.Http
                                 using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                     errorResult = serializer.DeSerialize(df);
                                 break;
+
                             case "gzip":
                                 using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                     errorResult = serializer.DeSerialize(df);
                                 break;
+
                             case "bzip2":
                                 using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
                                     errorResult = serializer.DeSerialize(bzs);
                                 break;
+
                             case "lzma":
                                 using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                     errorResult = serializer.DeSerialize(lzmas);
                                 break;
+
                             default:
                                 errorResult = serializer.DeSerialize(ms);
                                 break;
@@ -567,7 +575,7 @@ namespace SanteDB.DisconnectedClient.Http
                     Exception exception = null;
                     if (errorResult is RestServiceFault rse)
                         exception = new RestClientException<RestServiceFault>(rse, e, e.Status, e.Response);
-                    else if(errorResponse is TResult)
+                    else if (errorResponse is TResult)
                         exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
 
                     switch (errorResponse.StatusCode)
@@ -576,9 +584,11 @@ namespace SanteDB.DisconnectedClient.Http
                             if (this.CategorizeResponse(errorResponse) != ServiceClientErrorType.Ok)
                                 throw exception;
                             break;
+
                         case HttpStatusCode.NotModified:
                             responseHeaders = errorResponse?.Headers;
                             return default(TResult);
+
                         case (HttpStatusCode)422:
                             throw exception;
 
@@ -609,7 +619,6 @@ namespace SanteDB.DisconnectedClient.Http
                     this.m_tracer.TraceError("Invalid Operation: {0}", e.Message);
                     throw;
                 }
-
             }
 
             responseHeaders = new WebHeaderCollection();
@@ -627,4 +636,3 @@ namespace SanteDB.DisconnectedClient.Http
         }
     }
 }
-

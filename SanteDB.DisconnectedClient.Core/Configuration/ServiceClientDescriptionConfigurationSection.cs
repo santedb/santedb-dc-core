@@ -1,21 +1,22 @@
 /*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Http;
@@ -27,7 +28,6 @@ using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Configuration
 {
-
     /// <summary>
     /// Service client configuration
     /// </summary>
@@ -74,7 +74,6 @@ namespace SanteDB.DisconnectedClient.Configuration
         [JsonProperty("optimize")]
         public OptimizationMethod Optimize { get; set; }
 
-
         /// <summary>
         /// Gets or sets the rest client implementation
         /// </summary>
@@ -101,7 +100,7 @@ namespace SanteDB.DisconnectedClient.Configuration
     }
 
     /// <summary>
-    /// A service client reprsent a single client to a service 
+    /// A service client reprsent a single client to a service
     /// </summary>
     [XmlType(nameof(ServiceClientDescriptionConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
     public class ServiceClientDescriptionConfiguration : IRestClientDescription
@@ -113,6 +112,12 @@ namespace SanteDB.DisconnectedClient.Configuration
         {
             this.Endpoint = new List<ServiceClientEndpoint>();
         }
+
+        /// <summary>
+        /// Gets or sets the accept
+        /// </summary>
+        [XmlElement("accept")]
+        public string Accept { get; set; }
 
         /// <summary>
         /// The endpoints of the client
@@ -135,7 +140,6 @@ namespace SanteDB.DisconnectedClient.Configuration
             get;
             set;
         }
-
 
         /// <summary>
         /// Gets or sets the name of the service client
@@ -194,7 +198,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the type which dictates how a body maps to a 
+        /// Gets or sets the type which dictates how a body maps to a
         /// </summary>
         /// <value>The serialization binder type xml.</value>
         [XmlAttribute("contentTypeMapper")]
@@ -232,7 +236,6 @@ namespace SanteDB.DisconnectedClient.Configuration
         [XmlElement("method")]
         public OptimizationMethod OptimizationMethod { get; set; }
 
-
         /// <summary>
         /// Content type mapper
         /// </summary>
@@ -243,7 +246,6 @@ namespace SanteDB.DisconnectedClient.Configuration
             get;
             set;
         }
-
 
         /// <summary>
         /// Gets the security description
@@ -259,12 +261,16 @@ namespace SanteDB.DisconnectedClient.Configuration
     {
         [XmlEnum("off")]
         None = 0,
+
         [XmlEnum("df")]
         Deflate = 1,
+
         [XmlEnum("gz")]
         Gzip = 2,
+
         [XmlEnum("bz2")]
         Bzip2 = 3,
+
         [XmlEnum("7z")]
         Lzma = 4
     }
@@ -276,8 +282,8 @@ namespace SanteDB.DisconnectedClient.Configuration
     public class ServiceClientSecurity : IRestClientSecurityDescription
     {
         /// <summary>
-        /// Gets or sets the ICertificateValidator interface which should be called to validate 
-        /// certificates 
+        /// Gets or sets the ICertificateValidator interface which should be called to validate
+        /// certificates
         /// </summary>
         /// <value>The serialization binder type xml.</value>
         [XmlAttribute("certificateValidator")]
@@ -286,7 +292,6 @@ namespace SanteDB.DisconnectedClient.Configuration
             get => this.CertificateValidator?.GetType().AssemblyQualifiedName;
             set => this.CertificateValidator = Activator.CreateInstance(Type.GetType(value)) as ICertificateValidator;
         }
-
 
         /// <summary>
         /// Gets the thumbprint the device should use for authentication
@@ -416,7 +421,6 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
     }
 
-
     /// <summary>
     /// Represnts a single endpoint for use in the service client
     /// </summary>
@@ -448,7 +452,4 @@ namespace SanteDB.DisconnectedClient.Configuration
         [XmlAttribute("timeout")]
         public int Timeout { get; set; }
     }
-
-
 }
-

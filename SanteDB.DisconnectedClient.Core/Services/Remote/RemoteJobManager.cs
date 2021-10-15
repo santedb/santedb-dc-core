@@ -157,7 +157,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                             if (ji.Parameters != null)
                                 for (int i = 0; i < ji.Parameters.Count; i++)
                                     ji.Parameters[i].Value = parameters[i];
-                            client.Put<JobInfo, JobInfo>($"JobInfo/{this.Key}", client.Accept, ji);
+                            client.Put<JobInfo, JobInfo>($"JobInfo/{this.Key}", ji);
                         }
                     }
                     catch (Exception ex)
@@ -177,7 +177,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         private static IRestClient GetRestClient()
         {
             var retVal = ApplicationContext.Current.GetRestClient("ami");
-            retVal.Accept = "application/xml";
             return retVal;
         }
 

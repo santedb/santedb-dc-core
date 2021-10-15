@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SanteDB.BI.Services.Impl;
@@ -78,7 +79,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// </summary>
     public partial class ApplicationServiceBehavior : IApplicationServiceContract
     {
-
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(ApplicationServiceBehavior));
 
@@ -142,9 +142,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 case "Basic":
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Basic;
                     break;
+
                 case "Inline":
                     ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DomainAuthentication = DomainClientAuthentication.Inline;
                     break;
+
                 case "Peer":
                     ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(OAuthIdentityProvider));
                     break;
@@ -154,7 +156,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Stage 1 - Demand access admin policy
             try
             {
-
                 new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.CreateDevice).Demand();
                 new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.AccessClientAdministrativeFunction).Demand();
                 new PolicyPermission(PermissionState.Unrestricted, PermissionPolicyIdentifiers.UnrestrictedMetadata).Demand();
@@ -189,20 +190,18 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 var serviceOptions = amiClient.Options();
                 serviceClientSection.Client.Clear();
 
-                Dictionary<ServiceEndpointType, String> endpointNames = new Dictionary<ServiceEndpointType, string>()
+                var endpointNames = new Dictionary<ServiceEndpointType, KeyValuePair<string, string>>()
                 {
-                    { ServiceEndpointType.AdministrationIntegrationService, "ami" },
-                    { ServiceEndpointType.HealthDataService, "hdsi" },
-                    { ServiceEndpointType.AuthenticationService, "acs" },
-                    {ServiceEndpointType.BusinessIntelligenceService, "bis" }
+                    { ServiceEndpointType.AdministrationIntegrationService, new KeyValuePair<String,String>("ami", "application/xml") },
+                    { ServiceEndpointType.HealthDataService, new KeyValuePair<String,String>("hdsi", "application/xml") },
+                    { ServiceEndpointType.AuthenticationService, new KeyValuePair<String,String>("acs", "application/json") },
+                    {ServiceEndpointType.BusinessIntelligenceService, new KeyValuePair<String,String>("bis", "application/json") }
                 };
 
                 foreach (var itm in serviceOptions.Endpoints)
                 {
-
                     var urlInfo = itm.BaseUrl.Where(o => o.StartsWith(scheme));
-                    String serviceName = null;
-                    if (!urlInfo.Any() || !endpointNames.TryGetValue(itm.ServiceType, out serviceName))
+                    if (!urlInfo.Any() || !endpointNames.TryGetValue(itm.ServiceType, out KeyValuePair<String, String> serviceData))
                         continue;
 
                     // Description binding
@@ -231,7 +230,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             Timeout = itm.ServiceType == ServiceEndpointType.HealthDataService ? 180000 : 60000
                         }).ToList(),
                         Trace = enableTrace,
-                        Name = serviceName
+                        Name = serviceData.Key,
+                        Accept = serviceData.Value
                     };
 
                     serviceClientSection.Client.Add(description);
@@ -260,15 +260,19 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         case 0:
                             pcharArray[i] = (byte)((pcharArray[i] % 10) + 48);
                             break;
+
                         case 1:
                             pcharArray[i] = (byte)spec[pcharArray[i] % spec.Length];
                             break;
+
                         case 2:
                             pcharArray[i] = (byte)((pcharArray[i] % 25) + 65);
                             break;
+
                         case 3:
                             pcharArray[i] = (byte)((pcharArray[i] % 25) + 97);
                             break;
+
                         default:
                             pcharArray[i] = (byte)((pcharArray[i] % 61) + 65);
                             break;
@@ -302,7 +306,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             Policies = role.Policies
                         });
 
-                        // Create the device entity 
+                        // Create the device entity
                         hdsiClient.Create(new DeviceEntity()
                         {
                             SecurityDevice = newDevice.Entity,
@@ -329,7 +333,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             var existingDeviceItem = existingDevice.CollectionItem.OfType<SecurityDeviceInfo>().First().Entity;
                             amiClient.UpdateDevice(existingDeviceItem.Key.Value, new SecurityDeviceInfo(new SanteDB.Core.Model.Security.SecurityDevice()
                             {
-
                                 UpdatedTime = DateTime.Now,
                                 Name = deviceName,
                                 DeviceSecret = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>().DeviceSecret
@@ -338,7 +341,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 Policies = role.Policies
                             });
 
-                            // Create the device entity 
+                            // Create the device entity
                             var existingDeviceEntity = hdsiClient.Query<DeviceEntity>(o => o.SecurityDeviceKey == existingDeviceItem.Key.Value, 0, 1, false).Item.OfType<DeviceEntity>();
                             foreach (var ede in existingDeviceEntity)
                                 hdsiClient.Obsolete(ede);
@@ -356,7 +359,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                     new EntityName(NameUseKeys.Search, osiService.MachineName)
                                 }
                             });
-
                         }
                     }
                 }
@@ -373,7 +375,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
             catch (PolicyViolationException ex)
             {
-
                 this.m_tracer.TraceWarning("Policy violation exception on {0}. Will attempt again", ex.Demanded, ex.ToString());
                 // Only configure the minimum to contact the realm for authentication to continue
                 var serviceClientSection = ApplicationContext.Current.Configuration.GetSection<ServiceClientConfigurationSection>();
@@ -417,6 +418,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         }
                     },
                     Name = "ami",
+                    Accept = "application/xml",
                     Trace = enableTrace
                 });
                 serviceClientSection.Client.Add(new ServiceClientDescriptionConfiguration()
@@ -431,6 +433,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         }
                     },
                     Name = "hdsi",
+                    Accept = "application/xml",
                     Trace = enableTrace
                 });
 
@@ -474,6 +477,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 Optimize = false
                             },
                             Name = "acs",
+                            Accept = "application/json",
                             Trace = enableTrace,
                             Endpoint = acsOption.BaseUrl.Select(o => new ServiceClientEndpoint()
                             {
@@ -481,7 +485,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 Timeout = 30000
                             }).ToList()
                         });
-
                     }
 
                     // Update the security binding on the temporary AMI binding
@@ -501,7 +504,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     };
 
                     throw new PolicyViolationException(AuthenticationContext.Current.Principal, ex.PolicyId, SanteDB.Core.Model.Security.PolicyGrantType.Deny);
-
                 }
                 finally
                 {
@@ -653,7 +655,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
                 case SynchronizationMode.Sync:
                     {
-
                         // First, we want to update the central repository to let it know information about us
                         if (configuration.Security.Facilities?.Count > 0 || configuration.Security.Owners?.Count > 0)
                         {
@@ -733,7 +734,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         // Since we're running offline we don't want to audit certain events
                         configuration.OtherSections.OfType<AuditAccountabilityConfigurationSection>().First().AuditFilters.AddRange(new AuditFilterConfiguration[]
                             {
-                                // Never audit security alerts which are successful 
+                                // Never audit security alerts which are successful
                                 new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.SecurityAlert | EventIdentifierType.UseOfRestrictedFunction | EventIdentifierType.NetworkActivity, OutcomeIndicator.Success, false, false),
                             });
 
@@ -750,6 +751,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 case "AssigningAuthority":
                                     itm = ApplicationContext.Current.GetService<IRepositoryService<AssigningAuthority>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
                                     break;
+
                                 case "Place":
                                 case "Facility":
                                     itm = ApplicationContext.Current.GetService<IRepositoryService<Place>>().Get(Guid.Parse(id.ToString()), Guid.Empty);
@@ -761,7 +763,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                         o.Component.ForEach(c => c.ComponentType = c.ComponentType ?? ApplicationServiceContext.Current.GetService<IRepositoryService<Concept>>().Get(c.ComponentTypeKey.GetValueOrDefault()));
                                     });
                                     break;
-
                             }
 
                             // Subscription data
@@ -827,7 +828,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     }
             }
 
-
             // Password hashing
             this.m_tracer.TraceInfo("Setting password hasher...");
 
@@ -840,9 +840,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 case "SHA256PasswordHasher":
                     ApplicationContext.Current.AddServiceProvider(typeof(SHA256PasswordHasher), true);
                     break;
+
                 case "SHAPasswordHasher":
                     ApplicationContext.Current.AddServiceProvider(typeof(SHAPasswordHasher), true);
                     break;
+
                 case "PlainTextPasswordHasher":
                     ApplicationContext.Current.AddServiceProvider(typeof(PlainTextPasswordHasher), true);
                     break;
@@ -935,13 +937,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         var caddr = new Uri(ep.Address);
                         ep.Address = new Uri($"{caddr.Scheme}://{overrideBinding.Value}{caddr.AbsolutePath}").ToString();
                     }
-
             }
             ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
             return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
         }
-
 
         /// <summary>
         /// Update configuration
@@ -967,7 +967,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public ConfigurationViewModel SetAppSetting(String scope, List<AppSettingKeyValuePair> settings)
         {
-
             var configService = ApplicationServiceContext.Current.GetService<IConfigurationManager>();
             if ("global".Equals(scope, StringComparison.OrdinalIgnoreCase))
             {
@@ -980,7 +979,5 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 throw new NotImplementedException("IUserPreferenceManager not found");
             }
         }
-
     }
-
 }
