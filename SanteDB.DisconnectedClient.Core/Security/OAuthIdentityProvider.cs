@@ -381,7 +381,7 @@ namespace SanteDB.DisconnectedClient.Security
             {
                 this.m_tracer.TraceError("OAUTH Error: {0}", ex.ToString());
                 this.Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, retVal, false));
-                throw;
+                throw new SecurityException($"Error establishing authentication session - {ex.Message}", ex);
             }
 
             return retVal;
