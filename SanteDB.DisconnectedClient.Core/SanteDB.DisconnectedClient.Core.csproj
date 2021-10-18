@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003"> -->
-  <!-- <PropertyGroup> -->
-    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration> -->
-    <!-- <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform> -->
-    <!-- <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids> -->
-    <!-- <ProjectGuid>{554DF209-7744-433F-993A-783E2A2803EF}</ProjectGuid> -->
-    <!-- <OutputType>Library</OutputType> -->
-    <!-- <RootNamespace>SanteDB.DisconnectedClient</RootNamespace> -->
-    <!-- <AssemblyName>SanteDB.DisconnectedClient</AssemblyName> -->
-    <!-- <TargetFrameworkProfile>Profile7</TargetFrameworkProfile> -->
-    <!-- <TargetFrameworkVersion>v4.5</TargetFrameworkVersion> -->
-  <!-- </PropertyGroup> -->
+<!-- <PropertyGroup> -->
+<!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration> -->
+<!-- <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform> -->
+<!-- <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids> -->
+<!-- <ProjectGuid>{554DF209-7744-433F-993A-783E2A2803EF}</ProjectGuid> -->
+<!-- <OutputType>Library</OutputType> -->
+<!-- <RootNamespace>SanteDB.DisconnectedClient</RootNamespace> -->
+<!-- <AssemblyName>SanteDB.DisconnectedClient</AssemblyName> -->
+<!-- <TargetFrameworkProfile>Profile7</TargetFrameworkProfile> -->
+<!-- <TargetFrameworkVersion>v4.5</TargetFrameworkVersion> -->
+<!-- </PropertyGroup> -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
@@ -30,16 +30,16 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
-        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-	    <Product>SanteDB Disconnected Client</Product>
+    <Product>SanteDB Disconnected Client</Product>
     <Copyright>Copyright (C) 2015-2020 SanteSuite Contributors (See: NOTICES)</Copyright>
     <Company>SanteSuite Contributors</Company>
     <RootNamespace>SanteDB.DisconnectedClient</RootNamespace>
     <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
   </PropertyGroup>
-    
+
   <ItemGroup>
     <Compile Remove="Data\Warehouse\CarePlan\LocalCarePlanManagerService.cs" />
     <Compile Remove="Services\ServiceHandlers\AdhocWarehouseService.cs" />
@@ -56,12 +56,12 @@
     <Compile Remove="Services\ServiceHandlers\RisiService.cs" />
     <Compile Remove="Services\ServiceHandlers\UserInterface.cs" />
   </ItemGroup>
-    
+
   <ItemGroup>
     <None Remove="Resources\antihaxor" />
     <None Remove="Resources\ViewModel.xml" />
   </ItemGroup>
-    
+
   <ItemGroup>
     <Content Include="Services\ServiceHandlers\AdhocWarehouseService.cs" />
     <Content Include="Services\ServiceHandlers\AmiService.cs" />
@@ -76,10 +76,10 @@
     <Content Include="Services\ServiceHandlers\ImsiService.Patient.cs" />
     <Content Include="Services\ServiceHandlers\RisiService.cs" />
     <Content Include="Services\ServiceHandlers\UserInterface.cs" />
-  </ItemGroup>  
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-  </ItemGroup>            
+  </ItemGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -128,108 +128,108 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <!-- <ItemGroup> -->
-    <!-- <Compile Include="Configuration\DataConfigurationSection.cs" /> -->
-    <!-- <Compile Include="Configuration\IConfigurationPersister.cs" /> -->
-    <!-- <Compile Include="Configuration\IInitialConfigurationProvider.cs" /> -->
-    <!-- <Compile Include="Mail\LocalMailService.cs" /> -->
-    <!-- <Compile Include="Exceptions\DuplicateKeyException.cs" /> -->
-    <!-- <Compile Include="Security\HeaderTypes.cs" /> -->
-    <!-- <Compile Include="Security\IOfflineDeviceIdentityProviderService.cs" /> -->
-    <!-- <Compile Include="Security\IOfflineIdentityProviderService.cs" /> -->
-    <!-- <Compile Include="Security\IOfflinePolicyInformationService.cs" /> -->
-    <!-- <Compile Include="Security\IOfflinePrincipal.cs" /> -->
-    <!-- <Compile Include="Security\IOfflineRoleProviderService.cs" /> -->
-    <!-- <Compile Include="Security\IOperatingSystemInfoService.cs" /> -->
-    <!-- <Compile Include="Security\IOperatingSystemSecurityService.cs" /> -->
-    <!-- <Compile Include="Security\IPinAuthenticationService.cs" /> -->
-    <!-- <Compile Include="Security\DefaultPolicyDecisionService.cs" /> -->
-    <!-- <Compile Include="Security\Remote\AmiSecurityChallengeProvider.cs" /> -->
-    <!-- <Compile Include="Security\Session\MemorySession.cs" /> -->
-    <!-- <Compile Include="Services\IGeoTaggingService.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalActRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalClinicalDataRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalConceptRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalMetadataRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalNullifiedRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\GenericLocalSecurityRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalAssigningAuthorityRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalBatchRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalConceptRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalEntityRelationshipRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalExtensionTypeRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalJobManagerService.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalManufacturedMaterialRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalMaterialRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalOrganizationRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalPatientRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalPlaceRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalRepositoryFactoryService.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalRepositoryService.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalSecurityApplicationRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalSecurityDeviceRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalSecurityPolicyRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalSecurityRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalSecurityRoleRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalSecurityUserRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalUserEntityRepository.cs" /> -->
-    <!-- <Compile Include="Services\Local\MailSynchronizationService.cs" /> -->
-    <!-- <Compile Include="Services\ISymmetricCryptographicProvider.cs" /> -->
-    <!-- <Compile Include="Services\Remote\AmiRepositoryBaseService.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteAssigningAuthorityService.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteAuditRepositoryService.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteBiService.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteJobManager.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteMailRepositoryService.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteSecurityRepository.cs" /> -->
-    <!-- <Compile Include="Synchronization\ISynchronizationLogService.cs" /> -->
-    <!-- <Compile Include="Synchronization\RemoteSynchronizationService.cs" /> -->
-    <!-- <Compile Include="Security\NullCredentials.cs" /> -->
-    <!-- <Compile Include="Services\IBackupService.cs" /> -->
-    <!-- <Compile Include="Services\Local\SynchronizedAuditDispatchService.cs" /> -->
-    <!-- <Compile Include="Services\Local\LocalTagPersistenceService.cs" /> -->
-    <!-- <Compile Include="Services\IQueueManagerService.cs" /> -->
-    <!-- <Compile Include="Services\ITickleService.cs" /> -->
-    <!-- <Compile Include="Services\IUpdateManager.cs" /> -->
-    <!-- <Compile Include="Caching\CacheEntry.cs" /> -->
-    <!-- <Compile Include="Caching\MemoryCache.cs" /> -->
-    <!-- <Compile Include="Caching\MemoryCacheService.cs" /> -->
-    <!-- <Compile Include="Configuration\SynchronizationConfigurationSection.cs" /> -->
-    <!-- <Compile Include="Services\Remote\RemoteRepositoryServices.cs" /> -->
-    <!-- <Compile Include="Exceptions\InvalidVersionException.cs" /> -->
-    <!-- <Compile Include="Exceptions\SessionExpiredException.cs" /> -->
-    <!-- <Compile Include="Interop\AMI\AmiIntegrationService.cs" /> -->
-    <!-- <Compile Include="Interop\ConfigurationExtensions.cs" /> -->
-    <!-- <Compile Include="Security\Session\MemorySessionManagerService.cs" /> -->
-    <!-- <Compile Include="Services\IDataConnectionManager.cs" /> -->
-    <!-- <Compile Include="Services\Local\MemoryQueryPersistenceService.cs" /> -->
-    <!-- <Compile Include="Services\IntegrationQueryOptions.cs" /> -->
-    <!-- <Compile Include="Properties\AssemblyInfo.cs" /> -->
-    <!-- <Compile Include="Configuration\ConfigurationManager.cs" /> -->
-    <!-- <Compile Include="Configuration\Data\IDbMigration.cs" /> -->
-    <!-- <Compile Include="Configuration\Data\DataMigrationLog.cs" /> -->
-    <!-- <Compile Include="Configuration\Data\DataMigrator.cs" /> -->
-    <!-- <Compile Include="Exceptions\DataMigrationException.cs" /> -->
-    <!-- <Compile Include="Configuration\AppletConfigurationSection.cs" /> -->
-    <!-- <Compile Include="Configuration\SecurityConfigurationSection.cs" /> -->
-    <!-- <Compile Include="Configuration\ApplicationConfigurationSection.cs" /> -->
-    <!-- <Compile Include="Security\GenericPolicy.cs" /> -->
-    <!-- <Compile Include="Security\GenericPolicyInstance.cs" /> -->
-    <!-- <Compile Include="ApplicationContext.cs" /> -->
-    <!-- <Compile Include="Security\Remote\AmiPolicyInformationService.cs" /> -->
-    <!-- <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" /> -->
-    <!-- <Compile Include="Services\IPushNotificationService.cs" /> -->
-    <!-- <Compile Include="Services\ISynchronizationService.cs" /> -->
-    <!-- <Compile Include="Services\IIntegrationService.cs" /> -->
-    <!-- <Compile Include="Exceptions\LocalPersistenceException.cs" /> -->
-    <!-- <Compile Include="Configuration\ServiceClientDescriptionConfigurationSection.cs" /> -->
-    <!-- <Compile Include="Synchronization\IQueueFileProvider.cs" /> -->
-    <!-- <Compile Include="Synchronization\ISynchronizationLogEntry.cs" /> -->
-    <!-- <Compile Include="Synchronization\ISynchronizationQueue.cs" /> -->
-    <!-- <Compile Include="Synchronization\SynchronizationOperationType.cs" /> -->
-    <!-- <Compile Include="Tickler\MemoryTickleService.cs" /> -->
-    <!-- <Compile Include="Tickler\Tickle.cs" /> -->
-    <!-- <Compile Include="Tickler\TickleType.cs" /> -->
+  <!-- <Compile Include="Configuration\DataConfigurationSection.cs" /> -->
+  <!-- <Compile Include="Configuration\IConfigurationPersister.cs" /> -->
+  <!-- <Compile Include="Configuration\IInitialConfigurationProvider.cs" /> -->
+  <!-- <Compile Include="Mail\LocalMailService.cs" /> -->
+  <!-- <Compile Include="Exceptions\DuplicateKeyException.cs" /> -->
+  <!-- <Compile Include="Security\HeaderTypes.cs" /> -->
+  <!-- <Compile Include="Security\IOfflineDeviceIdentityProviderService.cs" /> -->
+  <!-- <Compile Include="Security\IOfflineIdentityProviderService.cs" /> -->
+  <!-- <Compile Include="Security\IOfflinePolicyInformationService.cs" /> -->
+  <!-- <Compile Include="Security\IOfflinePrincipal.cs" /> -->
+  <!-- <Compile Include="Security\IOfflineRoleProviderService.cs" /> -->
+  <!-- <Compile Include="Security\IOperatingSystemInfoService.cs" /> -->
+  <!-- <Compile Include="Security\IOperatingSystemSecurityService.cs" /> -->
+  <!-- <Compile Include="Security\IPinAuthenticationService.cs" /> -->
+  <!-- <Compile Include="Security\DefaultPolicyDecisionService.cs" /> -->
+  <!-- <Compile Include="Security\Remote\AmiSecurityChallengeProvider.cs" /> -->
+  <!-- <Compile Include="Security\Session\MemorySession.cs" /> -->
+  <!-- <Compile Include="Services\IGeoTaggingService.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalActRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalClinicalDataRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalConceptRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalMetadataRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalNullifiedRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\GenericLocalSecurityRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalAssigningAuthorityRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalBatchRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalConceptRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalEntityRelationshipRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalExtensionTypeRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalJobManagerService.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalManufacturedMaterialRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalMaterialRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalOrganizationRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalPatientRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalPlaceRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalRepositoryFactoryService.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalRepositoryService.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalSecurityApplicationRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalSecurityDeviceRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalSecurityPolicyRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalSecurityRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalSecurityRoleRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalSecurityUserRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalUserEntityRepository.cs" /> -->
+  <!-- <Compile Include="Services\Local\MailSynchronizationService.cs" /> -->
+  <!-- <Compile Include="Services\ISymmetricCryptographicProvider.cs" /> -->
+  <!-- <Compile Include="Services\Remote\AmiRepositoryBaseService.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteAssigningAuthorityService.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteAuditRepositoryService.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteBiService.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteJobManager.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteMailRepositoryService.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteSecurityRepository.cs" /> -->
+  <!-- <Compile Include="Synchronization\ISynchronizationLogService.cs" /> -->
+  <!-- <Compile Include="Synchronization\RemoteSynchronizationService.cs" /> -->
+  <!-- <Compile Include="Security\NullCredentials.cs" /> -->
+  <!-- <Compile Include="Services\IBackupService.cs" /> -->
+  <!-- <Compile Include="Services\Local\SynchronizedAuditDispatchService.cs" /> -->
+  <!-- <Compile Include="Services\Local\LocalTagPersistenceService.cs" /> -->
+  <!-- <Compile Include="Services\IQueueManagerService.cs" /> -->
+  <!-- <Compile Include="Services\ITickleService.cs" /> -->
+  <!-- <Compile Include="Services\IUpdateManager.cs" /> -->
+  <!-- <Compile Include="Caching\CacheEntry.cs" /> -->
+  <!-- <Compile Include="Caching\MemoryCache.cs" /> -->
+  <!-- <Compile Include="Caching\MemoryCacheService.cs" /> -->
+  <!-- <Compile Include="Configuration\SynchronizationConfigurationSection.cs" /> -->
+  <!-- <Compile Include="Services\Remote\RemoteRepositoryServices.cs" /> -->
+  <!-- <Compile Include="Exceptions\InvalidVersionException.cs" /> -->
+  <!-- <Compile Include="Exceptions\SessionExpiredException.cs" /> -->
+  <!-- <Compile Include="Interop\AMI\AmiIntegrationService.cs" /> -->
+  <!-- <Compile Include="Interop\ConfigurationExtensions.cs" /> -->
+  <!-- <Compile Include="Security\Session\MemorySessionManagerService.cs" /> -->
+  <!-- <Compile Include="Services\IDataConnectionManager.cs" /> -->
+  <!-- <Compile Include="Services\Local\MemoryQueryPersistenceService.cs" /> -->
+  <!-- <Compile Include="Services\IntegrationQueryOptions.cs" /> -->
+  <!-- <Compile Include="Properties\AssemblyInfo.cs" /> -->
+  <!-- <Compile Include="Configuration\ConfigurationManager.cs" /> -->
+  <!-- <Compile Include="Configuration\Data\IDbMigration.cs" /> -->
+  <!-- <Compile Include="Configuration\Data\DataMigrationLog.cs" /> -->
+  <!-- <Compile Include="Configuration\Data\DataMigrator.cs" /> -->
+  <!-- <Compile Include="Exceptions\DataMigrationException.cs" /> -->
+  <!-- <Compile Include="Configuration\AppletConfigurationSection.cs" /> -->
+  <!-- <Compile Include="Configuration\SecurityConfigurationSection.cs" /> -->
+  <!-- <Compile Include="Configuration\ApplicationConfigurationSection.cs" /> -->
+  <!-- <Compile Include="Security\GenericPolicy.cs" /> -->
+  <!-- <Compile Include="Security\GenericPolicyInstance.cs" /> -->
+  <!-- <Compile Include="ApplicationContext.cs" /> -->
+  <!-- <Compile Include="Security\Remote\AmiPolicyInformationService.cs" /> -->
+  <!-- <Compile Include="Interop\IMSI\HdsiIntegrationService.cs" /> -->
+  <!-- <Compile Include="Services\IPushNotificationService.cs" /> -->
+  <!-- <Compile Include="Services\ISynchronizationService.cs" /> -->
+  <!-- <Compile Include="Services\IIntegrationService.cs" /> -->
+  <!-- <Compile Include="Exceptions\LocalPersistenceException.cs" /> -->
+  <!-- <Compile Include="Configuration\ServiceClientDescriptionConfigurationSection.cs" /> -->
+  <!-- <Compile Include="Synchronization\IQueueFileProvider.cs" /> -->
+  <!-- <Compile Include="Synchronization\ISynchronizationLogEntry.cs" /> -->
+  <!-- <Compile Include="Synchronization\ISynchronizationQueue.cs" /> -->
+  <!-- <Compile Include="Synchronization\SynchronizationOperationType.cs" /> -->
+  <!-- <Compile Include="Tickler\MemoryTickleService.cs" /> -->
+  <!-- <Compile Include="Tickler\Tickle.cs" /> -->
+  <!-- <Compile Include="Tickler\TickleType.cs" /> -->
   <!-- </ItemGroup> -->
   <!-- <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" /> -->
   <ProjectExtensions>
@@ -281,7 +281,6 @@
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
         <ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
-
       </ItemGroup>
     </When>
     <Otherwise>
@@ -304,10 +303,10 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>2.1.89</Version>
+      <Version>$(VersionNumber)</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>2.1.89</Version>
+      <Version>$(VersionNumber)</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.30.0" />
     <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
