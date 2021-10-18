@@ -141,10 +141,10 @@
   </Choose>
   <ItemGroup>
     <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>$(VersionNumber)</Version>
+      <Version>2.1.89</Version>
     </PackageReference>
     <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>$(VersionNumber)</Version>
+      <Version>2.1.89</Version>
     </PackageReference>
 
     <PackageReference Include="NewtonSoft.Json">

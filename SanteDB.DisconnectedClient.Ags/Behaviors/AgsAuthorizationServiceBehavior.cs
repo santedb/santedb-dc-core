@@ -29,6 +29,7 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Exceptions;
 using System;
 using System.Linq;
+using System.Net;
 using System.Security.Principal;
 using System.Text;
 
@@ -87,8 +88,21 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
             }
             else if (request.Cookies["_s"] != null) // cookie authentication
             {
-                var token = request.Cookies["_s"].Value;
-                contextAuth = this.SetContextFromBearer(token);
+                try
+                {
+                    var token = request.Cookies["_s"].Value;
+                    contextAuth = this.SetContextFromBearer(token);
+                }
+                catch (SanteDB.DisconnectedClient.Exceptions.SecurityTokenException)
+                {
+                    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", "")
+                    {
+                        Discard = true,
+                        Expired = true,
+                        Expires = DateTime.Now
+                    });
+                    throw;
+                }
             }
 
             // Dispose the context when the rest operation is disposed
@@ -103,6 +117,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         private IDisposable SetContextFromBearer(string bearerToken)
         {
+
             var smgr = ApplicationContext.Current.GetService<ISessionProviderService>();
 
             var bearerBinary = bearerToken.ParseHexString();
@@ -130,6 +145,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
             this.m_tracer.TraceInfo("User {0} authenticated via SESSION BEARER", principal.Identity.Name);
             return AuthenticationContext.EnterContext(principal);
+
         }
 
         /// <summary>

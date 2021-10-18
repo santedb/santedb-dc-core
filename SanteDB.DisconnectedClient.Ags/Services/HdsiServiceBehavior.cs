@@ -709,7 +709,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        return restClient.Post<object, object>($"{resourceType}/{childResourceType}", body);
+                        return restClient.Post<object, object>($"{resourceType}/{key}/{childResourceType}", body);
                     }
                     catch (Exception e)
                     {
