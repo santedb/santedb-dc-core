@@ -56,6 +56,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         // Resource handler tool
         private ResourceHandlerTool m_resourceHandler;
 
+        // Data caching service
+        private IDataCachingService m_dataCachingService;
+
         /// <summary>
         /// Get resource handler
         /// </summary>
@@ -84,6 +87,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public HdsiServiceBehavior()
         {
+            this.m_dataCachingService = ApplicationServiceContext.Current.GetService<IDataCachingService>();
         }
 
         /// <summary>
@@ -159,6 +163,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
+        /// <summary>
+        /// Create or udpate with upstream
+        /// </summary>
         public override IdentifiedData CreateUpdate(string resourceType, string id, IdentifiedData body)
         {
             // create only on the external server
@@ -170,6 +177,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(id, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
                         return restClient.Post<IdentifiedData, IdentifiedData>($"{resourceType}/{id}", body);
                     }
                     catch (Exception e)
@@ -201,6 +213,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Requesting += (o, e) => e.AdditionalHeaders.Add("X-Delete-Mode", RestOperationContext.Current.IncomingRequest.Headers["X-Delete-Mode"] ?? "OBSOLETE");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(id, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+
                         return restClient.Delete<IdentifiedData>($"{resourceType}/{id}");
                     }
                     catch (Exception e)
@@ -231,7 +249,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{id}");
+                        var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{id}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
                         // Do we have a local?
                         if (retVal is Entity entity &&
                             ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
@@ -239,6 +257,20 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         else if (retVal is Act act &&
                             ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>().Get(act.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
                             act.AddTag("$upstream", "true");
+                        else if (retVal is Bundle bundle)
+                        {
+                            bundle.Item
+                               .OfType<ITaggable>()
+                               .Select(o =>
+                               {
+                                   // Do we have a local?
+                                   if (o is Entity entity1 &&
+                                      ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>()?.Get(entity1.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                                       return o;
+                                   o.AddTag("$upstream", "true");
+                                   return o;
+                               }).ToList();
+                        }
                         return retVal;
                     }
                     catch (Exception e)
@@ -562,6 +594,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 throw new DomainStateException();
         }
 
+        /// <summary>
+        /// Update data
+        /// </summary>
         public override IdentifiedData Update(string resourceType, string id, IdentifiedData body)
         {
             // Perform only on the external server
@@ -573,6 +608,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(id, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+
                         return restClient.Put<IdentifiedData, IdentifiedData>($"/{resourceType}/{id}", body);
                     }
                     catch (Exception e)
@@ -589,6 +630,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
+        /// <summary>
+        /// Associated object search
+        /// </summary>
         public override object AssociationSearch(string resourceType, string key, string childResourceType)
         {
             // Perform only on the external server
@@ -634,6 +678,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
+        /// <summary>
+        /// Remove associated object
+        /// </summary>
         public override object AssociationRemove(string resourceType, string key, string childResourceType, string scopedEntityKey)
         {
             // Only on the remote server
@@ -646,6 +693,16 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Requesting += (o, e) => e.AdditionalHeaders.Add("X-Delete-Mode", RestOperationContext.Current.IncomingRequest.Headers["X-Delete-Mode"] ?? "OBSOLETE");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+                        if (Guid.TryParse(scopedEntityKey, out uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+
                         return restClient.Delete<object>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}");
                     }
                     catch (Exception e)
@@ -662,6 +719,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
+        /// <summary>
+        /// Get associated object
+        /// </summary>
         public override object AssociationGet(string resourceType, string key, string childResourceType, string scopedEntityKey)
         {
             if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
@@ -709,6 +769,16 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+                        if (body is IIdentifiedEntity ide)
+                        {
+                            this.m_dataCachingService.Remove(ide.Key.Value);
+                        }
+
                         return restClient.Post<object, object>($"{resourceType}/{key}/{childResourceType}", body);
                     }
                     catch (Exception e)
@@ -767,6 +837,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(id, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+
                         return restClient.Post<object, object>($"{resourceType}/{id}/${operationName}", body);
                     }
                     catch (Exception e)
