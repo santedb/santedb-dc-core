@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -50,7 +51,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     /// </summary>
     public class RemoteRepositoryService : IDaemonService
     {
-
         /// <summary>
         /// Template keys
         /// </summary>
@@ -67,8 +67,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         [XmlType(Namespace = "http://santedb.org/model")]
         public class EntityRelationshipMaster : EntityRelationship
         {
-
-
             /// <summary>
             /// Gets the original relationship
             /// </summary>
@@ -80,7 +78,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             /// </summary>
             [XmlElement("originalTarget"), JsonProperty("originalTarget")]
             public Guid? OriginalTargetKey { get; set; }
-
         }
 
         /// <summary>
@@ -99,8 +96,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             where T : IdentifiedData, new()
         { }
 
-
-
         /// <summary>
         /// Get all types from core classes of entity and act and create shims in the model serialization binder
         /// </summary>
@@ -111,10 +106,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             foreach (var t in typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
                 ModelSerializationBinder.RegisterModelType(typeof(ActMaster<>).MakeGenericType(t));
             ModelSerializationBinder.RegisterModelType(typeof(EntityRelationshipMaster));
-
         }
-
-
 
         /// <summary>
         /// Get the service name
@@ -130,8 +122,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public bool IsRunning => false;
 
         public event EventHandler Starting;
+
         public event EventHandler Started;
+
         public event EventHandler Stopping;
+
         public event EventHandler Stopped;
 
         /// <summary>
@@ -146,10 +141,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             // Now iterate through the map file and ensure we have all the mappings, if a class does not exist create it
             try
             {
-
                 foreach (var itm in typeof(IdentifiedData).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()) && !o.GetTypeInfo().IsAbstract))
                 {
-
                     var rootElement = itm.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
                     if (rootElement == null) continue;
                     // Is there a persistence service?
@@ -233,14 +226,12 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
     }
 
-
     /// <summary>
     /// Generic versioned persister service for any non-customized persister
     /// </summary>
-    internal class RemoteRepositoryService<TModel> : IRepositoryService<TModel>, IPersistableQueryRepositoryService<TModel>
+    internal class RemoteRepositoryService<TModel> : IRepositoryService<TModel>, IPersistableQueryRepositoryService<TModel>, IRepositoryService
         where TModel : IdentifiedData, new()
     {
-
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -279,7 +270,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
                     if (existing is TModel)
                     {
-                        if (existing != null && existing is IdentifiedData idata) // For entities and acts we want to ping the server 
+                        if (existing != null && existing is IdentifiedData idata) // For entities and acts we want to ping the server
                         {
                             client.Client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", idata.Tag);
                         }
@@ -311,7 +302,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             if (template.Template != null &&
                 !template.TemplateKey.HasValue)
             {
-                // Lookup 
+                // Lookup
                 template.TemplateKey = RemoteRepositoryService.GetTemplate(template.Template.Mnemonic);
             }
         }
@@ -321,7 +312,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public TModel Insert(TModel data)
         {
-
             if (data is IHasTemplate template)
                 this.HarmonizeTemplateId(template);
             else if (data is Bundle bundle)
@@ -363,7 +353,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy)
         {
             return this.Find(query, offset, count, out totalResults, Guid.Empty, orderBy);
-
         }
 
         /// <summary>
@@ -402,7 +391,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     (data as Bundle)?.Reconstitute();
                     //data.Item.RemoveAll(o => data.ExpansionKeys.Contains(o.Key.Value));
                     //data.ExpansionKeys.Clear();
-                    // TODO: Only process Focal objects 
+                    // TODO: Only process Focal objects
                     data.Item.AsParallel().ForAll(o =>
                     {
                         ApplicationContext.Current.GetService<IDataCachingService>()?.Add(o as IdentifiedData);
@@ -416,6 +405,37 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     return new List<TModel>();
                 }
         }
-    }
 
+        /// <summary>
+        /// Get by key
+        /// </summary>
+        IdentifiedData IRepositoryService.Get(Guid key) => this.Get(key);
+
+        /// <summary>
+        /// Find
+        /// </summary>
+        public IEnumerable<IdentifiedData> Find(Expression query) => this.Find(query as Expression<Func<TModel, bool>>);
+
+        /// <summary>
+        /// Find with restrictions
+        /// </summary>
+        public IEnumerable<IdentifiedData> Find(Expression query, int offset, int? count, out int totalResults) => this.Find(query as Expression<Func<TModel, bool>>, offset, count, out totalResults);
+
+        /// <summary>
+        /// Insert data
+        /// </summary>
+        public IdentifiedData Insert(object data) => this.Insert(data as TModel);
+
+        /// <summary>
+        /// Save
+        /// </summary>
+        public IdentifiedData Save(object data) => this.Save(data as TModel);
+
+        /// <summary>
+        /// Obsolete data
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        IdentifiedData IRepositoryService.Obsolete(Guid key) => this.Obsolete(key);
+    }
 }

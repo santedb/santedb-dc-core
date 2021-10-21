@@ -286,6 +286,9 @@ namespace SanteDB.DisconnectedClient.Security
                                 p.AdditionalHeaders.Add(HeaderTypes.HttpClaims, Convert.ToBase64String(Encoding.UTF8.GetBytes(
                                     $"{SanteDBClaimTypes.PurposeOfUse}={purposeOfUse};{SanteDBClaimTypes.SanteDBOverrideClaim}=true"
                                     )));
+                            // Add device credential
+                            if (!String.IsNullOrEmpty(ApplicationContext.Current.Device.DeviceSecret))
+                                p.AdditionalHeaders.Add(HeaderTypes.HttpDeviceAuthentication, $"BASIC {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ApplicationContext.Current.Device.Name}:{ApplicationContext.Current.Device.DeviceSecret}"))}");
                         };
 
                         if (ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)

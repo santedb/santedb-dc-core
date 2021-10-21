@@ -316,7 +316,7 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     // Prepare reply for the WCF pipeline
                     contentType = "application/json";
                 }
-                else if (response.StatusCode != 304)
+                else if (response.StatusCode == 0)
                     response.StatusCode = 204; // no content
 
                 RestOperationContext.Current.OutgoingResponse.ContentType = RestOperationContext.Current.OutgoingResponse.ContentType ?? contentType;
