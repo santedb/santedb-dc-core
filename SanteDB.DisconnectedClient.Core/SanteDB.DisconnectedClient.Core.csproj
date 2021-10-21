@@ -277,6 +277,7 @@
           <Name>SanteDB.BI</Name>
         </ProjectReference>
         <ProjectReference Include="..\..\restsrvr\RestSrvr\RestSrvr.csproj" />
+        <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj" />
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
@@ -293,7 +294,7 @@
         <PackageReference Include="SanteDB.Rest.Common" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Matcher" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.BusinessRules.JavaScript" Version="$(VersionNumber)" />
-
+        <PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model.AMI">
           <Version>$(VersionNumber)</Version>
         </PackageReference>

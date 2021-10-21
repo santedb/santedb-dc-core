@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.BI.Services.Impl;
 using SanteDB.Cdss.Xml;
 using SanteDB.Core.Applets.Services.Impl;
@@ -83,7 +84,7 @@ namespace SanteDB.DisconnectedClient.UI
         /// <summary>
         /// Attempt restore from windows.old
         /// </summary>
-        /// <remarks>Sometimes Windows Update will remove our configuration in %SYSTEMPROFILE%\ which makes the 
+        /// <remarks>Sometimes Windows Update will remove our configuration in %SYSTEMPROFILE%\ which makes the
         /// DCG think it isn't configured. This routine will check WINDOWS.OLD and copy the configuration files
         /// over if they exist</remarks>
         private bool AttemptRestore()
@@ -102,7 +103,6 @@ namespace SanteDB.DisconnectedClient.UI
 
                 try
                 {
-
                     Debug.WriteLine($"New configuration at {this.m_configPath} doesn't exist", "RESTORE_UPDATE");
                     Debug.WriteLine($"Checking for old configuration at {oldPath}...", "RESTORE_UPDATE");
 
@@ -181,7 +181,7 @@ namespace SanteDB.DisconnectedClient.UI
                 }
             };
 
-            // App service 
+            // App service
             var appServiceSection = new ApplicationServiceContextConfigurationSection()
             {
                 ThreadPoolSize = Environment.ProcessorCount * 2,
@@ -194,7 +194,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(NetworkInformationService)),
                     new TypeReferenceConfiguration(typeof(BusinessRulesDaemonService)),
                     new TypeReferenceConfiguration(typeof(AgsService)),
-                    new TypeReferenceConfiguration(typeof(MemoryCacheService)),
+                    new TypeReferenceConfiguration(typeof(SanteDB.Caching.Memory.MemoryCacheService)),
                     new TypeReferenceConfiguration(typeof(DefaultThreadPoolService)),
                     new TypeReferenceConfiguration(typeof(SimpleCarePlanService)),
                     new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),
@@ -322,7 +322,6 @@ namespace SanteDB.DisconnectedClient.UI
             return retVal;
         }
 
-
         /// <summary>
         /// Creates a new instance of the configuration manager with the specified configuration file
         /// </summary>
@@ -383,7 +382,6 @@ namespace SanteDB.DisconnectedClient.UI
             }
         }
 
-
         /// <summary>
         /// Backup the configuration
         /// </summary>
@@ -423,6 +421,5 @@ namespace SanteDB.DisconnectedClient.UI
                 return retVal;
             }
         }
-
     }
 }
