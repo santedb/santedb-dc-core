@@ -280,8 +280,9 @@
         <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj" />
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
-        <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
         <ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
+        <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
+        <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
       </ItemGroup>
     </When>
     <Otherwise>
@@ -298,23 +299,25 @@
         <PackageReference Include="SanteDB.Core.Model.AMI">
           <Version>$(VersionNumber)</Version>
         </PackageReference>
+        <PackageReference Include="SanteDB.Messaging.AMI.Client">
+          <Version>$(VersionNumber)</Version>
+        </PackageReference>
+        <PackageReference Include="SanteDB.Messaging.HDSI.Client">
+          <Version>$(VersionNumber)</Version>
+        </PackageReference>
       </ItemGroup>
     </Otherwise>
   </Choose>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>$(VersionNumber)</Version>
-    </PackageReference>
-    <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>$(VersionNumber)</Version>
-    </PackageReference>
+
     <PackageReference Include="SharpCompress" Version="0.30.0" />
     <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
     <PackageReference Include="System.Security.Permissions" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
+
     <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
       <Project>{4a16bbdf-64eb-4cde-97aa-b18c9a44cbb6}</Project>
       <Name>SanteDB.DisconnectedClient.i18n</Name>

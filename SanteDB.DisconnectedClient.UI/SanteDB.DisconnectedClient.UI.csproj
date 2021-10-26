@@ -122,6 +122,8 @@
         <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
         <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj" />
+        <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
+        <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
       </ItemGroup>
     </When>
     <Otherwise>
@@ -136,16 +138,16 @@
         <PackageReference Include="SanteDB.Core.Model.AMI">
           <Version>$(VersionNumber)</Version>
         </PackageReference>
+        <PackageReference Include="SanteDB.Messaging.AMI.Client">
+          <Version>$(VersionNumber)</Version>
+        </PackageReference>
+        <PackageReference Include="SanteDB.Messaging.HDSI.Client">
+          <Version>$(VersionNumber)</Version>
+        </PackageReference>
       </ItemGroup>
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="SanteDB.Messaging.AMI.Client">
-      <Version>$(VersionNumber)</Version>
-    </PackageReference>
-    <PackageReference Include="SanteDB.Messaging.HDSI.Client">
-      <Version>$(VersionNumber)</Version>
-    </PackageReference>
 
     <PackageReference Include="NewtonSoft.Json">
       <Version>13.0.1</Version>
