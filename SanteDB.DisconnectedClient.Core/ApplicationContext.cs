@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -26,6 +27,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using SanteDB.DisconnectedClient.Configuration;
+
 //using SanteDB.DisconnectedClient.Data;
 using SanteDB.DisconnectedClient.Security;
 using System;
@@ -36,13 +38,11 @@ using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient
 {
-
     /// <summary>
     /// Represents event arguments for progress
     /// </summary>
     public class ApplicationProgressEventArgs : EventArgs
     {
-
         /// <summary>
         /// The text of the progress
         /// </summary>
@@ -59,7 +59,6 @@ namespace SanteDB.DisconnectedClient
     /// </summary>
     public abstract class ApplicationContext : IServiceProvider, IApplicationServiceContext, IPolicyEnforcementService
     {
-
         // Tracer
         protected Tracer m_tracer = Tracer.GetTracer(typeof(ApplicationContext));
 
@@ -93,14 +92,17 @@ namespace SanteDB.DisconnectedClient
         /// Fired when the application is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Fired when the application startup has completed
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Fired when the application is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Fired when the application has stopped
         /// </summary>
@@ -148,7 +150,7 @@ namespace SanteDB.DisconnectedClient
         /// <param name="serviceType">Service type.</param>
         public object GetService(Type serviceType) => this.m_serviceManager.GetService(serviceType);
 
-        #endregion
+        #endregion IServiceProvider implementation
 
         /// <summary>
         /// Confirmation dialog
@@ -176,7 +178,6 @@ namespace SanteDB.DisconnectedClient
             {
                 if (s_context == null || value == null)
                     s_context = value;
-
             }
         }
 
@@ -265,14 +266,17 @@ namespace SanteDB.DisconnectedClient
         /// </summary>
         /// <value>The role provider service.</value>
         public IRoleProviderService RoleProviderService { get { return this.GetService(typeof(IRoleProviderService)) as IRoleProviderService; } }
+
         /// <summary>
         /// Gets the configuration manager
         /// </summary>
         public SanteDBConfiguration Configuration { get { return this.m_configManager.Configuration; } }
+
         /// <summary>
         /// Gets the configuration manager
         /// </summary>
         public IConfigurationManager ConfigurationManager { get { return this.m_configManager; } }
+
         /// <summary>
         /// Gets the application information for the currently running application.
         /// </summary>
@@ -371,7 +375,7 @@ namespace SanteDB.DisconnectedClient
                 this.m_tracer.TraceWarning("Could not scan startup assembly location: {0}", e);
             }
 
-            // Authenticate as system principal for startup 
+            // Authenticate as system principal for startup
             this.m_tracer.TraceInfo("Loading application secret");
             // Set the application secret to the configured value
             this.Application.ApplicationSecret = this.Configuration.GetSection<SecurityConfigurationSection>().ApplicationSecret ?? this.Application.ApplicationSecret;
@@ -387,7 +391,6 @@ namespace SanteDB.DisconnectedClient
             this.StartTime = DateTime.Now;
 
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
-
         }
 
         /// <summary>
@@ -408,7 +411,7 @@ namespace SanteDB.DisconnectedClient
         public abstract void Exit();
 
         /// <summary>
-        /// Add service 
+        /// Add service
         /// </summary>
         public void AddServiceProvider(Type serviceType, bool addToConfiguration)
         {
@@ -430,11 +433,13 @@ namespace SanteDB.DisconnectedClient
             ApplicationServiceContextConfigurationSection appSection = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             this.m_serviceManager.RemoveServiceProvider(serviceType);
             if (updateConfiguration)
+            {
                 appSection.ServiceProviders.RemoveAll(t => t.Type == serviceType);
+            }
         }
 
         /// <summary>
-        /// Instructs the current application context to get a unique identifier that should be used for encrypting/decrypting the 
+        /// Instructs the current application context to get a unique identifier that should be used for encrypting/decrypting the
         /// SanteDB databases. This should be a consistent key (i.e. generate from machine, user SID, etc.).
         /// </summary>
         public abstract byte[] GetCurrentContextSecurityKey();
@@ -472,4 +477,3 @@ namespace SanteDB.DisconnectedClient
         }
     }
 }
-

@@ -359,7 +359,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public override ServiceOptions Options()
         {
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
                 return amiClient.Options();
@@ -432,7 +433,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object Create(string resourceType, object data)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -455,10 +457,14 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
+        /// <summary>
+        /// Create or update the specified resource
+        /// </summary>
         public override object CreateUpdate(string resourceType, string key, object data)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -487,7 +493,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object Delete(string resourceType, string key)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -519,7 +526,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object Get(string resourceType, string key)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -548,7 +556,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object GetVersion(string resourceType, string key, string versionKey)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -577,7 +586,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override AmiCollection History(string resourceType, string key)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -608,7 +618,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override ServiceResourceOptions ResourceOptions(string resourceType)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -636,7 +647,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override AmiCollection Search(string resourceType)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -664,7 +676,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object Update(string resourceType, string key, object data)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -693,7 +706,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object Lock(string resourceType, string key)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try
@@ -722,7 +736,8 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         public override object UnLock(string resourceType, string key)
         {
             // Perform only on the external server
-            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true")
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
                 if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
                     try

@@ -1,22 +1,25 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
+using SanteDB.Core.Matching;
 using SanteDB.DisconnectedClient.Configuration.Data;
+using SanteDB.DisconnectedClient.Services.Remote;
 using SanteDB.Matcher.Configuration;
 using SanteDB.Matcher.Definition;
 using SanteDB.Matcher.Matchers;
@@ -39,24 +42,32 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
         /// <summary>
         /// Gets the id
         /// </summary>
-        public string Id => "add-simple-matching-config";
+        public string Id => "add-simple-matching-config-v3";
 
         /// <summary>
         /// Install the specified extension
         /// </summary>
         public bool Install()
         {
-
-            ApplicationContext.Current.AddServiceProvider(typeof(SimpleRecordMatchingService), true);
-            ApplicationContext.Current.AddServiceProvider(typeof(FileMatchConfigurationProvider), true);
-
-            // Setup the match configurations
-            var fileConfig = ApplicationContext.Current.Configuration.GetSection<FileMatchConfigurationSection>();
-            if (fileConfig == null)
+            // Connected to sync
+            var syncMode = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>()?.Mode;
+            if (!syncMode.HasValue || syncMode == SynchronizationMode.Online)
             {
-                fileConfig = new FileMatchConfigurationSection
+                ApplicationContext.Current.RemoveServiceProvider(typeof(SimpleRecordMatchingService), true);
+                ApplicationContext.Current.RemoveServiceProvider(typeof(FileMatchConfigurationProvider), true);
+            }
+            else // user central server for checkout
+            {
+                ApplicationContext.Current.AddServiceProvider(typeof(SimpleRecordMatchingService), true);
+                ApplicationContext.Current.AddServiceProvider(typeof(FileMatchConfigurationProvider), true);
+
+                // Setup the match configurations
+                var fileConfig = ApplicationContext.Current.Configuration.GetSection<FileMatchConfigurationSection>();
+                if (fileConfig == null)
                 {
-                    FilePath = new List<FilePathConfiguration>
+                    fileConfig = new FileMatchConfigurationSection
+                    {
+                        FilePath = new List<FilePathConfiguration>
                     {
                         new  FilePathConfiguration
                         {
@@ -64,8 +75,9 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
                             ReadOnly = false
                         }
                     }
-                };
-                ApplicationContext.Current.Configuration.AddSection(fileConfig);
+                    };
+                    ApplicationContext.Current.Configuration.AddSection(fileConfig);
+                }
             }
 
             // Setup the approx configuration

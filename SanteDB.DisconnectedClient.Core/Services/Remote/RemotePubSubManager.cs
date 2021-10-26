@@ -214,7 +214,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", new PubSubChannelDefinition()
                     {
                         DispatcherFactoryTypeXml = dispatcherFactoryType.AssemblyQualifiedName,
-                        Endpoint = endpoint,
+                        Endpoint = endpoint.ToString(),
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
                 }
@@ -237,7 +237,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 {
                     return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", new PubSubChannelDefinition()
                     {
-                        Endpoint = endpoint,
+                        Endpoint = endpoint.ToString(),
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
                 }
@@ -338,7 +338,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 {
                     return client.Put<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel/{key}", new PubSubChannelDefinition()
                     {
-                        Endpoint = endpoint,
+                        Endpoint = endpoint.ToString(),
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
                 }

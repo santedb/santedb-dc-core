@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using RestSrvr;
 using RestSrvr.Attributes;
 using RestSrvr.Bindings;
@@ -47,7 +48,6 @@ namespace SanteDB.DisconnectedClient.Ags
     /// </summary>
     public class AgsService : IDaemonService, IRestServiceFactory
     {
-
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -70,19 +70,21 @@ namespace SanteDB.DisconnectedClient.Ags
         /// Fired when the handler is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Fired when the handler has started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Fired when the handler is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Fired when the handler has stopped
         /// </summary>
         public event EventHandler Stopped;
-
 
         /// <summary>
         /// Gets the default AGS configuration
@@ -216,7 +218,6 @@ namespace SanteDB.DisconnectedClient.Ags
         /// </summary>
         public bool Start()
         {
-
             RemoteEndpointUtil.Current.AddEndpointProvider(this.GetRemoteEndpointInfo);
             this.Starting?.Invoke(this, EventArgs.Empty);
 
@@ -317,7 +318,6 @@ namespace SanteDB.DisconnectedClient.Ags
             if (me.Endpoints.Any(e => e.Behaviors.OfType<MessageDispatchFormatterBehavior>().Any()))
                 retVal |= ServiceEndpointCapabilities.ViewModel;
             return (int)retVal;
-
         }
 
         /// <summary>
@@ -361,9 +361,7 @@ namespace SanteDB.DisconnectedClient.Ags
                 Tracer.GetTracer(typeof(AgsService)).TraceError("Could not start {0} : {1}", serviceType.FullName, e);
                 throw new Exception($"Could not start {serviceType.FullName}", e);
             }
-
         }
-
 
         /// <summary>
         /// Retrieve the remote endpoint information
@@ -375,14 +373,15 @@ namespace SanteDB.DisconnectedClient.Ags
             else
             {
                 var fwdHeader = RestOperationContext.Current?.IncomingRequest.Headers["X-Forwarded-For"];
+                var realIpHeader = RestOperationContext.Current.IncomingRequest.Headers["X-Real-IP"];
                 return new RemoteEndpointInfo()
                 {
                     OriginalRequestUrl = RestOperationContext.Current?.IncomingRequest.Url.ToString(),
-                    RemoteAddress = fwdHeader ?? RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString(),
+                    ForwardInformation = fwdHeader,
+                    RemoteAddress = realIpHeader ?? RestOperationContext.Current?.IncomingRequest.RemoteEndPoint.Address.ToString(),
                     CorrelationToken = RestOperationContext.Current?.Data["uuid"]?.ToString()
                 };
             }
         }
-
     }
 }

@@ -17,10 +17,13 @@
  * Date: 2021-2-9
  */
 
+using RestSrvr;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Security;
@@ -51,98 +54,6 @@ namespace SanteDB.DisconnectedClient.Http
     /// </summary>
     public class RestClient : RestClientBase
     {
-        /// <summary>
-        /// Identified data
-        /// </summary>
-        [XmlType(nameof(ErrorResult), Namespace = "http://santedb.org/hdsi")]
-        [XmlRoot(nameof(ErrorResult), Namespace = "http://santedb.org/hdsi")]
-        public class ErrorResult : IdentifiedData
-        {
-            /// <summary>
-            /// Gets the date this was modified
-            /// </summary>
-            public override DateTimeOffset ModifiedOn
-            {
-                get
-                {
-                    return DateTimeOffset.Now;
-                }
-            }
-
-            /// <summary>
-            /// Represents an error result
-            /// </summary>
-            public ErrorResult()
-            {
-                this.Details = new List<ResultDetail>();
-            }
-
-            /// <summary>
-            /// Gets or sets the details of the result
-            /// </summary>
-            [XmlElement("detail")]
-            public List<ResultDetail> Details { get; set; }
-
-            /// <summary>
-            /// String representation
-            /// </summary>
-            /// <returns></returns>
-            public override string ToString()
-            {
-                return String.Join("\r\n", Details.Select(o => $">> {o.Type} : {o.Text}"));
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the detail type
-        /// </summary>
-        [XmlType(nameof(DetailType), Namespace = "http://santedb.org/hdsi")]
-        public enum DetailType
-        {
-            [XmlEnum("I")]
-            Information,
-
-            [XmlEnum("W")]
-            Warning,
-
-            [XmlEnum("E")]
-            Error
-        }
-
-        /// <summary>
-        /// A single result detail
-        /// </summary
-        [XmlType(nameof(ResultDetail), Namespace = "http://santedb.org/hdsi")]
-        public class ResultDetail
-        {
-            /// <summary>
-            /// Default ctor
-            /// </summary>
-            public ResultDetail()
-            { }
-
-            /// <summary>
-            /// Creates a new result detail
-            /// </summary>
-            public ResultDetail(DetailType type, string text)
-            {
-                this.Type = type;
-                this.Text = text;
-            }
-
-            /// <summary>
-            /// Gets or sets the type of the error
-            /// </summary>
-            [XmlAttribute("type")]
-            public DetailType Type { get; set; }
-
-            /// <summary>
-            /// Gets or sets the text of the error
-            /// </summary>
-            [XmlText]
-            public string Text { get; set; }
-        }
-
         // Config section
         private ServiceClientConfigurationSection m_configurationSection;
 
@@ -246,6 +157,19 @@ namespace SanteDB.DisconnectedClient.Http
 
             retVal.AllowAutoRedirect = false;
 
+            // Are we forwarding this request?
+            var remoteData = RemoteEndpointUtil.Current.GetRemoteClient();
+            if (remoteData != null)
+            {
+                var fwdInfo = remoteData.ForwardInformation;
+                if (!String.IsNullOrEmpty(fwdInfo))
+                {
+                    fwdInfo += $", {remoteData.RemoteAddress}";
+                }
+
+                retVal.Headers.Add("X-Real-IP", remoteData.RemoteAddress);
+                retVal.Headers.Add("X-Forwarded-For", fwdInfo);
+            }
             return retVal;
         }
 
@@ -526,7 +450,7 @@ namespace SanteDB.DisconnectedClient.Http
                 {
                     this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
                     // Deserialize
-                    object errorResult = default(ErrorResult);
+                    object errorResult = null;
 
                     var responseContentType = errorResponse.ContentType;
                     if (responseContentType.Contains(";"))
