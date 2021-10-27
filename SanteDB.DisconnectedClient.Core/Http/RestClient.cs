@@ -501,6 +501,8 @@ namespace SanteDB.DisconnectedClient.Http
                         exception = new RestClientException<RestServiceFault>(rse, e, e.Status, e.Response);
                     else if (errorResponse is TResult)
                         exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
+                    else
+                        exception = new RestClientException<object>(errorResult, e, e.Status, e.Response);
 
                     switch (errorResponse.StatusCode)
                     {

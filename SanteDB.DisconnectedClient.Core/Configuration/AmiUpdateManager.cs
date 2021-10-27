@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
@@ -99,7 +100,6 @@ namespace SanteDB.DisconnectedClient.Configuration
             {
                 this.m_tracer.TraceInfo("No network available, skipping update check");
             }
-
         }
 
         /// <summary>
@@ -215,7 +215,6 @@ namespace SanteDB.DisconnectedClient.Configuration
 
                     using (this.Authenticate(amiClient.Client, out Credentials credentials))
                     {
-
                         amiClient.Client.Credentials = credentials;
                         amiClient.Client.ProgressChanged += (o, e) => ApplicationContext.Current.SetProgress(string.Format(Strings.locale_downloading, packageId), e.Progress);
                         amiClient.Client.Description.Endpoint[0].Timeout = 30000;
@@ -300,6 +299,7 @@ namespace SanteDB.DisconnectedClient.Configuration
         }
 
         public event EventHandler Stopped;
+
         public event EventHandler Stopping;
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace SanteDB.DisconnectedClient.Configuration
             {
                 this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
             }
-            credentials = client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+            credentials = client.Description.Binding.Security.CredentialProvider.GetCredentials(this.m_cachedCredential);
             return AuthenticationContext.EnterContext(this.m_cachedCredential);
         }
     }
