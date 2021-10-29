@@ -117,9 +117,6 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
         /// </summary>
         private IDisposable SetContextFromBearer(string bearerToken)
         {
-
-            var smgr = ApplicationContext.Current.GetService<ISessionProviderService>();
-
             var bearerBinary = bearerToken.ParseHexString();
             var sessionId = bearerBinary.Take(16).ToArray();
             var signature = bearerBinary.Skip(16).ToArray();
@@ -145,7 +142,6 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
             this.m_tracer.TraceInfo("User {0} authenticated via SESSION BEARER", principal.Identity.Name);
             return AuthenticationContext.EnterContext(principal);
-
         }
 
         /// <summary>

@@ -24,9 +24,13 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Diagnostics;
 using SanteDB.Core.Model.AMI.Logging;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -58,6 +62,9 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         // Resource handler tool
         private ResourceHandlerTool m_resourceHandler;
 
+        // Data caching service
+        private IDataCachingService m_dataCachingService;
+
         /// <summary>
         /// Resource handler
         /// </summary>
@@ -76,6 +83,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public AmiServiceBehavior()
         {
+            this.m_dataCachingService = ApplicationServiceContext.Current.GetService<IDataCachingService>();
         }
 
         // Tracer
@@ -471,6 +479,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
                         return restClient.Post<Object, Object>($"{resourceType}/{key}", data);
                     }
                     catch (Exception e)
@@ -501,6 +513,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
                         return restClient.Delete<Object>($"{resourceType}");
                     }
                     catch (Exception e)
@@ -684,6 +700,10 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("ami");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
                         return restClient.Put<Object, Object>($"{resourceType}/{key}", data);
                     }
                     catch (Exception e)
@@ -757,6 +777,234 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             else
             {
                 return base.UnLock(resourceType, key);
+            }
+        }
+
+        /// <summary>
+        /// Invoke a method
+        /// </summary>
+        public override object InvokeMethod(string resourceType, string operationName, ApiOperationParameterCollection body)
+        {
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("ami");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        return restClient.Post<object, object>($"{resourceType}/${operationName}", body);
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.InvokeMethod(resourceType, operationName, body);
+            }
+        }
+
+        /// <summary>
+        /// Invoke the specified operation on a specific instance
+        /// </summary>
+        public override object InvokeMethod(string resourceType, string id, string operationName, ApiOperationParameterCollection body)
+        {
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("ami");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        if (Guid.TryParse(id, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+                        return restClient.Post<object, object>($"{resourceType}/{id}/${operationName}", body);
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.InvokeMethod(resourceType, id, operationName, body);
+            }
+        }
+
+        /// <summary>
+        /// Associated object search
+        /// </summary>
+        public override AmiCollection AssociationSearch(string resourceType, string key, string childResourceType)
+        {
+            // Perform only on the external server
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("ami");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        // This NVC is UTF8 compliant
+                        var nvc = SanteDB.Core.Model.Query.NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
+                        var retVal = restClient.Get<object>($"/{resourceType}/{key}/{childResourceType}", nvc.Select(o => new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
+
+                        if (retVal is AmiCollection bundle)
+                        {
+                            bundle.CollectionItem
+                                .OfType<ITaggable>()
+                                .Select(o =>
+                                {
+                                    // Do we have a local?
+                                    if (o is Entity entity &&
+                                        ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>()?.Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                                        return o;
+                                    o.AddTag("$upstream", "true");
+                                    return o;
+                                }).ToList();
+                            return bundle;
+                        }
+                        return null;
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationSearch(resourceType, key, childResourceType);
+            }
+        }
+
+        /// <summary>
+        /// Remove associated object
+        /// </summary>
+        public override object AssociationRemove(string resourceType, string key, string childResourceType, string scopedEntityKey)
+        {
+            // Only on the remote server
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("ami");
+                        restClient.Requesting += (o, e) => e.AdditionalHeaders.Add("X-Delete-Mode", RestOperationContext.Current.IncomingRequest.Headers["X-Delete-Mode"] ?? "OBSOLETE");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+                        if (Guid.TryParse(scopedEntityKey, out uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+
+                        return restClient.Delete<object>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}");
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationRemove(resourceType, key, childResourceType, scopedEntityKey);
+            }
+        }
+
+        /// <summary>
+        /// Get associated object
+        /// </summary>
+        public override object AssociationGet(string resourceType, string key, string childResourceType, string scopedEntityKey)
+        {
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("ami");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+                        var retVal = restClient.Get<object>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}");
+                        // Do we have a local?
+                        if (retVal is Entity entity &&
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
+                            entity.AddTag("$upstream", "true");
+                        else if (retVal is Act act &&
+                            ApplicationServiceContext.Current.GetService<IDataPersistenceService<Act>>().Get(act.Key.Value, null, true, AuthenticationContext.SystemPrincipal) != null)
+                            act.AddTag("$upstream", "true");
+                        return retVal;
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationGet(resourceType, key, childResourceType, scopedEntityKey);
+            }
+        }
+
+        /// <summary>
+        /// Association based create
+        /// </summary>
+        public override object AssociationCreate(string resourceType, string key, string childResourceType, object body)
+        {
+            if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
+                RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
+            {
+                if (ApplicationContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable)
+                    try
+                    {
+                        var restClient = ApplicationContext.Current.GetRestClient("ami");
+                        restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
+
+                        if (Guid.TryParse(key, out Guid uuid))
+                        {
+                            this.m_dataCachingService.Remove(uuid);
+                        }
+                        if (body is IIdentifiedEntity ide)
+                        {
+                            this.m_dataCachingService.Remove(ide.Key.Value);
+                        }
+
+                        return restClient.Post<object, object>($"{resourceType}/{key}/{childResourceType}", body);
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
+                        throw;
+                    }
+                else
+                    throw new FaultException(502);
+            }
+            else
+            {
+                return base.AssociationCreate(resourceType, key, childResourceType, body);
             }
         }
     }

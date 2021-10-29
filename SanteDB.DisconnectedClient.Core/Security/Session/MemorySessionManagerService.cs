@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;
@@ -25,8 +26,10 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Security.Principal;
 
 namespace SanteDB.DisconnectedClient.Security.Session
@@ -36,11 +39,10 @@ namespace SanteDB.DisconnectedClient.Security.Session
     /// </summary>
     public class MemorySessionManagerService : ISessionProviderService, ISessionIdentityProviderService
     {
-
         /// <summary>
-        /// Sessions 
+        /// Sessions
         /// </summary>
-        private Dictionary<String, MemorySession> m_session = new Dictionary<String, MemorySession>();
+        private MemoryCache m_session = new MemoryCache("$sdb-ade.session");
 
         // Security configuration section
         private SecurityConfigurationSection m_securityConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
@@ -75,9 +77,8 @@ namespace SanteDB.DisconnectedClient.Security.Session
         /// </summary>
         public IPrincipal Authenticate(ISession session)
         {
-            if (this.m_session.TryGetValue(this.GetSessionKey(session.Id), out MemorySession memSession))
-                return memSession.Principal;
-            return null;
+            var memSession = this.m_session.Get(this.GetSessionKey(session.Id)) as MemorySession;
+            return memSession.Principal;
         }
 
         /// <summary>
@@ -86,11 +87,12 @@ namespace SanteDB.DisconnectedClient.Security.Session
         /// <param name="session">The session to be abandoned</param>
         public void Abandon(ISession session)
         {
-            if (this.m_session.TryGetValue(this.GetSessionKey(session.Id), out MemorySession ses))
+            var memSession = this.m_session.Get(this.GetSessionKey(session.Id)) as MemorySession;
+            if (memSession != null)
             {
                 this.m_session.Remove(this.GetSessionKey(session.Id));
-                ApplicationServiceContext.Current.GetService<IPolicyDecisionService>()?.ClearCache(ses.Principal);
-                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(ses.Principal, ses, true, false, null, null));
+                ApplicationServiceContext.Current.GetService<IPolicyDecisionService>()?.ClearCache(memSession.Principal);
+                this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(memSession.Principal, memSession, true, false, null, null));
             }
             else
                 this.Abandoned?.Invoke(this, new SessionEstablishedEventArgs(null, null, false, false, null, null));
@@ -117,7 +119,6 @@ namespace SanteDB.DisconnectedClient.Security.Session
                         ;
                     else if (policyDemands?.Length > 0)
                     {
-
                         if (isOverride)
                             claims.Add(new SanteDBClaim(SanteDBClaimTypes.SanteDBOverrideClaim, "true"));
                         if (!String.IsNullOrEmpty(purpose))
@@ -166,7 +167,7 @@ namespace SanteDB.DisconnectedClient.Security.Session
                         memorySession = new MemorySession(sessionKey, notBefore, notAfter, sessionRefresh.ToByteArray(), claims.ToArray(), principal);
                     }
 
-                    this.m_session.Add(this.GetSessionKey(sessionKey.ToByteArray()), memorySession);
+                    this.m_session.Add(this.GetSessionKey(sessionKey.ToByteArray()), memorySession, memorySession.NotAfter.AddMinutes(10));
                     this.Established?.Invoke(this, new SessionEstablishedEventArgs(principal, memorySession, true, isOverride, purpose, policyDemands));
                     return memorySession;
                 }
@@ -184,24 +185,33 @@ namespace SanteDB.DisconnectedClient.Security.Session
         public ISession Extend(byte[] refreshToken)
         {
             var tokenKey = this.GetSessionKey(refreshToken);
-            var session = this.m_session.FirstOrDefault(o => o.Value.RefreshTokenString == tokenKey).Value;
-
-            if (session.Claims.Any(r => r.Type == SanteDBClaimTypes.SanteDBOverrideClaim))
+            var session = this.m_session.FirstOrDefault(o => (o.Value as MemorySession).RefreshTokenString == tokenKey).Value as MemorySession;
+            if (session == null)
+            {
+                throw new SecuritySessionException(SessionExceptionType.Expired, "Session refresh token not found", null);
+            }
+            else if (session.Claims.Any(r => r.Type == SanteDBClaimTypes.SanteDBOverrideClaim))
+            {
                 throw new InvalidOperationException("Cannot extend/refresh an override claim");
+            }
 
             // Refresh the principal
             var principal = ApplicationServiceContext.Current.GetService<IIdentityProviderService>().ReAuthenticate(session.Principal);
 
             // First, we want to abandon the session
             this.Abandon(session);
-            session = this.Establish(principal,
+
+            // Establish a new session with any new policies
+            var tSession = this.Establish(principal,
                 null,
                 false,
                 null,
                 null,
                 session.Claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.Language)?.Value) as MemorySession;
 
-            return session;
+            // Allow the users who still have an old session cookie to use them
+            //this.m_session.Add(this.GetSessionKey(session.Id), tSession, session.NotAfter.AddMinutes(10));
+            return tSession;
         }
 
         /// <summary>
@@ -209,8 +219,11 @@ namespace SanteDB.DisconnectedClient.Security.Session
         /// </summary>
         public ISession Get(byte[] sessionToken, bool allowExpired = false)
         {
-            if (this.m_session.TryGetValue(this.GetSessionKey(sessionToken), out MemorySession ses) && (allowExpired ^ (ses.NotAfter > DateTime.Now)))
-                return ses;
+            var session = this.m_session.Get(this.GetSessionKey(sessionToken)) as ISession;
+            if (allowExpired ^ (session != null && session.NotAfter > DateTimeOffset.Now))
+            {
+                return session;
+            }
             return null;
         }
 

@@ -168,12 +168,20 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                     case "refresh_token":
                         {
-                            byte[] refreshTokenData = request["refresh_token"].ParseHexString(),
-                                refreshToken = refreshTokenData.Take(16).ToArray(),
-                                signature = refreshTokenData.Skip(16).ToArray();
-                            if (!signatureService.Verify(refreshToken, signature))
-                                throw new SecurityException("Refresh token signature mismatch");
+                            byte[] refreshToken = null;
+                            if (request["refresh_token"].Equals("cookie") && RestOperationContext.Current.Data.TryGetValue(AgsAuthorizationServiceBehavior.SessionPropertyName, out object sessionData) && sessionData is ISession session1) // hack: Use the cookie to llok up the current session
+                            {
+                                refreshToken = session1.RefreshToken;
+                            }
+                            else
+                            {
+                                byte[] refreshTokenData = request["refresh_token"].ParseHexString(),
+                                    signature = refreshTokenData.Skip(16).ToArray();
+                                refreshToken = refreshTokenData.Take(16).ToArray();
 
+                                if (!signatureService.Verify(refreshToken, signature))
+                                    throw new SecurityException("Refresh token signature mismatch");
+                            }
                             // Get the local session
                             session = sessionService.Extend(refreshToken);
                             break;

@@ -42,7 +42,7 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
         /// <summary>
         /// Gets the id
         /// </summary>
-        public string Id => "add-simple-matching-config-v3";
+        public string Id => "add-simple-matching-config-v4";
 
         /// <summary>
         /// Install the specified extension
@@ -55,9 +55,12 @@ namespace SanteDB.DisconnectedClient.Configuration.Migrations
             {
                 ApplicationContext.Current.RemoveServiceProvider(typeof(SimpleRecordMatchingService), true);
                 ApplicationContext.Current.RemoveServiceProvider(typeof(FileMatchConfigurationProvider), true);
+                ApplicationContext.Current.AddServiceProvider(typeof(RemoteRecordMatchConfigurationService), true);
             }
             else // user central server for checkout
             {
+                ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRecordMatchConfigurationService), true);
+
                 ApplicationContext.Current.AddServiceProvider(typeof(SimpleRecordMatchingService), true);
                 ApplicationContext.Current.AddServiceProvider(typeof(FileMatchConfigurationProvider), true);
 
