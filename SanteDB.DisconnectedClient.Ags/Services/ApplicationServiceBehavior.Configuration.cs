@@ -701,7 +701,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(DefaultJobManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
