@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -33,6 +34,7 @@ using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Services.Local;
 using SanteDB.DisconnectedClient.Synchronization;
+using SanteDB.Persistence.MDM.Model;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -42,56 +44,13 @@ using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.SQLite.Mdm
 {
-
     /// <summary>
-    /// Master entity
+    /// When synchronizing with a server which has MDM enabled.
     /// </summary>
-    public interface IMasterEntity { }
-
-    /// <summary>
-    /// Represents a relationship shim for MDM
-    /// </summary>
-    [XmlType(Namespace = "http://santedb.org/model")]
-    public class EntityRelationshipMaster : EntityRelationship
-    {
-
-        /// <summary>
-        /// Gets the original relationship
-        /// </summary>
-        [XmlElement("originalHolder"), JsonProperty("originalHolder")]
-        public Guid? OriginalHolderKey { get; set; }
-
-        /// <summary>
-        /// Gets the original relationship
-        /// </summary>
-        [XmlElement("originalTarget"), JsonProperty("originalTarget")]
-        public Guid? OriginalTargetKey { get; set; }
-    }
-
-    /// <summary>
-    /// Stub class for receiving MDM Entities
-    /// </summary>
-    [XmlType(Namespace = "http://santedb.org/model")]
-    public class EntityMaster<T> : Entity, IMasterEntity
-        where T : IdentifiedData, new()
-    { }
-
-    /// <summary>
-    /// Stub class for receiving MDM Acts
-    /// </summary>
-    [XmlType(Namespace = "http://santedb.org/model")]
-    public class ActMaster<T> : Act, IMasterEntity
-        where T : IdentifiedData, new()
-    { }
-
-    /// <summary>
-    /// When synchronizing with a server which has MDM enabled. 
-    /// </summary>
-    /// <remarks>The SQLite persistence layer is incompatible with the storage patterns of the master. Therefore, whenever the service 
+    /// <remarks>The SQLite persistence layer is incompatible with the storage patterns of the master. Therefore, whenever the service
     /// attempts to insert a record which is tagged / flagged as an MDM master this service will take over persistence of the data</remarks>
     public class MdmDataManager : IDaemonService
     {
-
         /// <summary>
         /// Get all types from core classes of entity and act and create shims in the model serialization binder
         /// </summary>
@@ -147,21 +106,24 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// Fired when the service is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Fired after the service has started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Fired when the service is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Fired after the service has stopped
         /// </summary>
         public event EventHandler Stopped;
 
         /// <summary>
-        /// Create a mdm repository 
+        /// Create a mdm repository
         /// </summary>
         private IDisposable CreateRepositoryListener(Type bindType)
         {
@@ -192,7 +154,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                         clinDi.Responded += ClinicalRepositoryResponded;
 
                     // We want to attach to the repository services so we can redirect writes which are actually against a MDM controlled piece of data
-                    // This is because the user interface or API callers on the dCDR may inadvertantly try to update from an old UUID, 
+                    // This is because the user interface or API callers on the dCDR may inadvertantly try to update from an old UUID,
                     // not realizing that the MDM layer had rewritten the UUID to the master copy UUID
                     var types = ApplicationServiceContext.Current.GetService<IServiceManager>()
                         .GetAllTypes().Where(t => typeof(Entity).IsAssignableFrom(t)).ToArray();
@@ -222,7 +184,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
 
                     // TODO: Save the resulting object here.
                 }
-                else if (entity.ClassConceptKey == MasterRecordClassification) // we fetched a master record directly - what is the local type? 
+                else if (entity.ClassConceptKey == MasterRecordClassification) // we fetched a master record directly - what is the local type?
                 {
                     Type bindType = null;
                     var mdmRel = entity.Relationships.FirstOrDefault(o => o.RelationshipTypeKey == MasterRecordRelationship);
@@ -231,18 +193,16 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                     else
                         bindType = (sender as IClinicalIntegrationService).Get<Entity>(mdmRel.SourceEntityKey.Value, null)?.GetType();
 
-                    if (bindType != null) // We have an MDM record 
+                    if (bindType != null) // We have an MDM record
                     {
                         e.ResponseData = (sender as IClinicalIntegrationService).Get(bindType, entity.Key.Value, null);
                         entity = e.ResponseData as Entity;
                         foreach (var rel in entity.Relationships.Where(o => o.RelationshipTypeKey == MasterRecordRelationship))
                             this.RewriteRelationships(entity, rel.SourceEntityKey, rel.TargetEntityKey);
-
                     }
                 }
             }
         }
-
 
         /// <summary>
         /// Inbound queue object has been queued, ensure that the MDM references are corrected for proper operation of the mobile device queue
@@ -320,7 +280,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                             // Rewrite all relationships
                             bundle?.Item.Add(rel.Clone());
                             this.RewriteRelationships(itm, rel.SourceEntityKey, itm.Key);
-                            // Do we have a local object? 
+                            // Do we have a local object?
                             if (rel.LoadProperty<Entity>(nameof(EntityRelationship.SourceEntity)) != null)
                             {
                                 rel.SourceEntity.ObsoletionTime = DateTime.Now;
@@ -365,7 +325,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                             bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, master.Key) { SourceEntityKey = currentLocal.Key });
                         else
                             bundle?.Item.Add(new EntityRelationship(MasterRecordRelationship, er.TargetEntityKey) { SourceEntityKey = currentLocal.Key });
-
                     }
                     hasChanged = true;
                 }
@@ -379,8 +338,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
         /// </summary>
         private IdentifiedData HideCurrentLocal(EntityRelationship rel)
         {
-
-            // Do we have a local object? 
+            // Do we have a local object?
             var local = EntitySource.Current.Get<Entity>(rel.SourceEntityKey);
             if (local != null && !local.ObsoletionTime.HasValue)
             {
@@ -388,14 +346,12 @@ namespace SanteDB.DisconnectedClient.SQLite.Mdm
                 //local.ObsoletedByKey = Guid.Parse(AuthenticationContext.SystemUserSid);
                 local.AddTag("$sys.hidden", "true");
                 //entity.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, rel.SourceEntityKey));
-
             }
             return local;
-
         }
 
         /// <summary>
-        /// Rewrite all relationships on the specified data entry 
+        /// Rewrite all relationships on the specified data entry
         /// </summary>
         private void RewriteRelationships(IdentifiedData itm, Guid? localId, Guid? masterId)
         {

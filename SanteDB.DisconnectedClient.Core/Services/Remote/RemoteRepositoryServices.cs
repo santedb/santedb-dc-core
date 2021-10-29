@@ -47,182 +47,13 @@ using System.Xml.Serialization;
 namespace SanteDB.DisconnectedClient.Services.Remote
 {
     /// <summary>
-    /// Represents a persistence service which uses the HDSI only in online mode
+    /// Remote repository service (deprecated - kept for backwards compatibility with configurations)
     /// </summary>
-    public class RemoteRepositoryService : IDaemonService
+    [Obsolete("Use SanteDB.DisconnectedClient.Services.RemoteRepositoryFactory", true)]
+    public class RemoteRepositoryService : RemoteRepositoryFactory
     {
-        /// <summary>
-        /// Template keys
-        /// </summary>
-        private static ConcurrentDictionary<String, Guid> s_templateKeys = new ConcurrentDictionary<string, Guid>();
-
-        /// <summary>
-        /// Master entity
-        /// </summary>
-        internal interface IMasterEntity { }
-
-        /// <summary>
-        /// Represents a relationship shim for MDM
-        /// </summary>
-        [XmlType(Namespace = "http://santedb.org/model")]
-        public class EntityRelationshipMaster : EntityRelationship
+        public RemoteRepositoryService(IConfigurationManager configurationManager, IServiceManager serviceManager, ILocalizationService localizationService) : base(configurationManager, serviceManager, localizationService)
         {
-            /// <summary>
-            /// Gets the original relationship
-            /// </summary>
-            [XmlElement("originalHolder"), JsonProperty("originalHolder")]
-            public Guid? OriginalHolderKey { get; set; }
-
-            /// <summary>
-            /// Gets the original relationship
-            /// </summary>
-            [XmlElement("originalTarget"), JsonProperty("originalTarget")]
-            public Guid? OriginalTargetKey { get; set; }
-        }
-
-        /// <summary>
-        /// Stub class for receiving MDM Entities
-        /// </summary>
-        [XmlType(Namespace = "http://santedb.org/model")]
-        public class EntityMaster<T> : Entity, IMasterEntity
-            where T : IdentifiedData, new()
-        { }
-
-        /// <summary>
-        /// Stub class for receiving MDM Acts
-        /// </summary>
-        [XmlType(Namespace = "http://santedb.org/model")]
-        public class ActMaster<T> : Act, IMasterEntity
-            where T : IdentifiedData, new()
-        { }
-
-        /// <summary>
-        /// Get all types from core classes of entity and act and create shims in the model serialization binder
-        /// </summary>
-        static RemoteRepositoryService()
-        {
-            foreach (var t in typeof(Entity).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
-                ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
-            foreach (var t in typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
-                ModelSerializationBinder.RegisterModelType(typeof(ActMaster<>).MakeGenericType(t));
-            ModelSerializationBinder.RegisterModelType(typeof(EntityRelationshipMaster));
-        }
-
-        /// <summary>
-        /// Get the service name
-        /// </summary>
-        public String ServiceName => "Remote Data Repository Service";
-
-        // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteRepositoryService));
-
-        /// <summary>
-        /// Return true if running
-        /// </summary>
-        public bool IsRunning => false;
-
-        public event EventHandler Starting;
-
-        public event EventHandler Started;
-
-        public event EventHandler Stopping;
-
-        public event EventHandler Stopped;
-
-        /// <summary>
-        /// Start the service
-        /// </summary>
-        public bool Start()
-        {
-            this.Starting?.Invoke(this, EventArgs.Empty);
-
-            var appSection = ApplicationContext.Current.Configuration.GetSection<ApplicationConfigurationSection>();
-
-            // Now iterate through the map file and ensure we have all the mappings, if a class does not exist create it
-            try
-            {
-                foreach (var itm in typeof(IdentifiedData).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()) && !o.GetTypeInfo().IsAbstract))
-                {
-                    var rootElement = itm.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>();
-                    if (rootElement == null) continue;
-                    // Is there a persistence service?
-                    var idpType = typeof(IRepositoryService<>);
-                    idpType = idpType.MakeGenericType(itm);
-
-                    this.m_tracer.TraceVerbose("Creating persister {0}", itm);
-
-                    // Is the model class a Versioned entity?
-                    var pclass = typeof(RemoteRepositoryService<>);
-                    pclass = pclass.MakeGenericType(itm);
-
-                    if (ApplicationServiceContext.Current.GetService(idpType) == null)
-                        ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(pclass);
-                }
-
-                // Get client for device user
-                try
-                {
-                    using (var client = GetClient())
-                    {
-                        var retVal = client.Query<TemplateDefinition>(o => o.ObsoletionTime == null);
-                        retVal.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
-                    }
-                }
-                catch (Exception)
-                {
-                    this.m_tracer.TraceWarning("Cannot map local template keys");
-                }
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Error initializing local persistence: {0}", e);
-                throw e;
-            }
-
-            this.Started?.Invoke(this, EventArgs.Empty);
-
-            return true;
-        }
-
-        /// <summary>
-        /// Stop the service
-        /// </summary>
-        public bool Stop()
-        {
-            this.Stopping?.Invoke(this, EventArgs.Empty);
-
-            this.Stopped?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
-
-        /// <summary>
-        /// Get the client
-        /// </summary>
-        private static HdsiServiceClient GetClient()
-        {
-            var retVal = new HdsiServiceClient(ApplicationContext.Current.GetRestClient("hdsi"));
-
-            var appConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
-            var rmtPrincipal = ApplicationServiceContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
-            retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(rmtPrincipal);
-            return retVal;
-        }
-
-        /// <summary>
-        /// Get the specified template by mnemonic
-        /// </summary>
-        internal static Guid? GetTemplate(string mnemonic)
-        {
-            if (!s_templateKeys.TryGetValue(mnemonic, out Guid retVal))
-            {
-                // Get client for device user
-                using (var client = GetClient())
-                {
-                    var itm = client.Query<TemplateDefinition>(o => o.Mnemonic == mnemonic);
-                    itm.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
-                }
-            }
-            return retVal;
         }
     }
 
@@ -232,6 +63,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     internal class RemoteRepositoryService<TModel> : IRepositoryService<TModel>, IPersistableQueryRepositoryService<TModel>, IRepositoryService
         where TModel : IdentifiedData, new()
     {
+        // Template keys already fetched from the server
+        private ConcurrentDictionary<String, Guid> s_templateKeys = new ConcurrentDictionary<string, Guid>();
+
         /// <summary>
         /// Get the service name
         /// </summary>
@@ -302,8 +136,15 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             if (template.Template != null &&
                 !template.TemplateKey.HasValue)
             {
-                // Lookup
-                template.TemplateKey = RemoteRepositoryService.GetTemplate(template.Template.Mnemonic);
+                if (!s_templateKeys.TryGetValue(template.Template.Mnemonic, out Guid retVal))
+                {
+                    using (var client = GetClient())
+                    {
+                        var itm = client.Query<TemplateDefinition>(o => o.Mnemonic == template.Template.Mnemonic);
+                        itm.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
+                    }
+                }
+                template.TemplateKey = retVal;
             }
         }
 

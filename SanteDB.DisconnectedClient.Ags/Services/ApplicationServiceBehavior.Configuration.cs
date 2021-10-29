@@ -239,14 +239,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
 
                 // Re-initialize the service providers
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(AmiPolicyInformationService));
-                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteRepositoryFactory));
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteAssigningAuthorityService));
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(typeof(RemoteSecurityRepository));
                 ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(AmiPolicyInformationService));
                 ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteAssigningAuthorityService));
-                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteRepositoryFactory));
                 ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteSecurityRepository));
-                ApplicationServiceContext.Current.GetService<RemoteRepositoryService>().Start();
 
                 // Cache address types
                 ApplicationContext.Current.GetService<IRepositoryService<Concept>>().Find(o => o.ConceptSets.Any(s => s.Key == ConceptSetKeys.AddressComponentType));
@@ -438,7 +437,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 });
 
                 ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(AmiPolicyInformationService));
-                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteRepositoryService));
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteRepositoryFactory));
                 ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RemoteSecurityRepository));
 
                 AmiServiceClient amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
@@ -637,7 +636,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                                 || o is IMailMessageRepositoryService).ToArray())
                             ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(idp.GetType());
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryFactory), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService), true);
 
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository), true);
@@ -671,7 +670,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         this.m_tracer.TraceInfo("Removing remote service providers....");
                         // Remove any references to remote storage providers
                         ApplicationContext.Current.RemoveServiceProvider(typeof(AmiPolicyInformationService), true);
-                        ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRepositoryService), true);
+                        ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteRepositoryFactory), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteSecurityRepository), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteAuditRepositoryService), true);
                         ApplicationContext.Current.RemoveServiceProvider(typeof(RemoteBiService), true);
