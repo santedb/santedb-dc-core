@@ -170,6 +170,7 @@ namespace SanteDB.DisconnectedClient.Http
                 retVal.Headers.Add("X-Real-IP", remoteData.RemoteAddress);
                 retVal.Headers.Add("X-Forwarded-For", fwdInfo);
             }
+
             return retVal;
         }
 

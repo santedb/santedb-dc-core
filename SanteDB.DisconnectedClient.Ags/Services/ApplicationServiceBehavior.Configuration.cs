@@ -66,11 +66,13 @@ using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Security.Permissions;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
@@ -936,8 +938,21 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ep.Address = new Uri($"{caddr.Scheme}://{overrideBinding.Value}{caddr.AbsolutePath}").ToString();
                     }
             }
+
             ApplicationContext.Current.ConfigurationPersister.Save(ApplicationContext.Current.Configuration);
 
+            // auto-restart?
+            var pep = ApplicationServiceContext.Current.GetService<IPolicyEnforcementService>();
+            if (configuration.AutoRestart &&
+                pep.SoftDemand(PermissionPolicyIdentifiers.UnrestrictedAdministration, AuthenticationContext.Current.Principal))
+            {
+                // Signal stop
+                ThreadPool.QueueUserWorkItem((o) =>
+                {
+                    ApplicationContext.Current.Stop();
+                });
+                return new ConfigurationViewModel(ApplicationContext.Current.Configuration) { AutoRestart = true };
+            }
             return new ConfigurationViewModel(ApplicationContext.Current.Configuration);
         }
 

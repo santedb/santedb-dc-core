@@ -328,7 +328,7 @@ namespace SanteDB.DisconnectedClient
         /// <summary>
         /// Start the daemon services
         /// </summary>
-        protected virtual void Start()
+        public virtual void Start()
         {
             // Already running
             if (this.m_running)
@@ -396,13 +396,17 @@ namespace SanteDB.DisconnectedClient
         /// <summary>
         /// Force stop
         /// </summary>
-        public void Stop()
+        public virtual void Stop()
         {
             this.Stopping?.Invoke(this, EventArgs.Empty);
-            this.m_serviceManager.Stop();
             AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStop);
+            this.m_serviceManager.Stop();
+            this.m_serviceManager.Dispose();
+            this.m_serviceManager = null;
+            this.m_configManager = null;
             this.Stopped?.Invoke(this, EventArgs.Empty);
             this.m_running = false;
+            s_context = null; // tear down singleton
         }
 
         /// <summary>
