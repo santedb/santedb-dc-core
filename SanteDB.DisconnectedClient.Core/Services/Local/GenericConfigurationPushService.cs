@@ -18,7 +18,7 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
