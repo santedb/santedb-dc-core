@@ -276,7 +276,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     catch (Exception e)
                     {
                         this.m_traceSource.TraceError("Error performing online operation: {0}", e.InnerException);
-                        throw;
+                        throw new Exception("Error performing online operation", e);
                     }
                 else
                     throw new FaultException(502);
@@ -646,7 +646,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
                         // This NVC is UTF8 compliant
                         var nvc = SanteDB.Core.Model.Query.NameValueCollection.ParseQueryString(RestOperationContext.Current.IncomingRequest.Url.Query);
-                        var retVal = restClient.Get<object>($"/{resourceType}/{key}/{childResourceType}", nvc.Select(o => new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
+                        var retVal = restClient.Get<Object>($"/{resourceType}/{key}/{childResourceType}", nvc.Select(o => new KeyValuePair<String, Object>(o.Key, o.Value)).ToArray());
 
                         if (retVal is Bundle bundle)
                         {

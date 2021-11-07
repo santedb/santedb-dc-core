@@ -130,7 +130,9 @@ namespace SanteDB.DisconnectedClient.Security
 
             AuditUtil.AuditAccessControlDecision(principal, m_policyId, action);
             if (action != PolicyGrantType.Grant)
+            {
                 throw new PolicyViolationException(principal, this.m_policyId, action);
+            }
         }
 
         /// <summary>
