@@ -85,7 +85,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// HDSI service behavior
         /// </summary>
-        public HdsiServiceBehavior()
+        public HdsiServiceBehavior() : base(ApplicationServiceContext.Current.GetService<IDataCachingService>())
         {
             this.m_dataCachingService = ApplicationServiceContext.Current.GetService<IDataCachingService>();
         }
