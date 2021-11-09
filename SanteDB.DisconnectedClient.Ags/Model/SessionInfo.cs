@@ -1,21 +1,22 @@
 /*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using Newtonsoft.Json;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -40,14 +41,12 @@ using System.Xml.Serialization;
 
 namespace SanteDB.DisconnectedClient.Ags.Model
 {
-
     /// <summary>
     /// Session information
     /// </summary>
-    [JsonObject("SessionInfo"), XmlType("SessionInfo", Namespace = "http://santedb.org/model")]
+    [JsonObject("SessionInfo")]
     public class SessionInfo
     {
-
         // The principal
         private IPrincipal m_cachedPrincipal;
 
@@ -87,7 +86,7 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// <summary>
         /// Gets the underlying session this wraps
         /// </summary>
-        [JsonIgnore, DataIgnore]
+        [JsonIgnore, XmlIgnore]
         public ISession Session { get; private set; }
 
         /// <summary>
@@ -194,7 +193,6 @@ namespace SanteDB.DisconnectedClient.Ags.Model
         /// </summary>
         private void ProcessSession()
         {
-
             // Grab the user entity
             String errDetail = String.Empty;
             var sessionService = ApplicationServiceContext.Current.GetService<ISessionIdentityProviderService>();
@@ -202,7 +200,6 @@ namespace SanteDB.DisconnectedClient.Ags.Model
             // Try to get user entity
             try
             {
-
                 var userService = ApplicationContext.Current.GetService<ISecurityRepositoryService>();
 
                 var sid = Guid.Parse(this.Session.Claims.First(o => o.Type == SanteDBClaimTypes.NameIdentifier).Value);
@@ -233,14 +230,14 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                 this.UserEntity = userService.GetUserEntity(this.GetPrincipal().Identity);
 
                 // Attempt to download if the user entity is null
-                // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity 
+                // Or if there are no relationships of type dedicated service dedicated service delivery location to force a download of the user entity
                 if (this.UserEntity == null || this.UserEntity?.Relationships.Any(r => r.RelationshipTypeKey != EntityRelationshipTypeKeys.DedicatedServiceDeliveryLocation) == true)
                 {
                     var amiService = ApplicationContext.Current.GetService<IClinicalIntegrationService>();
                     if (amiService != null && amiService.IsAvailable())
                     {
                         this.UserEntity = amiService?.Find<UserEntity>(o => o.SecurityUser.Key == sid, 0, 1, null).Item?.OfType<UserEntity>().FirstOrDefault();
-                        // Update the local user 
+                        // Update the local user
                         ApplicationContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
                         {
                             var persistence = ApplicationContext.Current.GetService<IDataPersistenceService<Entity>>();
@@ -292,8 +289,6 @@ namespace SanteDB.DisconnectedClient.Ags.Model
                     throw new SecurityException(String.Format(Strings.locale_loginFromUnsubscribedFacility, errDetail));
                 }
             }
-
         }
-
     }
 }
