@@ -240,7 +240,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
                     return (data as Bundle)?.Item.OfType<TModel>() ?? new List<TModel>() { data as TModel };
                 }
-                catch (WebException)
+                catch (WebException e)
                 {
                     totalResults = 0;
                     return new List<TModel>();

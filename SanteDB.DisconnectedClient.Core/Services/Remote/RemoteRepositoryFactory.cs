@@ -7,6 +7,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Security.Remote;
 using SanteDB.Persistence.MDM.Model;
 using System;
 using System.Collections.Concurrent;
@@ -35,7 +36,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 typeof(RemotePubSubManager),
                 typeof(RemoteRecordMatchConfigurationService),
                 typeof(RemoteSecurityRepository),
-                typeof(RemoteResourceCheckoutService)
+                typeof(RemoteResourceCheckoutService),
+                typeof(RemoteSecurityChallengeRepositoryService)
             };
 
         /// <summary>
