@@ -28,6 +28,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
@@ -798,7 +799,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Invoke a method
         /// </summary>
-        public override object InvokeMethod(string resourceType, string operationName, ApiOperationParameterCollection body)
+        public override object InvokeMethod(string resourceType, string operationName, ParameterCollection body)
         {
             if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
                 RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
@@ -827,8 +828,13 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// <summary>
         /// Invoke the specified operation on a specific instance
         /// </summary>
-        public override object InvokeMethod(string resourceType, string id, string operationName, ApiOperationParameterCollection body)
+        public override object InvokeMethod(string resourceType, string id, string operationName, ParameterCollection body)
         {
+            if (body is null)
+            {
+                throw new ArgumentNullException(nameof(body));
+            }
+
             if (RestOperationContext.Current.IncomingRequest.QueryString["_upstream"] == "true" ||
                 RestOperationContext.Current.IncomingRequest.Headers["X-SanteDB-Upstream"] == "true")
             {
