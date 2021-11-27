@@ -518,7 +518,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         {
                             this.m_dataCachingService.Remove(uuid);
                         }
-                        return restClient.Delete<Object>($"{resourceType}");
+                        return restClient.Delete<Object>($"{resourceType}/{key}");
                     }
                     catch (Exception e)
                     {

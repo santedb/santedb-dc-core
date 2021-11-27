@@ -1,21 +1,22 @@
 ﻿/*
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-2-9
  */
+
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -63,7 +64,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Configuration options
         /// </summary>
-        public Dictionary<String, ConfigurationOptionType> Options
+        public IDictionary<String, ConfigurationOptionType> Options
         {
             get
             {
@@ -77,7 +78,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// No option groups
         /// </summary>
-        public Dictionary<string, string[]> OptionGroups => null;
+        public IDictionary<string, string[]> OptionGroups => null;
 
         /// <summary>
         /// Get the provider type
@@ -92,9 +93,8 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Configure
         /// </summary>
-        public bool Configure(SanteDBConfiguration configuration, Dictionary<String, Object> options)
+        public bool Configure(SanteDBConfiguration configuration, IDictionary<String, Object> options)
         {
-
             string dataDirectory = options["DataDirectory"].ToString();
             if (!options.ContainsKey("encrypt"))
                 options.Add("encrypt", false);
@@ -167,10 +167,12 @@ namespace SanteDB.DisconnectedClient.SQLite
                     else
                         configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic"));
                     break;
+
                 case OperatingSystemID.MacOS:
                 case OperatingSystemID.Linux:
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.Generic.SQLitePlatformGeneric, SQLite.Net.Platform.Generic"));
                     break;
+
                 case OperatingSystemID.Android:
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration("SQLite.Net.Platform.XamarinAndroid.SQLitePlatformAndroid, SQLite.Net.Platform.XamarinAndroid"));
                     break;
@@ -210,7 +212,6 @@ namespace SanteDB.DisconnectedClient.SQLite
             throw new NotSupportedException("This provider cannot create databases");
         }
 
-
         /// <summary>
         /// Deploy the identified feature
         /// </summary>
@@ -242,7 +243,7 @@ namespace SanteDB.DisconnectedClient.SQLite
         /// <summary>
         /// Parse the specified connection string to known components
         /// </summary>
-        public Dictionary<string, object> ParseConnectionString(ConnectionString connectionString)
+        public IDictionary<string, object> ParseConnectionString(ConnectionString connectionString)
         {
             return new Dictionary<string, object>()
             {
