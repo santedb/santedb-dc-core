@@ -214,7 +214,8 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(InMemoryPivotProvider)),
                     new TypeReferenceConfiguration(typeof(DefaultDataSigningService)),
                     new TypeReferenceConfiguration(typeof(GenericConfigurationPushService)),
-                    new TypeReferenceConfiguration(typeof(QrBarcodeGenerator))
+                    new TypeReferenceConfiguration(typeof(QrBarcodeGenerator)),
+                    new TypeReferenceConfiguration(typeof(FileSystemDispatcherQueueService))
                 }
             };
 
@@ -265,6 +266,10 @@ namespace SanteDB.DisconnectedClient.UI
                 }
             };
 #endif
+            retVal.Sections.Add(new FileSystemDispatcherQueueConfigurationSection()
+            {
+                QueuePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SanteDB", this.m_instanceName, "queue"),
+            });
             retVal.Sections.Add(appServiceSection);
             retVal.Sections.Add(appletSection);
             retVal.Sections.Add(diagSection);
