@@ -733,7 +733,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                     {
                         var restClient = ApplicationContext.Current.GetRestClient("hdsi");
                         restClient.Responded += (o, e) => RestOperationContext.Current.OutgoingResponse.SetETag(e.ETag);
-                        var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}");
+                        var retVal = restClient.Get<IdentifiedData>($"{resourceType}/{key}/{childResourceType}/{scopedEntityKey}", RestOperationContext.Current.IncomingRequest.QueryString.ToList().ToArray());
                         // Do we have a local?
                         if (retVal is Entity entity &&
                             ApplicationServiceContext.Current.GetService<IDataPersistenceService<Entity>>().Get(entity.Key.Value, null, true, AuthenticationContext.SystemPrincipal) == null)
