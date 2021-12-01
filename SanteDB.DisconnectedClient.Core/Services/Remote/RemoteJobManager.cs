@@ -146,7 +146,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             /// </summary>
             public void Run(object sender, EventArgs e, object[] parameters)
             {
-                if (parameters?.Length != this.Parameters?.Count)
+                if (parameters?.Length != this.Parameters?.Count && this.Parameters.Count > 0)
                     throw new ArgumentException("Invalid number of arguments to job");
                 else
                     try
