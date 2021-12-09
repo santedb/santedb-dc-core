@@ -640,6 +640,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiPolicyInformationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteRepositoryFactory), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAssigningAuthorityService), true);
+                        ApplicationContext.Current.AddServiceProvider(typeof(RemotePubSubManager), true);
 
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(RemoteAuditRepositoryService), true);
