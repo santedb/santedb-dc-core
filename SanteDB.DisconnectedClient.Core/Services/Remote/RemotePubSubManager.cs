@@ -262,7 +262,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         Name = name,
                         NotAfter = notAfter?.DateTime,
                         NotBefore = notBefore?.DateTime,
-                        ResourceTypeXml = modelType.GetSerializationName(),
+                        ResourceTypeName = modelType.GetSerializationName(),
                         SupportContact = supportAddress
                     });
                 }
