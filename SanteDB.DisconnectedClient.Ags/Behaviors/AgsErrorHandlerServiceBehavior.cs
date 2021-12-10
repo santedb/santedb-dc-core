@@ -85,6 +85,16 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                     this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
 #endif
 
+                if(faultMessage == null)
+                {
+                    if(RestOperationContext.Current.OutgoingResponse == null)
+                    {
+                        this.m_tracer.TraceWarning("Client hangup");
+                        return false;
+                    }
+                    this.m_tracer.TraceWarning("For some reason the fault message is null - ");
+                    faultMessage = new RestResponseMessage(RestOperationContext.Current.OutgoingResponse);
+                }
                 var ie = error;
                 while (ie != null)
                 {
@@ -111,8 +121,15 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 else
                     RestOperationContext.Current.OutgoingResponse.OutputStream.Write(System.Text.Encoding.UTF8.GetBytes(error.Message), 0, System.Text.Encoding.UTF8.GetByteCount(error.Message));
 
-                if (ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>()?.OperatingSystem != OperatingSystemID.Android)
-                    AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
+                try
+                {
+                    if (ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>()?.OperatingSystem != OperatingSystemID.Android)
+                        AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Could not send network request failure - {0}", e);
+                }
             }
             catch (Exception e)
             {
