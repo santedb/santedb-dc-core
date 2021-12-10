@@ -90,7 +90,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 {
                     this.m_tracer.TraceWarning("{0} - ({1}){2} - {3}", error == ie ? "" : "Caused By",
                         RestOperationContext.Current.EndpointOperation?.Description.InvokeMethod.Name,
-                        ie.GetType().FullName, ie.Message);
+                        ie?.GetType().FullName, ie.Message);
 
                     // TODO: Do we need this or can we just capture the innermost exception as the cause?
                     if (ie is RestClientException<RestServiceFault> || ie is SecurityException || ie is DetectedIssueException
@@ -102,8 +102,8 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
                 object fault = (error as RestClientException<RestServiceFault>)?.Result ?? new RestServiceFault(error);
 
-                if (error is FaultException && error.GetType() != typeof(FaultException)) // Special classification
-                    fault = error.GetType().GetRuntimeProperty("Body").GetValue(error);
+                if (error is FaultException && error?.GetType() != typeof(FaultException)) // Special classification
+                    fault = error?.GetType().GetRuntimeProperty("Body").GetValue(error);
 
                 var formatter = RestMessageDispatchFormatter.CreateFormatter(RestOperationContext.Current.ServiceEndpoint.Description.Contract.Type);
                 if (formatter != null)
@@ -111,7 +111,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 else
                     RestOperationContext.Current.OutgoingResponse.OutputStream.Write(System.Text.Encoding.UTF8.GetBytes(error.Message), 0, System.Text.Encoding.UTF8.GetByteCount(error.Message));
 
-                if (ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem != OperatingSystemID.Android)
+                if (ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>()?.OperatingSystem != OperatingSystemID.Android)
                     AuditUtil.AuditNetworkRequestFailure(error, RestOperationContext.Current.IncomingRequest.Url, RestOperationContext.Current.IncomingRequest.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.IncomingRequest.Headers[o]), RestOperationContext.Current.OutgoingResponse.Headers.AllKeys.ToDictionary(o => o, o => RestOperationContext.Current.OutgoingResponse.Headers[o]));
             }
             catch (Exception e)
