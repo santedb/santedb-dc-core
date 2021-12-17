@@ -220,7 +220,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<TModel>[] orderBy)
         {
             using (var client = this.GetClient())
-                try
                 {
                     var data = client.Query(query, offset, count, false, queryId: queryId, orderBy: orderBy);
                     (data as Bundle)?.Reconstitute();
@@ -240,11 +239,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
                     return (data as Bundle)?.Item.OfType<TModel>() ?? new List<TModel>() { data as TModel };
                 }
-                catch (WebException e)
-                {
-                    totalResults = 0;
-                    return new List<TModel>();
-                }
+                
         }
 
         /// <summary>

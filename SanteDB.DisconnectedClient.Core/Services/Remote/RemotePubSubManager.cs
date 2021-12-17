@@ -1,7 +1,9 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.PubSub;
 using SanteDB.DisconnectedClient.Interop;
@@ -82,11 +84,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         {
             try
             {
-                var sub = this.GetSubscription(key);
                 using (var client = this.GetRestClient())
                 {
-                    sub.IsActive = isActive;
-                    return client.Put<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}", sub);
+                    return client.Post<ParameterCollection, PubSubSubscriptionDefinition>($"PubSubSubscription/{key}/$activate", new ParameterCollection(new Parameter("status", isActive)));
                 }
             }
             catch (Exception e)
@@ -207,29 +207,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         public PubSubChannelDefinition RegisterChannel(string name, Type dispatcherFactoryType, Uri endpoint, IDictionary<string, string> settings)
         {
-            try
-            {
-                using (var client = this.GetRestClient())
-                {
-                    return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", new PubSubChannelDefinition()
-                    {
-                        DispatcherFactoryTypeXml = dispatcherFactoryType.AssemblyQualifiedName,
-                        Endpoint = endpoint.ToString(),
-                        Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
-                    });
-                }
-            }
-            catch (Exception e)
-            {
-                this.m_tracer.TraceError("Error creating channel - {0}", e);
-                throw new Exception($"Error creating channel", e);
-            }
+            return this.RegisterChannel(name, DispatcherFactoryUtil.FindDispatcherFactoryByType(dispatcherFactoryType)?.Id, endpoint, settings);
         }
 
         /// <summary>
         /// Register a channel with default handler
         /// </summary>
-        public PubSubChannelDefinition RegisterChannel(string name, Uri endpoint, IDictionary<string, string> settings)
+        public PubSubChannelDefinition RegisterChannel(string name, string factoryId, Uri endpoint, IDictionary<string, string> settings)
         {
             try
             {
@@ -237,6 +221,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 {
                     return client.Post<PubSubChannelDefinition, PubSubChannelDefinition>($"PubSubChannel", new PubSubChannelDefinition()
                     {
+                        DispatcherFactoryId = factoryId,
+                        Name = name,
                         Endpoint = endpoint.ToString(),
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
@@ -274,9 +260,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         Event = events,
                         Filter = new List<string>() { hdsiFilter },
                         Name = name,
-                        NotAfter = notAfter,
-                        NotBefore = notBefore,
-                        ResourceTypeXml = modelType.AssemblyQualifiedName,
+                        NotAfter = notAfter?.DateTime,
+                        NotBefore = notBefore?.DateTime,
+                        ResourceTypeName = modelType.GetSerializationName(),
                         SupportContact = supportAddress
                     });
                 }
@@ -365,8 +351,8 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         Event = events,
                         Filter = new List<string>() { hdsiFilter },
                         Name = name,
-                        NotAfter = notAfter,
-                        NotBefore = notBefore,
+                        NotAfter = notAfter?.DateTime,
+                        NotBefore = notBefore?.DateTime,
                         SupportContact = supportAddress
                     });
                 }
