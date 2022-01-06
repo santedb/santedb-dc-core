@@ -390,6 +390,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Warehouse
             return retVal;
         }
 
+        /// <summary>
+        /// Creates the materialized view
+        /// </summary>
+        public void CreateMaterializedView(BiQueryDefinition materializeDefinition)
+        {
+            throw new NotImplementedException();
+        }
 
+        public void RefreshMaterializedView(BiQueryDefinition materializeDefinition)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

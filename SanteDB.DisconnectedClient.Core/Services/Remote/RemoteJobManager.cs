@@ -295,5 +295,13 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
+
+        /// <summary>
+        /// Set job schedule for the BI repository
+        /// </summary>
+        public void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
+        {
+            // TODO: Send a schedule to the central server.
+        }
     }
 }
