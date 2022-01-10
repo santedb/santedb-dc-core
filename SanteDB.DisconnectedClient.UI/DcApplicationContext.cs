@@ -365,7 +365,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                     // Update the applets if there are new versions
-                    foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Applets")))
+                    foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "applets")))
                         try
                         {
                             using (var fs = File.OpenRead(appPath))
