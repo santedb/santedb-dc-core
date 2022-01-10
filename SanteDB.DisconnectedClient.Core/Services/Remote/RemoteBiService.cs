@@ -278,5 +278,19 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 throw;
             }
         }
+
+        /// <summary>
+        /// Creating materialized views remotely not supported
+        /// </summary>
+        public void CreateMaterializedView(BiQueryDefinition materializeDefinition)
+        {
+        }
+
+        /// <summary>
+        /// Refreshing materialized views remotely not supported
+        /// </summary>
+        public void RefreshMaterializedView(BiQueryDefinition materializeDefinition)
+        {
+        }
     }
 }
