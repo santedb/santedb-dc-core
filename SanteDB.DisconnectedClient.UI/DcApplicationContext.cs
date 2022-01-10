@@ -179,7 +179,7 @@ namespace SanteDB.DisconnectedClient.UI
 
                 retVal.SetProgress("Loading configuration", 0.2f);
                 // Load all user-downloaded applets in the data directory
-                foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Applets")))
+                foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "applets")))
                     try
                     {
 
@@ -365,7 +365,7 @@ namespace SanteDB.DisconnectedClient.UI
                     }
 
                     // Update the applets if there are new versions
-                    foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Applets")))
+                    foreach (var appPath in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "applets")))
                         try
                         {
                             using (var fs = File.OpenRead(appPath))
