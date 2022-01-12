@@ -67,7 +67,10 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                 try
                 {
 
-                    ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new SQLiteAuditPruneJob(), new TimeSpan(1, 0, 0, 0), JobStartType.DelayStart);
+                    var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
+                    var job = new SQLiteAuditPruneJob();
+                    jms.AddJob(job, JobStartType.DelayStart);
+                    jms.SetJobSchedule(job, new TimeSpan(1, 0, 0));
 
                     // Bind BI stuff
                     ApplicationServiceContext.Current.GetService<IBiMetadataRepository>()?.Insert(new SanteDB.BI.Model.BiDataSourceDefinition()

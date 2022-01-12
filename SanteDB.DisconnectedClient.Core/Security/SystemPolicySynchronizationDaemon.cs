@@ -81,7 +81,10 @@ namespace SanteDB.DisconnectedClient.Security
             ApplicationServiceContext.Current.Started += (o, e) =>
             {
                 var pollInterval = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SynchronizationConfigurationSection>().PollInterval;
-                ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new SystemPolicySynchronizationJob(), pollInterval);
+                var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
+                var job = new SystemPolicySynchronizationJob();
+                jms.AddJob(job);
+                jms.SetJobSchedule(job, pollInterval);
             };
 
             this.Started?.Invoke(this, EventArgs.Empty);
