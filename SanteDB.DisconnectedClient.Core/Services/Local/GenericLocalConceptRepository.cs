@@ -17,13 +17,18 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 
 namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
     /// Generic local concept repository with sufficient permissions
     /// </summary>
+    /// <remarks>This genericized implementation of a <see cref="IRepositoryService"/> is responsible
+    /// for wrapping realized generic instances for <see cref="ReferenceTerm"/>, <see cref="ConceptSet"/>, and 
+    /// <see cref="CodeSystem"/></remarks>
     public class GenericLocalConceptRepository<TModel> : GenericLocalMetadataRepository<TModel>
         where TModel : IdentifiedData
     {

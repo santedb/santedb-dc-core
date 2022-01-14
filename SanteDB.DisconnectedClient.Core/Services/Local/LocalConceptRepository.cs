@@ -31,8 +31,8 @@ using System.Text.RegularExpressions;
 namespace SanteDB.DisconnectedClient.Services.Local
 {
     /// <summary>
-    /// Represents a service which is responsible for the
-    /// maintenance of concepts.
+    /// Represents a service which is responsible for the maintenance of concepts using the local 
+    /// <see cref="IRepositoryService"/> for <see cref="Concept"/>
     /// </summary>
     public class LocalConceptRepository : GenericLocalNullifiedRepository<Concept>, IConceptRepositoryService
     {

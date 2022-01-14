@@ -22,6 +22,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml;
 
@@ -29,8 +30,14 @@ namespace SanteDB.DisconnectedClient.Configuration
 {
 
     /// <summary>
-    /// Configuration service 
+    /// Disconnected Client Configuration Manager
     /// </summary>
+    /// <remarks>
+    /// <para>This configuration manager is responsible for loading configuration files from the <c>%appdata%\santedb</c> 
+    /// (or <c>~/.config/santedb</c> on Linux and MacOS) directory  matching the dCDR technology (Web Access Gateway, 
+    /// Disconnected Client, Windows, Linux or Android apps) and the named instance data.</para>
+    /// </remarks>
+    [Description("dCDR Configuration Manager")]
     public class ConfigurationManager : IConfigurationManager
     {
         /// <summary>

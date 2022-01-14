@@ -36,8 +36,12 @@ namespace SanteDB.DisconnectedClient.UI.Services.Bluetooth
 
 
     /// <summary>
-    /// Represents a basic bluetooth peer to peer service
+    /// An implementation of the <see cref="IPeerToPeerShareService"/> which sends and receives data over bluetooth
     /// </summary>
+    /// <remarks>
+    /// <para>The bluetooth peer to peer sharing service allows SanteDB plug-ins to request and receive ad-hoc data
+    /// between peers using bluetooth file sharing</para>
+    /// </remarks>
     /// TODO: Test this in Android and Linux and if they work move over to the core interface
     public class BluetoothPeerToPeerShareService : IPeerToPeerShareService, IDaemonService, IDisposable
     {
