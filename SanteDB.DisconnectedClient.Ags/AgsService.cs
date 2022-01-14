@@ -44,8 +44,17 @@ using System.Reflection;
 namespace SanteDB.DisconnectedClient.Ags
 {
     /// <summary>
-    /// Represents the Applet Gateway Service
+    /// The Applet Gateway Service 
     /// </summary>
+    /// <remarks>
+    /// <para>The AGS service is responsible for starting the REST based services for the dCDR instance and is responsible
+    /// for maintaining and managing these services through the life cycle including:</para>
+    /// <list type="bullet">
+    ///     <item><see href="https://help.santesuite.org/developers/service-apis/health-data-service-interface-hdsi">Health Data Service Interface</see></item>
+    ///     <item><see href="https://help.santesuite.org/developers/service-apis/administration-management-interface-ami">Administration Management Interface</see></item>
+    ///     <item><see href="https://help.santesuite.org/developers/service-apis/business-intelligence-services-bis">Business Intelligence Service</see></item>
+    /// </list>
+    /// </remarks>
     public class AgsService : IDaemonService, IRestServiceFactory
     {
         /// <summary>

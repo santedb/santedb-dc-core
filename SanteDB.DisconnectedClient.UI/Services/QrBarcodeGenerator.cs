@@ -34,6 +34,12 @@ namespace SanteDB.DisconnectedClient.UI.Services
     /// <summary>
     /// Barcode generator service that generates a QR code
     /// </summary>
+    /// <remarks>
+    /// <para>This service is an implementation of the <see cref="IBarcodeProviderService"/> which generates 
+    /// two dimensional barcodes with the ZXing library. This service uses the <see cref="IResourcePointerService"/>
+    /// to generate digitally signed <see href="https://help.santesuite.org/developers/service-apis/health-data-service-interface-hdsi/digitally-signed-visual-code-api">Visual Resource Pointer</see> 
+    /// payloads which are represented as a QR code.</para>
+    /// </remarks>
     [ServiceProvider("QR Code Barcode Generator", Dependencies = new Type[] { typeof(IResourcePointerService) })]
     public class QrBarcodeGenerator : IBarcodeProviderService
     {
