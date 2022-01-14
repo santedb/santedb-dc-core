@@ -23,6 +23,9 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.AMI;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Jobs;
+using SanteDB.Core.Model.Parameters;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.DisconnectedClient.Interop;
 using System;
 using System.Collections.Generic;
@@ -57,6 +60,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 this.JobType = Type.GetType(job.JobType);
                 this.StatusText = job.StatusText;
                 this.Progress = job.Progress;
+                this.Schedule = job.Schedule.Select(o => new RemoteJobSchedule(o));
             }
 
             /// <summary>
@@ -120,6 +124,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             public float Progress { get; }
 
             /// <summary>
+            /// Gets or sets the remote job schedule
+            /// </summary>
+            public IEnumerable<RemoteJobSchedule> Schedule { get; set; }
+
+            /// <summary>
             /// Gets the status text
             /// </summary>
             public string StatusText { get; }
@@ -133,7 +142,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     try
                     {
                         using (var client = RemoteJobManager.GetRestClient())
-                            client.Delete<JobInfo>($"JobInfo/{this.Key}");
+                            client.Post<ParameterCollection, ParameterCollection>($"JobInfo/{this.Key}/$cancel", new ParameterCollection());
                     }
                     catch (Exception e)
                     {
@@ -153,11 +162,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     {
                         using (var client = RemoteJobManager.GetRestClient())
                         {
-                            var ji = new JobInfo(this);
-                            if (ji.Parameters != null)
-                                for (int i = 0; i < ji.Parameters.Count; i++)
-                                    ji.Parameters[i].Value = parameters[i];
-                            client.Put<JobInfo, JobInfo>($"JobInfo/{this.Key}", ji);
+                            var parms = new ParameterCollection()
+                            {
+                                Parameters = parameters?.Select(o => new Parameter("_", o)).ToList()
+                            };
+                            client.Post<ParameterCollection, ParameterCollection>($"JobInfo/{this.Key}/$start", parms);
                         }
                     }
                     catch (Exception ex)
@@ -165,8 +174,45 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                         throw new Exception($"Error running job {this.Key}", ex);
                     }
             }
+
+
         }
 
+        /// <summary>
+        /// Remote job schedule container
+        /// </summary>
+        public class RemoteJobSchedule : IJobSchedule
+        {
+
+            /// <summary>
+            /// Create remote scheduling information
+            /// </summary>
+            public RemoteJobSchedule(JobScheduleInfo jobScheduleInfo)
+            {
+                this.Interval = jobScheduleInfo.IntervalXmlSpecified ? (TimeSpan?)jobScheduleInfo.Interval : null;
+                this.StartTime = jobScheduleInfo.StartDate;
+                this.StopTime = jobScheduleInfo.StopDateSpecified ? (DateTime?)jobScheduleInfo.StopDate : null;
+                this.Days = jobScheduleInfo.RepeatOn;
+            }
+
+            /// <inheritdoc/>
+            public TimeSpan? Interval { get; set; }
+
+            /// <inheritdoc/>
+            public DateTime StartTime { get; set; }
+
+            /// <inheritdoc/>
+            public DateTime? StopTime { get; set; }
+
+            /// <inheritdoc/>
+            public DayOfWeek[] Days { get; set; }
+
+            /// <inheritdoc/>
+            public bool AppliesTo(DateTime checkTime, DateTime? lastExecutionTime)
+            {
+                throw new NotImplementedException();
+            }
+        }
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteJobManager));
 
@@ -239,6 +285,14 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
 
         /// <summary>
+        /// Add a job to the job manager
+        /// </summary>
+        public void AddJob(IJob jobType, JobStartType jobStartType = JobStartType.Immediate)
+        {
+            // Not supported
+        }
+
+        /// <summary>
         /// Get the job instance
         /// </summary>
         public IJob GetJobInstance(Guid jobId)
@@ -302,6 +356,83 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
         {
             // TODO: Send a schedule to the central server.
+        }
+
+        /// <summary>
+        /// Get the specified job's schedule
+        /// </summary>
+        public IEnumerable<IJobSchedule> GetJobSchedules(IJob job)
+        {
+            var jobInfo = this.GetJobInstance(job.Id) as RemoteJob;
+            return jobInfo.Schedule;
+        }
+
+        /// <inheritdoc/>
+        IJobSchedule IJobManagerService.SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
+        {
+            if (AuthenticationContext.Current.Principal is IClaimsPrincipal)
+            {
+                try
+                {
+                    using (var client = GetRestClient())
+                    {
+                        var jobInfo = client.Get<JobInfo>($"JobInfo/{job.Id}");
+                        jobInfo.Schedule = new List<JobScheduleInfo>()
+                    {
+                        new JobScheduleInfo()
+                        {
+                            RepeatOn = daysOfWeek,
+                            StartDate = scheduleTime
+                        }
+                    };
+                        jobInfo = client.Put<JobInfo, JobInfo>($"JobInfo/{job.Id}", jobInfo);
+                        return new RemoteJobSchedule(jobInfo.Schedule.First());
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
+                    throw new Exception("Error setting job information on remote server", e);
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        /// <inheritdoc/>
+        public IJobSchedule SetJobSchedule(IJob job, TimeSpan intervalSpan)
+        {
+            if (AuthenticationContext.Current.Principal is IClaimsPrincipal)
+            {
+                try
+                {
+                    using (var client = GetRestClient())
+                    {
+                        var jobInfo = client.Get<JobInfo>($"JobInfo/{job.Id}");
+                        jobInfo.Schedule = new List<JobScheduleInfo>()
+                    {
+                        new JobScheduleInfo()
+                        {
+                            Interval = intervalSpan,
+                            IntervalXmlSpecified = true
+                        }
+                    };
+                        jobInfo = client.Put<JobInfo, JobInfo>($"JobInfo/{job.Id}", jobInfo);
+                        return new RemoteJobSchedule(jobInfo.Schedule.First());
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
+                    throw new Exception("Error setting job information on remote server", e);
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

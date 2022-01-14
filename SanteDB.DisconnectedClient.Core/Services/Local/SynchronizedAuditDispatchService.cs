@@ -182,7 +182,9 @@ namespace SanteDB.DisconnectedClient.Security.Audit
             ApplicationServiceContext.Current.Stopping += (o, e) => this.m_safeToStop = true;
 
             // Queue user work item for sending
-            ApplicationContext.Current.GetService<IJobManagerService>().AddJob(this, new TimeSpan(0, 5, 0), JobStartType.TimerOnly);
+            var jms = ApplicationContext.Current.GetService<IJobManagerService>();
+            jms.AddJob(this, JobStartType.TimerOnly);
+            jms.SetJobSchedule(this, new TimeSpan(0, 5, 0));
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;

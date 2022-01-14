@@ -56,8 +56,11 @@ namespace SanteDB.DisconnectedClient.Services.Local
             ApplicationServiceContext.Current.Started += (o, e) =>
             {
                 var config = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>();
+                var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
+                var job = new MailSynchronizationJob();
+                jms.AddJob(job);
+                jms.SetJobSchedule(job, config.PollInterval);
 
-                ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new MailSynchronizationJob(), config.PollInterval);
                 this.IsRunning = true;
             };
 

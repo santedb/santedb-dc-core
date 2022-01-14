@@ -155,7 +155,10 @@ namespace SanteDB.DisconnectedClient.Synchronization
                     if (this.m_configuration.SynchronizationResources.Any(o => (o.Triggers & SynchronizationPullTriggerType.PeriodicPoll) != 0) &&
                         this.m_configuration.PollInterval != default(TimeSpan))
                     {
-                        ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new RemoteSynchronizationJob(), this.m_configuration.PollInterval, JobStartType.DelayStart);
+                        var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
+                        var job = new RemoteSynchronizationJob();
+                        jms.AddJob(job, JobStartType.DelayStart);
+                        jms.SetJobSchedule(job, this.m_configuration.PollInterval);
                     }
                 }
                 catch (Exception)
