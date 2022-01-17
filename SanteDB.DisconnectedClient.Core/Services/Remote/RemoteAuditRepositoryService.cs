@@ -70,20 +70,27 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// </summary>
         private void MonitorOutboundQueue(DispatcherMessageEnqueuedInfo enqueuedInfo)
         {
-            using (var client = this.GetClient())
+            try
             {
-                while ((this.m_dispatcherQueue.Dequeue(AmiQueueName)?.Body is AuditData audit))
+                using (var client = this.GetClient())
                 {
-                    try
+                    while ((this.m_dispatcherQueue.Dequeue(AmiQueueName)?.Body is AuditData audit))
                     {
-                        client.SubmitAudit(new AuditSubmission(audit));
-                    }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError("Error dispatching audit: {0}", e);
-                        this.m_dispatcherQueue.Enqueue(AmiDeadQueueName, audit);
+                        try
+                        {
+                            client.SubmitAudit(new AuditSubmission(audit));
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceError("Error dispatching audit: {0}", e);
+                            this.m_dispatcherQueue.Enqueue(AmiDeadQueueName, audit);
+                        }
                     }
                 }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceError("Error establishing connection to remote server for dispatching audits: {0}", e);
             }
         }
 
