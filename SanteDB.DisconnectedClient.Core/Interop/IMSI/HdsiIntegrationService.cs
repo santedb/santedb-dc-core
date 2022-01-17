@@ -591,16 +591,10 @@ namespace SanteDB.DisconnectedClient.Interop.HDSI
         {
             try
             {
-                var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-
-                if (this.m_cachedCredential == null ||
-                    !(this.m_cachedCredential is TokenClaimsPrincipal) || this.m_cachedCredential is IClaimsPrincipal claimsPrincipal &&
-                    (claimsPrincipal.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                using (AuthenticationContextExtensions.EnterDeviceContext())
                 {
-                    this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                    return client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
                 }
-
-                return client.Description.Binding.Security.CredentialProvider.GetCredentials(this.m_cachedCredential);
             }
             catch (Exception e)
             {

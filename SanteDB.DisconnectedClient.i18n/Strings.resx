@@ -150,7 +150,7 @@
     <value>Synchronization Conflict</value>
   </data>
   <data name="locale_sessionError" xml:space="preserve">
-    <value>Error establishing session:</value>
+    <value>Error establishing user session</value>
   </data>
   <data name="locale_session_expired" xml:space="preserve">
     <value>Session is expired</value>
@@ -360,7 +360,7 @@ Sincerely,
     <value>Sending items to server...</value>
   </data>
   <data name="err_offline_no_local_available" xml:space="preserve">
-    <value>Cannot contact central authentication server and local identity provider has been configured.</value>
+    <value>The attempt to authenticate this user account using available methods has failed.</value>
   </data>
   <data name="err_network_securityNotAvailable" xml:space="preserve">
     <value>Cannot authenticate device when network unavailable. Synchronization will be suspended</value>

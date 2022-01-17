@@ -29,7 +29,9 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Json.Formatter;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Security;
 using SanteDB.DisconnectedClient.Ags.Behaviors;
+using SanteDB.DisconnectedClient.Security;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -246,29 +248,31 @@ namespace SanteDB.DisconnectedClient.Ags.Formatter
                     var viewModel = httpRequest.Headers["X-SanteDB-ViewModel"] ?? httpRequest.QueryString["_viewModel"];
 
                     // Create the view model serializer
-                    var viewModelSerializer = new JsonViewModelSerializer();
-                    viewModelSerializer.LoadSerializerAssembly(typeof(ActExtensionViewModelSerializer).Assembly);
-
-                    if (!String.IsNullOrEmpty(viewModel))
+                    using (AuthenticationContextExtensions.TryEnterDeviceContext())
                     {
-                        var viewModelDescription = ApplicationContext.Current.GetService<IAppletManagerService>()?.Applets.GetViewModelDescription(viewModel);
-                        viewModelSerializer.ViewModel = viewModelDescription;
-                    }
-                    else
-                    {
-                        viewModelSerializer.ViewModel = m_defaultViewModel;
-                    }
+                        var viewModelSerializer = new JsonViewModelSerializer();
+                        viewModelSerializer.LoadSerializerAssembly(typeof(ActExtensionViewModelSerializer).Assembly);
 
-                    using (var tms = new MemoryStream())
-                    using (StreamWriter sw = new StreamWriter(tms, Encoding.UTF8))
-                    using (JsonWriter jsw = new JsonTextWriter(sw))
-                    {
-                        viewModelSerializer.Serialize(jsw, result as IdentifiedData);
-                        jsw.Flush();
-                        sw.Flush();
-                        response.Body = new MemoryStream(tms.ToArray());
-                    }
+                        if (!String.IsNullOrEmpty(viewModel))
+                        {
+                            var viewModelDescription = ApplicationContext.Current.GetService<IAppletManagerService>()?.Applets.GetViewModelDescription(viewModel);
+                            viewModelSerializer.ViewModel = viewModelDescription;
+                        }
+                        else
+                        {
+                            viewModelSerializer.ViewModel = m_defaultViewModel;
+                        }
 
+                        using (var tms = new MemoryStream())
+                        using (StreamWriter sw = new StreamWriter(tms, Encoding.UTF8))
+                        using (JsonWriter jsw = new JsonTextWriter(sw))
+                        {
+                            viewModelSerializer.Serialize(jsw, result as IdentifiedData);
+                            jsw.Flush();
+                            sw.Flush();
+                            response.Body = new MemoryStream(tms.ToArray());
+                        }
+                    }
                     contentType = "application/json+sdb-viewModel";
                 }
                 // The request was in XML and/or the accept is JSON

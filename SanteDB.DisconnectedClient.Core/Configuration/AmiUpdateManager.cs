@@ -30,6 +30,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.DisconnectedClient.Tickler;
 using SanteDB.Messaging.AMI.Client;
@@ -46,8 +47,6 @@ namespace SanteDB.DisconnectedClient.Configuration
     /// </summary>
     public class AmiUpdateManager : IUpdateManager, IDaemonService
     {
-        // Cached credential
-        private IPrincipal m_cachedCredential;
 
         private bool m_checkedForUpdates;
 
@@ -299,15 +298,9 @@ namespace SanteDB.DisconnectedClient.Configuration
         private IDisposable Authenticate(IRestClient client, out Credentials credentials)
         {
             var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            // TODO: Clean this up - Login as device account
-            if (this.m_cachedCredential == null ||
-                !this.m_cachedCredential.Identity.IsAuthenticated ||
-                ((this.m_cachedCredential as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
-            {
-                this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
-            }
-            credentials = client.Description.Binding.Security.CredentialProvider.GetCredentials(this.m_cachedCredential);
-            return AuthenticationContext.EnterContext(this.m_cachedCredential);
+            var retVal = AuthenticationContextExtensions.TryEnterDeviceContext();
+            credentials = client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+            return retVal;
         }
     }
 }

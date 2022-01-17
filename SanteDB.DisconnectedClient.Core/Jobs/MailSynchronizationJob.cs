@@ -29,6 +29,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Synchronization;
 using SanteDB.Messaging.AMI.Client;
 using System;
@@ -143,17 +144,9 @@ namespace SanteDB.DisconnectedClient.Jobs
         /// </summary>
         private IDisposable GetCredentials(IRestClient client, out Credentials credentials)
         {
-            var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-
-            // TODO: Clean this up - Login as device account
-            if (this.m_cachedCredential == null ||
-                !this.m_cachedCredential.Identity.IsAuthenticated ||
-                ((this.m_cachedCredential as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTimeOffset.MinValue) < DateTimeOffset.Now)
-            {
-                this.m_cachedCredential = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
-            }
+            var retVal = AuthenticationContextExtensions.EnterDeviceContext();
             credentials = client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
-            return AuthenticationContext.EnterContext(this.m_cachedCredential);
+            return retVal;
         }
 
         /// <summary>

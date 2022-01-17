@@ -21,6 +21,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Interop;
+using SanteDB.DisconnectedClient.Security;
 using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Security.Principal;
@@ -33,9 +34,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     public abstract class AmiRepositoryBaseService
     {
 
-        // The principal to fall back on
-        private IPrincipal m_devicePrincipal;
-
         /// <summary>
         /// Get a service client
         /// </summary>
@@ -43,7 +41,6 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         {
             var retVal = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
 
-            var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
             if (principal == null)
                 principal = AuthenticationContext.Current.Principal;
 
@@ -52,13 +49,15 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 principal == AuthenticationContext.SystemPrincipal ||
                 principal == AuthenticationContext.AnonymousPrincipal)
             {
-                principal = this.m_devicePrincipal;
-                // Expired or not exists
-                if (principal == null || ((principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
-                    this.m_devicePrincipal = principal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+                using (AuthenticationContextExtensions.TryEnterDeviceContext())
+                {
+                    retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(AuthenticationContext.Current.Principal);
+                }
             }
-
-            retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(principal);
+            else
+            {
+                retVal.Client.Credentials = retVal.Client.Description.Binding.Security.CredentialProvider.GetCredentials(principal);
+            }
             return retVal;
         }
 
