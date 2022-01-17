@@ -23,17 +23,25 @@ namespace SanteDB.DisconnectedClient.Security
         private static readonly Tracer s_tracer = Tracer.GetTracer(typeof(AuthenticationContextExtensions));
 
         /// <summary>
+        /// Enter device context, throwing any exceptions
+        /// </summary>
+        public static IDisposable EnterDeviceContext()
+        {
+            var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
+            // Expired or not exists
+            if (!(s_devicePrincipal is IClaimsPrincipal cp) || (cp.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
+                s_devicePrincipal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
+            return AuthenticationContext.EnterContext(s_devicePrincipal);
+        }
+
+        /// <summary>
         /// Enter device context
         /// </summary>
         public static IDisposable TryEnterDeviceContext()
         {
             try
             {
-                var appConfig = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-                // Expired or not exists
-                if (!(s_devicePrincipal is IClaimsPrincipal cp) || (cp.FindFirst(SanteDBClaimTypes.Expiration)?.AsDateTime().ToLocalTime() ?? DateTime.MinValue) < DateTime.Now)
-                    s_devicePrincipal = ApplicationContext.Current.GetService<IDeviceIdentityProviderService>().Authenticate(appConfig.DeviceName, appConfig.DeviceSecret);
-                return AuthenticationContext.EnterContext(s_devicePrincipal);
+                return EnterDeviceContext();
             }
             catch(Exception e)
             {
