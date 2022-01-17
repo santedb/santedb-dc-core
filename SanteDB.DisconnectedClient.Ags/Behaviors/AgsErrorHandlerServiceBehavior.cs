@@ -79,10 +79,10 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
                 this.m_tracer.TraceWarning("Error on pipeline: {0}", error);
 
 #else
-                if (error is TargetInvocationException)
-                    this.m_tracer.TraceWarning("{0} - {1} / {2}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message, error.InnerException?.Message);
+                if (error is TargetInvocationException tie)
+                    this.m_tracer.TraceWarning("{0} - {1} / {2}", RestOperationContext.Current?.EndpointOperation?.Description?.InvokeMethod?.Name, error.Message, error.InnerException?.Message);
                 else
-                    this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current.EndpointOperation.Description.InvokeMethod.Name, error.Message);
+                    this.m_tracer.TraceWarning("{0} - {1}", RestOperationContext.Current?.EndpointOperation?.Description?.InvokeMethod?.Name, error.Message);
 #endif
 
                 if(faultMessage == null)
