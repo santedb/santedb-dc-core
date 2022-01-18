@@ -98,6 +98,9 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         /// </summary>
         public string Name => "Audit Dispatch Job";
 
+        /// <inheritdoc/>
+        public string Description => "Checks the administrative dCDR synchronization queue and dispatches those audits to the central iCDR";
+
         /// <summary>
         /// Can cancel
         /// </summary>

@@ -52,6 +52,9 @@ namespace SanteDB.DisconnectedClient.Security
         /// </summary>
         public string Name => "System Policy Synchronization";
 
+        /// <inheritdoc/>
+        public string Description => "Synchronizes the security policies assigned to security roles from the central iCDR server";
+
         /// <summary>
         /// Can cancel
         /// </summary>

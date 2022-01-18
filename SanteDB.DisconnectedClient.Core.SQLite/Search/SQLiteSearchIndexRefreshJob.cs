@@ -51,6 +51,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         /// </summary>
         public string Name => "SQLite FreeText Search Indexing";
 
+        /// <inheritdoc/>
+        public string Description => "Refreshes the SQLite FreeText search";
+
         /// <summary>
         /// Can cancel the job?
         /// </summary>
