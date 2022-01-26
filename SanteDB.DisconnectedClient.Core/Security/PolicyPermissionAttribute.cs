@@ -126,7 +126,7 @@ namespace SanteDB.DisconnectedClient.Security
                     action = pdp.GetPolicyOutcome(principal, this.m_policyId);
             }
 
-            this.m_traceSource.TraceInfo("Policy Enforce: {0}({1}) = {2}", principal?.Identity?.Name, this.m_policyId, action);
+            this.m_traceSource.TraceVerbose("Policy Enforce: {0}({1}) = {2}", principal?.Identity?.Name, this.m_policyId, action);
 
             AuditUtil.AuditAccessControlDecision(principal, m_policyId, action);
             if (action != PolicyGrantType.Grant)
