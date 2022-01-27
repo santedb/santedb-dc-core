@@ -83,6 +83,9 @@ namespace SanteDB.DisconnectedClient.Jobs
         /// </summary>
         public string Name => "Synchronize Mail Messages";
 
+        /// <inheritdoc/>
+        public string Description => "Synchronizes the dCDR messages (broadcasts, alerts, user messages) from central server infrastructure";
+
         /// <summary>
         /// Can cancel the job
         /// </summary>

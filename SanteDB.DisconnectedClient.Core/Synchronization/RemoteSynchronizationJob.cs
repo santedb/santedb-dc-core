@@ -45,6 +45,9 @@ namespace SanteDB.DisconnectedClient.Synchronization
         /// </summary>
         public string Name => "Remote Synchronization Job";
 
+        /// <inheritdoc/>
+        public string Description => "Executes this dCDR's subscription check logic to download new information from the central iCDR server";
+
         /// <summary>
         /// True if synchronization can be cancelled
         /// </summary>

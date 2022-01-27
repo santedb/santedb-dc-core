@@ -50,6 +50,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
         /// </summary>
         public string Name => "Audit Retention Job";
 
+        /// <inheritdoc/>
+        public string Description => "Prunes old audit events from the dCDR database";
+
         /// <summary>
         /// Can cancel?
         /// </summary>

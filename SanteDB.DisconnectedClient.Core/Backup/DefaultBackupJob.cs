@@ -59,6 +59,9 @@ namespace SanteDB.DisconnectedClient.Backup
         /// </summary>
         public string Name => "System Automatic Backup";
 
+        /// <inheritdoc/>
+        public string Description => "Takes an automated, encrypted backup of the dCDR database";
+
         /// <summary>
         /// Can cancel the job?
         /// </summary>

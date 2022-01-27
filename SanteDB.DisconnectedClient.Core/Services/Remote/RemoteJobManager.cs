@@ -52,6 +52,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 this.Tag = job.Tag;
                 this.ModifiedOn = DateTime.Now;
                 this.Name = job.Name;
+                this.Description = job.Description;
                 this.CanCancel = job.CanCancel;
                 this.CurrentState = job.State;
                 this.LastFinished = job.LastFinish;
@@ -72,6 +73,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             /// Gets the name of the job
             /// </summary>
             public string Name { get; }
+
+            /// <inheritdoc/>
+            public string Description { get; }
 
             /// <summary>
             /// Gets whether the job can be cancelled

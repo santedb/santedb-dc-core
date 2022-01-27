@@ -140,7 +140,7 @@ namespace SanteDB.DisconnectedClient.Ags.Behaviors
 
             RestOperationContext.Current.Data.Add(SessionPropertyName, session);
 
-            this.m_tracer.TraceInfo("User {0} authenticated via SESSION BEARER", principal.Identity.Name);
+            this.m_tracer.TraceVerbose("User {0} authenticated via SESSION BEARER", principal.Identity.Name);
             return AuthenticationContext.EnterContext(principal);
         }
 
