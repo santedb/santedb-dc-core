@@ -250,7 +250,7 @@ namespace SanteDB.DisconnectedClient.Ags
                 foreach (var ep in itm.Endpoints)
                 {
                     this.m_tracer.TraceInfo("\tEndpoint: {0}", ep.Address);
-                    var serviceEndpoint = service.AddServiceEndpoint(new Uri(ep.Address), ep.Contract, new RestHttpBinding(false));
+                    var serviceEndpoint = service.AddServiceEndpoint(new Uri(ep.Address), ep.Contract, new RestHttpBinding());
                     foreach (var bhvr in ep.Behaviors)
                     {
                         this.m_tracer.TraceVerbose("AGS Service {0} endpoint {1} has behavior {2}", itm.Name, ep.Address, bhvr.XmlType);
@@ -353,7 +353,7 @@ namespace SanteDB.DisconnectedClient.Ags
 
                 foreach (var ep in config.Endpoints)
                 {
-                    var se = retVal.AddServiceEndpoint(new Uri(ep.Address), ep.Contract, new RestHttpBinding(false));
+                    var se = retVal.AddServiceEndpoint(new Uri(ep.Address), ep.Contract, new RestHttpBinding());
                     foreach (var bhvr in ep.Behaviors)
                     {
                         se.AddEndpointBehavior(
