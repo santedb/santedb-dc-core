@@ -64,5 +64,10 @@ namespace SanteDB.DisconnectedClient.UI.Diagnostics.Performance
         /// Gets the value
         /// </summary>
         object IDiagnosticsProbe.Value => this.Value;
+
+        /// <summary>
+        /// Gets the unit of measure
+        /// </summary>
+        string IDiagnosticsProbe.Unit => null;
     }
 }

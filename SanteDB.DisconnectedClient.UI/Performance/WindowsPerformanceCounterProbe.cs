@@ -40,10 +40,7 @@ namespace SanteDB.DisconnectedClient.UI.Diagnostics.Performance
         public WindowsPerformanceCounterProbe(Guid uuid, String name, String description, String category, String measure, String value) : base(name, description)
         {
             var osiService = ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>();
-            if (osiService.OperatingSystem == OperatingSystemID.Win32)
-            {
-                this.m_windowsCounter = new PerformanceCounter(category, measure, value, true);
-            }
+            this.m_windowsCounter = new PerformanceCounter(category, measure, value, true);
             this.Uuid = uuid;
         }
 
@@ -70,5 +67,10 @@ namespace SanteDB.DisconnectedClient.UI.Diagnostics.Performance
         {
             this.m_windowsCounter.Dispose();
         }
+
+        /// <summary>
+        /// Get unit of measure
+        /// </summary>
+        public override string Unit => "%";
     }
 }
