@@ -399,6 +399,14 @@ namespace SanteDB.DisconnectedClient.Services
         }
 
         /// <summary>
+        /// Notify the applet has changed
+        /// </summary>
+        protected void NotifyChanged()
+        {
+            this.Changed?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
         /// Gets applets for the solution
         /// </summary>
         public ReadonlyAppletCollection GetApplets(string solutionId)
