@@ -196,6 +196,7 @@ namespace SanteDB.DisconnectedClient.UI
                     new TypeReferenceConfiguration(typeof(BusinessRulesDaemonService)),
                     new TypeReferenceConfiguration(typeof(AgsService)),
                     new TypeReferenceConfiguration(typeof(SanteDB.Caching.Memory.MemoryCacheService)),
+                    new TypeReferenceConfiguration(typeof(SanteDB.Caching.Memory.MemoryAdhocCacheService)),
                     new TypeReferenceConfiguration(typeof(DefaultThreadPoolService)),
                     new TypeReferenceConfiguration(typeof(SimpleCarePlanService)),
                     new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),

@@ -58,7 +58,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public List<Tickle> GetTickles()
         {
-            var suser = ApplicationContext.Current.GetService<ISecurityRepositoryService>().GetUser(AuthenticationContext.Current.Principal.Identity);
+            var suser = ApplicationContext.Current.GetService<ISecurityRepositoryService>()?.GetUser(AuthenticationContext.Current.Principal.Identity);
             return ApplicationContext.Current.GetService<ITickleService>()?.GetTickles(o => o.Expiry > DateTime.Now && (o.Target == Guid.Empty || o.Target == suser.Key)).ToList();
         }
 

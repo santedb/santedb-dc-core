@@ -33,18 +33,20 @@ using SanteDB.DisconnectedClient.Data;
 using SanteDB.DisconnectedClient.Services;
 using SanteDB.Rest.Common.Attributes;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace SanteDB.DisconnectedClient.Ags.Services
 {
     /// <summary>
     /// DCG Application Services Interface Behavior
     /// </summary>
-    [ServiceBehavior(Name = "APP", InstanceMode = ServiceInstanceMode.PerCall)]
-    public partial class ApplicationServiceBehavior : IApplicationServiceContract
+    [ServiceBehavior(Name = "APP", InstanceMode = ServiceInstanceMode.Singleton)]
+    public partial class ApplicationServiceBehavior : IApplicationServiceContract, IDisposable
     {
         // Routes
         private byte[] m_routes;
@@ -53,17 +55,46 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         private DateTime m_lastOnlineQuery;
 
         // Last online state
-        private Dictionary<string, bool> m_lastOnlineState;
+        private bool m_online = false;
+        private bool m_amiAvailable = false;
+        private bool m_hdsiAvaialble = false;
 
         // Policy decision service
         private IPolicyDecisionService m_policyDecisionService;
 
+        // Disposal flag
+        private volatile bool m_disposing = false;
+
+        // Monitor state
+        private Thread m_monitorStateThread;
+
+        /// <summary>
+        /// Monitor online state
+        /// </summary>
+        private void MonitorOnlineState()
+        {
+            while (!this.m_disposing)
+            {
+
+                this.m_online = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.IsNetworkAvailable ?? false;
+                this.m_amiAvailable = ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() ?? true;
+                this.m_hdsiAvaialble = ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>()?.IsAvailable() ?? true;
+                Thread.Sleep(5000);
+            }
+        }
         /// <summary>
         /// PDP service
         /// </summary>
         public ApplicationServiceBehavior()
         {
             this.m_policyDecisionService = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
+            this.m_monitorStateThread = new Thread(this.MonitorOnlineState)
+            {
+                IsBackground = true,
+                Priority = ThreadPriority.Lowest,
+                Name = "Online State Monitor"
+            };
+            this.m_monitorStateThread.Start();
         }
 
         /// <summary>
@@ -82,68 +113,72 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             // Ensure response makes sense
             RestOperationContext.Current.OutgoingResponse.ContentType = "text/javascript";
             IAppletManagerService appletService = ApplicationContext.Current.GetService<IAppletManagerService>();
+            appletService.Changed += (o,e)=>this.m_routes = null;
 
-            // Calculate routes
-            using (MemoryStream ms = new MemoryStream())
+            if (this.m_routes == null)
             {
-                using (StreamWriter sw = new StreamWriter(ms))
+                // Calculate routes
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    IEnumerable<AppletAsset> viewStates = appletService.Applets.ViewStateAssets.Select(o => new { Asset = o, Html = (o.Content ?? appletService.Applets.Resolver?.Invoke(o)) as AppletAssetHtml }).GroupBy(o => o.Html.ViewState.Name).Select(g => g.OrderByDescending(o => o.Html.ViewState.Priority).First().Asset);
-
-                    sw.WriteLine("// Generated Routes ");
-                    sw.WriteLine("// Loaded Applets");
-                    foreach (var apl in appletService.Applets)
+                    using (StreamWriter sw = new StreamWriter(ms))
                     {
-                        sw.WriteLine("// \t {0}", apl.Info.Id);
-                        foreach (var ast in apl.Assets)
+                        IEnumerable<AppletAsset> viewStates = appletService.Applets.ViewStateAssets.Select(o => new { Asset = o, Html = (o.Content ?? appletService.Applets.Resolver?.Invoke(o)) as AppletAssetHtml }).GroupBy(o => o.Html.ViewState.Name).Select(g => g.OrderByDescending(o => o.Html.ViewState.Priority).First().Asset);
+
+                        sw.WriteLine("// Generated Routes ");
+                        sw.WriteLine("// Loaded Applets");
+                        foreach (var apl in appletService.Applets)
                         {
-                            var cont = ast.Content ?? appletService.Applets.Resolver?.Invoke(ast);
-                            if (cont is AppletAssetHtml html && html.ViewState != null)
-                                sw.WriteLine("// \t\t {0}", html.ViewState?.Name);
-                        }
-                    }
-                    sw.WriteLine("// Include States: ");
-                    foreach (var vs in viewStates)
-                        sw.WriteLine("// \t{0}", vs.Name);
-
-                    sw.WriteLine("SanteDB = SanteDB || {}");
-                    sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
-                    sw.WriteLine("SanteDB.UserInterface.states = [");
-
-
-                    // Collect routes
-                    foreach (var itm in viewStates)
-                    {
-                        var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
-                        var viewState = htmlContent.ViewState;
-                        sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
-                        var displayName = htmlContent.GetTitle(AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
-                        if (!String.IsNullOrEmpty(displayName))
-                            sw.Write($", displayName: '{displayName }'");
-                        if (itm.Policies.Count > 0)
-                            sw.Write($", demand: [{String.Join(",", itm.Policies.Select(o => $"'{o}'"))}] ");
-                        if (viewState.View.Count > 0)
-                        {
-                            sw.Write(", views: {");
-                            foreach (var view in viewState.View)
+                            sw.WriteLine("// \t {0}", apl.Info.Id);
+                            foreach (var ast in apl.Assets)
                             {
-                                sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
-                                var dynScripts = appletService.Applets.GetLazyScripts(itm);
-                                if (dynScripts.Any())
-                                {
-                                    sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, relativeAsset: itm)}'"))}  ]");
-                                }
-                                sw.WriteLine(" }, ");
+                                var cont = ast.Content ?? appletService.Applets.Resolver?.Invoke(ast);
+                                if (cont is AppletAssetHtml html && html.ViewState != null)
+                                    sw.WriteLine("// \t\t {0}", html.ViewState?.Name);
                             }
-                            sw.WriteLine("}");
                         }
-                        sw.WriteLine("} ,");
+                        sw.WriteLine("// Include States: ");
+                        foreach (var vs in viewStates)
+                            sw.WriteLine("// \t{0}", vs.Name);
+
+                        sw.WriteLine("SanteDB = SanteDB || {}");
+                        sw.WriteLine("SanteDB.UserInterface = SanteDB.UserInterface || {}");
+                        sw.WriteLine("SanteDB.UserInterface.states = [");
+
+                        // Collect routes
+                        foreach (var itm in viewStates)
+                        {
+                            var htmlContent = (itm.Content ?? appletService.Applets.Resolver?.Invoke(itm)) as AppletAssetHtml;
+                            var viewState = htmlContent.ViewState;
+                            sw.WriteLine($"{{ name: '{viewState.Name}', url: '{viewState.Route}', abstract: {viewState.IsAbstract.ToString().ToLower()}");
+                            var displayName = htmlContent.GetTitle(AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Language) ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+                            if (!String.IsNullOrEmpty(displayName))
+                                sw.Write($", displayName: '{displayName }'");
+                            if (itm.Policies.Count > 0)
+                                sw.Write($", demand: [{String.Join(",", itm.Policies.Select(o => $"'{o}'"))}] ");
+                            if (viewState.View.Count > 0)
+                            {
+                                sw.Write(", views: {");
+                                foreach (var view in viewState.View)
+                                {
+                                    sw.Write($"'{view.Name}' : {{ controller: '{view.Controller}', templateUrl: '{view.Route ?? itm.ToString() }'");
+                                    var dynScripts = appletService.Applets.GetLazyScripts(itm);
+                                    if (dynScripts.Any())
+                                    {
+                                        sw.Write($", lazy: [ {String.Join(",", dynScripts.Select(o => $"'{appletService.Applets.ResolveAsset(o.Reference, relativeAsset: itm)}'"))}  ]");
+                                    }
+                                    sw.WriteLine(" }, ");
+                                }
+                                sw.WriteLine("}");
+                            }
+                            sw.WriteLine("} ,");
+                        }
+                        sw.Write("];");
                     }
-                    sw.Write("];");
+                    this.m_routes = ms.ToArray();
                 }
-                this.m_routes = ms.ToArray();
             }
             return new MemoryStream(this.m_routes);
+
         }
 
         /// <summary>
@@ -264,18 +299,11 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         {
             try
             {
-                if (this.m_lastOnlineState == null || DateTime.Now.Subtract(this.m_lastOnlineQuery).TotalSeconds > 30)
-                {
-                    this.m_lastOnlineState = new Dictionary<string, bool>()
-                    {
-                        // Connected to internet
-                        { "online", ApplicationServiceContext.Current.GetService<INetworkInformationService>().IsNetworkAvailable },
-                        { "ami", ApplicationServiceContext.Current.GetService<IAdministrationIntegrationService>()?.IsAvailable() ?? true},
-                        { "hdsi", ApplicationServiceContext.Current.GetService<IClinicalIntegrationService>()?.IsAvailable()?? true }
-                    };
-                    this.m_lastOnlineQuery = DateTime.Now;
-                }
-                return this.m_lastOnlineState;
+                return new Dictionary<string, bool>() {
+                    {  "online" , this.m_online },
+                    { "hdsi", this.m_hdsiAvaialble },
+                    { "ami", this.m_amiAvailable }
+                };
             }
             catch (Exception e)
             {
@@ -284,6 +312,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
             }
         }
 
-
+        /// <summary>
+        /// Stop monitoring online
+        /// </summary>
+        public void Dispose()
+        {
+            this.m_disposing = true;
+        }
     }
 }

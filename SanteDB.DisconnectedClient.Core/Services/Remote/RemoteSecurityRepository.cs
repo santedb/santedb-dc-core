@@ -65,6 +65,17 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         // Get a tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteSecurityRepository));
 
+        // Adhoc cache
+        private readonly IAdhocCacheService m_adhocCache;
+
+        /// <summary>
+        /// DI constructor
+        /// </summary>
+        public RemoteSecurityRepository(IAdhocCacheService adhocCache = null)
+        {
+            this.m_adhocCache = adhocCache;
+        }
+
         /// <summary>
         /// Add users to the specified roles
         /// </summary>
@@ -194,7 +205,14 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                    return client.GetPolicies(o => o.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
+                    var cacheKey = $"sec.pol.{policyOid}";
+                    var cacheResult = this.m_adhocCache?.Get<SecurityPolicy>(cacheKey);
+                    if (cacheResult == null)
+                    {
+                        cacheResult = client.GetPolicies(o => o.Oid == policyOid).CollectionItem.OfType<SecurityPolicyInfo>().FirstOrDefault()?.Policy;
+                        this.m_adhocCache?.Add(cacheKey, cacheResult, new TimeSpan(0, 5, 0));
+                    }
+                    return cacheResult;
                 }
                 catch (Exception e)
                 {
@@ -210,7 +228,14 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                    return client.GetProvenance(provenanceId);
+                    var cacheKey = $"sec.prov.{provenanceId}";
+                    var cacheResult = this.m_adhocCache?.Get<SecurityProvenance>(cacheKey);
+                    if (cacheResult == null)
+                    {
+                        cacheResult = client.GetProvenance(provenanceId);
+                        this.m_adhocCache?.Add(cacheKey, cacheResult, new TimeSpan(1, 0, 0)); // prov cannot be altered
+                    }
+                    return cacheResult;
                 }
                 catch (Exception e)
                 {
@@ -226,10 +251,19 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                    var role = client.GetRoles(r => r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
-                    if (role != null)
-                        role.Entity.Policies = role.Policies.Select(o => o.ToPolicyInstance()).ToList();
-                    return role?.Entity;
+                    var cacheKey = $"sec.rol.{roleName}";
+                    var cacheResult = this.m_adhocCache?.Get<SecurityRoleInfo>(cacheKey);
+                    if (cacheResult == null)
+                    {
+                        cacheResult = client.GetRoles(r => r.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault();
+                        if (cacheResult != null)
+                        {
+                            cacheResult.Entity.Policies = cacheResult.Policies.Select(o => o.ToPolicyInstance()).ToList();
+                        }
+                        this.m_adhocCache?.Add(cacheKey, cacheResult, new TimeSpan(0, 1, 0));
+                    }
+                    return cacheResult?.Entity;
+
                 }
                 catch (Exception e)
                 {
@@ -245,10 +279,16 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             using (var client = this.GetClient())
                 try
                 {
-                    var user = client.GetUsers(u => u.UserName == userName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
-                    if (user != null)
-                        user.Entity.Roles = user.Roles.Select(r => this.GetRole(r)).ToList();
-                    return user?.Entity;
+                    var cacheKey = $"sec.usr.{userName}";
+                    var cacheResult = this.m_adhocCache?.Get<SecurityUserInfo>(cacheKey);
+                    if (cacheResult == null)
+                    {
+                        cacheResult = client.GetUsers(u => u.UserName == userName).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault();
+                        if (cacheResult != null)
+                            cacheResult.Entity.Roles = cacheResult.Roles.Select(r => this.GetRole(r)).ToList();
+                        this.m_adhocCache?.Add(cacheKey, cacheResult, new TimeSpan(0, 1, 0));
+                    }
+                    return cacheResult?.Entity;
                 }
                 catch (Exception e)
                 {
@@ -270,7 +310,14 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public UserEntity GetUserEntity(IIdentity identity)
         {
             int tr = 0;
-            return ((IRepositoryService<UserEntity>)this).Find(o => o.SecurityUser.UserName == identity.Name, 0, 1, out tr).FirstOrDefault();
+            var cacheKey = $"sec.ue.{identity.Name}";
+            var cacheResult = this.m_adhocCache?.Get<UserEntity>(cacheKey);
+            if (cacheResult == null)
+            {
+                cacheResult = ((IRepositoryService<UserEntity>)this).Find(o => o.SecurityUser.UserName == identity.Name, 0, 1, out tr).FirstOrDefault();
+                this.m_adhocCache?.Add(cacheKey, cacheResult, new TimeSpan(0, 1, 0));
+            }
+            return cacheResult;
         }
 
         /// <summary>
@@ -1204,8 +1251,16 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         public Provider GetProviderEntity(IIdentity identity)
         {
             int t;
-            return ApplicationContext.Current.GetService<IRepositoryService<Provider>>()
-                .Find(o => o.Relationships.Where(r => r.RelationshipType.Mnemonic == "AssignedEntity").Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName == identity.Name), 0, 1, out t).FirstOrDefault();
+            var cacheKey = $"sec.pvd.{identity.Name}";
+            var cacheResult = this.m_adhocCache?.Get<Provider>(cacheKey);
+            if(cacheResult == null)
+            {
+                cacheResult = ApplicationContext.Current.GetService<IRepositoryService<Provider>>()
+                               .Find(o => o.Relationships.Where(r => r.RelationshipType.Mnemonic == "AssignedEntity").Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName == identity.Name), 0, 1, out t).FirstOrDefault();
+                this.m_adhocCache?.Add(cacheKey, cacheResult, new TimeSpan(0, 1, 0));
+            }
+            return cacheResult;
+            
         }
 
         /// <summary>
