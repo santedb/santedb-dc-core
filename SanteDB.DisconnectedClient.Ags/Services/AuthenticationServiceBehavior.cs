@@ -50,7 +50,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// <summary>
     /// DCG Authentication Service BEhavior
     /// </summary>
-    [ServiceBehavior(Name = "AUTH", InstanceMode = ServiceInstanceMode.PerCall)]
+    [ServiceBehavior(Name = "AUTH", InstanceMode = ServiceInstanceMode.Singleton)]
     public class AuthenticationServiceBehavior : IAuthenticationServiceContract
     {
         private Tracer m_tracer = Tracer.GetTracer(typeof(AuthenticationServiceBehavior));

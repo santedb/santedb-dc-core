@@ -149,7 +149,7 @@ namespace SanteDB.DisconnectedClient
         /// </summary>
         /// <returns>The service.</returns>
         /// <param name="serviceType">Service type.</param>
-        public object GetService(Type serviceType) => this.m_serviceManager.GetService(serviceType);
+        public object GetService(Type serviceType) => this.m_serviceManager?.GetService(serviceType);
 
         #endregion IServiceProvider implementation
 

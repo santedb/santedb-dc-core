@@ -42,11 +42,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
     /// <summary>
     /// DCG Web Hosting Service
     /// </summary>
-    [ServiceBehavior(Name = "WWW", InstanceMode = ServiceInstanceMode.PerCall)]
+    [ServiceBehavior(Name = "WWW", InstanceMode = ServiceInstanceMode.Singleton)]
     public class WwwServiceBehavior : IWwwServiceContract
     {
         // Cached applets
         private static Dictionary<String, AppletAsset> m_cacheApplets = new Dictionary<string, AppletAsset>();
+
         // Lock object
         private static object m_lockObject = new object();
 
