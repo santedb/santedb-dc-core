@@ -215,131 +215,48 @@ namespace SanteDB.DisconnectedClient.Http
             //if (String.IsNullOrEmpty(url))
             //    throw new ArgumentNullException(nameof(url));
 
-            // Three times:
-            // 1. With provided credential
-            // 2. With challenge
-            // 3. With challenge again
-            for (int i = 0; i < 2; i++)
-            {
-                // Credentials provided ?
-                HttpWebRequest requestObj = this.CreateHttpRequest(url, query) as HttpWebRequest;
-                if (!String.IsNullOrEmpty(contentType))
-                    requestObj.ContentType = contentType;
-                requestObj.Method = method;
 
-                // Additional headers
-                if (additionalHeaders != null)
-                    foreach (var hdr in additionalHeaders.AllKeys)
-                    {
-                        if (hdr == "If-Modified-Since")
-                            requestObj.IfModifiedSince = DateTime.Parse(additionalHeaders[hdr]);
-                        else
-                            requestObj.Headers.Add(hdr, additionalHeaders[hdr]);
-                    }
+            // Credentials provided ?
+            HttpWebRequest requestObj = this.CreateHttpRequest(url, query) as HttpWebRequest;
+            if (!String.IsNullOrEmpty(contentType))
+                requestObj.ContentType = contentType;
+            requestObj.Method = method;
+
+            // Additional headers
+            if (additionalHeaders != null)
+                foreach (var hdr in additionalHeaders.AllKeys)
+                {
+                    if (hdr == "If-Modified-Since")
+                        requestObj.IfModifiedSince = DateTime.Parse(additionalHeaders[hdr]);
+                    else
+                        requestObj.Headers.Add(hdr, additionalHeaders[hdr]);
+                }
 
 #if PERFMON
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 #endif
-                // Get request object
+            // Get request object
 
-                // Body was provided?
-                try
+            // Body was provided?
+            try
+            {
+                // Try assigned credentials
+                IBodySerializer serializer = null;
+                if (body != null)
                 {
-                    // Try assigned credentials
-                    IBodySerializer serializer = null;
-                    if (body != null)
-                    {
-                        // GET Stream,
-                        Stream requestStream = null;
-                        try
-                        {
-                            // Get request object
-                            var cancellationTokenSource = new CancellationTokenSource();
-                            cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
-                            using (var requestTask = Task.Run(async () => { return await requestObj.GetRequestStreamAsync(); }, cancellationTokenSource.Token))
-                            {
-                                try
-                                {
-                                    requestStream = requestTask.Result;
-                                }
-                                catch (AggregateException e)
-                                {
-                                    requestObj.Abort();
-                                    throw e.InnerExceptions.First();
-                                }
-                            }
-
-                            if (contentType == null && typeof(TResult) != typeof(Object))
-                                throw new ArgumentNullException(nameof(contentType));
-
-                            serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(contentType, typeof(TBody));
-                            // Serialize and compress with deflate
-                            using (MemoryStream ms = new MemoryStream())
-                            {
-                                if (this.Description.Binding.Optimize)
-                                {
-                                    switch ((this.Description.Binding as ServiceClientBinding)?.OptimizationMethod)
-                                    {
-                                        case OptimizationMethod.Lzma:
-                                            requestObj.Headers.Add("Content-Encoding", "lzma");
-                                            using (var df = new LZipStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
-                                                serializer.Serialize(df, body);
-                                            break;
-
-                                        case OptimizationMethod.Bzip2:
-                                            requestObj.Headers.Add("Content-Encoding", "bzip2");
-                                            using (var df = new BZip2Stream(new NonDisposingStream(requestStream), CompressionMode.Compress, false))
-                                                serializer.Serialize(df, body);
-                                            break;
-
-                                        case OptimizationMethod.Gzip:
-                                            requestObj.Headers.Add("Content-Encoding", "gzip");
-                                            using (var df = new GZipStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
-                                                serializer.Serialize(df, body);
-                                            break;
-
-                                        case OptimizationMethod.Deflate:
-                                            requestObj.Headers.Add("Content-Encoding", "deflate");
-                                            using (var df = new DeflateStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
-                                                serializer.Serialize(df, body);
-                                            break;
-
-                                        case OptimizationMethod.None:
-                                        default:
-                                            serializer.Serialize(ms, body);
-                                            break;
-                                    }
-                                }
-                                else
-                                    serializer.Serialize(ms, body);
-
-                                // Trace
-                                if (this.Description.Trace)
-                                    this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(ms.ToArray()));
-
-                                using (var nms = new MemoryStream(ms.ToArray()))
-                                    nms.CopyTo(requestStream);
-                            }
-                        }
-                        finally
-                        {
-                            if (requestStream != null)
-                                requestStream.Dispose();
-                        }
-                    }
-
-                    // Response
-                    HttpWebResponse response = null;
+                    // GET Stream,
+                    Stream requestStream = null;
                     try
                     {
+                        // Get request object
                         var cancellationTokenSource = new CancellationTokenSource();
                         cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
-                        using (var responseTask = Task.Run(async () => { return await requestObj.GetResponseAsync(); }, cancellationTokenSource.Token))
+                        using (var requestTask = Task.Run(async () => { return await requestObj.GetRequestStreamAsync(); }, cancellationTokenSource.Token))
                         {
                             try
                             {
-                                response = (HttpWebResponse)responseTask.Result;
+                                requestStream = requestTask.Result;
                             }
                             catch (AggregateException e)
                             {
@@ -348,205 +265,275 @@ namespace SanteDB.DisconnectedClient.Http
                             }
                         }
 
-                        responseHeaders = response.Headers;
-                        var validationResult = this.CategorizeResponse(response);
-                        if (validationResult != ServiceClientErrorType.Ok)
+                        if (contentType == null && typeof(TResult) != typeof(Object))
+                            throw new ArgumentNullException(nameof(contentType));
+
+                        serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(contentType, typeof(TBody));
+                        // Serialize and compress with deflate
+                        using (MemoryStream ms = new MemoryStream())
                         {
-                            this.m_tracer.TraceError("Response failed validation : {0}", validationResult);
-                            throw new WebException(Strings.err_response_failed_validation, null, WebExceptionStatus.Success, response);
-                        }
-
-                        // No content - does the result want a pointer maybe?
-                        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.Continue || response.StatusCode == HttpStatusCode.NotModified)
-                        {
-                            return default(TResult);
-                        }
-                        else if (response.StatusCode == HttpStatusCode.RedirectKeepVerb)
-                            return this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, additionalHeaders, out responseHeaders, body, query);
-                        else if (response.StatusCode == HttpStatusCode.RedirectMethod)
-                            return this.InvokeInternal<TBody, TResult>("GET", response.Headers[HttpResponseHeader.Location], contentType, additionalHeaders, out responseHeaders, default(TBody), query);
-                        else
-                        {
-                            // De-serialize
-                            var responseContentType = response.ContentType;
-                            if (String.IsNullOrEmpty(responseContentType))
-                                return default(TResult);
-
-                            if (responseContentType.Contains(";"))
-                                responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
-
-                            if (response.StatusCode == HttpStatusCode.NotModified)
-                                return default(TResult);
-
-                            serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
-
-                            TResult retVal = default(TResult);
-                            // Compression?
-                            using (MemoryStream ms = new MemoryStream())
+                            if (this.Description.Binding.Optimize)
                             {
-                                if (this.Description.Trace)
-                                    this.m_tracer.TraceVerbose("Received response {0} : {1} bytes", response.ContentType, response.ContentLength);
-
-                                response.GetResponseStream().CopyTo(ms);
-
-                                ms.Seek(0, SeekOrigin.Begin);
-
-                                // Trace
-                                if (this.Description.Trace)
-                                    this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(ms.ToArray()));
-
-                                switch (response.Headers[HttpResponseHeader.ContentEncoding])
+                                switch ((this.Description.Binding as ServiceClientBinding)?.OptimizationMethod)
                                 {
-                                    case "deflate":
-                                        using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                            retVal = (TResult)serializer.DeSerialize(df);
+                                    case OptimizationMethod.Lzma:
+                                        requestObj.Headers.Add("Content-Encoding", "lzma");
+                                        using (var df = new LZipStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
+                                            serializer.Serialize(df, body);
                                         break;
 
-                                    case "gzip":
-                                        using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                            retVal = (TResult)serializer.DeSerialize(df);
+                                    case OptimizationMethod.Bzip2:
+                                        requestObj.Headers.Add("Content-Encoding", "bzip2");
+                                        using (var df = new BZip2Stream(new NonDisposingStream(requestStream), CompressionMode.Compress, false))
+                                            serializer.Serialize(df, body);
                                         break;
 
-                                    case "bzip2":
-                                        using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
-                                            retVal = (TResult)serializer.DeSerialize(bzs);
+                                    case OptimizationMethod.Gzip:
+                                        requestObj.Headers.Add("Content-Encoding", "gzip");
+                                        using (var df = new GZipStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
+                                            serializer.Serialize(df, body);
                                         break;
 
-                                    case "lzma":
-                                        using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                            retVal = (TResult)serializer.DeSerialize(lzmas);
+                                    case OptimizationMethod.Deflate:
+                                        requestObj.Headers.Add("Content-Encoding", "deflate");
+                                        using (var df = new DeflateStream(new NonDisposingStream(requestStream), CompressionMode.Compress))
+                                            serializer.Serialize(df, body);
                                         break;
 
+                                    case OptimizationMethod.None:
                                     default:
-                                        retVal = (TResult)serializer.DeSerialize(ms);
+                                        serializer.Serialize(ms, body);
                                         break;
                                 }
-                                //retVal = (TResult)serializer.DeSerialize(ms);
                             }
+                            else
+                                serializer.Serialize(ms, body);
 
-                            return retVal;
+                            // Trace
+                            if (this.Description.Trace)
+                                this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(ms.ToArray()));
+
+                            using (var nms = new MemoryStream(ms.ToArray()))
+                                nms.CopyTo(requestStream);
                         }
                     }
                     finally
                     {
-                        if (response != null)
-                        {
-                            response.Close();
-                            response.Dispose();
-                        }
-                        //responseTask.Dispose();
+                        if (requestStream != null)
+                            requestStream.Dispose();
                     }
                 }
-                catch (TimeoutException e)
-                {
-                    this.m_tracer.TraceError("Request timed out:{0}", e.Message);
-                    throw;
-                }
-                catch (WebException e) when (e.Response is HttpWebResponse errorResponse && errorResponse.StatusCode == HttpStatusCode.NotModified)
-                {
-                    this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
-                    responseHeaders = errorResponse?.Headers;
-                    return default(TResult);
-                }
-                catch (WebException e) when (e.Response is HttpWebResponse errorResponse && e.Status == WebExceptionStatus.ProtocolError)
-                {
-                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
-                    // Deserialize
-                    object errorResult = null;
 
-                    var responseContentType = errorResponse.ContentType;
-                    if (responseContentType.Contains(";"))
-                        responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
-
-                    var ms = new MemoryStream(); // copy response to memory
-                    errorResponse.GetResponseStream().CopyTo(ms);
-                    ms.Seek(0, SeekOrigin.Begin);
-
-                    try
+                // Response
+                HttpWebResponse response = null;
+                try
+                {
+                    var cancellationTokenSource = new CancellationTokenSource();
+                    cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
+                    using (var responseTask = Task.Run(async () => { return await requestObj.GetResponseAsync(); }, cancellationTokenSource.Token))
                     {
-                        var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
-
-                        switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
+                        try
                         {
-                            case "deflate":
-                                using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                    errorResult = serializer.DeSerialize(df);
-                                break;
-
-                            case "gzip":
-                                using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                    errorResult = serializer.DeSerialize(df);
-                                break;
-
-                            case "bzip2":
-                                using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
-                                    errorResult = serializer.DeSerialize(bzs);
-                                break;
-
-                            case "lzma":
-                                using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
-                                    errorResult = serializer.DeSerialize(lzmas);
-                                break;
-
-                            default:
-                                errorResult = serializer.DeSerialize(ms);
-                                break;
+                            response = (HttpWebResponse)responseTask.Result;
+                        }
+                        catch (AggregateException e)
+                        {
+                            requestObj.Abort();
+                            throw e.InnerExceptions.First();
                         }
                     }
-                    catch
-                    {
-                        errorResult = new RestServiceFault(e);
-                    }
 
-                    Exception exception = null;
-                    if (errorResult is RestServiceFault rse)
-                        exception = new RestClientException<RestServiceFault>(rse, e, e.Status, e.Response);
-                    else if (errorResponse is TResult)
-                        exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
+                    responseHeaders = response.Headers;
+
+                    // No content - does the result want a pointer maybe?
+                    if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.Continue || response.StatusCode == HttpStatusCode.NotModified)
+                    {
+                        return default(TResult);
+                    }
+                    else if (response.StatusCode == HttpStatusCode.RedirectKeepVerb)
+                        return this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, additionalHeaders, out responseHeaders, body, query);
+                    else if (response.StatusCode == HttpStatusCode.RedirectMethod)
+                        return this.InvokeInternal<TBody, TResult>("GET", response.Headers[HttpResponseHeader.Location], contentType, additionalHeaders, out responseHeaders, default(TBody), query);
                     else
-                        exception = new RestClientException<object>(errorResult, e, e.Status, e.Response);
-
-                    switch (errorResponse.StatusCode)
                     {
-                        case HttpStatusCode.Unauthorized: // Validate the response
-                            if (this.CategorizeResponse(errorResponse) != ServiceClientErrorType.Ok)
-                                throw exception;
-                            break;
-
-                        case HttpStatusCode.NotModified:
-                            responseHeaders = errorResponse?.Headers;
+                        // De-serialize
+                        var responseContentType = response.ContentType;
+                        if (String.IsNullOrEmpty(responseContentType))
                             return default(TResult);
 
-                        case (HttpStatusCode)422:
-                            throw exception;
+                        if (responseContentType.Contains(";"))
+                            responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
 
-                        default:
-                            throw exception;
+                        if (response.StatusCode == HttpStatusCode.NotModified)
+                            return default(TResult);
+
+                        serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
+
+                        TResult retVal = default(TResult);
+                        // Compression?
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            if (this.Description.Trace)
+                                this.m_tracer.TraceVerbose("Received response {0} : {1} bytes", response.ContentType, response.ContentLength);
+
+                            response.GetResponseStream().CopyTo(ms);
+
+                            ms.Seek(0, SeekOrigin.Begin);
+
+                            // Trace
+                            if (this.Description.Trace)
+                                this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(ms.ToArray()));
+
+                            switch (response.Headers[HttpResponseHeader.ContentEncoding])
+                            {
+                                case "deflate":
+                                    using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        retVal = (TResult)serializer.DeSerialize(df);
+                                    break;
+
+                                case "gzip":
+                                    using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        retVal = (TResult)serializer.DeSerialize(df);
+                                    break;
+
+                                case "bzip2":
+                                    using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
+                                        retVal = (TResult)serializer.DeSerialize(bzs);
+                                    break;
+
+                                case "lzma":
+                                    using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        retVal = (TResult)serializer.DeSerialize(lzmas);
+                                    break;
+
+                                default:
+                                    retVal = (TResult)serializer.DeSerialize(ms);
+                                    break;
+                            }
+                            //retVal = (TResult)serializer.DeSerialize(ms);
+                        }
+
+                        return retVal;
                     }
                 }
-                catch (WebException e) when (e.Status == WebExceptionStatus.Timeout)
+                finally
                 {
-                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
-                    throw new TimeoutException($"Timeout executing REST operation {method} {url}", e);
+                    if (response != null)
+                    {
+                        response.Close();
+                        response.Dispose();
+                    }
+                    //responseTask.Dispose();
                 }
-                catch (WebException e) when (e.Status == WebExceptionStatus.ConnectFailure)
+            }
+            catch (TimeoutException e)
+            {
+                this.m_tracer.TraceError("Request timed out:{0}", e.Message);
+                throw;
+            }
+            catch (WebException e) when (e.Response is HttpWebResponse errorResponse && errorResponse.StatusCode == HttpStatusCode.NotModified)
+            {
+                this.m_tracer.TraceInfo("Server indicates not modified {0} {1} : {2}", method, url, e.Message);
+                responseHeaders = errorResponse?.Headers;
+                return default(TResult);
+            }
+            catch (WebException e) when (e.Response is HttpWebResponse errorResponse && e.Status == WebExceptionStatus.ProtocolError)
+            {
+                this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                // Deserialize
+                object errorResult = null;
+
+                var responseContentType = errorResponse.ContentType;
+                if (responseContentType.Contains(";"))
+                    responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
+
+                var ms = new MemoryStream(); // copy response to memory
+                errorResponse.GetResponseStream().CopyTo(ms);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                try
                 {
-                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
-                    if ((e.InnerException as SocketException)?.SocketErrorCode == SocketError.TimedOut)
-                        throw new TimeoutException();
-                    else
-                        throw;
+                    var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
+
+                    switch (errorResponse.Headers[HttpResponseHeader.ContentEncoding])
+                    {
+                        case "deflate":
+                            using (DeflateStream df = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                errorResult = serializer.DeSerialize(df);
+                            break;
+
+                        case "gzip":
+                            using (GZipStream df = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                errorResult = serializer.DeSerialize(df);
+                            break;
+
+                        case "bzip2":
+                            using (var bzs = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
+                                errorResult = serializer.DeSerialize(bzs);
+                            break;
+
+                        case "lzma":
+                            using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                errorResult = serializer.DeSerialize(lzmas);
+                            break;
+
+                        default:
+                            errorResult = serializer.DeSerialize(ms);
+                            break;
+                    }
                 }
-                catch (WebException e)
+                catch
                 {
-                    this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                    errorResult = new RestServiceFault(e);
+                }
+
+                Exception exception = null;
+                if (errorResult is RestServiceFault rse)
+                    exception = new RestClientException<RestServiceFault>(rse, e, e.Status, e.Response);
+                else if (errorResponse is TResult)
+                    exception = new RestClientException<TResult>((TResult)errorResult, e, e.Status, e.Response);
+                else
+                    exception = new RestClientException<object>(errorResult, e, e.Status, e.Response);
+
+                switch (errorResponse.StatusCode)
+                {
+                    case HttpStatusCode.Unauthorized: // Validate the response
+
+                        throw exception;
+
+                    case HttpStatusCode.NotModified:
+                        responseHeaders = errorResponse?.Headers;
+                        return default(TResult);
+
+                    case (HttpStatusCode)422:
+                        throw exception;
+
+                    default:
+                        throw exception;
+                }
+            }
+            catch (WebException e) when (e.Status == WebExceptionStatus.Timeout)
+            {
+                this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                throw new TimeoutException($"Timeout executing REST operation {method} {url}", e);
+            }
+            catch (WebException e) when (e.Status == WebExceptionStatus.ConnectFailure)
+            {
+                this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                if ((e.InnerException as SocketException)?.SocketErrorCode == SocketError.TimedOut)
+                    throw new TimeoutException();
+                else
                     throw;
-                }
-                catch (InvalidOperationException e)
-                {
-                    this.m_tracer.TraceError("Invalid Operation: {0}", e.Message);
-                    throw;
-                }
+            }
+            catch (WebException e)
+            {
+                this.m_tracer.TraceError("Error executing {0} {1} : {2}", method, url, e.Message);
+                throw;
+            }
+            catch (InvalidOperationException e)
+            {
+                this.m_tracer.TraceError("Invalid Operation: {0}", e.Message);
+                throw;
             }
 
             responseHeaders = new WebHeaderCollection();

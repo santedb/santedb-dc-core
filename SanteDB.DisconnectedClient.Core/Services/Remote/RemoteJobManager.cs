@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-27
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
@@ -198,8 +199,11 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 this.StartTime = jobScheduleInfo.StartDate;
                 this.StopTime = jobScheduleInfo.StopDateSpecified ? (DateTime?)jobScheduleInfo.StopDate : null;
                 this.Days = jobScheduleInfo.RepeatOn;
+                this.Type = jobScheduleInfo.Type;
             }
 
+
+            
             /// <inheritdoc/>
             public TimeSpan? Interval { get; set; }
 
@@ -211,6 +215,9 @@ namespace SanteDB.DisconnectedClient.Services.Remote
 
             /// <inheritdoc/>
             public DayOfWeek[] Days { get; set; }
+
+            /// <inheritdoc/>
+            public JobScheduleType Type { get; set; }
 
             /// <inheritdoc/>
             public bool AppliesTo(DateTime checkTime, DateTime? lastExecutionTime)
