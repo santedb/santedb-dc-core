@@ -362,13 +362,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             return true;
         }
 
-        /// <summary>
-        /// Set job schedule for the BI repository
-        /// </summary>
-        public void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
-        {
-            // TODO: Send a schedule to the central server.
-        }
+      
 
         /// <summary>
         /// Get the specified job's schedule
@@ -380,7 +374,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
 
         /// <inheritdoc/>
-        IJobSchedule IJobManagerService.SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
+        public IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
         {
             if (AuthenticationContext.Current.Principal is IClaimsPrincipal)
             {
@@ -393,6 +387,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     {
                         new JobScheduleInfo()
                         {
+                            Type = JobScheduleType.Scheduled,
                             RepeatOn = daysOfWeek,
                             StartDate = scheduleTime
                         }
@@ -427,6 +422,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     {
                         new JobScheduleInfo()
                         {
+                            Type = JobScheduleType.Interval,
                             Interval = intervalSpan,
                             IntervalXmlSpecified = true
                         }
