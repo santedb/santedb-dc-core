@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
+using SanteDB.DisconnectedClient.Configuration;
 using SanteDB.DisconnectedClient.Synchronization;
 using System;
 using System.Collections.Generic;
@@ -111,6 +112,11 @@ namespace SanteDB.DisconnectedClient.Services
         bool Fetch(Type modelType);
 
         /// <summary>
+        /// Perform a pull with the specified trigger
+        /// </summary>
+        void Pull(SynchronizationPullTriggerType trigger);
+
+        /// <summary>
         /// Pull data from the remove server and place it on the inbound queue
         /// </summary>
         int Pull(Type modelType);
@@ -119,7 +125,6 @@ namespace SanteDB.DisconnectedClient.Services
         /// Pull data from the remove server and place it on the inbound queue
         /// </summary>
         int Pull(Type modelType, NameValueCollection filter);
-
 
         /// <summary>
         /// Pull data from the remove server and place it on the inbound queue

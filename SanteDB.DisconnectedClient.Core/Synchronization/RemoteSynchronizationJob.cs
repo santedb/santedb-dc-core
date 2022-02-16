@@ -22,6 +22,7 @@ using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
 using SanteDB.DisconnectedClient.Configuration;
+using SanteDB.DisconnectedClient.Services;
 using System;
 using System.Collections.Generic;
 
@@ -41,7 +42,17 @@ namespace SanteDB.DisconnectedClient.Synchronization
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RemoteSynchronizationJob));
+        private readonly ISynchronizationService m_synchronizationService;
+        private readonly IJobStateManagerService m_stateManager;
 
+        /// <summary>
+        /// DI constructor for job
+        /// </summary>
+        public RemoteSynchronizationJob(ISynchronizationService synchronizationService, IJobStateManagerService stateManager)
+        {
+            this.m_synchronizationService = synchronizationService;
+            this.m_stateManager = stateManager;
+        }
         /// <summary>
         /// Get the name
         /// </summary>
@@ -56,24 +67,9 @@ namespace SanteDB.DisconnectedClient.Synchronization
         public bool CanCancel => false;
 
         /// <summary>
-        /// Gets the current state
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets the parameter types
         /// </summary>
         public IDictionary<string, Type> Parameters => null;
-
-        /// <summary>
-        /// Time last started
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Last time finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
 
         /// <summary>
         /// Cancel the specified job
@@ -89,19 +85,15 @@ namespace SanteDB.DisconnectedClient.Synchronization
         {
             try
             {
-                this.LastStarted = DateTime.Now;
-                this.CurrentState = JobStateType.Running;
-                ApplicationServiceContext.Current.GetService<RemoteSynchronizationService>().Pull(SynchronizationPullTriggerType.PeriodicPoll);
-                this.CurrentState = JobStateType.Completed;
+                this.m_stateManager.SetState(this, JobStateType.Running);
+                this.m_synchronizationService.Pull(SynchronizationPullTriggerType.PeriodicPoll);
+                this.m_stateManager.SetState(this, JobStateType.Completed);
+
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error running sync job {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
-            }
-            finally
-            {
-                this.LastFinished = DateTime.Now;
+                this.m_stateManager.SetState(this, JobStateType.Aborted);
             }
         }
     }
