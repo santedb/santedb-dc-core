@@ -297,7 +297,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
 
         /// <summary>
-        /// Get user from identitiy
+        /// Get user from identity
         /// </summary>
         public SecurityUser GetUser(IIdentity identity)
         {

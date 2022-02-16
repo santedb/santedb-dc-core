@@ -54,6 +54,7 @@ using SanteDB.DisconnectedClient.i18n;
 using SanteDB.DisconnectedClient.Interop;
 using SanteDB.DisconnectedClient.Interop.AMI;
 using SanteDB.DisconnectedClient.Interop.HDSI;
+using SanteDB.DisconnectedClient.Jobs;
 using SanteDB.DisconnectedClient.Mail;
 using SanteDB.DisconnectedClient.Security;
 using SanteDB.DisconnectedClient.Security.Audit;
@@ -702,14 +703,12 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalMailService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(HdsiIntegrationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(AmiIntegrationService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(MailSynchronizationService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(DefaultJobManagerService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalRepositoryFactoryService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalSecurityRepository), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(LocalTagPersistenceService), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(PersistenceEntitySource), true);
                         //ApplicationContext.Current.AddServiceProvider(typeof(LocalCarePlanManagerService), true);
-                        ApplicationContext.Current.AddServiceProvider(typeof(SystemPolicySynchronizationDaemon), true);
                         ApplicationContext.Current.AddServiceProvider(typeof(SynchronizedAuditDispatchService), true);
                         // BI Services
                         ApplicationContext.Current.AddServiceProvider(typeof(AppletBiRepository), true);
@@ -826,6 +825,35 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                             syncConfig.PollIntervalXml = configuration.Synchronization.PollIntervalXml;
                         ApplicationContext.Current.Configuration.AddSection(syncConfig);
 
+                        var jobConfigurationSection = ApplicationContext.Current.Configuration.GetSection<JobConfigurationSection>();
+                        if(jobConfigurationSection == null)
+                        {
+                            jobConfigurationSection = new JobConfigurationSection();
+                            ApplicationContext.Current.Configuration.AddSection(jobConfigurationSection);
+                        }
+                        jobConfigurationSection.Jobs.Add(new JobItemConfiguration()
+                        {
+                            Type = typeof(SystemPolicySynchronizationJob),
+                            Schedule = new List<JobItemSchedule>()
+                            {
+                                new JobItemSchedule()
+                                {
+                                    Interval = 300,
+                                    Type = JobScheduleType.Interval
+                                }
+                            }
+                        });
+                        jobConfigurationSection.Jobs.Add(new JobItemConfiguration()
+                        {
+                            Type = typeof(MailSynchronizationJob),
+                            Schedule = new List<JobItemSchedule>() {
+                                new JobItemSchedule() {
+                                    Interval = (int)syncConfig.PollInterval.TotalSeconds,
+                                    Type = JobScheduleType.Interval
+                                }
+                            }
+                        });
+                        
                         break;
                     }
             }

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-27
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using SanteDB.DisconnectedClient.Configuration.Data;
@@ -25,6 +26,7 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Search;
 using SanteDB.DisconnectedClient.SQLite.Search.Model;
 using System;
+using System.Collections.Generic;
 
 namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
 {
@@ -72,7 +74,24 @@ namespace SanteDB.DisconnectedClient.SQLite.Configuration.Data.Migrations
                 if (connStr == null)
                     return true;
                 else if (ApplicationContext.Current.GetService<IFreetextSearchService>() == null)
+                {
+
                     ApplicationContext.Current.AddServiceProvider(typeof(SQLiteSearchIndexService), true);
+
+                    // Add refresh job
+                    var jobConfigurationSection = ApplicationContext.Current.GetService<IConfigurationManager>().GetSection<JobConfigurationSection>();
+                    jobConfigurationSection.Jobs.Add(new JobItemConfiguration()
+                    {
+                        Type = typeof(SQLiteSearchIndexRefreshJob),
+                        Schedule = new List<JobItemSchedule>() {
+                                new JobItemSchedule()
+                                {
+                                    Interval = 3600,
+                                    Type = JobScheduleType.Interval
+                                }
+                            }
+                    });
+                }
 
                 // Get a connection to the search database
                 var conn = SQLiteConnectionManager.Current.GetReadWriteConnection(connStr);

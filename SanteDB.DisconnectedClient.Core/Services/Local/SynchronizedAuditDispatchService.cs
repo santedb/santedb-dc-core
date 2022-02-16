@@ -38,10 +38,11 @@ using System.Threading;
 namespace SanteDB.DisconnectedClient.Security.Audit
 {
     /// <summary>
-    /// Local auditing service
+    /// Dispatcher service which uses the administrative queue
     /// </summary>
-    /// TODO: Split the job off
-    public class SynchronizedAuditDispatchService : IAuditDispatchService, IDaemonService, IJob
+    /// <remarks>This service exists to reduce load on the database - whenever a process audits to the dispatcher this 
+    /// class will collect all audits in memory and (on a schedule) will dump them into the admin queue</remarks>
+    public class SynchronizedAuditDispatchService : IAuditDispatchService, IJob, IDisposable
     {
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         /// <summary>
         /// Get the service name
         /// </summary>
-        public String ServiceName => "Local Audit Dispatch Service";
+        public String ServiceName => "Audit Dispatch Service";
 
         /// <summary>
         /// Dummy identiifed wrapper
@@ -71,8 +72,6 @@ namespace SanteDB.DisconnectedClient.Security.Audit
             }
         }
 
-        private bool m_safeToStop = false;
-
         // Tracer class
         private Tracer m_tracer = Tracer.GetTracer(typeof(SynchronizedAuditDispatchService));
 
@@ -82,17 +81,38 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         // Reset event
         private AutoResetEvent m_resetEvent = new AutoResetEvent(false);
 
-        private SecurityConfigurationSection m_securityConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+        // Security configuration
+        private readonly SecurityConfigurationSection m_securityConfiguration;
+        private readonly IJobStateManagerService m_jobStateManager;
+        private readonly IQueueManagerService m_queueManagerService;
 
         /// <summary>
-        ///  True if the service is running
+        /// Synchronized dispatch service
         /// </summary>
-        public bool IsRunning
+        public SynchronizedAuditDispatchService(IConfigurationManager configurationManager, IJobStateManagerService jobStateManager, IJobManagerService scheduleManager, IThreadPoolService threadPool, IQueueManagerService queueManagerService)
         {
-            get
+            this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_jobStateManager = jobStateManager;
+            this.m_queueManagerService = queueManagerService;
+
+            if(!scheduleManager.GetJobSchedules(this).Any())
             {
-                return true;
+                scheduleManager.SetJobSchedule(this, new TimeSpan(0, 5, 0));
             }
+
+            threadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
+                    AuditUtil.AddLocalDeviceActor(securityAlertData);
+                    AuditUtil.SendAudit(securityAlertData);
+                }
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceError("Error starting up audit repository service: {0}", ex);
+                }
+            });
         }
 
         /// <summary>
@@ -109,29 +129,9 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         public bool CanCancel => false;
 
         /// <summary>
-        /// Current state
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets type of parmaeters
         /// </summary>
         public IDictionary<string, Type> Parameters => null;
-
-        /// <summary>
-        /// Last time started
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Last time finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
-
-        public event EventHandler Started;
-        public event EventHandler Starting;
-        public event EventHandler Stopped;
-        public event EventHandler Stopping;
 
         // Duplicate guard
         private Dictionary<Guid, DateTime> m_duplicateGuard = new Dictionary<Guid, DateTime>();
@@ -163,73 +163,13 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         }
 
         /// <summary>
-        /// Start auditor service
-        /// </summary>
-        public bool Start()
-        {
-            this.Starting?.Invoke(this, EventArgs.Empty);
-
-            this.m_safeToStop = false;
-            ApplicationContext.Current.Started += (o, e) =>
-            {
-                try
-                {
-                    this.m_tracer.TraceInfo("Binding to service events...");
-
-                    AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
-                    AuditUtil.SendAudit(securityAlertData);
-                }
-                catch (Exception ex)
-                {
-                    this.m_tracer.TraceError("Error starting up audit repository service: {0}", ex);
-                }
-            };
-            ApplicationServiceContext.Current.Stopping += (o, e) => this.m_safeToStop = true;
-
-            // Queue user work item for sending
-            var jms = ApplicationContext.Current.GetService<IJobManagerService>();
-            jms.AddJob(this, JobStartType.TimerOnly);
-            jms.SetJobSchedule(this, new TimeSpan(0, 5, 0));
-
-            this.Started?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
-
-        /// <summary>
-        /// Stopped 
-        /// </summary>
-        public bool Stop()
-        {
-            this.Stopping?.Invoke(this, EventArgs.Empty);
-
-            // Audit tool should never stop!!!!!
-            if (!this.m_safeToStop)
-            {
-                AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
-                AuditUtil.AddLocalDeviceActor(securityAlertData);
-                AuditUtil.SendAudit(securityAlertData);
-            }
-            else
-            {
-                AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
-                AuditUtil.AddLocalDeviceActor(securityAlertData);
-                AuditUtil.SendAudit(securityAlertData);
-            }
-
-
-            this.Stopped?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
-
-        /// <summary>
         /// Run the IJob on a delay
         /// </summary>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
             try
             {
-                this.CurrentState = JobStateType.Running;
-                this.LastStarted = DateTime.Now;
+                this.m_jobStateManager.SetState(this, JobStateType.Running);
 
                 AuditSubmission submission = new AuditSubmission(); // To reduce size only submit 2 at a time
                 while (this.m_auditQueue.TryDequeue(out AuditData data))
@@ -241,15 +181,13 @@ namespace SanteDB.DisconnectedClient.Security.Audit
                         submission = new AuditSubmission();
                     }
                 }
+
+                this.m_jobStateManager.SetState(this, JobStateType.Completed);
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error running audit dispatch: {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
-            }
-            finally
-            {
-                this.LastFinished = DateTime.Now;
+                this.m_jobStateManager.SetState(this, JobStateType.Aborted);
             }
 
 
@@ -260,6 +198,17 @@ namespace SanteDB.DisconnectedClient.Security.Audit
         /// </summary>
         public void Cancel()
         {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Dispose of the job
+        /// </summary>
+        public void Dispose()
+        {
+            AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
+            AuditUtil.AddLocalDeviceActor(securityAlertData);
+            AuditUtil.SendAudit(securityAlertData);
         }
     }
 }

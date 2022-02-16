@@ -61,23 +61,26 @@ namespace SanteDB.DisconnectedClient.Jobs
         private Tracer m_tracer = Tracer.GetTracer(typeof(MailSynchronizationJob));
 
         // Configuration
-        private SynchronizationConfigurationSection m_configuration;
+        private readonly SynchronizationConfigurationSection m_configuration;
 
         // Security configuration
-        private SecurityConfigurationSection m_securityConfiguration;
+        private readonly SecurityConfigurationSection m_securityConfiguration;
 
         // Alert repository
-        private IMailMessageRepositoryService m_mailRepository;
+        private readonly IMailMessageRepositoryService m_mailRepository;
+        private readonly IJobStateManagerService m_jobStateManager;
+        private readonly ISynchronizationLogService m_synchronizationLogService;
 
         /// <summary>
         /// Creates a new job
         /// </summary>
-        public MailSynchronizationJob()
+        public MailSynchronizationJob(IConfigurationManager configurationManager, IMailMessageRepositoryService mailRepositoryService, IJobStateManagerService jobStateManagerService, ISynchronizationLogService synchronizationLogService)
         {
-            this.m_configuration = ApplicationContext.Current.Configuration.GetSection<SynchronizationConfigurationSection>();
-            this.m_securityConfiguration = ApplicationContext.Current.Configuration.GetSection<SecurityConfigurationSection>();
-            this.m_mailRepository = ApplicationContext.Current.GetService<IMailMessageRepositoryService>();
-
+            this.m_configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
+            this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_mailRepository = mailRepositoryService;
+            this.m_jobStateManager = jobStateManagerService;
+            this.m_synchronizationLogService = synchronizationLogService;
         }
 
         /// <summary>
@@ -94,55 +97,9 @@ namespace SanteDB.DisconnectedClient.Jobs
         public bool CanCancel => false;
 
         /// <summary>
-        /// Current state of the job
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Parameters for the job
         /// </summary>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>();
-
-        /// <summary>
-        /// Last time the job was started
-        /// </summary>
-        public DateTime? LastStarted
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// Last time the job was finished
-        /// </summary>
-        public DateTime? LastFinished
-        {
-            get
-            {
-                try
-                {
-                    var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
-                    return logSvc.GetLastTime(typeof(MailMessage));
-                }
-                catch (Exception e)
-                {
-                    this.m_tracer.TraceError("Error getting last finished date: {0}", e);
-                    return null;
-                }
-            }
-            set
-            {
-                try
-                {
-                    var logSvc = ApplicationContext.Current.GetService<ISynchronizationLogService>();
-                    logSvc.Save(typeof(MailMessage), null, null, "mail", value.Value);
-                }
-                catch (Exception e)
-                {
-                    this.m_tracer.TraceError("Error getting last finished date: {0}", e);
-                }
-            }
-        }
 
         /// <summary>
         /// Gets current credentials
@@ -169,9 +126,7 @@ namespace SanteDB.DisconnectedClient.Jobs
         {
             try
             {
-
-                this.LastStarted = DateTime.Now;
-                this.CurrentState = JobStateType.Running;
+                this.m_jobStateManager.SetState(this, JobStateType.Running);
 
                 // We are to poll for alerts always (never push supported)
                 var amiClient = new AmiServiceClient(ApplicationContext.Current.GetRestClient("ami"));
@@ -180,7 +135,8 @@ namespace SanteDB.DisconnectedClient.Jobs
                     amiClient.Client.Credentials = credentials;
 
                     // When was the last time we polled an alert?
-                    var syncTime = this.LastFinished.HasValue ? new DateTimeOffset(this.LastFinished.Value) : new DateTimeOffset(new DateTime(1900, 01, 01));
+                    var lastSync = this.m_synchronizationLogService.GetLastTime(typeof(MailMessage));
+                    var syncTime = new DateTimeOffset(lastSync.GetValueOrDefault());
                     // Poll action for all alerts to "everyone"
                     AmiCollection serverAlerts = amiClient.GetMailMessages(a => a.CreationTime >= syncTime && a.RcptTo.Any(o => o.UserName == "SYSTEM")); // SYSTEM WIDE ALERTS
 
@@ -217,6 +173,8 @@ namespace SanteDB.DisconnectedClient.Jobs
                         this.m_mailRepository.Broadcast(itm);
                     }
 
+                    this.m_synchronizationLogService.Save(typeof(MailMessage), String.Empty, String.Empty, "Mail", DateTime.Now);
+
                     // Push alerts which I have created or updated
                     //int tc = 0;
                     //foreach(var itm in this.m_alertRepository.Find(a=> (a.TimeStamp >= lastTime ) && a.Flags != AlertMessageFlags.System, 0, null, out tc))
@@ -230,15 +188,14 @@ namespace SanteDB.DisconnectedClient.Jobs
                     //            amiClient.CreateAlert(new AlertMessageInfo(itm));
                     //    }
                     //}
-
-                    this.LastFinished = DateTime.Now;
-                    this.CurrentState = JobStateType.Completed;
+                    this.m_jobStateManager.SetState(this, JobStateType.Completed);
                 }
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Could not pull alerts: {0}", ex.Message);
-                this.CurrentState = JobStateType.Cancelled;
+                this.m_jobStateManager.SetState(this, JobStateType.Aborted);
+                this.m_jobStateManager.SetProgress(this, ex.Message, 0.0f);
             }
 
         }

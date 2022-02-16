@@ -43,12 +43,15 @@ namespace SanteDB.DisconnectedClient.Backup
         /// </summary>
         public Guid Id => Guid.Parse("17987F37-451B-4099-B66C-F53F3186547A");
 
+        // Job state
+        private readonly IJobStateManagerService m_jobStateManager;
+
         /// <summary>
         /// Job is starting
         /// </summary>
-        public DefaultBackupJob()
+        public DefaultBackupJob(IJobStateManagerService jobStateManagerService)
         {
-            this.CurrentState = JobStateType.NotRun;
+            this.m_jobStateManager = jobStateManagerService;
         }
 
         /// <summary>
@@ -70,24 +73,9 @@ namespace SanteDB.DisconnectedClient.Backup
         public bool CanCancel => false;
 
         /// <summary>
-        /// Gets the current state of the job
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets the parameters
         /// </summary>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>();
-
-        /// <summary>
-        /// Last time the backup was started
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Last time the backup finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
 
         /// <summary>
         /// Cancel the job
@@ -107,8 +95,7 @@ namespace SanteDB.DisconnectedClient.Backup
                 try
                 {
                     ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Toast | Tickler.TickleType.Task, Strings.locale_backupStarted));
-                    this.LastStarted = DateTime.Now;
-                    this.CurrentState = JobStateType.Running;
+                    this.m_jobStateManager.SetState(this, JobStateType.Running);
 
                     var backupService = ApplicationServiceContext.Current.GetService<IBackupService>();
                     var maxBackups = Int32.Parse(ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetAppSetting("autoBackup.max") ?? "5");
@@ -123,8 +110,8 @@ namespace SanteDB.DisconnectedClient.Backup
                         backupService.RemoveBackup(BackupMedia.Private, descriptor);
                     }
 
-                    this.CurrentState = JobStateType.Completed;
-                    this.LastFinished = DateTime.Now;
+                    this.m_jobStateManager.SetState(this, JobStateType.Completed);
+
 
                     ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Toast | Tickler.TickleType.Task, Strings.locale_backupCompleted));
 
@@ -132,7 +119,8 @@ namespace SanteDB.DisconnectedClient.Backup
                 catch (Exception ex)
                 {
                     this.m_tracer.TraceError("Error running backup job: {0}", ex);
-                    this.CurrentState = JobStateType.Aborted;
+                    this.m_jobStateManager.SetState(this, JobStateType.Aborted);
+                    this.m_jobStateManager.SetProgress(this, ex.Message, 0.0f);
                 }
             }
         }

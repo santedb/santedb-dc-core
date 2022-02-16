@@ -369,11 +369,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
                         }, e.Data);
                     }
 
-                    var jms = ApplicationContext.Current.GetService<IJobManagerService>();
-                    var job = new SQLiteSearchIndexRefreshJob();
-                    jms.AddJob(job);
-                    jms.SetJobSchedule(job, new TimeSpan(1, 0, 0));
-
+                   
                     this.Started?.Invoke(this, EventArgs.Empty);
                 }
                 catch (Exception e)

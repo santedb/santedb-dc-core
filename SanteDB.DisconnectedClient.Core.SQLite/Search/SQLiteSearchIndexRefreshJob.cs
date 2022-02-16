@@ -44,9 +44,21 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         public Guid Id => Guid.Parse("EBC6308D-8BAF-40E5-BC27-D471588A7EDC");
 
         // Tracer for SQLite tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteSearchIndexService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteSearchIndexRefreshJob));
+
         // Cancel has been requested
         private bool m_cancelRequested = false;
+        private readonly SQLiteSearchIndexService m_searchIndexService;
+        private readonly IJobStateManagerService m_jobStateManager;
+
+        /// <summary>
+        /// DI ctor
+        /// </summary>
+        public SQLiteSearchIndexRefreshJob(SQLiteSearchIndexService searchIndexService, IJobStateManagerService jobStateManager)
+        {
+            this.m_searchIndexService = searchIndexService;
+            this.m_jobStateManager = jobStateManager;
+        }
 
         /// <summary>
         /// Gets the name of the refresh job
@@ -62,11 +74,6 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         public bool CanCancel => true;
 
         /// <summary>
-        /// The current state of the job
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets the parameters that can be passed
         /// </summary>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
@@ -75,37 +82,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         };
 
         /// <summary>
-        /// Time that the service last started
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Gets the time the service last finished
-        /// </summary>
-        public DateTime? LastFinished
-        {
-            get
-            {
-                var lastRun = ApplicationContext.Current.ConfigurationManager.GetAppSetting("santedb.mobile.core.search.lastIndex");
-                if (lastRun == null)
-                    return null;
-                else
-                    return DateTime.Parse(lastRun);
-            }
-            set
-            {
-                if (this.CurrentState == JobStateType.Completed)
-                    ApplicationContext.Current.ConfigurationManager.SetAppSetting("santedb.mobile.core.search.lastIndex", value.ToString());
-            }
-        }
-
-        /// <summary>
         /// Cancel the running of this job
         /// </summary>
         public void Cancel()
         {
             this.m_tracer.TraceInfo("Cancel re-index has been requested");
             this.m_cancelRequested = true;
+            this.m_jobStateManager.SetProgress(this, "Cancel Requested", 0.0f);
         }
 
         /// <summary>
@@ -114,24 +97,19 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
         public void Run(object sender, EventArgs args, object[] parameters)
         {
 
-            if (this.CurrentState == JobStateType.Running)
-            {
-                this.m_tracer.TraceWarning("Ignoring start index request: Already indexing");
-                return;
-            }
-
-            this.LastStarted = DateTime.Now;
-            this.CurrentState = JobStateType.Running;
             this.m_tracer.TraceInfo("Starting complete full-text indexing of the primary datastore");
             try
             {
+
+                var jobState = this.m_jobStateManager.GetJobState(this);
+
                 // Load all entities in database and index them
-                int tr = 101, ofs = 0;
+                int tr = 1, ofs = 0;
                 var patientService = ApplicationServiceContext.Current.GetService<IStoredQueryDataPersistenceService<Patient>>();
                 Guid queryId = Guid.NewGuid();
-                var since = parameters?.FirstOrDefault() as DateTime? ?? this.LastFinished ?? new DateTime(1970, 01, 01);
+                var since = parameters?.FirstOrDefault() as DateTime? ?? jobState.LastStopTime ?? new DateTime(1970, 01, 01);
 
-                while (tr > ofs + 50 && !this.m_cancelRequested)
+                while (ofs < tr && !this.m_cancelRequested)
                 {
 
                     if (patientService == null) break;
@@ -139,28 +117,28 @@ namespace SanteDB.DisconnectedClient.SQLite.Search
 
                     // Index 
                     this.m_tracer.TraceInfo("Index Job: Will index {0}..{1} of {2} objects", ofs, ofs + 50, tr);
-                    ApplicationServiceContext.Current.GetService<SQLiteSearchIndexService>().IndexEntity(entities.ToArray());
+                    this.m_searchIndexService.IndexEntity(entities.ToArray());
 
                     // Let user know the status
                     ofs += 50;
-                    ApplicationContext.Current.SetProgress(Strings.locale_indexing, (float)ofs / tr);
+
+                    this.m_jobStateManager.SetProgress(this, Strings.locale_indexing, (float)ofs / tr);
                 }
 
                 if (this.m_cancelRequested)
-                    this.CurrentState = JobStateType.Cancelled;
+                    this.m_jobStateManager.SetState(this, JobStateType.Cancelled);
                 else
-                    this.CurrentState = JobStateType.Completed;
+                    this.m_jobStateManager.SetState(this, JobStateType.Completed);
 
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error indexing primary database: {0}", e);
-                this.CurrentState = JobStateType.Aborted;
+                this.m_jobStateManager.SetState(this, JobStateType.Aborted);
                 throw;
             }
             finally
             {
-                this.LastFinished = DateTime.Now;
                 this.m_cancelRequested = false;
             }
 

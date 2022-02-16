@@ -43,7 +43,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         /// <summary>
         /// Represents a remote job
         /// </summary>
-        private class RemoteJob : IJob, IAmiIdentified, IReportProgressJob
+        private class RemoteJob : IJob, IAmiIdentified, IJobState
         {
             /// <summary>
             /// Creates a new remote job from an AMI job info class
@@ -57,14 +57,19 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                 this.Description = job.Description;
                 this.CanCancel = job.CanCancel;
                 this.CurrentState = job.State;
-                this.LastFinished = job.LastFinish;
-                this.LastStarted = job.LastStart;
+                this.LastStartTime = job.LastFinish;
+                this.LastStopTime = job.LastStart;
                 this.Parameters = job.Parameters?.ToDictionary(o => o.Key, o => Type.GetType($"System.{o.Type}"));
                 this.JobType = Type.GetType(job.JobType);
                 this.StatusText = job.StatusText;
                 this.Progress = job.Progress;
                 this.Schedule = job.Schedule.Select(o => new RemoteJobSchedule(o));
             }
+
+            /// <summary>
+            /// Gets the job of the job state
+            /// </summary>
+            public IJob Job => this;
 
             /// <summary>
             /// Get the identifier of this job
@@ -97,12 +102,12 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             /// <summary>
             /// Gets the time the job was last started
             /// </summary>
-            public DateTime? LastStarted { get; }
+            public DateTime? LastStartTime { get; }
 
             /// <summary>
             /// Gets the time that the job was last finished
             /// </summary>
-            public DateTime? LastFinished { get; }
+            public DateTime? LastStopTime { get; }
 
             /// <summary>
             /// Gets the remote id of the job
@@ -362,13 +367,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             return true;
         }
 
-        /// <summary>
-        /// Set job schedule for the BI repository
-        /// </summary>
-        public void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
-        {
-            // TODO: Send a schedule to the central server.
-        }
+      
 
         /// <summary>
         /// Get the specified job's schedule
@@ -380,7 +379,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
         }
 
         /// <inheritdoc/>
-        IJobSchedule IJobManagerService.SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
+        public IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
         {
             if (AuthenticationContext.Current.Principal is IClaimsPrincipal)
             {
@@ -393,6 +392,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     {
                         new JobScheduleInfo()
                         {
+                            Type = JobScheduleType.Scheduled,
                             RepeatOn = daysOfWeek,
                             StartDate = scheduleTime
                         }
@@ -427,6 +427,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
                     {
                         new JobScheduleInfo()
                         {
+                            Type = JobScheduleType.Interval,
                             Interval = intervalSpan,
                             IntervalXmlSpecified = true
                         }

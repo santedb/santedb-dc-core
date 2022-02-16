@@ -434,7 +434,7 @@ namespace SanteDB.DisconnectedClient.Backup
 
             var delayStartType = ApplicationServiceContext.Current.GetService<IOperatingSystemInfoService>().OperatingSystem == OperatingSystemID.Android ? JobStartType.Never : JobStartType.DelayStart;
             var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
-            var job = new DefaultBackupJob();
+            var job = new DefaultBackupJob(ApplicationServiceContext.Current.GetService<IJobStateManagerService>());
             jms?.AddJob(job, delayStartType);
             jms?.SetJobSchedule(job, new DayOfWeek[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday }, DateTime.MinValue);// Weekdays at midnight
             this.Started?.Invoke(this, EventArgs.Empty);
