@@ -28,6 +28,7 @@ using SanteDB.DisconnectedClient.SQLite.Connection;
 using SanteDB.DisconnectedClient.SQLite.Mail;
 using SanteDB.DisconnectedClient.SQLite.Mdm;
 using SanteDB.DisconnectedClient.SQLite.Security;
+using SanteDB.DisconnectedClient.SQLite.Security.Audit;
 using SanteDB.DisconnectedClient.SQLite.Synchronization;
 using SanteDB.DisconnectedClient.SQLite.Warehouse;
 using System;
@@ -155,6 +156,21 @@ namespace SanteDB.DisconnectedClient.SQLite
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteDeviceIdentityProviderService)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(MdmDataManager)));
             configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SQLiteSecurityChallengeService)));
+
+            // Add the audit pruning job
+            configuration.GetSection<JobConfigurationSection>().Jobs.Add(new JobItemConfiguration()
+            {
+                Type = typeof(SQLiteAuditPruneJob),
+                Schedule = new List<JobItemSchedule>()
+                {
+                    new JobItemSchedule()
+                    {
+                        Interval = 3600,
+                        Type = JobScheduleType.Interval
+                    }
+                }
+            });
+
             // SQLite provider
 #if NOCRYPT
 			appSection.ServiceTypes.Add(typeof(SQLite.Net.Platform.Generic.SQLitePlatformGeneric).AssemblyQualifiedName);

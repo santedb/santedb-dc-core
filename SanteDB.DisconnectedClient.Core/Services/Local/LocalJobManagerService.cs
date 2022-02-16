@@ -33,7 +33,7 @@ namespace SanteDB.DisconnectedClient.Services.Local
         /// <summary>
         /// Creates a new local job manager
         /// </summary>
-        public LocalJobManagerService(IThreadPoolService threadPool) : base(threadPool)
+        public LocalJobManagerService(IThreadPoolService threadPool, IServiceManager serviceManager, IJobStateManagerService jobStateManager = null, IJobScheduleManager cronTabManager = null) : base(threadPool, serviceManager, jobStateManager, cronTabManager)
         {
         }
     }

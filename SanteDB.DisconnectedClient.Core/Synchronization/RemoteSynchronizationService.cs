@@ -158,7 +158,8 @@ namespace SanteDB.DisconnectedClient.Synchronization
                         this.m_configuration.PollInterval != default(TimeSpan))
                     {
                         var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
-                        var job = new RemoteSynchronizationJob();
+                        var jsms = ApplicationServiceContext.Current.GetService<IJobStateManagerService>();
+                        var job = new RemoteSynchronizationJob(this, jsms);
                         jms.AddJob(job, JobStartType.DelayStart);
                         jms.SetJobSchedule(job, this.m_configuration.PollInterval);
                     }

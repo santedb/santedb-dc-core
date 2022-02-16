@@ -46,6 +46,17 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
 
         // Trace writer for the job
         private Tracer m_tracer = Tracer.GetTracer(typeof(SQLiteAuditPruneJob));
+        private readonly IJobStateManagerService m_jobStateManager;
+        private readonly ITickleService m_tickleService;
+
+        /// <summary>
+        /// DI constructor
+        /// </summary>
+        public SQLiteAuditPruneJob(IJobStateManagerService jobStateManager, ITickleService tickleService)
+        {
+            this.m_jobStateManager = jobStateManager;
+            this.m_tickleService = tickleService;
+        }
 
         /// <summary>
         /// Gets the name of the job
@@ -61,24 +72,9 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
         public bool CanCancel => false;
 
         /// <summary>
-        /// Gets the current state
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Parameters
         /// </summary>
         public IDictionary<string, Type> Parameters => null;
-
-        /// <summary>
-        /// When the job was last run
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// When the job was last finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
 
         /// <summary>
         /// Cancel the job
@@ -97,9 +93,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
 
             try
             {
-                this.CurrentState = JobStateType.Running;
-                this.LastStarted = DateTime.Now;
-
+                this.m_jobStateManager.SetState(this, JobStateType.Running);
                 this.m_tracer.TraceInfo("Prune audits older than {0}", config?.AuditRetention);
                 if (config?.AuditRetention == null) return; // keep audits forever
 
@@ -122,13 +116,13 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
                             ")");
 
                         conn.Commit();
-                        this.LastFinished = DateTime.Now;
-                        this.CurrentState = JobStateType.Completed;
+                        this.m_jobStateManager.SetState(this, JobStateType.Completed);
+
                     }
                     catch (Exception ex)
                     {
-                        ApplicationServiceContext.Current.GetService<ITickleService>().SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.err_prune_audit_failed, ex.Message)));
-                        this.CurrentState = JobStateType.Cancelled;
+                        this.m_tickleService.SendTickle(new Tickler.Tickle(Guid.Empty, Tickler.TickleType.Danger, String.Format(Strings.err_prune_audit_failed, ex.Message)));
+                        this.m_jobStateManager.SetState(this, JobStateType.Aborted);
                         conn.Rollback();
                     }
                 }
@@ -137,7 +131,7 @@ namespace SanteDB.DisconnectedClient.SQLite.Security.Audit
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error pruning audit database: {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
+                this.m_jobStateManager.SetState(this, JobStateType.Aborted);
             }
         }
     }
