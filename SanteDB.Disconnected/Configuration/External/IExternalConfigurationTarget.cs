@@ -21,7 +21,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SanteDB.DisconnectedClient.Services
+namespace SanteDB.Disconnected.Configuration.External
 {
     /// <summary>
     /// Configuration target which can receive a pushed configuration

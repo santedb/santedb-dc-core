@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Services;
+﻿using SanteDB.Core.Model.Subscription;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -36,7 +37,7 @@ namespace SanteDB.Disconnected.Data.Synchronization
         /// <summary>
         /// Perform a pull with the specified trigger
         /// </summary>
-        void Pull(SynchronizationTriggerEventType trigger);
+        void Pull(SubscriptionTriggerType trigger);
 
         /// <summary>
         /// Pull data from the remove server and place it on the inbound queue
@@ -53,6 +54,9 @@ namespace SanteDB.Disconnected.Data.Synchronization
         /// </summary>
         int Pull(Type modelType, NameValueCollection filter, bool always);
 
-
+        /// <summary>
+        /// Push data to the server
+        /// </summary>
+        void Push();
     }
 }

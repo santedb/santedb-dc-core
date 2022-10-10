@@ -7,7 +7,7 @@ namespace SanteDB.Disconnected.Data.Synchronization
     /// <summary>
     /// Synchronization operation type.
     /// </summary>
-    public enum SynchronizationTriggerEventType
+    public enum SynchronizationQueueEntryOperation
     {
         /// <summary>
         /// The operation represents an inbound entry (sync)

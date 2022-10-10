@@ -39,7 +39,7 @@ namespace SanteDB.Disconnected.Data.Synchronization
         /// <summary>
         /// Gets the operation of the object
         /// </summary>
-        SynchronizationTriggerEventType Operation { get; set; }
+        SynchronizationQueueEntryOperation Operation { get; set; }
 
         /// <summary>
         /// Get whether the object is a retry

@@ -27,7 +27,7 @@ namespace SanteDB.Disconnected.Configuration.External
     /// <summary>
     /// An interface which can push and/or configure the DCG configuration with a third party
     /// </summary>
-    public interface IConfigurationPushService
+    public interface IExternalConfigurator
     {
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace SanteDB.Disconnected.Configuration.External
         /// <summary>
         /// Gets the specified remote software package 
         /// </summary>
-        IConfigurationTarget GetTarget(Uri targetUri);
+        IExternalConfigurationTarget GetTarget(Uri targetUri);
 
         // TODO: Add more methods to this which will be more useful for future configuration solutions
     }

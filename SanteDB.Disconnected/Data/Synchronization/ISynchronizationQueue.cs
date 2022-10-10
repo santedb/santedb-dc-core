@@ -44,7 +44,7 @@ namespace SanteDB.Disconnected.Data.Synchronization
         /// </summary>
         /// <param name="data">The data to enqueue</param>
         /// <param name="operation">The sync operation </param>
-        ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationTriggerEventType operation);
+        ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation);
 
         /// <summary>
         /// Peek the next item on the queue
