@@ -41,13 +41,6 @@
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Services\RisiServiceBehavior.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Resources\icon.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -217,12 +210,6 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\antihaxor" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\GenericError.html" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>
@@ -230,9 +217,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\icon.ico" />
   </ItemGroup>
   <!-- <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" /> -->
 </Project>

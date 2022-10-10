@@ -18,30 +18,28 @@
  * User: fyfej
  * Date: 2021-8-27
  */
-using RestSrvr.Attributes;
-using System.IO;
+using System;
+using System.Collections.Generic;
 
-namespace SanteDB.DisconnectedClient.Ags.Contracts
+namespace SanteDB.Disconnected.Configuration.External
 {
+
     /// <summary>
-    /// Represents a WWW service contract
+    /// An interface which can push and/or configure the DCG configuration with a third party
     /// </summary>
-    [ServiceContract(Name = "WWW")]
-    public interface IWwwServiceContract
+    public interface IConfigurationPushService
     {
 
         /// <summary>
-        /// Get the icon
+        /// Configure the specified target device with the specified username and software
         /// </summary>
-        /// <returns></returns>
-        [Get("/favicon.ico")]
-        Stream GetIcon();
+        List<Uri> Configure(Uri targetUri, string userName, string password, IDictionary<string, object> configuration);
 
         /// <summary>
-        /// Get specified object
+        /// Gets the specified remote software package 
         /// </summary>
-        [Get("*")]
-        Stream Get();
+        IConfigurationTarget GetTarget(Uri targetUri);
 
+        // TODO: Add more methods to this which will be more useful for future configuration solutions
     }
 }

@@ -18,31 +18,26 @@
  * User: fyfej
  * Date: 2021-8-27
  */
-using RestSrvr;
-using SanteDB.DisconnectedClient.Ags.Formatter;
+using System;
+using System.Collections.Generic;
 
-namespace SanteDB.DisconnectedClient.Ags.Behaviors
+namespace SanteDB.DisconnectedClient.Services
 {
     /// <summary>
-    /// Serialization for the endpoint
+    /// Configuration target which can receive a pushed configuration
     /// </summary>
-    public class AgsSerializationEndpointBehavior : IEndpointBehavior, IOperationBehavior
+    public interface IExternalConfigurationTarget
     {
-        /// <summary>
-        /// Apply the behavior
-        /// </summary>
-        public void ApplyEndpointBehavior(ServiceEndpoint endpoint, EndpointDispatcher dispatcher)
-        {
-            foreach (var op in endpoint.Description.Contract.Operations)
-                op.AddOperationBehavior(this);
-        }
 
         /// <summary>
-        /// Apply operation behavior
+        /// Gets the invariant for this software (openmrs, dhis2, etc.)
         /// </summary>
-        public void ApplyOperationBehavior(EndpointOperation operation, OperationDispatcher dispatcher)
-        {
-            dispatcher.DispatchFormatter = AgsMessageDispatchFormatter.CreateFormatter(operation.Description.Contract.Type);
-        }
+        string Invariant { get; }
+
+        /// <summary>
+        /// Push configuration to the remote target
+        /// </summary>
+        List<Uri> PushConfiguration(Uri target, String user, String password, IDictionary<String, Object> configuration);
+
     }
 }

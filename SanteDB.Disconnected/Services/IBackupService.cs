@@ -18,56 +18,56 @@
  * User: fyfej
  * Date: 2021-8-27
  */
-using Newtonsoft.Json;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Ags.Configuration
+namespace SanteDB.Disconnected.Services
 {
     /// <summary>
-    /// Represents an endpoint configuration
+    /// Gets or sets the backup media
     /// </summary>
-    [XmlType(nameof(AgsEndpointConfiguration), Namespace = "http://santedb.org/mobile/configuration")]
-    [JsonObject]
-    public class AgsEndpointConfiguration
+    public enum BackupMedia
+    {
+        ExternalPublic,
+        Public,
+        Private
+    }
+
+    /// <summary>
+    /// Represents a service that can back-up data to/from another location
+    /// </summary>
+    public interface IBackupService : IServiceImplementation
     {
 
         /// <summary>
-        /// AGS Endpoint CTOR
+        /// Backup media
         /// </summary>
-        public AgsEndpointConfiguration()
-        {
-            this.Behaviors = new List<AgsBehaviorConfiguration>();
-        }
+        void Backup(BackupMedia media, String password = null);
 
         /// <summary>
-        /// Gets or sets the contract type
+        /// Perform autorestore
         /// </summary>
-        [XmlAttribute("contract"), JsonProperty("contract")]
-        public String ContractXml { get; set; }
+        void AutoRestore();
 
         /// <summary>
-        /// Gets or sets the Contract type
+        /// Restore from media
         /// </summary>
-        [XmlIgnore, JsonIgnore]
-        public Type Contract
-        {
-            get => Type.GetType(this.ContractXml);
-            set => this.ContractXml = value.AssemblyQualifiedName;
-        }
+        void Restore(BackupMedia media, String backupDescriptor = null, String password = null);
 
         /// <summary>
-        /// Gets or sets the address
+        /// Has backup on the specified media
         /// </summary>
-        [XmlAttribute("address"), JsonProperty("address")]
-        public String Address { get; set; }
+        bool HasBackup(BackupMedia media);
 
         /// <summary>
-        /// Gets the bindings 
+        /// Gets the backup descriptors for the specified media
         /// </summary>
-        [XmlArray("behavior"), XmlArrayItem("add"), JsonProperty("behavior")]
-        public List<AgsBehaviorConfiguration> Behaviors { get; set; }
+        IEnumerable<String> GetBackups(BackupMedia media);
 
+        /// <summary>
+        /// Remove a backup
+        /// </summary>
+        void RemoveBackup(BackupMedia media, String backupDescriptor);
     }
 }

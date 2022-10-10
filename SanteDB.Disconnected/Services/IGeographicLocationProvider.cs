@@ -18,33 +18,22 @@
  * User: fyfej
  * Date: 2021-8-27
  */
-using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
-using System.Collections.Generic;
-using System.Xml.Serialization;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Services;
 
-namespace SanteDB.DisconnectedClient.Ags.Configuration
+namespace SanteDB.Disconnected.Services
 {
+
     /// <summary>
-    /// Represents the configuration for the AGS
+    /// Represents a geo-tagging service to get device and position
     /// </summary>
-    [XmlType(nameof(AgsConfigurationSection), Namespace = "http://santedb.org/mobile/configuration")]
-    [JsonObject]
-    public class AgsConfigurationSection : IConfigurationSection
+    public interface IGeographicLocationProvider : IServiceImplementation
     {
 
         /// <summary>
-        /// Construct the AGS configuration
+        /// Gets the current position
         /// </summary>
-        public AgsConfigurationSection()
-        {
-            this.Services = new List<AgsServiceConfiguration>();
-        }
+        GeoTag GetCurrentPosition();
 
-        /// <summary>
-        /// Gets or sets the service configuration
-        /// </summary>
-        [XmlElement("service"), JsonProperty("service")]
-        public List<AgsServiceConfiguration> Services { get; set; }
     }
 }
