@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Disconnected.UserInterface
+namespace SanteDB.Client.UserInterface
 {
     /// <summary>
     /// An interface that can provide low level dialogs for confirmations and messages

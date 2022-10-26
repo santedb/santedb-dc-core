@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SanteDB.Disconnected.Services
+namespace SanteDB.Client.Services
 {
     /// <summary>
     /// Provides the SanteDB application gateway which binds the JavaScript

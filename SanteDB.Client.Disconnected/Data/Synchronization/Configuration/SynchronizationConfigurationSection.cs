@@ -25,10 +25,10 @@ namespace SanteDB.Disconnected.Data.Synchronization.Configuration
         /// <summary>
         /// Resources which are forbidden from being sychronized
         /// </summary>
-        [XmlArray("forbidResources")]
+        [XmlArray("forbidSending")]
         [XmlArrayItem("add")]
-        [JsonProperty("forbiddenResources")]
-        public List<ResourceTypeReferenceConfiguration> ForbiddenResouces { get; set; }
+        [JsonProperty("forbidSending")]
+        public List<ResourceTypeReferenceConfiguration> ForbidSending { get; set; }
 
         /// <summary>
         /// Gets or sets the subscriptions which are active for this configuration

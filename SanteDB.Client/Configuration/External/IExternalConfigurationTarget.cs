@@ -21,25 +21,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace SanteDB.Disconnected.Configuration.External
+namespace SanteDB.Client.Configuration.External
 {
-
     /// <summary>
-    /// An interface which can push and/or configure the DCG configuration with a third party
+    /// Configuration target which can receive a pushed configuration
     /// </summary>
-    public interface IExternalConfigurator
+    public interface IExternalConfigurationTarget
     {
 
         /// <summary>
-        /// Configure the specified target device with the specified username and software
+        /// Gets the invariant for this software (openmrs, dhis2, etc.)
         /// </summary>
-        List<Uri> Configure(Uri targetUri, string userName, string password, IDictionary<string, object> configuration);
+        string Invariant { get; }
 
         /// <summary>
-        /// Gets the specified remote software package 
+        /// Push configuration to the remote target
         /// </summary>
-        IExternalConfigurationTarget GetTarget(Uri targetUri);
+        List<Uri> PushConfiguration(Uri target, String user, String password, IDictionary<String, Object> configuration);
 
-        // TODO: Add more methods to this which will be more useful for future configuration solutions
     }
 }

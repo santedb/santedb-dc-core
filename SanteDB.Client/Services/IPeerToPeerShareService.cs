@@ -23,7 +23,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
-namespace SanteDB.Disconnected.Services
+namespace SanteDB.Client.Services
 {
     /// <summary>
     /// Represents a peer to peer sharing service which allows the host to share data between one or more hosts via an appropriate protocol

@@ -4,12 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Disconnected
+namespace SanteDB.Client
 {
     /// <summary>
     /// Disconnected gateway application context
     /// </summary>
-    public class DisconnectedApplicationContext : SanteDBContextBase
+    public class ClientApplicationContext : SanteDBContextBase
     {
 
         private readonly string m_instanceName;
@@ -21,7 +21,7 @@ namespace SanteDB.Disconnected
         /// Creates a new disconnected application context with the specified configuration provider
         /// </summary>
         /// <param name="hostEnvironment">The type of host environment being represented</param>
-        protected DisconnectedApplicationContext(SanteDBHostType hostEnvironment, String instanceName, IConfigurationManager configurationManager) : base(hostEnvironment, configurationManager)
+        protected ClientApplicationContext(SanteDBHostType hostEnvironment, String instanceName, IConfigurationManager configurationManager) : base(hostEnvironment, configurationManager)
         {
             this.m_instanceName = instanceName;
         }

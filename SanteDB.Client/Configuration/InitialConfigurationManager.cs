@@ -1,16 +1,19 @@
-﻿using SanteDB.Core.Configuration;
+﻿using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace SanteDB.Disconnected.Configuration
+namespace SanteDB.Client.Configuration
 {
     /// <summary>
-    /// A configuration manager which uses a temporary configuration in memory
+    /// A configuration manager which uses a temporary configuration in memory 
+    /// via implementations of <see cref="IInitialConfigurationProvider"/>
     /// </summary>
-    public class TemporaryConfigurationManager : IConfigurationManager
+    public class InitialConfigurationManager : IConfigurationManager
     {
         private readonly SanteDBConfiguration m_configuration;
 
@@ -28,6 +31,32 @@ namespace SanteDB.Disconnected.Configuration
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Temporary Configuration Service";
+
+        /// <summary>
+        /// Initial configuration manager 
+        /// </summary>
+        public InitialConfigurationManager()
+        {
+            // Let the initial configuration providers do their magic
+            var configuration = new SanteDBConfiguration()
+            {
+                Sections = new List<object>()
+                {
+                    new ApplicationServiceContextConfigurationSection()
+                    {
+                        ThreadPoolSize = Environment.ProcessorCount,
+                        AllowUnsignedAssemblies = false,
+                        ServiceProviders = new List<TypeReferenceConfiguration>()
+                    }
+                }
+            };
+
+            foreach(var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(IInitialConfigurationProvider).IsAssignableFrom(t)).Select(t=>Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>())
+            {
+                configuration = initialProvider.Provide(configuration);
+            }
+            this.m_configuration = configuration;
+        }
 
         /// <inheritdoc/>
         public string GetAppSetting(string key)

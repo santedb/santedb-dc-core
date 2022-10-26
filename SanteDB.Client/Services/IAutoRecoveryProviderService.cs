@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Disconnected.Services
+namespace SanteDB.Client.Services
 {
     /// <summary>
     /// Represents a service that can provide auto-recovery services

@@ -21,7 +21,7 @@
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Services;
 
-namespace SanteDB.Disconnected.Services
+namespace SanteDB.Client.Services
 {
 
     /// <summary>
