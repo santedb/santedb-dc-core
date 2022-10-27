@@ -154,7 +154,7 @@ namespace SanteDB.Client.Upstream
                 {
                     case UpstreamCredentialConveyance.Secret:
                     case UpstreamCredentialConveyance.Header:
-                        devicePrincipal = this.m_deviceIdentityProvider.Authenticate(deviceCredentialSettings.CredentialName, deviceCredentialSettings.CredentialSecret);
+                        devicePrincipal = this.m_deviceIdentityProvider.Authenticate(deviceCredentialSettings.CredentialName, deviceCredentialSettings.CredentialSecret, AuthenticationMethod.Local);
                         break;
                     case UpstreamCredentialConveyance.ClientCertificate:
                         devicePrincipal = this.m_certificateIdentityProvider.Authenticate(deviceCredentialSettings.CertificateSecret.Certificate);
