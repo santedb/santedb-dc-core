@@ -1,5 +1,7 @@
 ﻿using SanteDB.Client.Configuration.Upstream;
+using SanteDB.Client.Exceptions;
 using SanteDB.Core.Http;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -8,6 +10,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
 using System.Text;
@@ -23,6 +26,9 @@ namespace SanteDB.Client.Upstream
         private readonly UpstreamConfigurationSection m_configuration;
         private readonly IDeviceIdentityProviderService m_deviceIdentityProvider;
         private readonly ICertificateIdentityProvider m_certificateIdentityProvider;
+        private readonly ILocalizationService m_localizationService;
+        private readonly IApplicationIdentityProviderService m_applicationIdentityProvider;
+        private readonly ConfiguredUpstreamRealmSettings m_upstreamSettings;
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Data Provider";
@@ -41,15 +47,21 @@ namespace SanteDB.Client.Upstream
         /// <param name="configurationManager">The configuration manager for fetching configuration</param>
         /// <param name="deviceIdentityProvider">Device identity provider for authenticating this device</param>
         /// <param name="certificateIdentityProvider">The certificate identity provider for authenticating this device with a certificate</param>
-        public DefaultUpstreamIntegrationService(IRestClientFactory restClientFactory, 
-            IConfigurationManager configurationManager, 
+        public DefaultUpstreamIntegrationService(IRestClientFactory restClientFactory,
+            IConfigurationManager configurationManager,
             IDeviceIdentityProviderService deviceIdentityProvider,
-            ICertificateIdentityProvider certificateIdentityProvider)
+            IApplicationIdentityProviderService applicationIdentityProvider,
+            ICertificateIdentityProvider certificateIdentityProvider,
+            ILocalizationService localizationService)
         {
             this.m_restClientFactory = restClientFactory;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
             this.m_deviceIdentityProvider = deviceIdentityProvider;
             this.m_certificateIdentityProvider = certificateIdentityProvider;
+            this.m_localizationService = localizationService;
+            this.m_applicationIdentityProvider = applicationIdentityProvider;
+
+            this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(this.m_configuration);
         }
 
         /// <inheritdoc/>
@@ -83,10 +95,7 @@ namespace SanteDB.Client.Upstream
         }
 
         /// <inheritdoc/>
-        public IUpstreamRealmSettings GetSettings()
-        {
-            throw new NotImplementedException();
-        }
+        public IUpstreamRealmSettings GetSettings() => this.m_upstreamSettings;
 
         /// <inheritdoc/>
         public TimeSpan GetTimeDrift()
@@ -130,9 +139,37 @@ namespace SanteDB.Client.Upstream
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Get a <see cref="IPrincipal"/> representing the authenticated device with the upstream
+        /// </summary>
         public IPrincipal AuthenticateAsDevice()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var deviceCredentialSettings = this.m_configuration.Credentials.Single(o => o.CredentialType == UpstreamCredentialType.Device);
+                var applicationCredentialSettings = this.m_configuration.Credentials.Single(o => o.CredentialType == UpstreamCredentialType.Application);
+
+                IPrincipal devicePrincipal = null;
+                switch (deviceCredentialSettings.Conveyance)
+                {
+                    case UpstreamCredentialConveyance.Secret:
+                    case UpstreamCredentialConveyance.Header:
+                        devicePrincipal = this.m_deviceIdentityProvider.Authenticate(deviceCredentialSettings.CredentialName, deviceCredentialSettings.CredentialSecret);
+                        break;
+                    case UpstreamCredentialConveyance.ClientCertificate:
+                        devicePrincipal = this.m_certificateIdentityProvider.Authenticate(deviceCredentialSettings.CertificateSecret.Certificate);
+                        break;
+                    default:
+                        throw new InvalidOperationException(String.Format(ErrorMessages.NOT_SUPPORTED_IMPLEMENTATION, deviceCredentialSettings.Conveyance));
+                }
+
+                return this.m_applicationIdentityProvider.Authenticate(applicationCredentialSettings.CredentialName, devicePrincipal);
+            
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_AUTH_ERR), e);
+            }
         }
     }
 }

@@ -23,8 +23,11 @@ namespace SanteDB.Client.Upstream
         public string LocalClientName { get; }
 
         /// <inheritdoc/>
-        public string LocalClientSecret { get; }
+        internal string LocalClientSecret { get; }
 
+        /// <inheritdoc/>
+        internal string LocalDeviceSecret { get; }
+        
         /// <summary>
         /// Create a new configured realm service 
         /// </summary>
@@ -42,7 +45,9 @@ namespace SanteDB.Client.Upstream
             var applicationCredential = configuration.Credentials.Find(o => o.CredentialType == UpstreamCredentialType.Application);
             this.LocalClientName = applicationCredential?.CredentialName;
             this.LocalClientSecret = applicationCredential.Conveyance == UpstreamCredentialConveyance.ClientCertificate ? null : applicationCredential.CredentialSecret;
-            this.LocalDeviceName = configuration.Credentials.Find(o => o.CredentialType == UpstreamCredentialType.Device)?.CredentialName;
+            var deviceCredential = configuration.Credentials.Find(o => o.CredentialType == UpstreamCredentialType.Device);
+            this.LocalDeviceSecret = deviceCredential.Conveyance == UpstreamCredentialConveyance.ClientCertificate ? null : deviceCredential.CredentialSecret;
+            this.LocalDeviceName = deviceCredential.CredentialName; 
         }
     }
 }
