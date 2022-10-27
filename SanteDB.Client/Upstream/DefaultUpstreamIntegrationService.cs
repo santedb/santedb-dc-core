@@ -39,6 +39,8 @@ namespace SanteDB.Client.Upstream
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
         /// <inheritdoc/>
         public event EventHandler<UpstreamIntegrationResultEventArgs> Responded;
+        /// <inheritdoc/>
+        public event EventHandler RealmChanged;
 
         /// <summary>
         /// DI constructor
@@ -118,6 +120,7 @@ namespace SanteDB.Client.Upstream
         /// <inheritdoc/>
         public void Join(IUpstreamRealmSettings targetRealm)
         {
+            RealmChanged?.Invoke(this, EventArgs.Empty);
             throw new NotImplementedException();
         }
 
@@ -130,6 +133,7 @@ namespace SanteDB.Client.Upstream
         /// <inheritdoc/>
         public void UnJoin()
         {
+            RealmChanged?.Invoke(this, EventArgs.Empty);
             throw new NotImplementedException();
         }
 
