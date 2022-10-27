@@ -39,7 +39,7 @@ namespace SanteDB.Core.Http
         {
             if(this.Principal is IClaimsPrincipal claimsPrincipal)
             {
-                if(claimsPrincipal.TryGetClaimValue(SanteDBClaimTypes.AuthenticationCertificate, out var subjectName))
+                if(claimsPrincipal.TryGetClaimValue(SanteDBClaimTypes.AuthenticationCertificateSubject, out var subjectName))
                 {
                     var clientCertificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectName, StoreLocation.CurrentUser, StoreName.My, subjectName);
                     if(clientCertificate == null)
