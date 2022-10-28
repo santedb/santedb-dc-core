@@ -8,6 +8,10 @@
     <Folder Include="Services\Impl\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="6.25.0" />
+  </ItemGroup>
+
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>

@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using SanteDB.Client.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
@@ -10,9 +12,11 @@ using SanteDB.Core.Security.OAuth;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 
 namespace SanteDB.Client.OAuth
 {
@@ -24,8 +28,21 @@ namespace SanteDB.Client.OAuth
         readonly ILocalizationService _Localization;
         readonly Tracer _Tracer;
         readonly IRestClientFactory _RestClientFactory;
+        readonly JsonWebTokenHandler _TokenHandler;
+        readonly TokenValidationParameters _TokenValidationParameters;
+        OpenIdConnectDiscoveryDocument _DiscoveryDocument;
         IRestClient _AuthRestClient;
 
+        // Claim map
+        private readonly Dictionary<String, String> claimMap = new Dictionary<string, string>() {
+            { "name", SanteDBClaimTypes.DefaultNameClaimType },
+            { "role", SanteDBClaimTypes.DefaultRoleClaimType },
+            { "sub", SanteDBClaimTypes.Sid },
+            { "exp", SanteDBClaimTypes.Expiration },
+            { "iat", SanteDBClaimTypes.AuthenticationInstant },
+            { "email", SanteDBClaimTypes.Email },
+            { "phone_number", SanteDBClaimTypes.Telephone }
+        };
         private class OAuthTokenRequest
         {
             [FormElement("grant_type")]
@@ -40,6 +57,8 @@ namespace SanteDB.Client.OAuth
             public string ClientSecret { get; set; }
             [FormElement("nonce")]
             public string Nonce { get; set; }
+            [FormElement("refresh_token")]
+            public string RefreshToken { get; set; }
         }
 
         private class OAuthTokenResponse
@@ -75,16 +94,49 @@ namespace SanteDB.Client.OAuth
             _RealmSettings = upstreamIntegration?.GetSettings();
             _Localization = localization;
             _RestClientFactory = restClientFactory;
+            _TokenHandler = new JsonWebTokenHandler();
+            _TokenValidationParameters = new TokenValidationParameters();
+            SetTokenValidationParameters();
+        }
+
+        protected virtual void SetTokenValidationParameters()
+        {
+            var discoverydocument = GetDiscoveryDocument();
+
+            _TokenValidationParameters.ValidIssuers = new[] { discoverydocument.Issuer };
+            _TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName };
+            _TokenValidationParameters.ValidateAudience = true;
+            _TokenValidationParameters.ValidateIssuer = true;
+            _TokenValidationParameters.ValidateLifetime = true;
+            _TokenValidationParameters.TryAllIssuerSigningKeys = true;
+
+            var jwksendpoint = discoverydocument.SigningKeyEndpoint;
+
+            var restclient = GetRestClient();
+
+            var bytes = restclient.Get(jwksendpoint);
+
+            var jwksjson = Encoding.UTF8.GetString(bytes);
+
+            var jwks = new JsonWebKeySet(jwksjson);
+
+            jwks.SkipUnresolvedJsonWebKeys = true;
+
+            _TokenValidationParameters.IssuerSigningKeys = jwks.Keys;
+            _TokenValidationParameters.NameClaimType = "name";
         }
 
         protected virtual void UpstreamRealmChanged(object sender, EventArgs eventArgs)
         {
             try
             {
+                //Removed cached client and discovery document.
                 _AuthRestClient = null;
+                _DiscoveryDocument = null;
                 _Tracer.TraceVerbose("Getting new Upstream Realm Settings.");
                 _RealmSettings = _UpstreamIntegration?.GetSettings();
                 _Tracer.TraceVerbose("Successfully updated Upstream Realm Settings.");
+                SetTokenValidationParameters();
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
@@ -93,7 +145,7 @@ namespace SanteDB.Client.OAuth
             }
         }
 
-        public IPrincipal AuthenticateUser(string username, string password, string clientId)
+        public IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null)
         {
             var request = new OAuthTokenRequest
             {
@@ -107,7 +159,7 @@ namespace SanteDB.Client.OAuth
             return GetPrincipal(request);
         }
 
-        private IPrincipal GetPrincipal(OAuthTokenRequest request)
+        private IClaimsPrincipal GetPrincipal(OAuthTokenRequest request)
         {
             var response = GetToken(request);
 
@@ -123,7 +175,52 @@ namespace SanteDB.Client.OAuth
                 return null;
             }
 
-            return new OAuthClaimsPrincipal(response.AccessToken, response.IdToken, response.TokenType, response.RefreshToken, response.ExpiresIn);
+            return CreatePrincipalFromResponse(response);
+        }
+
+        private IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response)
+        {
+            var tokenvalidationresult = _TokenHandler.ValidateToken(response.IdToken, _TokenValidationParameters);
+
+            if (tokenvalidationresult?.IsValid != true)
+            {
+                throw tokenvalidationresult.Exception ?? new SecurityTokenException("Token validation failed");
+            }
+
+            var claims = new List<IClaim>();
+
+            foreach (var claim in tokenvalidationresult.Claims)
+            {
+                if (null == claim.Value)
+                {
+                    continue;
+                }
+                else if (claim.Value is string s)
+                {
+                    claims.Add(new SanteDBClaim(claim.Key, s));
+                }
+                else if (claim.Value is string[] sarr)
+                {
+                    claims.AddRange(sarr.Select(a => new SanteDBClaim(claim.Key, a)));
+                }
+                else if (claim.Value is IEnumerable<string> enumerable)
+                {
+                    claims.AddRange(enumerable.Select(v => new SanteDBClaim(claim.Key, v)));
+                }
+                else if (claim.Value is IEnumerable<object> objenumerable)
+                {
+                    claims.AddRange(objenumerable.Select(v => new SanteDBClaim(claim.Key, v.ToString())));
+                }
+                else
+                {
+                    claims.Add(new SanteDBClaim(claim.Key, claim.Value.ToString()));
+                }
+            }
+
+            //Drop the realm into the claims so upstream knows which realm this principal is from.
+            claims.Add(new SanteDBClaim(SanteDBClaimTypes.Realm, _RealmSettings.Realm.ToString()));
+
+            return new OAuthClaimsPrincipal(response.AccessToken, tokenvalidationresult.SecurityToken, response.TokenType, response.RefreshToken, response.ExpiresIn, claims);
         }
 
         private OAuthTokenResponse GetToken(OAuthTokenRequest request)
@@ -134,11 +231,13 @@ namespace SanteDB.Client.OAuth
                 throw new InvalidOperationException(_Localization.GetString(ErrorMessageStrings.INVALID_STATE));
             }
 
+            if (null == request.ClientId)
+            {
+                request.ClientId = _RealmSettings.LocalClientName;
+            }
+
             return _AuthRestClient.Post<OAuthTokenRequest, OAuthTokenResponse>(GetTokenEndpoint(), "application/x-www-form-urlencoded", request);
         }
-
-
-        
 
         private string GetTokenEndpoint()
         {
@@ -150,18 +249,28 @@ namespace SanteDB.Client.OAuth
 
         private OpenIdConnectDiscoveryDocument GetDiscoveryDocument()
         {
+            if (null != _DiscoveryDocument)
+            {
+                return _DiscoveryDocument;
+            }
+
             var restclient = GetRestClient();
 
-            try
-            {
-                var document = restclient.Get<OpenIdConnectDiscoveryDocument>(".well-known/openid-configuration");
+            int counter = 0;
 
-                return document;
-            }
-            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            while (_DiscoveryDocument == null && (counter++) < 5)
             {
-                return null;
+                try
+                {
+                    _DiscoveryDocument = restclient.Get<OpenIdConnectDiscoveryDocument>(".well-known/openid-configuration");
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+                    Thread.Sleep(1000);
+                }
             }
+
+            return _DiscoveryDocument;
         }
 
         /// <summary>
@@ -180,7 +289,7 @@ namespace SanteDB.Client.OAuth
             return _AuthRestClient;
         }
 
-        public IPrincipal AuthenticateApp(string clientId, string clientSecret = null)
+        public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null)
         {
             var request = new OAuthTokenRequest
             {
@@ -191,8 +300,18 @@ namespace SanteDB.Client.OAuth
             };
 
             return GetPrincipal(request);
+        }
 
+        public IClaimsPrincipal Refresh(string refreshToken)
+        {
+            var request = new OAuthTokenRequest
+            {
+                GrantType = "refresh_token",
+                RefreshToken = refreshToken,
+                Nonce = GetNonce()
+            };
 
+            return GetPrincipal(request);
         }
     }
 }
