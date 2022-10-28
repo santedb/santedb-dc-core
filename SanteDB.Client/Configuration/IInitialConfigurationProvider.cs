@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Configuration;
+﻿using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,7 +18,7 @@ namespace SanteDB.Client.Configuration
         /// </summary>
         /// <param name="configuration">The configuration to be provided</param>
         /// <returns>The provided configuration</returns>
-        SanteDBConfiguration Provide(SanteDBConfiguration configuration);
+        SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration);
 
     }
 }

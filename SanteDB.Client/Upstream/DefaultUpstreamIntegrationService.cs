@@ -4,7 +4,6 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;

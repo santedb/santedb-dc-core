@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -14,6 +14,13 @@
         <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
         <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.WWW\SanteDB.Rest.WWW.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.OAuth\SanteDB.Rest.OAuth.csproj" />
+        <ProjectReference Include="..\..\santedb-bis\SanteDB.Rest.BIS\SanteDB.Rest.BIS.csproj" />
+
       </ItemGroup>
     </When>
     <Otherwise>
@@ -21,6 +28,12 @@
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Applets" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model.AMI" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.Common" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.WWW" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.HDSI" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.AMI" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.BIS" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.OAuth" Version="$(VersionNumber)" />
       </ItemGroup>
     </Otherwise>
   </Choose>

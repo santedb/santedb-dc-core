@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Upstream;
+using SanteDB.Core;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -13,12 +14,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 
-namespace SanteDB.Core.Http
+namespace SanteDB.Client.Http
 {
     /// <summary>
     /// Pricipal based credentials
     /// </summary>
-    public class UpstreamDeviceCredentials : Credentials
+    public class UpstreamDeviceCredentials : UpstreamPrincipalCredentials
     {
 
         // Upstream integration service
@@ -27,43 +28,30 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create new principal credentials
         /// </summary>
-        public UpstreamDeviceCredentials(IPrincipal principal ) : base(principal) {
+        public UpstreamDeviceCredentials(IPrincipal principal) : base(principal)
+        {
             this.m_upstreamConfiguration = ApplicationServiceContext.Current.GetService<IUpstreamIntegrationService>() as ConfiguredUpstreamRealmSettings;
         }
 
-        /// <summary>
-        /// Set the credentials for the web request
-        /// </summary>
-        /// <param name="webRequest">The request to set credentials on</param>
-        public override void SetCredentials(HttpWebRequest webRequest)
+        /// <inheritdoc/>
+        protected override bool SetCredentials(IIdentity identity, HttpWebRequest webRequest)
         {
-            if(this.Principal is IClaimsPrincipal claimsPrincipal)
+            if(!base.SetCredentials(identity, webRequest) && identity is IDeviceIdentity deviceIdentity)
             {
-                if(claimsPrincipal.TryGetClaimValue(SanteDBClaimTypes.AuthenticationCertificateSubject, out var subjectName))
-                {
-                    var clientCertificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectName, StoreLocation.CurrentUser, StoreName.My, subjectName);
-                    if(clientCertificate == null)
-                    {
-                        throw new InvalidOperationException(ErrorMessages.CERTIFICATE_NOT_FOUND);
-                    }
-                    webRequest.ClientCertificates.Add(clientCertificate);
-                    return;
-                }
-
-                var deviceIdentity = claimsPrincipal.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
-                if(deviceIdentity == null)
-                {
-                    throw new InvalidOperationException(String.Format(ErrorMessages.NOT_SUPPORTED_IMPLEMENTATION, typeof(IDeviceIdentity)));
-                }
-                else if(deviceIdentity.Name.Equals(this.m_upstreamConfiguration.LocalDeviceName, StringComparison.OrdinalIgnoreCase))
+                if (deviceIdentity.Name.Equals(this.m_upstreamConfiguration.LocalDeviceName, StringComparison.OrdinalIgnoreCase))
                 {
                     var headerValue = Encoding.UTF8.GetBytes($"{this.m_upstreamConfiguration.LocalDeviceName}:{this.m_upstreamConfiguration.LocalDeviceSecret}");
                     webRequest.Headers.Add(SanteDBClaimTypes.BasicHttpClientClaimHeaderName, $"BAISC {Convert.ToBase64String(headerValue)}");
+                    return true;
                 }
                 else
                 {
-                    throw new SecurityException(ErrorMessages.PRINCIPAL_NOT_APPROPRIATE);
+                    throw new InvalidOperationException(ErrorMessages.PRINCIPAL_NOT_APPROPRIATE);
                 }
+            }
+            else
+            {
+                return false;
             }
         }
     }

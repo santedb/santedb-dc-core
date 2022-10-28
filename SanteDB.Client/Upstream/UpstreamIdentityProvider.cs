@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Services;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
@@ -51,6 +52,11 @@ namespace SanteDB.Client.Upstream
         }
 
         public void DeleteIdentity(string userName, IPrincipal principal)
+        {
+            throw new NotImplementedException();
+        }
+
+        public AuthenticationMethod GetAuthenticationMethods(string userName)
         {
             throw new NotImplementedException();
         }

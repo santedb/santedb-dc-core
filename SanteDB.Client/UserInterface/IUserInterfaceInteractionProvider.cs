@@ -25,6 +25,14 @@ namespace SanteDB.Client.UserInterface
         void Alert(String message);
 
         /// <summary>
+        /// Shows a prompt for the user to enter a response
+        /// </summary>
+        /// <param name="message">The message to prompt</param>
+        /// <param name="maskEntry">True if the entry should be masked</param>
+        /// <returns>The data entered by the user</returns>
+        String Prompt(String message, bool maskEntry = false);
+
+        /// <summary>
         /// Set the application status bar to to the specified value
         /// </summary>
         /// <param name="statusText">The text to display on the status bar</param>

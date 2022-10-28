@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ namespace SanteDB.Client.Configuration
     /// </summary>
     public class InitialConfigurationManager : IConfigurationManager
     {
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(InitialConfigurationManager));
         private readonly SanteDBConfiguration m_configuration;
 
         /// <summary>
@@ -35,7 +37,7 @@ namespace SanteDB.Client.Configuration
         /// <summary>
         /// Initial configuration manager 
         /// </summary>
-        public InitialConfigurationManager()
+        public InitialConfigurationManager(SanteDBHostType hostType, String instanceName)
         {
             // Let the initial configuration providers do their magic
             var configuration = new SanteDBConfiguration()
@@ -46,14 +48,16 @@ namespace SanteDB.Client.Configuration
                     {
                         ThreadPoolSize = Environment.ProcessorCount,
                         AllowUnsignedAssemblies = false,
+                        InstanceName = instanceName,
                         ServiceProviders = new List<TypeReferenceConfiguration>()
                     }
                 }
             };
 
-            foreach(var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(IInitialConfigurationProvider).IsAssignableFrom(t)).Select(t=>Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>())
+            foreach(var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface).Select(t=>Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>())
             {
-                configuration = initialProvider.Provide(configuration);
+                this.m_tracer.TraceInfo("Initializing {0}...", initialProvider);
+                configuration = initialProvider.Provide(hostType, configuration);
             }
             this.m_configuration = configuration;
         }
