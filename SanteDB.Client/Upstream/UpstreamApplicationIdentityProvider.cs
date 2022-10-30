@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.OAuth;
 using SanteDB.Client.Services;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
@@ -18,7 +19,7 @@ namespace SanteDB.Client.Upstream
         IApplicationIdentityProviderService _LocalApplicationIdentityProvider;
         IOAuthClient _OAuthClient;
 
-        public UpstreamApplicationIdentityProvider(IApplicationIdentityProviderService localApplicationIdentityProvider, IOAuthClient oauthClient)
+        public UpstreamApplicationIdentityProvider(IOAuthClient oauthClient, ILocalApplicationIdentityProviderService localApplicationIdentityProvider = null)
         {
             _LocalApplicationIdentityProvider = localApplicationIdentityProvider;
             _OAuthClient = oauthClient ?? throw new ArgumentNullException(nameof(oauthClient));
@@ -38,6 +39,10 @@ namespace SanteDB.Client.Upstream
 
         public void AddClaim(string applicationName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
+            if(_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
             _LocalApplicationIdentityProvider.AddClaim(applicationName, claim, principal, expiry);
         }
 
@@ -57,6 +62,10 @@ namespace SanteDB.Client.Upstream
                 {
 
                 }
+            }
+            else if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
             }
 
             return _LocalApplicationIdentityProvider.Authenticate(clientId, clientSecret);
@@ -81,17 +90,31 @@ namespace SanteDB.Client.Upstream
 
                 }
             }
+            else if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
 
             return _LocalApplicationIdentityProvider.Authenticate(clientId, authenticationContext);
         }
 
         public void ChangeSecret(string applicationName, string secret, IPrincipal principal)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             _LocalApplicationIdentityProvider.ChangeSecret(applicationName, secret, principal);
         }
 
         public IApplicationIdentity CreateIdentity(string applicationName, string password, IPrincipal principal)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             var identity = _LocalApplicationIdentityProvider.CreateIdentity(applicationName, password, principal);
 
             return identity;
@@ -114,37 +137,71 @@ namespace SanteDB.Client.Upstream
 
                 }
             }
+            else if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
 
             return _LocalApplicationIdentityProvider.GetClaims(applicationName);
         }
 
         public IApplicationIdentity GetIdentity(string applicationName)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             return _LocalApplicationIdentityProvider.GetIdentity(applicationName);
         }
 
         public byte[] GetPublicSigningKey(string applicationName)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             return _LocalApplicationIdentityProvider.GetPublicSigningKey(applicationName);
         }
 
         public Guid GetSid(string name)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             return _LocalApplicationIdentityProvider.GetSid(name);
         }
 
         public void RemoveClaim(string applicationName, string claimType, IPrincipal principal)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             _LocalApplicationIdentityProvider.RemoveClaim(applicationName, claimType, principal);
         }
 
         public void SetLockout(string applicationName, bool lockoutState, IPrincipal principal)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             _LocalApplicationIdentityProvider.SetLockout(applicationName, lockoutState, principal);
         }
 
         public void SetPublicKey(string applicationName, byte[] key, IPrincipal principal)
         {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
             _LocalApplicationIdentityProvider.SetPublicKey(applicationName, key, principal);
         }
 
@@ -157,6 +214,10 @@ namespace SanteDB.Client.Upstream
                 SynchronizeLocalIdentity(result);
 
                 return result;
+            }
+            else if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
             }
             else
             {

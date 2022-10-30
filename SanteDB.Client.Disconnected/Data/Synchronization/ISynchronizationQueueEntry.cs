@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Disconnected.Data.Synchronization
+namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     /// <summary>
     /// Represents a synchronization queue entry

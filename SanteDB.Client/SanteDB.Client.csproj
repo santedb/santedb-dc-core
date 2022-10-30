@@ -12,6 +12,11 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="6.25.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
+    <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
+  </ItemGroup>
+
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>

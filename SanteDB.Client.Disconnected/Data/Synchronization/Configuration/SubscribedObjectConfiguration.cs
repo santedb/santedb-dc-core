@@ -3,7 +3,7 @@ using SanteDB.Core.Configuration;
 using System;
 using System.Xml.Serialization;
 
-namespace SanteDB.Disconnected.Data.Synchronization.Configuration
+namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
 {
     /// <summary>
     /// Represents a single resource which is subscribed

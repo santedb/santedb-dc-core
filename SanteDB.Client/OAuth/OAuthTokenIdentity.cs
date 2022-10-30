@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.OAuth;
+using SanteDB.Core.Security.Principal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
-    public class OAuthTokenIdentity : ITokenIdentity
+    public class OAuthTokenIdentity : IClaimsIdentity
     {
         readonly SecurityToken _Token;
 

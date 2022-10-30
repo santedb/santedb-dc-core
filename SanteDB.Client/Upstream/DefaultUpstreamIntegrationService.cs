@@ -1,7 +1,10 @@
 ﻿using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
+using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Services;
@@ -21,13 +24,15 @@ namespace SanteDB.Client.Upstream
     /// </summary>
     public class DefaultUpstreamIntegrationService : IUpstreamIntegrationService
     {
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultUpstreamIntegrationService));
         private readonly IRestClientFactory m_restClientFactory;
+        private readonly IUpstreamManagementService m_upstreamManager;
         private readonly UpstreamConfigurationSection m_configuration;
         private readonly IDeviceIdentityProviderService m_deviceIdentityProvider;
         private readonly ICertificateIdentityProvider m_certificateIdentityProvider;
         private readonly ILocalizationService m_localizationService;
         private readonly IApplicationIdentityProviderService m_applicationIdentityProvider;
-        private readonly ConfiguredUpstreamRealmSettings m_upstreamSettings;
+        private readonly INetworkInformationService m_networkInformationService;
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Data Provider";
@@ -38,9 +43,7 @@ namespace SanteDB.Client.Upstream
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
         /// <inheritdoc/>
         public event EventHandler<UpstreamIntegrationResultEventArgs> Responded;
-        /// <inheritdoc/>
-        public event EventHandler RealmChanged;
-
+        
         /// <summary>
         /// DI constructor
         /// </summary>
@@ -49,20 +52,22 @@ namespace SanteDB.Client.Upstream
         /// <param name="deviceIdentityProvider">Device identity provider for authenticating this device</param>
         /// <param name="certificateIdentityProvider">The certificate identity provider for authenticating this device with a certificate</param>
         public DefaultUpstreamIntegrationService(IRestClientFactory restClientFactory,
-            IConfigurationManager configurationManager,
+            INetworkInformationService networkInformationService,
+            IConfigurationManager configurationManager, 
+            IUpstreamManagementService upstreamManagementService,
             IDeviceIdentityProviderService deviceIdentityProvider,
             IApplicationIdentityProviderService applicationIdentityProvider,
             ICertificateIdentityProvider certificateIdentityProvider,
             ILocalizationService localizationService)
         {
-            this.m_restClientFactory = restClientFactory;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
+            this.m_restClientFactory = restClientFactory;
+            this.m_upstreamManager = upstreamManagementService;
             this.m_deviceIdentityProvider = deviceIdentityProvider;
             this.m_certificateIdentityProvider = certificateIdentityProvider;
             this.m_localizationService = localizationService;
             this.m_applicationIdentityProvider = applicationIdentityProvider;
-
-            this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(this.m_configuration);
+            this.m_networkInformationService = networkInformationService;
         }
 
         /// <inheritdoc/>
@@ -95,14 +100,6 @@ namespace SanteDB.Client.Upstream
             throw new NotImplementedException();
         }
 
-        /// <inheritdoc/>
-        public IUpstreamRealmSettings GetSettings() => this.m_upstreamSettings;
-
-        /// <inheritdoc/>
-        public TimeSpan GetTimeDrift()
-        {
-            throw new NotImplementedException();
-        }
 
         /// <inheritdoc/>
         public void Insert(IdentifiedData data)
@@ -110,29 +107,59 @@ namespace SanteDB.Client.Upstream
             throw new NotImplementedException();
         }
 
+
         /// <inheritdoc/>
-        public bool IsAvailable()
+        public TimeSpan GetTimeDrift(ServiceEndpointType endpoint)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (this.m_networkInformationService.IsNetworkAvailable &&
+                    this.m_networkInformationService.IsNetworkConnected)
+                {
+                    using (var client = this.m_restClientFactory.GetRestClientFor(endpoint))
+                    {
+                        client.SetTimeout(5000);
+                        var serverTime = DateTime.Now;
+                        client.Responded += (o, e) => _ = DateTime.TryParse(e.Headers["X-GeneratedOn"], out serverTime) || DateTime.TryParse(e.Headers["Date"], out serverTime);
+                        client.Invoke<object, object>("PING", "/", null);
+                        return serverTime.Subtract(DateTime.Now);
+                    }
+                }
+                return TimeSpan.Zero;
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError($"Unable to determine server time drift: {e}");
+                return TimeSpan.Zero;
+            }
         }
 
         /// <inheritdoc/>
-        public void Join(IUpstreamRealmSettings targetRealm)
+        public bool IsAvailable(ServiceEndpointType endpoint)
         {
-            RealmChanged?.Invoke(this, EventArgs.Empty);
-            throw new NotImplementedException();
+            if(this.m_networkInformationService.IsNetworkAvailable &&
+                this.m_networkInformationService.IsNetworkConnected)
+            {
+                using (var restClient = this.m_restClientFactory.GetRestClientFor(endpoint))
+                {
+                    try
+                    {
+                        restClient.SetTimeout(5000);
+                        restClient.Invoke<object, object>("PING", "/", null);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <inheritdoc/>
         public void Obsolete(IdentifiedData data, bool forceObsolete = false)
         {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public void UnJoin()
-        {
-            RealmChanged?.Invoke(this, EventArgs.Empty);
             throw new NotImplementedException();
         }
 
@@ -151,6 +178,10 @@ namespace SanteDB.Client.Upstream
             {
                 var deviceCredentialSettings = this.m_configuration.Credentials.Single(o => o.CredentialType == UpstreamCredentialType.Device);
                 var applicationCredentialSettings = this.m_configuration.Credentials.Single(o => o.CredentialType == UpstreamCredentialType.Application);
+                if(deviceCredentialSettings == null || applicationCredentialSettings == null)
+                {
+                    throw new InvalidOperationException(ErrorMessages.UPSTREAM_NOT_CONFIGURED);
+                }
 
                 IPrincipal devicePrincipal = null;
                 switch (deviceCredentialSettings.Conveyance)

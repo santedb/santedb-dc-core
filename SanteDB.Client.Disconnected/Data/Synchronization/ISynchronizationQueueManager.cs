@@ -1,13 +1,14 @@
-﻿using System;
+﻿using SanteDB.Core.Services;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Disconnected.Data.Synchronization
+namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     /// <summary>
     /// Synchronization queue manager
     /// </summary>
-    public interface ISynchronizationQueueManager
+    public interface ISynchronizationQueueManager : IServiceImplementation
     {
 
         /// <summary>

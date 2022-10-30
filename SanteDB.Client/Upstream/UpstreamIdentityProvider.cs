@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.OAuth;
 using SanteDB.Client.Services;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
@@ -18,7 +19,9 @@ namespace SanteDB.Client.Upstream
         readonly IIdentityProviderService _LocalIdentityProvider;
         readonly IOAuthClient _OAuthClient;
 
-        public UpstreamIdentityProvider(IIdentityProviderService localIdentityProvider, IOAuthClient oauthClient)
+        public UpstreamIdentityProvider(
+            IOAuthClient oauthClient,
+            ILocalIdentityProviderService localIdentityProvider = null) // on initial configuration in online only mode there are no local users
         {
             _LocalIdentityProvider = localIdentityProvider;
             _OAuthClient = oauthClient ?? throw new ArgumentNullException(nameof(oauthClient));
@@ -43,7 +46,12 @@ namespace SanteDB.Client.Upstream
 
         public void AddClaim(string userName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
-            _LocalIdentityProvider.AddClaim(userName, claim, principal, expiry);
+            if (_LocalIdentityProvider == null) // If this is online only configured - local not allowed
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
+
+            _LocalIdentityProvider?.AddClaim(userName, claim, principal, expiry);
         }
 
         public IPrincipal Authenticate(string userName, string password)
@@ -62,6 +70,10 @@ namespace SanteDB.Client.Upstream
                 {
 
                 }
+            }
+            else if(_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
 
             return _LocalIdentityProvider.Authenticate(userName, password);
@@ -84,7 +96,10 @@ namespace SanteDB.Client.Upstream
 
                 }
             }
-
+            else if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             return _LocalIdentityProvider.Authenticate(userName, password, tfaSecret);
         }
 
@@ -99,11 +114,19 @@ namespace SanteDB.Client.Upstream
 
         public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             return _LocalIdentityProvider.CreateIdentity(userName, password, principal);
         }
 
         public void DeleteIdentity(string userName, IPrincipal principal)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             _LocalIdentityProvider.DeleteIdentity(userName, principal);
         }
 
@@ -114,21 +137,37 @@ namespace SanteDB.Client.Upstream
 
         public IEnumerable<IClaim> GetClaims(string userName)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             return _LocalIdentityProvider.GetClaims(userName);
         }
 
         public IIdentity GetIdentity(string userName)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             return _LocalIdentityProvider.GetIdentity(userName);
         }
 
         public IIdentity GetIdentity(Guid sid)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             return _LocalIdentityProvider.GetIdentity(sid);
         }
 
         public Guid GetSid(string name)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             return _LocalIdentityProvider.GetSid(name);
         }
 
@@ -149,6 +188,10 @@ namespace SanteDB.Client.Upstream
                     throw new NotSupportedException("Cannot refresh this principal");
                 }
             }
+            else if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             else
             {
                 return _LocalIdentityProvider.ReAuthenticate(principal);
@@ -157,11 +200,19 @@ namespace SanteDB.Client.Upstream
 
         public void RemoveClaim(string userName, string claimType, IPrincipal principal)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             _LocalIdentityProvider.RemoveClaim(userName, claimType, principal);
         }
 
         public void SetLockout(string userName, bool lockout, IPrincipal principal)
         {
+            if (_LocalIdentityProvider == null)
+            {
+                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+            }
             _LocalIdentityProvider.SetLockout(userName, lockout, principal);
         }
     }

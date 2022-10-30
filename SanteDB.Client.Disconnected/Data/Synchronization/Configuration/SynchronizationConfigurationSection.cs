@@ -6,7 +6,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace SanteDB.Disconnected.Data.Synchronization.Configuration
+namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
 {
     /// <summary>
     /// Represents a configuration section which controls the synchronization of resources with an upstream

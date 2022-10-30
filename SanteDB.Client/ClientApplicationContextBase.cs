@@ -56,7 +56,8 @@ namespace SanteDB.Client
             try
             {
 
-                
+                base.DependencyServiceManager.ProgressChanged += (o, e) => this.InteractionProvider.SetStatus(e.State.ToString(), e.Progress);
+
                 base.Start();
 
                 // Remote server validation prompt using the UserInterface component

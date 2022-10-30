@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Http;
+﻿using SanteDB.Client.OAuth;
+using SanteDB.Core.Http;
 using SanteDB.Core.Security.Principal;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,13 @@ namespace SanteDB.Client.Http
             if (this.Principal is ClaimsPrincipal claimsPrincipal)
             {
                 claimsPrincipal.Identities.ToList().ForEach(o => this.SetCredentials(o, webRequest));
+
+                // HACK: Need a better way to do this
+                if(this.Principal is OAuthClaimsPrincipal oacp)
+                {
+                    webRequest.Headers.Add(HttpRequestHeader.Authorization, $"BEARER {oacp.GetAccessToken()}"); // Should get the token type from the oauth response
+                }
+
             }
             else
             {
@@ -48,9 +56,6 @@ namespace SanteDB.Client.Http
                 case ICertificateIdentity certificateIdentity:
                     webRequest.ClientCertificates.Add(certificateIdentity.AuthenticationCertificate);
                     return true ;
-                case ITokenIdentity tokenIdentity:
-                    webRequest.Headers.Add(HttpRequestHeader.Authorization, $"{tokenIdentity.AccessTokenType} {tokenIdentity.AccessToken}");
-                    return true;
             }
             return false;
         }

@@ -18,13 +18,10 @@ namespace SanteDB.Client.Repositories
     /// Remote security challenge provider repository
     /// </summary>
     [PreferredService(typeof(ISecurityChallengeService))]
-    public class UpstreamSecurityChallengeProvider : ISecurityChallengeService
+    public class UpstreamSecurityChallengeProvider : UpstreamServiceBase, ISecurityChallengeService
     {
         private readonly ISecurityChallengeService m_localSecurityChallengeService;
-        private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
         private readonly IIdentityProviderService m_identityProvider;
-        private readonly ISecurityRepositoryService m_securityRepository;
-        private readonly IRestClientFactory m_restClientFactory;
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Security Challenge Provider";
@@ -32,25 +29,21 @@ namespace SanteDB.Client.Repositories
         /// <summary>
         /// Gets the upstream integration service
         /// </summary>
-        public UpstreamSecurityChallengeProvider( 
-            IUpstreamIntegrationService upstreamIntegrationService,
+        public UpstreamSecurityChallengeProvider(
             IRestClientFactory restClientFactory,
             IIdentityProviderService identityProvider,
-            ISecurityRepositoryService securityRepository = null,
-            ISecurityChallengeService localSecurityChallengeService = null)
+            ILocalSecurityChallengeService localSecurityChallengeService = null,
+            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamIntegrationService)
         {
             this.m_localSecurityChallengeService = localSecurityChallengeService;
-            this.m_upstreamIntegrationService = upstreamIntegrationService;
             this.m_identityProvider = identityProvider;
-            this.m_securityRepository = securityRepository;
-            this.m_restClientFactory = restClientFactory;
         }
 
         /// <inheritdoc/>
         public IEnumerable<SecurityChallenge> Get(string userName, IPrincipal principal)
         {
             // Try to gather whether the user is upstream or not
-            if(!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
+            if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
                 return this.m_localSecurityChallengeService.Get(userName, principal);
             }
@@ -71,13 +64,9 @@ namespace SanteDB.Client.Repositories
             }
             else
             {
-                using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, principal))
                 {
-                    client.Credentials = new UpstreamPrincipalCredentials(principal);
-                    using (AuthenticationContext.EnterContext(principal))
-                    {
-                        return client.Get<AmiCollection>($"SecurityUser/{userKey}/challenge").CollectionItem.OfType<SecurityChallenge>();
-                    }
+                    return client.Get<AmiCollection>($"SecurityUser/{userKey}/challenge").CollectionItem.OfType<SecurityChallenge>();
                 }
             }
 
@@ -93,10 +82,9 @@ namespace SanteDB.Client.Repositories
             }
             else
             {
-                using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, principal))
                 {
                     var sid = this.m_identityProvider.GetSid(userName);
-                    client.Credentials = new UpstreamPrincipalCredentials(principal);
                     client.Delete<SecurityChallenge>($"SecurityUser/{sid}/challenge/{challengeKey}");
                 }
             }
@@ -112,17 +100,15 @@ namespace SanteDB.Client.Repositories
             }
             else
             {
-                using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, principal))
                 {
                     var sid = this.m_identityProvider.GetSid(userName);
-                    client.Credentials = new UpstreamPrincipalCredentials(principal);
-                    
                     var challengeSet = new SecurityUserChallengeInfo()
                     {
                         ChallengeKey = challengeKey,
                         ChallengeResponse = response
                     };
-                    
+
                     client.Post<SecurityUserChallengeInfo, Object>($"SecurityUser/{sid}/challenge", challengeSet);
                 }
             }

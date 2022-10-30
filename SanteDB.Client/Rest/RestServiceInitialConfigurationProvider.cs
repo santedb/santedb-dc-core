@@ -1,4 +1,5 @@
-﻿using RestSrvr.Attributes;
+﻿using RestSrvr;
+using RestSrvr.Attributes;
 using SanteDB.Client.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
@@ -6,7 +7,9 @@ using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.BIS;
+using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Behavior;
+using SanteDB.Rest.Common.Behaviors;
 using SanteDB.Rest.Common.Configuration;
 using SanteDB.Rest.Common.Security;
 using SanteDB.Rest.HDSI;
@@ -70,7 +73,7 @@ namespace SanteDB.Client.Rest
             }
 
             // Default Configuration for BIS
-            restConfiguration.Services.Add(new RestServiceConfiguration(typeof(BisServiceBehavior))
+            restConfiguration.Services.Add(new RestServiceConfiguration(serviceMetadata.BehaviorType)
             {
                 Behaviors = serviceBehaviors.ToList(),
                 ConfigurationName = serviceContractMetadata.Name,
@@ -118,16 +121,17 @@ namespace SanteDB.Client.Rest
             var apiBehaviors = new List<RestServiceBehaviorConfiguration>()
             {
                 new RestServiceBehaviorConfiguration(typeof(ErrorServiceBehavior)),
-                new RestServiceBehaviorConfiguration(typeof(ServerMetadataServiceBehavior))
+                new RestServiceBehaviorConfiguration(typeof(SecurityPolicyEnforcementBehavior))
             };
 
             var oauthBehaviors = new List<RestServiceBehaviorConfiguration>(apiBehaviors) {
                 new RestServiceBehaviorConfiguration(typeof(ClientCertificateAccessBehavior)),
+                new RestServiceBehaviorConfiguration(typeof(SecurityPolicyEnforcementBehavior)),
                 new RestServiceBehaviorConfiguration(typeof(ClientAuthorizationAccessBehavior))
             };
 
             apiBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(TokenAuthorizationAccessBehavior)));
-            webBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(TokenAuthorizationAccessBehavior)));
+            webBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(CookieAuthenticationBehavior)));
 
             if (hostContextType == SanteDBHostType.Client)
             {
@@ -138,21 +142,29 @@ namespace SanteDB.Client.Rest
             var endpointBehaviors = new List<RestEndpointBehaviorConfiguration>()
             {
                 new RestEndpointBehaviorConfiguration(typeof(AcceptLanguageEndpointBehavior)),
-                new RestEndpointBehaviorConfiguration(typeof(SecurityPolicyEnforcementBehavior)),
                 new RestEndpointBehaviorConfiguration(typeof(MessageDispatchFormatterBehavior)),
 #if DEBUG
                 new RestEndpointBehaviorConfiguration(typeof(MessageLoggingEndpointBehavior)),
 #endif
                 new RestEndpointBehaviorConfiguration(typeof(MessageCompressionEndpointBehavior)),
-                new RestEndpointBehaviorConfiguration(typeof(SecurityPolicyEnforcementBehavior))
+                new RestEndpointBehaviorConfiguration(typeof(ServerMetadataServiceBehavior)),
+                new RestEndpointBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior))
             };
 
-
-            this.AddRestServiceFor(configuration, ServiceEndpointType.HealthDataService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/hdsi", apiBehaviors, endpointBehaviors);
-            this.AddRestServiceFor(configuration, ServiceEndpointType.BusinessIntelligenceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/bis", apiBehaviors, endpointBehaviors);
-            this.AddRestServiceFor(configuration, ServiceEndpointType.ApplicationControlService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/app", webBehaviors, endpointBehaviors);
-            this.AddRestServiceFor(configuration, ServiceEndpointType.AuthenticationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/auth", oauthBehaviors, endpointBehaviors);
+            this.AddRestServiceFor(configuration, ServiceEndpointType.AuthenticationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/auth/", oauthBehaviors, endpointBehaviors);
+            this.AddRestServiceFor(configuration, ServiceEndpointType.HealthDataService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/hdsi/", apiBehaviors, endpointBehaviors);
+            this.AddRestServiceFor(configuration, ServiceEndpointType.AdministrationIntegrationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/ami/", apiBehaviors, endpointBehaviors);
+            this.AddRestServiceFor(configuration, ServiceEndpointType.BusinessIntelligenceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/bis/", apiBehaviors, endpointBehaviors);
+            this.AddRestServiceFor(configuration, ServiceEndpointType.ApplicationControlService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/app/", webBehaviors, endpointBehaviors);
             this.AddRestServiceFor(configuration, ServiceEndpointType.WebUserInterfaceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/", webBehaviors, endpointBehaviors);
+
+            var appConfiguration = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+
+            if (!appConfiguration.ServiceProviders.Any(s => typeof(IRestServiceFactory).IsAssignableFrom(s.Type)))
+            {
+                appConfiguration.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RestServiceFactory)));
+            }
+
             return configuration;
 
         }

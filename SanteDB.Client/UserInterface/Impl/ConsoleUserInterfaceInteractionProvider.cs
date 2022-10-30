@@ -47,7 +47,7 @@ namespace SanteDB.Client.UserInterface.Impl
         /// <inheritdoc/>
         public void SetStatus(string statusText, float progressIndicator)
         {
-            Console.WriteLine("PROGRESS: {0:#%} {1}", progressIndicator, statusText);
+            Console.WriteLine("PROGRESS: {0:0%} {1}", progressIndicator, statusText);
         }
     }
 }

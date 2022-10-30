@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text;
 
-namespace SanteDB.Disconnected.Data.Synchronization
+namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     /// <summary>
     /// Synchronization events

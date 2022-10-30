@@ -24,7 +24,7 @@ namespace SanteDB.Client.OAuth
     public class OAuthClient : IOAuthClient
     {
         IUpstreamRealmSettings _RealmSettings;
-        readonly IUpstreamIntegrationService _UpstreamIntegration;
+        readonly IUpstreamManagementService _UpstreamManagement;
         readonly ILocalizationService _Localization;
         readonly Tracer _Tracer;
         readonly IRestClientFactory _RestClientFactory;
@@ -86,12 +86,12 @@ namespace SanteDB.Client.OAuth
             return Convert.ToBase64String(entropy);
         }
 
-        public OAuthClient(IUpstreamIntegrationService upstreamIntegration, ILocalizationService localization, IRestClientFactory restClientFactory)
+        public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory)
         {
             _Tracer = new Tracer(nameof(OAuthClient));
-            _UpstreamIntegration = upstreamIntegration;
-            _UpstreamIntegration.RealmChanged += UpstreamRealmChanged;
-            _RealmSettings = upstreamIntegration?.GetSettings();
+            _UpstreamManagement = upstreamManagement;
+            _UpstreamManagement.RealmChanged += UpstreamRealmChanged;
+            _RealmSettings = upstreamManagement?.GetSettings();
             _Localization = localization;
             _RestClientFactory = restClientFactory;
             _TokenHandler = new JsonWebTokenHandler();
@@ -101,29 +101,36 @@ namespace SanteDB.Client.OAuth
 
         protected virtual void SetTokenValidationParameters()
         {
-            var discoverydocument = GetDiscoveryDocument();
+            if (_UpstreamManagement.IsConfigured())
+            {
+                var discoverydocument = GetDiscoveryDocument();
 
-            _TokenValidationParameters.ValidIssuers = new[] { discoverydocument.Issuer };
-            _TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName };
-            _TokenValidationParameters.ValidateAudience = true;
-            _TokenValidationParameters.ValidateIssuer = true;
-            _TokenValidationParameters.ValidateLifetime = true;
-            _TokenValidationParameters.TryAllIssuerSigningKeys = true;
+                _TokenValidationParameters.ValidIssuers = new[] { discoverydocument.Issuer };
+                _TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName };
+                _TokenValidationParameters.ValidateAudience = true;
+                _TokenValidationParameters.ValidateIssuer = true;
+                _TokenValidationParameters.ValidateLifetime = true;
+                _TokenValidationParameters.TryAllIssuerSigningKeys = true;
 
-            var jwksendpoint = discoverydocument.SigningKeyEndpoint;
+                var jwksendpoint = discoverydocument.SigningKeyEndpoint;
 
-            var restclient = GetRestClient();
+                var restclient = GetRestClient();
 
-            var bytes = restclient.Get(jwksendpoint);
+                var bytes = restclient.Get(jwksendpoint);
 
-            var jwksjson = Encoding.UTF8.GetString(bytes);
+                var jwksjson = Encoding.UTF8.GetString(bytes);
 
-            var jwks = new JsonWebKeySet(jwksjson);
+                var jwks = new JsonWebKeySet(jwksjson);
 
-            jwks.SkipUnresolvedJsonWebKeys = true;
+                jwks.SkipUnresolvedJsonWebKeys = true;
 
-            _TokenValidationParameters.IssuerSigningKeys = jwks.Keys;
-            _TokenValidationParameters.NameClaimType = "name";
+                _TokenValidationParameters.IssuerSigningKeys = jwks.Keys;
+                _TokenValidationParameters.NameClaimType = "name";
+            }
+            else
+            {
+                _Tracer.TraceWarning("Upstream is not yet configured - skipping fetch of token validation parameters");
+            }
         }
 
         protected virtual void UpstreamRealmChanged(object sender, EventArgs eventArgs)
@@ -134,7 +141,7 @@ namespace SanteDB.Client.OAuth
                 _AuthRestClient = null;
                 _DiscoveryDocument = null;
                 _Tracer.TraceVerbose("Getting new Upstream Realm Settings.");
-                _RealmSettings = _UpstreamIntegration?.GetSettings();
+                _RealmSettings = _UpstreamManagement?.GetSettings();
                 _Tracer.TraceVerbose("Successfully updated Upstream Realm Settings.");
                 SetTokenValidationParameters();
             }
@@ -253,6 +260,7 @@ namespace SanteDB.Client.OAuth
             {
                 return _DiscoveryDocument;
             }
+            
 
             var restclient = GetRestClient();
 

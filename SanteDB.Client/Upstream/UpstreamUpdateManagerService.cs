@@ -25,9 +25,9 @@ namespace SanteDB.Client.Upstream
     /// <summary>
     /// Update manager which uses the AMI to get updates for packages
     /// </summary>
-    public class RemoteUpdateManager : IUpdateManager
+    public class UpstreamUpdateManagerService : IUpdateManager
     {
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(RemoteUpdateManager));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamUpdateManagerService));
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
         private readonly ClientConfigurationSection m_configuration;
@@ -44,13 +44,13 @@ namespace SanteDB.Client.Upstream
         /// <summary>
         /// DI constructor
         /// </summary>
-        public RemoteUpdateManager(IRestClientFactory restClientFactory,
-            IUpstreamIntegrationService upstreamIntegrationService,
+        public UpstreamUpdateManagerService(IRestClientFactory restClientFactory,
             IConfigurationManager configurationManager,
             ILocalizationService localizationService,
             IUserInterfaceInteractionProvider userInterface,
             IAppletManagerService appletManager,
-            ITickleService tickleService)
+            ITickleService tickleService,
+            IUpstreamIntegrationService upstreamIntegrationService = null)
         {
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
@@ -67,6 +67,11 @@ namespace SanteDB.Client.Upstream
             if (String.IsNullOrEmpty(packageId))
             {
                 throw new ArgumentNullException(nameof(packageId), ErrorMessages.ARGUMENT_NULL);
+            }
+            else if(this.m_upstreamIntegrationService == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.UPSTREAM_NOT_CONFIGURED);
+
             }
 
             try
@@ -99,6 +104,10 @@ namespace SanteDB.Client.Upstream
             {
                 throw new ArgumentNullException(nameof(packageId), ErrorMessages.ARGUMENT_NULL);
             }
+            else if (this.m_upstreamIntegrationService == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.UPSTREAM_NOT_CONFIGURED);
+            }
 
             try
             {
@@ -129,9 +138,15 @@ namespace SanteDB.Client.Upstream
         /// <inheritdoc/>
         public void Update(bool nonInteractive)
         {
+            if (this.m_upstreamIntegrationService == null)
+            {
+                this.m_tracer.TraceWarning("Upstream is not configured - skipping update");
+                return;
+            }
+
             try
             {
-                if (this.m_upstreamIntegrationService.IsAvailable())
+                if (this.m_upstreamIntegrationService.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                 {
                     // Are we configured to auto-update?
                     if (nonInteractive && !this.m_configuration.AutoUpdateApplets)
@@ -139,7 +154,7 @@ namespace SanteDB.Client.Upstream
                         this.m_tracer.TraceWarning("Will skip checking for automatic updates...");
                         return; // Skip updates
                     }
-                    
+
                     this.m_tracer.TraceInfo("Checking for updates with remote service...");
 
                     // Set progress 
