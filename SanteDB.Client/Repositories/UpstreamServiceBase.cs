@@ -40,7 +40,7 @@ namespace SanteDB.Client.Repositories
         /// </summary>
         protected IRestClient CreateRestClient(ServiceEndpointType serviceEndpointType, IPrincipal authenticatedAs)
         {
-            var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService);
+            var client = this.m_restClientFactory.GetRestClientFor(serviceEndpointType);
             if (authenticatedAs == null)
             {
                 client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
