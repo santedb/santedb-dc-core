@@ -35,7 +35,9 @@ namespace SanteDB.Client.OAuth
 
         // Claim map
         private static readonly Dictionary<String, String> s_ClaimMap = new Dictionary<string, string>() {
+            { "sid", SanteDBClaimTypes.Sid },
             { "name", SanteDBClaimTypes.DefaultNameClaimType },
+            { "realm", SanteDBClaimTypes.Realm },
             { "role", SanteDBClaimTypes.DefaultRoleClaimType },
             { "sub", SanteDBClaimTypes.Sid },
             { "exp", SanteDBClaimTypes.Expiration },
