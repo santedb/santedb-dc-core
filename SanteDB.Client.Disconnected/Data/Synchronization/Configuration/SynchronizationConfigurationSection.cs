@@ -21,6 +21,23 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         [XmlAttribute("bigBundles"), JsonProperty("bigBundles")]
         public bool BigBundles { get; set; }
 
+        /// <summary>
+        /// True if automatic merging should occur on the server and client
+        /// </summary>
+        [XmlAttribute("overwriteServer"), JsonProperty("overwriteServer")]
+        public bool OverwriteServer { get; set; }
+
+        /// <summary>
+        /// Use patches instead of updates
+        /// </summary>
+        [XmlAttribute("usePatches"), JsonProperty("usePatches")]
+        public bool UsePatches { get; set; }
+
+        /// <summary>
+        /// Gets the mode of sync
+        /// </summary>
+        [XmlAttribute("mode"), JsonProperty("mode")]
+        public SynchronizationMode Mode { get; set; }
 
         /// <summary>
         /// Resources which are forbidden from being sychronized
@@ -34,7 +51,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         /// Gets or sets the subscriptions which are active for this configuration
         /// </summary>
         [XmlArray("subscriptions"), XmlArrayItem("add"), JsonProperty("subscriptions")]
-        public List<SynchronizationResourceConfiguration> Subscriptions { get; set; }
+        public List<Guid> Subscriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the subscribed objects

@@ -13,19 +13,19 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
     public enum SynchronizationMode
     {
         /// <summary>
-        /// Synchronization mode - Cache results offline
+        /// Synchronized based on subscriptions
         /// </summary>
-        [XmlEnum("sync")]
-        Sync = 0x1,
+        [XmlEnum("sub")]
+        Subscriptions = 0x1,
         /// <summary>
-        /// Operate online only
+        /// Operate online only - no synchronization
         /// </summary>
-        [XmlEnum("online")]
+        [XmlEnum("none")]
         Online = 0x2,
         /// <summary>
-        /// Operate offline only
+        /// Replicate everything
         /// </summary>
-        [XmlEnum("offline")]
-        Offline = 0x4
+        [XmlEnum("replicate")]
+        All = 0x4
     }
 }

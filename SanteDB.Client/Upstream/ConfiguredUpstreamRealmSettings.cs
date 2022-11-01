@@ -31,7 +31,7 @@ namespace SanteDB.Client.Upstream
         /// <summary>
         /// Create a new configured realm service 
         /// </summary>
-        internal ConfiguredUpstreamRealmSettings(UpstreamConfigurationSection configuration)
+        public ConfiguredUpstreamRealmSettings(UpstreamConfigurationSection configuration)
         {
             if(configuration.Realm == null)
             {

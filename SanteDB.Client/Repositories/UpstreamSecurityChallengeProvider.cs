@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Http;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
@@ -22,6 +23,7 @@ namespace SanteDB.Client.Repositories
     {
         private readonly ISecurityChallengeService m_localSecurityChallengeService;
         private readonly IIdentityProviderService m_identityProvider;
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamSecurityChallengeProvider));
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Security Challenge Provider";
@@ -32,8 +34,9 @@ namespace SanteDB.Client.Repositories
         public UpstreamSecurityChallengeProvider(
             IRestClientFactory restClientFactory,
             IIdentityProviderService identityProvider,
+            IUpstreamManagementService upstreamManagementService,
             ILocalSecurityChallengeService localSecurityChallengeService = null,
-            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamIntegrationService)
+            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamIntegrationService)
         {
             this.m_localSecurityChallengeService = localSecurityChallengeService;
             this.m_identityProvider = identityProvider;
@@ -46,6 +49,11 @@ namespace SanteDB.Client.Repositories
             if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
                 return this.m_localSecurityChallengeService.Get(userName, principal);
+            }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not configured - skipping");
+                return new SecurityChallenge[0];
             }
             else
             {
@@ -62,6 +70,11 @@ namespace SanteDB.Client.Repositories
             {
                 return this.m_localSecurityChallengeService.Get(userKey, principal);
             }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not configured - skipping");
+                return new SecurityChallenge[0];
+            }
             else
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, principal))
@@ -76,9 +89,14 @@ namespace SanteDB.Client.Repositories
         public void Remove(string userName, Guid challengeKey, IPrincipal principal)
         {
             // Is this user a local user?
+            // Try to gather whether the user is upstream or not
             if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
                 this.m_localSecurityChallengeService.Remove(userName, challengeKey, principal);
+            }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not configured - skipping");
             }
             else
             {
@@ -97,6 +115,10 @@ namespace SanteDB.Client.Repositories
             if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
                 this.m_localSecurityChallengeService.Set(userName, challengeKey, response, principal);
+            }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not configured - skipping");
             }
             else
             {

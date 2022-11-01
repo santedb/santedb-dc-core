@@ -125,9 +125,7 @@ namespace SanteDB.Client.Rest
             };
 
             var oauthBehaviors = new List<RestServiceBehaviorConfiguration>(apiBehaviors) {
-                new RestServiceBehaviorConfiguration(typeof(ClientCertificateAccessBehavior)),
                 new RestServiceBehaviorConfiguration(typeof(SecurityPolicyEnforcementBehavior)),
-                new RestServiceBehaviorConfiguration(typeof(ClientAuthorizationAccessBehavior))
             };
 
             apiBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(TokenAuthorizationAccessBehavior)));
