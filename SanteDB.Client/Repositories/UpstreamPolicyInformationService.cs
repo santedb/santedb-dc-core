@@ -25,13 +25,14 @@ namespace SanteDB.Client.Repositories
     /// <summary>
     /// Represents a policy information service which communicates with an upstream policy information service
     /// </summary>
+    [PreferredService(typeof(IPolicyInformationService))]
     public class UpstreamPolicyInformationService : UpstreamServiceBase, IPolicyInformationService
     {
         private readonly ILocalizationService m_localizationSerice;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamPolicyInformationService));
 
         /// <inheritdoc/>
-        public string ServiceName => throw new NotImplementedException();
+        public string ServiceName => "Upstream Policy Information Service";
 
         /// <summary>
         /// DI ctor

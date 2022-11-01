@@ -13,6 +13,7 @@ using System.Text;
 
 namespace SanteDB.Client.Repositories
 {
+    [PreferredService(typeof(IRoleProviderService))]
     public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService
     {
         readonly ILocalizationService _LocalizationService;

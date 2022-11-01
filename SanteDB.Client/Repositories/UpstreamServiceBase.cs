@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Http;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Security;
@@ -18,6 +19,8 @@ namespace SanteDB.Client.Repositories
         private readonly IRestClientFactory m_restClientFactory;
         private IUpstreamIntegrationService m_upstreamIntegrationService;
 
+        protected readonly Tracer m_Tracer;
+
         /// <summary>
         /// Get whether the upstream is conifgured 
         /// </summary>
@@ -28,10 +31,19 @@ namespace SanteDB.Client.Repositories
         /// </summary>
         public UpstreamServiceBase(IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamIntegrationService upstreamIntegrationService = null)
         {
+            m_Tracer = new Tracer(GetType().Name); //Not nameof so that the non-abstract type is used.
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
             upstreamManagementService.RealmChanged += (o, e) => this.m_upstreamIntegrationService = e.UpstreamIntegrationService;
         }
+
+        /// <summary>
+        /// Gets a value that indicates whether the upstream 
+        /// </summary>
+        /// <param name="endpointType"></param>
+        /// <returns></returns>
+        public bool IsUpstreamAvailable(Core.Interop.ServiceEndpointType endpointType = ServiceEndpointType.AdministrationIntegrationService)
+            => IsUpstreamConfigured && (m_upstreamIntegrationService?.IsAvailable(endpointType) ?? false);
 
         /// <summary>
         /// Get client for the AMI 

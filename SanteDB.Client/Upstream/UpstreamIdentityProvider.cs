@@ -1,30 +1,65 @@
-﻿using SanteDB.Client.OAuth;
+﻿using SanteDB.Client.Exceptions;
+using SanteDB.Client.OAuth;
+using SanteDB.Client.Repositories;
 using SanteDB.Client.Services;
+using SanteDB.Core;
+using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.Rest.AMI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Security.Authentication;
 using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.Client.Upstream
 {
     [PreferredService(typeof(IIdentityProviderService))]
-    public class UpstreamIdentityProvider : IIdentityProviderService
+    public class UpstreamIdentityProvider : UpstreamServiceBase, IIdentityProviderService
     {
-        readonly IIdentityProviderService _LocalIdentityProvider;
+        readonly ILocalIdentityProviderService _LocalIdentityProvider;
         readonly IOAuthClient _OAuthClient;
+        readonly ILocalizationService _LocalizationService;
+        readonly IPolicyInformationService _RemotePolicyInformationService;
+        readonly ILocalPolicyInformationService _LocalPolicyInformationService;
+        readonly IRoleProviderService _RemoteRoleProviderService;
+        readonly ILocalRoleProviderService _LocalRoleProviderService;
+
+        readonly bool _CanSyncPolicies;
+        readonly bool _CanSyncRoles;
 
         public UpstreamIdentityProvider(
             IOAuthClient oauthClient,
+            IRestClientFactory restClientFactory,
+            ILocalizationService localizationService,
+            IUpstreamManagementService upstreamManagementService,
+            IPolicyInformationService remotePolicyInformationService,
+            IRoleProviderService remoteRoleProviderService,
+            ILocalPolicyInformationService localPolicyInformationService = null,
+            ILocalRoleProviderService localRoleProviderService = null,
+            IUpstreamIntegrationService upstreamIntegrationService = null,
             ILocalIdentityProviderService localIdentityProvider = null) // on initial configuration in online only mode there are no local users
+            : base(restClientFactory, upstreamManagementService, upstreamIntegrationService)
         {
             _LocalIdentityProvider = localIdentityProvider;
+            _LocalizationService = localizationService;
+            _RemotePolicyInformationService = remotePolicyInformationService;
+            _RemoteRoleProviderService = remoteRoleProviderService;
+            _LocalRoleProviderService = localRoleProviderService;
+            _LocalPolicyInformationService = localPolicyInformationService;
             _OAuthClient = oauthClient ?? throw new ArgumentNullException(nameof(oauthClient));
+
+            _CanSyncPolicies = null != _LocalPolicyInformationService && _RemotePolicyInformationService != _LocalPolicyInformationService;
+            _CanSyncRoles = null != _LocalRoleProviderService && _RemoteRoleProviderService != _LocalRoleProviderService;
         }
 
         public string ServiceName => "Upstream Identity Provider";
@@ -32,16 +67,134 @@ namespace SanteDB.Client.Upstream
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
 
-        public bool ShouldDoRemoteAuthentication(string userName) => true;
-
-        public void SynchronizeLocalIdentity(IClaimsPrincipal remoteIdentity)
+        public bool ShouldDoRemoteAuthentication(string userName)
         {
+            //Null local provider so we're in online-only or initial mode.
+            if (null == _LocalIdentityProvider || !IsUpstreamConfigured)
+            {
+                return true;
+            }
 
+            //Try to check if the local user is marked as local only.
+            var localuser = _LocalIdentityProvider.GetIdentity(userName);
+
+            if (localuser is IClaimsIdentity icl)
+            {
+                if (icl.Claims.FirstOrDefault(c => c.Type == SanteDBClaimTypes.LocalOnly) != null)
+                {
+                    return false;
+                }
+            }
+
+            return IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AuthenticationService);
         }
+
+        public void SynchronizeLocalIdentity(IClaimsPrincipal remoteIdentity, string password)
+        {
+            if (null == remoteIdentity)
+            {
+                throw new ArgumentNullException(nameof(remoteIdentity), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+            }
+
+            if (null == _LocalIdentityProvider) //If there is no local identity provider, then we don't need to do anything.
+            {
+                return;
+            }
+
+            var useridentity = remoteIdentity.Identity as IClaimsIdentity; //Coming from OAuth, there will always be one that represents the user.
+
+            var policiestosync = new List<string>();
+            var rolestosync = new List<string>();
+            string userid = null;
+
+            policiestosync.AddRange(remoteIdentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
+            rolestosync.AddRange(remoteIdentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
+
+            if (null != useridentity)
+            {
+                policiestosync.AddRange(useridentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
+                rolestosync.AddRange(useridentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
+
+                userid = useridentity.GetFirstClaimValue(SanteDBClaimTypes.SanteDBUserIdentifierClaim, SanteDBClaimTypes.Sid);
+            }
+
+            var localuser = _LocalIdentityProvider.GetIdentity(useridentity.Name);
+
+            if (null == localuser)
+            {
+                localuser = _LocalIdentityProvider.CreateIdentity(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
+            }
+            else
+            {
+                _LocalIdentityProvider.ChangePassword(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
+            }
+
+            if (_CanSyncPolicies)
+            {
+                foreach (var policyoid in policiestosync)
+                {
+                    var localpolicy = _LocalPolicyInformationService.GetPolicy(policyoid);
+
+                    if (null == localpolicy)
+                    {
+                        var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
+                        _LocalPolicyInformationService.CreatePolicy(remotepolicy, AuthenticationContext.SystemPrincipal);
+                    }
+                }
+            }
+
+            if (_CanSyncRoles)
+            {
+                var localroles = _LocalRoleProviderService.GetAllRoles();
+                foreach (var rolename in rolestosync)
+                {
+                    if (!localroles.Contains(rolename))
+                    {
+                        _LocalRoleProviderService.CreateRole(rolename, AuthenticationContext.SystemPrincipal);
+                    }
+
+                    var role = new SecurityRole { Name = rolename }; //TODO: Current implementations will not allow this to work locally.
+
+                    var rolepolicies = _RemotePolicyInformationService.GetPolicies(role);
+
+                    foreach (var policy in rolepolicies)
+                    {
+                        if (null == _LocalPolicyInformationService.GetPolicy(policy.Policy.Oid))
+                        {
+                            _LocalPolicyInformationService.CreatePolicy(policy.Policy, AuthenticationContext.SystemPrincipal);
+                        }
+
+                        _LocalPolicyInformationService.AddPolicies(role, policy.Rule, AuthenticationContext.SystemPrincipal, policy.Policy.Oid);
+                    }
+                }
+            }
+        }
+
+
 
         public void ChangeRemotePassword(string username, string newPassword)
         {
+            using (var amiclient = CreateAmiServiceClient())
+            {
+                var remoteuser = amiclient.GetUsers(u => u.UserName == username).CollectionItem?.OfType<SecurityUser>().FirstOrDefault();
 
+                if (null == remoteuser?.Key)
+                {
+                    throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = nameof(SecurityUser) }));
+                }
+
+                remoteuser.Password = newPassword;
+
+                try
+                {
+                    var result = amiclient.UpdateUser(remoteuser.Key.Value, new Core.Model.AMI.Auth.SecurityUserInfo(remoteuser) { PasswordOnly = true });
+
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+                    throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = remoteuser.Key.Value }), ex);
+                }
+            }
         }
 
         public void AddClaim(string userName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
@@ -55,57 +208,72 @@ namespace SanteDB.Client.Upstream
         }
 
         public IPrincipal Authenticate(string userName, string password)
-        {
-            if (ShouldDoRemoteAuthentication(userName))
-            {
-                try
-                {
-                    var result = _OAuthClient.AuthenticateUser(userName, password);
-
-                    SynchronizeLocalIdentity(result);
-
-                    return result;
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-
-                }
-            }
-            else if(_LocalIdentityProvider == null)
-            {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
-            }
-
-            return _LocalIdentityProvider.Authenticate(userName, password);
-        }
+            => Authenticate(userName, password, null);
 
         public IPrincipal Authenticate(string userName, string password, string tfaSecret)
         {
-            if (ShouldDoRemoteAuthentication(userName))
+            var authenticatingargs = new AuthenticatingEventArgs(userName);
+            Authenticating?.Invoke(this, authenticatingargs);
+
+            if (authenticatingargs.Cancel)
             {
-                try
+                m_Tracer.TraceVerbose("Authenticating Event signals cancel.");
+                if (authenticatingargs.Success)
                 {
-                    var result = _OAuthClient.AuthenticateUser(userName, password);
-
-                    SynchronizeLocalIdentity(result);
-
-                    return result;
+                    return authenticatingargs.Principal;
                 }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                else
                 {
-
+                    throw new AuthenticationException(_LocalizationService.GetString(ErrorMessageStrings.AUTH_CANCELLED));
                 }
             }
-            else if (_LocalIdentityProvider == null)
+
+            IClaimsPrincipal result = null;
+            try
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+
+                if (ShouldDoRemoteAuthentication(userName))
+                {
+                    try
+                    {
+                        result = _OAuthClient.AuthenticateUser(userName, password);
+
+                        SynchronizeLocalIdentity(result, password);
+
+                        return result;
+                    }
+                    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                    {
+                        throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_AUTH_ERR), ex);
+                    }
+                }
+                else if (_LocalIdentityProvider == null)
+                {
+                    throw new UpstreamIntegrationException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                }
+
+                if (null != tfaSecret)
+                {
+                    result = _LocalIdentityProvider.Authenticate(userName, password, tfaSecret) as IClaimsPrincipal;
+                }
+                else
+                {
+                    result = _LocalIdentityProvider.Authenticate(userName, password) as IClaimsPrincipal;
+                }
+
+                return result;
             }
-            return _LocalIdentityProvider.Authenticate(userName, password, tfaSecret);
+            finally
+            {
+                Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, result, null != result));
+            }
         }
+
+
 
         public void ChangePassword(string userName, string newPassword, IPrincipal principal)
         {
-            _LocalIdentityProvider.ChangePassword(userName, newPassword, principal);
+            _LocalIdentityProvider?.ChangePassword(userName, newPassword, principal);
             if (ShouldDoRemoteAuthentication(userName))
             {
                 ChangeRemotePassword(userName, newPassword);
@@ -118,7 +286,14 @@ namespace SanteDB.Client.Upstream
             {
                 throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            return _LocalIdentityProvider.CreateIdentity(userName, password, principal);
+
+            var result = _LocalIdentityProvider.CreateIdentity(userName, password, principal);
+
+            _LocalIdentityProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
+
+            result = _LocalIdentityProvider.GetIdentity(userName);
+
+            return result;
         }
 
         public void DeleteIdentity(string userName, IPrincipal principal)
@@ -132,7 +307,26 @@ namespace SanteDB.Client.Upstream
 
         public AuthenticationMethod GetAuthenticationMethods(string userName)
         {
-            throw new NotImplementedException();
+            if (null == _LocalIdentityProvider)
+            {
+                return AuthenticationMethod.Online;
+            }
+
+            try
+            {
+                var claims = _LocalIdentityProvider.GetClaims(userName);
+
+                if (claims?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true)
+                {
+                    return AuthenticationMethod.Local;
+                }
+            }
+            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+
+            }
+
+            return AuthenticationMethod.Local | AuthenticationMethod.Online;
         }
 
         public IEnumerable<IClaim> GetClaims(string userName)
@@ -179,7 +373,7 @@ namespace SanteDB.Client.Upstream
                 {
                     var result = _OAuthClient.Refresh(oacp.GetRefreshToken());
 
-                    SynchronizeLocalIdentity(result);
+                    SynchronizeLocalIdentity(result, null);
 
                     return result;
                 }

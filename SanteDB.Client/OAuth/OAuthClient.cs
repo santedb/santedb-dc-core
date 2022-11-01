@@ -34,7 +34,7 @@ namespace SanteDB.Client.OAuth
         IRestClient _AuthRestClient;
 
         // Claim map
-        private readonly Dictionary<String, String> claimMap = new Dictionary<string, string>() {
+        private static readonly Dictionary<String, String> s_ClaimMap = new Dictionary<string, string>() {
             { "name", SanteDBClaimTypes.DefaultNameClaimType },
             { "role", SanteDBClaimTypes.DefaultRoleClaimType },
             { "sub", SanteDBClaimTypes.Sid },
@@ -185,6 +185,20 @@ namespace SanteDB.Client.OAuth
             return CreatePrincipalFromResponse(response);
         }
 
+        private static IClaim CreateClaimFromResponse(string type, string value)
+        {
+            if (s_ClaimMap.ContainsKey(type)){
+                type = s_ClaimMap[type];
+            }
+
+            if (type == SanteDBClaimTypes.SanteDBScopeClaim && value.StartsWith("ua."))
+            {
+                value = $"{PermissionPolicyIdentifiers.UnrestrictedAll}{value.Substring(2)}";
+            }
+
+            return new SanteDBClaim(type, value);
+        }
+
         private IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response)
         {
             var tokenvalidationresult = _TokenHandler.ValidateToken(response.IdToken, _TokenValidationParameters);
@@ -204,23 +218,23 @@ namespace SanteDB.Client.OAuth
                 }
                 else if (claim.Value is string s)
                 {
-                    claims.Add(new SanteDBClaim(claim.Key, s));
+                    claims.Add(CreateClaimFromResponse(claim.Key, s));
                 }
                 else if (claim.Value is string[] sarr)
                 {
-                    claims.AddRange(sarr.Select(a => new SanteDBClaim(claim.Key, a)));
+                    claims.AddRange(sarr.Select(a => CreateClaimFromResponse(claim.Key, a)));
                 }
                 else if (claim.Value is IEnumerable<string> enumerable)
                 {
-                    claims.AddRange(enumerable.Select(v => new SanteDBClaim(claim.Key, v)));
+                    claims.AddRange(enumerable.Select(v => CreateClaimFromResponse(claim.Key, v)));
                 }
                 else if (claim.Value is IEnumerable<object> objenumerable)
                 {
-                    claims.AddRange(objenumerable.Select(v => new SanteDBClaim(claim.Key, v.ToString())));
+                    claims.AddRange(objenumerable.Select(v => CreateClaimFromResponse(claim.Key, v.ToString())));
                 }
                 else
                 {
-                    claims.Add(new SanteDBClaim(claim.Key, claim.Value.ToString()));
+                    claims.Add(CreateClaimFromResponse(claim.Key, claim.Value.ToString()));
                 }
             }
 
