@@ -16,15 +16,21 @@ namespace SanteDB.Client.Repositories
     public class UpstreamServiceBase
     {
         private readonly IRestClientFactory m_restClientFactory;
-        private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
+        private IUpstreamIntegrationService m_upstreamIntegrationService;
+
+        /// <summary>
+        /// Get whether the upstream is conifgured 
+        /// </summary>
+        protected bool IsUpstreamConfigured => this.m_upstreamIntegrationService != null;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UpstreamServiceBase(IRestClientFactory restClientFactory, IUpstreamIntegrationService upstreamIntegrationService = null)
+        public UpstreamServiceBase(IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamIntegrationService upstreamIntegrationService = null)
         {
-                this.m_restClientFactory = restClientFactory;
+            this.m_restClientFactory = restClientFactory;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
+            upstreamManagementService.RealmChanged += (o, e) => this.m_upstreamIntegrationService = e.UpstreamIntegrationService;
         }
 
         /// <summary>

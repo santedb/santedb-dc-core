@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Acts;
@@ -27,6 +28,7 @@ namespace SanteDB.Client.Repositories
     public class UpstreamPolicyInformationService : UpstreamServiceBase, IPolicyInformationService
     {
         private readonly ILocalizationService m_localizationSerice;
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamPolicyInformationService));
 
         /// <inheritdoc/>
         public string ServiceName => throw new NotImplementedException();
@@ -36,7 +38,8 @@ namespace SanteDB.Client.Repositories
         /// </summary>
         public UpstreamPolicyInformationService(ILocalizationService localizationService,
             IRestClientFactory restClientFactory,
-            IUpstreamIntegrationService integrationService = null) : base(restClientFactory, integrationService)
+            IUpstreamManagementService upstreamManagementService,
+            IUpstreamIntegrationService integrationService = null) : base(restClientFactory, upstreamManagementService, integrationService)
         {
             this.m_localizationSerice = localizationService;
         }
@@ -44,6 +47,16 @@ namespace SanteDB.Client.Repositories
         /// <inheritdoc/>
         public void AddPolicies(object securable, PolicyGrantType rule, IPrincipal principal, params string[] policyOids)
         {
+            if(securable == null)
+            {
+                throw new ArgumentNullException(nameof(securable));
+            }
+            else if(!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
+                return;
+            }
+
             try
             {
                 using (var client = this.CreateAmiServiceClient())
@@ -64,6 +77,16 @@ namespace SanteDB.Client.Repositories
         /// <inheritdoc/>
         public IEnumerable<IPolicyInstance> GetPolicies(object securable)
         {
+            if (securable == null)
+            {
+                throw new ArgumentNullException(nameof(securable));
+            }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
+                return new IPolicyInstance[0];
+            }
+
             try
             {
                 switch (securable)
@@ -117,6 +140,12 @@ namespace SanteDB.Client.Repositories
         /// <inheritdoc/>
         public IEnumerable<IPolicy> GetPolicies()
         {
+            if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
+                return new IPolicy[0];
+            }
+
             try
             {
                 using (var client = this.CreateAmiServiceClient())
@@ -156,6 +185,16 @@ namespace SanteDB.Client.Repositories
         /// <inheritdoc/>
         public void RemovePolicies(object securable, IPrincipal principal, params string[] oid)
         {
+            if (securable == null)
+            {
+                throw new ArgumentNullException(nameof(securable));
+            }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
+                return;
+            }
+
             try
             {
                 var policyKeys = this.GetPolicies(securable).Where(o => oid.Contains(o.Policy.Oid)).Select(o => o.Policy.Key).ToList();

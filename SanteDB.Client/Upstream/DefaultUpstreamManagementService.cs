@@ -56,7 +56,7 @@ namespace SanteDB.Client.Upstream
         public IUpstreamRealmSettings GetSettings() => this.m_upstreamSettings;
 
         /// <inheritdoc/>
-        public void Join(IUpstreamRealmSettings targetRealm)
+        public void Join(IUpstreamRealmSettings targetRealm, bool replaceExistingRegistration)
         {
             throw new NotImplementedException();
         }
