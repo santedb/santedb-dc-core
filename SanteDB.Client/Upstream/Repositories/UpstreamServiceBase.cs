@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Http;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Security;
@@ -16,23 +17,43 @@ namespace SanteDB.Client.Upstream.Repositories
     public abstract class UpstreamServiceBase
     {
         private readonly IRestClientFactory m_restClientFactory;
-        protected IUpstreamIntegrationService m_upstreamIntegrationService;
+        private readonly IUpstreamAvailabilityProvider m_upstreamAvailabilityProvider;
+        private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
+        private readonly IUpstreamManagementService m_upstreamManagementService;
+        protected readonly Tracer m_tracer;
 
         /// <summary>
         /// Get whether the upstream is conifgured 
         /// </summary>
-        protected bool IsUpstreamConfigured => this.m_upstreamIntegrationService != null;
+        protected bool IsUpstreamConfigured => this.m_upstreamManagementService.IsConfigured();
+
+        /// <summary>
+        /// Get the upstream management service
+        /// </summary>
+        protected IUpstreamIntegrationService UpstreamIntegrationService => this.m_upstreamIntegrationService;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UpstreamServiceBase(IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamIntegrationService upstreamIntegrationService = null)
+        public UpstreamServiceBase(IRestClientFactory restClientFactory, 
+            IUpstreamManagementService upstreamManagementService, 
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            IUpstreamIntegrationService upstreamIntegrationService = null)
         {
+            this.m_tracer = new Tracer(GetType().Name); //Not nameof so that the non-abstract type is used.
             this.m_restClientFactory = restClientFactory;
+            this.m_upstreamAvailabilityProvider = upstreamAvailabilityProvider;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
-
-            upstreamManagementService.RealmChanged += (o, e) => this.m_upstreamIntegrationService = e.UpstreamIntegrationService;
+            this.m_upstreamManagementService = upstreamManagementService;
         }
+
+        /// <summary>
+        /// Gets a value that indicates whether the upstream 
+        /// </summary>
+        /// <param name="endpointType"></param>
+        /// <returns></returns>
+        public bool IsUpstreamAvailable(Core.Interop.ServiceEndpointType endpointType)
+            => IsUpstreamConfigured && this.m_upstreamAvailabilityProvider.IsAvailable(endpointType);
 
         /// <summary>
         /// Get client for the AMI 
@@ -47,7 +68,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// </summary>
         protected IRestClient CreateRestClient(ServiceEndpointType serviceEndpointType, IPrincipal authenticatedAs)
         {
-            var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService);
+            var client = this.m_restClientFactory.GetRestClientFor(serviceEndpointType);
             if (authenticatedAs == null)
             {
                 client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);

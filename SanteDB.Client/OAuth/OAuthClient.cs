@@ -34,8 +34,10 @@ namespace SanteDB.Client.OAuth
         IRestClient _AuthRestClient;
 
         // Claim map
-        private readonly Dictionary<String, String> claimMap = new Dictionary<string, string>() {
+        private static readonly Dictionary<String, String> s_ClaimMap = new Dictionary<string, string>() {
+            { "sid", SanteDBClaimTypes.Sid },
             { "name", SanteDBClaimTypes.DefaultNameClaimType },
+            { "realm", SanteDBClaimTypes.Realm },
             { "role", SanteDBClaimTypes.DefaultRoleClaimType },
             { "sub", SanteDBClaimTypes.Sid },
             { "exp", SanteDBClaimTypes.Expiration },
@@ -90,7 +92,7 @@ namespace SanteDB.Client.OAuth
         {
             _Tracer = new Tracer(nameof(OAuthClient));
             _UpstreamManagement = upstreamManagement;
-            _UpstreamManagement.RealmChanged += UpstreamRealmChanged;
+            _UpstreamManagement.RealmChanging += UpstreamRealmChanging;
             _RealmSettings = upstreamManagement?.GetSettings();
             _Localization = localization;
             _RestClientFactory = restClientFactory;
@@ -133,7 +135,7 @@ namespace SanteDB.Client.OAuth
             }
         }
 
-        protected virtual void UpstreamRealmChanged(object sender, EventArgs eventArgs)
+        protected virtual void UpstreamRealmChanging(object sender, UpstreamRealmChangedEventArgs eventArgs)
         {
             try
             {
@@ -141,7 +143,7 @@ namespace SanteDB.Client.OAuth
                 _AuthRestClient = null;
                 _DiscoveryDocument = null;
                 _Tracer.TraceVerbose("Getting new Upstream Realm Settings.");
-                _RealmSettings = _UpstreamManagement?.GetSettings();
+                _RealmSettings = eventArgs.UpstreamRealmSettings;
                 _Tracer.TraceVerbose("Successfully updated Upstream Realm Settings.");
                 SetTokenValidationParameters();
             }
@@ -185,6 +187,20 @@ namespace SanteDB.Client.OAuth
             return CreatePrincipalFromResponse(response);
         }
 
+        private static IClaim CreateClaimFromResponse(string type, string value)
+        {
+            if (s_ClaimMap.ContainsKey(type)){
+                type = s_ClaimMap[type];
+            }
+
+            if (type == SanteDBClaimTypes.SanteDBScopeClaim && value.StartsWith("ua."))
+            {
+                value = $"{PermissionPolicyIdentifiers.UnrestrictedAll}{value.Substring(2)}";
+            }
+
+            return new SanteDBClaim(type, value);
+        }
+
         private IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response)
         {
             var tokenvalidationresult = _TokenHandler.ValidateToken(response.IdToken, _TokenValidationParameters);
@@ -204,23 +220,23 @@ namespace SanteDB.Client.OAuth
                 }
                 else if (claim.Value is string s)
                 {
-                    claims.Add(new SanteDBClaim(claim.Key, s));
+                    claims.Add(CreateClaimFromResponse(claim.Key, s));
                 }
                 else if (claim.Value is string[] sarr)
                 {
-                    claims.AddRange(sarr.Select(a => new SanteDBClaim(claim.Key, a)));
+                    claims.AddRange(sarr.Select(a => CreateClaimFromResponse(claim.Key, a)));
                 }
                 else if (claim.Value is IEnumerable<string> enumerable)
                 {
-                    claims.AddRange(enumerable.Select(v => new SanteDBClaim(claim.Key, v)));
+                    claims.AddRange(enumerable.Select(v => CreateClaimFromResponse(claim.Key, v)));
                 }
                 else if (claim.Value is IEnumerable<object> objenumerable)
                 {
-                    claims.AddRange(objenumerable.Select(v => new SanteDBClaim(claim.Key, v.ToString())));
+                    claims.AddRange(objenumerable.Select(v => CreateClaimFromResponse(claim.Key, v.ToString())));
                 }
                 else
                 {
-                    claims.Add(new SanteDBClaim(claim.Key, claim.Value.ToString()));
+                    claims.Add(CreateClaimFromResponse(claim.Key, claim.Value.ToString()));
                 }
             }
 
@@ -243,7 +259,7 @@ namespace SanteDB.Client.OAuth
                 request.ClientId = _RealmSettings.LocalClientName;
             }
 
-            return _AuthRestClient.Post<OAuthTokenRequest, OAuthTokenResponse>(GetTokenEndpoint(), "application/x-www-form-urlencoded", request);
+            return GetRestClient().Post<OAuthTokenRequest, OAuthTokenResponse>(GetTokenEndpoint(), "application/x-www-form-urlencoded", request);
         }
 
         private string GetTokenEndpoint()

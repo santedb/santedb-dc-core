@@ -16,11 +16,11 @@ namespace SanteDB.Client.Http
         /// <summary>
         /// Get credentials on the specified <paramref name="context"/>
         /// </summary>
-        public Credentials GetCredentials(IRestClient context) => this.GetCredentials(AuthenticationContext.Current.Principal);
+        public RestRequestCredentials GetCredentials(IRestClient context) => this.GetCredentials(AuthenticationContext.Current.Principal);
 
         /// <summary>
         /// Get credentials for the specified principal
         /// </summary>
-        public Credentials GetCredentials(IPrincipal principal) => new UpstreamDeviceCredentials(principal);
+        public RestRequestCredentials GetCredentials(IPrincipal principal) => new UpstreamDeviceCredentials(principal);
     }
 }

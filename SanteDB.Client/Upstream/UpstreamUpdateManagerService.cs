@@ -30,6 +30,7 @@ namespace SanteDB.Client.Upstream
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamUpdateManagerService));
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
+        private readonly IUpstreamAvailabilityProvider m_upstreamAvailabilityProvider;
         private readonly ClientConfigurationSection m_configuration;
         private readonly ILocalizationService m_localizationService;
         private readonly IUserInterfaceInteractionProvider m_userInterfaceService;
@@ -50,10 +51,12 @@ namespace SanteDB.Client.Upstream
             IUserInterfaceInteractionProvider userInterface,
             IAppletManagerService appletManager,
             ITickleService tickleService,
-            IUpstreamIntegrationService upstreamIntegrationService = null)
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            IUpstreamIntegrationService upstreamIntegrationService)
         {
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
+            this.m_upstreamAvailabilityProvider = upstreamAvailabilityProvider;
             this.m_configuration = configurationManager.GetSection<ClientConfigurationSection>();
             this.m_localizationService = localizationService;
             this.m_userInterfaceService = userInterface;
@@ -151,7 +154,7 @@ namespace SanteDB.Client.Upstream
 
             try
             {
-                if (this.m_upstreamIntegrationService.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                if (this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                 {
                     // Are we configured to auto-update?
                     if (nonInteractive && !this.m_configuration.AutoUpdateApplets)

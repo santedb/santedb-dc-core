@@ -35,8 +35,10 @@ namespace SanteDB.Client.Upstream.Repositories
             IRestClientFactory restClientFactory,
             IIdentityProviderService identityProvider,
             IUpstreamManagementService upstreamManagementService,
-            ILocalSecurityChallengeService localSecurityChallengeService = null,
-            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamIntegrationService)
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            IUpstreamIntegrationService upstreamIntegrationService = null,
+            ILocalSecurityChallengeService localSecurityChallengeService = null
+            ) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_localSecurityChallengeService = localSecurityChallengeService;
             this.m_identityProvider = identityProvider;

@@ -1,4 +1,7 @@
-﻿using SanteDB.Core.Services;
+﻿using SanteDB.Core.Http;
+using SanteDB.Core.Interop;
+using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,18 +21,20 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(UpstreamSecurityChallengeProvider)
         };
         private readonly IServiceManager m_serviceManager;
-        private IUpstreamIntegrationService m_upstreamIntegration;
+        private readonly IRestClientFactory m_restClientFactory;
+        private readonly IUpstreamManagementService m_upstreamManagementService;
+        private IDictionary<Type, IRepositoryService> m_serviceRepositories;
 
         /// <summary>
         /// Constructor
         /// </summary>
         public UpstreamRepositoryFactory(IServiceManager serviceManager,
-            IUpstreamManagementService upstreamManagementService,
-            IUpstreamIntegrationService upstreamIntegrationService = null)
+            IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService)
         {
             this.m_serviceManager = serviceManager;
-            this.m_upstreamIntegration = upstreamIntegrationService;
-            upstreamManagementService.RealmChanged += (o, e) => this.m_upstreamIntegration = e.UpstreamIntegrationService;
+            this.m_restClientFactory = restClientFactory;
+            this.m_upstreamManagementService = upstreamManagementService;
         }
 
         /// <inheritdoc/>
@@ -49,7 +54,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
             // Not configured
-            if(this.m_upstreamIntegration == null)
+            if(!this.m_upstreamManagementService.IsConfigured())
             {
                 serviceInstance = false;
                 return false;
@@ -63,12 +68,50 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             else if(serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IRepositoryService<>))
             {
-                var instance = this.m_upstreamIntegration.GetUpstreamRepository(serviceType.GenericTypeArguments[0]);
+                var instance = this.GetUpstreamRepository(serviceType.GenericTypeArguments[0]);
                 serviceInstance = instance;
                 return instance != null;
             }
             serviceInstance = null;
             return false;
+        }
+
+
+        /// <summary>
+        /// Get upstream repository for the specified type
+        /// </summary>
+        public IRepositoryService GetUpstreamRepository(Type forType)
+        {
+            if (this.m_serviceRepositories == null)
+            {
+                try
+                {
+                    var tEndpointMap = new Dictionary<Type, IRepositoryService>();
+                    var serializationBinder = new ModelSerializationBinder();
+                    using (var hdsiClient = this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService))
+                    {
+                        hdsiClient.Options<ServiceOptions>("/").Resources.ForEach(o => tEndpointMap.Add(o.ResourceType, this.m_serviceManager.CreateInjected(typeof(HdsiUpstreamRepository<>).MakeGenericType(o.ResourceType)) as IRepositoryService));
+                    }
+                    using (var amiClient = this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService))
+                    {
+                        amiClient.Options<ServiceOptions>("/").Resources.ForEach(o => tEndpointMap.Add(o.ResourceType, this.m_serviceManager.CreateInjected(typeof(AmiUpstreamRepository<>).MakeGenericType(o.ResourceType)) as IRepositoryService));
+                    }
+                    this.m_serviceRepositories = tEndpointMap;
+                }
+                catch (Exception e)
+                {
+                    return null;
+                }
+            }
+
+            if (this.m_serviceRepositories.TryGetValue(forType, out var repositoryService))
+            {
+                return repositoryService;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

@@ -25,14 +25,31 @@ namespace SanteDB.Client.Upstream.Repositories
         where TModel : IdentifiedData, new()
         where TCollection : IResourceCollection
     {
-        protected readonly ServiceEndpointType m_endpoint;
-        protected readonly IDataCachingService m_cacheService;
-        protected readonly ILocalizationService m_localeService;
+        private readonly ServiceEndpointType m_endpoint;
+        private readonly IDataCachingService m_cacheService;
+        private readonly ILocalizationService m_localeService;
+
+        /// <summary>
+        /// Gets the localization service
+        /// </summary>
+        protected ILocalizationService LocalizationService => this.m_localeService;
+
+        /// <summary>
+        /// Gets the data caching service
+        /// </summary>
+        protected IDataCachingService DataCachingService => this.m_cacheService;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        protected UpstreamRepositoryServiceBase(ServiceEndpointType serviceEndpoint, ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamIntegrationService)
+        protected UpstreamRepositoryServiceBase(
+            ServiceEndpointType serviceEndpoint, 
+            ILocalizationService localizationService, 
+            IDataCachingService cacheService, 
+            IRestClientFactory restClientFactory, 
+            IUpstreamManagementService upstreamManagementService, 
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            IUpstreamIntegrationService upstreamIntegrationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_endpoint = serviceEndpoint;
             this.m_cacheService = cacheService;
@@ -136,11 +153,11 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             if (data is IHasTemplate iht)
             {
-                this.m_upstreamIntegrationService.HarmonizeTemplateId(iht);
+                this.UpstreamIntegrationService.HarmonizeTemplateId(iht);
             }
             else if (data is IResourceCollection irc)
             {
-                irc.Item.OfType<IHasTemplate>().ToList().ForEach(r => this.m_upstreamIntegrationService.HarmonizeTemplateId(r));
+                irc.Item.OfType<IHasTemplate>().ToList().ForEach(r => this.UpstreamIntegrationService.HarmonizeTemplateId(r));
             }
 
 
@@ -168,11 +185,11 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             if (data is IHasTemplate iht)
             {
-                this.m_upstreamIntegrationService.HarmonizeTemplateId(iht);
+                this.UpstreamIntegrationService.HarmonizeTemplateId(iht);
             }
             else if (data is IResourceCollection irc)
             {
-                irc.Item.OfType<IHasTemplate>().ToList().ForEach(r => this.m_upstreamIntegrationService.HarmonizeTemplateId(r));
+                irc.Item.OfType<IHasTemplate>().ToList().ForEach(r => this.UpstreamIntegrationService.HarmonizeTemplateId(r));
             }
 
 

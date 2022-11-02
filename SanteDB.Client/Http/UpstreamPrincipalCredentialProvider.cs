@@ -13,9 +13,9 @@ namespace SanteDB.Client.Http
     public class UpstreamPrincipalCredentialProvider : ICredentialProvider
     {
         /// <inheritdoc/>
-        public Credentials GetCredentials(IRestClient context) => this.GetCredentials(AuthenticationContext.Current.Principal);
+        public RestRequestCredentials GetCredentials(IRestClient context) => this.GetCredentials(AuthenticationContext.Current.Principal);
 
         /// <inheritdoc/>
-        public Credentials GetCredentials(IPrincipal principal) => new UpstreamPrincipalCredentials(principal);
+        public RestRequestCredentials GetCredentials(IPrincipal principal) => new UpstreamPrincipalCredentials(principal);
     }
 }

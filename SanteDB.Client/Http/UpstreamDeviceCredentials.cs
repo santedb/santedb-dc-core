@@ -1,10 +1,12 @@
 ﻿using SanteDB.Client.Upstream.Management;
 using SanteDB.Core;
+using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
+using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace SanteDB.Client.Http
     /// <summary>
     /// Pricipal based credentials
     /// </summary>
-    public class UpstreamDeviceCredentials : UpstreamPrincipalCredentials
+    public class UpstreamDeviceCredentials : RestRequestCredentials
     {
 
         // Upstream integration service
@@ -33,26 +35,17 @@ namespace SanteDB.Client.Http
             this.m_upstreamConfiguration = ApplicationServiceContext.Current.GetService<IUpstreamIntegrationService>() as ConfiguredUpstreamRealmSettings;
         }
 
-        /// <inheritdoc/>
-        protected override bool SetCredentials(IIdentity identity, HttpWebRequest webRequest)
+        /// <summary>
+        /// Set the credentials for this
+        /// </summary>
+        public override void SetCredentials(HttpWebRequest webRequest)
         {
-            if(!base.SetCredentials(identity, webRequest) && identity is IDeviceIdentity deviceIdentity)
+            if (this.m_upstreamConfiguration != null)
             {
-                if (deviceIdentity.Name.Equals(this.m_upstreamConfiguration.LocalDeviceName, StringComparison.OrdinalIgnoreCase))
-                {
-                    var headerValue = Encoding.UTF8.GetBytes($"{this.m_upstreamConfiguration.LocalDeviceName}:{this.m_upstreamConfiguration.LocalDeviceSecret}");
-                    webRequest.Headers.Add(SanteDBClaimTypes.BasicHttpClientClaimHeaderName, $"BAISC {Convert.ToBase64String(headerValue)}");
-                    return true;
-                }
-                else
-                {
-                    throw new InvalidOperationException(ErrorMessages.PRINCIPAL_NOT_APPROPRIATE);
-                }
-            }
-            else
-            {
-                return false;
+                var headerValue = Encoding.UTF8.GetBytes($"{this.m_upstreamConfiguration.LocalDeviceName}:{this.m_upstreamConfiguration.LocalDeviceSecret}");
+                webRequest.Headers.Add(ExtendedHttpHeaderNames.HttpDeviceCredentialHeaderName, $"BASIC {Convert.ToBase64String(headerValue)}");
             }
         }
+
     }
 }

@@ -14,7 +14,7 @@ namespace SanteDB.Client.Http
     /// <summary>
     /// Represents a credential 
     /// </summary>
-    public class UpstreamPrincipalCredentials : Credentials
+    public class UpstreamPrincipalCredentials : RestRequestCredentials
     {
 
         /// <summary>

@@ -19,7 +19,12 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// DI constructor
         /// </summary>
-        public HdsiUpstreamRepository(ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamIntegrationService upstreamIntegrationService = null) : base(ServiceEndpointType.HealthDataService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamIntegrationService)
+        public HdsiUpstreamRepository(ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService, 
+            IUpstreamIntegrationService upstreamIntegrationService,
+            IUpstreamAvailabilityProvider upstreamAvailability
+            ) 
+            : base(ServiceEndpointType.HealthDataService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService)
         {
         }
     }

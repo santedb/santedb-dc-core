@@ -38,7 +38,7 @@ namespace SanteDB.Client.Upstream.Management
     /// <summary>
     /// An upstream management service which manages the upstream
     /// </summary>
-    [ServiceProvider("Upstream Management", Type = ServiceInstantiationType.PerCall)]
+    [ServiceProvider("Upstream Management", Type = ServiceInstantiationType.Singleton)]
     public class DefaultUpstreamManagementService : IUpstreamManagementService
     {
         private readonly ILocalizationService m_localizationService;
@@ -84,6 +84,9 @@ namespace SanteDB.Client.Upstream.Management
 
         /// <inheritdoc/>
         public string ServiceName => "Default Upstream Management Service";
+
+        /// <inheritdoc/>
+        public event EventHandler<UpstreamRealmChangedEventArgs> RealmChanging;
 
         /// <inheritdoc/>
         public event EventHandler<UpstreamRealmChangedEventArgs> RealmChanged;
@@ -168,14 +171,8 @@ namespace SanteDB.Client.Upstream.Management
                     }
                 }
 
-                this.m_serviceManager.AddServiceProvider(typeof(UpstreamIdentityProvider));
-
-                this.m_serviceManager.RemoveServiceProvider(typeof(IPolicyInformationService));
-                this.m_serviceManager.RemoveServiceProvider(typeof(IIdentityDomainRepositoryService));
-                this.m_serviceManager.RemoveServiceProvider(typeof(ISecurityRepositoryService));
-                this.m_serviceManager.AddServiceProvider(typeof(UpstreamPolicyInformationService));
-                this.m_serviceManager.AddServiceProvider(typeof(UpstreamRepositoryFactory));
-                this.m_serviceManager.AddServiceProvider(typeof(UpstreamSecurityRepository));
+                // Invoke changing handler
+                this.RealmChanging?.Invoke(this, new UpstreamRealmChangedEventArgs(targetRealm));
 
                 // Generate the device secret or certificate
                 var deviceCredential = this.m_configuration.Credentials.First(o => o.CredentialType == UpstreamCredentialType.Device);
@@ -207,8 +204,9 @@ namespace SanteDB.Client.Upstream.Management
 
                     this.CreateDeviceEntity(existingDevice);
 
-                    if (targetRealm.Realm.Scheme == "https" &&
-                        this.m_restConfiguration.Client.Find(o => o.Name == ServiceEndpointType.AuthenticationService.ToString()).Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
+                    var authEpConfiguration = this.m_restConfiguration.Client.Find(o => o.Name == ServiceEndpointType.AuthenticationService.ToString());
+                    if (targetRealm.Realm.Scheme == "https" && 
+                        authEpConfiguration.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
                     {
 
                         var subjectName = $"{targetRealm.LocalDeviceName}.{targetRealm.Realm.Host}";
@@ -230,11 +228,11 @@ namespace SanteDB.Client.Upstream.Management
                             if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
                                 submissionResult.CertificatePkcs != null)
                             {
-                                var combinedCertificate = this.m_certificateEnrolment.Recombine(submissionResult.GetCertificiate(), privateKey);
+                                deviceCertificate = this.m_certificateEnrolment.Recombine(submissionResult.GetCertificiate(), privateKey);
                                 using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
                                 {
                                     store.Open(OpenFlags.ReadWrite);
-                                    store.Add(combinedCertificate);
+                                    store.Add(deviceCertificate);
                                     store.Close();
                                 }
                             }
@@ -244,6 +242,16 @@ namespace SanteDB.Client.Upstream.Management
                             }
                         }
 
+                        authEpConfiguration.Binding.Security.CredentialProvider = null; // No need for credentials on OAUTH since the certificate is our credential
+
+                        // Update other configurations to use our shiny new device certificate
+                        foreach(var ep in this.m_restConfiguration.Client)
+                        {
+                            if(ep.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
+                            {
+                                ep.Binding.Security.ClientCertificate = new Core.Security.Configuration.X509ConfigurationElement(deviceCertificate);
+                            }
+                        }
                     }
                     EntitySource.Current = new EntitySource(new RepositoryEntitySource());
 
@@ -301,12 +309,12 @@ namespace SanteDB.Client.Upstream.Management
                         Security = new RestClientSecurityConfiguration()
                         {
                             AuthRealm = targetRealm.Realm.Host,
+                            Mode = endpoint.SecurityScheme,
                             PreemptiveAuthentication = true,
                             CredentialProvider = endpoint.SecurityScheme.HasFlag(Core.Http.Description.SecurityScheme.Bearer) || endpoint.SecurityScheme.HasFlag(Core.Http.Description.SecurityScheme.ClientCertificate) ?
-                                (ICredentialProvider)new UpstreamPrincipalCredentialProvider() : endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth) ?
-                                new UpstreamDeviceCredentialProvider() : null,
+                                (ICredentialProvider)new UpstreamPrincipalCredentialProvider() : endpoint.ServiceType == ServiceEndpointType.AuthenticationService ? (ICredentialProvider)new UpstreamDeviceCredentialProvider() : null,
                             CertificateValidatorXml = new Core.Configuration.TypeReferenceConfiguration(typeof(UserInterface.UserInterfaceCertificateValidator))
-
+                            
                         },
                         ContentTypeMapper = new DefaultContentTypeMapper(),
                         OptimizationMethod = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression) ? Core.Http.Description.HttpCompressionAlgorithm.Gzip : Core.Http.Description.HttpCompressionAlgorithm.None,

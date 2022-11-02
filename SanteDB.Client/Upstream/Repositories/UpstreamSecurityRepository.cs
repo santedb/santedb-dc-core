@@ -38,7 +38,8 @@ namespace SanteDB.Client.Upstream.Repositories
             IUpstreamManagementService upstreamManagementService,
             ILocalizationService localizationService,
             IAdhocCacheService adhocCacheService,
-            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamIntegrationService)
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            IUpstreamIntegrationService upstreamIntegrationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_localizationService = localizationService;
             this.m_adhocCache = adhocCacheService;
