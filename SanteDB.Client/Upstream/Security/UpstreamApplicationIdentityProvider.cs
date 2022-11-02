@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Security.Principal;
 using System.Text;
 
-namespace SanteDB.Client.Upstream
+namespace SanteDB.Client.Upstream.Security
 {
     [PreferredService(typeof(IApplicationIdentityProviderService))]
     public class UpstreamApplicationIdentityProvider : IApplicationIdentityProviderService
@@ -39,7 +39,7 @@ namespace SanteDB.Client.Upstream
 
         public void AddClaim(string applicationName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
-            if(_LocalApplicationIdentityProvider == null)
+            if (_LocalApplicationIdentityProvider == null)
             {
                 throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
             }

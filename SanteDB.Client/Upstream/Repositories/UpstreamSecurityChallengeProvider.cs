@@ -13,7 +13,7 @@ using System.Linq;
 using System.Security.Principal;
 using System.Text;
 
-namespace SanteDB.Client.Repositories
+namespace SanteDB.Client.Upstream.Repositories
 {
     /// <summary>
     /// Remote security challenge provider repository

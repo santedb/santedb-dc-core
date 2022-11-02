@@ -1,4 +1,4 @@
-﻿using SanteDB.Client.Upstream;
+﻿using SanteDB.Client.Upstream.Management;
 using SanteDB.Core;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;

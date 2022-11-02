@@ -11,7 +11,7 @@ using System.Runtime.ExceptionServices;
 using System.Security.Principal;
 using System.Text;
 
-namespace SanteDB.Client.Upstream
+namespace SanteDB.Client.Upstream.Security
 {
     [PreferredService(typeof(IIdentityProviderService))]
     public class UpstreamIdentityProvider : IIdentityProviderService
@@ -48,7 +48,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null) // If this is online only configured - local not allowed
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
 
             _LocalIdentityProvider?.AddClaim(userName, claim, principal, expiry);
@@ -71,9 +71,9 @@ namespace SanteDB.Client.Upstream
 
                 }
             }
-            else if(_LocalIdentityProvider == null)
+            else if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
 
             return _LocalIdentityProvider.Authenticate(userName, password);
@@ -98,7 +98,7 @@ namespace SanteDB.Client.Upstream
             }
             else if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             return _LocalIdentityProvider.Authenticate(userName, password, tfaSecret);
         }
@@ -116,7 +116,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             return _LocalIdentityProvider.CreateIdentity(userName, password, principal);
         }
@@ -125,7 +125,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             _LocalIdentityProvider.DeleteIdentity(userName, principal);
         }
@@ -139,7 +139,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             return _LocalIdentityProvider.GetClaims(userName);
         }
@@ -148,7 +148,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             return _LocalIdentityProvider.GetIdentity(userName);
         }
@@ -157,7 +157,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             return _LocalIdentityProvider.GetIdentity(sid);
         }
@@ -166,7 +166,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             return _LocalIdentityProvider.GetSid(name);
         }
@@ -190,7 +190,7 @@ namespace SanteDB.Client.Upstream
             }
             else if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             else
             {
@@ -202,7 +202,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             _LocalIdentityProvider.RemoveClaim(userName, claimType, principal);
         }
@@ -211,7 +211,7 @@ namespace SanteDB.Client.Upstream
         {
             if (_LocalIdentityProvider == null)
             {
-                throw new NotSupportedException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             _LocalIdentityProvider.SetLockout(userName, lockout, principal);
         }

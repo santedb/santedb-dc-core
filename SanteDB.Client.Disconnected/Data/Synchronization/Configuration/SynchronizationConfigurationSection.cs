@@ -51,7 +51,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         /// Gets or sets the subscriptions which are active for this configuration
         /// </summary>
         [XmlArray("subscriptions"), XmlArrayItem("add"), JsonProperty("subscriptions")]
-        public List<Guid> Subscriptions { get; set; }
+        public List<String> Subscriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the subscribed objects

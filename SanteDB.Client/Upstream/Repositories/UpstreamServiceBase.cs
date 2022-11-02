@@ -8,15 +8,15 @@ using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Security.Principal;
 
-namespace SanteDB.Client.Repositories
+namespace SanteDB.Client.Upstream.Repositories
 {
     /// <summary>
     /// A base class for repositories which use the AMI as their base data source
     /// </summary>
-    public class UpstreamServiceBase
+    public abstract class UpstreamServiceBase
     {
         private readonly IRestClientFactory m_restClientFactory;
-        private IUpstreamIntegrationService m_upstreamIntegrationService;
+        protected IUpstreamIntegrationService m_upstreamIntegrationService;
 
         /// <summary>
         /// Get whether the upstream is conifgured 
@@ -30,6 +30,7 @@ namespace SanteDB.Client.Repositories
         {
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
+
             upstreamManagementService.RealmChanged += (o, e) => this.m_upstreamIntegrationService = e.UpstreamIntegrationService;
         }
 

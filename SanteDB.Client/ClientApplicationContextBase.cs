@@ -60,32 +60,6 @@ namespace SanteDB.Client
 
                 base.Start();
 
-                // Remote server validation prompt using the UserInterface component
-                ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, error) =>
-                {
-                    if (certificate == null || chain == null)
-                        return false;
-                    else
-                    {
-                        var trustedCertificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectName, StoreLocation.CurrentUser, StoreName.TrustedPeople, certificate.Subject);
-                        if (trustedCertificate == null)
-                        {
-                            if (this.InteractionProvider.Confirm(this.LocalizationService.GetString(UserMessageStrings.CONFIRM_CERTIFICATE_TRUST, new { cert = certificate.Subject })))
-                            {
-                                X509CertificateUtils.InstallCertificate(StoreName.TrustedPeople, new X509Certificate2(certificate));
-                                return true;
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }                            
-                       
-                        return true;
-                        //isValid &= chain.ChainStatus.Length == 0;
-                    }
-                };
-
                 // A component has requested a restart 
                 this.ServiceManager.GetServices().OfType<IRequestRestarts>().ToList().ForEach(svc =>
                 {

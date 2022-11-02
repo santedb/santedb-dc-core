@@ -68,7 +68,7 @@ namespace SanteDB.Client.Upstream
             {
                 throw new ArgumentNullException(nameof(packageId), ErrorMessages.ARGUMENT_NULL);
             }
-            else if(this.m_upstreamIntegrationService == null)
+            else if (this.m_upstreamIntegrationService == null)
             {
                 throw new InvalidOperationException(ErrorMessages.UPSTREAM_NOT_CONFIGURED);
 
@@ -80,6 +80,7 @@ namespace SanteDB.Client.Upstream
                 {
                     using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                     {
+
                         var headers = restClient.Head($"AppletSolution/{this.m_configuration.UiSolution}/applet/{packageId}");
                         headers.TryGetValue("X-SanteDB-PakID", out string packId);
                         headers.TryGetValue("ETag", out string versionKey);
@@ -88,6 +89,7 @@ namespace SanteDB.Client.Upstream
                             Id = packageId,
                             Version = versionKey
                         };
+
                     }
                 }
             }
@@ -115,6 +117,7 @@ namespace SanteDB.Client.Upstream
                 {
                     using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                     {
+
                         this.m_tracer.TraceInfo("Updating {0}...", packageId);
                         restClient.ProgressChanged += (o, e) => this.m_userInterfaceService.SetStatus(this.m_localizationService.GetString(UserMessageStrings.DOWNLOADING, new { file = packageId }), e.Progress);
                         restClient.SetTimeout(30000);
@@ -126,12 +129,14 @@ namespace SanteDB.Client.Upstream
                             this.m_appletManager.Install(package, true);
                             this.m_tickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Information, this.m_localizationService.GetString(UserMessageStrings.UPDATE_INSTALLED, new { package = package.Meta.Id, version = package.Meta.Version })));
                         }
+
                     }
                 }
             }
             catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { resource = $"applet/{packageId}" }), e);
+
             }
         }
 
@@ -178,6 +183,7 @@ namespace SanteDB.Client.Upstream
                             {
                                 remoteVersionInfo.ForEach(i => this.Install(i.AppletInfo.Id));
                             }
+
 
                         }
                     }

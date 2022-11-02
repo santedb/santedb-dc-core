@@ -20,7 +20,7 @@ using System.Linq;
 using System.Security.Principal;
 using System.Text;
 
-namespace SanteDB.Client.Repositories
+namespace SanteDB.Client.Upstream.Repositories
 {
     /// <summary>
     /// Represents a policy information service which communicates with an upstream policy information service
@@ -69,7 +69,7 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception e)
             {
-                throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
+                throw new UpstreamIntegrationException( this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
 
             }
         }
@@ -163,6 +163,11 @@ namespace SanteDB.Client.Repositories
         /// <inheritdoc/>
         public IPolicy GetPolicy(string policyOid)
         {
+            if(!this.IsUpstreamConfigured)
+            {
+                return null;
+            }
+
             try
             {
                 using (var client = this.CreateAmiServiceClient())
