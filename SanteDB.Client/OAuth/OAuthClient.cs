@@ -93,6 +93,7 @@ namespace SanteDB.Client.OAuth
             _Tracer = new Tracer(nameof(OAuthClient));
             _UpstreamManagement = upstreamManagement;
             _UpstreamManagement.RealmChanging += UpstreamRealmChanging;
+            _UpstreamManagement.RealmChanged += UpstreamRealmChanged;
             _RealmSettings = upstreamManagement?.GetSettings();
             _Localization = localization;
             _RestClientFactory = restClientFactory;
@@ -118,10 +119,30 @@ namespace SanteDB.Client.OAuth
 
                 var restclient = GetRestClient();
 
-                var bytes = restclient.Get(jwksendpoint);
+                int requestcounter = 0;
+                string jwksjson = null;
 
-                var jwksjson = Encoding.UTF8.GetString(bytes);
+                while(jwksjson == null && (requestcounter++) < 5)
+                {
+                    try
+                    {
+                        //TODO: Our rest client needs a better interface
+                        var bytes = restclient.Get(jwksendpoint);
 
+                        jwksjson = Encoding.UTF8.GetString(bytes);
+                    }
+                    catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                    {
+                        _Tracer.TraceInfo("Exception getting jwks endpoint: {0}", ex);
+                        Thread.Sleep(1000);
+                    }
+                }
+
+                if (null == jwksjson)
+                {
+                    _Tracer.TraceError("Failed to fetch jwks endpoint data from OAuth service.");
+                }
+                
                 var jwks = new JsonWebKeySet(jwksjson);
 
                 jwks.SkipUnresolvedJsonWebKeys = true;
@@ -142,6 +163,19 @@ namespace SanteDB.Client.OAuth
                 //Removed cached client and discovery document.
                 _AuthRestClient = null;
                 _DiscoveryDocument = null;
+                
+            }
+            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+                _Tracer.TraceError("Exception clearing upstream realm settings: {0}", ex);
+                _RealmSettings = null;
+            }
+        }
+
+        protected virtual void UpstreamRealmChanged(object sender, UpstreamRealmChangedEventArgs eventArgs)
+        {
+            try
+            {
                 _Tracer.TraceVerbose("Getting new Upstream Realm Settings.");
                 _RealmSettings = eventArgs.UpstreamRealmSettings;
                 _Tracer.TraceVerbose("Successfully updated Upstream Realm Settings.");

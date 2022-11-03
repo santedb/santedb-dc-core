@@ -63,7 +63,7 @@ namespace SanteDB.Client.Upstream.Management
             IServiceManager serviceManager,
             IOperatingSystemInfoService operatingSystemInfoService, 
             IGeographicLocationProvider geographicLocationProvider = null,
-            ICertificateGeneratorService certificateEnrolmentService = null,
+            ICertificateGeneratorService certificateGenerator = null,
             IPolicyEnforcementService pepService = null
             )
         {
@@ -73,7 +73,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_localizationService = localizationService;
             this.m_policyEnforcementService = pepService;
             this.m_serviceManager = serviceManager;
-            this.m_certificateGenerator = certificateEnrolmentService;
+            this.m_certificateGenerator = certificateGenerator;
             this.m_operatingSystemInfo = operatingSystemInfoService;
             this.m_geographicLocationService = geographicLocationProvider;
             if (m_configuration?.Realm != null)
@@ -232,14 +232,14 @@ namespace SanteDB.Client.Upstream.Management
                             }
 
                             var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
-                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
+                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
                             
                             var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
                             if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
                                 submissionResult.CertificatePkcs != null)
                             {
                                 deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
-                                X509CertificateUtils.InstallCertificate(StoreLocation.LocalMachine, StoreName.My, deviceCertificate);
+                                X509CertificateUtils.InstallCertificate(StoreLocation.CurrentUser, StoreName.My, deviceCertificate);
                             }
                             else
                             {
