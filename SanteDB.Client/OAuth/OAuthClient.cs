@@ -93,6 +93,7 @@ namespace SanteDB.Client.OAuth
             _Tracer = new Tracer(nameof(OAuthClient));
             _UpstreamManagement = upstreamManagement;
             _UpstreamManagement.RealmChanging += UpstreamRealmChanging;
+            _UpstreamManagement.RealmChanged += UpstreamRealmChanged;
             _RealmSettings = upstreamManagement?.GetSettings();
             _Localization = localization;
             _RestClientFactory = restClientFactory;
@@ -142,6 +143,19 @@ namespace SanteDB.Client.OAuth
                 //Removed cached client and discovery document.
                 _AuthRestClient = null;
                 _DiscoveryDocument = null;
+                
+            }
+            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+                _Tracer.TraceError("Exception clearing upstream realm settings: {0}", ex);
+                _RealmSettings = null;
+            }
+        }
+
+        protected virtual void UpstreamRealmChanged(object sender, UpstreamRealmChangedEventArgs eventArgs)
+        {
+            try
+            {
                 _Tracer.TraceVerbose("Getting new Upstream Realm Settings.");
                 _RealmSettings = eventArgs.UpstreamRealmSettings;
                 _Tracer.TraceVerbose("Successfully updated Upstream Realm Settings.");
