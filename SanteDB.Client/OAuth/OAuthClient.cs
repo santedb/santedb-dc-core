@@ -85,7 +85,7 @@ namespace SanteDB.Client.OAuth
             byte[] entropy = new byte[32];
             csrng.GetBytes(entropy);
 
-            return Convert.ToBase64String(entropy);
+            return Base64UrlEncoder.Encode(entropy);
         }
 
         public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory)
@@ -119,10 +119,30 @@ namespace SanteDB.Client.OAuth
 
                 var restclient = GetRestClient();
 
-                var bytes = restclient.Get(jwksendpoint);
+                int requestcounter = 0;
+                string jwksjson = null;
 
-                var jwksjson = Encoding.UTF8.GetString(bytes);
+                while(jwksjson == null && (requestcounter++) < 5)
+                {
+                    try
+                    {
+                        //TODO: Our rest client needs a better interface
+                        var bytes = restclient.Get(jwksendpoint);
 
+                        jwksjson = Encoding.UTF8.GetString(bytes);
+                    }
+                    catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                    {
+                        _Tracer.TraceInfo("Exception getting jwks endpoint: {0}", ex);
+                        Thread.Sleep(1000);
+                    }
+                }
+
+                if (null == jwksjson)
+                {
+                    _Tracer.TraceError("Failed to fetch jwks endpoint data from OAuth service.");
+                }
+                
                 var jwks = new JsonWebKeySet(jwksjson);
 
                 jwks.SkipUnresolvedJsonWebKeys = true;
