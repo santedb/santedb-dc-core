@@ -20,7 +20,7 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Ca;
+using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
@@ -44,7 +44,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly ILocalizationService m_localizationService;
         private readonly IPolicyEnforcementService m_policyEnforcementService;
         private readonly IServiceManager m_serviceManager;
-        private readonly ICertificateEnrolmentService m_certificateEnrolment;
+        private readonly ICertificateGeneratorService m_certificateGenerator;
         private readonly IOperatingSystemInfoService m_operatingSystemInfo;
         private readonly ConfiguredUpstreamRealmSettings m_upstreamSettings;
         private readonly IRestClientFactory m_restClientFactory;
@@ -63,7 +63,7 @@ namespace SanteDB.Client.Upstream.Management
             IServiceManager serviceManager,
             IOperatingSystemInfoService operatingSystemInfoService, 
             IGeographicLocationProvider geographicLocationProvider = null,
-            ICertificateEnrolmentService certificateEnrolmentService = null,
+            ICertificateGeneratorService certificateEnrolmentService = null,
             IPolicyEnforcementService pepService = null
             )
         {
@@ -73,7 +73,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_localizationService = localizationService;
             this.m_policyEnforcementService = pepService;
             this.m_serviceManager = serviceManager;
-            this.m_certificateEnrolment = certificateEnrolmentService;
+            this.m_certificateGenerator = certificateEnrolmentService;
             this.m_operatingSystemInfo = operatingSystemInfoService;
             this.m_geographicLocationService = geographicLocationProvider;
             if (m_configuration?.Realm != null)
@@ -147,12 +147,14 @@ namespace SanteDB.Client.Upstream.Management
             // Add the OAUTH service provider 
             try
             {
+                var dnSettings = String.Empty;
 
                 using (amiRestClient)
                 {
                     using (var amiServiceClient = new AmiServiceClient(amiRestClient))
                     {
                         var realmOptions = amiServiceClient.Options(); // Get the options object from the server
+                        dnSettings = realmOptions.Settings.Find(o => o.Key.Equals("dn", StringComparison.OrdinalIgnoreCase))?.Value;
 
                         // Is the server compatible?
                         if (!replaceExistingRegistration &&
@@ -177,7 +179,9 @@ namespace SanteDB.Client.Upstream.Management
                 // Generate the device secret or certificate
                 var deviceCredential = this.m_configuration.Credentials.First(o => o.CredentialType == UpstreamCredentialType.Device);
                 deviceCredential.CredentialName = targetRealm.LocalDeviceName;
-                deviceCredential.CredentialSecret = Guid.NewGuid().ToByteArray().HexEncode();
+                var secretBytes = new byte[64];
+                System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(secretBytes);
+                deviceCredential.CredentialSecret = secretBytes.HexEncode();
 
                 using (var restClient = this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService))
                 using (var amiClient = new AmiServiceClient(restClient))
@@ -209,32 +213,33 @@ namespace SanteDB.Client.Upstream.Management
                         authEpConfiguration.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
                     {
 
-                        var subjectName = $"{targetRealm.LocalDeviceName}.{targetRealm.Realm.Host}";
-                        deviceCredential.CertificateSecret = new Core.Security.Configuration.X509ConfigurationElement(StoreLocation.CurrentUser, StoreName.My, X509FindType.FindBySubjectName, $"CN={subjectName}");
+                        var subjectName = $"CN={existingDevice.Key}, DC={targetRealm.LocalDeviceName}, DC={ targetRealm.Realm.Host}";
+                        if(!String.IsNullOrEmpty(dnSettings))
+                        {
+                            subjectName += $", {dnSettings}";
+                        }
+
+                        deviceCredential.CertificateSecret = new Core.Security.Configuration.X509ConfigurationElement(StoreLocation.CurrentUser, StoreName.My, X509FindType.FindBySubjectDistinguishedName, subjectName);
 
                         // Is there already a certificate that has a private key?
                         var deviceCertificate = deviceCredential.CertificateSecret.Certificate;
                         if (deviceCertificate == null ||
                             !deviceCertificate.Verify()) // No certificate
                         {
-                            if (this.m_certificateEnrolment == null)
+                            if (this.m_certificateGenerator == null)
                             {
                                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CANNOT_GENERATE_CERTIFICATE));
                             }
 
-                            var csr = this.m_certificateEnrolment.CreateSigningRequest(subjectName, ApplicationServiceContext.Current.ApplicationName, out var privateKey);
-
+                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
+                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
+                            
                             var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
                             if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
                                 submissionResult.CertificatePkcs != null)
                             {
-                                deviceCertificate = this.m_certificateEnrolment.Recombine(submissionResult.GetCertificiate(), privateKey);
-                                using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
-                                {
-                                    store.Open(OpenFlags.ReadWrite);
-                                    store.Add(deviceCertificate);
-                                    store.Close();
-                                }
+                                deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
+                                X509CertificateUtils.InstallCertificate(StoreLocation.LocalMachine, StoreName.My, deviceCertificate);
                             }
                             else
                             {
@@ -254,7 +259,6 @@ namespace SanteDB.Client.Upstream.Management
                         }
                     }
                     EntitySource.Current = new EntitySource(new RepositoryEntitySource());
-
                 }
             }
             catch (Exception e)

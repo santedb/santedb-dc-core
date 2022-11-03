@@ -85,7 +85,7 @@ namespace SanteDB.Client.OAuth
             byte[] entropy = new byte[32];
             csrng.GetBytes(entropy);
 
-            return Convert.ToBase64String(entropy);
+            return Base64UrlEncoder.Encode(entropy);
         }
 
         public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory)
@@ -103,7 +103,7 @@ namespace SanteDB.Client.OAuth
 
         protected virtual void SetTokenValidationParameters()
         {
-            if (_UpstreamManagement.IsConfigured())
+            if (null != _RealmSettings) // This may be called before the UpstreamManagementService is fully configured - i.e. is configuring
             {
                 var discoverydocument = GetDiscoveryDocument();
 

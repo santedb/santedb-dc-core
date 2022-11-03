@@ -3,7 +3,10 @@ using RestSrvr.Attributes;
 using SanteDB.Client.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Services;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.BIS;
@@ -11,6 +14,7 @@ using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Behavior;
 using SanteDB.Rest.Common.Behaviors;
 using SanteDB.Rest.Common.Configuration;
+using SanteDB.Rest.Common.Configuration.Interop;
 using SanteDB.Rest.Common.Security;
 using SanteDB.Rest.HDSI;
 using SanteDB.Rest.OAuth;
@@ -19,7 +23,9 @@ using SanteDB.Rest.WWW.Behaviors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace SanteDB.Client.Rest
@@ -161,6 +167,13 @@ namespace SanteDB.Client.Rest
             if (!appConfiguration.ServiceProviders.Any(s => typeof(IRestServiceFactory).IsAssignableFrom(s.Type)))
             {
                 appConfiguration.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RestServiceFactory)));
+            }
+
+            // Are we working on SSL?
+            if(bindingBase.Scheme == "https")
+            {
+                var appService = appConfiguration.ServiceProviders.Find(o => typeof(ICertificateGeneratorService).IsAssignableFrom(o.Type));
+                RestDebugCertificateInstallation.InstallDebuggerCertificate(bindingBase, Activator.CreateInstance(appService.Type) as ICertificateGeneratorService);
             }
 
             return configuration;
