@@ -20,7 +20,7 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Ca;
+using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
@@ -44,7 +44,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly ILocalizationService m_localizationService;
         private readonly IPolicyEnforcementService m_policyEnforcementService;
         private readonly IServiceManager m_serviceManager;
-        private readonly ICertificateEnrolmentService m_certificateEnrolment;
+        private readonly ICertificateGeneratorService m_certificateGenerator;
         private readonly IOperatingSystemInfoService m_operatingSystemInfo;
         private readonly ConfiguredUpstreamRealmSettings m_upstreamSettings;
         private readonly IRestClientFactory m_restClientFactory;
@@ -63,7 +63,7 @@ namespace SanteDB.Client.Upstream.Management
             IServiceManager serviceManager,
             IOperatingSystemInfoService operatingSystemInfoService, 
             IGeographicLocationProvider geographicLocationProvider = null,
-            ICertificateEnrolmentService certificateEnrolmentService = null,
+            ICertificateGeneratorService certificateGenerator = null,
             IPolicyEnforcementService pepService = null
             )
         {
@@ -73,7 +73,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_localizationService = localizationService;
             this.m_policyEnforcementService = pepService;
             this.m_serviceManager = serviceManager;
-            this.m_certificateEnrolment = certificateEnrolmentService;
+            this.m_certificateGenerator = certificateGenerator;
             this.m_operatingSystemInfo = operatingSystemInfoService;
             this.m_geographicLocationService = geographicLocationProvider;
             if (m_configuration?.Realm != null)
@@ -217,18 +217,21 @@ namespace SanteDB.Client.Upstream.Management
                         if (deviceCertificate == null ||
                             !deviceCertificate.Verify()) // No certificate
                         {
-                            if (this.m_certificateEnrolment == null)
+                            if (this.m_certificateGenerator == null)
                             {
                                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CANNOT_GENERATE_CERTIFICATE));
                             }
 
-                            var csr = this.m_certificateEnrolment.CreateSigningRequest(subjectName, ApplicationServiceContext.Current.ApplicationName, out var privateKey);
+                            var privateKey = m_certificateGenerator.CreateKeyPair(2048);
+
+                            //var csr = this.m_certificateGenerator.CreateSigningRequest(subjectName, ApplicationServiceContext.Current.ApplicationName, out var privateKey);
+                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKey, new X500DistinguishedName($"CN={ApplicationServiceContext.Current.ApplicationName}"), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement);
 
                             var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
                             if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
                                 submissionResult.CertificatePkcs != null)
                             {
-                                deviceCertificate = this.m_certificateEnrolment.Recombine(submissionResult.GetCertificiate(), privateKey);
+                                deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKey);
                                 using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
                                 {
                                     store.Open(OpenFlags.ReadWrite);
