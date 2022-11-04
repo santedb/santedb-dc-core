@@ -21,18 +21,22 @@ namespace SanteDB.Client.Http
     /// <summary>
     /// Pricipal based credentials
     /// </summary>
-    public class UpstreamDeviceCredentials : RestRequestCredentials
+    public class UpstreamDeviceCredentials : UpstreamPrincipalCredentials
     {
 
         // Upstream integration service
-        private readonly ConfiguredUpstreamRealmSettings m_upstreamConfiguration;
+        private static ConfiguredUpstreamRealmSettings m_upstreamConfiguration;
+
+        static UpstreamDeviceCredentials()
+        {
+            ApplicationServiceContext.Current.GetService<IUpstreamManagementService>().RealmChanging += (o, e) => m_upstreamConfiguration = e.UpstreamRealmSettings as ConfiguredUpstreamRealmSettings;
+        }
 
         /// <summary>
         /// Create new principal credentials
         /// </summary>
         public UpstreamDeviceCredentials(IPrincipal principal) : base(principal)
         {
-            this.m_upstreamConfiguration = ApplicationServiceContext.Current.GetService<IUpstreamIntegrationService>() as ConfiguredUpstreamRealmSettings;
         }
 
         /// <summary>
@@ -40,10 +44,14 @@ namespace SanteDB.Client.Http
         /// </summary>
         public override void SetCredentials(HttpWebRequest webRequest)
         {
-            if (this.m_upstreamConfiguration != null)
+            if (m_upstreamConfiguration != null)
             {
-                var headerValue = Encoding.UTF8.GetBytes($"{this.m_upstreamConfiguration.LocalDeviceName}:{this.m_upstreamConfiguration.LocalDeviceSecret}");
+                var headerValue = Encoding.UTF8.GetBytes($"{m_upstreamConfiguration.LocalDeviceName}:{m_upstreamConfiguration.LocalDeviceSecret}");
                 webRequest.Headers.Add(ExtendedHttpHeaderNames.HttpDeviceCredentialHeaderName, $"BASIC {Convert.ToBase64String(headerValue)}");
+            }
+            else
+            {
+                base.SetCredentials(webRequest);
             }
         }
 

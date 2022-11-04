@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using RestSrvr;
 using SanteDB.Client.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
@@ -10,6 +11,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.OAuth;
 using SanteDB.Core.Services;
+using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +33,7 @@ namespace SanteDB.Client.OAuth
         readonly JsonWebTokenHandler _TokenHandler;
         readonly TokenValidationParameters _TokenValidationParameters;
         OpenIdConnectDiscoveryDocument _DiscoveryDocument;
-        IRestClient _AuthRestClient;
+        //IRestClient _AuthRestClient;
 
         // Claim map
         private static readonly Dictionary<String, String> s_ClaimMap = new Dictionary<string, string>() {
@@ -73,7 +75,7 @@ namespace SanteDB.Client.OAuth
             public string TokenType { get; set; }
             [JsonProperty("refresh_token")]
             public string RefreshToken { get; set; }
-            [JsonProperty("expirs_in")]
+            [JsonProperty("expires_in")]
             public int ExpiresIn { get; set; }
             [JsonProperty("nonce")]
             public string Nonce { get; set; }
@@ -109,7 +111,7 @@ namespace SanteDB.Client.OAuth
                 var discoverydocument = GetDiscoveryDocument();
 
                 _TokenValidationParameters.ValidIssuers = new[] { discoverydocument.Issuer };
-                _TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName };
+                _TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName, _RealmSettings.LocalDeviceName };
                 _TokenValidationParameters.ValidateAudience = true;
                 _TokenValidationParameters.ValidateIssuer = true;
                 _TokenValidationParameters.ValidateLifetime = true;
@@ -160,10 +162,11 @@ namespace SanteDB.Client.OAuth
         {
             try
             {
-                //Removed cached client and discovery document.
-                _AuthRestClient = null;
+                //Removed cached client and discovery document and rediscover with the new (soon to be joined realm)
                 _DiscoveryDocument = null;
-                
+                _RealmSettings = eventArgs.UpstreamRealmSettings;
+                SetTokenValidationParameters();
+
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
@@ -293,7 +296,18 @@ namespace SanteDB.Client.OAuth
                 request.ClientId = _RealmSettings.LocalClientName;
             }
 
-            return GetRestClient().Post<OAuthTokenRequest, OAuthTokenResponse>(GetTokenEndpoint(), "application/x-www-form-urlencoded", request);
+            var restClient = GetRestClient();
+            // Copy inbound client claims to the claims to the claims that the server is getting (purpose of use, overrride, etc.)
+            restClient.Requesting += (o, e) =>
+            {
+                var clientClaimHeader = RestOperationContext.Current?.IncomingRequest.Headers[ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName];
+                if (!String.IsNullOrEmpty(clientClaimHeader))
+                {
+                    e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName, clientClaimHeader);
+                }
+            };
+
+            return restClient.Post<OAuthTokenRequest, OAuthTokenResponse>(GetTokenEndpoint(), "application/x-www-form-urlencoded", request);
         }
 
         private string GetTokenEndpoint()
@@ -337,14 +351,8 @@ namespace SanteDB.Client.OAuth
         /// <returns></returns>
         private IRestClient GetRestClient()
         {
-            if (null != _AuthRestClient)
-            {
-                return _AuthRestClient;
-            }
-
-            _AuthRestClient = _RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AuthenticationService);
-
-            return _AuthRestClient;
+            // We want to return a new rest client for each request since the .Credentials would bleed between requests
+            return _RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AuthenticationService);
         }
 
         public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null)

@@ -235,7 +235,10 @@ namespace SanteDB.Client.Upstream.Security
                         }
                         else if (null != authenticationContext)
                         {
-                            result = _OAuthClient.AuthenticateApp(clientId);
+                            using (AuthenticationContext.EnterContext(authenticationContext)) // Enter authentication context so the rest client knows to append the proper headers
+                            {
+                                result = _OAuthClient.AuthenticateApp(clientId);
+                            }
                         }
 
                         SynchronizeLocalIdentity(result, clientSecret);

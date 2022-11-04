@@ -18,14 +18,12 @@ namespace SanteDB.Client.OAuth
     /// Token claims principal.
     /// </summary>
     [ExcludeFromCodeCoverage]
-    public class OAuthClaimsPrincipal : SanteDBClaimsPrincipal
+    public class OAuthClaimsPrincipal : SanteDBClaimsPrincipal, ITokenPrincipal
     {
         public DateTimeOffset ExpiresAt { get; }
         public DateTimeOffset RenewAfter { get; }
 
-
-        
-
+        readonly string _TokenType;
         readonly SecurityToken _IdToken;
         readonly string _AccessToken;
         readonly string _RefreshToken;
@@ -54,6 +52,7 @@ namespace SanteDB.Client.OAuth
                 throw new ArgumentOutOfRangeException(nameof(tokenType), "expected urn:ietf:params:oauth:token-type:jwt");
             }
 
+            _TokenType = tokenType;
             // Token
             _IdToken = idToken;
             this._AccessToken = accessToken;
@@ -78,6 +77,14 @@ namespace SanteDB.Client.OAuth
         }
 
         public bool CanRefresh => !string.IsNullOrEmpty(_RefreshToken);
+
+        string ITokenPrincipal.AccessToken => this._AccessToken;
+
+        string ITokenPrincipal.TokenType => this._TokenType;
+
+        String ITokenPrincipal.IdentityToken => (this._IdToken as JsonWebToken).EncodedToken;
+
+        String ITokenPrincipal.RefreshToken => this._RefreshToken;
 
         public string GetRefreshToken() => _RefreshToken;
         public string GetAccessToken() => _AccessToken;

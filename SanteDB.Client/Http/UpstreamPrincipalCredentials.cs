@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.OAuth;
 using SanteDB.Core.Http;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using System;
 using System.Collections.Generic;
@@ -27,14 +28,14 @@ namespace SanteDB.Client.Http
         /// <inheritdoc/>
         public override void SetCredentials(HttpWebRequest webRequest)
         {
-            if (this.Principal is ClaimsPrincipal claimsPrincipal)
+            if (this.Principal is IClaimsPrincipal claimsPrincipal)
             {
                 claimsPrincipal.Identities.ToList().ForEach(o => this.SetCredentials(o, webRequest));
 
                 // HACK: Need a better way to do this
-                if(this.Principal is OAuthClaimsPrincipal oacp)
+                if(this.Principal is ITokenPrincipal oacp)
                 {
-                    webRequest.Headers.Add(HttpRequestHeader.Authorization, $"BEARER {oacp.GetAccessToken()}"); // Should get the token type from the oauth response
+                    webRequest.Headers.Add(HttpRequestHeader.Authorization, $"{oacp.TokenType} {oacp.AccessToken}"); 
                 }
 
             }

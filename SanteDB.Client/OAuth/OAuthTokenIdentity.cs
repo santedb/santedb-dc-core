@@ -32,7 +32,8 @@ namespace SanteDB.Client.OAuth
 
         public bool IsAuthenticated { get; }
 
-        public string Name => FindFirst("name")?.Value;
+        public string Name => FindFirst(SanteDBClaimTypes.Name)?.Value;
+
 
         public IEnumerable<IClaim> FindAll(string claimType) => _Claims.Where(c => c.Type == claimType);
 
