@@ -267,7 +267,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
                 {
                     var retVal = new UpstreamQueryResultSet<Provider, Bundle>(client, o => o.Relationships
-                        .Where(r => r.RelationshipTypeKey == EntityRelationshipTypeKeys.AssignedEntity)
+                        .Where(r => r.RelationshipTypeKey == EntityRelationshipTypeKeys.EquivalentEntity && r.ClassificationKey == RelationshipClassKeys.PlayedRoleLink)
                         .Any(r => (r.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == identity.Name.ToLowerInvariant())).FirstOrDefault();
                     this.m_adhocCache?.Add($"sec.pvd.{identity.Name}", retVal, TEMP_CACHE_TIMEOUT);
                     return retVal;

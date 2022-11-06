@@ -33,10 +33,8 @@ namespace SanteDB.Client.Rest
             {
                 var keyPair = certificateGeneratorService.CreateKeyPair(2048);
                 ssiDebugCert = certificateGeneratorService.CreateSelfSignedCertificate(keyPair, new X500DistinguishedName($"CN={bindingBase.Host}"), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment, new string[] { ExtendedKeyUsageOids.ServerAuthentication }, new String[] { bindingBase.Host } );
-                X509CertificateUtils.InstallCertificate(StoreLocation.LocalMachine, StoreName.My, ssiDebugCert);
-                X509CertificateUtils.InstallCertificate(StoreLocation.CurrentUser, StoreName.Root, ssiDebugCert);
-
-                
+                X509CertificateUtils.InstallMachineCertificate(ssiDebugCert);
+                X509CertificateUtils.InstallCertificate(StoreName.Root, ssiDebugCert);
             }
 
             try

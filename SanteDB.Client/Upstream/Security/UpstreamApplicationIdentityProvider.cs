@@ -121,7 +121,7 @@ namespace SanteDB.Client.Upstream.Security
                 policiestosync.AddRange(appidentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
                 rolestosync.AddRange(appidentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
 
-                appid = appidentity.GetFirstClaimValue(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, SanteDBClaimTypes.Sid);
+                appid = appidentity.GetFirstClaimValue(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, SanteDBClaimTypes.SecurityId);
             }
 
             var localapp = _LocalApplicationIdentityProvider.GetIdentity(appidentity.Name);

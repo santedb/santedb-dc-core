@@ -1,4 +1,5 @@
-﻿using SanteDB;
+﻿using RestSrvr;
+using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
@@ -9,10 +10,12 @@ using SanteDB.Core;
 using SanteDB.Core.Configuration.Http;
 using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
@@ -20,7 +23,9 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Certs;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
@@ -46,12 +51,14 @@ namespace SanteDB.Client.Upstream.Management
         private readonly IServiceManager m_serviceManager;
         private readonly ICertificateGeneratorService m_certificateGenerator;
         private readonly IOperatingSystemInfoService m_operatingSystemInfo;
-        private readonly ConfiguredUpstreamRealmSettings m_upstreamSettings;
+        private ConfiguredUpstreamRealmSettings m_upstreamSettings;
         private readonly IRestClientFactory m_restClientFactory;
         private readonly UpstreamConfigurationSection m_configuration;
         private readonly RestClientConfigurationSection m_restConfiguration;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultUpstreamManagementService));
         private readonly IGeographicLocationProvider m_geographicLocationService;
+        private IAuditService m_auditService;
+        private readonly SecurityConfigurationSection m_securityConfiguration;
 
         /// <summary>
         /// DI constructor
@@ -70,6 +77,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_restClientFactory = restClientFactory;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
             this.m_restConfiguration = configurationManager.GetSection<RestClientConfigurationSection>();
+            this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
             this.m_localizationService = localizationService;
             this.m_policyEnforcementService = pepService;
             this.m_serviceManager = serviceManager;
@@ -98,7 +106,7 @@ namespace SanteDB.Client.Upstream.Management
         public IUpstreamRealmSettings GetSettings() => m_upstreamSettings;
 
         /// <inheritdoc/>
-        public void Join(IUpstreamRealmSettings targetRealm, bool replaceExistingRegistration)
+        public void Join(IUpstreamRealmSettings targetRealm, bool replaceExistingRegistration, out string welcomeMessage)
         {
 
             if (this.IsConfigured())
@@ -115,6 +123,11 @@ namespace SanteDB.Client.Upstream.Management
                 this.m_policyEnforcementService?.Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, AuthenticationContext.Current.Principal);
             }
 
+            if(this.m_auditService == null)
+            {
+                this.m_auditService = ApplicationServiceContext.Current.GetService<IAuditService>();
+            }
+
             this.m_tracer.TraceInfo("Will attempt to join domain {0}", targetRealm.Realm);
 
             var backupConfiguration = this.m_restConfiguration.Client.ToArray();
@@ -129,7 +142,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     ContentTypeMapper = new DefaultContentTypeMapper(),
                     OptimizationMethod = Core.Http.Description.HttpCompressionAlgorithm.Gzip,
-                    Optimize = true,
+                    CompressRequests = true,
                     Security = new RestClientSecurityConfiguration()
                     {
                         AuthRealm = targetRealm.Realm.Host,
@@ -144,6 +157,16 @@ namespace SanteDB.Client.Upstream.Management
             });
             var amiRestClient = m_restClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService);
 
+            var audit = this.m_auditService.Audit()
+                   .WithPrincipal()
+                   .WithLocalSource()
+                   .WithAction(Core.Model.Audit.ActionType.Execute)
+                   .WithEventIdentifier(Core.Model.Audit.EventIdentifierType.ApplicationActivity)
+                   .WithEventType(EventTypeCodes.SecurityConfigurationChanged)
+                   .WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Access, targetRealm.Realm)
+                   .WithTimestamp()
+                   .WithHttpInformation(RestOperationContext.Current.IncomingRequest);
+
             // Add the OAUTH service provider 
             try
             {
@@ -155,6 +178,12 @@ namespace SanteDB.Client.Upstream.Management
                     {
                         var realmOptions = amiServiceClient.Options(); // Get the options object from the server
                         dnSettings = realmOptions.Settings.Find(o => o.Key.Equals("dn", StringComparison.OrdinalIgnoreCase))?.Value;
+                        welcomeMessage = realmOptions.Settings.Find(o => o.Key.Equals("welcome"))?.Value ?? this.m_localizationService.GetString(UserMessageStrings.JOIN_REALM_SUCCESS, new { realm = targetRealm.Realm.Host });
+                        // Pull security configuration sections from the AMI - these are only disclosed when the AMI has our authentication as an administrator
+                        this.m_securityConfiguration.PasswordRegex = realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
+                            this.m_securityConfiguration.PasswordRegex;
+                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
+                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
 
                         // Is the server compatible?
                         if (!replaceExistingRegistration &&
@@ -188,7 +217,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     // Register the device
                     var existingDevice = amiClient.GetDevices(o => o.Name.ToLowerInvariant() == deviceCredential.CredentialName.ToLowerInvariant()).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
-                    if (existingDevice != null && replaceExistingRegistration)
+                    if (existingDevice != null && !replaceExistingRegistration)
                     {
                         throw new DuplicateNameException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_DEVICE_DUPLICATE, new { device = existingDevice.Name }));
                     }
@@ -196,6 +225,8 @@ namespace SanteDB.Client.Upstream.Management
                     {
                         existingDevice.DeviceSecret = deviceCredential.CredentialSecret;
                         existingDevice = amiClient.UpdateDevice(existingDevice.Key.Value, new SecurityDeviceInfo(existingDevice))?.Entity;
+                        audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, existingDevice);
+
                     }
                     else
                     {
@@ -204,10 +235,12 @@ namespace SanteDB.Client.Upstream.Management
                             DeviceSecret = deviceCredential.CredentialSecret,
                             Name = deviceCredential.CredentialName
                         }))?.Entity;
+                        audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, existingDevice);
+
                     }
 
-                    this.CreateDeviceEntity(existingDevice);
-
+                    var entity = this.CreateDeviceEntity(existingDevice);
+                    audit.WithIdentifiedData(AuditableObjectLifecycle.Creation, entity);
                     var authEpConfiguration = this.m_restConfiguration.Client.Find(o => o.Name == ServiceEndpointType.AuthenticationService.ToString());
                     if (targetRealm.Realm.Scheme == "https" && 
                         authEpConfiguration.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
@@ -235,11 +268,16 @@ namespace SanteDB.Client.Upstream.Management
                             var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
                             
                             var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
+
                             if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
                                 submissionResult.CertificatePkcs != null)
                             {
                                 deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
-                                X509CertificateUtils.InstallCertificate(StoreLocation.CurrentUser, StoreName.My, deviceCertificate);
+                                this.m_securityConfiguration.Signatures.RemoveAll(o => o.KeyName == "default");
+                                this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, deviceCertificate));
+                                this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", StoreLocation.CurrentUser, StoreName.My, deviceCertificate));
+                                X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
+                                audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
                             }
                             else
                             {
@@ -260,17 +298,30 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     EntitySource.Current = new EntitySource(new RepositoryEntitySource());
                 }
+
+               
+
+                // Now we want to save the configuration
+                this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
+                this.RealmChanged?.Invoke(this, new UpstreamRealmChangedEventArgs(targetRealm));
+                this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(this.m_configuration);
+                audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.Success);
             }
             catch (Exception e)
             {
+                audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.MinorFail);
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_ERR), e);
+            }
+            finally
+            {
+                audit.Send();
             }
         }
 
         /// <summary>
         /// Create a device entity <paramref name="forDevice"/>
         /// </summary>
-        private void CreateDeviceEntity(SecurityDevice forDevice)
+        private Entity CreateDeviceEntity(SecurityDevice forDevice)
         {
             // Create device registration information (the operating system, etc.)
             using (var hdsiRest = this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService))
@@ -293,7 +344,7 @@ namespace SanteDB.Client.Upstream.Management
                     new EntityName(NameUseKeys.Search, this.m_operatingSystemInfo.MachineName)
                 };
 
-                hdsiRest.Post<DeviceEntity, DeviceEntity>($"{typeof(DeviceEntity).GetSerializationName()}/{deviceEntity.Key}", deviceEntity);
+                return hdsiRest.Post<DeviceEntity, DeviceEntity>($"{typeof(DeviceEntity).GetSerializationName()}/{deviceEntity.Key}", deviceEntity);
             }
         }
 
@@ -322,7 +373,7 @@ namespace SanteDB.Client.Upstream.Management
                         },
                         ContentTypeMapper = new DefaultContentTypeMapper(),
                         OptimizationMethod = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression) ? Core.Http.Description.HttpCompressionAlgorithm.Gzip : Core.Http.Description.HttpCompressionAlgorithm.None,
-                        Optimize = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression)
+                        CompressRequests = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression)
                     },
                     Accept = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.InternalApi) ? "application/xml" : "application/json",
                     Endpoint = endpoint.BaseUrl.Select(o => new RestClientEndpointConfiguration(o, new TimeSpan(0, 1, 0))).ToList(),

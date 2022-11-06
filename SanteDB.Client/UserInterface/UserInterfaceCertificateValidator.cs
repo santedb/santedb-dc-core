@@ -38,7 +38,7 @@ namespace SanteDB.Client.UserInterface
                 {
                     if (this.m_interactionProvider.Confirm(this.m_localizationService.GetString(UserMessageStrings.CONFIRM_CERTIFICATE_TRUST, new { cert = certificate.Subject })))
                     {
-                        X509CertificateUtils.InstallCertificate(StoreLocation.CurrentUser, StoreName.TrustedPeople, new X509Certificate2(certificate));
+                        X509CertificateUtils.InstallCertificate(StoreName.TrustedPeople, new X509Certificate2(certificate));
                         return true;
                     }
                     else

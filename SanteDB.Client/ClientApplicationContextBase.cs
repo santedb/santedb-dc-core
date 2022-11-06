@@ -17,6 +17,10 @@ namespace SanteDB.Client
     /// </summary>
     public abstract class ClientApplicationContextBase : SanteDBContextBase
     {
+        /// <summary>
+        /// App data directory setting
+        /// </summary>
+        public const string AppDataDirectorySetting = "DataDirectory";
 
         // The instance name
         private readonly string m_instanceName;

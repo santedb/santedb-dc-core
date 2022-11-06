@@ -1,10 +1,21 @@
 ﻿using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Services;
+using SanteDB.Rest.AMI;
+using SanteDB.Rest.Common;
+using SanteDB.Rest.HDSI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
 using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
@@ -18,23 +29,30 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly Type[] m_upstreamServices = new Type[]
         {
             typeof(UpstreamPolicyInformationService),
-            typeof(UpstreamSecurityChallengeProvider)
+            typeof(UpstreamSecurityChallengeProvider),
+            typeof(UpstreamAuditRepository)
         };
         private readonly IServiceManager m_serviceManager;
-        private readonly IRestClientFactory m_restClientFactory;
-        private readonly IUpstreamManagementService m_upstreamManagementService;
-        private IDictionary<Type, IRepositoryService> m_serviceRepositories;
+        private Type[] m_amiResources = new Type[]
+        {
+            typeof(SubscriptionDefinition),
+            typeof(SecurityProvenance),
+            typeof(ApplicationEntity),
+            typeof(DeviceEntity),
+            typeof(SecurityPolicy),
+            typeof(SecurityChallenge),
+            typeof(MailMessage),
+            typeof(IdentityDomain),
+            typeof(IdentifierType),
+            typeof(ExtensionType)
+        };
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public UpstreamRepositoryFactory(IServiceManager serviceManager,
-            IRestClientFactory restClientFactory,
-            IUpstreamManagementService upstreamManagementService)
+        public UpstreamRepositoryFactory(IServiceManager serviceManager)
         {
             this.m_serviceManager = serviceManager;
-            this.m_restClientFactory = restClientFactory;
-            this.m_upstreamManagementService = upstreamManagementService;
         }
 
         /// <inheritdoc/>
@@ -53,12 +71,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
-            // Not configured
-            if(!this.m_upstreamManagementService.IsConfigured())
-            {
-                serviceInstance = false;
-                return false;
-            }
+            
 
             var serviceCandidate = this.m_upstreamServices.FirstOrDefault(o => serviceType.IsAssignableFrom(o));
             if(serviceCandidate != null)
@@ -68,50 +81,23 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             else if(serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IRepositoryService<>))
             {
-                var instance = this.GetUpstreamRepository(serviceType.GenericTypeArguments[0]);
-                serviceInstance = instance;
-                return instance != null;
+                var storageType = serviceType.GenericTypeArguments[0];
+                if(this.m_amiResources.Contains(storageType))
+                {
+                    storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
+                }
+                else
+                {
+                    storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
+                }
+
+                serviceInstance = this.m_serviceManager.CreateInjected(storageType);
+                return true;
             }
             serviceInstance = null;
             return false;
         }
 
 
-        /// <summary>
-        /// Get upstream repository for the specified type
-        /// </summary>
-        public IRepositoryService GetUpstreamRepository(Type forType)
-        {
-            if (this.m_serviceRepositories == null)
-            {
-                try
-                {
-                    var tEndpointMap = new Dictionary<Type, IRepositoryService>();
-                    var serializationBinder = new ModelSerializationBinder();
-                    using (var hdsiClient = this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService))
-                    {
-                        hdsiClient.Options<ServiceOptions>("/").Resources.ForEach(o => tEndpointMap.Add(o.ResourceType, this.m_serviceManager.CreateInjected(typeof(HdsiUpstreamRepository<>).MakeGenericType(o.ResourceType)) as IRepositoryService));
-                    }
-                    using (var amiClient = this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService))
-                    {
-                        amiClient.Options<ServiceOptions>("/").Resources.ForEach(o => tEndpointMap.Add(o.ResourceType, this.m_serviceManager.CreateInjected(typeof(AmiUpstreamRepository<>).MakeGenericType(o.ResourceType)) as IRepositoryService));
-                    }
-                    this.m_serviceRepositories = tEndpointMap;
-                }
-                catch (Exception e)
-                {
-                    return null;
-                }
-            }
-
-            if (this.m_serviceRepositories.TryGetValue(forType, out var repositoryService))
-            {
-                return repositoryService;
-            }
-            else
-            {
-                return null;
-            }
-        }
     }
 }

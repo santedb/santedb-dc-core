@@ -25,5 +25,10 @@ namespace SanteDB.Client.Upstream.Repositories
             : base(ServiceEndpointType.AdministrationIntegrationService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService)
         {
         }
+
+        /// <summary>
+        /// Get whether the upstream is available
+        /// </summary>
+        protected bool IsUpstreamAvailable() => this.IsUpstreamAvailable(ServiceEndpointType.AdministrationIntegrationService);
     }
 }

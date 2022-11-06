@@ -35,18 +35,6 @@ namespace SanteDB.Client.OAuth
         OpenIdConnectDiscoveryDocument _DiscoveryDocument;
         //IRestClient _AuthRestClient;
 
-        // Claim map
-        private static readonly Dictionary<String, String> s_ClaimMap = new Dictionary<string, string>() {
-            { "sid", SanteDBClaimTypes.Sid },
-            { "name", SanteDBClaimTypes.DefaultNameClaimType },
-            { "realm", SanteDBClaimTypes.Realm },
-            { "role", SanteDBClaimTypes.DefaultRoleClaimType },
-            { "sub", SanteDBClaimTypes.Sid },
-            { "exp", SanteDBClaimTypes.Expiration },
-            { "iat", SanteDBClaimTypes.AuthenticationInstant },
-            { "email", SanteDBClaimTypes.Email },
-            { "phone_number", SanteDBClaimTypes.Telephone }
-        };
         private class OAuthTokenRequest
         {
             [FormElement("grant_type")]
@@ -224,19 +212,7 @@ namespace SanteDB.Client.OAuth
             return CreatePrincipalFromResponse(response);
         }
 
-        private static IClaim CreateClaimFromResponse(string type, string value)
-        {
-            if (s_ClaimMap.ContainsKey(type)){
-                type = s_ClaimMap[type];
-            }
-
-            if (type == SanteDBClaimTypes.SanteDBScopeClaim && value.StartsWith("ua."))
-            {
-                value = $"{PermissionPolicyIdentifiers.UnrestrictedAll}{value.Substring(2)}";
-            }
-
-            return new SanteDBClaim(type, value);
-        }
+       
 
         private IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response)
         {
@@ -247,40 +223,22 @@ namespace SanteDB.Client.OAuth
                 throw tokenvalidationresult.Exception ?? new SecurityTokenException("Token validation failed");
             }
 
-            var claims = new List<IClaim>();
-
-            foreach (var claim in tokenvalidationresult.Claims)
+            // Map claims from any external format to the internal format
+            if (ClaimMapper.Current.TryGetMapper(ClaimMapper.ExternalTokenTypeJwt, out var mappers))
             {
-                if (null == claim.Value)
-                {
-                    continue;
-                }
-                else if (claim.Value is string s)
-                {
-                    claims.Add(CreateClaimFromResponse(claim.Key, s));
-                }
-                else if (claim.Value is string[] sarr)
-                {
-                    claims.AddRange(sarr.Select(a => CreateClaimFromResponse(claim.Key, a)));
-                }
-                else if (claim.Value is IEnumerable<string> enumerable)
-                {
-                    claims.AddRange(enumerable.Select(v => CreateClaimFromResponse(claim.Key, v)));
-                }
-                else if (claim.Value is IEnumerable<object> objenumerable)
-                {
-                    claims.AddRange(objenumerable.Select(v => CreateClaimFromResponse(claim.Key, v.ToString())));
-                }
-                else
-                {
-                    claims.Add(CreateClaimFromResponse(claim.Key, claim.Value.ToString()));
-                }
+                var claims = mappers.SelectMany(o => o.MapToInternalIdentityClaims(tokenvalidationresult.Claims)).ToList();
+
+                //Drop the realm into the claims so upstream knows which realm this principal is from.
+                claims.Add(new SanteDBClaim(SanteDBClaimTypes.Realm, _RealmSettings.Realm.ToString()));
+
+                return new OAuthClaimsPrincipal(response.AccessToken, tokenvalidationresult.SecurityToken, response.TokenType, response.RefreshToken, response.ExpiresIn, claims);
+
+            }
+            else
+            {
+                throw new InvalidOperationException(); // TODO: Think of a good error to throw here
             }
 
-            //Drop the realm into the claims so upstream knows which realm this principal is from.
-            claims.Add(new SanteDBClaim(SanteDBClaimTypes.Realm, _RealmSettings.Realm.ToString()));
-
-            return new OAuthClaimsPrincipal(response.AccessToken, tokenvalidationresult.SecurityToken, response.TokenType, response.RefreshToken, response.ExpiresIn, claims);
         }
 
         private OAuthTokenResponse GetToken(OAuthTokenRequest request)

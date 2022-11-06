@@ -65,7 +65,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private string GetResourceName() => typeof(TModel).GetSerializationName();
 
         /// <inheritdoc/>
-        public TModel Delete(Guid key)
+        public virtual TModel Delete(Guid key)
         {
            
                 try
@@ -85,23 +85,23 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
-        public IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query)
+        public virtual IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query)
         {
             return new UpstreamQueryResultSet<TModel, TCollection>(this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal), query);
         }
 
         /// <inheritdoc/>
         [Obsolete("Use Find(query)", true)]
-        public IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy)
+        public virtual IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public TModel Get(Guid key) => this.Get(key, Guid.Empty);
+        public virtual TModel Get(Guid key) => this.Get(key, Guid.Empty);
 
         /// <inheritdoc/>
-        public TModel Get(Guid key, Guid versionKey)
+        public virtual TModel Get(Guid key, Guid versionKey)
         {
             
                 try
@@ -144,7 +144,7 @@ namespace SanteDB.Client.Upstream.Repositories
 
 
         /// <inheritdoc/>
-        public TModel Insert(TModel data)
+        public virtual TModel Insert(TModel data)
         {
 
             if (data == null)
@@ -177,7 +177,7 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
-        public TModel Save(TModel data)
+        public virtual TModel Save(TModel data)
         {
             if (data == null)
             {

@@ -23,7 +23,10 @@ namespace SanteDB.Client.OAuth
             _Token = token;
             AuthenticationType = authenticationType;
             IsAuthenticated = isAuthenticated;
-            _Claims = claims;
+
+
+            _Claims = claims; // TODO: throw an exception?
+
         }
 
         public IEnumerable<IClaim> Claims => _Claims;

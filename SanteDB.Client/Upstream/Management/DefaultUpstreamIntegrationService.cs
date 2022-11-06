@@ -13,6 +13,8 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.HDSI.Client;
@@ -23,6 +25,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 
@@ -33,6 +36,66 @@ namespace SanteDB.Client.Upstream.Management
     /// </summary>
     public class DefaultUpstreamIntegrationService : IUpstreamIntegrationService
     {
+
+        /// <summary>
+        /// A certificate principal
+        /// </summary>
+        private class CertificatePrincipal : SanteDBClaimsPrincipal, ICertificatePrincipal
+        {
+            /// <summary>
+            /// Create a new basic header for this 
+            /// </summary>
+            public CertificatePrincipal(UpstreamCredentialConfiguration credentialConfiguration)
+            {
+                if (credentialConfiguration.Conveyance != UpstreamCredentialConveyance.ClientCertificate)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(credentialConfiguration));
+                }
+                this.AddIdentity(new SanteDBClaimsIdentity(credentialConfiguration.CredentialName, true, "NONE"));
+                this.AuthenticationCertificate = credentialConfiguration.CertificateSecret.Certificate;
+            }
+
+            /// <inheritdoc/>
+            public X509Certificate2 AuthenticationCertificate { get; }
+        }
+
+        /// <summary>
+        /// Represents a device principal which is used to represent basic authentication context information
+        /// </summary>
+        private class HttpBasicTokenPrincipal : SanteDBClaimsPrincipal, ITokenPrincipal
+        {
+
+            /// <summary>
+            /// Create a new basic header for this 
+            /// </summary>
+            public HttpBasicTokenPrincipal(UpstreamCredentialConfiguration credentialConfiguration)
+            {
+                if (credentialConfiguration.Conveyance == UpstreamCredentialConveyance.ClientCertificate) {
+                    throw new ArgumentOutOfRangeException(nameof(credentialConfiguration));
+                }
+                this.AddIdentity(new SanteDBClaimsIdentity(credentialConfiguration.CredentialName, true, "NONE"));
+                this.TokenType = "BASIC";
+                this.AccessToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{credentialConfiguration.CredentialName}:{credentialConfiguration.CredentialSecret}"));
+                this.ExpiresAt = DateTimeOffset.Now.AddSeconds(10);
+            }
+
+            /// <inheritdoc/>
+            public string AccessToken { get; }
+
+            /// <inheritdoc/>
+            public string TokenType { get; }
+
+            /// <inheritdoc/>
+            public DateTimeOffset ExpiresAt { get; }
+
+            /// <inheritdoc/>
+            public string IdentityToken => null;
+
+            /// <inheritdoc/>
+            public string RefreshToken => null;
+
+        }
+
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultUpstreamIntegrationService));
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamManagementService m_upstreamManager;
@@ -41,7 +104,8 @@ namespace SanteDB.Client.Upstream.Management
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IServiceManager m_serviceManager;
         private ConcurrentDictionary<String, Guid> s_templateKeys = new ConcurrentDictionary<string, Guid>();
-       
+        private ITokenPrincipal m_devicePrincipal;
+
         /// <inheritdoc/>
         public string ServiceName => "Upstream Data Provider";
 
@@ -128,6 +192,12 @@ namespace SanteDB.Client.Upstream.Management
         {
             try
             {
+
+                if(this.m_devicePrincipal != null && this.m_devicePrincipal.ExpiresAt.AddMinutes(-2) > DateTimeOffset.Now)
+                {
+                    return this.m_devicePrincipal;
+                }
+
                 var deviceCredentialSettings = m_configuration.Credentials.Single(o => o.CredentialType == UpstreamCredentialType.Device);
                 var applicationCredentialSettings = m_configuration.Credentials.Single(o => o.CredentialType == UpstreamCredentialType.Application);
                 if (deviceCredentialSettings == null || applicationCredentialSettings == null)
@@ -138,22 +208,20 @@ namespace SanteDB.Client.Upstream.Management
                 IPrincipal devicePrincipal = null;
                 switch (deviceCredentialSettings.Conveyance)
                 {
-                    case UpstreamCredentialConveyance.Secret:
                     case UpstreamCredentialConveyance.Header:
-                        var deviceIdentityProvider = ApplicationServiceContext.Current.GetService<IDeviceIdentityProviderService>();
-                        devicePrincipal = deviceIdentityProvider.Authenticate(deviceCredentialSettings.CredentialName, deviceCredentialSettings.CredentialSecret, AuthenticationMethod.Local);
+                    case UpstreamCredentialConveyance.Secret:
+                        devicePrincipal = new HttpBasicTokenPrincipal(deviceCredentialSettings);
                         break;
                     case UpstreamCredentialConveyance.ClientCertificate:
-                        var certificateIdentityProvider = ApplicationServiceContext.Current.GetService<ICertificateIdentityProvider>();
-                        devicePrincipal = certificateIdentityProvider.Authenticate(deviceCredentialSettings.CertificateSecret.Certificate);
+                        devicePrincipal = new CertificatePrincipal(deviceCredentialSettings);
                         break;
                     default:
                         throw new InvalidOperationException(string.Format(ErrorMessages.NOT_SUPPORTED_IMPLEMENTATION, deviceCredentialSettings.Conveyance));
                 }
 
                 var applicationIdentityProvider = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>();
-                return applicationIdentityProvider.Authenticate(applicationCredentialSettings.CredentialName, devicePrincipal);
-
+                this.m_devicePrincipal = applicationIdentityProvider.Authenticate(applicationCredentialSettings.CredentialName, devicePrincipal) as ITokenPrincipal;
+                return this.m_devicePrincipal;
             }
             catch (Exception e)
             {

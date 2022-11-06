@@ -47,7 +47,7 @@ namespace SanteDB.Client.Http
             if (m_upstreamConfiguration != null)
             {
                 var headerValue = Encoding.UTF8.GetBytes($"{m_upstreamConfiguration.LocalDeviceName}:{m_upstreamConfiguration.LocalDeviceSecret}");
-                webRequest.Headers.Add(ExtendedHttpHeaderNames.HttpDeviceCredentialHeaderName, $"BASIC {Convert.ToBase64String(headerValue)}");
+                webRequest.Headers.Add(HttpRequestHeader.Authorization, $"BASIC {Convert.ToBase64String(headerValue)}");
             }
             else
             {
