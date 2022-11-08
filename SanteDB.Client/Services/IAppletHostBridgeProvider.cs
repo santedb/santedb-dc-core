@@ -17,5 +17,6 @@ namespace SanteDB.Client.Services
         /// interact with the host
         /// </summary>
         String GetBridgeScript();
+
     }
 }

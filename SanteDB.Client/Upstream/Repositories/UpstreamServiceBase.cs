@@ -71,7 +71,7 @@ namespace SanteDB.Client.Upstream.Repositories
             var client = this.m_restClientFactory.GetRestClientFor(serviceEndpointType);
             if (authenticatedAs != null)
             {
-                client.Credentials = new UpstreamPrincipalCredentials(null);
+                client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
             }
             else if ((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
                 AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal) && this.m_upstreamIntegrationService != null) // We are the system - so we need to auth as the device

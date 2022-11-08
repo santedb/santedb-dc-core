@@ -29,7 +29,15 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IDispatcherQueueManagerService m_dispatcherQueue;
 
         /// <inheritdoc/>
-        public UpstreamAuditRepository(IDispatcherQueueManagerService dispatcherQueueManagerService, ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamAvailabilityProvider upstreamAvailability, IUpstreamIntegrationService upstreamIntegrationService, IAuditDispatchService auditDispatchService = null) : base(localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService)
+        public UpstreamAuditRepository(IDispatcherQueueManagerService dispatcherQueueManagerService, 
+            ILocalizationService localizationService, 
+            IDataCachingService cacheService, 
+            IRestClientFactory restClientFactory, 
+            IUpstreamManagementService upstreamManagementService, 
+            IUpstreamAvailabilityProvider upstreamAvailability, 
+            IUpstreamIntegrationService upstreamIntegrationService, 
+            IAdhocCacheService adhocCacheService,
+            IAuditDispatchService auditDispatchService = null) : base(localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService, adhocCacheService)
         {
             this.m_dispatcherQueue = dispatcherQueueManagerService;
             this.m_dispatcherQueue.Open(AmiQueueName);

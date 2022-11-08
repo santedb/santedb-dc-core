@@ -7,6 +7,7 @@ using SanteDB.Client.Services;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.Upstream.Security;
 using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Http;
 using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
@@ -55,6 +56,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly IRestClientFactory m_restClientFactory;
         private readonly UpstreamConfigurationSection m_configuration;
         private readonly RestClientConfigurationSection m_restConfiguration;
+        private readonly ApplicationServiceContextConfigurationSection m_applicationConfiguration;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultUpstreamManagementService));
         private readonly IGeographicLocationProvider m_geographicLocationService;
         private IAuditService m_auditService;
@@ -68,7 +70,7 @@ namespace SanteDB.Client.Upstream.Management
             IConfigurationManager configurationManager,
             ILocalizationService localizationService,
             IServiceManager serviceManager,
-            IOperatingSystemInfoService operatingSystemInfoService, 
+            IOperatingSystemInfoService operatingSystemInfoService,
             IGeographicLocationProvider geographicLocationProvider = null,
             ICertificateGeneratorService certificateGenerator = null,
             IPolicyEnforcementService pepService = null
@@ -77,6 +79,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_restClientFactory = restClientFactory;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
             this.m_restConfiguration = configurationManager.GetSection<RestClientConfigurationSection>();
+            this.m_applicationConfiguration = configurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
             this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
             this.m_localizationService = localizationService;
             this.m_policyEnforcementService = pepService;
@@ -123,7 +126,7 @@ namespace SanteDB.Client.Upstream.Management
                 this.m_policyEnforcementService?.Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction, AuthenticationContext.Current.Principal);
             }
 
-            if(this.m_auditService == null)
+            if (this.m_auditService == null)
             {
                 this.m_auditService = ApplicationServiceContext.Current.GetService<IAuditService>();
             }
@@ -171,14 +174,28 @@ namespace SanteDB.Client.Upstream.Management
             try
             {
                 var dnSettings = String.Empty;
-
+                var isCaConfigured = false;
+                var allowHs256 = true;
                 using (amiRestClient)
                 {
                     using (var amiServiceClient = new AmiServiceClient(amiRestClient))
                     {
                         var realmOptions = amiServiceClient.Options(); // Get the options object from the server
                         dnSettings = realmOptions.Settings.Find(o => o.Key.Equals("dn", StringComparison.OrdinalIgnoreCase))?.Value;
+                        isCaConfigured = realmOptions.Resources.Any(r => r.ResourceName == "Ca");
+                        if (!Boolean.TryParse(realmOptions.Settings.Find(o => o.Key.Equals("forbidhs256"))?.Value, out allowHs256))
+                        {
+                            allowHs256 = true;
+                        }
+
                         welcomeMessage = realmOptions.Settings.Find(o => o.Key.Equals("welcome"))?.Value ?? this.m_localizationService.GetString(UserMessageStrings.JOIN_REALM_SUCCESS, new { realm = targetRealm.Realm.Host });
+
+                        // Copy central app settings 
+                        foreach (var set in realmOptions.Settings.Where(o => o.Key.StartsWith("client.")))
+                        {
+                            this.m_applicationConfiguration.AddAppSetting(set.Key.Substring(7), set.Value);
+                        }
+
                         // Pull security configuration sections from the AMI - these are only disclosed when the AMI has our authentication as an administrator
                         this.m_securityConfiguration.PasswordRegex = realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
                             this.m_securityConfiguration.PasswordRegex;
@@ -226,7 +243,6 @@ namespace SanteDB.Client.Upstream.Management
                         existingDevice.DeviceSecret = deviceCredential.CredentialSecret;
                         existingDevice = amiClient.UpdateDevice(existingDevice.Key.Value, new SecurityDeviceInfo(existingDevice))?.Entity;
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, existingDevice);
-
                     }
                     else
                     {
@@ -239,20 +255,25 @@ namespace SanteDB.Client.Upstream.Management
 
                     }
 
+                    this.m_securityConfiguration.SetPolicy(SecurityPolicyIdentification.AssignedDeviceSecurityId, existingDevice.Key.Value);
+
                     var entity = this.CreateDeviceEntity(existingDevice);
+                    this.m_securityConfiguration.SetPolicy(SecurityPolicyIdentification.AssignedDeviceEntityId, entity.Key.Value);
+
+
                     audit.WithIdentifiedData(AuditableObjectLifecycle.Creation, entity);
                     var authEpConfiguration = this.m_restConfiguration.Client.Find(o => o.Name == ServiceEndpointType.AuthenticationService.ToString());
-                    if (targetRealm.Realm.Scheme == "https" && 
+                    if (targetRealm.Realm.Scheme == "https" &&
                         authEpConfiguration.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
                     {
 
-                        var subjectName = $"CN={existingDevice.Key}, DC={targetRealm.LocalDeviceName}, DC={ targetRealm.Realm.Host}";
-                        if(!String.IsNullOrEmpty(dnSettings))
+                        var deviceSubjectName = $"CN={existingDevice.Key}, DC={targetRealm.LocalDeviceName}, DC={targetRealm.Realm.Host}";
+                        if (!String.IsNullOrEmpty(dnSettings))
                         {
-                            subjectName += $", {dnSettings}";
+                            deviceSubjectName += $", {dnSettings}";
                         }
 
-                        deviceCredential.CertificateSecret = new Core.Security.Configuration.X509ConfigurationElement(StoreLocation.CurrentUser, StoreName.My, X509FindType.FindBySubjectDistinguishedName, subjectName);
+                        deviceCredential.CertificateSecret = new Core.Security.Configuration.X509ConfigurationElement(StoreLocation.CurrentUser, StoreName.My, X509FindType.FindBySubjectDistinguishedName, deviceSubjectName);
 
                         // Is there already a certificate that has a private key?
                         var deviceCertificate = deviceCredential.CertificateSecret.Certificate;
@@ -265,41 +286,91 @@ namespace SanteDB.Client.Upstream.Management
                             }
 
                             var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
-                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
-                            
-                            var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
-
-                            if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
-                                submissionResult.CertificatePkcs != null)
+                            if (isCaConfigured)
                             {
-                                deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
-                                this.m_securityConfiguration.Signatures.RemoveAll(o => o.KeyName == "default");
-                                this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, deviceCertificate));
-                                this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", StoreLocation.CurrentUser, StoreName.My, deviceCertificate));
-                                X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
-                                audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
+                                var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(deviceSubjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
+                                var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
+                                if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
+                                    submissionResult.CertificatePkcs != null)
+                                {
+                                    deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
+                                    X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
+                                    audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CERTIFICATE_HOLD, new { message = submissionResult.Message, status = submissionResult.Status }));
+                                }
                             }
                             else
                             {
-                                throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CERTIFICATE_HOLD, new { message = submissionResult.Message, status = submissionResult.Status }));
+                                deviceCertificate = this.m_certificateGenerator.CreateSelfSignedCertificate(privateKeyPair, new X500DistinguishedName(deviceSubjectName), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
+                                X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
+                                audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
                             }
                         }
 
                         authEpConfiguration.Binding.Security.CredentialProvider = null; // No need for credentials on OAUTH since the certificate is our credential
 
                         // Update other configurations to use our shiny new device certificate
-                        foreach(var ep in this.m_restConfiguration.Client)
+                        foreach (var ep in this.m_restConfiguration.Client)
                         {
-                            if(ep.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
+                            if (ep.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
                             {
                                 ep.Binding.Security.ClientCertificate = new Core.Security.Configuration.X509ConfigurationElement(deviceCertificate);
                             }
                         }
                     }
+
+
+                    // Generate a signing certificate for data on this machine
+                    var subjectName = $"CN={targetRealm.LocalDeviceName} Digital Signature, DC={targetRealm.LocalDeviceName}, DC={targetRealm.Realm.Host}";
+                    if (!String.IsNullOrEmpty(dnSettings))
+                    {
+                        subjectName += $", {dnSettings}";
+                    }
+
+                    var signingCertificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectDistinguishedName, StoreLocation.CurrentUser, StoreName.My, subjectName);
+                    if (signingCertificate == null)
+                    {
+                        if (this.m_certificateGenerator == null)
+                        {
+                            throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CANNOT_GENERATE_CERTIFICATE));
+                        }
+
+                        var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
+                        if (isCaConfigured)
+                        {
+                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.CodeSigning });
+                            var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
+                            if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
+                                submissionResult.CertificatePkcs != null)
+                            {
+                                signingCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
+                                X509CertificateUtils.InstallCertificate(StoreName.My, signingCertificate);
+                                audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CERTIFICATE_HOLD, new { message = submissionResult.Message, status = submissionResult.Status }));
+                            }
+                        }
+                        else
+                        {
+                            signingCertificate = this.m_certificateGenerator.CreateSelfSignedCertificate(privateKeyPair, new X500DistinguishedName(subjectName), new TimeSpan(730, 0, 0, 0), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature);
+                            X509CertificateUtils.InstallCertificate(StoreName.My, signingCertificate);
+                            audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
+                        }
+                    }
+
+                    // Remove all HMAC and replace with RS256
+                    this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
+                    this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+
                     EntitySource.Current = new EntitySource(new RepositoryEntitySource());
                 }
 
-               
+
 
                 // Now we want to save the configuration
                 this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
@@ -355,7 +426,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <returns>The collection of rest descriptions</returns>
         private IEnumerable<RestClientDescriptionConfiguration> GetRestClients(IUpstreamRealmSettings targetRealm, ServiceOptions realmOptions)
         {
-            foreach (var endpoint in realmOptions.Endpoints.Where(r => r.BaseUrl.Any(k => new Uri(k).Scheme.StartsWith("http"))))
+            foreach (var endpoint in realmOptions.Endpoints.Where(r => r.BaseUrl.Any(k => new Uri(k).Scheme.StartsWith("http")) && r.ServiceType != ServiceEndpointType.Metadata))
             {
                 yield return new RestClientDescriptionConfiguration()
                 {
@@ -369,7 +440,7 @@ namespace SanteDB.Client.Upstream.Management
                             CredentialProvider = endpoint.SecurityScheme.HasFlag(Core.Http.Description.SecurityScheme.Bearer) || endpoint.SecurityScheme.HasFlag(Core.Http.Description.SecurityScheme.ClientCertificate) ?
                                 (ICredentialProvider)new UpstreamPrincipalCredentialProvider() : endpoint.ServiceType == ServiceEndpointType.AuthenticationService ? (ICredentialProvider)new UpstreamDeviceCredentialProvider() : null,
                             CertificateValidatorXml = new Core.Configuration.TypeReferenceConfiguration(typeof(UserInterface.UserInterfaceCertificateValidator))
-                            
+
                         },
                         ContentTypeMapper = new DefaultContentTypeMapper(),
                         OptimizationMethod = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression) ? Core.Http.Description.HttpCompressionAlgorithm.Gzip : Core.Http.Description.HttpCompressionAlgorithm.None,

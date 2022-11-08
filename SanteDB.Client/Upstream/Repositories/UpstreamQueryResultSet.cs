@@ -17,12 +17,13 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// Represents a <see cref="IQueryResultSet{TData}"/> which interacts with a REST service 
     /// </summary>
-    internal class UpstreamQueryResultSet<TModel, TCollectionType> : IQueryResultSet<TModel>, IDisposable
+    internal class UpstreamQueryResultSet<TModel, TCollectionType> : IQueryResultSet<TModel>, IOrderableQueryResultSet<TModel>, IDisposable
         where TModel : IdentifiedData, new()
         where TCollectionType : IResourceCollection
     {
         private readonly IRestClient m_restClient;
         private readonly NameValueCollection m_queryFilter;
+        private IEnumerable<IIdentifiedResource> m_cachedResults;
 
         /// <summary>
         /// Create a new upstream query result set with <paramref name="restClient"/> and <paramref name="query"/>
@@ -117,15 +118,23 @@ namespace SanteDB.Client.Upstream.Repositories
             bool fetchNextPage = true;
             while (fetchNextPage)
             {
-                var results = this.m_restClient.Get<TCollectionType>(typeof(TModel).GetSerializationName(), parameters).Item;
-                foreach (var r in results.OfType<TModel>())
+                this.m_cachedResults = this.m_cachedResults ?? this.m_restClient.Get<TCollectionType>(typeof(TModel).GetSerializationName(), parameters).Item;
+                foreach (var r in this.m_cachedResults.OfType<TModel>())
                 {
                     fetchNextPage = true;
                     yield return r;
                 }
-                fetchNextPage = results.Any();
-                offset += results.Count();
-                parameters[QueryControlParameterNames.HttpOffsetParameterName] = offset.ToString(); // fetch next page
+                fetchNextPage = this.m_cachedResults.Any();
+                offset += this.m_cachedResults .Count();
+                if (Int32.TryParse(parameters[QueryControlParameterNames.HttpCountParameterName], out int count) && count > offset)
+                {
+                    parameters[QueryControlParameterNames.HttpOffsetParameterName] = offset.ToString(); // fetch next page
+                    this.m_cachedResults = null;
+                }
+                else
+                {
+                    yield break;
+                }
             }
         }
 
@@ -152,10 +161,54 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             foreach (var itm in this)
             {
-                if (this is TType t)
+                if (itm is TType t)
                 {
                     yield return t;
                 }
+            }
+        }
+
+        /// <inheritdoc/>
+        public IOrderableQueryResultSet<TModel> OrderBy<TKey>(Expression<Func<TModel, TKey>> sortExpression)
+        {
+            var newQuery = new NameValueCollection(this.m_queryFilter);
+            var propertySelector = QueryExpressionBuilder.BuildSortExpression<TModel>(new ModelSort<TModel>(sortExpression, Core.Model.Map.SortOrderType.OrderBy));
+            newQuery[QueryControlParameterNames.HttpOrderByParameterName] = propertySelector;
+            return new UpstreamQueryResultSet<TModel, TCollectionType>(this.m_restClient, newQuery);
+        }
+
+        /// <inheritdoc/>
+        public IOrderableQueryResultSet OrderBy(Expression expression)
+        {
+            if (expression is Expression<Func<TModel, dynamic>> le)
+            {
+                return this.OrderBy(le);
+            }
+            else
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.INVALID_EXPRESSION_TYPE, typeof(Expression<Func<TModel, dynamic>>), expression.GetType()));
+            }
+        }
+
+        /// <inheritdoc/>
+        public IOrderableQueryResultSet<TModel> OrderByDescending<TKey>(Expression<Func<TModel, TKey>> sortExpression)
+        {
+            var newQuery = new NameValueCollection(this.m_queryFilter);
+            var propertySelector = QueryExpressionBuilder.BuildSortExpression<TModel>(new ModelSort<TModel>(sortExpression, Core.Model.Map.SortOrderType.OrderByDescending));
+            newQuery[QueryControlParameterNames.HttpOrderByParameterName] = propertySelector;
+            return new UpstreamQueryResultSet<TModel, TCollectionType>(this.m_restClient, newQuery);
+        }
+
+        /// <inheritdoc/>
+        public IOrderableQueryResultSet OrderByDescending(Expression expression)
+        {
+            if (expression is Expression<Func<TModel, dynamic>> le)
+            {
+                return this.OrderByDescending(le);
+            }
+            else
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.INVALID_EXPRESSION_TYPE, typeof(Expression<Func<TModel, dynamic>>), expression.GetType()));
             }
         }
 
@@ -173,6 +226,9 @@ namespace SanteDB.Client.Upstream.Repositories
                     break;
                 case Func<TModel, TReturn> fse:
                     compiledSelector = fse;
+                    break;
+                case Expression<Func<TModel, Object>> fso:
+                    compiledSelector = Expression.Lambda<Func<TModel, TReturn>>(Expression.Convert(fso.Body, typeof(TReturn)), fso.Parameters).Compile();
                     break;
                 default:
                     throw new InvalidOperationException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, selector.GetType(), typeof(Func<TModel, TReturn>)));

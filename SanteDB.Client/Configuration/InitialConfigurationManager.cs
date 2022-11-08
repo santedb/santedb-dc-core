@@ -2,9 +2,11 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -14,10 +16,14 @@ namespace SanteDB.Client.Configuration
     /// A configuration manager which uses a temporary configuration in memory 
     /// via implementations of <see cref="IInitialConfigurationProvider"/>
     /// </summary>
-    public class InitialConfigurationManager : IConfigurationManager
+    public class InitialConfigurationManager : IConfigurationManager, IRequestRestarts
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(InitialConfigurationManager));
         private readonly SanteDBConfiguration m_configuration;
+        private readonly string m_localConfigurationPath;
+
+        // Restart requested
+        public event EventHandler RestartRequested;
 
         /// <summary>
         /// True if the configuration is readonly
@@ -37,7 +43,7 @@ namespace SanteDB.Client.Configuration
         /// <summary>
         /// Initial configuration manager 
         /// </summary>
-        public InitialConfigurationManager(SanteDBHostType hostType, String instanceName)
+        public InitialConfigurationManager(SanteDBHostType hostType, String instanceName, String fileLocation)
         {
             // Let the initial configuration providers do their magic
             var configuration = new SanteDBConfiguration()
@@ -60,6 +66,7 @@ namespace SanteDB.Client.Configuration
                 configuration = initialProvider.Provide(hostType, configuration);
             }
             this.m_configuration = configuration;
+            this.m_localConfigurationPath = fileLocation;
         }
 
         /// <inheritdoc/>
@@ -103,14 +110,29 @@ namespace SanteDB.Client.Configuration
         /// <inheritdoc/>
         public void SaveConfiguration()
         {
+            // Save configuration - 
+            var encryptionCertificiate = this.m_configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o=>o.KeyName == "default");
+            if(encryptionCertificiate?.Algorithm != SignatureAlgorithm.HS256)
+            {
+                this.m_configuration.ProtectedSectionKey = new X509ConfigurationElement(encryptionCertificiate);
+            }
+
+            this.m_configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == typeof(InitialConfigurationManager));
+            
+            // Now we want to save
+            using(var fs = File.Create(this.m_localConfigurationPath))
+            {
+                this.m_configuration.Save(fs);
+            }
+            this.RestartRequested?.Invoke(null, EventArgs.Empty);
+
         }
 
         /// <inheritdoc/>
         public void SetAppSetting(string key, string value)
         {
-            var appSettings = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings;
-            appSettings.RemoveAll(o => o.Key == key);
-            appSettings.Add(new AppSettingKeyValuePair(key, value));
+            var appSettings = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+            appSettings.AddAppSetting(key, value);
         }
     }
 }

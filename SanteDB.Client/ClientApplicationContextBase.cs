@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 
 namespace SanteDB.Client
 {
@@ -37,6 +38,11 @@ namespace SanteDB.Client
         /// Localization service
         /// </summary>
         protected ILocalizationService LocalizationService => this.GetService<ILocalizationService>();
+        
+        /// <summary>
+        /// Threadpool
+        /// </summary>
+        protected IThreadPoolService ThreadPoolService => this.GetService<IThreadPoolService>();
 
         /// <summary>
         /// Service manager
@@ -69,11 +75,7 @@ namespace SanteDB.Client
                 {
                     svc.RestartRequested += (o, e) =>
                     {
-                        if (o is IServiceImplementation isi &&
-                            this.InteractionProvider.Confirm(this.LocalizationService.GetString(UserMessageStrings.CONFIRM_RESTART_REQUEST, new { source = isi.ServiceName })))
-                        {
-                            this.OnRestartRequested(o);
-                        }
+                        ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nurfed
                     };
                 });
             }

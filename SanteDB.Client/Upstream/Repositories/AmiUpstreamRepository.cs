@@ -20,9 +20,10 @@ namespace SanteDB.Client.Upstream.Repositories
         /// DI constructor
         /// </summary>
         public AmiUpstreamRepository(ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService,
-            IUpstreamAvailabilityProvider upstreamAvailability, 
-            IUpstreamIntegrationService upstreamIntegrationService) 
-            : base(ServiceEndpointType.AdministrationIntegrationService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService)
+            IUpstreamAvailabilityProvider upstreamAvailability,
+            IUpstreamIntegrationService upstreamIntegrationService,
+            IAdhocCacheService adhocCacheService = null)
+            : base(ServiceEndpointType.AdministrationIntegrationService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService, adhocCacheService)
         {
         }
 

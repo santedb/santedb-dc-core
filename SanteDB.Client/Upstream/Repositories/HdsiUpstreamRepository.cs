@@ -22,9 +22,10 @@ namespace SanteDB.Client.Upstream.Repositories
         public HdsiUpstreamRepository(ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory,
             IUpstreamManagementService upstreamManagementService, 
             IUpstreamIntegrationService upstreamIntegrationService,
+            IAdhocCacheService adhocCacheService,
             IUpstreamAvailabilityProvider upstreamAvailability
             ) 
-            : base(ServiceEndpointType.HealthDataService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService)
+            : base(ServiceEndpointType.HealthDataService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService, adhocCacheService)
         {
         }
 

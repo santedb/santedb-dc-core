@@ -16,7 +16,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         /// Synchronized based on subscriptions
         /// </summary>
         [XmlEnum("sub")]
-        Subscriptions = 0x1,
+        Subscription = 0x1,
         /// <summary>
         /// Operate online only - no synchronization
         /// </summary>

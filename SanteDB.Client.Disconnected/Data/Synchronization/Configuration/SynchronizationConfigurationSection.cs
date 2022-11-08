@@ -51,13 +51,19 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         /// Gets or sets the subscriptions which are active for this configuration
         /// </summary>
         [XmlArray("subscriptions"), XmlArrayItem("add"), JsonProperty("subscriptions")]
-        public List<String> Subscriptions { get; set; }
+        public List<Guid> Subscriptions { get; set; }
+
+        /// <summary>
+        /// The type of resource that this is binding to
+        /// </summary>
+        [XmlElement("subscribeTo"), JsonProperty("subscribeTo")]
+        public ResourceTypeReferenceConfiguration SubscribeToResource { get; set; }
 
         /// <summary>
         /// Gets or sets the subscribed objects
         /// </summary>
         [XmlArray("subscribed"), XmlArrayItem("add"), JsonProperty("subscribed")]
-        public List<SubscribedObjectConfiguration> SubscribedObjects { get; set; }
+        public List<Guid> SubscribedObjects { get; set; }
 
         /// <summary>
         /// The time between polling requests

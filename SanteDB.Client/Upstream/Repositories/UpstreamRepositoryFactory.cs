@@ -16,7 +16,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
+using System.Reflection;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -86,11 +88,15 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
                 }
-                else
+                else if(storageType.GetCustomAttribute<XmlRootAttribute>() != null)
                 {
                     storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
                 }
-
+                else
+                {
+                    serviceInstance = null;
+                    return false;
+                }
                 serviceInstance = this.m_serviceManager.CreateInjected(storageType);
                 return true;
             }

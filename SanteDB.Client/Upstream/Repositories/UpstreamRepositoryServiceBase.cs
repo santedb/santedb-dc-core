@@ -19,7 +19,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// A generic implementation that calls the upstream for fetching data 
     /// </summary>
-    public abstract class UpstreamRepositoryServiceBase<TModel, TCollection> : UpstreamServiceBase, 
+    public abstract class UpstreamRepositoryServiceBase<TModel, TCollection> : UpstreamServiceBase,
         IRepositoryService<TModel>,
         IRepositoryService
         where TModel : IdentifiedData, new()
@@ -28,6 +28,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly ServiceEndpointType m_endpoint;
         private readonly IDataCachingService m_cacheService;
         private readonly ILocalizationService m_localeService;
+        private readonly IAdhocCacheService m_adhocCache;
 
         /// <summary>
         /// Gets the localization service
@@ -43,17 +44,19 @@ namespace SanteDB.Client.Upstream.Repositories
         /// DI constructor
         /// </summary>
         protected UpstreamRepositoryServiceBase(
-            ServiceEndpointType serviceEndpoint, 
-            ILocalizationService localizationService, 
-            IDataCachingService cacheService, 
-            IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
+            ServiceEndpointType serviceEndpoint,
+            ILocalizationService localizationService,
+            IDataCachingService cacheService,
+            IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
-            IUpstreamIntegrationService upstreamIntegrationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
+            IUpstreamIntegrationService upstreamIntegrationService,
+            IAdhocCacheService adhocCacheService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_endpoint = serviceEndpoint;
             this.m_cacheService = cacheService;
             this.m_localeService = localizationService;
+            this.m_adhocCache = adhocCacheService;
         }
 
         /// <inheritdoc/>
@@ -67,20 +70,20 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public virtual TModel Delete(Guid key)
         {
-           
-                try
-                {
+
+            try
+            {
                 using (var client = this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal))
                 {
                     var retVal = client.Delete<TModel>($"{this.GetResourceName()}/{key}");
                     this.m_cacheService?.Remove(key);
                     return retVal;
                 }
-                }
-                catch (Exception e)
-                {
-                    throw new UpstreamIntegrationException( this.m_localeService.GetString(ErrorMessageStrings.UPSTREAM_GEN_ERR), e);
-                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localeService.GetString(ErrorMessageStrings.UPSTREAM_GEN_ERR), e);
+            }
 
         }
 
@@ -103,20 +106,23 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public virtual TModel Get(Guid key, Guid versionKey)
         {
-            
-                try
-                {
+
+            try
+            {
                 using (var client = this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal))
                 {
                     var existing = this.m_cacheService?.GetCacheItem(key);
 
                     if (existing is TModel tm && versionKey == Guid.Empty) // The cache item matches the type
                     {
-                        if (existing is IdentifiedData idata) // For entities and acts we want to ping the server
+                        var lastCheckKey = $"{existing.Type}/{existing.Tag}";
+                        // Only do a head if the ad-hoc cache for excessive HEAD checks is null
+                        if (!this.m_adhocCache.TryGet<DateTime>(lastCheckKey, out var lastTimeChecked))
                         {
-                            client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", $"W/{idata.Tag}");
+                            client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", $"{tm.Tag}");
+                            existing = client.Get<TModel>($"{this.GetResourceName()}/{key}") ?? existing;
+                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 0, 30));
                         }
-                        existing = client.Get<TModel>($"{this.GetResourceName()}/{key}") ?? existing;
                     }
                     else if (versionKey == Guid.Empty)
                     {
@@ -130,15 +136,15 @@ namespace SanteDB.Client.Upstream.Repositories
 
                     return (TModel)existing;
                 }
-                }
-                catch (WebException) // Web based exception = return nothing
-                {
-                    return default(TModel);
-                }
-                catch (Exception e)
-                {
-                    throw new UpstreamIntegrationException(this.m_localeService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
-                }
+            }
+            catch (WebException) // Web based exception = return nothing
+            {
+                return default(TModel);
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localeService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
+            }
 
         }
 
