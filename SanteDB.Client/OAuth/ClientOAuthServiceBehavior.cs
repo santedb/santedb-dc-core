@@ -4,6 +4,7 @@ using SanteDB.Core;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
+using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Security;
 using SanteDB.Rest.OAuth.Model;
 using SanteDB.Rest.OAuth.Rest;
@@ -61,10 +62,10 @@ namespace SanteDB.Client.OAuth
             var result = base.Token(formFields);
             if(result is OAuthTokenResponse otr)
             {
-                var sessionInfo = this.m_SessionResolver.GetSessionFromIdToken(otr.AccessToken);
-                if (sessionInfo.Claims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && c.Value == "true"))
+                var clientClaims = ClaimsUtility.ExtractClientClaims(RestOperationContext.Current.IncomingRequest.Headers);
+                if (!clientClaims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && c.Value == "true"))
                 {
-                    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", this.m_symmetricEncryptionProvider.Encrypt(otr.AccessToken), "/")
+                    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", otr.AccessToken, "/")
                     {
                         HttpOnly = true,
                         Expires = DateTime.Now.AddSeconds(otr.ExpiresIn).ToUniversalTime(),
