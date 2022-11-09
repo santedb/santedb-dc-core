@@ -39,6 +39,10 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             typeof(SubscriptionDefinition),
             typeof(SecurityProvenance),
+            typeof(SecurityUser),
+            typeof(SecurityRole),
+            typeof(SecurityDevice),
+            typeof(SecurityApplication),
             typeof(ApplicationEntity),
             typeof(DeviceEntity),
             typeof(SecurityPolicy),
