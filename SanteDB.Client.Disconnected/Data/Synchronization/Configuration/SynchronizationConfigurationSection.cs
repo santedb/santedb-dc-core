@@ -16,7 +16,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
     {
 
         /// <summary>
-        /// TRue it use big bundles (> 1000)
+        /// True it use big bundles (> 1000)
         /// </summary>
         [XmlAttribute("bigBundles"), JsonProperty("bigBundles")]
         public bool BigBundles { get; set; }
