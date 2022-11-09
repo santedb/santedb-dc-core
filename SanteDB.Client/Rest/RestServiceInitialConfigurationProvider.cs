@@ -134,6 +134,7 @@ namespace SanteDB.Client.Rest
             var apiBehaviors = new List<RestServiceBehaviorConfiguration>()
             {
                 new RestServiceBehaviorConfiguration(typeof(ErrorServiceBehavior)),
+                new RestServiceBehaviorConfiguration(typeof(CookieAuthenticationBehavior)),
                 new RestServiceBehaviorConfiguration(typeof(TokenAuthorizationAccessBehavior))
             };
 

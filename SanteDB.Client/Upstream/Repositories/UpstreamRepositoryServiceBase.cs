@@ -121,7 +121,7 @@ namespace SanteDB.Client.Upstream.Repositories
                         {
                             client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", $"{tm.Tag}");
                             existing = client.Get<TModel>($"{this.GetResourceName()}/{key}") ?? existing;
-                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 0, 30));
+                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 1, 00));
                         }
                     }
                     else if (versionKey == Guid.Empty)
