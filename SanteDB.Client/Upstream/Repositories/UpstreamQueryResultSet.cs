@@ -218,6 +218,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IEnumerable<TReturn> Select<TReturn>(Expression selector)
         {
+            
             Func<TModel, TReturn> compiledSelector = selector as Func<TModel, TReturn>;
             switch (selector)
             {
