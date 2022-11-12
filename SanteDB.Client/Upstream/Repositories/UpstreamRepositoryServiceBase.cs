@@ -19,10 +19,11 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// A generic implementation that calls the upstream for fetching data 
     /// </summary>
-    public abstract class UpstreamRepositoryServiceBase<TModel, TCollection> : UpstreamServiceBase,
+    public abstract class UpstreamRepositoryServiceBase<TModel, TWireFormat, TCollection> : UpstreamServiceBase,
         IRepositoryService<TModel>,
         IRepositoryService
         where TModel : IdentifiedData, new()
+        where TWireFormat : class, IIdentifiedResource, new()
         where TCollection : IResourceCollection
     {
         private readonly ServiceEndpointType m_endpoint;
@@ -59,13 +60,23 @@ namespace SanteDB.Client.Upstream.Repositories
             this.m_adhocCache = adhocCacheService;
         }
 
+        /// <summary>
+        /// Map the <paramref name="wireObject"/> received from the remote server into a <typeparamref name="TModel"/>
+        /// </summary>
+        protected virtual TModel MapFromWire(TWireFormat wireObject) => wireObject as TModel;
+
+        /// <summary>
+        /// Map the <paramref name="modelObject"/> to a wire appropriate format
+        /// </summary>
+        protected virtual TWireFormat MapToWire(TModel modelObject) => modelObject as TWireFormat;
+
         /// <inheritdoc/>
         public string ServiceName => $"Upstream Repository for {typeof(TModel)}";
 
         /// <summary>
         /// Get resource name on the API
         /// </summary>
-        private string GetResourceName() => typeof(TModel).GetSerializationName();
+        protected virtual string GetResourceName() => typeof(TModel).GetSerializationName();
 
         /// <inheritdoc/>
         public virtual TModel Delete(Guid key)
@@ -75,7 +86,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal))
                 {
-                    var retVal = client.Delete<TModel>($"{this.GetResourceName()}/{key}");
+                    var retVal = this.MapFromWire(client.Delete<TWireFormat>($"{this.GetResourceName()}/{key}"));
                     this.m_cacheService?.Remove(key);
                     return retVal;
                 }
@@ -90,7 +101,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public virtual IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query)
         {
-            return new UpstreamQueryResultSet<TModel, TCollection>(this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal), query);
+            return new UpstreamQueryResultSet<TModel, TWireFormat, TCollection>(this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal), query, this.MapFromWire);
         }
 
         /// <inheritdoc/>
@@ -120,18 +131,18 @@ namespace SanteDB.Client.Upstream.Repositories
                         if (!this.m_adhocCache.TryGet<DateTime>(lastCheckKey, out var lastTimeChecked))
                         {
                             client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", $"{tm.Tag}");
-                            existing = client.Get<TModel>($"{this.GetResourceName()}/{key}") ?? existing;
+                            existing = this.MapFromWire(client.Get<TWireFormat>($"{this.GetResourceName()}/{key}")) ?? existing;
                             this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 1, 00));
                         }
                     }
                     else if (versionKey == Guid.Empty)
                     {
-                        existing = client.Get<TModel>($"{this.GetResourceName()}/{key}");
+                        existing = this.MapFromWire(client.Get<TWireFormat>($"{this.GetResourceName()}/{key}"));
                         this.m_cacheService?.Add(existing as IdentifiedData);
                     }
                     else
                     {
-                        existing = client.Get<TModel>($"{this.GetResourceName()}/{key}/_history/{versionKey}");
+                        existing = this.MapFromWire(client.Get<TWireFormat>($"{this.GetResourceName()}/{key}/_history/{versionKey}"));
                     }
 
                     return (TModel)existing;
@@ -171,7 +182,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal))
                 {
-                    var retVal = client.Post<TModel, TModel>($"{this.GetResourceName()}", data);
+                    var retVal = this.MapFromWire(client.Post<TWireFormat, TWireFormat>($"{this.GetResourceName()}", this.MapToWire(data)));
                     this.m_cacheService.Add(retVal);
                     return retVal;
                 }
@@ -209,7 +220,7 @@ namespace SanteDB.Client.Upstream.Repositories
                     }
 
                     // Create or Update
-                    var retVal = client.Post<TModel, TModel>($"{this.GetResourceName()}/{data.Key}", data);
+                    var retVal = this.MapFromWire(client.Post<TWireFormat, TWireFormat>($"{this.GetResourceName()}/{data.Key}", this.MapToWire(data)));
                     this.m_cacheService.Add(retVal);
                     return retVal;
                 }

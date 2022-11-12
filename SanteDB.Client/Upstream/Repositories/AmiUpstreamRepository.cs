@@ -12,7 +12,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// HDSI upstream repository
     /// </summary>
-    internal class AmiUpstreamRepository<TModel> : UpstreamRepositoryServiceBase<TModel, AmiCollection>
+    internal class AmiUpstreamRepository<TModel> : UpstreamRepositoryServiceBase<TModel, TModel, AmiCollection>
         where TModel : IdentifiedData, new()
     {
 
@@ -31,5 +31,6 @@ namespace SanteDB.Client.Upstream.Repositories
         /// Get whether the upstream is available
         /// </summary>
         protected bool IsUpstreamAvailable() => this.IsUpstreamAvailable(ServiceEndpointType.AdministrationIntegrationService);
+
     }
 }

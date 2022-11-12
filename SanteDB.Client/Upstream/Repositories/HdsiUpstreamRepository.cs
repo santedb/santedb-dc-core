@@ -12,7 +12,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// HDSI upstream repository
     /// </summary>
-    internal class HdsiUpstreamRepository<TModel> : UpstreamRepositoryServiceBase<TModel, Bundle>
+    internal class HdsiUpstreamRepository<TModel> : UpstreamRepositoryServiceBase<TModel, TModel, Bundle>
         where TModel : IdentifiedData, new()
     {
 

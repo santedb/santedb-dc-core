@@ -19,11 +19,14 @@ namespace SanteDB.Client.Upstream.Repositories
     /// Remote security challenge provider repository
     /// </summary>
     [PreferredService(typeof(ISecurityChallengeService))]
-    public class UpstreamSecurityChallengeProvider : UpstreamServiceBase, ISecurityChallengeService
+    public class UpstreamSecurityChallengeProvider : UpstreamServiceBase, ISecurityChallengeService, IUpstreamServiceProvider<ISecurityChallengeService>
     {
-        private readonly ISecurityChallengeService m_localSecurityChallengeService;
+        private readonly ILocalServiceProvider<ISecurityChallengeService> m_localSecurityChallengeService;
         private readonly IIdentityProviderService m_identityProvider;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamSecurityChallengeProvider));
+
+        /// <inheritdoc/>
+        public ISecurityChallengeService UpstreamProvider => this;
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Security Challenge Provider";
@@ -37,7 +40,7 @@ namespace SanteDB.Client.Upstream.Repositories
             IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService = null,
-            ILocalSecurityChallengeService localSecurityChallengeService = null
+            ILocalServiceProvider<ISecurityChallengeService> localSecurityChallengeService = null
             ) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_localSecurityChallengeService = localSecurityChallengeService;
@@ -50,7 +53,7 @@ namespace SanteDB.Client.Upstream.Repositories
             // Try to gather whether the user is upstream or not
             if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
-                return this.m_localSecurityChallengeService.Get(userName, principal);
+                return this.m_localSecurityChallengeService.LocalProvider.Get(userName, principal);
             }
             else if (!this.IsUpstreamConfigured)
             {
@@ -70,7 +73,7 @@ namespace SanteDB.Client.Upstream.Repositories
             if (!this.m_identityProvider.GetAuthenticationMethods(this.m_identityProvider.GetIdentity(userKey).Name)
                 .HasFlag(AuthenticationMethod.Online))
             {
-                return this.m_localSecurityChallengeService.Get(userKey, principal);
+                return this.m_localSecurityChallengeService.LocalProvider.Get(userKey, principal);
             }
             else if (!this.IsUpstreamConfigured)
             {
@@ -94,7 +97,7 @@ namespace SanteDB.Client.Upstream.Repositories
             // Try to gather whether the user is upstream or not
             if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
-                this.m_localSecurityChallengeService.Remove(userName, challengeKey, principal);
+                this.m_localSecurityChallengeService.LocalProvider.Remove(userName, challengeKey, principal);
             }
             else if (!this.IsUpstreamConfigured)
             {
@@ -116,7 +119,7 @@ namespace SanteDB.Client.Upstream.Repositories
             // Is this user a local user?
             if (!this.m_identityProvider.GetAuthenticationMethods(userName).HasFlag(AuthenticationMethod.Online))
             {
-                this.m_localSecurityChallengeService.Set(userName, challengeKey, response, principal);
+                this.m_localSecurityChallengeService.LocalProvider.Set(userName, challengeKey, response, principal);
             }
             else if (!this.IsUpstreamConfigured)
             {

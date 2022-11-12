@@ -27,7 +27,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Get all log entries
         /// </summary>
-        List<ISynchronizationLogEntry> GetAll();
+        IEnumerable<ISynchronizationLogEntry> GetAll();
 
         /// <summary>
         /// Save the specified query data for later continuation
