@@ -21,7 +21,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             throw new NotImplementedException();
         }
 
-        public List<ISynchronizationLogEntry> GetAll()
+        public IEnumerable<ISynchronizationLogEntry> GetAll()
         {
             throw new NotImplementedException();
         }

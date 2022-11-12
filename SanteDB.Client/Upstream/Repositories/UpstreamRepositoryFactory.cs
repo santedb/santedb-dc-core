@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Http;
+﻿using SanteDB.Client.Upstream.Management;
+using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
@@ -33,7 +34,8 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             typeof(UpstreamPolicyInformationService),
             typeof(UpstreamSecurityChallengeProvider),
-            typeof(UpstreamAuditRepository)
+            typeof(UpstreamAuditRepository),
+            typeof(UpstreamJobManager)
         };
         private readonly IServiceManager m_serviceManager;
         private readonly IDictionary<Type, Type> m_wrappedAmiResources = new Dictionary<Type, Type>()

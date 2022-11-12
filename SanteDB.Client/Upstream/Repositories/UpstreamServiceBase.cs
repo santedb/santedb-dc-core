@@ -33,6 +33,11 @@ namespace SanteDB.Client.Upstream.Repositories
         protected IUpstreamIntegrationService UpstreamIntegrationService => this.m_upstreamIntegrationService;
 
         /// <summary>
+        /// Get the upstream client factory
+        /// </summary>
+        protected IRestClientFactory RestClientFactory => this.m_restClientFactory;
+
+        /// <summary>
         /// DI constructor
         /// </summary>
         public UpstreamServiceBase(IRestClientFactory restClientFactory, 
