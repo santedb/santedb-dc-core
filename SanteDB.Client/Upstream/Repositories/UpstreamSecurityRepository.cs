@@ -129,7 +129,7 @@ namespace SanteDB.Client.Upstream.Repositories
             { 
                 throw new ArgumentNullException(nameof(applicationName)); 
             }
-            else if(this.m_adhocCache?.TryGet($"sec.app.{applicationName}", out SecurityApplication retVal) == true)
+            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.app.{applicationName}", out SecurityApplication retVal) == true)
             {
                 return retVal;
             }
@@ -166,7 +166,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(deviceName));
             }
-            else if (this.m_adhocCache?.TryGet($"sec.dev.{deviceName}", out SecurityDevice retVal) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.dev.{deviceName}", out SecurityDevice retVal) == true)
             {
                 return retVal;
             }
@@ -203,7 +203,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(policyOid));
             }
-            else if (this.m_adhocCache?.TryGet($"sec.pol.{policyOid}", out SecurityPolicy retVal) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.pol.{policyOid}", out SecurityPolicy retVal) )
             {
                 return retVal;
             }
@@ -230,7 +230,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(provenanceId));
             }
-            else if(this.m_adhocCache?.TryGet($"sec.prov.{provenanceId}", out SecurityProvenance provenance) == true)
+            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.prov.{provenanceId}", out SecurityProvenance provenance) == true)
             {
                 return provenance;
             }
@@ -257,7 +257,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(identity));
             }
-            else if(this.m_adhocCache?.TryGet($"sec.pvd.{identity.Name}", out Provider retVal) == true)
+            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.pvd.{identity.Name}", out Provider retVal) == true)
             {
                 return retVal;
             }
@@ -286,7 +286,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(roleName));
             }
-            else if(this.m_adhocCache?.TryGet($"sec.rol.{roleName}", out SecurityRole retVal) == true)
+            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.rol.{roleName}", out SecurityRole retVal) == true)
             {
                 return retVal;
             }
@@ -345,7 +345,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(userName));
             }
-            else if(this.m_adhocCache?.TryGet($"sec.usr.{userName}", out SecurityUser user) == true)
+            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.usr.{userName}", out SecurityUser user) == true)
             {
                 return user;
             }
@@ -383,7 +383,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(identity));
             }
-            else if(this.m_adhocCache?.TryGet($"sec.ue.{identity.Name}", out UserEntity retVal) == true)
+            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.ue.{identity.Name}", out UserEntity retVal) == true)
             {
                 return retVal;
             }
