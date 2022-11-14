@@ -22,22 +22,22 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Update the log entry 
         /// </summary>
-        void Save(Type modelType, String filter, String eTag, String name, DateTime since);
+        void Save(Type modelType, String filter, String eTag, DateTime since);
 
         /// <summary>
         /// Get all log entries
         /// </summary>
-        List<ISynchronizationLogEntry> GetAll();
+        IEnumerable<ISynchronizationLogEntry> GetAll();
 
         /// <summary>
         /// Save the specified query data for later continuation
         /// </summary>
-        void SaveQuery(Type modelType, String filter, Guid queryId, String name, int offset);
+        void SaveQuery(Type modelType, String filter, Guid queryId, int offset);
 
         /// <summary>
         /// Mark the specified query as complete
         /// </summary>
-        void CompleteQuery(Guid queryId);
+        void CompleteQuery(Type modelType, String filter, Guid queryId);
 
         /// <summary>
         /// Find the query data

@@ -1,9 +1,12 @@
 ﻿using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Subscription;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -26,6 +29,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly ISubscriptionRepository _SubscriptionRepository;
         readonly IJobManagerService _JobManager;
         readonly IServiceManager _ServiceManager;
+        readonly IRestClientFactory _RestClientFactory;
 
         public bool IsRunning => true;
 
@@ -49,7 +53,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             ISynchronizationQueueManager queueManager,
             ISubscriptionRepository subscriptionRepository,
             IJobManagerService jobManagerService,
-            IServiceManager serviceManager)
+            IServiceManager serviceManager,
+            IRestClientFactory restClientFactory)
         {
             _Tracer = new Tracer(nameof(UpstreamSynchronizationService));
             _Configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
@@ -60,6 +65,24 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _QueueManager = queueManager;
             _JobManager = jobManagerService;
             _ServiceManager = serviceManager;
+            _RestClientFactory = restClientFactory;
+        }
+
+        protected virtual void GetSubscriptionDefinitions()
+        {
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                using (var restclient = _RestClientFactory?.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                {
+
+                    using (var client = new AmiServiceClient(restclient))
+                    {
+                        var coll = client.GetSubscriptionDefinitions();
+
+                        var subscriptions = coll?.CollectionItem?.OfType<SubscriptionDefinition>();
+                    }
+                }
+            }
         }
 
         public bool Fetch(Type modelType)

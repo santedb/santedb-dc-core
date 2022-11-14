@@ -35,11 +35,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         event EventHandler<DataPersistedEventArgs<ISynchronizationQueueEntry>> Enqueued;
 
         /// <summary>
-        /// Fired when the queue has been exhausted
-        /// </summary>
-        event EventHandler<QueueExhaustedEventArgs> Exhausted;
-
-        /// <summary>
         /// Enqueue the data
         /// </summary>
         /// <param name="data">The data to enqueue</param>
@@ -76,14 +71,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <returns>The queue object</returns>
         ISynchronizationQueueEntry Get(int id);
 
-        /// <summary>
-        /// Requeue the queue item
-        /// </summary>
-        void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
+        ///// <summary>
+        ///// Requeue the queue item
+        ///// </summary>
+        //void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
 
         /// <summary>
         /// Query the dataset from the specified search parameters
         /// </summary>
-        IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
+        //IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
     }
 }
