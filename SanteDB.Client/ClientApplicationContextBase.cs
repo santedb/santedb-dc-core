@@ -1,6 +1,8 @@
 ﻿using SanteDB.Client.UserInterface;
 using SanteDB.Core;
+using SanteDB.Core.Data;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -52,7 +54,6 @@ namespace SanteDB.Client
         /// <summary>
         /// Creates a new disconnected application context with the specified configuration provider
         /// </summary>
-        /// <param name="hostEnvironment">The type of host environment being represented</param>
         protected ClientApplicationContextBase(SanteDBHostType hostEnvironment, String instanceName, IConfigurationManager configurationManager) : base(hostEnvironment, configurationManager)
         {
             this.m_instanceName = instanceName;
@@ -67,8 +68,9 @@ namespace SanteDB.Client
             {
 
                 base.DependencyServiceManager.ProgressChanged += (o, e) => this.InteractionProvider.SetStatus(e.State.ToString(), e.Progress);
-
+                base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
                 base.Start();
+                EntitySource.Current = this.DependencyServiceManager.CreateInjected<EntitySource>();
 
                 // A component has requested a restart 
                 this.ServiceManager.GetServices().OfType<IRequestRestarts>().ToList().ForEach(svc =>

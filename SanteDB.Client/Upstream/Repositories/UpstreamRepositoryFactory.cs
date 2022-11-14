@@ -1,5 +1,7 @@
-﻿using SanteDB.Core.Http;
+﻿using SanteDB.Client.Upstream.Management;
+using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
@@ -32,17 +34,22 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             typeof(UpstreamPolicyInformationService),
             typeof(UpstreamSecurityChallengeProvider),
-            typeof(UpstreamAuditRepository)
+            typeof(UpstreamAuditRepository),
+            typeof(UpstreamJobManager)
         };
         private readonly IServiceManager m_serviceManager;
+        private readonly IDictionary<Type, Type> m_wrappedAmiResources = new Dictionary<Type, Type>()
+        {
+            {  typeof(SecurityUser), typeof(SecurityUserInfo) },
+            {  typeof(SecurityRole), typeof(SecurityRoleInfo) },
+            {  typeof(SecurityDevice), typeof(SecurityDeviceInfo) },
+            {  typeof(SecurityApplication), typeof(SecurityApplicationInfo) }
+        };
+
         private Type[] m_amiResources = new Type[]
         {
             typeof(SubscriptionDefinition),
             typeof(SecurityProvenance),
-            typeof(SecurityUser),
-            typeof(SecurityRole),
-            typeof(SecurityDevice),
-            typeof(SecurityApplication),
             typeof(ApplicationEntity),
             typeof(DeviceEntity),
             typeof(SecurityPolicy),
@@ -91,6 +98,10 @@ namespace SanteDB.Client.Upstream.Repositories
                 if(this.m_amiResources.Contains(storageType))
                 {
                     storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
+                }
+                else if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
+                {
+                    storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
                 }
                 else if(storageType.GetCustomAttribute<XmlRootAttribute>() != null)
                 {

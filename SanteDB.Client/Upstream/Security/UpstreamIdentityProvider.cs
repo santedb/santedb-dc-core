@@ -27,13 +27,13 @@ namespace SanteDB.Client.Upstream.Security
     [PreferredService(typeof(IIdentityProviderService))]
     public class UpstreamIdentityProvider : UpstreamServiceBase, IIdentityProviderService
     {
-        readonly ILocalIdentityProviderService _LocalIdentityProvider;
+        readonly ILocalServiceProvider<IIdentityProviderService> _LocalIdentityProvider;
         readonly IOAuthClient _OAuthClient;
         readonly ILocalizationService _LocalizationService;
-        readonly IPolicyInformationService _RemotePolicyInformationService;
-        readonly ILocalPolicyInformationService _LocalPolicyInformationService;
+        readonly IUpstreamServiceProvider<IPolicyInformationService> _RemotePolicyInformationService;
+        readonly ILocalServiceProvider<IPolicyInformationService> _LocalPolicyInformationService;
         readonly IRoleProviderService _RemoteRoleProviderService;
-        readonly ILocalRoleProviderService _LocalRoleProviderService;
+        readonly ILocalServiceProvider<IRoleProviderService> _LocalRoleProviderService;
 
         readonly bool _CanSyncPolicies;
         readonly bool _CanSyncRoles;
@@ -43,12 +43,12 @@ namespace SanteDB.Client.Upstream.Security
             IRestClientFactory restClientFactory,
             ILocalizationService localizationService,
             IUpstreamManagementService upstreamManagementService,
-            IPolicyInformationService remotePolicyInformationService,
+            IUpstreamServiceProvider<IPolicyInformationService> remotePolicyInformationService,
             IRoleProviderService remoteRoleProviderService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
-            ILocalPolicyInformationService localPolicyInformationService = null,
-            ILocalRoleProviderService localRoleProviderService = null,
-            ILocalIdentityProviderService localIdentityProvider = null) // on initial configuration in online only mode there are no local users
+            ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService = null,
+            ILocalServiceProvider<IRoleProviderService> localRoleProviderService = null,
+            ILocalServiceProvider<IIdentityProviderService> localIdentityProvider = null) // on initial configuration in online only mode there are no local users
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider)
         {
             _LocalIdentityProvider = localIdentityProvider;
@@ -76,7 +76,7 @@ namespace SanteDB.Client.Upstream.Security
             }
 
             //Try to check if the local user is marked as local only.
-            var localuser = _LocalIdentityProvider.GetIdentity(userName);
+            var localuser = _LocalIdentityProvider.LocalProvider.GetIdentity(userName);
 
             if (localuser is IClaimsIdentity icl)
             {
@@ -118,53 +118,53 @@ namespace SanteDB.Client.Upstream.Security
                 userid = useridentity.GetFirstClaimValue(SanteDBClaimTypes.SanteDBUserIdentifierClaim, SanteDBClaimTypes.SecurityId);
             }
 
-            var localuser = _LocalIdentityProvider.GetIdentity(useridentity.Name);
+            var localuser = _LocalIdentityProvider.LocalProvider.GetIdentity(useridentity.Name);
 
             if (null == localuser)
             {
-                localuser = _LocalIdentityProvider.CreateIdentity(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
+                localuser = _LocalIdentityProvider.LocalProvider.CreateIdentity(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
             }
             else
             {
-                _LocalIdentityProvider.ChangePassword(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
+                _LocalIdentityProvider.LocalProvider.ChangePassword(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
             }
 
             if (_CanSyncPolicies)
             {
                 foreach (var policyoid in policiestosync)
                 {
-                    var localpolicy = _LocalPolicyInformationService.GetPolicy(policyoid);
+                    var localpolicy = _LocalPolicyInformationService.LocalProvider.GetPolicy(policyoid);
 
                     if (null == localpolicy)
                     {
-                        var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
-                        _LocalPolicyInformationService.CreatePolicy(remotepolicy, AuthenticationContext.SystemPrincipal);
+                        var remotepolicy = _RemotePolicyInformationService.UpstreamProvider.GetPolicy(policyoid);
+                        _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy, AuthenticationContext.SystemPrincipal);
                     }
                 }
             }
 
             if (_CanSyncRoles)
             {
-                var localroles = _LocalRoleProviderService.GetAllRoles();
+                var localroles = _LocalRoleProviderService.LocalProvider.GetAllRoles();
                 foreach (var rolename in rolestosync)
                 {
                     if (!localroles.Contains(rolename))
                     {
-                        _LocalRoleProviderService.CreateRole(rolename, AuthenticationContext.SystemPrincipal);
+                        _LocalRoleProviderService.LocalProvider.CreateRole(rolename, AuthenticationContext.SystemPrincipal);
                     }
 
                     var role = new SecurityRole { Name = rolename }; //TODO: Current implementations will not allow this to work locally.
 
-                    var rolepolicies = _RemotePolicyInformationService.GetPolicies(role);
+                    var rolepolicies = _RemotePolicyInformationService.UpstreamProvider.GetPolicies(role);
 
                     foreach (var policy in rolepolicies)
                     {
-                        if (null == _LocalPolicyInformationService.GetPolicy(policy.Policy.Oid))
+                        if (null == _LocalPolicyInformationService.LocalProvider.GetPolicy(policy.Policy.Oid))
                         {
-                            _LocalPolicyInformationService.CreatePolicy(policy.Policy, AuthenticationContext.SystemPrincipal);
+                            _LocalPolicyInformationService.LocalProvider.CreatePolicy(policy.Policy, AuthenticationContext.SystemPrincipal);
                         }
 
-                        _LocalPolicyInformationService.AddPolicies(role, policy.Rule, AuthenticationContext.SystemPrincipal, policy.Policy.Oid);
+                        _LocalPolicyInformationService.LocalProvider.AddPolicies(role, policy.Rule, AuthenticationContext.SystemPrincipal, policy.Policy.Oid);
                     }
                 }
             }
@@ -204,7 +204,7 @@ namespace SanteDB.Client.Upstream.Security
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
 
-            _LocalIdentityProvider?.AddClaim(userName, claim, principal, expiry);
+            _LocalIdentityProvider?.LocalProvider.AddClaim(userName, claim, principal, expiry);
         }
 
         public IPrincipal Authenticate(string userName, string password)
@@ -254,11 +254,11 @@ namespace SanteDB.Client.Upstream.Security
 
                 if (null != tfaSecret)
                 {
-                    result = _LocalIdentityProvider.Authenticate(userName, password, tfaSecret) as IClaimsPrincipal;
+                    result = _LocalIdentityProvider.LocalProvider.Authenticate(userName, password, tfaSecret) as IClaimsPrincipal;
                 }
                 else
                 {
-                    result = _LocalIdentityProvider.Authenticate(userName, password) as IClaimsPrincipal;
+                    result = _LocalIdentityProvider.LocalProvider.Authenticate(userName, password) as IClaimsPrincipal;
                 }
 
                 return result;
@@ -273,7 +273,7 @@ namespace SanteDB.Client.Upstream.Security
 
         public void ChangePassword(string userName, string newPassword, IPrincipal principal)
         {
-            _LocalIdentityProvider?.ChangePassword(userName, newPassword, principal);
+            _LocalIdentityProvider?.LocalProvider.ChangePassword(userName, newPassword, principal);
             if (ShouldDoRemoteAuthentication(userName))
             {
                 ChangeRemotePassword(userName, newPassword);
@@ -287,11 +287,11 @@ namespace SanteDB.Client.Upstream.Security
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
 
-            var result = _LocalIdentityProvider.CreateIdentity(userName, password, principal);
+            var result = _LocalIdentityProvider.LocalProvider.CreateIdentity(userName, password, principal);
 
-            _LocalIdentityProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
+            _LocalIdentityProvider.LocalProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
 
-            result = _LocalIdentityProvider.GetIdentity(userName);
+            result = _LocalIdentityProvider.LocalProvider.GetIdentity(userName);
 
             return result;
         }
@@ -302,7 +302,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            _LocalIdentityProvider.DeleteIdentity(userName, principal);
+            _LocalIdentityProvider.LocalProvider.DeleteIdentity(userName, principal);
         }
 
         public AuthenticationMethod GetAuthenticationMethods(string userName)
@@ -314,7 +314,7 @@ namespace SanteDB.Client.Upstream.Security
 
             try
             {
-                var claims = _LocalIdentityProvider.GetClaims(userName);
+                var claims = _LocalIdentityProvider.LocalProvider.GetClaims(userName);
 
                 if (claims?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true)
                 {
@@ -335,7 +335,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            return _LocalIdentityProvider.GetClaims(userName);
+            return _LocalIdentityProvider.LocalProvider.GetClaims(userName);
         }
 
         public IIdentity GetIdentity(string userName)
@@ -344,7 +344,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            return _LocalIdentityProvider.GetIdentity(userName);
+            return _LocalIdentityProvider.LocalProvider.GetIdentity(userName);
         }
 
         public IIdentity GetIdentity(Guid sid)
@@ -353,7 +353,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            return _LocalIdentityProvider.GetIdentity(sid);
+            return _LocalIdentityProvider.LocalProvider.GetIdentity(sid);
         }
 
         public Guid GetSid(string name)
@@ -362,7 +362,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            return _LocalIdentityProvider.GetSid(name);
+            return _LocalIdentityProvider.LocalProvider.GetSid(name);
         }
 
         public IPrincipal ReAuthenticate(IPrincipal principal)
@@ -388,7 +388,7 @@ namespace SanteDB.Client.Upstream.Security
             }
             else
             {
-                return _LocalIdentityProvider.ReAuthenticate(principal);
+                return _LocalIdentityProvider.LocalProvider.ReAuthenticate(principal);
             }
         }
 
@@ -398,7 +398,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            _LocalIdentityProvider.RemoveClaim(userName, claimType, principal);
+            _LocalIdentityProvider.LocalProvider.RemoveClaim(userName, claimType, principal);
         }
 
         public void SetLockout(string userName, bool lockout, IPrincipal principal)
@@ -407,7 +407,7 @@ namespace SanteDB.Client.Upstream.Security
             {
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
-            _LocalIdentityProvider.SetLockout(userName, lockout, principal);
+            _LocalIdentityProvider.LocalProvider.SetLockout(userName, lockout, principal);
         }
     }
 }

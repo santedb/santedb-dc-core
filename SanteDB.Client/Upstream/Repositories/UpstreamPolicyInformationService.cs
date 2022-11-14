@@ -27,8 +27,12 @@ namespace SanteDB.Client.Upstream.Repositories
     /// Represents a policy information service which communicates with an upstream policy information service
     /// </summary>
     [PreferredService(typeof(IPolicyInformationService))]
-    public class UpstreamPolicyInformationService : UpstreamServiceBase, IPolicyInformationService
+    public class UpstreamPolicyInformationService : UpstreamServiceBase, IPolicyInformationService, IUpstreamServiceProvider<IPolicyInformationService>
     {
+
+        /// <inheritdoc/>
+        public IPolicyInformationService UpstreamProvider => this;
+
         private readonly ILocalizationService m_localizationSerice;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamPolicyInformationService));
 
@@ -50,11 +54,11 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public void AddPolicies(object securable, PolicyGrantType rule, IPrincipal principal, params string[] policyOids)
         {
-            if(securable == null)
+            if (securable == null)
             {
                 throw new ArgumentNullException(nameof(securable));
             }
-            else if(!this.IsUpstreamConfigured)
+            else if (!this.IsUpstreamConfigured)
             {
                 this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
                 return;
@@ -72,7 +76,7 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             catch (Exception e)
             {
-                throw new UpstreamIntegrationException( this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
+                throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
 
             }
         }
@@ -109,6 +113,7 @@ namespace SanteDB.Client.Upstream.Repositories
                         {
                             return client.GetRoles(a => a.Name == sr.Name).CollectionItem.OfType<SecurityRoleInfo>().First().Policies.Select(o => new UpstreamPolicyInstance(sr, o.Policy, o.Grant));
                         }
+                    
                     case IPrincipal ipr:
                         using (var client = this.CreateAmiServiceClient())
                         {
@@ -130,7 +135,7 @@ namespace SanteDB.Client.Upstream.Repositories
                             return client.Get<Entity>(ent.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(ent, o.Policy, PolicyGrantType.Grant));
                         }
                     default:
-                        throw new NotSupportedException(String.Format(ErrorMessages.NOT_SUPPORTED_IMPLEMENTATION, securable.GetType().Name));
+                        return new List<UpstreamPolicyInstance>();
                 }
             }
             catch (Exception e)
@@ -166,7 +171,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IPolicy GetPolicy(string policyOid)
         {
-            if(!this.IsUpstreamConfigured)
+            if (!this.IsUpstreamConfigured)
             {
                 return null;
             }
@@ -233,6 +238,34 @@ namespace SanteDB.Client.Upstream.Repositories
             catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_ASSIGN, new { securable = securable, policyOids = String.Join(";", oid) }), e);
+            }
+        }
+
+        /// <summary>
+        /// Create policy
+        /// </summary>
+        public void CreatePolicy(IPolicy policy, IPrincipal principal)
+        {
+            if (policy == null)
+            {
+                throw new ArgumentNullException(nameof(policy));
+            }
+            else if (!this.IsUpstreamConfigured)
+            {
+                this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
+                return;
+            }
+
+            try
+            {
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, principal))
+                {
+                    client.Post<SecurityPolicyInfo, SecurityPolicyInfo>("SecurityPolicy", new SecurityPolicyInfo(policy));
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN, new { policyOids = policy.Oid }), e);
             }
         }
     }

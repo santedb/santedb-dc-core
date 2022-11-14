@@ -62,6 +62,18 @@ namespace SanteDB.Client.Upstream
             this.m_userInterfaceService = userInterface;
             this.m_appletManager = appletManager;
             this.m_tickleService = tickleService;
+
+            try
+            {
+                if (this.m_configuration.AutoUpdateApplets) 
+                {
+                    this.Update(true);
+                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceWarning("Cannot check for updates - {0}", e.Message);
+            }
         }
 
         /// <inheritdoc/>

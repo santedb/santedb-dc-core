@@ -45,4 +45,11 @@
     <RootNamespace>SanteDB.Client.Disconnected</RootNamespace>
   </PropertyGroup>
 
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Auditing.ADO\SanteDB.Persistence.Auditing.ADO.csproj" />
+    <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
+    <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.PubSub.ADO\SanteDB.Persistence.PubSub.ADO.csproj" />
+  </ItemGroup>
+
 </Project>
