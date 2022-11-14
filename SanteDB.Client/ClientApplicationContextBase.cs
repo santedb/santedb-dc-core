@@ -60,6 +60,14 @@ namespace SanteDB.Client
         }
 
         /// <summary>
+        /// Monitor status and send to UI
+        /// </summary>
+        private void MonitorStatus(Object sender, ProgressChangedEventArgs e)
+        {
+            this.InteractionProvider.SetStatus(e.State.ToString(), e.Progress);
+        }
+
+        /// <summary>
         /// Start the application context
         /// </summary>
         public override void Start()
@@ -67,9 +75,16 @@ namespace SanteDB.Client
             try
             {
 
-                base.DependencyServiceManager.ProgressChanged += (o, e) => this.InteractionProvider.SetStatus(e.State.ToString(), e.Progress);
+                base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
                 base.Start();
+                base.DependencyServiceManager.ProgressChanged -= this.MonitorStatus;
+
+                // Bind to status updates on our UI
+                foreach (var irpc in base.DependencyServiceManager.GetServices().OfType<IReportProgressChanged>())
+                {
+                    irpc.ProgressChanged += this.MonitorStatus;
+                }
                 EntitySource.Current = this.DependencyServiceManager.CreateInjected<EntitySource>();
 
                 // A component has requested a restart 
@@ -87,6 +102,20 @@ namespace SanteDB.Client
             }
         }
 
+
+        /// <summary>
+        /// Stop the service host
+        /// </summary>
+        public override void Stop()
+        {
+            // Bind to status updates on our UI
+            foreach (var irpc in base.DependencyServiceManager.GetServices().OfType<IReportProgressChanged>())
+            {
+                irpc.ProgressChanged -= this.MonitorStatus;
+            }
+
+            base.Stop();
+        }
 
         /// <summary>
         /// A restart has been requested by a service

@@ -27,9 +27,10 @@ namespace SanteDB.Client.Disconnected.Configuration
                 configuration.AddSection(ormSection);
             }
 
-            ormSection.Providers = DataConfigurationSection.GetDataConfigurationProviders()
-                .Where(o => o.HostType == hostContextType).Select(o => new ProviderRegistrationConfiguration(o.Invariant, o.DbProviderType)).ToList();
-            ormSection.AdoProvider = AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(DbProviderFactory).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface).Select(t => new ProviderRegistrationConfiguration(t.Namespace.StartsWith("System") ? t.Name : t.Namespace.Split('.')[0], t)).ToList();
+            var providers = DataConfigurationSection.GetDataConfigurationProviders()
+                .Where(o => o.HostType.HasFlag(hostContextType));
+            ormSection.Providers = providers.Select(o => new ProviderRegistrationConfiguration(o.Invariant, o.DbProviderType)).ToList();
+            ormSection.AdoProvider = providers.Select(t => new ProviderRegistrationConfiguration(t.Invariant, t.AdoNetFactoryType)).ToList();
 
             // Construct the connection strings and initial configurations for the orm configuration section base
             foreach(var itm in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(OrmConfigurationBase).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract))
