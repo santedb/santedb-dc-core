@@ -37,7 +37,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock = new ReaderWriterLockSlim();
             _BackingFile = new FileStream(GetQueueFilename(Path), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
 
-            _Entries = ReadQueueFromFileInternal(); //Safe without lock because we're constructing.
+            _Entries = ReadQueueFromFileInternal() ?? new Queue<int>(); //Safe without lock because we're constructing.
         }
 
         private static string GetQueueFilename(string path) => System.IO.Path.Combine(path, "_queue.json");
@@ -187,7 +187,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         public IdentifiedData Dequeue()
         {
-            var entry = LockWrite(q =>
+            var entry = LockWrite<TEntry>(q =>
             {
                 try
                 {
@@ -214,7 +214,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 catch (InvalidOperationException)
                 {
                     //Queue is empty
-                    return null;
+                    return default;
                 }
             });
 
@@ -303,7 +303,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
-        private void WriteEntryInternal(SynchronizationQueueEntry entry)
+        private void WriteEntryInternal(TEntry entry)
         {
             if (null == entry)
             {
