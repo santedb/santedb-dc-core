@@ -15,17 +15,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         /// <summary>
         /// Synchronized based on subscriptions
         /// </summary>
-        [XmlEnum("sub")]
-        Subscription = 0x1,
-        /// <summary>
-        /// Operate online only - no synchronization
-        /// </summary>
-        [XmlEnum("none")]
-        Online = 0x2,
+        [XmlEnum("partial")]
+        Partial = 0x1,
         /// <summary>
         /// Replicate everything
         /// </summary>
         [XmlEnum("replicate")]
-        All = 0x4
+        Full = 0x2
     }
 }

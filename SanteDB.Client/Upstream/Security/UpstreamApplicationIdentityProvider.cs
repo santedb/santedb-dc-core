@@ -138,29 +138,32 @@ namespace SanteDB.Client.Upstream.Security
                 _LocalApplicationIdentityProvider.LocalProvider.ChangeSecret(appidentity.Name, clientSecret, AuthenticationContext.SystemPrincipal);
             }
 
-            if (_CanSyncPolicies)
+            using (AuthenticationContext.EnterContext(remoteIdentity))
             {
-                foreach (var policyoid in policiestosync)
+                if (_CanSyncPolicies)
                 {
-                    var localpolicy = _LocalPolicyInformationService.LocalProvider.GetPolicy(policyoid);
-
-                    if (null == localpolicy)
+                    foreach (var policyoid in policiestosync)
                     {
-                        var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
-                        _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy, AuthenticationContext.SystemPrincipal);
-                    }
-                }
+                        var localpolicy = _LocalPolicyInformationService.LocalProvider.GetPolicy(policyoid);
 
-                var remotepolicies = _RemotePolicyInformationService.GetPolicies(appidentity);
-
-                foreach(var remotepolicy in remotepolicies)
-                {
-                    if (null == _LocalPolicyInformationService.LocalProvider.GetPolicy(remotepolicy.Policy.Oid))
-                    {
-                        _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy.Policy, AuthenticationContext.SystemPrincipal);
+                        if (null == localpolicy)
+                        {
+                            var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
+                            _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy, AuthenticationContext.SystemPrincipal);
+                        }
                     }
 
-                    _LocalPolicyInformationService.LocalProvider.AddPolicies(localapp, remotepolicy.Rule, AuthenticationContext.SystemPrincipal, remotepolicy.Policy.Oid);
+                    var remotepolicies = _RemotePolicyInformationService.GetPolicies(appidentity);
+
+                    foreach (var remotepolicy in remotepolicies)
+                    {
+                        if (null == _LocalPolicyInformationService.LocalProvider.GetPolicy(remotepolicy.Policy.Oid))
+                        {
+                            _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy.Policy, AuthenticationContext.SystemPrincipal);
+                        }
+
+                        _LocalPolicyInformationService.LocalProvider.AddPolicies(localapp, remotepolicy.Rule, AuthenticationContext.SystemPrincipal, remotepolicy.Policy.Oid);
+                    }
                 }
             }
         }

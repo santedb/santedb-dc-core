@@ -39,6 +39,9 @@ namespace SanteDB.Client.Rest
     public class RestServiceInitialConfigurationProvider : IInitialConfigurationProvider
     {
 
+        /// <inheritdoc/>
+        public int Order => 0;
+
         // API service providers
         private IDictionary<ServiceEndpointType, Type> m_apiServiceProviders = AppDomain.CurrentDomain.GetAllTypes().Where(t => t.GetCustomAttribute<ApiServiceProviderAttribute>() != null)
             .ToDictionary(o => o.GetCustomAttribute<ApiServiceProviderAttribute>().ServiceType, o => o);
@@ -80,7 +83,7 @@ namespace SanteDB.Client.Rest
                 return null;
             }
 
-            // Default Configuration for BIS
+            // Default Configuration for service
             var svc = new RestServiceConfiguration(serviceMetadata.BehaviorType)
             {
                 Behaviors = serviceBehaviors.ToList(),
@@ -101,7 +104,10 @@ namespace SanteDB.Client.Rest
                 appConfiguration.ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
             }
 
-            restConfiguration.Services.Add(svc);
+            if (!restConfiguration.Services.Any(o => o.ConfigurationName == svc.ConfigurationName))
+            {
+                restConfiguration.Services.Add(svc);
+            }
             return svc;
         }
 

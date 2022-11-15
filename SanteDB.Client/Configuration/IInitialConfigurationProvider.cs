@@ -14,6 +14,11 @@ namespace SanteDB.Client.Configuration
     {
 
         /// <summary>
+        /// Get the ordering of this provider
+        /// </summary>
+        int Order { get; }
+
+        /// <summary>
         /// Provide the initial configuration
         /// </summary>
         /// <param name="configuration">The configuration to be provided</param>

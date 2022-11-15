@@ -8,9 +8,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+<<<<<<< HEAD
 using SanteDB.Core.Interop;
 using System.Runtime.CompilerServices;
 using System.IO.Compression;
+=======
+>>>>>>> bc93f20e04bfb21f192c023a5a2f8e5bbb4fa0d9
 using SanteDB.Core.Model.Query;
 using System.Collections.Specialized;
 
@@ -436,6 +439,18 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             GC.SuppressFinalize(this);
         }
 
+<<<<<<< HEAD
+=======
+        public void Retry(ISynchronizationDeadLetterQueueEntry queueItem)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search)
+        {
+            throw new NotImplementedException();
+        }
+>>>>>>> bc93f20e04bfb21f192c023a5a2f8e5bbb4fa0d9
         #endregion
 
         ISynchronizationQueueEntry ISynchronizationQueue.Peek() => this.Peek();

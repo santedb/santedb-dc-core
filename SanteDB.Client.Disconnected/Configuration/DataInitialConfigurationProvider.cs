@@ -17,6 +17,10 @@ namespace SanteDB.Client.Disconnected.Configuration
     /// </summary>
     public class DataInitialConfigurationProvider : IInitialConfigurationProvider
     {
+
+        /// <inheritdoc/>
+        public int Order => 0;
+
         /// <inheritdoc/>
         public SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
         {

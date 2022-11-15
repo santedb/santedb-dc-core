@@ -53,7 +53,7 @@
 
 
   <ItemGroup>
-   
+    <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AppService\SanteDB.Rest.AppService.csproj" />
   </ItemGroup>
 
 
