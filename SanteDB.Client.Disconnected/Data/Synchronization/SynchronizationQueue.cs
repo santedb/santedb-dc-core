@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using SanteDB.Core.Model.Query;
+using System.Collections.Specialized;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -399,6 +401,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Retry(ISynchronizationDeadLetterQueueEntry queueItem)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

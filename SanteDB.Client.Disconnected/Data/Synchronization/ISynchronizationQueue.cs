@@ -74,11 +74,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         ///// <summary>
         ///// Requeue the queue item
         ///// </summary>
-        //void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
+        void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
 
         /// <summary>
         /// Query the dataset from the specified search parameters
         /// </summary>
-        //IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
+        IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
     }
 }

@@ -1,4 +1,5 @@
-﻿using SanteDB.Core;
+﻿using SanteDB.Client.Configuration;
+using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
@@ -60,7 +61,7 @@ namespace SanteDB.Client.Configuration
                 }
             };
 
-            foreach(var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface).Select(t=>Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>())
+            foreach(var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface).Select(t=>Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>().OrderBy(o=>o.Order))
             {
                 this.m_tracer.TraceInfo("Initializing {0}...", initialProvider);
                 configuration = initialProvider.Provide(hostType, configuration);

@@ -119,7 +119,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            if (_Configuration?.Mode != SynchronizationMode.Online && _Configuration.PollInterval != default(TimeSpan))
+            if (_Configuration.PollInterval != default(TimeSpan))
             {
                 ApplicationServiceContext.Current.Started += (s, e) =>
                 {
