@@ -16,10 +16,13 @@ using System.Threading;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
+    /// <summary>
+    /// Default Queue manager for synchronization with 4 queues: <c>in</c>, <c>out</c>, <c>admin</c> and <c>deadletter</c>
+    /// </summary>
     public class DefaultSynchronizationQueueManager : ISynchronizationQueueManager
     {
-        public const string QueueName_Incoming = "incoming";
-        public const string QueueName_Outgoing = "outgoing";
+        public const string QueueName_Incoming = "in";
+        public const string QueueName_Outgoing = "out";
         public const string QueueName_Admin = "admin";
         public const string QueueName_DeadLetter = "deadletter";
 
@@ -29,15 +32,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             _Queues = new List<ISynchronizationQueue>
             {
-                OpenQueue(QueueName_DeadLetter),
-                OpenQueue(QueueName_Admin),
-                OpenQueue(QueueName_Outgoing),
-                OpenQueue(QueueName_Incoming)
+                OpenQueue<SynchronizationDeadLetterQueueEntry>(QueueName_DeadLetter, SynchronizationPattern.DeadLetter),
+                OpenQueue<SynchronizationQueueEntry>(QueueName_Outgoing, SynchronizationPattern.LocalToUpstream),
+                OpenQueue<SynchronizationQueueEntry>(QueueName_Admin, SynchronizationPattern.LocalToUpstream),
+                OpenQueue<SynchronizationQueueEntry>(QueueName_Incoming, SynchronizationPattern.UpstreamToLocal)
             };
 
         }
 
-        private static ISynchronizationQueue OpenQueue(string queueName)
+        private static ISynchronizationQueue OpenQueue<TEntry>(string queueName, SynchronizationPattern type) where TEntry: ISynchronizationQueueEntry, new()
         {
             var path = GetQueuePath(queueName);
 
@@ -46,15 +49,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 Directory.CreateDirectory(path);
             }
 
-            switch (queueName)
-            {
-                case QueueName_DeadLetter:
-                    return new SynchronizationQueue<SynchronizationDeadLetterQueueEntry>(queueName, SynchronizationPattern.DeadLetter, path);
-                case QueueName_Incoming:
-                    return new SynchronizationQueue<SynchronizationQueueEntry>(queueName, SynchronizationPattern.UpstreamToLocal, path);
-                default:
-                    return new SynchronizationQueue<SynchronizationQueueEntry>(queueName, SynchronizationPattern.LocalToUpstream, path);
-            }
+            return new SynchronizationQueue<TEntry>(queueName, type, path);
         }
 
         private static string GetQueuePath(string queueName)
@@ -64,11 +59,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 throw new ArgumentNullException(nameof(queueName));
             }
 
-            //TODO: Use a configuration provider to get the path location.
             return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
-                "santedb", 
-                ApplicationServiceContext.Current.ApplicationName ?? "default", 
+                AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString(),
                 "synchronizationqueue", 
                 queueName
             );

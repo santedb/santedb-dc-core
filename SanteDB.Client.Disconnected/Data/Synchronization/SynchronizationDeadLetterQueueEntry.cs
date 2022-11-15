@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model;
+﻿using SanteDB.Core.Interop;
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,5 +17,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public IdentifiedData Data { get; set; }
         public SynchronizationQueueEntryOperation Operation { get; set; }
         public bool IsRetry { get; set; }
+        public ServiceEndpointType EndpointType { get; set; }
     }
 }

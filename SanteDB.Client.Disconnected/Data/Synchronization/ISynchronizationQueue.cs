@@ -1,4 +1,5 @@
 ﻿using SanteDB.Core.Event;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
@@ -39,19 +40,19 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </summary>
         /// <param name="data">The data to enqueue</param>
         /// <param name="operation">The sync operation </param>
-        ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation);
+        ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation, ServiceEndpointType endpointType);
 
         /// <summary>
         /// Peek the next item on the queue
         /// </summary>
         /// <returns>The next item on the queue</returns>
-        IdentifiedData Peek();
+        ISynchronizationQueueEntry Peek();
 
         /// <summary>
         /// Dequeue the item from the queue
         /// </summary>
         /// <returns>The queued item</returns>
-        IdentifiedData Dequeue();
+        ISynchronizationQueueEntry Dequeue();
 
         /// <summary>
         /// Get the count of objects on the queue
@@ -71,14 +72,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <returns>The queue object</returns>
         ISynchronizationQueueEntry Get(int id);
 
-        ///// <summary>
-        ///// Requeue the queue item
-        ///// </summary>
-        //void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
+        /// <summary>
+        /// Requeue the queue item
+        /// </summary>
+        void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
 
         /// <summary>
         /// Query the dataset from the specified search parameters
         /// </summary>
-        //IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
+        IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
     }
 }

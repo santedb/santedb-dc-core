@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model;
+﻿using SanteDB.Core.Interop;
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,6 +15,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public string LastETag { get; set; }
 
         public string Filter { get; set; }
+
+        public ServiceEndpointType Endpoint { get; set; }
 
         public override DateTimeOffset ModifiedOn => LastSync;
     }

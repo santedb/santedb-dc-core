@@ -334,6 +334,23 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public void StartJob(Type jobType, object[] parameters) => this.Jobs.OfType<UpstreamJob>().FirstOrDefault(o => o.JobType == jobType)?.Run(this, EventArgs.Empty, parameters);
 
-
+        /// <inheritdoc/>
+        public void ClearJobSchedule(IJob job)
+        {
+            try
+            {
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var jobInfo = client.Get<JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}");
+                    jobInfo.Schedule = null;
+                    jobInfo = client.Put<JobInfo, JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}", jobInfo);
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
+                throw new Exception("Error setting job information on remote server", e);
+            }
+        }
     }
 }
