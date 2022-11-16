@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using SanteDB.Client.Configuration;
+using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -47,7 +48,7 @@ namespace SanteDB.Client.Disconnected.Configuration
         }
 
         /// <inheritdoc/>
-        public int Order => 0;
+        public int Order => 50;
 
         /// <inheritdoc/>
         public string Name => "data";
@@ -109,6 +110,11 @@ namespace SanteDB.Client.Disconnected.Configuration
         /// <inheritdoc/>
         public bool Configure(SanteDBConfiguration configuration, IDictionary<string, object> featureConfiguration)
         {
+            if(configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings?.Any(p=>p.Key == "integration-mode" && p.Value == "online") == true)
+            {
+                return true;
+            }
+
             var dataSection = configuration.GetSection<DataConfigurationSection>();
             if(dataSection == null)
             {
@@ -136,9 +142,10 @@ namespace SanteDB.Client.Disconnected.Configuration
                 {
                     if (itmSettingCollection.TryGetValue(itm.GetType().Name, out var itmSettingRaw) && itmSettingRaw is JObject itmSetting)
                     {
-                        if (!itmSetting.TryGetValue(GLOBAL_DATA_PROVIDER_SETTING, out var providerRaw))
+                        if (!itmSetting.TryGetValue(GLOBAL_DATA_PROVIDER_SETTING, out var providerRaw) || String.IsNullOrEmpty(providerRaw.ToString()))
                         {
-                            throw new ArgumentNullException(GLOBAL_DATA_PROVIDER_SETTING);
+                            // No provider set
+                            continue;
                         }
                         var provider = DataConfigurationSection.GetDataConfigurationProvider(providerRaw.ToString());
                         if (provider == null)

@@ -145,7 +145,6 @@ namespace SanteDB.Client.Rest
             };
 
             var oauthBehaviors = new List<RestServiceBehaviorConfiguration>(apiBehaviors) {
-                new RestServiceBehaviorConfiguration(typeof(TokenAuthorizationAccessBehavior))
             };
 
             if (hostContextType == SanteDBHostType.Client)
@@ -176,6 +175,7 @@ namespace SanteDB.Client.Rest
             this.AddRestServiceFor(configuration, ServiceEndpointType.WebUserInterfaceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/", webBehaviors, endpointBehaviors);
 
             oauth.ServiceType = typeof(ClientOAuthServiceBehavior);
+            oauth.Endpoints.ForEach(o => o.Contract = typeof(IClientOAuthServiceContract));
             hdsi.ServiceType = typeof(UpstreamHdsiServiceBehavior);
             ami.ServiceType = typeof(UpstreamAmiServiceBehavior);
             bis.ServiceType = typeof(UpstreamBisServiceBehavior);

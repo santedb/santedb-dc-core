@@ -35,7 +35,8 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(UpstreamPolicyInformationService),
             typeof(UpstreamSecurityChallengeProvider),
             typeof(UpstreamAuditRepository),
-            typeof(UpstreamJobManager)
+            typeof(UpstreamJobManager),
+            typeof(UpstreamPubSubManager)
         };
         private readonly IServiceManager m_serviceManager;
         private readonly IDictionary<Type, Type> m_wrappedAmiResources = new Dictionary<Type, Type>()

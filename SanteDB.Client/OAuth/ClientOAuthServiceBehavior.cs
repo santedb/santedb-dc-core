@@ -1,10 +1,12 @@
 ﻿using Microsoft.IdentityModel.JsonWebTokens;
 using RestSrvr;
+using RestSrvr.Attributes;
 using SanteDB.Core;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Rest.Common;
+using SanteDB.Rest.Common.Fault;
 using SanteDB.Rest.Common.Security;
 using SanteDB.Rest.OAuth.Model;
 using SanteDB.Rest.OAuth.Rest;
@@ -18,9 +20,26 @@ using System.Text;
 namespace SanteDB.Client.OAuth
 {
     /// <summary>
+    /// Service contract for OAUTH
+    /// </summary>
+    public interface IClientOAuthServiceContract : IOAuthServiceContract
+    {
+
+        /// <summary>
+        /// Demands <paramref name="policyId"/> from the current user
+        /// </summary>
+        [Get("pdp/{policyId}")]
+        [ServiceFault(204, typeof(object), "The user has the authorization demand and can access")]
+        [ServiceFault(401, typeof(RestServiceFault), "The user needs to re-authenticate (elevate)")]
+        [ServiceFault(403, typeof(RestServiceFault), "The user does not have access to this policy")]
+        void AclPrecheck(String policyId);
+
+    }
+
+    /// <summary>
     /// An extension of the <see cref="OAuthServiceBehavior"/> which adds and removes cookies
     /// </summary>
-    public class ClientOAuthServiceBehavior : OAuthServiceBehavior
+    public class ClientOAuthServiceBehavior : OAuthServiceBehavior, IClientOAuthServiceContract
     {
 
         private readonly ISymmetricCryptographicProvider m_symmetricEncryptionProvider;
@@ -30,6 +49,14 @@ namespace SanteDB.Client.OAuth
         {
             this.m_symmetricEncryptionProvider = ApplicationServiceContext.Current.GetService<ISymmetricCryptographicProvider>();
             this.m_sessionProvider = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
+        }
+
+        /// <summary>
+        /// ACL Pre-check
+        /// </summary>
+        public void AclPrecheck(string policyId)
+        {
+            this.m_policyEnforcementService.Demand(policyId);
         }
 
         /// <summary>
