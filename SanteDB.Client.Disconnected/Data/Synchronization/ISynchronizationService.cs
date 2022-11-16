@@ -17,12 +17,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Fired when a pull has completed and imported data
         /// </summary>
-        event EventHandler<SynchronizationEventArgs> PullCompleted;
+        event EventHandler PullCompleted;
 
         /// <summary>
         /// Fired when the push has been completed
         /// </summary>
-        event EventHandler<SynchronizationEventArgs> PushCompleted;
+        event EventHandler PushCompleted;
 
         /// <summary>
         /// Get whether the service is syncing

@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model;
+﻿using SanteDB.Core.Interop;
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -45,6 +46,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Get whether the object is a retry
         /// </summary>
         bool IsRetry { get; set; }
+
+
+        /// <summary>
+        /// The type of endpoint that this entry is part of.
+        /// </summary>
+        ServiceEndpointType EndpointType { get; set; }
     }
 
 

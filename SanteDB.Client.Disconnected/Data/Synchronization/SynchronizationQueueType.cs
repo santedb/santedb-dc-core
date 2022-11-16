@@ -22,6 +22,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// The queue is for local-local communication
         /// </summary>
         LocalOnly = 0x4,
+        /*
+        /// <summary>
+        /// 
+        /// </summary>
+        Reserved = 0x8,
+        */
         /// <summary>
         /// The queue is both for inbound and outbound 
         /// </summary>
@@ -29,7 +35,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// The queue is a deadletter queue.
         /// </summary>
-        DeadLetter = 0xF | LocalOnly
+        DeadLetter = 0x80 | LocalOnly,
+        /// <summary>
+        /// All Queue patterns except for <see cref="DeadLetter"/>
+        /// </summary>
+        All = BiDirectional | LocalOnly
 
     }
 }

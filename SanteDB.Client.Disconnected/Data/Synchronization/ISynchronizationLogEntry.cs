@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SanteDB.Core.Interop;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -29,7 +30,5 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Get the last etag that was successfully fetched.
         /// </summary>
         string LastETag { get; }
-
-        
     }
 }

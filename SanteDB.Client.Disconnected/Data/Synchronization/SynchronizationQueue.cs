@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using SanteDB.Core.Interop;
+using System.Runtime.CompilerServices;
+using System.IO.Compression;
 using SanteDB.Core.Model.Query;
 using System.Collections.Specialized;
 
@@ -15,13 +18,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal class SynchronizationQueue<TEntry> : ISynchronizationQueue, IDisposable where TEntry : ISynchronizationQueueEntry, new()
     {
-        private static JsonSerializerSettings s_SerializerSettings = new JsonSerializerSettings();
+        private static JsonSerializerSettings s_SerializerSettings = new JsonSerializerSettings() { TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple, TypeNameHandling = TypeNameHandling.Auto };
         private static ThreadSafeRandomNumberGenerator s_Rand = new ThreadSafeRandomNumberGenerator();
 
         private FileStream _BackingFile;
         private ReaderWriterLockSlim _Lock;
-        private Queue<int> _Entries;
+        private Queue<int> _EntryQueue;
 
+        readonly JsonSerializer _Serializer;
+
+        readonly Type _EntryType;
 
         private bool disposedValue;
 
@@ -35,11 +41,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             Name = name;
             Type = type;
             Path = path;
+            _EntryType = typeof(TEntry);
 
             _Lock = new ReaderWriterLockSlim();
             _BackingFile = new FileStream(GetQueueFilename(Path), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            _Serializer = CreateSerializer();
 
-            _Entries = ReadQueueFromFileInternal() ?? new Queue<int>(); //Safe without lock because we're constructing.
+            _EntryQueue = ReadQueueFromFileInternal() ?? new Queue<int>(); //Safe without lock because we're constructing.
         }
 
         private static string GetQueueFilename(string path) => System.IO.Path.Combine(path, "_queue.json");
@@ -55,13 +63,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             try
             {
-                var serializer = CreateSerializer();
-
                 using (var sr = new StreamReader(_BackingFile, Encoding.UTF8, true, 256, leaveOpen: true))
                 {
                     using (var jtr = new JsonTextReader(sr))
                     {
-                        return serializer.Deserialize<Queue<int>>(jtr);
+                        return _Serializer.Deserialize<Queue<int>>(jtr);
                     }
                 }
             }
@@ -78,15 +84,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             try
             {
-                var serializer = CreateSerializer();
-
                 _BackingFile.SetLength(0);
 
                 using (var sw = new StreamWriter(_BackingFile, Encoding.UTF8, 256, leaveOpen: true))
                 {
                     using (var jtw = new JsonTextWriter(sw))
                     {
-                        serializer.Serialize(jtw, _Entries);
+                        _Serializer.Serialize(jtw, _EntryQueue);
                         jtw.Flush();
                         jtw.Close();
                     }
@@ -106,7 +110,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock.EnterReadLock();
             try
             {
-                return func(_Entries);
+                return func(_EntryQueue);
             }
             finally
             {
@@ -119,7 +123,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock.EnterReadLock();
             try
             {
-                action(_Entries);
+                action(_EntryQueue);
             }
             finally
             {
@@ -132,7 +136,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock.EnterUpgradeableReadLock();
             try
             {
-                return func(_Entries);
+                return func(_EntryQueue);
             }
             finally
             {
@@ -145,7 +149,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock.EnterUpgradeableReadLock();
             try
             {
-                action(_Entries);
+                action(_EntryQueue);
             }
             finally
             {
@@ -158,7 +162,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock.EnterWriteLock();
             try
             {
-                return func(_Entries);
+                return func(_EntryQueue);
             }
             finally
             {
@@ -171,7 +175,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Lock.EnterWriteLock();
             try
             {
-                action(_Entries);
+                action(_EntryQueue);
             }
             finally
             {
@@ -183,13 +187,29 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         public void Delete(int id)
         {
-            //We don't need to remove the entry from the queue. On Dequeue and Peek, not finding the file will silently move to the next entry.
-            File.Delete(GetEntryFilename(Path, id));
+            try
+            {
+                //We don't need to remove the entry from the queue. On Dequeue and Peek, not finding the file will silently move to the next entry.
+                File.Delete(GetEntryFilename(Path, id));
+            }
+            catch (FileNotFoundException)
+            {
+                //TODO: Verbose Logging
+            }
+            catch (DirectoryNotFoundException)
+            {
+                //TODO: Verbose Logging
+            }
+            catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+                //TODO: Logging.
+                throw;
+            }
         }
 
-        public IdentifiedData Dequeue()
+        public ISynchronizationQueueEntry Dequeue()
         {
-            var entry = LockWrite<TEntry>(q =>
+            return LockWrite<TEntry>(q =>
             {
                 try
                 {
@@ -202,12 +222,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             throw new InvalidOperationException("Queue corruption issue.");
                         }
 
-                        var etry = ReadEntryInternal(id);
+                        var entry = ReadEntryInternal(id);
 
-                        if (null != etry)
+                        if (null != entry)
                         {
                             WriteQueueToFileInternal();
-                            return etry;
+                            Delete(id);
+                            return entry;
                         }
 
                         //TODO: Log bad entry.
@@ -219,23 +240,31 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     return default;
                 }
             });
-
-            return entry?.Data;
         }
+
+        
 
         private int DequeueBadEntry() => LockWrite(q => q.Dequeue());
 
-        public ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation)
+        public ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation, ServiceEndpointType endpointType) 
+            => Enqueue(CreateEntry(data, operation, endpointType));
+
+        public TEntry Enqueue(TEntry entry)
         {
-            var entry = CreateEntry(data, operation);
             var preevt = new DataPersistingEventArgs<ISynchronizationQueueEntry>(entry, Core.Services.TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
             Enqueuing?.Invoke(this, preevt);
 
             if (preevt.Cancel)
             {
+                if (preevt.Success)
+                {
+                    var successevt = new DataPersistedEventArgs<ISynchronizationQueueEntry>(preevt.Data, Core.Services.TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
+                    Enqueued?.Invoke(this, successevt);
+                }
                 //TODO: Logging
-                return preevt.Data;
+                return entry;
             }
 
             LockWrite(q =>
@@ -251,19 +280,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return entry;
         }
 
-        private TEntry CreateEntry(IdentifiedData data, SynchronizationQueueEntryOperation operation)
+        private TEntry CreateEntry(IdentifiedData data, SynchronizationQueueEntryOperation operation, ServiceEndpointType endpointType) => new TEntry()
         {
-            return new TEntry
-            {
-                CreationTime = DateTime.UtcNow,
-                Data = data,
-                Id = s_Rand.Next(),
-                Operation = operation,
-                Type = data.GetType().Name
-            };
-        }
+            CreationTime = DateTime.UtcNow,
+            Data = data,
+            Id = s_Rand.Next(),
+            Operation = operation,
+            Type = data.GetType().Name,
+            EndpointType = endpointType
+        };
 
-        public ISynchronizationQueueEntry Get(int id)
+        public TEntry Get(int id)
         {
             return ReadEntryInternal(id);
         }
@@ -276,11 +303,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 using (var fs = new FileStream(GetEntryFilename(Path, id), FileMode.Open, FileAccess.Read))
                 {
-                    using (var sr = new StreamReader(fs, Encoding.UTF8, true, 512, leaveOpen: false))
+                    using (var cs = new DeflateStream(fs, CompressionLevel.Fastest))
                     {
-                        using (var jtr = new JsonTextReader(sr))
+                        using (var sr = new StreamReader(cs, Encoding.UTF8, true, 512, leaveOpen: false))
                         {
-                            return serializer.Deserialize<TEntry>(jtr);
+                            using (var jtr = new JsonTextReader(sr))
+                            {
+                                return serializer.Deserialize<TEntry>(jtr);
+                            }
                         }
                     }
                 }
@@ -318,12 +348,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 using (var fs = new FileStream(GetEntryFilename(Path, entry.Id), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
                 {
-                    using (var sw = new StreamWriter(fs))
+                    using (var cs = new DeflateStream(fs, CompressionLevel.Fastest))
                     {
-                        using (var jtw = new JsonTextWriter(sw))
+                        using (var sw = new StreamWriter(cs))
                         {
-                            serializer.Serialize(jtw, entry);
-                            jtw.Flush();
+                            using (var jtw = new JsonTextWriter(sw))
+                            {
+                                serializer.Serialize(jtw, entry, _EntryType);
+                                jtw.Flush();
+                            }
                         }
                     }
                 }
@@ -335,7 +368,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
-        public IdentifiedData Peek()
+        public TEntry Peek()
         {
             return LockReadUpgradeable(queue =>
             {
@@ -354,7 +387,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                         if (null != entry)
                         {
-                            return entry.Data;
+                            return entry;
                         }
 
                         //TODO: Log Bad entry.
@@ -367,7 +400,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
                 catch (InvalidOperationException) {  /* Queue is empty */ }
 
-                return null;
+                return default;
             });
         }
 
@@ -403,15 +436,20 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             GC.SuppressFinalize(this);
         }
 
-        public void Retry(ISynchronizationDeadLetterQueueEntry queueItem)
+        #endregion
+
+        ISynchronizationQueueEntry ISynchronizationQueue.Peek() => this.Peek();
+
+        ISynchronizationQueueEntry ISynchronizationQueue.Get(int id) => this.Get(id);
+
+        void ISynchronizationQueue.Retry(ISynchronizationDeadLetterQueueEntry queueItem)
         {
             throw new NotImplementedException();
         }
 
-        public IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search)
+        IQueryResultSet<ISynchronizationQueueEntry> ISynchronizationQueue.Query(NameValueCollection search)
         {
             throw new NotImplementedException();
         }
-        #endregion
     }
 }
