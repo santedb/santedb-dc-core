@@ -122,7 +122,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                     configSection.SubscribeToResource = null;
                     goto case SynchronizationMode.Partial;
                 case SynchronizationMode.Partial:
-                    if (featureConfiguration.TryGetValue(ENABLED_SUBSCRIPTIONS_SETTING, out var subscriptionValueRaw) && subscriptionValueRaw is JArray subscriptionValueJarray && subscriptionValueJarray.Count > 0)
+                    if (featureConfiguration.TryGetValue(SUBSCRIBED_OBJECTS_SETTING, out var subscriptionValueRaw) && subscriptionValueRaw is JArray subscriptionValueJarray && subscriptionValueJarray.Count > 0)
                     {
                         configSection.Subscriptions = ((IEnumerable)featureConfiguration[ENABLED_SUBSCRIPTIONS_SETTING])?.OfType<JToken>().Select(o => Guid.Parse(o.ToString())).ToList();
                         configSection.SubscribedObjects = ((IEnumerable)featureConfiguration[SUBSCRIBED_OBJECTS_SETTING])?.OfType<JToken>().Select(o => Guid.Parse(o.ToString())).ToList();
