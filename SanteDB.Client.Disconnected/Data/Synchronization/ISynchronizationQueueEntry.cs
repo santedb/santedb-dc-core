@@ -47,11 +47,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </summary>
         bool IsRetry { get; set; }
 
-
-        /// <summary>
-        /// The type of endpoint that this entry is part of.
-        /// </summary>
-        ServiceEndpointType EndpointType { get; set; }
     }
 
 

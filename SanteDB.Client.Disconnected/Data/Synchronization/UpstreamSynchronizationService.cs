@@ -2,11 +2,16 @@
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -16,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 
@@ -107,6 +113,18 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         }
 
 
+        protected virtual TimeSpan GetUpstreamDrift(ServiceEndpointType endpointType)
+        {
+            var result = _UpstreamAvailabilityProvider.GetTimeDrift(endpointType) ?? TimeSpan.FromMilliseconds(_UpstreamAvailabilityProvider.GetUpstreamLatency(endpointType));
+
+            if (result < TimeSpan.Zero) // GetUpstreamLatency returns -1 when the service is unavailable.
+            {
+                throw new TimeoutException("Service Unavailable.");
+            }
+
+            return result;
+        }
+
         private void PullInternal(object state = null)
         {
             if (Monitor.TryEnter(_PullLock, _LockTimeout))
@@ -115,16 +133,33 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     foreach (var inboundqueue in _QueueManager.GetAll(SynchronizationPattern.UpstreamToLocal))
                     {
-                        _MessagePump.Run(inboundqueue, entry =>
+                        _MessagePump.RunDefault(inboundqueue, entry =>
                         {
+                            //TODO: Do we still need this? RemoteSynchronizationService.cs:413, sdk - SanteDB.DisconnectedClient.Synchronization.RemoteSynchronizationService
+                            if (entry is SecurityUser || entry is SecurityRole || entry is SecurityPolicy)
+                            {
+                                return SynchronizationMessagePump.Continue;
+                            }
+
                             var repotype = typeof(IRepositoryService<>).MakeGenericType(entry.Data.GetType());
 
                             if (_LocalRepositoryFactory.TryCreateService(repotype, out var localrepoobj))
                             {
                                 if (localrepoobj is IRepositoryService localrepo)
                                 {
-                                    localrepo.Save(entry.Data);
-                                    return true;
+                                    if (entry.Data is IVersionedData versioned)
+                                    {
+                                        var existing = localrepo.Get(versioned.Key.Value) as IVersionedData;
+
+                                        if (existing?.VersionKey == versioned.VersionKey)
+                                        {
+                                            //Skip
+                                            return SynchronizationMessagePump.Continue;
+                                        }
+                                    }
+
+                                    localrepo.Save(entry.Data); //Save does an upsert for us.
+                                    return SynchronizationMessagePump.Continue;
                                 }
                             }
 
@@ -141,33 +176,46 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
+        private void SendOutboundEntryInternal(ISynchronizationQueueEntry entry)
+        {
+            if (null == entry)
+            {
+                return;
+            }
+
+            MapUpstreamTemplateKey(entry?.Data);
+
+            switch (entry.Operation)
+            {
+                case SynchronizationQueueEntryOperation.Insert:
+                    _UpstreamIntegrationService.Insert(entry?.Data);
+                    break;
+                case SynchronizationQueueEntryOperation.Update:
+                    _UpstreamIntegrationService.Update(entry?.Data, forceUpdate: entry.IsRetry);
+                    break;
+                case SynchronizationQueueEntryOperation.Obsolete:
+                    _UpstreamIntegrationService.Obsolete(entry?.Data, forceObsolete: entry.IsRetry);
+                    break;
+                default:
+                    break;
+            }
+        }
+
         private void PushInternal(object state = null)
         {
             if (Monitor.TryEnter(_PushLock, _LockTimeout))
             {
                 try
                 {
-                    var amirestclient = _RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService);
-                    var hdsirestclient = _RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.HealthDataService);
 
+                    //TODO: Should we make this parallel?
                     foreach (var outboundqueue in _QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
                     {
-                        _MessagePump.Run(outboundqueue, entry =>
+                        _MessagePump.RunDefault(outboundqueue, entry =>
                         {
-                            switch (entry?.EndpointType)
-                            {
-                                case Core.Interop.ServiceEndpointType.AdministrationIntegrationService:
-                                    amirestclient.Put<IdentifiedData, IdentifiedData>(entry?.Type, entry?.Data);
-                                    break;
-                                case Core.Interop.ServiceEndpointType.HealthDataService:
-                                    hdsirestclient.Put<IdentifiedData, IdentifiedData>(entry?.Type, entry?.Data);
-                                    break;
-                                case null: break;
-                                default:
-                                    throw new NotSupportedException($"ServiceEndpointType \"{entry?.EndpointType}\" not supported");
-                            }
+                            SendOutboundEntryInternal(entry);
 
-                            return true;
+                            return SynchronizationMessagePump.Continue;
                         });
                     }
                 }
@@ -177,6 +225,60 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     Monitor.Exit(_PushLock);
                 }
             }
+        }
+
+
+        private Guid GetUpstreamTemplateKey(TemplateDefinition template)
+        {
+            var servertemplate = _UpstreamIntegrationService.Find<TemplateDefinition>(e => e.Mnemonic == template.Mnemonic).FirstOrDefault();
+
+            if (null == servertemplate)
+            {
+                servertemplate = template;
+                _UpstreamIntegrationService.Insert(servertemplate);
+            }
+
+            return servertemplate.Key.Value;
+
+        }
+
+        private void MapUpstreamTemplateKey(IdentifiedData data)
+        {
+            if (data is TemplateDefinition td)
+            {
+                GetUpstreamTemplateKey(td); //Will force the insert to upstream.
+            }
+            else if (data is Entity entity && entity.TemplateKey.HasValue)
+            {
+                entity.TemplateKey = GetUpstreamTemplateKey(entity.LoadProperty(e => e.Template));
+            }
+            else if (data is Act act)
+            {
+                act.TemplateKey = GetUpstreamTemplateKey(act.LoadProperty(a => a.Template));
+            }
+        }
+
+        private int ScaleTakeCount(int takecount)
+        {
+            var scalefactor = 1;
+
+            /* if (this.m_configuration.BigBundles && (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
+                                count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000))
+                                count = 5000;
+                            else if (this.m_configuration.BigBundles && (count == 2500 && perfTimer.ElapsedMilliseconds < 30000 ||
+                                count < 2500 && result.TotalResults > 10000 && perfTimer.ElapsedMilliseconds < 30000))
+                                count = 2500;
+                            else if (count == 1000 && perfTimer.ElapsedMilliseconds < 20000 ||
+                                count < 1000 && result.TotalResults > 5000 && perfTimer.ElapsedMilliseconds < 20000)
+                                count = 1000;
+                            else if (count == 500 && perfTimer.ElapsedMilliseconds < 10000 ||
+                                count < 200 && result.TotalResults > 1000 && perfTimer.ElapsedMilliseconds < 10000)
+                                count = 500;
+                            else
+                                count = 100;
+            */
+
+            return takecount * scalefactor;
         }
 
 
@@ -190,9 +292,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             var subscriptions = GetSubscriptionDefinitions();
 
-            foreach(var subscription in subscriptions)
+            foreach (var subscription in subscriptions)
             {
-                foreach(var def in subscription.ClientDefinitions.Where(cd=>(cd.Trigger & trigger) == trigger))
+                foreach (var def in subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger))
                 {
                     //TODO: Execute.
                 }
@@ -210,14 +312,99 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public int Pull(Type modelType, NameValueCollection filter, bool always)
         {
             //always ignores If-Modified-Since
+            var filterstring = filter?.ToString();
 
             //TODO: Fetch items from upstream
+            var lastmodificationdate = !always ? _SynchronizationLogService.GetLastTime(modelType, filterstring) : (DateTime?)null;
 
+            if (null != lastmodificationdate)
+            {
+                var drift = GetUpstreamDrift(ServiceEndpointType.HealthDataService);
 
+                lastmodificationdate = lastmodificationdate.Value.Add(drift);
+            }
+            else
+            {
+                if (!_UpstreamAvailabilityProvider.IsAvailable(ServiceEndpointType.HealthDataService))
+                {
+                    return 0;
+                }
+            }
+
+            var offset = 0;
+            var etag = string.Empty;
+            var entitycount = 0;
+            var queryid = Guid.NewGuid();
+            var takecount = _Configuration.BigBundles ? 1_000 : 100;
+
+            var existingquery = _SynchronizationLogService.FindQueryData(modelType, filterstring);
+
+            if (IsExistingQueryLogValid(existingquery))
+            {
+                queryid = existingquery.QueryId;
+                offset = existingquery.QueryOffset;
+            }
+            else
+            {
+                _SynchronizationLogService.CompleteQuery(existingquery);
+
+                _SynchronizationLogService.SaveQuery(modelType, filterstring, queryid, 0);
+            }
+
+            var inboundqueue = _QueueManager.GetInboundQueue();
+
+            var result = _UpstreamIntegrationService.Find(modelType, filter, new UpstreamIntegrationOptions { IfModifiedSince = lastmodificationdate, Timeout = 120_000 }).AsStateful(queryid);
+
+            if (null == result)
+            {
+                //TODO: Log this scenario.
+                return 0;
+            }
+
+            var currenttotal = result.Count();
+
+            for (; offset < currenttotal; offset += takecount)
+            {
+                takecount = ScaleTakeCount(takecount);
+
+                var entities = result.Skip(offset).Take(takecount).ToList();
+
+                etag = entities.GetFirstEtag();
+
+                inboundqueue.Enqueue(entities, SynchronizationQueueEntryOperation.Sync);
+
+                _SynchronizationLogService.SaveQuery(modelType, filterstring, queryid, offset);
+
+                entitycount += entities.Count;
+
+                if (entities.Count == 0)
+                {
+                    //TODO: check if this is an error.
+                    var newtotal = result.Count();
+                    if (newtotal > 0)
+                    {
+                        currenttotal = newtotal;
+                    }
+                    break;
+                }
+            }
+
+            _SynchronizationLogService.Save(modelType, filterstring, etag, lastmodificationdate);
 
             _ThreadPool.QueueUserWorkItem(PullInternal);
 
-            return 0;
+            PullCompleted?.Invoke(this, EventArgs.Empty);
+
+            return entitycount;
+        }
+
+        private bool IsExistingQueryLogValid(ISynchronizationLogQuery query)
+        {
+            if (null == query)
+            {
+                return false;
+            }
+            return DateTime.UtcNow.Subtract(query.QueryStartTime).TotalHours <= 1;
         }
 
         public void Push()

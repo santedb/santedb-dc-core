@@ -18,6 +18,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly ManualResetEventSlim _Lock;
         readonly ConcurrentQueue<Action> _Work;
 
+        internal const bool Continue = true;
+        internal const bool Abort = false;
+        internal const bool Handled = true;
+        internal const bool Unhandled = false;
+
         public SynchronizationMessagePump(ISynchronizationQueueManager queueManager, IThreadPoolService threadPool)
         {
             _QueueManager = queueManager;
@@ -27,10 +32,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Work = new ConcurrentQueue<Action>();
         }
 
-        private SynchronizationQueue<SynchronizationDeadLetterQueueEntry> GetDeadLetterQueue() => _QueueManager.GetAll(SynchronizationPattern.DeadLetter)?.OfType<SynchronizationQueue<SynchronizationDeadLetterQueueEntry>>()?.FirstOrDefault();
+        internal SynchronizationQueue<SynchronizationDeadLetterQueueEntry> GetDeadLetterQueue() => _QueueManager.GetAll(SynchronizationPattern.DeadLetter)?.OfType<SynchronizationQueue<SynchronizationDeadLetterQueueEntry>>()?.FirstOrDefault();
 
         /// <summary>
-        /// Generic Message pump loop for a queue. This method is ignorant of any threading concerns.
+        /// Generic message loop for a queue. This method is ignorant of any threading concerns.
         /// </summary>
         /// <param name="queue">The queue to run the pump on. The queue's <see cref="ISynchronizationQueue.Dequeue"/> method is called until <c>default</c> is returned.</param>
         /// <param name="callback">The callback to execute when data is received from the <paramref name="queue"/>. Return <c>true</c> to continue, <c>false</c> to break out of the loop.</param>
@@ -38,7 +43,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="before">Optional pre-execution handler to invoke before the loop begins. Return <c>true</c> to proceed, <c>false</c> to return before beginning the loop.</param>
         /// <param name="after">Optional post-execution callback to cleanup any managed state before returning.</param>
         /// <exception cref="ArgumentNullException">The <paramref name="queue"/> or <paramref name="callback"/> parameters are null.</exception>
-        protected void ProcessQueueInternal(ISynchronizationQueue queue, Func<ISynchronizationQueueEntry, bool> callback, Func<ISynchronizationQueueEntry, Exception, bool> error = null, Func<bool> before = null, Action after = null)
+        public void Run(ISynchronizationQueue queue, Func<ISynchronizationQueueEntry, bool> callback, Func<ISynchronizationQueueEntry, Exception, bool> error = null, Func<bool> before = null, Action after = null)
         {
             if (null == queue)
             {
@@ -50,30 +55,30 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 throw new ArgumentNullException(nameof(callback));
             }
 
-            bool cont = before?.Invoke() ?? true;
+            bool cont = before?.Invoke() ?? Continue;
 
-            if (!cont)
+            if (cont == Abort)
             {
                 return;
             }
 
             var entry = queue.Dequeue();
-            while(null != entry)
+            while (null != entry)
             {
                 try
                 {
                     cont = callback(entry);
                 }
-                catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     //TODO: Log exception
-                    if (!(error?.Invoke(entry, ex) ?? false))
+                    if (!(error?.Invoke(entry, ex) ?? Unhandled))
                     {
                         throw;
                     }
                 }
 
-                if (!cont)
+                if (cont == Abort)
                 {
                     break;
                 }
@@ -83,38 +88,143 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             after?.Invoke();
         }
-
-        public int Run(ISynchronizationQueue queue, Func<ISynchronizationQueueEntry, bool> callback)
+        /// <summary>
+        /// Generic message loop for a queue. This method is ignorant of any threading concerns.
+        /// </summary>
+        /// <param name="queue">The queue to run the pump on. The queue's <see cref="ISynchronizationQueue.Dequeue"/> method is called until <c>default</c> is returned.</param>
+        /// <param name="callback">The callback to execute when data is received from the <paramref name="queue"/>. Return <c>true</c> to continue, <c>false</c> to break out of the loop.</param>
+        /// <param name="callbackPolicy">A policy that defines how exceptions are handled when they occur during the callback.</param>
+        /// <param name="before">Optional pre-execution handler to invoke before the loop begins. Return <c>true</c> to proceed, <c>false</c> to return before beginning the loop.</param>
+        /// <param name="after">Optional post-execution callback to cleanup any managed state before returning.</param>
+        /// <exception cref="ArgumentNullException">The <paramref name="queue"/> or <paramref name="callback"/> parameters are null.</exception>
+        public void Run(ISynchronizationQueue queue, Func<ISynchronizationQueueEntry, bool> callback, Polly.ISyncPolicy<bool> callbackPolicy, Func<bool> before, Action after = null)
         {
-            int count = 0;
+            if (null == queue)
+            {
+                throw new ArgumentNullException(nameof(queue));
+            }
 
-            ProcessQueueInternal(queue, 
-                data =>
+            if (null == callback)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            bool cont = before?.Invoke() ?? Continue;
+
+            if (cont == Abort)
+            {
+                return;
+            }
+
+            var entry = queue.Dequeue();
+            while (null != entry)
+            {
+                cont = callbackPolicy.Execute(() => callback(entry));
+
+                if (cont == Abort)
                 {
-                    try
-                    {
-                        return callback(data);
-                    }
-                    finally
-                    {
-                        count++;
-                    }
-                }, 
-            (data, ex) =>
+                    break;
+                }
+
+                entry = queue.Dequeue();
+            }
+
+            after?.Invoke();
+        }
+        /// <summary>
+        /// Generic message loop for a queue. This method is ignorant of any threading concerns.
+        /// </summary>
+        /// <param name="queue">The queue to run the pump on. The queue's <see cref="ISynchronizationQueue.Dequeue"/> method is called until <c>default</c> is returned.</param>
+        /// <param name="callback">The callback to execute when data is received from the <paramref name="queue"/>. Return <c>true</c> to continue, <c>false</c> to break out of the loop.</param>
+        /// <param name="callbackPolicy">A policy that defines how exceptions are handled when they occur during the callback.</param>
+        /// <param name="loopPolicy">A policy that defines how exceptions are handled outside of the loop.</param>
+        /// <param name="before">Optional pre-execution handler to invoke before the loop begins. Return <c>true</c> to proceed, <c>false</c> to return before beginning the loop.</param>
+        /// <param name="after">Optional post-execution callback to cleanup any managed state before returning.</param>
+        /// <exception cref="ArgumentNullException">The <paramref name="queue"/> or <paramref name="callback"/> parameters are null.</exception>
+        public void Run(ISynchronizationQueue queue, Func<ISynchronizationQueueEntry, bool> callback, Polly.ISyncPolicy<bool> callbackPolicy, Polly.ISyncPolicy loopPolicy, Func<bool> before, Action after = null)
+        {
+            if (null == queue)
+            {
+                throw new ArgumentNullException(nameof(queue));
+            }
+
+            if (null == callback)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            loopPolicy.Execute(() =>
+            {
+                bool cont = before?.Invoke() ?? Continue;
+
+                if (cont == Abort)
                 {
-                    var dlqueue = GetDeadLetterQueue();
-                    if (null == dlqueue)
+                    return;
+                }
+
+                var entry = queue.Dequeue();
+                while (null != entry)
+                {
+                    cont = callbackPolicy.Execute(() => callback(entry));
+
+                    if (cont == Abort)
                     {
-                        return false;
+                        break;
                     }
 
-                    dlqueue.Enqueue(queue, data);
+                    entry = queue.Dequeue();
+                }
 
-                    return true;
-                
-                });
+                after?.Invoke();
+            });
+        }
+        /// <summary>
+        /// Generic message loop for a queue. This method is ignorant of any threading concerns.
+        /// </summary>
+        /// <param name="queue">The queue to run the pump on. The queue's <see cref="ISynchronizationQueue.Dequeue"/> method is called until <c>default</c> is returned.</param>
+        /// <param name="callback">The callback to execute when data is received from the <paramref name="queue"/>. Return <c>true</c> to continue, <c>false</c> to break out of the loop.</param>
+        /// <param name="callbackPolicy">A policy that defines how exceptions are handled when they occur during the callback.</param>
+        /// <param name="dequeuePolicy">A policy that defines how exceptions are handled when they occur during the queue's dequeue operation.</param>
+        /// <param name="loopPolicy">A policy that defines how exceptions are handled outside of the loop.</param>
+        /// <param name="before">Optional pre-execution handler to invoke before the loop begins. Return <c>true</c> to proceed, <c>false</c> to return before beginning the loop.</param>
+        /// <param name="after">Optional post-execution callback to cleanup any managed state before returning.</param>
+        /// <exception cref="ArgumentNullException">The <paramref name="queue"/> or <paramref name="callback"/> parameters are null.</exception>
+        public void Run(ISynchronizationQueue queue, Func<ISynchronizationQueueEntry, bool> callback, Polly.ISyncPolicy<bool> callbackPolicy, Polly.ISyncPolicy<ISynchronizationQueueEntry> dequeuePolicy, Polly.ISyncPolicy loopPolicy, Func<bool> before, Action after = null)
+        {
+            if (null == queue)
+            {
+                throw new ArgumentNullException(nameof(queue));
+            }
 
-            return count;
+            if (null == callback)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            loopPolicy.Execute(() =>
+            {
+                bool cont = before?.Invoke() ?? Continue;
+
+                if (cont == Abort)
+                {
+                    return;
+                }
+
+                var entry = dequeuePolicy.Execute(() => queue.Dequeue());
+                while (null != entry)
+                {
+                    cont = callbackPolicy.Execute(() => callback(entry));
+
+                    if (cont == Abort)
+                    {
+                        break;
+                    }
+
+                    entry = dequeuePolicy.Execute(() => queue.Dequeue());
+                }
+
+                after?.Invoke();
+            });
         }
     }
 }

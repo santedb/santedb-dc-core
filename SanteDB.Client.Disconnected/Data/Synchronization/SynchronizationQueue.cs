@@ -105,6 +105,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public event EventHandler<DataPersistingEventArgs<ISynchronizationQueueEntry>> Enqueuing;
         public event EventHandler<DataPersistedEventArgs<ISynchronizationQueueEntry>> Enqueued;
 
+
         private T LockRead<T>(Func<Queue<int>, T> func)
         {
             _Lock.EnterReadLock();
@@ -246,8 +247,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private int DequeueBadEntry() => LockWrite(q => q.Dequeue());
 
-        public ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation, ServiceEndpointType endpointType) 
-            => Enqueue(CreateEntry(data, operation, endpointType));
+        public ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation) 
+            => Enqueue(CreateEntry(data, operation));
 
         public TEntry Enqueue(TEntry entry)
         {
@@ -280,14 +281,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return entry;
         }
 
-        private TEntry CreateEntry(IdentifiedData data, SynchronizationQueueEntryOperation operation, ServiceEndpointType endpointType) => new TEntry()
+        private TEntry CreateEntry(IdentifiedData data, SynchronizationQueueEntryOperation operation) => new TEntry()
         {
             CreationTime = DateTime.UtcNow,
             Data = data,
             Id = s_Rand.Next(),
             Operation = operation,
-            Type = data.GetType().Name,
-            EndpointType = endpointType
+            Type = data.GetType().Name
         };
 
         public TEntry Get(int id)
@@ -303,7 +303,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 using (var fs = new FileStream(GetEntryFilename(Path, id), FileMode.Open, FileAccess.Read))
                 {
-                    using (var cs = new DeflateStream(fs, CompressionLevel.Fastest))
+                    using (var cs = new GZipStream(fs, CompressionLevel.Fastest))
                     {
                         using (var sr = new StreamReader(cs, Encoding.UTF8, true, 512, leaveOpen: false))
                         {
@@ -342,13 +342,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 throw new ArgumentNullException(nameof(entry));
             }
 
+
             var serializer = CreateSerializer();
 
             try
             {
                 using (var fs = new FileStream(GetEntryFilename(Path, entry.Id), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
                 {
-                    using (var cs = new DeflateStream(fs, CompressionLevel.Fastest))
+                    using (var cs = new GZipStream(fs, CompressionLevel.Fastest))
                     {
                         using (var sw = new StreamWriter(cs))
                         {
