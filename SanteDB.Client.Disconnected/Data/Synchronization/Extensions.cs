@@ -1,8 +1,10 @@
-﻿using SanteDB.Core.Http;
+﻿using DynamicExpresso;
+using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
@@ -91,6 +93,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 });
 
             return count;
+        }
+
+        public static Expression<Func<object, bool>> ConvertToObjectLambda(this LambdaExpression expression, Type castType)
+        {
+            var pobj = Expression.Parameter(typeof(object), "o");
+            return Expression.Lambda<Func<object, bool>>(
+                Expression.Invoke(expression, Expression.Convert(pobj, castType)),
+                pobj
+                );
         }
     }
 }
