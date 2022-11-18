@@ -22,7 +22,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Update the log entry 
         /// </summary>
-        void Save(Type modelType, String filter, String eTag, DateTime since);
+        void Save(Type modelType, String filter, String eTag, DateTime? since);
 
         /// <summary>
         /// Get all log entries
@@ -38,6 +38,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Mark the specified query as complete
         /// </summary>
         void CompleteQuery(Type modelType, String filter, Guid queryId);
+        /// <summary>
+        /// Mark the specified query as complete
+        /// </summary>
+        void CompleteQuery(string modelType, String filter, Guid queryId);
 
         /// <summary>
         /// Find the query data

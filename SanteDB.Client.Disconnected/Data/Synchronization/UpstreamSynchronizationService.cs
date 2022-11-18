@@ -2,20 +2,27 @@
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using SanteDB.Messaging.AMI.Client;
+using SharpCompress.Common;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 
@@ -40,6 +47,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly LocalRepositoryFactory _LocalRepositoryFactory;
 
         readonly SynchronizationMessagePump _MessagePump;
+
+        readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
 
         public bool IsRunning { get; private set; }
 
@@ -84,13 +93,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _PushLock = new object();
             _PullLock = new object();
             _LockTimeout = TimeSpan.FromMilliseconds(100);
+            _GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
 
             _MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
 
             _LocalRepositoryFactory = _ServiceManager.CreateInjected<LocalRepositoryFactory>();
+
+
         }
 
-        protected virtual List<SubscriptionDefinition> GetSubscriptionDefinitions()
+        private List<SubscriptionDefinition> GetSubscriptionDefinitions()
         {
             using (AuthenticationContext.EnterSystemContext())
             {
@@ -107,7 +119,70 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         }
 
 
-        private void PullInternal(object state = null)
+        private TimeSpan GetUpstreamDrift(ServiceEndpointType endpointType)
+        {
+            var result = _UpstreamAvailabilityProvider.GetTimeDrift(endpointType) ?? TimeSpan.FromMilliseconds(_UpstreamAvailabilityProvider.GetUpstreamLatency(endpointType));
+
+            if (result < TimeSpan.Zero) // GetUpstreamLatency returns -1 when the service is unavailable.
+            {
+                throw new TimeoutException("Service Unavailable.");
+            }
+
+            return result;
+        }
+
+        private IRepositoryService GetLocalRepositoryForData(Type entityType)
+        {
+            if (null == entityType)
+            {
+                return null;
+            }
+
+            var repotype = typeof(IRepositoryService<>).MakeGenericType(entityType);
+
+            if (_LocalRepositoryFactory.TryCreateService(repotype, out var localrepoobj))
+            {
+                if (localrepoobj is IRepositoryService localrepo)
+                {
+                    return localrepo;
+                }
+                else
+                {
+                    _Tracer.TraceError("Error: Repository {0} does not implement IRepositoryService.", repotype.Name);
+                }
+            }
+
+            return null;
+        }
+        private IRepositoryService GetLocalRepositoryForData(IdentifiedData data)
+            => GetLocalRepositoryForData(data.GetType());
+
+        private void RunOutboundMessagePump(object state = null)
+        {
+            if (Monitor.TryEnter(_PushLock, _LockTimeout))
+            {
+                try
+                {
+
+                    //TODO: Should we make this parallel?
+                    foreach (var outboundqueue in _QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
+                    {
+                        _MessagePump.RunDefault(outboundqueue, entry =>
+                        {
+                            SendOutboundEntryInternal(entry);
+
+                            return SynchronizationMessagePump.Continue;
+                        });
+                    }
+                }
+                finally
+                {
+                    PushCompleted?.Invoke(this, EventArgs.Empty);
+                    Monitor.Exit(_PushLock);
+                }
+            }
+        }
+        private void RunInboundMessagePump(object state = null)
         {
             if (Monitor.TryEnter(_PullLock, _LockTimeout))
             {
@@ -115,21 +190,43 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     foreach (var inboundqueue in _QueueManager.GetAll(SynchronizationPattern.UpstreamToLocal))
                     {
-                        _MessagePump.Run(inboundqueue, entry =>
+                        _MessagePump.RunDefault(inboundqueue, entry =>
                         {
-                            var repotype = typeof(IRepositoryService<>).MakeGenericType(entry.Data.GetType());
-
-                            if (_LocalRepositoryFactory.TryCreateService(repotype, out var localrepoobj))
+                            if (null == entry?.Data)
                             {
-                                if (localrepoobj is IRepositoryService localrepo)
+                                return SynchronizationMessagePump.Continue;
+                            }
+
+                            //TODO: Do we still need this? RemoteSynchronizationService.cs:413, sdk - SanteDB.DisconnectedClient.Synchronization.RemoteSynchronizationService
+                            if (entry.Data is SecurityUser || entry.Data is SecurityRole || entry.Data is SecurityPolicy)
+                            {
+                                _Tracer.TraceVerbose("Skipping {0} because data is SecurityUser, SecurityRole, or SecurityPolicy", entry.Id);
+                                return SynchronizationMessagePump.Continue;
+                            }
+
+                            var localrepo = GetLocalRepositoryForData(entry.Data);
+
+                            if (null == localrepo)
+                            {
+                                _Tracer.TraceError("Error getting repository.");
+                                throw new InvalidOperationException("Error getting repository."); //Will throw onto deadletter queue
+                            }
+
+                            if (entry.Data is IVersionedData versioned)
+                            {
+                                var existing = localrepo.Get(versioned.Key.Value) as IVersionedData;
+
+                                if (existing?.VersionKey == versioned.VersionKey)
                                 {
-                                    localrepo.Save(entry.Data);
-                                    return true;
+                                    //Skip
+                                    return SynchronizationMessagePump.Continue;
                                 }
                             }
 
-                            _Tracer.TraceError("Error getting repository.");
-                            throw new InvalidOperationException("Error getting repository."); //Will throw onto deadletter queue
+                            localrepo.Save(entry.Data); //Save does an upsert for us.
+                            return SynchronizationMessagePump.Continue;
+
+
                         });
                     }
                 }
@@ -141,128 +238,31 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
-        private void PushInternal(object state = null)
+        private void SendOutboundEntryInternal(ISynchronizationQueueEntry entry)
         {
-            if (Monitor.TryEnter(_PushLock, _LockTimeout))
+            if (null == entry)
             {
-                try
-                {
-                    var amirestclient = _RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService);
-                    var hdsirestclient = _RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.HealthDataService);
+                return;
+            }
 
-                    foreach (var outboundqueue in _QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
-                    {
-                        _MessagePump.Run(outboundqueue, entry =>
-                        {
-                            switch (entry?.EndpointType)
-                            {
-                                case Core.Interop.ServiceEndpointType.AdministrationIntegrationService:
-                                    amirestclient.Put<IdentifiedData, IdentifiedData>(entry?.Type, entry?.Data);
-                                    break;
-                                case Core.Interop.ServiceEndpointType.HealthDataService:
-                                    hdsirestclient.Put<IdentifiedData, IdentifiedData>(entry?.Type, entry?.Data);
-                                    break;
-                                case null: break;
-                                default:
-                                    throw new NotSupportedException($"ServiceEndpointType \"{entry?.EndpointType}\" not supported");
-                            }
+            MapUpstreamTemplateKey(entry?.Data);
 
-                            return true;
-                        });
-                    }
-                }
-                finally
-                {
-                    PushCompleted?.Invoke(this, EventArgs.Empty);
-                    Monitor.Exit(_PushLock);
-                }
+            switch (entry.Operation)
+            {
+                case SynchronizationQueueEntryOperation.Insert:
+                    _UpstreamIntegrationService.Insert(entry?.Data);
+                    break;
+                case SynchronizationQueueEntryOperation.Update:
+                    _UpstreamIntegrationService.Update(entry?.Data, forceUpdate: entry.IsRetry);
+                    break;
+                case SynchronizationQueueEntryOperation.Obsolete:
+                    _UpstreamIntegrationService.Obsolete(entry?.Data, forceObsolete: entry.IsRetry);
+                    break;
+                default:
+                    break;
             }
         }
 
-
-        public bool Fetch(Type modelType)
-        {
-            //TODO: This was never implemented. Should do a head in constrained bandwidth scenarios and if modified, will trigger sync.
-            throw new NotImplementedException();
-        }
-
-        public void Pull(SubscriptionTriggerType trigger)
-        {
-            var subscriptions = GetSubscriptionDefinitions();
-
-            foreach(var subscription in subscriptions)
-            {
-                foreach(var def in subscription.ClientDefinitions.Where(cd=>(cd.Trigger & trigger) == trigger))
-                {
-                    //TODO: Execute.
-                }
-            }
-
-            throw new NotImplementedException();
-        }
-
-        public int Pull(Type modelType)
-            => Pull(modelType, null, false);
-
-        public int Pull(Type modelType, NameValueCollection filter)
-            => Pull(modelType, filter, false);
-
-        public int Pull(Type modelType, NameValueCollection filter, bool always)
-        {
-            //always ignores If-Modified-Since
-
-            //TODO: Fetch items from upstream
-
-
-
-            _ThreadPool.QueueUserWorkItem(PullInternal);
-
-            return 0;
-        }
-
-        public void Push()
-        {
-            _ThreadPool.QueueUserWorkItem(PushInternal);
-        }
-
-        public bool Start()
-        {
-            this.Starting?.Invoke(this, EventArgs.Empty);
-
-            if (_Configuration.PollInterval != default(TimeSpan))
-            {
-                ApplicationServiceContext.Current.Started += (s, e) =>
-                {
-                    try
-                    {
-                        this.Pull(SubscriptionTriggerType.OnStart);
-
-                        var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
-                        _JobManager.AddJob(job, JobStartType.DelayStart);
-                        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
-
-                    }
-                    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                    {
-                        _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
-                    }
-
-                };
-            }
-
-            IsRunning = true;
-
-            this.Started?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
-
-        public bool Stop()
-        {
-            this.Stopping?.Invoke(this, EventArgs.Empty);
-            IsRunning = false;
-            this.Stopped?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
 
         /// <summary>
         /// Bundle dependent objects for resubmit
@@ -312,5 +312,363 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             return currentBundle;
         }
+
+        private Guid GetUpstreamTemplateKey(TemplateDefinition template)
+        {
+            var servertemplate = _UpstreamIntegrationService.Find<TemplateDefinition>(e => e.Mnemonic == template.Mnemonic).FirstOrDefault();
+
+            if (null == servertemplate)
+            {
+                servertemplate = template;
+                _UpstreamIntegrationService.Insert(servertemplate);
+            }
+
+            return servertemplate.Key.Value;
+
+        }
+
+        private void MapUpstreamTemplateKey(IdentifiedData data)
+        {
+            if (data is TemplateDefinition td)
+            {
+                GetUpstreamTemplateKey(td); //Will force the insert to upstream.
+            }
+            else if (data is IHasTemplate iht)
+            {
+                iht.TemplateKey = GetUpstreamTemplateKey(data.LoadProperty<TemplateDefinition>(nameof(IHasTemplate.Template)));
+            }
+        }
+
+        private int ScaleTakeCount(int takecount, long? estimatedLatency = null)
+        {
+            var scalefactor = 1;
+
+            /* if (this.m_configuration.BigBundles && (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
+                                count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000))
+                                count = 5000;
+                            else if (this.m_configuration.BigBundles && (count == 2500 && perfTimer.ElapsedMilliseconds < 30000 ||
+                                count < 2500 && result.TotalResults > 10000 && perfTimer.ElapsedMilliseconds < 30000))
+                                count = 2500;
+                            else if (count == 1000 && perfTimer.ElapsedMilliseconds < 20000 ||
+                                count < 1000 && result.TotalResults > 5000 && perfTimer.ElapsedMilliseconds < 20000)
+                                count = 1000;
+                            else if (count == 500 && perfTimer.ElapsedMilliseconds < 10000 ||
+                                count < 200 && result.TotalResults > 1000 && perfTimer.ElapsedMilliseconds < 10000)
+                                count = 500;
+                            else
+                                count = 100;
+            */
+
+            return takecount * scalefactor;
+        }
+
+
+
+        private List<object> GetSubscribedObjects()
+        {
+            var subscribedrepository = GetLocalRepositoryForData(_Configuration.SubscribeToResource.Type);
+
+            if (null == subscribedrepository)
+            {
+                _Tracer.TraceError("No local repository exists for {0}", _Configuration.SubscribeToResource.Type);
+                throw new InvalidOperationException($"No local repostiory exists for type {_Configuration.SubscribeToResource.Type}");
+            }
+
+            Expression<Func<object, bool>> expr = obj => null != ((IdentifiedData)obj).Key && _Configuration.SubscribedObjects.Contains(((IdentifiedData)obj).Key.Value);
+
+            return subscribedrepository.Find(expr).OfType<object>().ToList();
+        }
+
+        
+
+        private bool IsExistingQueryLogValid(ISynchronizationLogQuery query)
+        {
+            if (null == query)
+            {
+                return false;
+            }
+            return DateTime.UtcNow.Subtract(query.QueryStartTime).TotalHours <= 1;
+        }
+
+        /// <summary>
+        /// Gets a subset of the <paramref name="subscribedObjects"/> that match any guard conditions present in the <paramref name="definition"/>.
+        /// </summary>
+        /// <param name="definition">The definition to look for guards with.</param>
+        /// <param name="subscribedObjects">A list of objects that are part of the subscription.</param>
+        /// <returns>A list of the objects from <paramref name="subscribedObjects"/> that meet any guard conditions present in the definition.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the definition is null.</exception>
+        private List<object> GetSubscribedObjectsForDefinition(SubscriptionClientDefinition definition, List<object> subscribedObjects)
+        {
+            if (null == definition)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            if (definition?.Guards?.Count < 1) //No guards
+            {
+                return subscribedObjects;
+            }
+
+            if (subscribedObjects?.Count < 1) //No subscription objects
+            {
+                return new List<object>();
+            }
+
+            var query = subscribedObjects.AsQueryable();
+
+            foreach (var guard in definition.Guards)
+            {
+                if (!_GuardExpressionCache.TryGetValue(guard, out var expr))
+                {
+                    expr = QueryExpressionParser.BuildLinqExpression(_Configuration.SubscribeToResource.Type, NameValueCollectionExtensions.ParseQueryString(guard)).ConvertToObjectLambda(_Configuration.SubscribeToResource.Type);
+                    _GuardExpressionCache.Add(guard, expr);
+                }
+
+                query = query.Where(expr);
+            }
+
+            return query.ToList();
+        }
+
+        private int ProcessSubscription(SubscriptionDefinition subscription, SubscriptionClientDefinition clientDefinition, List<object> subscribedObjects)
+        {
+            var totalresults = 0;
+
+            if (clientDefinition?.Filters?.Count > 0)
+            {
+                foreach (var filter in clientDefinition.Filters)
+                {
+                    if (filter.IndexOf("$subscribed") > -1)
+                    {
+                        object subscribed = null;
+                        var expr = QueryExpressionParser.BuildLinqExpression(subscription.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
+                        {
+                            { "subscribed", () => subscribed }
+                        });
+
+                        foreach (var subscribedobject in subscribedObjects)
+                        {
+                            subscribed = subscribedobject;
+                            var newfilter = QueryExpressionBuilder.BuildQuery(subscription.ResourceType, expr).ToHttpString();
+                            totalresults += PullInternal(subscription.ResourceType, NameValueCollectionExtensions.ParseQueryString(newfilter), clientDefinition.IgnoreModifiedOn);
+                        }
+                    }
+                    else
+                    {
+                        totalresults += PullInternal(subscription.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), clientDefinition.IgnoreModifiedOn);
+                    }
+                }
+            }
+            else
+            {
+                totalresults += PullInternal(subscription.ResourceType, null, false);
+            }
+
+            return totalresults;
+        }
+
+        private int PullInternal(Type modelType, NameValueCollection filter, bool ignoreModifiedOn)
+        {
+            //always ignores If-Modified-Since
+            var filterstring = filter?.ToString();
+
+            //TODO: Fetch items from upstream
+            var lastmodificationdate = !ignoreModifiedOn ? _SynchronizationLogService.GetLastTime(modelType, filterstring) : (DateTime?)null;
+
+            var estimatedlatency = _UpstreamAvailabilityProvider.GetUpstreamLatency(ServiceEndpointType.HealthDataService);
+
+            if (estimatedlatency < 0) //Unavailable
+            {
+                _Tracer.TraceInfo("Upstream is unavialable. Exiting Pull.");
+                return 0;
+            }
+
+            _Tracer.TraceVerbose("Estimated upstream latency: {0}", estimatedlatency);
+
+            //If we are using last modified, check what the time drift is. 
+            if (null != lastmodificationdate)
+            {
+                var drift = GetUpstreamDrift(ServiceEndpointType.HealthDataService);
+
+                _Tracer.TraceVerbose("Upstream time difference: {0}", drift);
+
+                lastmodificationdate = lastmodificationdate.Value.Add(drift);
+            }
+
+
+            var offset = 0;
+            var etag = string.Empty;
+            var entitycount = 0;
+            var queryid = Guid.NewGuid();
+            var takecount = _Configuration.BigBundles ? 1_000 : 100;
+
+            var existingquery = _SynchronizationLogService.FindQueryData(modelType, filterstring);
+
+            if (IsExistingQueryLogValid(existingquery))
+            {
+                queryid = existingquery.QueryId;
+                offset = existingquery.QueryOffset;
+            }
+            else
+            {
+                _SynchronizationLogService.CompleteQuery(existingquery);
+
+                _SynchronizationLogService.SaveQuery(modelType, filterstring, queryid, 0);
+            }
+
+            var inboundqueue = _QueueManager.GetInboundQueue();
+
+            if (null == inboundqueue)
+            {
+                _Tracer.TraceError("No inbound queue is available.");
+                throw new NotSupportedException("No inbound queue available.");
+            }
+
+            var result = _UpstreamIntegrationService.Find(modelType, filter, new UpstreamIntegrationOptions { IfModifiedSince = lastmodificationdate, Timeout = 120_000 }).AsStateful(queryid);
+
+            if (null == result)
+            {
+                //TODO: Log this scenario.
+                return 0;
+            }
+
+            var currenttotal = result.Count();
+
+            for (; offset < currenttotal; offset += takecount)
+            {
+                takecount = ScaleTakeCount(takecount, estimatedlatency);
+
+                var entities = result.Skip(offset).Take(takecount).ToList();
+
+                etag = entities.GetFirstEtag();
+
+                inboundqueue.Enqueue(entities, SynchronizationQueueEntryOperation.Sync);
+
+                _SynchronizationLogService.SaveQuery(modelType, filterstring, queryid, offset);
+
+                entitycount += entities.Count;
+
+                if (entities.Count == 0)
+                {
+                    //TODO: check if this is an error.
+                    var newtotal = result.Count();
+                    if (newtotal > 0)
+                    {
+                        currenttotal = newtotal;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            _SynchronizationLogService.Save(modelType, filterstring, etag, lastmodificationdate);
+
+            return entitycount;
+        }
+
+        /// <inheritdoc />
+        public bool Fetch(Type modelType)
+        {
+            //TODO: This was never implemented. Should do a head in constrained bandwidth scenarios and if modified, will trigger sync.
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public void Pull(SubscriptionTriggerType trigger)
+        {
+            var subscriptions = GetSubscriptionDefinitions();
+            var subscribedobjects = GetSubscribedObjects();
+
+            var totalresults = 0;
+
+            foreach (var subscription in subscriptions)
+            {
+                foreach (var def in subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger))
+                {
+                    if ((_Configuration.Mode == SynchronizationMode.Full && ((def.Mode & SubscriptionModeType.Full) == SubscriptionModeType.Full)) ||
+                        (_Configuration.Mode == SynchronizationMode.Partial && ((def.Mode & SubscriptionModeType.Partial) == SubscriptionModeType.Partial)))
+                    {
+                        _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
+
+                        var objectstoevaluate = GetSubscribedObjectsForDefinition(def, subscribedobjects);
+
+                        totalresults += ProcessSubscription(subscription, def, objectstoevaluate);
+                    }
+                    else
+                    {
+                        _Tracer.TraceVerbose("Skipping {0} because the mode does not match the CDR mode.", def.Name);
+                    }
+                }
+            }
+
+            _ThreadPool.QueueUserWorkItem(RunInboundMessagePump);
+        }
+
+        /// <inheritdoc />
+        public int Pull(Type modelType)
+            => Pull(modelType, null, false);
+
+        /// <inheritdoc />
+        public int Pull(Type modelType, NameValueCollection filter)
+            => Pull(modelType, filter, false);
+
+        /// <inheritdoc />
+        public int Pull(Type modelType, NameValueCollection filter, bool ignoreModifiedOn)
+        {
+            var entitycount = PullInternal(modelType, filter, ignoreModifiedOn);
+
+            _ThreadPool.QueueUserWorkItem(RunInboundMessagePump);
+
+            return entitycount;
+        }
+
+        /// <inheritdoc />
+        public void Push()
+        {
+            _ThreadPool.QueueUserWorkItem(RunOutboundMessagePump);
+        }
+        /// <inheritdoc />
+        public bool Start()
+        {
+            this.Starting?.Invoke(this, EventArgs.Empty);
+
+            if (_Configuration.PollInterval != default(TimeSpan))
+            {
+                ApplicationServiceContext.Current.Started += (s, e) =>
+                {
+                    try
+                    {
+                        this.Pull(SubscriptionTriggerType.OnStart);
+
+                        var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
+                        _JobManager.AddJob(job, JobStartType.DelayStart);
+                        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
+
+                    }
+                    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                    {
+                        _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
+                    }
+
+                };
+            }
+
+            IsRunning = true;
+
+            this.Started?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+        /// <inheritdoc />
+        public bool Stop()
+        {
+            this.Stopping?.Invoke(this, EventArgs.Empty);
+            IsRunning = false;
+            this.Stopped?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
+        
     }
 }

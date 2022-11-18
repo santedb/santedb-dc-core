@@ -17,6 +17,11 @@ namespace SanteDB.Client.Upstream.Management
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IRestClientFactory m_restClientFactory;
 
+        /// <summary>
+        /// Timeout, in milliseconds, for the ping to complete for the endpoint.
+        /// </summary>
+        private const int PING_TIMEOUT = 5_000;
+
         public IUpstreamManagementService m_upstreamManagementService { get; }
 
         /// <summary>
@@ -40,29 +45,30 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public bool IsAvailable(ServiceEndpointType endpoint)
         {
-            if (this.m_networkInformationService.IsNetworkAvailable &&
-                this.m_networkInformationService.IsNetworkConnected &&
-                this.m_upstreamManagementService.IsConfigured())
-            {
-                using (var restClient = m_restClientFactory.GetRestClientFor(endpoint))
-                {
-                    try
-                    {
-                        restClient.SetTimeout(5000);
-                        restClient.Invoke<object, object>("PING", "/", null);
-                        return true;
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-                }
-            }
-            return false;
+            return GetUpstreamLatency(endpoint) != -1;
+            //if (this.m_networkInformationService.IsNetworkAvailable &&
+            //    this.m_networkInformationService.IsNetworkConnected &&
+            //    this.m_upstreamManagementService.IsConfigured())
+            //{
+            //    using (var restClient = m_restClientFactory.GetRestClientFor(endpoint))
+            //    {
+            //        try
+            //        {
+            //            restClient.SetTimeout(PING_TIMEOUT);
+            //            restClient.Invoke<object, object>("PING", "/", null);
+            //            return true;
+            //        }
+            //        catch
+            //        {
+            //            return false;
+            //        }
+            //    }
+            //}
+            //return false;
         }
 
         /// <inheritdoc/>
-        public TimeSpan GetTimeDrift(ServiceEndpointType endpoint)
+        public TimeSpan? GetTimeDrift(ServiceEndpointType endpoint)
         {
             try
             {
@@ -72,18 +78,18 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     using (var client = m_restClientFactory.GetRestClientFor(endpoint))
                     {
-                        client.SetTimeout(5000);
+                        client.SetTimeout(PING_TIMEOUT);
                         var serverTime = DateTime.Now;
                         client.Responded += (o, e) => _ = DateTime.TryParse(e.Headers["X-GeneratedOn"], out serverTime) || DateTime.TryParse(e.Headers["Date"], out serverTime);
                         client.Invoke<object, object>("PING", "/", null);
                         return serverTime.Subtract(DateTime.Now);
                     }
                 }
-                return TimeSpan.Zero;
+                return null;
             }
             catch 
             {
-                return TimeSpan.Zero;
+                return null;
             }
         }
 
@@ -98,7 +104,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     using (var client = m_restClientFactory.GetRestClientFor(endpointType))
                     {
-                        client.SetTimeout(5000);
+                        client.SetTimeout(PING_TIMEOUT);
                         var sw = new Stopwatch();
                         sw.Start();
                         client.Invoke<object, object>("PING", "/", null);

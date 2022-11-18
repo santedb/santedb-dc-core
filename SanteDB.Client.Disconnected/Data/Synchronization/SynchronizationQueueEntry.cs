@@ -15,6 +15,5 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public IdentifiedData Data { get; set; }
         public SynchronizationQueueEntryOperation Operation { get; set; }
         public bool IsRetry { get; set; }
-        public ServiceEndpointType EndpointType { get; set; }
     }
 }

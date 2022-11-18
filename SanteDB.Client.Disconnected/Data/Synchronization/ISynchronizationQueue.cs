@@ -40,7 +40,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </summary>
         /// <param name="data">The data to enqueue</param>
         /// <param name="operation">The sync operation </param>
-        ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation, ServiceEndpointType endpointType);
+        ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation);
 
         /// <summary>
         /// Peek the next item on the queue
