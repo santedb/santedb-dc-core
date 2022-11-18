@@ -23,6 +23,7 @@ namespace SanteDB.Client.Upstream.Repositories
     {
         private readonly ILocalServiceProvider<ISecurityChallengeService> m_localSecurityChallengeService;
         private readonly IIdentityProviderService m_identityProvider;
+        private readonly ISecurityRepositoryService m_securityRepository;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamSecurityChallengeProvider));
 
         /// <inheritdoc/>
@@ -39,10 +40,12 @@ namespace SanteDB.Client.Upstream.Repositories
             IIdentityProviderService identityProvider,
             IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            ISecurityRepositoryService securityRepositoryService = null,
             IUpstreamIntegrationService upstreamIntegrationService = null,
             ILocalServiceProvider<ISecurityChallengeService> localSecurityChallengeService = null
             ) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
+            this.m_securityRepository = securityRepositoryService;
             this.m_localSecurityChallengeService = localSecurityChallengeService;
             this.m_identityProvider = identityProvider;
         }
@@ -70,7 +73,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IEnumerable<SecurityChallenge> Get(Guid userKey, IPrincipal principal)
         {
-            if (!this.m_identityProvider.GetAuthenticationMethods(this.m_identityProvider.GetIdentity(userKey).Name)
+            if (!this.m_identityProvider.GetAuthenticationMethods(this.m_securityRepository.ResolveName(userKey))
                 .HasFlag(AuthenticationMethod.Online))
             {
                 return this.m_localSecurityChallengeService.LocalProvider.Get(userKey, principal);

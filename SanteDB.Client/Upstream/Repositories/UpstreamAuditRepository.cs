@@ -77,7 +77,7 @@ namespace SanteDB.Client.Upstream.Repositories
                             }
                             catch (Exception e)
                             {
-                                this.m_tracer.TraceError("Error dispatching audit: {0}", e);
+                                this._Tracer.TraceError("Error dispatching audit: {0}", e);
                                 submission.Audit.ForEach(audit => this.m_dispatcherQueue.Enqueue(AmiDeadQueueName, audit));
                             }
                         }
@@ -90,7 +90,7 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             catch (Exception e)
             {
-                this.m_tracer.TraceError("Error establishing connection to remote server for dispatching audits: {0}", e);
+                this._Tracer.TraceError("Error establishing connection to remote server for dispatching audits: {0}", e);
             }
         }
 

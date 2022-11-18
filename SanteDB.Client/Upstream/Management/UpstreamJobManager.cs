@@ -300,7 +300,7 @@ namespace SanteDB.Client.Upstream.Management
             }
             catch (Exception e)
             {
-                this.m_tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
+                this._Tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
                 throw new Exception("Error setting job information on remote server", e);
             }
         }
@@ -348,7 +348,7 @@ namespace SanteDB.Client.Upstream.Management
             }
             catch (Exception e)
             {
-                this.m_tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
+                this._Tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
                 throw new Exception("Error setting job information on remote server", e);
             }
         }

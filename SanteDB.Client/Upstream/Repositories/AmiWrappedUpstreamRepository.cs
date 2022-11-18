@@ -27,8 +27,11 @@ namespace SanteDB.Client.Upstream.Repositories
         protected override TWrapper MapToWire(TModel modelObject)
         {
             var retVal = new TWrapper() { Entity = modelObject };
-            ((IAmiIdentified)retVal).Key = modelObject.Key;
-            ((IIdentifiedResource)retVal).Key = modelObject.Key;
+            if (modelObject.Key.HasValue)
+            {
+                ((IAmiIdentified)retVal).Key = modelObject.Key;
+                ((IIdentifiedResource)retVal).Key = modelObject.Key;
+            }
             return retVal;
         }
 

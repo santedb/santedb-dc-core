@@ -67,6 +67,12 @@ namespace SanteDB.Client.OAuth
             public int ExpiresIn { get; set; }
             [JsonProperty("nonce")]
             public string Nonce { get; set; }
+
+            // HACK: Allows for conveying upstream errors
+            [JsonProperty("error")]
+            public string Error { get; set; }
+            [JsonProperty("error_description")]
+            public string ErrorDescription { get; set; }
         }
 
         private string GetNonce()

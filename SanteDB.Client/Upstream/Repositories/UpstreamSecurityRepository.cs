@@ -83,11 +83,11 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityUser CreateUser(SecurityUser userInfo, string password)
         {
-            if(userInfo == null)
+            if (userInfo == null)
             {
                 throw new ArgumentNullException(nameof(userInfo));
             }
-            else if(String.IsNullOrEmpty(password))
+            else if (String.IsNullOrEmpty(password))
             {
                 throw new ArgumentNullException(nameof(password));
             }
@@ -114,7 +114,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IQueryResultSet<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query)
         {
-            if(query == null)
+            if (query == null)
             {
                 throw new ArgumentNullException(nameof(query));
             }
@@ -125,25 +125,25 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityApplication GetApplication(string applicationName)
         {
-            if(String.IsNullOrEmpty(applicationName))
-            { 
-                throw new ArgumentNullException(nameof(applicationName)); 
+            if (String.IsNullOrEmpty(applicationName))
+            {
+                throw new ArgumentNullException(nameof(applicationName));
             }
-            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.app.{applicationName}", out SecurityApplication retVal) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.app.{applicationName}", out SecurityApplication retVal) == true)
             {
                 return retVal;
             }
 
             try
             {
-                using(var client = this.CreateAmiServiceClient())
+                using (var client = this.CreateAmiServiceClient())
                 {
                     var retVal = client.GetApplications(o => o.Name == applicationName).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault()?.Entity;
                     this.m_adhocCache?.Add($"sec.app.{applicationName}", retVal, this.TEMP_CACHE_TIMEOUT); // just saves some server calls
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -152,7 +152,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityApplication GetApplication(IIdentity identity)
         {
-            if(identity == null)
+            if (identity == null)
             {
                 throw new ArgumentNullException(nameof(identity));
             }
@@ -162,7 +162,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityDevice GetDevice(string deviceName)
         {
-            if(String.IsNullOrEmpty(deviceName))
+            if (String.IsNullOrEmpty(deviceName))
             {
                 throw new ArgumentNullException(nameof(deviceName));
             }
@@ -188,7 +188,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityDevice GetDevice(IIdentity identity)
         {
-            if(identity == null)
+            if (identity == null)
             {
                 throw new ArgumentNullException(nameof(identity));
             }
@@ -199,25 +199,25 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityPolicy GetPolicy(string policyOid)
         {
-            if(String.IsNullOrEmpty(policyOid))
+            if (String.IsNullOrEmpty(policyOid))
             {
                 throw new ArgumentNullException(nameof(policyOid));
             }
-            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.pol.{policyOid}", out SecurityPolicy retVal) )
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.pol.{policyOid}", out SecurityPolicy retVal))
             {
                 return retVal;
             }
 
             try
             {
-                using(var client = this.CreateAmiServiceClient())
+                using (var client = this.CreateAmiServiceClient())
                 {
                     var retVal = new UpstreamQueryResultSet<SecurityPolicy, AmiCollection>(client.Client, o => o.Oid == policyOid).FirstOrDefault();
                     this.m_adhocCache?.Add($"sec.pol.{policyOid}", retVal, TEMP_CACHE_TIMEOUT);
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -226,25 +226,25 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityProvenance GetProvenance(Guid provenanceId)
         {
-            if(provenanceId == Guid.Empty)
+            if (provenanceId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(provenanceId));
             }
-            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.prov.{provenanceId}", out SecurityProvenance provenance) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.prov.{provenanceId}", out SecurityProvenance provenance) == true)
             {
                 return provenance;
             }
 
             try
             {
-                using(var client = this.CreateAmiServiceClient())
+                using (var client = this.CreateAmiServiceClient())
                 {
                     var retVal = client.GetProvenance(provenanceId);
                     this.m_adhocCache?.Add($"sec.prov.{provenanceId}", retVal, TEMP_CACHE_TIMEOUT);
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -253,18 +253,18 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public Provider GetProviderEntity(IIdentity identity)
         {
-            if(identity == null)
+            if (identity == null)
             {
                 throw new ArgumentNullException(nameof(identity));
             }
-            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.pvd.{identity.Name}", out Provider retVal) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.pvd.{identity.Name}", out Provider retVal) == true)
             {
                 return retVal;
             }
 
             try
             {
-                using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
                 {
                     var retVal = new UpstreamQueryResultSet<Provider, Bundle>(client, o => o.Relationships
                         .Where(r => r.RelationshipTypeKey == EntityRelationshipTypeKeys.EquivalentEntity && r.ClassificationKey == RelationshipClassKeys.PlayedRoleLink)
@@ -273,7 +273,7 @@ namespace SanteDB.Client.Upstream.Repositories
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -286,21 +286,21 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new ArgumentNullException(nameof(roleName));
             }
-            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.rol.{roleName}", out SecurityRole retVal) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.rol.{roleName}", out SecurityRole retVal) == true)
             {
                 return retVal;
             }
 
             try
             {
-                using(var client = this.CreateAmiServiceClient())
+                using (var client = this.CreateAmiServiceClient())
                 {
                     var retVal = client.GetRoles(o => o.Name == roleName).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Entity;
                     this.m_adhocCache?.Add($"sec.rol.{roleName}", retVal);
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -309,7 +309,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IdentifiedData GetSecurityEntity(IPrincipal principal)
         {
-            switch(principal.Identity)
+            switch (principal.Identity)
             {
                 case IDeviceIdentity idi:
                     return this.GetDevice(idi);
@@ -341,25 +341,25 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityUser GetUser(string userName)
         {
-            if(String.IsNullOrEmpty(userName))
+            if (String.IsNullOrEmpty(userName))
             {
                 throw new ArgumentNullException(nameof(userName));
             }
-            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.usr.{userName}", out SecurityUser user) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.usr.{userName}", out SecurityUser user) == true)
             {
                 return user;
             }
 
             try
             {
-                using(var client = this.CreateAmiServiceClient())
+                using (var client = this.CreateAmiServiceClient())
                 {
                     var retVal = client.GetUsers(o => o.UserName.ToLowerInvariant() == userName.ToLowerInvariant()).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault()?.Entity;
                     this.m_adhocCache?.Add($"sec.usr.{userName}", retVal);
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -368,7 +368,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityUser GetUser(IIdentity identity)
         {
-            if(identity == null)
+            if (identity == null)
             {
                 throw new ArgumentNullException(nameof(identity));
             }
@@ -379,18 +379,18 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public UserEntity GetUserEntity(IIdentity identity)
         {
-            if(identity == null)
+            if (identity == null)
             {
                 throw new ArgumentNullException(nameof(identity));
             }
-            else if(this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.ue.{identity.Name}", out UserEntity retVal) == true)
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.ue.{identity.Name}", out UserEntity retVal) == true)
             {
                 return retVal;
             }
 
             try
             {
-                using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
                 {
                     var retVal = new UpstreamQueryResultSet<UserEntity, Bundle>(client, o => o.SecurityUser.UserName.ToLowerInvariant() == identity.Name.ToLowerInvariant())
                         .FirstOrDefault();
@@ -398,7 +398,7 @@ namespace SanteDB.Client.Upstream.Repositories
                     return retVal;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
             }
@@ -407,19 +407,19 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public void LockApplication(Guid key)
         {
-            if(key == Guid.Empty)
+            if (key == Guid.Empty)
             {
                 throw new ArgumentOutOfRangeException(nameof(key));
             }
 
             try
             {
-                using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
-                    client.Lock<SecurityApplication>($"{typeof(SecurityApplication).GetSerializationName()}/{key}");
+                    client.Lock<SecurityApplicationInfo>($"{typeof(SecurityApplication).GetSerializationName()}/{key}");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR), e);
             }
@@ -437,7 +437,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
-                    client.Lock<SecurityDevice>($"{typeof(SecurityDevice).GetSerializationName()}/{key}");
+                    client.Lock<SecurityDeviceInfo>($"{typeof(SecurityDevice).GetSerializationName()}/{key}");
                 }
             }
             catch (Exception e)
@@ -458,12 +458,60 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
-                    client.Lock<SecurityUser>($"{typeof(SecurityUser).GetSerializationName()}/{key}");
+                    client.Lock<SecurityUserInfo>($"{typeof(SecurityUser).GetSerializationName()}/{key}");
                 }
             }
             catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR), e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public String ResolveName(Guid sid)
+        {
+            if (sid == Guid.Empty)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sid));
+            }
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.sid.{sid}", out String retVal))
+            {
+                return retVal;
+            }
+
+            try
+            {
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    ISecurityEntityInfo securityObject = client.Get<SecurityUserInfo>($"{typeof(SecurityUser).GetSerializationName()}/{sid}") ??
+                        (ISecurityEntityInfo)client.Get<SecurityDeviceInfo>($"{typeof(SecurityDevice).GetSerializationName()}/{sid}") ??
+                        client.Get<SecurityApplicationInfo>($"{typeof(SecurityApplication).GetSerializationName()}/{sid}");
+
+                    String retVal = null; 
+                    switch(securityObject)
+                    {
+                        case SecurityUserInfo sui:
+                            retVal = sui.Entity.UserName;
+                            break;
+                        case SecurityDeviceInfo sdi:
+                            retVal = sdi.Entity.Name;
+                            break;
+                        case SecurityApplicationInfo sai:
+                            retVal = sai.Entity.Name;
+                            break;
+                        case SecurityRoleInfo sri:
+                            retVal = sri.Entity.Name;
+                            break;
+                    }
+
+                    this.m_adhocCache?.Add($"sec.sid.{sid}", retVal);
+                    return retVal;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = "resolve" }), e);
+
             }
         }
 
@@ -479,7 +527,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
-                    client.Unlock<SecurityApplication>($"{typeof(SecurityApplication).GetSerializationName()}/{key}");
+                    client.Unlock<SecurityApplicationInfo>($"{typeof(SecurityApplication).GetSerializationName()}/{key}");
                 }
             }
             catch (Exception e)
@@ -500,7 +548,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
-                    client.Unlock<SecurityDevice>($"{typeof(SecurityDevice).GetSerializationName()}/{key}");
+                    client.Unlock<SecurityDeviceInfo>($"{typeof(SecurityDevice).GetSerializationName()}/{key}");
                 }
             }
             catch (Exception e)
@@ -521,7 +569,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
-                    client.Unlock<SecurityUser>($"{typeof(SecurityUser).GetSerializationName()}/{key}");
+                    client.Unlock<SecurityUserInfo>($"{typeof(SecurityUser).GetSerializationName()}/{key}");
                 }
             }
             catch (Exception e)

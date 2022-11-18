@@ -216,7 +216,7 @@ namespace SanteDB.Client.Upstream.Security
 
             if (authenticatingargs.Cancel)
             {
-                m_tracer.TraceVerbose("Authenticating Event signals cancel.");
+                _Tracer.TraceVerbose("Authenticating Event signals cancel.");
                 if (authenticatingargs.Success)
                 {
                     return authenticatingargs.Principal;

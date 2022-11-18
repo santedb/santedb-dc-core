@@ -96,47 +96,64 @@ namespace SanteDB.Client.Upstream.Repositories
 
             try
             {
+                IEnumerable<IPolicyInstance> retVal = null;
                 switch (securable)
                 {
                     case SecurityDevice sd:
                         using (var client = this.CreateAmiServiceClient())
                         {
-                            return client.GetDevices(d => d.Name == sd.Name).CollectionItem.OfType<SecurityDeviceInfo>().First().Policies.Select(o => new UpstreamPolicyInstance(sd, o.Policy, o.Grant));
+                            retVal = client.GetDevices(d => d.Name == sd.Name).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(sd, o.Policy, o.Grant)) ;
                         }
+                        break;
+
                     case SecurityApplication sa:
                         using (var client = this.CreateAmiServiceClient())
                         {
-                            return client.GetApplications(a => a.Name == sa.Name).CollectionItem.OfType<SecurityApplicationInfo>().First().Policies.Select(o => new UpstreamPolicyInstance(sa, o.Policy, o.Grant));
+                            retVal = client.GetApplications(a => a.Name == sa.Name).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(sa, o.Policy, o.Grant));
                         }
+                        break;
+
                     case SecurityRole sr:
                         using (var client = this.CreateAmiServiceClient())
                         {
-                            return client.GetRoles(a => a.Name == sr.Name).CollectionItem.OfType<SecurityRoleInfo>().First().Policies.Select(o => new UpstreamPolicyInstance(sr, o.Policy, o.Grant));
+                            retVal = client.GetRoles(a => a.Name == sr.Name).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(sr, o.Policy, o.Grant));
                         }
-                    
+                            break;
+
                     case IPrincipal ipr:
                         using (var client = this.CreateAmiServiceClient())
                         {
-                            return client.GetUsers(o => o.UserName == ipr.Identity.Name).CollectionItem.OfType<SecurityUserInfo>().First().Policies.Select(o => new UpstreamPolicyInstance(ipr, o.Policy, o.Grant));
+                            retVal = client.GetUsers(o => o.UserName == ipr.Identity.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(ipr, o.Policy, o.Grant));
                         }
+                        break;
+
                     case IIdentity iid:
                         using (var client = this.CreateAmiServiceClient())
                         {
-                            return client.GetUsers(o => o.UserName == iid.Name).CollectionItem.OfType<SecurityUserInfo>().First().Policies.Select(o => new UpstreamPolicyInstance(iid, o.Policy, o.Grant));
+                            retVal = client.GetUsers(o => o.UserName == iid.Name).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(iid, o.Policy, o.Grant));
                         }
+                        break;
+
                     case Act act:
                         using (var client = this.CreateHdsiServiceClient())
                         {
-                            return client.Get<Act>(act.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(act, o.Policy, PolicyGrantType.Grant));
+                            retVal = client.Get<Act>(act.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(act, o.Policy, PolicyGrantType.Grant));
                         }
+                        break;
+
                     case Entity ent:
                         using (var client = this.CreateHdsiServiceClient())
                         {
-                            return client.Get<Entity>(ent.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(ent, o.Policy, PolicyGrantType.Grant));
+                            retVal = client.Get<Entity>(ent.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(ent, o.Policy, PolicyGrantType.Grant));
                         }
+                        break;
+
                     default:
-                        return new List<UpstreamPolicyInstance>();
+                        retVal = new IPolicyInstance[0];
+                        break;
                 }
+
+                return retVal ?? new IPolicyInstance[0];
             }
             catch (Exception e)
             {

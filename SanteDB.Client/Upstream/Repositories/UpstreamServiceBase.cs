@@ -20,7 +20,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IUpstreamAvailabilityProvider m_upstreamAvailabilityProvider;
         private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
         private readonly IUpstreamManagementService m_upstreamManagementService;
-        protected readonly Tracer m_tracer;
+        protected readonly Tracer _Tracer;
 
         /// <summary>
         /// Get whether the upstream is conifgured 
@@ -45,7 +45,7 @@ namespace SanteDB.Client.Upstream.Repositories
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService = null)
         {
-            this.m_tracer = new Tracer(GetType().Name); //Not nameof so that the non-abstract type is used.
+            this._Tracer = new Tracer(GetType().Name); //Not nameof so that the non-abstract type is used.
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamAvailabilityProvider = upstreamAvailabilityProvider;
             this.m_upstreamIntegrationService = upstreamIntegrationService;

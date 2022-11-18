@@ -4,6 +4,8 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -14,12 +16,18 @@ using System.Text;
 
 namespace SanteDB.Client.Repositories
 {
+    /// <summary>
+    /// A <see cref="IRoleProviderService"/> which manages upstream roles
+    /// </summary>
     [PreferredService(typeof(IRoleProviderService))]
     public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService
     {
         readonly ILocalizationService _LocalizationService;
         readonly Tracer _Tracer;
 
+        /// <summary>
+        /// DI ctor
+        /// </summary>
         public UpstreamRoleProviderService(ILocalizationService localizationService, 
             IRestClientFactory restClientFactory, 
             IUpstreamManagementService upstreamManagementService, 
@@ -27,32 +35,32 @@ namespace SanteDB.Client.Repositories
             IUpstreamIntegrationService upstreamIntegrationService)
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            _Tracer = new Tracer(nameof(UpstreamRoleProviderService));
-            _LocalizationService = localizationService;
+            this._Tracer = new Tracer(nameof(UpstreamRoleProviderService));
+            this._LocalizationService = localizationService;
         }
 
+        /// <inheritdoc/>
         public string ServiceName => "Upstream Role Provider Service";
 
+        /// <inheritdoc/>
         public void AddUsersToRoles(string[] users, string[] roles, IPrincipal principal)
         {
             if (null == users)
             {
-                throw new ArgumentNullException(nameof(users), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(users));
             }
-
-            if (null == roles)
+            else  if (null == roles)
             {
-                throw new ArgumentNullException(nameof(roles), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(roles));
             }
-
-            if (null == principal)
+            else if (null == principal)
             {
-                throw new ArgumentNullException(nameof(principal), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(principal));
             }
 
             if (!IsUpstreamConfigured)
             {
-                _Tracer.TraceWarning("Upstream is not configured; skipping.");
+                this._Tracer.TraceWarning("Upstream is not configured; skipping.");
                 return;
             }
 
@@ -60,33 +68,29 @@ namespace SanteDB.Client.Repositories
             {
                 using (var client = CreateAmiServiceClient(principal))
                 {
-                    var amiroles = client.GetRoles(r => roles.Contains(r.Name)).CollectionItem.OfType<SecurityRoleInfo>().ToList();
-
-                    foreach (var role in amiroles)
+                    foreach (var role in roles)
                     {
-                        role.Users.AddRange(users);
-
-                        client.UpdateRole(role.Entity.Key.Value, role);
+                        client.AddUsersToRole(role, users);
                     }
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                _Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                this._Tracer.TraceError("Error updating roles: {0}", ex);
+                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
+        /// <inheritdoc/>
         public void CreateRole(string roleName, IPrincipal principal)
         {
             if (string.IsNullOrEmpty(roleName))
             {
-                throw new ArgumentNullException(nameof(roleName), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(roleName), this._LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
             }
-
-            if (null == principal)
+            else if (null == principal)
             {
-                throw new ArgumentNullException(nameof(principal), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(principal), this._LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
             }
 
             try
@@ -104,11 +108,12 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                _Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                this._Tracer.TraceError("Error updating roles: {0}", ex);
+                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
+        /// <inheritdoc/>
         public string[] FindUsersInRole(string role)
         {
             if (string.IsNullOrEmpty(role))
@@ -120,18 +125,18 @@ namespace SanteDB.Client.Repositories
             {
                 using (var amiclient = CreateAmiServiceClient())
                 {
-                    var amirole = amiclient.GetRoles(r => r.Name == role)?.CollectionItem?.OfType<SecurityRoleInfo>()?.FirstOrDefault();
-
-                    return amirole?.Users?.ToArray();
+                    var amirole = amiclient.GetUsers(u => u.Roles.Any(r => r.Name == role))?.CollectionItem?.OfType<SecurityUserInfo>();
+                    return amirole.Select(o=>o.Entity.UserName).ToArray();
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                _Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                this._Tracer.TraceError("Error getting roles: {0}", ex);
+                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
+        /// <inheritdoc/>
         public string[] GetAllRoles()
         {
             try
@@ -143,11 +148,12 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                _Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                this._Tracer.TraceError("Error updating roles: {0}", ex);
+                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
+        /// <inheritdoc/>
         public string[] GetAllRoles(string userName)
         {
             if (string.IsNullOrEmpty(userName))
@@ -171,6 +177,7 @@ namespace SanteDB.Client.Repositories
             }
         }
 
+        /// <inheritdoc/>
         public bool IsUserInRole(string userName, string roleName)
         {
             if (string.IsNullOrEmpty(userName))
@@ -187,9 +194,7 @@ namespace SanteDB.Client.Repositories
             {
                 using (var amiclient = CreateAmiServiceClient())
                 {
-                    var role = amiclient.GetRoles(r => r.Name == roleName)?.CollectionItem?.OfType<SecurityRoleInfo>()?.FirstOrDefault();
-
-                    return role?.Users?.Contains(userName) ?? false;
+                    return amiclient.IsUserInRole(userName, roleName);
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
@@ -199,34 +204,29 @@ namespace SanteDB.Client.Repositories
             }
         }
 
+        /// <inheritdoc/>
         public void RemoveUsersFromRoles(string[] users, string[] roles, IPrincipal principal)
         {
             if (null == users)
             {
-                throw new ArgumentNullException(nameof(users), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(users));
             }
-
-            if (null == roles)
+            else if (null == roles)
             {
-                throw new ArgumentNullException(nameof(roles), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(roles));
             }
-
-            if (null == principal)
+            else if (null == principal)
             {
-                throw new ArgumentNullException(nameof(principal), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(principal));
             }
 
             try
             {
                 using (var client = CreateAmiServiceClient(principal))
                 {
-                    var amiroles = client.GetRoles(r => roles.Contains(r.Name)).CollectionItem.OfType<SecurityRoleInfo>().ToList();
-
-                    foreach (var role in amiroles)
+                    foreach (var role in roles)
                     {
-                        role.Users.RemoveAll(u => users.Contains(u));
-
-                        client.UpdateRole(role.Entity.Key.Value, role);
+                        client.RemoveUsersFromRole(role, users);
                     }
                 }
             }

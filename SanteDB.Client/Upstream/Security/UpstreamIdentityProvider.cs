@@ -34,6 +34,7 @@ namespace SanteDB.Client.Upstream.Security
         readonly ILocalServiceProvider<IPolicyInformationService> _LocalPolicyInformationService;
         readonly IRoleProviderService _RemoteRoleProviderService;
         readonly ILocalServiceProvider<IRoleProviderService> _LocalRoleProviderService;
+        readonly ISecurityRepositoryService _SecurityRepositoryService;
 
         readonly bool _CanSyncPolicies;
         readonly bool _CanSyncRoles;
@@ -46,6 +47,7 @@ namespace SanteDB.Client.Upstream.Security
             IUpstreamServiceProvider<IPolicyInformationService> remotePolicyInformationService,
             IRoleProviderService remoteRoleProviderService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            ISecurityRepositoryService securityRepositoryService,
             ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService = null,
             ILocalServiceProvider<IRoleProviderService> localRoleProviderService = null,
             ILocalServiceProvider<IIdentityProviderService> localIdentityProvider = null) // on initial configuration in online only mode there are no local users
@@ -56,6 +58,7 @@ namespace SanteDB.Client.Upstream.Security
             _RemotePolicyInformationService = remotePolicyInformationService;
             _RemoteRoleProviderService = remoteRoleProviderService;
             _LocalRoleProviderService = localRoleProviderService;
+            _SecurityRepositoryService = securityRepositoryService;
             _LocalPolicyInformationService = localPolicyInformationService;
             _OAuthClient = oauthClient ?? throw new ArgumentNullException(nameof(oauthClient));
             _CanSyncPolicies = null != _LocalPolicyInformationService && _RemotePolicyInformationService != _LocalPolicyInformationService;
@@ -176,7 +179,7 @@ namespace SanteDB.Client.Upstream.Security
         {
             using (var amiclient = CreateAmiServiceClient())
             {
-                var remoteuser = amiclient.GetUsers(u => u.UserName == username).CollectionItem?.OfType<SecurityUser>().FirstOrDefault();
+                var remoteuser = _SecurityRepositoryService.GetUser(username);
 
                 if (null == remoteuser?.Key)
                 {
@@ -217,7 +220,7 @@ namespace SanteDB.Client.Upstream.Security
 
             if (authenticatingargs.Cancel)
             {
-                m_tracer.TraceVerbose("Authenticating Event signals cancel.");
+                _Tracer.TraceVerbose("Authenticating Event signals cancel.");
                 if (authenticatingargs.Success)
                 {
                     return authenticatingargs.Principal;
