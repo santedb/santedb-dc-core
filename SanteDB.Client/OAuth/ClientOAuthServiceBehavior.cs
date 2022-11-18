@@ -98,6 +98,16 @@ namespace SanteDB.Client.OAuth
                         Expires = DateTime.Now.AddSeconds(otr.ExpiresIn).ToUniversalTime(),
                         Expired = false
                     });
+
+                    if (null != otr.RefreshToken)
+                    {
+                        RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie ("_r", otr.RefreshToken, "/auth")
+                        {
+                            HttpOnly = true,
+                            Expires = DateTime.Now.Add(m_masterConfig.GetSecurityPolicy<TimeSpan>(Core.Configuration.SecurityPolicyIdentification.RefreshLength)).AddMinutes(-1),
+                            Expired = false
+                        });
+                    }
                 }
             }
             return result;

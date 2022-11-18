@@ -1,4 +1,6 @@
-﻿using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
+﻿using Polly;
+using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
+using SanteDB.Client.Exceptions;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
@@ -21,6 +23,7 @@ using SharpCompress.Common;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -47,6 +50,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly LocalRepositoryFactory _LocalRepositoryFactory;
 
         readonly SynchronizationMessagePump _MessagePump;
+
+        readonly ISyncPolicy _PushExceptionPolicy;
 
         readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
 
@@ -99,6 +104,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             _LocalRepositoryFactory = _ServiceManager.CreateInjected<LocalRepositoryFactory>();
 
+            //Exception policies
+            _PushExceptionPolicy = Policy.Handle<UpstreamIntegrationException>(ex => ex.InnerException != null)
+                .Retry(2);
 
         }
 
@@ -250,13 +258,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             switch (entry.Operation)
             {
                 case SynchronizationQueueEntryOperation.Insert:
-                    _UpstreamIntegrationService.Insert(entry?.Data);
+                    _PushExceptionPolicy.Execute(()=>_UpstreamIntegrationService.Insert(entry?.Data));
                     break;
                 case SynchronizationQueueEntryOperation.Update:
-                    _UpstreamIntegrationService.Update(entry?.Data, forceUpdate: entry.IsRetry);
+                    _PushExceptionPolicy.Execute(() => _UpstreamIntegrationService.Update(entry?.Data, forceUpdate: entry.IsRetry));
                     break;
                 case SynchronizationQueueEntryOperation.Obsolete:
-                    _UpstreamIntegrationService.Obsolete(entry?.Data, forceObsolete: entry.IsRetry);
+                    _PushExceptionPolicy.Execute(() => _UpstreamIntegrationService.Obsolete(entry?.Data, forceObsolete: entry.IsRetry));
                     break;
                 default:
                     break;
@@ -339,27 +347,32 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
-        private int ScaleTakeCount(int takecount, long? estimatedLatency = null)
+        private int ScaleTakeCount(int takecount, long lastoperation, long? estimatedLatency = null)
         {
-            var scalefactor = 1;
+            if (lastoperation > 0) //Don't scale with a negative value. This is for init values.
+            {
+                var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / takecount; //y=mx+b, m = (y - b) / x
 
-            /* if (this.m_configuration.BigBundles && (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
-                                count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000))
-                                count = 5000;
-                            else if (this.m_configuration.BigBundles && (count == 2500 && perfTimer.ElapsedMilliseconds < 30000 ||
-                                count < 2500 && result.TotalResults > 10000 && perfTimer.ElapsedMilliseconds < 30000))
-                                count = 2500;
-                            else if (count == 1000 && perfTimer.ElapsedMilliseconds < 20000 ||
-                                count < 1000 && result.TotalResults > 5000 && perfTimer.ElapsedMilliseconds < 20000)
-                                count = 1000;
-                            else if (count == 500 && perfTimer.ElapsedMilliseconds < 10000 ||
-                                count < 200 && result.TotalResults > 1000 && perfTimer.ElapsedMilliseconds < 10000)
-                                count = 500;
-                            else
-                                count = 100;
-            */
 
-            return takecount * scalefactor;
+
+                /* if (this.m_configuration.BigBundles && (count == 5000 && perfTimer.ElapsedMilliseconds < 40000 ||
+                                    count < 5000 && result.TotalResults > 20000 && perfTimer.ElapsedMilliseconds < 40000))
+                                    count = 5000;
+                                else if (this.m_configuration.BigBundles && (count == 2500 && perfTimer.ElapsedMilliseconds < 30000 ||
+                                    count < 2500 && result.TotalResults > 10000 && perfTimer.ElapsedMilliseconds < 30000))
+                                    count = 2500;
+                                else if (count == 1000 && perfTimer.ElapsedMilliseconds < 20000 ||
+                                    count < 1000 && result.TotalResults > 5000 && perfTimer.ElapsedMilliseconds < 20000)
+                                    count = 1000;
+                                else if (count == 500 && perfTimer.ElapsedMilliseconds < 10000 ||
+                                    count < 200 && result.TotalResults > 1000 && perfTimer.ElapsedMilliseconds < 10000)
+                                    count = 500;
+                                else
+                                    count = 100;
+                */
+            }
+
+            return takecount;
         }
 
 
@@ -533,12 +546,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
 
             var currenttotal = result.Count();
+            var lastoperationtime = -1L;
+            var sw = new Stopwatch();
 
             for (; offset < currenttotal; offset += takecount)
             {
-                takecount = ScaleTakeCount(takecount, estimatedlatency);
+                takecount = ScaleTakeCount(takecount, lastoperationtime, estimatedlatency);
 
+                sw.Restart();
                 var entities = result.Skip(offset).Take(takecount).ToList();
+                sw.Stop();
+                lastoperationtime = sw.ElapsedMilliseconds;
 
                 etag = entities.GetFirstEtag();
 
