@@ -78,7 +78,9 @@ namespace SanteDB.Client.OAuth
             });
 
             // When the base operation works as well 
-            return base.Signout();
+            var retVal = base.Signout(RestOperationContext.Current.IncomingRequest.QueryString);
+            RestOperationContext.Current.OutgoingResponse.StatusCode = 200;
+            return retVal;
         }
 
         /// <summary>
