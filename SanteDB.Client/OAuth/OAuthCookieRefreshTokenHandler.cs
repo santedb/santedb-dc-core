@@ -2,6 +2,7 @@
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using SanteDB.Rest.OAuth.Abstractions;
 using SanteDB.Rest.OAuth.Model;
 using System;
