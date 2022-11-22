@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SanteDB.Client.Services
 {
-    public interface IOAuthClient
+    public interface IOAuthClient : IDisposable
     {
         /// <summary>
         /// Authenticate a user given an authenticated device principal and optionally a specific application.
