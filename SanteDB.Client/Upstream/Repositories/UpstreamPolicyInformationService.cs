@@ -70,7 +70,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     foreach (var itm in policyOids)
                     {
-                        client.AddPolicy(securable as IIdentifiedData, itm, rule);
+                        client.AddPolicy(securable as IAnnotatedResource, itm, rule);
                     }
                 }
             }
