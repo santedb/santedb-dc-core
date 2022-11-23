@@ -2,6 +2,7 @@
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
+using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -136,22 +137,73 @@ namespace SanteDB.Client.Upstream.Management
 
         }
 
+        private IRepositoryService GetRepositoryService(Type modelType)
+        {
+            var repositorytype = typeof(IRepositoryService<>).MakeGenericType(modelType);
+
+            return m_serviceManager.CreateInjected(repositorytype) as IRepositoryService;
+        }
+
+        private IQueryResultSet<IdentifiedData> Transform(IQueryResultSet qrs)
+        {
+            if (null == qrs)
+            {
+                return default;
+            }
+
+            if (qrs is IQueryResultSet<IdentifiedData> iqrsid)
+            {
+                return iqrsid;
+            }
+
+            var qrstype = qrs.GetType();
+            
+            if (qrstype.IsGenericType && qrstype.GetGenericTypeDefinition() == typeof(IQueryResultSet<>))
+            {
+                var modeltype = qrstype.GetGenericArguments()[0];
+
+                if (!typeof(IdentifiedData).IsAssignableFrom(modeltype))
+                {
+                    throw new NotSupportedException($"Result set model type {modeltype.Name} is not derived from {nameof(IdentifiedData)}");
+                }
+
+                var transformertype = typeof(TransformQueryResultSet<,>).MakeGenericType(modeltype, typeof(IdentifiedData));
+
+                var parm = Expression.Parameter(modeltype, "o");
+                LambdaExpression converter = Expression.Lambda(
+                    Expression.Convert(parm, typeof(IdentifiedData)),
+                    parm
+                    );
+
+                var tqrs = (IQueryResultSet<IdentifiedData>)Activator.CreateInstance(transformertype, qrs, converter.Compile());
+
+                return tqrs;
+            }
+            else
+            {
+                throw new NotSupportedException($"Cannot transform {qrstype.Name} into {typeof(IQueryResultSet<IdentifiedData>).ToString()}");
+            }
+            
+        }
+
         /// <inheritdoc/>
         public IQueryResultSet<IdentifiedData> Find(Type modelType, NameValueCollection filter, UpstreamIntegrationOptions options = null)
         {
-            throw new NotImplementedException();
+            return Transform(GetRepositoryService(modelType)?.Find(QueryExpressionParser.BuildLinqExpression(modelType, filter)));
         }
 
         /// <inheritdoc/>
         public IQueryResultSet<IdentifiedData> Find<TModel>(NameValueCollection filter, int offset, int? count, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData
         {
-            throw new NotImplementedException();
+            return new TransformQueryResultSet<TModel, IdentifiedData>(m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Find(QueryExpressionParser.BuildLinqExpression<TModel>(filter)), tm => tm); ;
         }
 
         /// <inheritdoc/>
         public IQueryResultSet<IdentifiedData> Find<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData
         {
-            throw new NotImplementedException();
+            var qrs =  m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Find(predicate);
+
+            return new TransformQueryResultSet<TModel, IdentifiedData>(qrs, tm => tm);
         }
 
         /// <inheritdoc/>
@@ -163,26 +215,47 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData
         {
-            throw new NotImplementedException();
+            if (null != versionKey)
+            {
+                return m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Get(key, versionKey.Value);
+            }
+            else
+            {
+                return m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Get(key);
+            }
         }
 
 
         /// <inheritdoc/>
         public void Insert(IdentifiedData data)
         {
-            throw new NotImplementedException();
+            if (null == data)
+            {
+                return;
+            }
+
+            GetRepositoryService(data.GetType())?.Insert(data);
         }
 
         /// <inheritdoc/>
         public void Obsolete(IdentifiedData data, bool forceObsolete = false)
         {
-            throw new NotImplementedException();
+            if (null == data?.Key)
+            {
+                return;
+            }
+
+            GetRepositoryService(data.GetType())?.Delete(data.Key.Value);
+
+            //TODO: Handle forceObsolete by getting dependent objects and resolving.
         }
 
         /// <inheritdoc/>
         public void Update(IdentifiedData data, bool forceUpdate = false)
         {
-            throw new NotImplementedException();
+            GetRepositoryService(data.GetType())?.Save(data);
+
+            //TODO: Handle forceUpdate by getting dependent objects and resolving.
         }
 
         /// <summary>

@@ -49,7 +49,7 @@ namespace SanteDB.Client.OAuth
             else if (tokenType != "urn:ietf:params:oauth:token-type:jwt" &&
                 tokenType != "bearer")
             {
-                throw new ArgumentOutOfRangeException(nameof(tokenType), "expected urn:ietf:params:oauth:token-type:jwt");
+                throw new ArgumentOutOfRangeException(nameof(tokenType), "expected urn:ietf:params:oauth:token-type:jwt or bearer");
             }
 
             _TokenType = tokenType;

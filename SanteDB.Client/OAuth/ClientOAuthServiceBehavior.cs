@@ -43,12 +43,13 @@ namespace SanteDB.Client.OAuth
     {
 
         private readonly ISymmetricCryptographicProvider m_symmetricEncryptionProvider;
-        private readonly ISessionProviderService m_sessionProvider;
 
-        public ClientOAuthServiceBehavior() :base()
+        /// <summary>
+        /// 
+        /// </summary>
+        public ClientOAuthServiceBehavior() : base()
         {
             this.m_symmetricEncryptionProvider = ApplicationServiceContext.Current.GetService<ISymmetricCryptographicProvider>();
-            this.m_sessionProvider = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
         }
 
         /// <summary>
@@ -59,60 +60,75 @@ namespace SanteDB.Client.OAuth
             this.m_policyEnforcementService.Demand(policyId);
         }
 
-        /// <summary>
-        /// Signout 
-        /// </summary>
-        public override object Signout(NameValueCollection formFields)
+        /// <inheritdoc />
+        protected override bool OnBeforeSignOut(OAuthSignoutRequestContext context)
         {
-
             // Abandon the UI session
-            if(RestOperationContext.Current.Data.TryGetValue(TokenAuthorizationAccessBehavior.RestPropertyNameSession, out object session))
+            if (context.OperationContext.Data.TryGetValue(TokenAuthorizationAccessBehavior.RestPropertyNameSession, out object session))
             {
-                this.m_sessionProvider.Abandon(session as ISession);
+                base.m_SessionProvider.Abandon(session as ISession);
             }
-            RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", "")
+
+            DiscardCookie(context, "_s");
+            DiscardCookie(context, "_r");
+
+            return true;
+        }
+
+        /// <inheritdoc />
+        protected override void BeforeSendTokenResponse(OAuthTokenRequestContext context, OAuthTokenResponse response)
+        {
+            var clientClaims = ClaimsUtility.ExtractClientClaims(context.IncomingRequest.Headers);
+            if (!clientClaims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && c.Value == "true"))
+            {
+                context.OutgoingResponse.SetCookie(new Cookie("_s", response.AccessToken, "/")
+                {
+                    HttpOnly = true,
+                    Expires = DateTime.Now.AddSeconds(response.ExpiresIn).ToUniversalTime(),
+                    Expired = false
+                });
+
+                if (null != response.RefreshToken)
+                {
+                    context.OutgoingResponse.SetCookie(new Cookie("_r", response.RefreshToken, GetAuthPathForCookie(context))
+                    {
+                        HttpOnly = true,
+                        Expires = DateTime.Now.Add(m_masterConfig.GetSecurityPolicy<TimeSpan>(Core.Configuration.SecurityPolicyIdentification.RefreshLength)).AddMinutes(-1),
+                        Expired = false
+                    });
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Helper method to retrieve the path of the auth server for use in a scoped cookie.
+        /// </summary>
+        /// <param name="context">The context to access the operation context from.</param>
+        /// <returns>A string that can be used to scope a cookie to the auth server.</returns>
+        private static string GetAuthPathForCookie(OAuthRequestContextBase context)
+        {
+            if (null == context)
+            {
+                return null;
+            }
+
+            return "/" + context.OperationContext.ServiceEndpoint.Description.ListenUri.GetComponents(UriComponents.Path, UriFormat.SafeUnescaped);
+        }
+
+        /// <summary>
+        /// Helper method to set a cookie in the response that discards the cookie.
+        /// </summary>
+        /// <param name="context">The context to access the outgoing response from.</param>
+        /// <param name="cookieName">The name of the cookie to discard.</param>
+        private static void DiscardCookie(OAuthRequestContextBase context, string cookieName)
+        {
+            context.OutgoingResponse.SetCookie(new Cookie(cookieName, "")
             {
                 Discard = true,
                 Expired = true,
                 Expires = DateTime.Now
             });
-
-            // When the base operation works as well 
-            var retVal = base.Signout(RestOperationContext.Current.IncomingRequest.QueryString);
-            RestOperationContext.Current.OutgoingResponse.StatusCode = 200;
-            return retVal;
-        }
-
-        /// <summary>
-        /// Token result
-        /// </summary>
-        public override object Token(NameValueCollection formFields)
-        {
-            var result = base.Token(formFields);
-            if(result is OAuthTokenResponse otr)
-            {
-                var clientClaims = ClaimsUtility.ExtractClientClaims(RestOperationContext.Current.IncomingRequest.Headers);
-                if (!clientClaims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && c.Value == "true"))
-                {
-                    RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie("_s", otr.AccessToken, "/")
-                    {
-                        HttpOnly = true,
-                        Expires = DateTime.Now.AddSeconds(otr.ExpiresIn).ToUniversalTime(),
-                        Expired = false
-                    });
-
-                    if (null != otr.RefreshToken)
-                    {
-                        RestOperationContext.Current.OutgoingResponse.SetCookie(new Cookie ("_r", otr.RefreshToken, "/auth")
-                        {
-                            HttpOnly = true,
-                            Expires = DateTime.Now.Add(m_masterConfig.GetSecurityPolicy<TimeSpan>(Core.Configuration.SecurityPolicyIdentification.RefreshLength)).AddMinutes(-1),
-                            Expired = false
-                        });
-                    }
-                }
-            }
-            return result;
         }
     }
 }
