@@ -117,6 +117,10 @@ namespace SanteDB.Client.Configuration
             {
                 this.m_configuration.ProtectedSectionKey = new X509ConfigurationElement(encryptionCertificiate);
             }
+            else
+            {
+                this.m_configuration.ProtectedSectionKey = null;
+            }
 
             this.m_configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == typeof(InitialConfigurationManager));
             

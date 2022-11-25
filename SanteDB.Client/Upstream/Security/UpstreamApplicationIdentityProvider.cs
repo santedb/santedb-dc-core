@@ -138,6 +138,9 @@ namespace SanteDB.Client.Upstream.Security
                 _LocalApplicationIdentityProvider.LocalProvider.ChangeSecret(appidentity.Name, clientSecret, AuthenticationContext.SystemPrincipal);
             }
 
+            var policiestoadd = new List<IPolicy>();
+            var policiestogrant = new List<(PolicyGrantType rule, string policyOid)>();
+
             using (AuthenticationContext.EnterContext(remoteIdentity))
             {
                 if (_CanSyncPolicies)
@@ -149,7 +152,7 @@ namespace SanteDB.Client.Upstream.Security
                         if (null == localpolicy)
                         {
                             var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
-                            _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy, AuthenticationContext.SystemPrincipal);
+                            policiestoadd.Add(remotepolicy);
                         }
                     }
 
@@ -159,10 +162,26 @@ namespace SanteDB.Client.Upstream.Security
                     {
                         if (null == _LocalPolicyInformationService.LocalProvider.GetPolicy(remotepolicy.Policy.Oid))
                         {
-                            _LocalPolicyInformationService.LocalProvider.CreatePolicy(remotepolicy.Policy, AuthenticationContext.SystemPrincipal);
+                            policiestoadd.Add(remotepolicy.Policy);
                         }
 
-                        _LocalPolicyInformationService.LocalProvider.AddPolicies(localapp, remotepolicy.Rule, AuthenticationContext.SystemPrincipal, remotepolicy.Policy.Oid);
+                        policiestogrant.Add((remotepolicy.Rule, remotepolicy.Policy.Oid));
+                    }
+                }
+            }
+
+            if (policiestoadd.Count > 0 || policiestoadd.Count > 0)
+            {
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    foreach (var policytoadd in policiestoadd)
+                    {
+                        _LocalPolicyInformationService.LocalProvider.CreatePolicy(policytoadd, AuthenticationContext.SystemPrincipal);
+                    }
+
+                    foreach (var policytogrant in policiestogrant)
+                    {
+                        _LocalPolicyInformationService.LocalProvider.AddPolicies(localapp, policytogrant.rule, AuthenticationContext.SystemPrincipal, policytogrant.policyOid);
                     }
                 }
             }

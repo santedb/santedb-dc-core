@@ -16,6 +16,7 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using SanteDB.Messaging.AMI.Client;
@@ -656,13 +657,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 ApplicationServiceContext.Current.Started += (s, e) =>
                 {
+
                     try
                     {
-                        this.Pull(SubscriptionTriggerType.OnStart);
-
                         var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
                         _JobManager.AddJob(job, JobStartType.DelayStart);
                         _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
+
+                        this.Pull(SubscriptionTriggerType.OnStart);
 
                     }
                     catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))

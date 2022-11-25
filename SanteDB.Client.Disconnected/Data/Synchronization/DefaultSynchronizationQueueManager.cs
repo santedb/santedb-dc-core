@@ -28,6 +28,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private List<ISynchronizationQueue> _Queues;
 
+        /// <summary>
+        /// Instantiates an instance of the class.
+        /// </summary>
         public DefaultSynchronizationQueueManager()
         {
             _Queues = new List<ISynchronizationQueue>

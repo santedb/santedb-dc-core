@@ -129,7 +129,7 @@ namespace SanteDB.Client.Upstream.Security
             }
             else
             {
-                _LocalIdentityProvider.LocalProvider.ChangePassword(useridentity.Name, password, AuthenticationContext.SystemPrincipal);
+                _LocalIdentityProvider.LocalProvider.ChangePassword(useridentity.Name, password, remoteIdentity, force: true);
             }
 
             if (_CanSyncPolicies)
@@ -274,7 +274,7 @@ namespace SanteDB.Client.Upstream.Security
 
 
 
-        public void ChangePassword(string userName, string newPassword, IPrincipal principal)
+        public void ChangePassword(string userName, string newPassword, IPrincipal principal, bool force)
         {
             _LocalIdentityProvider?.LocalProvider.ChangePassword(userName, newPassword, principal);
             if (ShouldDoRemoteAuthentication(userName))

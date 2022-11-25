@@ -233,31 +233,30 @@ namespace SanteDB.Client.Upstream.Management
                 using (var amiClient = new AmiServiceClient(restClient))
                 {
                     // Register the device
-                    var existingDevice = amiClient.GetDevices(o => o.Name.ToLowerInvariant() == deviceCredential.CredentialName.ToLowerInvariant()).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
-                    if (existingDevice != null && !replaceExistingRegistration)
+                    var upstreamDevice = amiClient.GetDevices(o => o.Name.ToLowerInvariant() == deviceCredential.CredentialName.ToLowerInvariant()).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
+                    if (upstreamDevice != null && !replaceExistingRegistration)
                     {
-                        throw new DuplicateNameException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_DEVICE_DUPLICATE, new { device = existingDevice.Name }));
+                        throw new DuplicateNameException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_DEVICE_DUPLICATE, new { device = upstreamDevice.Name }));
                     }
-                    else if (existingDevice != null)
+                    else if (upstreamDevice != null)
                     {
-                        existingDevice.DeviceSecret = deviceCredential.CredentialSecret;
-                        existingDevice = amiClient.UpdateDevice(existingDevice.Key.Value, new SecurityDeviceInfo(existingDevice))?.Entity;
-                        audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, existingDevice);
+                        upstreamDevice.DeviceSecret = deviceCredential.CredentialSecret;
+                        upstreamDevice = amiClient.UpdateDevice(upstreamDevice.Key.Value, new SecurityDeviceInfo(upstreamDevice))?.Entity;
+                        audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
                     else
                     {
-                        existingDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
+                        upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
                         {
                             DeviceSecret = deviceCredential.CredentialSecret,
                             Name = deviceCredential.CredentialName
                         }))?.Entity;
-                        audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, existingDevice);
-
+                        audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
 
-                    this.m_securityConfiguration.SetPolicy(SecurityPolicyIdentification.AssignedDeviceSecurityId, existingDevice.Key.Value);
+                    this.m_securityConfiguration.SetPolicy(SecurityPolicyIdentification.AssignedDeviceSecurityId, upstreamDevice.Key.Value);
 
-                    var entity = this.CreateDeviceEntity(existingDevice);
+                    var entity = this.CreateDeviceEntity(upstreamDevice);
                     this.m_securityConfiguration.SetPolicy(SecurityPolicyIdentification.AssignedDeviceEntityId, entity.Key.Value);
 
 
@@ -267,7 +266,7 @@ namespace SanteDB.Client.Upstream.Management
                         authEpConfiguration.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
                     {
 
-                        var deviceSubjectName = $"CN={existingDevice.Key}, DC={targetRealm.LocalDeviceName}, DC={targetRealm.Realm.Host}";
+                        var deviceSubjectName = $"CN={upstreamDevice.Key}, DC={targetRealm.LocalDeviceName}, DC={targetRealm.Realm.Host}";
                         if (!String.IsNullOrEmpty(dnSettings))
                         {
                             deviceSubjectName += $", {dnSettings}";

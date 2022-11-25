@@ -217,15 +217,15 @@ namespace SanteDB.Client.OAuth
 
         protected virtual OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request)
         {
-            if (null == request.ClientId)
-            {
-                request.ClientId = ClientId;
-            }
-
             if (null == TokenValidationParameters)
             {
                 Tracer.TraceVerbose("Token Validation Parameters have not been set. Calling SetTokenValidationParameters()");
                 SetTokenValidationParameters();
+            }
+
+            if (null == request.ClientId)
+            {
+                request.ClientId = ClientId;
             }
 
             var restclient = GetRestClient();

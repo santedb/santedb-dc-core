@@ -56,6 +56,8 @@ namespace SanteDB.Client.OAuth
             if (null != _RealmSettings) // This may be called before the UpstreamManagementService is fully configured - i.e. is configuring
             {
                 base.SetTokenValidationParameters();
+                TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName, _RealmSettings.LocalDeviceName };
+                ClientId = _RealmSettings.LocalClientName;
             }
             else
             {
