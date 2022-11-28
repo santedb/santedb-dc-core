@@ -116,6 +116,7 @@ namespace SanteDB.Client.OAuth
             TokenValidationParameters.ValidAudiences = new[] { ClientId };
             TokenValidationParameters.ValidateAudience = true;
             TokenValidationParameters.ValidateIssuer = true;
+            TokenValidationParameters.ValidateIssuerSigningKey = true;
             TokenValidationParameters.ValidateLifetime = true;
             TokenValidationParameters.TryAllIssuerSigningKeys = true;
 
