@@ -181,7 +181,8 @@ namespace SanteDB.Client.OAuth
 
             var jwks = new JsonWebKeySet(jwksjson);
 
-            jwks.SkipUnresolvedJsonWebKeys = true;
+            // This needs to be false for HS256 keys
+            jwks.SkipUnresolvedJsonWebKeys = false;
 
             return jwks;
         }

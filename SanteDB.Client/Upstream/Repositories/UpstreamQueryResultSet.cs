@@ -39,6 +39,10 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly NameValueCollection m_queryFilter;
         private Func<TWireModel, TModel> m_fromWireFormatMapperFunc;
 
+
+        /// <inheritdoc/>
+        public Type ElementType => typeof(TModel);
+
         /// <summary>
         /// Create a new upstream query result set with <paramref name="restClient"/> and <paramref name="query"/>
         /// </summary>

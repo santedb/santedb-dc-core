@@ -81,22 +81,14 @@ namespace SanteDB.Client.OAuth
             var clientClaims = ClaimsUtility.ExtractClientClaims(context.IncomingRequest.Headers);
             if (!clientClaims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && c.Value == "true"))
             {
-                context.OutgoingResponse.SetCookie(new Cookie("_s", response.AccessToken, "/")
-                {
-                    HttpOnly = true,
-                    Expires = DateTime.Now.AddSeconds(response.ExpiresIn).ToUniversalTime(),
-                    Expired = false
-                });
-
                 if (null != response.RefreshToken)
                 {
-                    context.OutgoingResponse.SetCookie(new Cookie("_r", response.RefreshToken, GetAuthPathForCookie(context))
-                    {
-                        HttpOnly = true,
-                        Expires = DateTime.Now.Add(m_masterConfig.GetSecurityPolicy<TimeSpan>(Core.Configuration.SecurityPolicyIdentification.RefreshLength)).AddMinutes(-1),
-                        Expired = false
-                    });
+                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"_r={response.RefreshToken}; Path={GetAuthPathForCookie(context)}; HttpOnly");
                 }
+
+                context.OutgoingResponse.AppendHeader("Set-Cookie", $"_s={response.AccessToken}; Path=/; HttpOnly");
+
+
             }
         }
 
