@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.Repositories;
 using SanteDB.Client.Upstream.Management;
+using SanteDB.Client.Upstream.Matching;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Data;
@@ -26,6 +27,7 @@ namespace SanteDB.Client.Configuration
                         typeof(UpstreamApplicationIdentityProvider),
                         typeof(UpstreamPolicyInformationService),
                         typeof(UpstreamRoleProviderService),
+                        typeof(UpstreamMatchConfigurationService),
                         typeof(UpstreamSecurityRepository),
                         typeof(UpstreamSecurityChallengeProvider),
                         typeof(RepositoryEntitySource)
