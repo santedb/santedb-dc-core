@@ -49,7 +49,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <param name="restClient">The rest client to use to fetch results</param>
         /// <param name="query">The query to use to filter</param>
         /// <param name="fromWireFormatMapper">The mapper func to map wire level results to the <typeparamref name="TModel"/> </param>
-        public UpstreamQueryResultSet(IRestClient restClient, Expression<Func<TModel, bool>> query, Func<TWireModel, TModel> fromWireFormatMapper) : this(restClient, QueryExpressionBuilder.BuildQuery(query), fromWireFormatMapper) { }
+        public UpstreamQueryResultSet(IRestClient restClient, Expression<Func<TModel, bool>> query, Func<TWireModel, TModel> fromWireFormatMapper) : this(restClient, QueryExpressionBuilder.BuildQuery(query, stripControl: true), fromWireFormatMapper) { }
 
         /// <summary>
         /// Create a new upstream query result
@@ -57,7 +57,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private UpstreamQueryResultSet(IRestClient restClient, NameValueCollection query, Func<TWireModel, TModel> fromWireFormatMapper)
         {
             this.m_restClient = restClient;
-            this.m_queryFilter = query;
+            this.m_queryFilter = new NameValueCollection( query);
             this.m_fromWireFormatMapperFunc = fromWireFormatMapper;
         }
 
@@ -76,6 +76,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public int Count()
         {
             var parameters = new NameValueCollection(this.m_queryFilter);
+            parameters[QueryControlParameterNames.HttpOffsetParameterName] = "0";
             parameters[QueryControlParameterNames.HttpCountParameterName] = "0";
             parameters[QueryControlParameterNames.HttpIncludeTotalParameterName] = "true";
             try

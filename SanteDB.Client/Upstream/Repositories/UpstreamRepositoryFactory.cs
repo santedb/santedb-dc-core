@@ -1,6 +1,7 @@
 ﻿using SanteDB.Client.Upstream.Management;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Collection;
@@ -11,6 +12,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Services;
+using SanteDB.Persistence.MDM.Model;
 using SanteDB.Rest.AMI;
 using SanteDB.Rest.Common;
 using SanteDB.Rest.HDSI;
@@ -67,6 +69,9 @@ namespace SanteDB.Client.Upstream.Repositories
         public UpstreamRepositoryFactory(IServiceManager serviceManager)
         {
             this.m_serviceManager = serviceManager;
+            foreach (var t in typeof(Entity).Assembly.ExportedTypes.Where(o => typeof(Entity).IsAssignableFrom(o)))
+                ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
+            ModelSerializationBinder.RegisterModelType(typeof(EntityRelationshipMaster));
         }
 
         /// <inheritdoc/>
