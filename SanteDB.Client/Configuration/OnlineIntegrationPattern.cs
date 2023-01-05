@@ -22,6 +22,7 @@ namespace SanteDB.Client.Configuration
         public IEnumerable<Type> GetServices() =>
                     new Type[] {
                         typeof(UpstreamJobManager),
+                        typeof(UpstreamForeignDataManagement),
                         typeof(UpstreamRepositoryFactory),
                         typeof(UpstreamIdentityProvider),
                         typeof(UpstreamApplicationIdentityProvider),

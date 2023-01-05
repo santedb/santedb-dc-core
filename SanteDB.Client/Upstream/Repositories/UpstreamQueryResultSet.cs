@@ -26,19 +26,25 @@ namespace SanteDB.Client.Upstream.Repositories
         public UpstreamQueryResultSet(IRestClient restClient, Expression<Func<TModel, bool>> query) : base(restClient, query, o => o)
         {
         }
+
+        /// <inheritdoc/>
+        public UpstreamQueryResultSet(IRestClient restClient, String resourceName, Expression<Func<TModel, bool>> query) : base(restClient, resourceName, query, o => o)
+        {
+        }
     }
 
     /// <summary>
     /// Represents a <see cref="IQueryResultSet{TData}"/> which interacts with a REST service 
     /// </summary>
     internal class UpstreamQueryResultSet<TModel, TWireModel, TCollectionType> : IQueryResultSet<TModel>, IOrderableQueryResultSet<TModel>, IDisposable
-        where TModel : IIdentifiedResource, new()
+        where TModel : IIdentifiedResource
+        where TWireModel: IIdentifiedResource, new()
         where TCollectionType : IResourceCollection
     {
         private readonly IRestClient m_restClient;
         private readonly NameValueCollection m_queryFilter;
         private Func<TWireModel, TModel> m_fromWireFormatMapperFunc;
-
+        private readonly string m_resourceName;
 
         /// <inheritdoc/>
         public Type ElementType => typeof(TModel);
@@ -49,17 +55,32 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <param name="restClient">The rest client to use to fetch results</param>
         /// <param name="query">The query to use to filter</param>
         /// <param name="fromWireFormatMapper">The mapper func to map wire level results to the <typeparamref name="TModel"/> </param>
-        public UpstreamQueryResultSet(IRestClient restClient, Expression<Func<TModel, bool>> query, Func<TWireModel, TModel> fromWireFormatMapper) : this(restClient, QueryExpressionBuilder.BuildQuery(query, stripControl: true), fromWireFormatMapper) { }
+        public UpstreamQueryResultSet(IRestClient restClient, Expression<Func<TModel, bool>> query, Func<TWireModel, TModel> fromWireFormatMapper) : this(restClient, typeof(TModel).GetSerializationName(), QueryExpressionBuilder.BuildQuery(query, stripControl: true), fromWireFormatMapper)
+        {
+        }
+
+        /// <summary>
+        /// Create a new upstream query result set with <paramref name="restClient"/> and <paramref name="query"/>
+        /// </summary>
+        /// <param name="restClient">The rest client to use to fetch results</param>
+        /// <param name="query">The query to use to filter</param>
+        /// <param name="fromWireFormatMapper">The mapper func to map wire level results to the <typeparamref name="TModel"/> </param>
+        public UpstreamQueryResultSet(IRestClient restClient, String resourceName, Expression<Func<TModel, bool>> query, Func<TWireModel, TModel> fromWireFormatMapper) : this(restClient, resourceName, QueryExpressionBuilder.BuildQuery(query, stripControl: true), fromWireFormatMapper)
+        {
+        }
 
         /// <summary>
         /// Create a new upstream query result
         /// </summary>
-        private UpstreamQueryResultSet(IRestClient restClient, NameValueCollection query, Func<TWireModel, TModel> fromWireFormatMapper)
+        private UpstreamQueryResultSet(IRestClient restClient, string resourceName, NameValueCollection query, Func<TWireModel, TModel> fromWireFormatMapper)
         {
             this.m_restClient = restClient;
             this.m_queryFilter = new NameValueCollection( query);
             this.m_fromWireFormatMapperFunc = fromWireFormatMapper;
+            this.m_resourceName = resourceName;
+
         }
+
 
         /// <inheritdoc/>
         public bool Any() => this.Count() > 0;
@@ -69,7 +90,7 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             var queryFilter = new NameValueCollection(this.m_queryFilter);
             queryFilter[QueryControlParameterNames.HttpQueryStateParameterName] = stateId.ToString();
-            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, queryFilter, this.m_fromWireFormatMapperFunc);
+            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, this.m_resourceName, queryFilter, this.m_fromWireFormatMapperFunc);
         }
 
         /// <inheritdoc/>
@@ -81,7 +102,7 @@ namespace SanteDB.Client.Upstream.Repositories
             parameters[QueryControlParameterNames.HttpIncludeTotalParameterName] = "true";
             try
             {
-                return this.m_restClient.Get<TCollectionType>(typeof(TModel).GetSerializationName(), parameters).TotalResults.GetValueOrDefault();
+                return this.m_restClient.Get<TCollectionType>(this.m_resourceName, parameters).TotalResults.GetValueOrDefault();
             }
             catch (Exception e)
             {
@@ -119,7 +140,7 @@ namespace SanteDB.Client.Upstream.Repositories
             parameters[QueryControlParameterNames.HttpIncludeTotalParameterName] = "false";
             try
             {
-                return this.m_fromWireFormatMapperFunc(this.m_restClient.Get<TCollectionType>(typeof(TModel).GetSerializationName(), parameters).Item.OfType<TWireModel>().FirstOrDefault());
+                return this.m_fromWireFormatMapperFunc(this.m_restClient.Get<TCollectionType>(this.m_resourceName, parameters).Item.OfType<TWireModel>().FirstOrDefault());
             }
             catch (Exception e)
             {
@@ -145,7 +166,7 @@ namespace SanteDB.Client.Upstream.Repositories
             var fetchUntilOffset = hasExplicitLimit ? offset + explicitLimit : Int32.MaxValue;
             while (fetchNextPage)
             {
-                var bundle = this.m_restClient.Get<TCollectionType>(typeof(TModel).GetSerializationName(), parameters);
+                var bundle = this.m_restClient.Get<TCollectionType>(this.m_resourceName, parameters);
                 foreach (var r in bundle.Item.OfType<TWireModel>())
                 {
                     fetchNextPage = true;
@@ -196,7 +217,7 @@ namespace SanteDB.Client.Upstream.Repositories
             var newQuery = new NameValueCollection(this.m_queryFilter);
             var propertySelector = QueryExpressionBuilder.BuildSortExpression<TModel>(new ModelSort<TModel>(sortExpression, Core.Model.Map.SortOrderType.OrderBy));
             newQuery[QueryControlParameterNames.HttpOrderByParameterName] = propertySelector;
-            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, newQuery, this.m_fromWireFormatMapperFunc);
+            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, this.m_resourceName, newQuery, this.m_fromWireFormatMapperFunc);
         }
 
         /// <inheritdoc/>
@@ -218,7 +239,7 @@ namespace SanteDB.Client.Upstream.Repositories
             var newQuery = new NameValueCollection(this.m_queryFilter);
             var propertySelector = QueryExpressionBuilder.BuildSortExpression<TModel>(new ModelSort<TModel>(sortExpression, Core.Model.Map.SortOrderType.OrderByDescending));
             newQuery[QueryControlParameterNames.HttpOrderByParameterName] = propertySelector;
-            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, newQuery, this.m_fromWireFormatMapperFunc);
+            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, this.m_resourceName, newQuery, this.m_fromWireFormatMapperFunc);
         }
 
         /// <inheritdoc/>
@@ -282,7 +303,7 @@ namespace SanteDB.Client.Upstream.Repositories
             parameters[QueryControlParameterNames.HttpIncludeTotalParameterName] = "false";
             try
             {
-                var results = this.m_restClient.Get<TCollectionType>(typeof(TModel).GetSerializationName(), parameters);
+                var results = this.m_restClient.Get<TCollectionType>(this.m_resourceName, parameters);
                 return this.m_fromWireFormatMapperFunc(results.Item.OfType<TWireModel>().SingleOrDefault());
             }
             catch (Exception e)
@@ -297,7 +318,7 @@ namespace SanteDB.Client.Upstream.Repositories
             var parameters = new NameValueCollection(this.m_queryFilter);
             _ = Int32.TryParse(parameters[QueryControlParameterNames.HttpOffsetParameterName], out var offset);
             parameters[QueryControlParameterNames.HttpOffsetParameterName] = (offset + count).ToString();
-            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, parameters, this.m_fromWireFormatMapperFunc);
+            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, this.m_resourceName, parameters, this.m_fromWireFormatMapperFunc);
         }
 
         /// <inheritdoc/>
@@ -305,7 +326,7 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             var parameters = new NameValueCollection(this.m_queryFilter);
             parameters[QueryControlParameterNames.HttpCountParameterName] = count.ToString();
-            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, parameters, this.m_fromWireFormatMapperFunc);
+            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, this.m_resourceName, parameters, this.m_fromWireFormatMapperFunc);
         }
 
         /// <inheritdoc/>
@@ -331,7 +352,7 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             var queryCollection = QueryExpressionBuilder.BuildQuery(query);
             queryCollection.Add(this.m_queryFilter);
-            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, queryCollection, this.m_fromWireFormatMapperFunc);
+            return new UpstreamQueryResultSet<TModel, TWireModel, TCollectionType>(this.m_restClient, this.m_resourceName, queryCollection, this.m_fromWireFormatMapperFunc);
         }
 
         /// <inheritdoc/>

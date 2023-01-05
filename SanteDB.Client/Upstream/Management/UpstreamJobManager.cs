@@ -20,15 +20,23 @@ namespace SanteDB.Client.Upstream.Management
     /// <summary>
     /// Represents a <see cref="IJobManagerService"/> which operates only on the upstream jobs service
     /// </summary>
-    public class UpstreamJobManager : UpstreamServiceBase, IJobManagerService, IJobStateManagerService
+    public class UpstreamJobManager : UpstreamServiceBase, IJobManagerService, IJobStateManagerService, IJobScheduleManager
     {
+        private readonly IAdhocCacheService m_adhocCache;
         private readonly ILocalizationService m_localizationService;
+        private const string CACHE_KEY = "$jobs";
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UpstreamJobManager(ILocalizationService localizationService, IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamAvailabilityProvider upstreamAvailabilityProvider, IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
+        public UpstreamJobManager(ILocalizationService localizationService, 
+            IRestClientFactory restClientFactory, 
+            IUpstreamManagementService upstreamManagementService, 
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
+            IAdhocCacheService adhocCacheService,
+            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
+            this.m_adhocCache = adhocCacheService;
             this.m_localizationService = localizationService;
         }
 
@@ -79,7 +87,7 @@ namespace SanteDB.Client.Upstream.Management
             /// <summary>
             /// Creates a new remote job from an AMI job info class
             /// </summary>
-            public UpstreamJob(JobInfo job, IRestClientFactory restClientFactory)
+            public UpstreamJob(JobInfo job, IRestClientFactory restClientFactory, IAdhocCacheService adhocCacheService)
             {
                 this.Key = job.Key;
                 this.Tag = job.Tag;
@@ -88,14 +96,15 @@ namespace SanteDB.Client.Upstream.Management
                 this.Description = job.Description;
                 this.CanCancel = job.CanCancel;
                 this.CurrentState = job.State;
-                this.LastStartTime = job.LastFinish;
-                this.LastStopTime = job.LastStart;
+                this.LastStartTime = job.LastStart;
+                this.LastStopTime = job.LastFinish;
                 this.Parameters = job.Parameters?.ToDictionary(o => o.Key, o => Type.GetType($"System.{o.Type}"));
                 this.JobType = Type.GetType(job.JobType);
                 this.StatusText = job.StatusText;
                 this.Progress = job.Progress;
-                this.Schedule = job.Schedule.Select(o => new UpstreamJobSchedule(o));
+                this.Schedule = job.Schedule.Select(o => new UpstreamJobSchedule(o)).ToList();
                 this.m_restClient = restClientFactory;
+                this.m_adhocCache = adhocCacheService;
             }
 
             /// <summary>
@@ -172,6 +181,7 @@ namespace SanteDB.Client.Upstream.Management
             public IEnumerable<IJobSchedule> Schedule { get; set; }
 
             private readonly IRestClientFactory m_restClient;
+            private readonly IAdhocCacheService m_adhocCache;
 
             /// <summary>
             /// Gets the status text
@@ -190,6 +200,7 @@ namespace SanteDB.Client.Upstream.Management
                         {
                             client.Post<ParameterCollection, ParameterCollection>($"JobInfo/{this.Key}/$cancel", new ParameterCollection());
                         }
+                        this.m_adhocCache?.Remove(UpstreamJobManager.CACHE_KEY);
                     }
                     catch (Exception e)
                     {
@@ -215,6 +226,8 @@ namespace SanteDB.Client.Upstream.Management
                         {
                             client.Post<ParameterCollection, ParameterCollection>($"JobInfo/{this.Key}/$start", parms);
                         }
+                        this.m_adhocCache?.Remove(UpstreamJobManager.CACHE_KEY);
+
                     }
                     catch (Exception ex)
                     {
@@ -231,9 +244,17 @@ namespace SanteDB.Client.Upstream.Management
             {
                 try
                 {
+                    var jobs = this.m_adhocCache?.Get<UpstreamJob[]>(CACHE_KEY);
+                    if(jobs != null)
+                    {
+                        return jobs;
+                    }
                     using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                     {
-                        return client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName()).CollectionItem.OfType<JobInfo>().Select(o => new UpstreamJob(o, this.RestClientFactory));
+                        jobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName()).CollectionItem.OfType<JobInfo>().Select(o => new UpstreamJob(o, this.RestClientFactory, this.m_adhocCache)).ToArray();
+
+                        this.m_adhocCache?.Add(CACHE_KEY, jobs, new TimeSpan(0, 0, 1));
+                        return jobs;
                     }
                 }
                 catch(Exception e)
@@ -278,31 +299,15 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime? scheduleTime, TimeSpan? intervalValue)
         {
-            try
+            this.Clear(job);
+            return this.Add(job, new UpstreamJobSchedule(new JobScheduleInfo()
             {
-                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
-                {
-                    var jobInfo = client.Get<JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}");
-                    jobInfo.Schedule = new List<JobScheduleInfo>()
-                    {
-                        new JobScheduleInfo()
-                        {
-                            Type = intervalValue.HasValue ? JobScheduleType.Interval : JobScheduleType.Scheduled,
-                            RepeatOn = daysOfWeek,
-                            StartDate = scheduleTime.HasValue ? scheduleTime.Value : DateTime.Now,
-                            Interval = intervalValue.GetValueOrDefault(),
-                            IntervalXmlSpecified = intervalValue.HasValue
-                        }
-                    };
-                    jobInfo = client.Put<JobInfo, JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}", jobInfo);
-                    return new UpstreamJobSchedule(jobInfo.Schedule.First());
-                }
-            }
-            catch (Exception e)
-            {
-                this._Tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
-                throw new Exception("Error setting job information on remote server", e);
-            }
+                RepeatOn = daysOfWeek,
+                StartDate = scheduleTime.GetValueOrDefault(),
+                Type = scheduleTime.HasValue ? JobScheduleType.Scheduled : JobScheduleType.Interval,
+                Interval = intervalValue.GetValueOrDefault(),
+                IntervalXmlSpecified = intervalValue.HasValue
+            }));
         }
 
         /// <inheritdoc/>
@@ -337,6 +342,15 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public void ClearJobSchedule(IJob job)
         {
+            this.Clear(job);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IJobSchedule> Get(IJob job) => (this.GetJobInstance(job.Id) as UpstreamJob).Schedule;
+
+        /// <inheritdoc/>
+        public void Clear(IJob job)
+        {
             try
             {
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
@@ -344,6 +358,8 @@ namespace SanteDB.Client.Upstream.Management
                     var jobInfo = client.Get<JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}");
                     jobInfo.Schedule = null;
                     jobInfo = client.Put<JobInfo, JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}", jobInfo);
+                    this.m_adhocCache?.Remove(CACHE_KEY);
+
                 }
             }
             catch (Exception e)
@@ -352,5 +368,59 @@ namespace SanteDB.Client.Upstream.Management
                 throw new Exception("Error setting job information on remote server", e);
             }
         }
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, IJobSchedule jobSchedule)
+        {
+            try
+            {
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var jobInfo = client.Get<JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}");
+                    jobInfo.Schedule = new List<JobScheduleInfo>()
+                    {
+                        new JobScheduleInfo()
+                        {
+                            Type = jobSchedule.Type,
+                            RepeatOn = jobSchedule.Days,
+                            StartDate = jobSchedule.StartTime,
+                            Interval = jobSchedule.Interval.GetValueOrDefault(),
+                            IntervalXmlSpecified = jobSchedule.Interval.HasValue
+                        }
+                    };
+                    jobInfo = client.Put<JobInfo, JobInfo>($"{typeof(JobInfo).GetSerializationName()}/{job.Id}", jobInfo);
+                    this.m_adhocCache?.Remove(CACHE_KEY);
+
+                    return new UpstreamJobSchedule(jobInfo.Schedule.First());
+                }
+            }
+            catch (Exception e)
+            {
+                this._Tracer.TraceError("Error setting job schedule on remote server: {0}", e.Message);
+                throw new Exception("Error setting job information on remote server", e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, TimeSpan interval, DateTime? stopDate = null) =>
+            this.Add(job, new UpstreamJobSchedule(new JobScheduleInfo()
+            {
+                Type = JobScheduleType.Interval,
+                Interval = interval,
+                IntervalXmlSpecified = true,
+                StopDate = stopDate.GetValueOrDefault(),
+                StopDateSpecified = stopDate.HasValue
+            }));
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, DayOfWeek[] repeatOn, DateTime startDate, DateTime? stopDate = null) =>
+            this.Add(job, new UpstreamJobSchedule(new JobScheduleInfo()
+            {
+                Type = JobScheduleType.Scheduled,
+                StartDate = startDate,
+                RepeatOn = repeatOn,
+                StopDate = stopDate.GetValueOrDefault(),
+                StopDateSpecified = stopDate.HasValue
+            }));
     }
 }

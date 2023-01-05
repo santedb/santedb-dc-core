@@ -126,7 +126,7 @@ namespace SanteDB.Client.Upstream.Repositories
 
                     if (existing is TModel tm && versionKey == Guid.Empty) // The cache item matches the type
                     {
-                        var lastCheckKey = $"{existing.Type}/{existing.Tag}";
+                        var lastCheckKey = existing.Tag;
                         // Only do a head if the ad-hoc cache for excessive HEAD checks is null
                         if (!this.m_adhocCache.TryGet<DateTime>(lastCheckKey, out var lastTimeChecked))
                         {

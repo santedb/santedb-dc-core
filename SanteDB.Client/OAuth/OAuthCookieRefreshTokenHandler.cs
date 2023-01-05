@@ -11,7 +11,7 @@ using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
-    internal class OAuthCookieRefreshTokenHandler : ITokenRequestHandler
+    public class OAuthCookieRefreshTokenHandler : ITokenRequestHandler
     {
         readonly ISessionTokenResolverService _SessionResolver;
         readonly ISessionIdentityProviderService _SessionIdentityProvider;
