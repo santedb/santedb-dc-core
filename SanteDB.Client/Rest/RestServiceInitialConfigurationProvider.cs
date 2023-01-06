@@ -115,6 +115,11 @@ namespace SanteDB.Client.Rest
         public virtual SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
         {
 
+            if(AppDomain.CurrentDomain.GetData(BINDING_BASE_DATA) == null || hostContextType == SanteDBHostType.Test)
+            {
+                return configuration;
+            }
+
             var bindingBase = new Uri(AppDomain.CurrentDomain.GetData(BINDING_BASE_DATA)?.ToString());
             if (bindingBase == null)
             {

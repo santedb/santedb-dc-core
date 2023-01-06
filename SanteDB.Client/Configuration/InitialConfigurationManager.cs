@@ -3,6 +3,7 @@ using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
@@ -96,6 +97,11 @@ namespace SanteDB.Client.Configuration
                 retVal = Configuration.GetSection<DataConfigurationSection>()?.ConnectionString.Find(o => o.Name == key);
             }
             catch { }
+
+            if (retVal == null)
+            {
+                throw new KeyNotFoundException(String.Format(ErrorMessages.CONNECTION_STRING_NOT_FOUND, key));
+            }
 
             return retVal;
         }

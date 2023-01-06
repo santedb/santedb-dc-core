@@ -23,6 +23,11 @@ namespace SanteDB.Client.Disconnected.Rest
         /// </summary>
         public SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
         {
+            if(hostContextType == SanteDBHostType.Test)
+            {
+                return configuration;
+            }
+
             var restConfiguration = configuration.GetSection<RestConfigurationSection>().Services.Find(o=>o.ConfigurationName == AppServiceMessageHandler.ConfigurationName);
             if(restConfiguration != null)
             {
