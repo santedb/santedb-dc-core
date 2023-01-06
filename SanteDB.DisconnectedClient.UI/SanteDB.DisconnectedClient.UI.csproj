@@ -101,11 +101,6 @@
   <!-- </ItemGroup> -->
   <!-- <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" /> -->
   <ItemGroup>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Ags\SanteDB.DisconnectedClient.Ags.csproj" />
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj" />
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>

@@ -237,12 +237,6 @@
     <Content Include="Sql\ExtractingConceptsFromOpenIZDefaultDictionary.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.Core\SanteDB.DisconnectedClient.Core.csproj" />
-    <ProjectReference Include="..\SanteDB.DisconnectedClient.i18n\SanteDB.DisconnectedClient.i18n.csproj">
-      <Name>SanteDB.DisconnectedClient.i18n</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>
