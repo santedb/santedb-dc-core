@@ -21,9 +21,9 @@
       <ItemGroup>
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Persistence.Auditing.ADO" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Persistence.Data.Auditing" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Persistence.Data" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Persistence.PubSub.ADO" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Persistence.Data.PubSub" Version="$(VersionNumber)" />
       </ItemGroup>
     </Otherwise>
   </Choose>
