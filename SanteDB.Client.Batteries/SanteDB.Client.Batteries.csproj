@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="$(SolutionName.Contains('-ext'))">
+      <ItemGroup>
+        <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
+        <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
+        <ProjectReference Include="..\..\santedb-certs-bc\SanteDB.Security.Certs.BouncyCastle\SanteDB.Security.Certs.BouncyCastle.csproj" />
+        <ProjectReference Include="..\..\santedb-tools\PakMan.Common\SanteDB.PakMan.Common.csproj" />
+        <ProjectReference Include="..\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
+        <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="SanteDB.BusinessRules.JavaScript" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Security.Certs.BouncyCastle" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.PakMan.Common" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Client.Disconnected" Version="$(VersionNumber)" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+  <PropertyGroup Condition="'$(VersionNumber)' == ''">
+    <VersionNumber>3.0-debug</VersionNumber>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>SanteDB.Client.Batteries</PackageId>
+    <Title>SanteDB.Client.Batteries</Title>
+    <Version>$(VersionNumber)</Version>
+    <Description>SanteDB dCDR Client Initialization Tooling for creating dCDR Clients</Description>
+    <Authors>SanteSuite Contributors</Authors>
+    <PackageTags>SanteDB</PackageTags>
+    <RepositoryUrl>https://github.com/santedb/santedb-dc-core</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Product>SanteDB</Product>
+    <Copyright>Copyright (C) 2015-2023 SanteSuite Contributors (See: NOTICES)</Copyright>
+    <Company>SanteSuite Contributors</Company>
+    <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
+    <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
+    <RootNamespace>SanteDB.Client.Batteries</RootNamespace>
+  </PropertyGroup>
+</Project>
