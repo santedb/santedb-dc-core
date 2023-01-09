@@ -15,6 +15,7 @@ using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.Upstream.Security;
 using SanteDB.Client.UserInterface.Impl;
 using SanteDB.Core;
+using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Http;
@@ -125,6 +126,7 @@ namespace SanteDB.Client.Batteries.Configuration
             appServiceSection.AppSettings.Add(new AppSettingKeyValuePair("aa.preferred", ""));
             appServiceSection.AppSettings = appServiceSection.AppSettings.OrderBy(o => o.Key).ToList();
 
+
             // Upstream default configuration
             UpstreamConfigurationSection upstreamConfiguration = new UpstreamConfigurationSection()
             {
@@ -210,6 +212,17 @@ namespace SanteDB.Client.Batteries.Configuration
                 PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "santedb", "sdk", "backup")
             };
 
+            configuration.Sections.Add(new AppletConfigurationSection()
+            {
+#if DEBUG
+                AllowUnsignedApplets = true,
+#else
+                AllowUnsignedApplets = false,
+#endif
+                AppletDirectory = Path.Combine(localDataPath, "applets"),
+                DefaultApplet = "org.santedb.uicore",
+                DefaultSolution = String.Empty
+            });
             configuration.Sections.Add(new RestClientConfigurationSection()
             {
                 RestClientType = new TypeReferenceConfiguration(typeof(RestClient))
