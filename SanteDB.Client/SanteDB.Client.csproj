@@ -12,16 +12,13 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="6.25.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
-    <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
-    <ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
-    <ProjectReference Include="..\..\santedb-mdm\SanteDB.Persistence.MDM\SanteDB.Persistence.MDM.csproj" />
-  </ItemGroup>
-
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
+      <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
+      <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
+      <ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
+      <ProjectReference Include="..\..\santedb-mdm\SanteDB.Persistence.MDM\SanteDB.Persistence.MDM.csproj" />
         <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
         <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj" />
@@ -36,6 +33,12 @@
     </When>
     <Otherwise>
       <ItemGroup>
+        <PackageReference Include="RestSrvr" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Messaging.HDSI.Client" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Matcher" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Persistence.MDM" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Core.Model" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Applets" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model.AMI" Version="$(VersionNumber)" />
@@ -45,6 +48,8 @@
         <PackageReference Include="SanteDB.Rest.AMI" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Rest.BIS" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Rest.OAuth" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Core.Model.ViewModelSerializers" Version="$(VersionNumber)" />
+       
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -53,6 +58,10 @@
     <VersionNumber>3.0-debug</VersionNumber>
   </PropertyGroup>
 
+  <ItemGroup>
+  
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+  </ItemGroup>
   <PropertyGroup>
     <PackageId>SanteDB.Client</PackageId>
     <Title>SanteDB.Client</Title>
