@@ -77,7 +77,6 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(DefaultUpstreamAvailabilityProvider)),
                     new TypeReferenceConfiguration(typeof(MemoryCacheService)),
                     new TypeReferenceConfiguration(typeof(DefaultThreadPoolService)),
-                    new TypeReferenceConfiguration(typeof(ConsoleUserInterfaceInteractionProvider)),
                     new TypeReferenceConfiguration(typeof(MemoryQueryPersistenceService)),
                     new TypeReferenceConfiguration(typeof(FileSystemDispatcherQueueService)),
                     new TypeReferenceConfiguration(typeof(SimplePatchService)),
