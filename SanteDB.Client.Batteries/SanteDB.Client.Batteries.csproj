@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -9,8 +9,8 @@
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
         <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
         <ProjectReference Include="..\..\santedb-certs-bc\SanteDB.Security.Certs.BouncyCastle\SanteDB.Security.Certs.BouncyCastle.csproj" />
-        <ProjectReference Include="..\..\santedb-tools\PakMan.Common\SanteDB.PakMan.Common.csproj" />
         <ProjectReference Include="..\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
+        <ProjectReference Include="..\..\santedb-tools\SanteDB.PakMan.Common\SanteDB.PakMan.Common.csproj" />
         <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
       </ItemGroup>
     </When>
@@ -50,4 +50,5 @@
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
     <RootNamespace>SanteDB.Client.Batteries</RootNamespace>
   </PropertyGroup>
+
 </Project>
