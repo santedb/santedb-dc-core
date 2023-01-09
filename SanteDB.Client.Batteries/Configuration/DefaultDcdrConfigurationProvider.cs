@@ -93,6 +93,7 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(UpstreamRoleProviderService)),
                     new TypeReferenceConfiguration(typeof(UpstreamSecurityRepository)),
                     new TypeReferenceConfiguration(typeof(UpstreamRepositoryFactory)),
+                    new TypeReferenceConfiguration(typeof(InitialAppletInstallationService)),
                     new TypeReferenceConfiguration(typeof(UpstreamPolicyInformationService)),
                     new TypeReferenceConfiguration(typeof(DataPolicyFilterService)),
                     new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),
