@@ -32,10 +32,10 @@ namespace SanteDB.Client.Upstream
         private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
         private readonly IUpstreamAvailabilityProvider m_upstreamAvailabilityProvider;
         private readonly ClientConfigurationSection m_configuration;
-        private readonly ILocalizationService m_localizationService;
         private readonly IUserInterfaceInteractionProvider m_userInterfaceService;
         private readonly IAppletManagerService m_appletManager;
         private readonly ITickleService m_tickleService;
+        private readonly ILocalizationService m_localizationService;
 
         /// <summary>
         /// Gets the service name
@@ -47,9 +47,9 @@ namespace SanteDB.Client.Upstream
         /// </summary>
         public UpstreamUpdateManagerService(IRestClientFactory restClientFactory,
             IConfigurationManager configurationManager,
-            ILocalizationService localizationService,
             IUserInterfaceInteractionProvider userInterface,
             IAppletManagerService appletManager,
+            ILocalizationService localizationService,
             ITickleService tickleService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService)
@@ -58,10 +58,10 @@ namespace SanteDB.Client.Upstream
             this.m_upstreamIntegrationService = upstreamIntegrationService;
             this.m_upstreamAvailabilityProvider = upstreamAvailabilityProvider;
             this.m_configuration = configurationManager.GetSection<ClientConfigurationSection>();
-            this.m_localizationService = localizationService;
             this.m_userInterfaceService = userInterface;
             this.m_appletManager = appletManager;
             this.m_tickleService = tickleService;
+            this.m_localizationService = localizationService;
 
             try
             {
@@ -110,7 +110,7 @@ namespace SanteDB.Client.Upstream
             }
             catch (Exception e)
             {
-                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { resource = $"applet/{packageId}" }), e);
+                throw new UpstreamIntegrationException(String.Format(ErrorMessages.READ_ERROR, $"applet/{packageId}"), e);
             }
         }
 
@@ -134,7 +134,7 @@ namespace SanteDB.Client.Upstream
                     {
 
                         this.m_tracer.TraceInfo("Updating {0}...", packageId);
-                        restClient.ProgressChanged += (o, e) => this.m_userInterfaceService.SetStatus(this.m_localizationService.GetString(UserMessageStrings.DOWNLOADING, new { file = packageId }), e.Progress);
+                        restClient.ProgressChanged += (o, e) => this.m_userInterfaceService.SetStatus(String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
                         restClient.SetTimeout(30000);
 
                         using (var ms = new MemoryStream(restClient.Get($"AppletSolution/{this.m_configuration.UiSolution}/applet/{packageId}")))
@@ -150,7 +150,7 @@ namespace SanteDB.Client.Upstream
             }
             catch (Exception e)
             {
-                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { resource = $"applet/{packageId}" }), e);
+                throw new UpstreamIntegrationException(String.Format(ErrorMessages.READ_ERROR, $"applet/{packageId}"), e);
 
             }
         }
@@ -178,7 +178,7 @@ namespace SanteDB.Client.Upstream
                     this.m_tracer.TraceInfo("Checking for updates with remote service...");
 
                     // Set progress 
-                    this.m_userInterfaceService.SetStatus(this.m_localizationService.GetString(UserMessageStrings.UPDATE_CHECK), 0.5f);
+                    this.m_userInterfaceService.SetStatus(UserMessages.UPDATE_CHECK, 0.5f);
                     using (AuthenticationContext.EnterContext(this.m_upstreamIntegrationService.AuthenticateAsDevice()))
                     {
                         using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
@@ -194,7 +194,7 @@ namespace SanteDB.Client.Upstream
                                 }).ToList();
 
                             if (remoteVersionInfo.Any() &&
-                                this.m_userInterfaceService.Confirm(this.m_localizationService.GetString(UserMessageStrings.UPDATE_INSTALL_CONFIRM, new { package = String.Join(",", remoteVersionInfo.Select(o => o.AppletInfo.GetName("en", true))) })))
+                                this.m_userInterfaceService.Confirm(String.Format(UserMessages.UPDATE_INSTALL_CONFIRM, String.Join(",", remoteVersionInfo.Select(o => o.AppletInfo.GetName("en", true))))));
                             {
                                 remoteVersionInfo.ForEach(i => this.Install(i.AppletInfo.Id));
                             }
@@ -206,7 +206,7 @@ namespace SanteDB.Client.Upstream
             }
             catch (Exception e)
             {
-                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { resource = "applet" }), e);
+                throw new UpstreamIntegrationException(String.Format(ErrorMessages.READ_ERROR, "applet"), e);
             }
         }
     }
