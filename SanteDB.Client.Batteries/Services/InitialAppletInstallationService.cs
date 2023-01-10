@@ -53,7 +53,7 @@ namespace SanteDB.Client.Batteries.Services
                         using (var fs = File.OpenRead(appFile))
                         {
                             var appPackage = AppletSolution.Load(fs);
-                            if (appletManagerService.Install(appPackage, true))
+                            if (!appletManagerService.Install(appPackage, true))
                             {
                                 this.m_tracer.TraceWarning("Could not install seed app: {0}", appFile);
                             }

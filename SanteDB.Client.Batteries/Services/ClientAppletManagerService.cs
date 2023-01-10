@@ -21,9 +21,9 @@ namespace SanteDB.Client.Batteries.Services
     /// <summary>
     /// Represents a <see cref="IAppletManagerService"/> which unpacks applet static files for faster access
     /// </summary>
-    public class UnpackAppletManagerService : FileSystemAppletManagerService, IReportProgressChanged
+    public class ClientAppletManagerService : FileSystemAppletManagerService, IReportProgressChanged
     {
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UnpackAppletManagerService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
         private readonly AppletConfigurationSection m_configuration;
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
 
@@ -34,7 +34,7 @@ namespace SanteDB.Client.Batteries.Services
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UnpackAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider)
+        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider)
         {
             this.m_configuration = configurationManager.GetSection<AppletConfigurationSection>();
             this.m_bridgeProvider = bridgeProvider;
@@ -168,6 +168,24 @@ namespace SanteDB.Client.Batteries.Services
 
                 throw;
             }
+        }
+
+        /// <inheritdoc/>
+        /// <remarks>Clients can only have one applet solution</remarks>
+        public override ReadonlyAppletCollection GetApplets(string solutionId) => base.GetApplets(String.Empty);
+
+        /// <inheritdoc/>
+        public override bool LoadApplet(AppletManifest applet)
+        {
+            if (applet.Info.Id == (this.m_configuration.DefaultApplet ?? "org.santedb.uicore"))
+            {
+                this.m_appletCollection[String.Empty].DefaultApplet = applet;
+            }
+
+            applet.Initialize();
+            this.m_appletCollection[String.Empty].Add(applet);
+            AppletCollection.ClearCaches();
+            return true;
         }
     }
 }
