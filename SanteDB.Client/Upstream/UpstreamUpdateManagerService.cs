@@ -216,7 +216,7 @@ namespace SanteDB.Client.Upstream
                                 }).ToList();
 
                             if (remoteVersionInfo.Any() &&
-                                this.m_userInterfaceService.Confirm(String.Format(UserMessages.UPDATE_INSTALL_CONFIRM, String.Join(",", remoteVersionInfo.Select(o => o.AppletInfo.GetName("en", true))))));
+                                this.m_userInterfaceService.Confirm(String.Format(UserMessages.UPDATE_INSTALL_CONFIRM, String.Join(",", remoteVersionInfo.Select(o => o.AppletInfo.GetName("en", true))))))
                             {
                                 remoteVersionInfo.ForEach(i => this.Install(i.AppletInfo.Id));
                             }
