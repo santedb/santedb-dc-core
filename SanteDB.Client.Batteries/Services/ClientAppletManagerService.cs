@@ -82,7 +82,7 @@ namespace SanteDB.Client.Batteries.Services
 
             if(base.Install(package, isUpgrade, null))
             {
-                this.InstallInternall(package.Unpack());
+                this.InstallInternal(package.Unpack());
                 return true;
             }
             return false;
@@ -118,7 +118,7 @@ namespace SanteDB.Client.Batteries.Services
         /// <summary>
         /// Unpack all the directories and needed files for the installation
         /// </summary>
-        private void InstallInternall(AppletManifest manifest)
+        private void InstallInternal(AppletManifest manifest)
         {
             // Now export all the binary files out
             var assetDirectory = Path.Combine(this.m_configuration.AppletDirectory, "assets", manifest.Info.Id);
@@ -126,8 +126,6 @@ namespace SanteDB.Client.Batteries.Services
             {
                 if (!Directory.Exists(assetDirectory))
                     Directory.CreateDirectory(assetDirectory);
-                else
-                    Directory.Delete(assetDirectory, true);
 
                 for (int i = 0; i < manifest.Assets.Count; i++)
                 {
