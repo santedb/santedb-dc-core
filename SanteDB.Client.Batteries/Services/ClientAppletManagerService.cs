@@ -104,6 +104,18 @@ namespace SanteDB.Client.Batteries.Services
             AppletCollection.ClearCaches();
         }
 
+        /// <inheritdoc/>
+        public override bool UnInstall(string packageId)
+        {
+            var existingPackage = this.GetApplet(packageId);
+            if(base.UnInstall(packageId))
+            {
+                this.UnInstallInternal(existingPackage);
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Unpack all the directories and needed files for the installation
         /// </summary>
@@ -183,6 +195,7 @@ namespace SanteDB.Client.Batteries.Services
             }
 
             applet.Initialize();
+            this.m_appletCollection[String.Empty].Remove(applet);
             this.m_appletCollection[String.Empty].Add(applet);
             AppletCollection.ClearCaches();
             return true;
