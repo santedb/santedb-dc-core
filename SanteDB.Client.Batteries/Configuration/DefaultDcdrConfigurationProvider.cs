@@ -82,7 +82,7 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(FileSystemDispatcherQueueService)),
                     new TypeReferenceConfiguration(typeof(SimplePatchService)),
                     new TypeReferenceConfiguration(typeof(DefaultBackupManager)),
-                    new TypeReferenceConfiguration(typeof(UnpackAppletManagerService)),
+                    new TypeReferenceConfiguration(typeof(ClientAppletManagerService)),
                     new TypeReferenceConfiguration(typeof(AppletBiRepository)),
                     new TypeReferenceConfiguration(typeof(OAuthClient)),
                     new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),
