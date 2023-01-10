@@ -24,7 +24,6 @@ namespace SanteDB.Client.Batteries.Services
     public class ClientAppletManagerService : FileSystemAppletManagerService, IReportProgressChanged
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
-        private readonly AppletConfigurationSection m_configuration;
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
 
         /// <inheritdoc/>
@@ -34,9 +33,9 @@ namespace SanteDB.Client.Batteries.Services
         /// <summary>
         /// DI constructor
         /// </summary>
-        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider)
+        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider) 
+            : base (configurationManager)
         {
-            this.m_configuration = configurationManager.GetSection<AppletConfigurationSection>();
             this.m_bridgeProvider = bridgeProvider;
             this.m_appletCollection[String.Empty].Resolver = this.ResolveAppletAsset;
             this.m_appletCollection[String.Empty].CachePages = true;
