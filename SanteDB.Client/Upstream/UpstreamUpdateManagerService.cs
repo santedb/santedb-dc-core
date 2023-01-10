@@ -63,14 +63,36 @@ namespace SanteDB.Client.Upstream
             this.m_tickleService = tickleService;
             this.m_localizationService = localizationService;
 
+            if(this.m_appletManager is IDaemonService ids)
+            {
+                if(ids.IsRunning)
+                {
+                    this.AutoCheckForUpdates();
+                }
+                else
+                {
+                    ids.Started += (o, e) => this.AutoCheckForUpdates();
+                }
+            }
+            else
+            {
+                this.AutoCheckForUpdates();
+            }
+        }
+
+        /// <summary>
+        /// Automatically check for updates
+        /// </summary>
+        private void AutoCheckForUpdates()
+        {
             try
             {
-                if (this.m_configuration.AutoUpdateApplets) 
+                if (this.m_configuration.AutoUpdateApplets)
                 {
                     this.Update(true);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceWarning("Cannot check for updates - {0}", e.Message);
             }
