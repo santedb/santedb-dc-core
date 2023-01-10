@@ -163,6 +163,7 @@ namespace SanteDB.Client.Batteries.Services
                 using (FileStream fs = File.Create(Path.Combine(this.m_configuration.AppletDirectory, manifest.Info.Id + ".pak")))
                 {
                     var mfst = manifest.CreatePackage();
+                    mfst.Meta.Hash = SHA256.Create().ComputeHash(mfst.Manifest);
                     mfst.Save(fs);
                 }
 
