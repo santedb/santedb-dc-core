@@ -165,10 +165,10 @@ namespace SanteDB.Client.Batteries.Services
                     var mfst = manifest.CreatePackage();
                     mfst.Meta.Hash = SHA256.Create().ComputeHash(mfst.Manifest);
 
-                    var signCert = this.m_securityConfiguration?.Signatures?.Find(o => o.KeyName == "default");
+                    var signCert = this.m_securityConfiguration?.Signatures?.Find(o => o.KeyName == "default")?.Certificate;
                     if (signCert != null && !this.m_configuration.AllowUnsignedApplets)
                     {
-                        mfst = PakManTool.SignPackage(mfst, signCert.Certificate, true);
+                        mfst = PakManTool.SignPackage(mfst, signCert, true);
                     }
                     mfst.Save(fs);
                 }
