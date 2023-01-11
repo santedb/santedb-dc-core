@@ -6,6 +6,7 @@ using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.PakMan;
 using SharpCompress.Compressors.LZMA;
@@ -25,6 +26,7 @@ namespace SanteDB.Client.Batteries.Services
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
+        private readonly SecurityConfigurationSection m_securityConfiguration;
 
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
@@ -39,6 +41,7 @@ namespace SanteDB.Client.Batteries.Services
             this.m_bridgeProvider = bridgeProvider;
             this.m_appletCollection[String.Empty].Resolver = this.ResolveAppletAsset;
             this.m_appletCollection[String.Empty].CachePages = true;
+            this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
         }
 
         /// <summary>
@@ -161,9 +164,15 @@ namespace SanteDB.Client.Batteries.Services
                 {
                     var mfst = manifest.CreatePackage();
                     mfst.Meta.Hash = SHA256.Create().ComputeHash(mfst.Manifest);
+
+                    var signCert = this.m_securityConfiguration.Signatures.Find(o => o.KeyName == "default");
+                    if (signCert != null && !this.m_configuration.AllowUnsignedApplets)
+                    {
+                        mfst = PakManTool.SignPackage(mfst, signCert.Certificate, true);
+                    }
                     mfst.Save(fs);
                 }
-
+                
                 this.LoadApplet(manifest);
             }
             catch(Exception e)
