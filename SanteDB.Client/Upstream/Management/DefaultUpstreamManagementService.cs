@@ -379,7 +379,7 @@ namespace SanteDB.Client.Upstream.Management
             }
             catch (Exception e)
             {
-                audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.MinorFail);
+                audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.SeriousFail);
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_ERR), e);
             }
             finally

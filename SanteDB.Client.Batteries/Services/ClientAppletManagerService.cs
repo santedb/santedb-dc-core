@@ -14,6 +14,7 @@ using SharpCompress.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -83,10 +84,18 @@ namespace SanteDB.Client.Batteries.Services
                 throw new InvalidOperationException(ErrorMessages.SOLUTIONS_NOT_SUPPORTED);
             }
 
-            if(base.Install(package, isUpgrade, null))
+            try
             {
-                this.InstallInternal(package.Unpack());
-                return true;
+                if (base.Install(package, isUpgrade, null))
+                {
+                    this.InstallInternal(package.Unpack());
+                    return true;
+                }
+            }
+            catch(SecurityException e) when (e.Message == "Applet failed validation" && package.Meta.Signature == null)
+            {
+                this.m_tracer.TraceError("Received error {0} trying to install the applet - will attempt to re-install from update", e);
+                this.UnInstall(package.Meta.Id);
             }
             return false;
         }
