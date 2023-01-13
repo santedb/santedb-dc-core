@@ -92,10 +92,10 @@ namespace SanteDB.Client.Batteries.Services
                     return true;
                 }
             }
-            catch(SecurityException e) when (e.Message == "Applet failed validation" && package.Meta.Signature == null)
+            catch(SecurityException e) when (e.Message == "Applet failed validation")
             {
                 this.m_tracer.TraceError("Received error {0} trying to install the applet - will attempt to re-install from update", e);
-                this.UnInstall(package.Meta.Id);
+                File.Delete(Path.Combine(this.m_configuration.AppletDirectory, package.Meta.Id + ".pak"));
             }
             return false;
         }
