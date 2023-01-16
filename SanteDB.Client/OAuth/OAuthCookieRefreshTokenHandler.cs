@@ -11,17 +11,33 @@ using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
+    /// <summary>
+    /// A special token handler for client scenarios where the client does not have access to the refresh token for security purposes. 
+    /// </summary>
+    /// <example>
+    ///     POST /oauth_token HTTP/1.1
+    ///     Content-Type: application/json
+    ///     
+    ///     {
+    ///         "grant_type": "x-refresh-cookie"
+    ///     }
+    /// </example>
     public class OAuthCookieRefreshTokenHandler : ITokenRequestHandler
     {
         readonly ISessionTokenResolverService _SessionResolver;
         readonly ISessionIdentityProviderService _SessionIdentityProvider;
         readonly IAuditService _AuditService;
         readonly Tracer _Tracer;
-
+        /// <inheritdoc />
         public IEnumerable<string> SupportedGrantTypes => new[] { OAuthClientConstants.GRANTTYPE_REFRESHCOOKIE };
-
-        public string ServiceName => "OAuth Client Cookie Refersh Token Handler";
-
+        /// <inheritdoc />
+        public string ServiceName => "OAuth Client Cookie Refresh Token Handler";
+        /// <summary>
+        /// Dependency injection constructor
+        /// </summary>
+        /// <param name="sessionResolver"></param>
+        /// <param name="sessionIdentityProvider"></param>
+        /// <param name="auditService"></param>
         public OAuthCookieRefreshTokenHandler(ISessionTokenResolverService sessionResolver, ISessionIdentityProviderService sessionIdentityProvider, IAuditService auditService)
         {
             _Tracer = new Tracer(nameof(OAuthCookieRefreshTokenHandler));
@@ -30,6 +46,7 @@ namespace SanteDB.Client.OAuth
             _AuditService = auditService;
         }
 
+        /// <inheritdoc />
         public bool HandleRequest(OAuthTokenRequestContext context)
         {
             var cookie = context.IncomingRequest.Cookies["_r"];

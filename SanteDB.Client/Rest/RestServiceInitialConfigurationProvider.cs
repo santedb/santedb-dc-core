@@ -44,7 +44,7 @@ namespace SanteDB.Client.Rest
 
         // API service providers
         private IDictionary<ServiceEndpointType, Type> m_apiServiceProviders = AppDomain.CurrentDomain.GetAllTypes().Where(t => t.GetCustomAttribute<ApiServiceProviderAttribute>() != null)
-            .ToDictionary(o => o.GetCustomAttribute<ApiServiceProviderAttribute>().ServiceType, o => o);
+            .ToDictionaryIgnoringDuplicates(o => o.GetCustomAttribute<ApiServiceProviderAttribute>().ServiceType, o => o);
 
         /// <summary>
         /// The binding application data
