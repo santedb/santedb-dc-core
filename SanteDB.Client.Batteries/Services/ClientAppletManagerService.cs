@@ -6,6 +6,7 @@ using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.PakMan;
 using SharpCompress.Compressors.LZMA;
@@ -13,6 +14,7 @@ using SharpCompress.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -25,6 +27,7 @@ namespace SanteDB.Client.Batteries.Services
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
+        private readonly SecurityConfigurationSection m_securityConfiguration;
 
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
@@ -39,6 +42,7 @@ namespace SanteDB.Client.Batteries.Services
             this.m_bridgeProvider = bridgeProvider;
             this.m_appletCollection[String.Empty].Resolver = this.ResolveAppletAsset;
             this.m_appletCollection[String.Empty].CachePages = true;
+            this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
         }
 
         /// <summary>
@@ -80,10 +84,25 @@ namespace SanteDB.Client.Batteries.Services
                 throw new InvalidOperationException(ErrorMessages.SOLUTIONS_NOT_SUPPORTED);
             }
 
-            if(base.Install(package, isUpgrade, null))
+            try
             {
-                this.InstallInternal(package.Unpack());
-                return true;
+                if (base.Install(package, isUpgrade, null))
+                {
+                    this.InstallInternal(package.Unpack());
+                    return true;
+                }
+            }
+            catch(SecurityException e) when (e.Message == "Applet failed validation")
+            {
+                var appletPath = Path.Combine(this.m_configuration.AppletDirectory, package.Meta.Id + ".pak");
+                this.m_tracer.TraceWarning("Received error {0} trying to install the applet - will attempt to re-install from update", e);
+
+                if (File.Exists(appletPath))
+                {
+                    this.m_tracer.TraceError("Received error {0} trying to install the applet - will attempt to re-install from update", e);
+                    File.Delete(appletPath) ;
+                    return true;
+                }
             }
             return false;
         }
@@ -161,9 +180,15 @@ namespace SanteDB.Client.Batteries.Services
                 {
                     var mfst = manifest.CreatePackage();
                     mfst.Meta.Hash = SHA256.Create().ComputeHash(mfst.Manifest);
+
+                    var signCert = this.m_securityConfiguration?.Signatures?.Find(o => o.KeyName == "default")?.Certificate;
+                    if (signCert != null && !this.m_configuration.AllowUnsignedApplets)
+                    {
+                        mfst = PakManTool.SignPackage(mfst, signCert, true);
+                    }
                     mfst.Save(fs);
                 }
-
+                
                 this.LoadApplet(manifest);
             }
             catch(Exception e)
