@@ -54,7 +54,16 @@ namespace SanteDB.Client.Batteries.Services
            
             if (navigateAsset.MimeType == "text/javascript" && navigateAsset.Name.Contains("santedb.js"))
             {
-                var script = navigateAsset.Content as string;
+                string script = String.Empty;
+                switch(navigateAsset.Content)
+                {
+                    case String str:
+                        script = str;
+                        break;
+                    case byte[] bytea:
+                        script = Encoding.UTF8.GetString(bytea);
+                        break;
+                }
                 script += this.m_bridgeProvider.GetBridgeScript();
                 return script;
             }
