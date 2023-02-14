@@ -17,6 +17,7 @@ using System.IO;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 
 namespace SanteDB.Client.Batteries.Services
 {
@@ -36,8 +37,8 @@ namespace SanteDB.Client.Batteries.Services
         /// <summary>
         /// DI constructor
         /// </summary>
-        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider) 
-            : base (configurationManager)
+        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider)
+            : base(configurationManager)
         {
             this.m_bridgeProvider = bridgeProvider;
             this.m_appletCollection[String.Empty].Resolver = this.ResolveAppletAsset;
@@ -50,49 +51,39 @@ namespace SanteDB.Client.Batteries.Services
         /// </summary>
         public object ResolveAppletAsset(AppletAsset navigateAsset)
         {
-            String itmPath = System.IO.Path.Combine(
-                                        this.m_configuration.AppletDirectory,
-                                        "assets",
-                                        navigateAsset.Manifest.Info.Id,
-                                        navigateAsset.Name);
-
-            if (navigateAsset.MimeType == "text/javascript" ||
-                        navigateAsset.MimeType == "text/css" ||
-                        navigateAsset.MimeType == "application/json" ||
-                        navigateAsset.MimeType == "text/json" ||
-                        navigateAsset.MimeType == "text/xml")
+           
+            if (navigateAsset.MimeType == "text/javascript" && navigateAsset.Name.Contains("santedb.js"))
             {
-                var script = File.ReadAllText(itmPath);
-                if (itmPath.Contains("santedb.js") || itmPath.Contains("santedb.min.js"))
-                    script += this.m_bridgeProvider.GetBridgeScript();
+                string script = String.Empty;
+                switch(navigateAsset.Content)
+                {
+                    case String str:
+                        script = str;
+                        break;
+                    case byte[] bytea:
+                        script = Encoding.UTF8.GetString(bytea);
+                        break;
+                }
+                script += this.m_bridgeProvider.GetBridgeScript();
                 return script;
             }
-            else
-                using (MemoryStream response = new MemoryStream())
-                using (var fs = File.OpenRead(itmPath))
-                {
-                    fs.CopyTo(response);
-                    return response.ToArray();
-                }
+
+            return navigateAsset.Content;
         }
 
         /// <inheritdoc/>
         public override bool Install(AppletPackage package, bool isUpgrade, AppletSolution owner)
         {
-            if(owner != null)
+            if (owner != null)
             {
                 throw new InvalidOperationException(ErrorMessages.SOLUTIONS_NOT_SUPPORTED);
             }
 
             try
             {
-                if (base.Install(package, isUpgrade, null))
-                {
-                    this.InstallInternal(package.Unpack());
-                    return true;
-                }
+                return base.Install(package, isUpgrade, null);
             }
-            catch(SecurityException e) when (e.Message == "Applet failed validation")
+            catch (SecurityException e) when (e.Message == "Applet failed validation")
             {
                 var appletPath = Path.Combine(this.m_configuration.AppletDirectory, package.Meta.Id + ".pak");
                 this.m_tracer.TraceWarning("Received error {0} trying to install the applet - will attempt to re-install from update", e);
@@ -100,109 +91,11 @@ namespace SanteDB.Client.Batteries.Services
                 if (File.Exists(appletPath))
                 {
                     this.m_tracer.TraceError("Received error {0} trying to install the applet - will attempt to re-install from update", e);
-                    File.Delete(appletPath) ;
+                    File.Delete(appletPath);
                     return true;
                 }
             }
             return false;
-        }
-
-        /// <summary>
-        /// Uninstall the assets folder
-        /// </summary>
-        private void UnInstallInternal(AppletManifest applet)
-        {
-            this.m_appletCollection[String.Empty].Remove(applet);
-
-            if (File.Exists(Path.Combine(this.m_configuration.AppletDirectory, applet.Info.Id)))
-                File.Delete(Path.Combine(this.m_configuration.AppletDirectory, applet.Info.Id));
-            if (Directory.Exists(Path.Combine(this.m_configuration.AppletDirectory, "assets", applet.Info.Id)))
-                Directory.Delete(Path.Combine(this.m_configuration.AppletDirectory, "assets", applet.Info.Id), true);
-
-            AppletCollection.ClearCaches();
-        }
-
-        /// <inheritdoc/>
-        public override bool UnInstall(string packageId)
-        {
-            var existingPackage = this.GetApplet(packageId);
-            if(base.UnInstall(packageId))
-            {
-                this.UnInstallInternal(existingPackage);
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Unpack all the directories and needed files for the installation
-        /// </summary>
-        private void InstallInternal(AppletManifest manifest)
-        {
-            // Now export all the binary files out
-            var assetDirectory = Path.Combine(this.m_configuration.AppletDirectory, "assets", manifest.Info.Id);
-            try
-            {
-                if (!Directory.Exists(assetDirectory))
-                    Directory.CreateDirectory(assetDirectory);
-
-                for (int i = 0; i < manifest.Assets.Count; i++)
-                {
-                    var itm = manifest.Assets[i];
-                    var itmPath = Path.Combine(assetDirectory, itm.Name);
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.1f + (float)(0.8 * (float)i / manifest.Assets.Count), String.Format(UserMessages.INSTALLING, manifest.Info.GetName("en"))));
-
-                    // Get dir name and create
-                    if (!Directory.Exists(Path.GetDirectoryName(itmPath)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(itmPath));
-
-                    // Extract content
-                    switch (itm.Content)
-                    {
-                        case byte[] bytea:
-                            if (Encoding.UTF8.GetString(bytea, 0, 4) == "LZIP")
-                                using (var fs = File.Create(itmPath))
-                                using (var ms = new MemoryStream(PakManTool.DeCompressContent(bytea)))
-                                    ms.CopyTo(fs);
-                            else
-                                File.WriteAllBytes(itmPath, itm.Content as byte[]);
-                            itm.Content = null;
-                            break;
-                        case String str:
-                            File.WriteAllText(itmPath, str);
-                            itm.Content = null;
-                            break;
-                    }
-                }
-
-                // Serialize the data to disk
-                using (FileStream fs = File.Create(Path.Combine(this.m_configuration.AppletDirectory, manifest.Info.Id + ".pak")))
-                {
-                    var mfst = manifest.CreatePackage();
-                    mfst.Meta.Hash = SHA256.Create().ComputeHash(mfst.Manifest);
-
-                    var signCert = this.m_securityConfiguration?.Signatures?.Find(o => o.KeyName == "default")?.Certificate;
-                    if (signCert != null && !this.m_configuration.AllowUnsignedApplets)
-                    {
-                        mfst = PakManTool.SignPackage(mfst, signCert, true);
-                    }
-                    mfst.Save(fs);
-                }
-                
-                this.LoadApplet(manifest);
-            }
-            catch(Exception e)
-            {
-                this.m_tracer.TraceError("Error installing applet {0} : {1}", manifest.Info.ToString(), e);
-
-                // Remove
-                if (File.Exists(assetDirectory))
-                {
-                    File.Delete(assetDirectory);
-                }
-
-                throw;
-            }
         }
 
         /// <inheritdoc/>

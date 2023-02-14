@@ -69,7 +69,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public UpstreamRepositoryFactory(IServiceManager serviceManager)
         {
             this.m_serviceManager = serviceManager;
-            foreach (var t in typeof(Entity).Assembly.ExportedTypes.Where(o => typeof(Entity).IsAssignableFrom(o)))
+            foreach (var t in typeof(Entity).Assembly.GetExportedTypesSafe().Where(o => typeof(Entity).IsAssignableFrom(o)))
                 ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
             ModelSerializationBinder.RegisterModelType(typeof(EntityRelationshipMaster));
         }
