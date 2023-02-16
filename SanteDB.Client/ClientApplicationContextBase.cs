@@ -96,9 +96,9 @@ namespace SanteDB.Client
                     };
                 });
             }
-            catch
+            catch//(Exception ex)
             {
-
+                //System.Diagnostics.Debugger.Break();
             }
         }
 

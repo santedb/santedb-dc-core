@@ -33,66 +33,76 @@ namespace SanteDB.Client.Batteries.Services
 
             this.m_userInterfaceInteraction = userInterfaceInteractionProvider;
 
-            // If there is an "applets" folder for seeding - let's use it
-            var seedDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "applets");
-            if (Directory.Exists(seedDirectory) && configurationManager is InitialConfigurationManager)
+            var assembly = Assembly.GetEntryAssembly();
+            var execassembly = Assembly.GetExecutingAssembly();
+
+            if (null == assembly)
             {
-                if(appletManagerService is IReportProgressChanged irpc)
-                {
-                    irpc.ProgressChanged += Irpc_ProgressChanged;
-                }
-                else
-                {
-                    irpc = null;
-                }
 
-                bool solutionloaded = false;
-
-                foreach (var appFile in Directory.GetFiles(seedDirectory, "*.pak"))
+            }
+            else
+            {
+                // If there is an "applets" folder for seeding - let's use it
+                var seedDirectory = Path.Combine(Path.GetDirectoryName(assembly.Location), "applets");
+                if (Directory.Exists(seedDirectory) && configurationManager is InitialConfigurationManager)
                 {
-                    try
+                    if (appletManagerService is IReportProgressChanged irpc)
                     {
-                        using (var fs = File.OpenRead(appFile))
+                        irpc.ProgressChanged += Irpc_ProgressChanged;
+                    }
+                    else
+                    {
+                        irpc = null;
+                    }
+
+                    bool solutionloaded = false;
+
+                    foreach (var appFile in Directory.GetFiles(seedDirectory, "*.pak"))
+                    {
+                        try
                         {
-                            var appPackage = AppletPackage.Load(fs);
-
-                            if (appPackage is AppletSolution sln)
+                            using (var fs = File.OpenRead(appFile))
                             {
-                                //Check if we've already loaded a solution. Multiple solutions cannot be installed on a client.
-                                if (solutionloaded)
-                                {
-                                    throw new InvalidOperationException("Multiple applet solutions cannot be installed concurrently.");
-                                }
+                                var appPackage = AppletPackage.Load(fs);
 
-                                solutionloaded = true;
-
-                                foreach (var include in sln.Include)
+                                if (appPackage is AppletSolution sln)
                                 {
-                                    if (!appletManagerService.Install(include, true))
+                                    //Check if we've already loaded a solution. Multiple solutions cannot be installed on a client.
+                                    if (solutionloaded)
                                     {
-                                        this.m_tracer.TraceWarning("Could not install include in seed app: {0}", include.Meta.Id);
+                                        throw new InvalidOperationException("Multiple applet solutions cannot be installed concurrently.");
+                                    }
+
+                                    solutionloaded = true;
+
+                                    foreach (var include in sln.Include)
+                                    {
+                                        if (!appletManagerService.Install(include, true))
+                                        {
+                                            this.m_tracer.TraceWarning("Could not install include in seed app: {0}", include.Meta.Id);
+                                        }
                                     }
                                 }
-                            }
 
-                            if (!appletManagerService.Install(appPackage, true))
-                            {
-                                this.m_tracer.TraceWarning("Could not install seed app: {0}", appFile);
-                            }
+                                if (!appletManagerService.Install(appPackage, true))
+                                {
+                                    this.m_tracer.TraceWarning("Could not install seed app: {0}", appFile);
+                                }
 
-                            
+
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceError("Error installing {0} - {1}", appFile, e);
                         }
                     }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError("Error installing {0} - {1}", appFile, e);
-                    }
-                }
-                configurationManager.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == this.GetType());
+                    configurationManager.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == this.GetType());
 
-                if (irpc != null)
-                {
-                    irpc.ProgressChanged -= Irpc_ProgressChanged;
+                    if (irpc != null)
+                    {
+                        irpc.ProgressChanged -= Irpc_ProgressChanged;
+                    }
                 }
             }
         }
