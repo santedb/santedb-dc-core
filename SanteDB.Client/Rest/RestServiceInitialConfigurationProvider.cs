@@ -113,7 +113,7 @@ namespace SanteDB.Client.Rest
 
         /// <inheritdoc/>
         public virtual SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
-        {
+         {
 
             if(AppDomain.CurrentDomain.GetData(BINDING_BASE_DATA) == null || hostContextType == SanteDBHostType.Test)
             {

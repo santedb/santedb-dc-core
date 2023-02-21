@@ -20,11 +20,12 @@ using System.Linq;
 using System.Security.Authentication;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 
 namespace SanteDB.Client.Upstream.Security
 {
     [PreferredService(typeof(IApplicationIdentityProviderService))]
-    public class UpstreamApplicationIdentityProvider : UpstreamServiceBase, IApplicationIdentityProviderService, IUpstreamServiceProvider<IApplicationIdentityProviderService>
+    public class UpstreamApplicationIdentityProvider : UpstreamServiceBase, IDisposable, IApplicationIdentityProviderService, IUpstreamServiceProvider<IApplicationIdentityProviderService>
     {
         readonly ILocalServiceProvider<IApplicationIdentityProviderService> _LocalApplicationIdentityProvider;
         readonly IOAuthClient _OAuthClient;
@@ -36,6 +37,9 @@ namespace SanteDB.Client.Upstream.Security
 
         readonly bool _CanSyncPolicies;
         readonly bool _CanSyncRoles;
+
+        readonly ThreadLocal<bool> _IsSynchonizingPolicies;
+        private bool disposedValue;
 
         /// <inheritdoc/>
         public IApplicationIdentityProviderService UpstreamProvider => this;
@@ -54,6 +58,7 @@ namespace SanteDB.Client.Upstream.Security
             ILocalServiceProvider<IApplicationIdentityProviderService> localIdentityProvider = null) // on initial configuration in online only mode there are no local users
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
+            _IsSynchonizingPolicies = new ThreadLocal<bool>();
             _LocalApplicationIdentityProvider = localIdentityProvider;
             _LocalizationService = localizationService;
             _RemotePolicyInformationService = remotePolicyInformationService;
@@ -100,90 +105,105 @@ namespace SanteDB.Client.Upstream.Security
 
         private void SynchronizeLocalIdentity(IClaimsPrincipal remoteIdentity, string clientSecret)
         {
-            if (null == remoteIdentity)
-            {
-                throw new ArgumentNullException(nameof(remoteIdentity), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
-            }
-
-            if (null == _LocalApplicationIdentityProvider) //In online-only mode or initial mode, there will not be a local provider.
+            if (_IsSynchonizingPolicies?.Value == true)
             {
                 return;
             }
 
-            var appidentity = remoteIdentity.Identity as IClaimsIdentity; //Coming from OAuth, there will always be one that represents the app.
-
-            var policiestosync = new List<string>();
-            var rolestosync = new List<string>();
-            string appid = null;
-
-            policiestosync.AddRange(remoteIdentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
-            rolestosync.AddRange(remoteIdentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
-
-            if (null != appidentity)
+            try
             {
-                policiestosync.AddRange(appidentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
-                rolestosync.AddRange(appidentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
+                _IsSynchonizingPolicies.Value = true;
 
-                appid = appidentity.GetFirstClaimValue(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, SanteDBClaimTypes.SecurityId);
-            }
 
-            var localapp = _LocalApplicationIdentityProvider.LocalProvider.GetIdentity(appidentity.Name);
-
-            if (null == localapp)
-            {
-                localapp = _LocalApplicationIdentityProvider.LocalProvider.CreateIdentity(appidentity.Name, clientSecret, AuthenticationContext.SystemPrincipal);
-            }
-            else if (!string.IsNullOrEmpty(clientSecret))
-            {
-                _LocalApplicationIdentityProvider.LocalProvider.ChangeSecret(appidentity.Name, clientSecret, AuthenticationContext.SystemPrincipal);
-            }
-
-            var policiestoadd = new List<IPolicy>();
-            var policiestogrant = new List<(PolicyGrantType rule, string policyOid)>();
-
-            using (AuthenticationContext.EnterContext(remoteIdentity))
-            {
-                if (_CanSyncPolicies)
+                if (null == remoteIdentity)
                 {
-                    foreach (var policyoid in policiestosync)
-                    {
-                        var localpolicy = _LocalPolicyInformationService.LocalProvider.GetPolicy(policyoid);
+                    throw new ArgumentNullException(nameof(remoteIdentity), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                }
 
-                        if (null == localpolicy)
+                if (null == _LocalApplicationIdentityProvider) //In online-only mode or initial mode, there will not be a local provider.
+                {
+                    return;
+                }
+
+                var appidentity = remoteIdentity.Identity as IClaimsIdentity; //Coming from OAuth, there will always be one that represents the app.
+
+                var policiestosync = new List<string>();
+                var rolestosync = new List<string>();
+                string appid = null;
+
+                policiestosync.AddRange(remoteIdentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
+                rolestosync.AddRange(remoteIdentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
+
+                if (null != appidentity)
+                {
+                    policiestosync.AddRange(appidentity.Claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(c => c.Value));
+                    rolestosync.AddRange(appidentity.Claims.Where(c => c.Type == SanteDBClaimTypes.DefaultRoleClaimType).Select(c => c.Value));
+
+                    appid = appidentity.GetFirstClaimValue(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, SanteDBClaimTypes.SecurityId);
+                }
+
+                var localapp = _LocalApplicationIdentityProvider.LocalProvider.GetIdentity(appidentity.Name);
+
+                if (null == localapp)
+                {
+                    localapp = _LocalApplicationIdentityProvider.LocalProvider.CreateIdentity(appidentity.Name, clientSecret, AuthenticationContext.SystemPrincipal);
+                }
+                else if (!string.IsNullOrEmpty(clientSecret))
+                {
+                    _LocalApplicationIdentityProvider.LocalProvider.ChangeSecret(appidentity.Name, clientSecret, AuthenticationContext.SystemPrincipal);
+                }
+
+                var policiestoadd = new List<IPolicy>();
+                var policiestogrant = new List<(PolicyGrantType rule, string policyOid)>();
+
+                using (AuthenticationContext.EnterContext(remoteIdentity))
+                {
+                    if (_CanSyncPolicies)
+                    {
+                        foreach (var policyoid in policiestosync)
                         {
-                            var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
-                            policiestoadd.Add(remotepolicy);
+                            var localpolicy = _LocalPolicyInformationService.LocalProvider.GetPolicy(policyoid);
+
+                            if (null == localpolicy)
+                            {
+                                var remotepolicy = _RemotePolicyInformationService.GetPolicy(policyoid);
+                                policiestoadd.Add(remotepolicy);
+                            }
+                        }
+
+                        var remotepolicies = _RemotePolicyInformationService.GetPolicies(appidentity);
+
+                        foreach (var remotepolicy in remotepolicies)
+                        {
+                            if (null == _LocalPolicyInformationService.LocalProvider.GetPolicy(remotepolicy.Policy.Oid))
+                            {
+                                policiestoadd.Add(remotepolicy.Policy);
+                            }
+
+                            policiestogrant.Add((remotepolicy.Rule, remotepolicy.Policy.Oid));
                         }
                     }
+                }
 
-                    var remotepolicies = _RemotePolicyInformationService.GetPolicies(appidentity);
-
-                    foreach (var remotepolicy in remotepolicies)
+                if (policiestoadd.Count > 0 || policiestoadd.Count > 0)
+                {
+                    using (AuthenticationContext.EnterSystemContext())
                     {
-                        if (null == _LocalPolicyInformationService.LocalProvider.GetPolicy(remotepolicy.Policy.Oid))
+                        foreach (var policytoadd in policiestoadd)
                         {
-                            policiestoadd.Add(remotepolicy.Policy);
+                            _LocalPolicyInformationService.LocalProvider.CreatePolicy(policytoadd, AuthenticationContext.SystemPrincipal);
                         }
 
-                        policiestogrant.Add((remotepolicy.Rule, remotepolicy.Policy.Oid));
+                        foreach (var policytogrant in policiestogrant)
+                        {
+                            _LocalPolicyInformationService.LocalProvider.AddPolicies(localapp, policytogrant.rule, AuthenticationContext.SystemPrincipal, policytogrant.policyOid);
+                        }
                     }
                 }
             }
-
-            if (policiestoadd.Count > 0 || policiestoadd.Count > 0)
+            finally
             {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    foreach (var policytoadd in policiestoadd)
-                    {
-                        _LocalPolicyInformationService.LocalProvider.CreatePolicy(policytoadd, AuthenticationContext.SystemPrincipal);
-                    }
-
-                    foreach (var policytogrant in policiestogrant)
-                    {
-                        _LocalPolicyInformationService.LocalProvider.AddPolicies(localapp, policytogrant.rule, AuthenticationContext.SystemPrincipal, policytogrant.policyOid);
-                    }
-                }
+                _IsSynchonizingPolicies.Value = false;
             }
         }
 
@@ -419,6 +439,36 @@ namespace SanteDB.Client.Upstream.Security
                 throw new NotSupportedException("Cannot refresh this principal");
             }
 
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    _IsSynchonizingPolicies?.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~UpstreamApplicationIdentityProvider()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

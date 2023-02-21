@@ -1,6 +1,7 @@
 ﻿using SanteDB.Client.Configuration;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
+using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Configuration;
@@ -18,7 +19,7 @@ namespace SanteDB.Client.Batteries.Services
     /// <summary>
     /// Initial applet installation service
     /// </summary>
-    internal class InitialAppletInstallationService
+    public class InitialAppletInstallationService
     {
         private readonly IUserInterfaceInteractionProvider m_userInterfaceInteraction;
 
@@ -33,11 +34,28 @@ namespace SanteDB.Client.Batteries.Services
 
             this.m_userInterfaceInteraction = userInterfaceInteractionProvider;
 
-            // If there is an "applets" folder for seeding - let's use it
-            var seedDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "applets");
+            var assembly = Assembly.GetEntryAssembly();
+            var execassembly = Assembly.GetExecutingAssembly();
+            string seedDirectory = null;
+
+            if (null == assembly)
+            {
+                var appletdirectory = configurationManager.GetSection<AppletConfigurationSection>()?.AppletDirectory;
+
+                if (!string.IsNullOrWhiteSpace(appletdirectory))
+                {
+                    seedDirectory = Path.Combine(Path.GetDirectoryName(appletdirectory), "pakfiles");
+                }
+            }
+            else
+            {
+                // If there is an "applets" folder for seeding - let's use it
+                seedDirectory = Path.Combine(Path.GetDirectoryName(assembly.Location), "applets");
+            }
+
             if (Directory.Exists(seedDirectory) && configurationManager is InitialConfigurationManager)
             {
-                if(appletManagerService is IReportProgressChanged irpc)
+                if (appletManagerService is IReportProgressChanged irpc)
                 {
                     irpc.ProgressChanged += Irpc_ProgressChanged;
                 }
@@ -46,17 +64,41 @@ namespace SanteDB.Client.Batteries.Services
                     irpc = null;
                 }
 
+                bool solutionloaded = false;
+
                 foreach (var appFile in Directory.GetFiles(seedDirectory, "*.pak"))
                 {
                     try
                     {
                         using (var fs = File.OpenRead(appFile))
                         {
-                            var appPackage = AppletSolution.Load(fs);
+                            var appPackage = AppletPackage.Load(fs);
+
+                            if (appPackage is AppletSolution sln)
+                            {
+                                //Check if we've already loaded a solution. Multiple solutions cannot be installed on a client.
+                                if (solutionloaded)
+                                {
+                                    throw new InvalidOperationException("Multiple applet solutions cannot be installed concurrently.");
+                                }
+
+                                solutionloaded = true;
+
+                                foreach (var include in sln.Include)
+                                {
+                                    if (!appletManagerService.Install(include, true))
+                                    {
+                                        this.m_tracer.TraceWarning("Could not install include in seed app: {0}", include.Meta.Id);
+                                    }
+                                }
+                            }
+
                             if (!appletManagerService.Install(appPackage, true))
                             {
                                 this.m_tracer.TraceWarning("Could not install seed app: {0}", appFile);
                             }
+
+
                         }
                     }
                     catch (Exception e)
