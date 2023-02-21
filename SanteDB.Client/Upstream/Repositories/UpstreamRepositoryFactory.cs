@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Upstream.Management;
+using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.Acts;
@@ -37,6 +38,7 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(UpstreamPolicyInformationService),
             typeof(UpstreamSecurityChallengeProvider),
             typeof(UpstreamAuditRepository),
+            typeof(UpstreamTfaService),
             typeof(UpstreamJobManager),
             typeof(UpstreamPubSubManager)
         };

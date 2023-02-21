@@ -25,5 +25,6 @@ namespace SanteDB.Client.OAuth
         public string Error { get; set; }
         [JsonProperty("error_description")]
         public string ErrorDescription { get; set; }
+        
     }
 }

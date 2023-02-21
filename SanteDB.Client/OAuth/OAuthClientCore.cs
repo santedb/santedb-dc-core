@@ -71,7 +71,7 @@ namespace SanteDB.Client.OAuth
             return RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AuthenticationService);
         }
 
-        public virtual IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null)
+        public virtual IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null)
         {
             var request = new OAuthClientTokenRequest
             {
@@ -79,7 +79,8 @@ namespace SanteDB.Client.OAuth
                 Username = username,
                 Password = password,
                 ClientId = clientId,
-                Nonce = GetNonce()
+                Nonce = GetNonce(),
+                MfaCode = tfaSecret
             };
 
             return GetPrincipal(request);

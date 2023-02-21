@@ -16,8 +16,9 @@ namespace SanteDB.Client.Services
         /// <param name="password"></param>
         /// <param name="clientId">Optional client_id to provide in the request. If this value is <c>null</c>, the Realm client_id will be used.</param>
         /// <param name="devicePrincipal"></param>
+        /// <param name="tfaSecret"></param>
         /// <returns></returns>
-        IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null);
+        IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null);
 
         /// <summary>
         /// Authenticate an application given an authenticated device principal.

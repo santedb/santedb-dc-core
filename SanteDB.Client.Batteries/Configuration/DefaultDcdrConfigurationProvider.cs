@@ -88,6 +88,7 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(MemorySessionManagerService)),
                     new TypeReferenceConfiguration(typeof(UpstreamUpdateManagerService)), // AmiUpdateManager
                     new TypeReferenceConfiguration(typeof(UpstreamIdentityProvider)),
+                    new TypeReferenceConfiguration(typeof(UpstreamTfaService)),
                     new TypeReferenceConfiguration(typeof(UpstreamApplicationIdentityProvider)),
                     new TypeReferenceConfiguration(typeof(UpstreamSecurityChallengeProvider)), // AmiSecurityChallengeProvider
                     new TypeReferenceConfiguration(typeof(UpstreamRoleProviderService)),

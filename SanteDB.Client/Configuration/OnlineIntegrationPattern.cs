@@ -24,6 +24,7 @@ namespace SanteDB.Client.Configuration
                         typeof(UpstreamJobManager),
                         typeof(UpstreamForeignDataManagement),
                         typeof(UpstreamRepositoryFactory),
+                        typeof(UpstreamTfaService),
                         typeof(UpstreamIdentityProvider),
                         typeof(UpstreamApplicationIdentityProvider),
                         typeof(UpstreamPolicyInformationService),

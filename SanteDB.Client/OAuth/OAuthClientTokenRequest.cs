@@ -21,5 +21,7 @@ namespace SanteDB.Client.OAuth
         public string Nonce { get; set; }
         [FormElement("refresh_token")]
         public string RefreshToken { get; set; }
+        [FormElement("x_mfa")]
+        public string MfaCode { get; set; }
     }
 }

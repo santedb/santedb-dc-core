@@ -239,7 +239,7 @@ namespace SanteDB.Client.Upstream.Security
                 {
                     try
                     {
-                        result = _OAuthClient.AuthenticateUser(userName, password);
+                        result = _OAuthClient.AuthenticateUser(userName, password, tfaSecret: tfaSecret);
 
                         SynchronizeLocalIdentity(result, password);
 
