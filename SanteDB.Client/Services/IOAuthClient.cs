@@ -29,5 +29,10 @@ namespace SanteDB.Client.Services
         IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null);
 
         IClaimsPrincipal Refresh(string refreshToken);
+
+        /// <summary>
+        /// Login for the purposes of changing a password only
+        /// </summary>
+        IClaimsPrincipal ChallengeAuthenticateUser(string userName, Guid challengeKey, string response, string clientId = null, string tfaSecret = null);
     }
 }

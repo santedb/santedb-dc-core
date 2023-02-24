@@ -5,6 +5,7 @@ using SanteDB.Client.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.OAuth;
 using SanteDB.Rest.OAuth;
@@ -22,7 +23,6 @@ namespace SanteDB.Client.OAuth
     /// </summary>
     public class OAuthClientCore : IOAuthClient
     {
-        
 
         protected TokenValidationParameters TokenValidationParameters { get; set; }
         protected OpenIdConnectDiscoveryDocument DiscoveryDocument { get; set; }
@@ -331,6 +331,26 @@ namespace SanteDB.Client.OAuth
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Perform a <c>x_challenge</c> authentication request against the server
+        /// </summary>
+        public IClaimsPrincipal ChallengeAuthenticateUser(string userName, Guid challengeKey, string challengeResponse, string clientId = null, string tfaSecret = null)
+        {
+            var request = new OAuthClientTokenRequest
+            {
+                Username = userName,
+                GrantType = "x_challenge",
+                ClientId = clientId,
+                Challenge = challengeKey.ToString(), 
+                Response = challengeResponse,
+                MfaCode = tfaSecret,
+                Nonce = GetNonce(),
+                Scope = PermissionPolicyIdentifiers.LoginPasswordOnly
+            };
+
+            return GetPrincipal(request);
         }
         #endregion
     }

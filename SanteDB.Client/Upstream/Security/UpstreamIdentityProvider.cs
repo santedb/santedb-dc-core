@@ -25,10 +25,12 @@ using System.Text;
 namespace SanteDB.Client.Upstream.Security
 {
     [PreferredService(typeof(IIdentityProviderService))]
-    public class UpstreamIdentityProvider : UpstreamServiceBase, IIdentityProviderService
+    [PreferredService(typeof(ISecurityChallengeIdentityService))]
+    public class UpstreamIdentityProvider : UpstreamServiceBase, IIdentityProviderService, ISecurityChallengeIdentityService
     {
         readonly ILocalServiceProvider<IIdentityProviderService> _LocalIdentityProvider;
         readonly IOAuthClient _OAuthClient;
+        private readonly ILocalServiceProvider<ISecurityChallengeIdentityService> _LocalSecurityChallengeService;
         readonly ILocalizationService _LocalizationService;
         readonly IUpstreamServiceProvider<IPolicyInformationService> _RemotePolicyInformationService;
         readonly ILocalServiceProvider<IPolicyInformationService> _LocalPolicyInformationService;
@@ -48,6 +50,7 @@ namespace SanteDB.Client.Upstream.Security
             IRoleProviderService remoteRoleProviderService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             ISecurityRepositoryService securityRepositoryService,
+            ILocalServiceProvider<ISecurityChallengeIdentityService> localSecurityChallengeService = null,
             ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService = null,
             ILocalServiceProvider<IRoleProviderService> localRoleProviderService = null,
             ILocalServiceProvider<IIdentityProviderService> localIdentityProvider = null) // on initial configuration in online only mode there are no local users
@@ -61,6 +64,7 @@ namespace SanteDB.Client.Upstream.Security
             _SecurityRepositoryService = securityRepositoryService;
             _LocalPolicyInformationService = localPolicyInformationService;
             _OAuthClient = oauthClient ?? throw new ArgumentNullException(nameof(oauthClient));
+            _LocalSecurityChallengeService = localSecurityChallengeService;
             _CanSyncPolicies = null != _LocalPolicyInformationService && _RemotePolicyInformationService != _LocalPolicyInformationService;
             _CanSyncRoles = null != _LocalRoleProviderService && _RemoteRoleProviderService != _LocalRoleProviderService;
         }
@@ -411,6 +415,65 @@ namespace SanteDB.Client.Upstream.Security
                 throw new NotSupportedException(string.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
             }
             _LocalIdentityProvider.LocalProvider.SetLockout(userName, lockout, principal);
+        }
+
+        /// <summary>
+        /// Authenticate using the x_challenge authentication scheme
+        /// </summary>
+        public IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret)
+        {
+            var authenticatingargs = new AuthenticatingEventArgs(userName);
+            Authenticating?.Invoke(this, authenticatingargs);
+
+            if (authenticatingargs.Cancel)
+            {
+                _Tracer.TraceVerbose("Authenticating Event signals cancel.");
+                if (authenticatingargs.Success)
+                {
+                    return authenticatingargs.Principal;
+                }
+                else
+                {
+                    throw new AuthenticationException(_LocalizationService.GetString(ErrorMessageStrings.AUTH_CANCELLED));
+                }
+            }
+
+            IClaimsPrincipal result = null;
+            try
+            {
+
+                if (ShouldDoRemoteAuthentication(userName))
+                {
+                    try
+                    {
+                        result = _OAuthClient.ChallengeAuthenticateUser(userName, challengeKey, response, tfaSecret: tfaSecret);
+                        return result;
+                    }
+                    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                    {
+                        throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_AUTH_ERR), ex);
+                    }
+                }
+                else if (_LocalIdentityProvider == null)
+                {
+                    throw new UpstreamIntegrationException(String.Format(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED, typeof(IIdentityProviderService)));
+                }
+
+                if (null != tfaSecret)
+                {
+                    result = _LocalSecurityChallengeService.LocalProvider.Authenticate(userName, challengeKey, response, tfaSecret) as IClaimsPrincipal;
+                }
+                else
+                {
+                    result = _LocalSecurityChallengeService.LocalProvider.Authenticate(userName, challengeKey, response, tfaSecret) as IClaimsPrincipal;
+                }
+
+                return result;
+            }
+            finally
+            {
+                Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, result, null != result));
+            }
         }
     }
 }

@@ -23,5 +23,11 @@ namespace SanteDB.Client.OAuth
         public string RefreshToken { get; set; }
         [FormElement("x_mfa")]
         public string MfaCode { get; set; }
+        [FormElement("challenge")]
+        public String Challenge { get; set; }
+        [FormElement("response")]
+        public String Response { get; set; }
+        [FormElement("scope")]
+        public string Scope { get; internal set; }
     }
 }
