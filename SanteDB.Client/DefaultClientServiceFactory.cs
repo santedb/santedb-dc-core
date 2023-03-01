@@ -16,7 +16,8 @@ namespace SanteDB.Client
         {
             typeof(DefaultUpstreamManagementService),
             typeof(DefaultUpstreamAvailabilityProvider),
-            typeof(DefaultUpstreamIntegrationService)
+            typeof(DefaultUpstreamIntegrationService),
+            typeof(UpstreamDiagnosticRepository)
         };
         private readonly IServiceManager m_serviceManager;
 
@@ -43,9 +44,10 @@ namespace SanteDB.Client
         /// <inheritdoc/>
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
-            if(this.m_serviceTypes.Any(t=>serviceType.IsAssignableFrom(t)))
+            var fixedSerivce = this.m_serviceTypes.FirstOrDefault(t => serviceType.IsAssignableFrom(t));
+            if (fixedSerivce != null)
             {
-                serviceInstance = this.m_serviceManager.CreateInjected(serviceType);
+                serviceInstance = this.m_serviceManager.CreateInjected(fixedSerivce);
                 return true;
             }
             serviceInstance = null;
