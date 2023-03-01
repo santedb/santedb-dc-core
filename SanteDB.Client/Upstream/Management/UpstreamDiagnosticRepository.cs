@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 
@@ -124,6 +125,8 @@ namespace SanteDB.Client.Upstream.Management
 
                 
                 }
+
+                data.ApplicationInfo = new DiagnosticApplicationInfo(Assembly.GetEntryAssembly() ?? this.GetType().Assembly);
                 using (var client = base.CreateAmiServiceClient())
                 {
                     return client.SubmitDiagnosticReport(data);
