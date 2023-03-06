@@ -32,7 +32,8 @@ namespace SanteDB.Client.Configuration
                         typeof(UpstreamMatchConfigurationService),
                         typeof(UpstreamSecurityRepository),
                         typeof(UpstreamSecurityChallengeProvider),
-                        typeof(RepositoryEntitySource)
+                        typeof(RepositoryEntitySource),
+                        typeof(UpstreamResourceCheckoutService)
                     };
     }
 }

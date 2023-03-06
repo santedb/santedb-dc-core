@@ -249,6 +249,11 @@ namespace SanteDB.Client.Upstream.Security
 
                         return result;
                     }
+                    catch(RestClientException<OAuthClientTokenResponse> ex)
+                    {
+                        // HACK: We want to relay the error from upstream
+                        throw new RestClientException<Object>(ex.Result, ex, ex.Status, ex.Response);
+                    }
                     catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                     {
                         throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_AUTH_ERR), ex);
