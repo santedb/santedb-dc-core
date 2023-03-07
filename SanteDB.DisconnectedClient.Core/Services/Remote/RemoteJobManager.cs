@@ -38,7 +38,7 @@ namespace SanteDB.DisconnectedClient.Services.Remote
     /// <summary>
     /// A job management service which is just chained to the central server
     /// </summary>
-    public class RemoteJobManager : IJobManagerService
+    public class RemoteJobManager : IJobManagerService, IJobStateManagerService
     {
         /// <summary>
         /// Represents a remote job
@@ -446,6 +446,24 @@ namespace SanteDB.DisconnectedClient.Services.Remote
             {
                 return null;
             }
+        }
+
+        /// <inheritdoc/>
+        public void SetState(IJob job, JobStateType state)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public void SetProgress(IJob job, string statusText, float progress)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public IJobState GetJobState(IJob job)
+        {
+            return this.GetJobInstance(job.Id) as RemoteJob;
         }
     }
 }

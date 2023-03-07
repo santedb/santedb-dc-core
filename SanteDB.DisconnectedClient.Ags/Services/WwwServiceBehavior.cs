@@ -66,7 +66,6 @@ namespace SanteDB.DisconnectedClient.Ags.Services
         /// </summary>
         public Stream GetIcon()
         {
-
             var ms = new MemoryStream();
             typeof(WwwServiceBehavior).Assembly.GetManifestResourceStream("SanteDB.DisconnectedClient.Ags.Resources.icon.ico").CopyTo(ms);
             ms.Seek(0, SeekOrigin.Begin);
