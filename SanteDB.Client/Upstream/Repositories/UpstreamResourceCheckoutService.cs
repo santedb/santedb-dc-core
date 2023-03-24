@@ -36,11 +36,14 @@ namespace SanteDB.Client.Upstream.Repositories
     /// </summary>
     public class UpstreamResourceCheckoutService : UpstreamServiceBase, IResourceCheckoutService
     {
+        private readonly IDataCachingService m_dataCachingService;
+
         /// <summary>
         /// DI Constructor
         /// </summary>
-        public UpstreamResourceCheckoutService(IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamAvailabilityProvider upstreamAvailabilityProvider, IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
+        public UpstreamResourceCheckoutService(IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, IUpstreamAvailabilityProvider upstreamAvailabilityProvider, IDataCachingService dataCachingService, IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
+            this.m_dataCachingService = dataCachingService;
         }
 
         /// <inheritdoc/>
@@ -54,6 +57,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 using(var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
                 {
                     client.Invoke<Object, Object>("CHECKIN", $"{typeof(T).GetSerializationName()}/{key}", null);
+                    this.m_dataCachingService.Remove(key);
                     return true;
                 }
             }
@@ -71,6 +75,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 using (var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
                 {
                     client.Invoke<Object, Object>("CHECKOUT", $"{typeof(T).GetSerializationName()}/{key}", null);
+                    this.m_dataCachingService.Remove(key);
                     return true;
                 }
             }

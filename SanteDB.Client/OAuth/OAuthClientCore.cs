@@ -19,6 +19,7 @@
  * Date: 2023-3-10
  */
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using SanteDB.BI.Model;
 using SanteDB.Client.Services;
@@ -210,6 +211,11 @@ namespace SanteDB.Client.OAuth
 
         protected virtual IClaimsPrincipal CreatePrincipalFromResponse(OAuthClientTokenResponse response)
         {
+#if DEBUG
+            // Allow PII to be included in exceptions
+            IdentityModelEventSource.ShowPII = true;
+#endif 
+
             var tokenvalidationresult = TokenHandler.ValidateToken(response.IdToken, TokenValidationParameters);
 
             if (tokenvalidationresult?.IsValid != true)
