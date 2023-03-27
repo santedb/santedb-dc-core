@@ -33,6 +33,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Text;
 using System.Linq;
+using Hl7.Fhir.Utility;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -40,7 +41,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// A generic implementation that calls the upstream for fetching data 
     /// </summary>
     public abstract class UpstreamRepositoryServiceBase<TModel, TWireFormat, TCollection> : UpstreamServiceBase,
-        IRepositoryService<TModel>,
+        IRepositoryServiceEx<TModel>,
         IRepositoryService
         where TModel : IdentifiedData, new()
         where TWireFormat : class, IIdentifiedResource, new()
@@ -273,5 +274,24 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         IdentifiedData IRepositoryService.Delete(Guid key) => this.Delete(key);
+
+        /// <inheritdoc/>
+        public void Touch(Guid key)
+        {
+            try
+            {
+                using (var client = this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal))
+                {
+                    // Create or Update
+                    client.Invoke<Object, Object>("TOUCH", $"{this.GetResourceName()}/{key}", null);
+                    this.m_cacheService.Remove(key);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localeService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR), e);
+            }
+
+        }
     }
 }

@@ -185,9 +185,9 @@ namespace SanteDB.Client.Repositories
             {
                 using (var amiclient = CreateAmiServiceClient())
                 {
-                    var user = amiclient.GetUsers(u => u.UserName == userName)?.CollectionItem?.OfType<SecurityUserInfo>()?.FirstOrDefault();
+                    var user = amiclient.GetUsers(u => u.UserName == userName && (u.ObsoletionTime != null || u.ObsoletionTime == null))?.CollectionItem?.OfType<SecurityUserInfo>()?.FirstOrDefault();
 
-                    return user?.Roles?.ToArray();
+                    return user?.Roles?.ToArray() ?? new string[0];
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
