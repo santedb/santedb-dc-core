@@ -362,6 +362,12 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
+        public IQueryResultSet<TModel> Except(Expression<Func<TModel, bool>> query)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
         public IQueryResultSet Union(IQueryResultSet other)
         {
             throw new NotSupportedException();
