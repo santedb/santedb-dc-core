@@ -130,12 +130,14 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public string ServiceName => "Upstream Data Provider";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<RestResponseEventArgs> Responding;
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
         /// <inheritdoc/>
         public event EventHandler<UpstreamIntegrationResultEventArgs> Responded;
+#pragma warning restore
 
         /// <summary>
         /// DI constructor

@@ -34,8 +34,18 @@ namespace SanteDB.Client.Disconnected.Rest
     public partial class SynchronizedAppServiceBehavior : AppServiceBehavior, ISynchronizedAppServiceContract
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SynchronizedAppServiceBehavior));
+
+        /// <summary>
+        /// The injected synchronization queue manager
+        /// </summary>
         protected readonly ISynchronizationQueueManager m_synchronizationQueueManager;
+        /// <summary>
+        /// The injected synchornization controller server
+        /// </summary>
         protected readonly ISynchronizationService m_synchronizationService;
+        /// <summary>
+        /// The injected synchronization logging server
+        /// </summary>
         protected readonly ISynchronizationLogService m_synchronizationLogService;
 
         /// <summary>

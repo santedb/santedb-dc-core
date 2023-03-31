@@ -26,18 +26,37 @@ using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
+    /// <summary>
+    /// Represents a single log entry in the synchronization log
+    /// </summary>
     public class SynchronizationLogEntry : IdentifiedData, ISynchronizationLogEntry
     {
+        /// <summary>
+        /// The type of resource 
+        /// </summary>
         public string ResourceType { get; set; }
 
+        /// <summary>
+        /// The last time that the object was synchronized
+        /// </summary>
         public DateTime LastSync { get; set; }
 
+        /// <summary>
+        /// The last ETAg which was fetched
+        /// </summary>
         public string LastETag { get; set; }
 
+        /// <summary>
+        /// The filter which was applied on the synchronization 
+        /// </summary>
         public string Filter { get; set; }
 
+        /// <summary>
+        /// The endpoint which was used to fetch the synchronization
+        /// </summary>
         public ServiceEndpointType Endpoint { get; set; }
 
+        /// <inheritdoc/>
         public override DateTimeOffset ModifiedOn => LastSync;
     }
 }

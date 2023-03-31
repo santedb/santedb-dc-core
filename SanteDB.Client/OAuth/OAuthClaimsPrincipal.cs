@@ -40,7 +40,13 @@ namespace SanteDB.Client.OAuth
     [ExcludeFromCodeCoverage]
     public class OAuthClaimsPrincipal : SanteDBClaimsPrincipal, ITokenPrincipal
     {
+        /// <summary>
+        /// Gets the time that the principal will be expired
+        /// </summary>
         public DateTimeOffset ExpiresAt { get; }
+        /// <summary>
+        /// Gets the time that the principal should be renewed
+        /// </summary>
         public DateTimeOffset RenewAfter { get; }
 
         readonly string _TokenType;
@@ -48,14 +54,24 @@ namespace SanteDB.Client.OAuth
         readonly string _AccessToken;
         readonly string _RefreshToken;
 
+        /// <summary>
+        /// Gets whether the principal needs to be renewed
+        /// </summary>
         public bool NeedsRenewal => DateTimeOffset.Now >= RenewAfter;
+        /// <summary>
+        /// Gets whether the principal is expired
+        /// </summary>
         public bool IsExpired => DateTimeOffset.Now >= ExpiresAt;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TokenClaimsPrincipal"/> class.
+        /// Initializes a new instance of the <see cref="OAuthClaimsPrincipal"/> class.
         /// </summary>
-        /// <param name="idToken">Token.</param>
-        /// <param name="tokenType">Token type.</param>
+        /// <param name="idToken">The identity token</param>
+        /// <param name="tokenType">The type of identity token provided</param>
+        /// <param name="accessToken">The token to access the resource</param>
+        /// <param name="claims">The claims attached to the principal</param>
+        /// <param name="expiresIn">The time when this principal is expired</param>
+        /// <param name="refreshToken">The token which can be used to extend this session</param>
         public OAuthClaimsPrincipal(string accessToken, SecurityToken idToken, string tokenType, string refreshToken, int expiresIn, List<IClaim> claims) : base()
         {
             if (null == idToken)
@@ -95,18 +111,41 @@ namespace SanteDB.Client.OAuth
         {
             return this._AccessToken;
         }
-
+        
+        /// <summary>
+        /// True if the principal can be refreshed
+        /// </summary>
         public bool CanRefresh => !string.IsNullOrEmpty(_RefreshToken);
 
+        /// <summary>
+        /// Gets the access token
+        /// </summary>
         string ITokenPrincipal.AccessToken => this._AccessToken;
 
+        /// <summary>
+        /// Gets the token type
+        /// </summary>
         string ITokenPrincipal.TokenType => this._TokenType;
 
+        /// <summary>
+        /// Gets the identity token
+        /// </summary>
         String ITokenPrincipal.IdentityToken => (this._IdToken as JsonWebToken).EncodedToken;
 
+        /// <summary>
+        /// Gets the refresh token
+        /// </summary>
         String ITokenPrincipal.RefreshToken => this._RefreshToken;
 
+        /// <summary>
+        /// Gets the refresh token
+        /// </summary>
         public string GetRefreshToken() => _RefreshToken;
+
+        /// <summary>
+        /// Gets the access token
+        /// </summary>
+        /// <returns></returns>
         public string GetAccessToken() => _AccessToken;
 
     }

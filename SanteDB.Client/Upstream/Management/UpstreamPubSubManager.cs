@@ -64,6 +64,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public string ServiceName => "Upstream Publish/Subscribe Manager";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<DataPersistingEventArgs<PubSubSubscriptionDefinition>> Subscribing;
         /// <inheritdoc/>
@@ -81,6 +82,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public event EventHandler<DataPersistedEventArgs<PubSubSubscriptionDefinition>> DeActivated;
 
+#pragma warning restore
         /// <inheritdoc/>
         public PubSubSubscriptionDefinition ActivateSubscription(Guid key, bool isActive)
         {

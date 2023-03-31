@@ -44,7 +44,7 @@ namespace SanteDB.Client.Configuration
         private readonly SanteDBConfiguration m_configuration;
         private readonly string m_localConfigurationPath;
 
-        // Restart requested
+        /// <inheritdoc/>
         public event EventHandler RestartRequested;
 
         /// <summary>

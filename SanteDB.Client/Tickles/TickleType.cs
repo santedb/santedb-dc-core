@@ -42,15 +42,24 @@ namespace SanteDB.Client.Tickles
         /// </summary>
         Toast = 4,
         /// <summary>
-        /// <summary>
         /// Represents a task the user must perform before the tickle can be dismissed
         /// </summary>
         Task = 8,
+        /// <summary>
         /// Represents a tickle related to security
         /// </summary>
         Security = 16,
+        /// <summary>
+        /// The tickle represents a security tickle
+        /// </summary>
         SecurityTask = Task | Security,
+        /// <summary>
+        /// The tickle represents an error related to a security control
+        /// </summary>
         SecurityError = Danger | Security,
+        /// <summary>
+        /// The tickle represents an informational message related to security control
+        /// </summary>
         SecurityInformation = Information | Security
 
     }

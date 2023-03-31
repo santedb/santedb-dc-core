@@ -23,6 +23,7 @@ using SanteDB.Core;
 using SanteDB.Core.Applets;
 using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Model;
+using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
@@ -50,9 +51,10 @@ namespace SanteDB.Client.Batteries.Services
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
         private readonly SecurityConfigurationSection m_securityConfiguration;
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
+#pragma warning restore
 
         /// <summary>
         /// DI constructor
