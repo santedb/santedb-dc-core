@@ -411,5 +411,10 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         IQueryResultSet IQueryResultSet.Take(int count) => this.Take(count);
+
+        public IQueryResultSet<TModel> Except(Expression<Func<TModel, bool>> query)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
