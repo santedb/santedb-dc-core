@@ -441,8 +441,6 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Generate rest client
         /// </summary>
-        /// <param name="realmOptions">The realm options returned by the server</param>
-        /// <returns>The collection of rest descriptions</returns>
         private IEnumerable<RestClientDescriptionConfiguration> GetRestClients(IUpstreamRealmSettings targetRealm, ServiceOptions realmOptions)
         {
             foreach (var endpoint in realmOptions.Endpoints.Where(r => r.BaseUrl.Any(k => new Uri(k).Scheme.StartsWith("http")) && r.ServiceType != ServiceEndpointType.Metadata))

@@ -52,15 +52,41 @@ namespace SanteDB.Client.Disconnected.Configuration
         private readonly IConfigurationManager m_configurationManager;
         private readonly ISubscriptionRepository m_subscriptionRepository;
         private readonly SynchronizationConfigurationSection m_configuration;
-
+        /// <summary>
+        /// The syncrhonization mode setting
+        /// </summary>
         public const string MODE_SETTING = "mode";
+        /// <summary>
+        /// The setting which controls whether the client overwrites the server
+        /// </summary>
         public const string OVERWRITE_SERVER_SETTING = "overwriteServer";
+        /// <summary>
+        /// The polling interval setting
+        /// </summary>
         public const string POLL_SETTING = "pollInterval";
+        /// <summary>
+        /// The setting which controls whether big bundles should be requested from the server
+        /// </summary>
         public const string BIG_BUNDLES_SETTING = "bigBundles";
+        /// <summary>
+        /// The setting which controls the subscriptions enabled
+        /// </summary>
         public const string ENABLED_SUBSCRIPTIONS_SETTING = "subscription";
+        /// <summary>
+        /// The setting which controls the types of objects to subscribe to
+        /// </summary>
         public const string SUBSCRIBED_OBJECT_TYPE_SETTING = "subscribeType";
+        /// <summary>
+        /// The setting which controls the instances of objects to subscribe to
+        /// </summary>
         public const string SUBSCRIBED_OBJECTS_SETTING = "subscribeTo";
+        /// <summary>
+        /// The setting which controls whether patches or full resources are sent to the server
+        /// </summary>
         public const string USE_PATCHES_SETTING = "usePatch";
+        /// <summary>
+        /// The setting which controls which resources are forbidden or to be ignored for synchronization
+        /// </summary>
         public const string FORBID_SYNC_SETTING = "forbidSync";
 
         /// <summary>

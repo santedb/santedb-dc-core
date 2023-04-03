@@ -44,6 +44,9 @@ using System.Threading;
 namespace SanteDB.Client.OAuth
 {
 
+    /// <summary>
+    /// An implementation of the OAuth client
+    /// </summary>
     public class OAuthClient : OAuthClientCore
     {
         IUpstreamRealmSettings _RealmSettings;
@@ -52,6 +55,9 @@ namespace SanteDB.Client.OAuth
         //IRestClient _AuthRestClient;
 
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory)
             : base(restClientFactory)
         {
@@ -63,6 +69,12 @@ namespace SanteDB.Client.OAuth
             //SetTokenValidationParameters();
         }
 
+        /// <summary>
+        /// Maps the claims from the <paramref name="tokenValidationResult"/> to the <paramref name="claims"/>
+        /// </summary>
+        /// <param name="tokenValidationResult">The token validation result to map claims for</param>
+        /// <param name="response">The OAUTH server response</param>
+        /// <param name="claims">The claims to be mapped</param>
         protected override void MapClaims(TokenValidationResult tokenValidationResult, OAuthClientTokenResponse response, List<IClaim> claims)
         {
             base.MapClaims(tokenValidationResult, response, claims);
@@ -71,6 +83,9 @@ namespace SanteDB.Client.OAuth
             claims.Add(new SanteDBClaim(SanteDBClaimTypes.Realm, _RealmSettings.Realm.ToString()));
         }
 
+        /// <summary>
+        /// Set the token validation parameters based on the configuration
+        /// </summary>
         protected override void SetTokenValidationParameters()
         {
             if (null != _RealmSettings) // This may be called before the UpstreamManagementService is fully configured - i.e. is configuring
@@ -85,6 +100,9 @@ namespace SanteDB.Client.OAuth
             }
         }
 
+        /// <summary>
+        /// handler for when the upstream realm has changed
+        /// </summary>
         protected virtual void UpstreamRealmChanging(object sender, UpstreamRealmChangedEventArgs eventArgs)
         {
             try
@@ -103,6 +121,9 @@ namespace SanteDB.Client.OAuth
             }
         }
 
+        /// <summary>
+        /// Event handler when the upstream realm has changed
+        /// </summary>
         protected virtual void UpstreamRealmChanged(object sender, UpstreamRealmChangedEventArgs eventArgs)
         {
             try
@@ -120,7 +141,11 @@ namespace SanteDB.Client.OAuth
             }
         }
 
-
+        /// <summary>
+        /// Contacts the OAUTH server with <paramref name="request"/>
+        /// </summary>
+        /// <param name="request">The OAUTH authentication request to send to the server</param>
+        /// <returns>The response provided by the OAUTH server</returns>
         protected override OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request)
         {
             if (null == _RealmSettings)
@@ -132,6 +157,9 @@ namespace SanteDB.Client.OAuth
             return base.GetToken(request);
         }
 
+        /// <summary>
+        /// Setup this class to send a token request
+        /// </summary>
         protected override void SetupRestClientForTokenRequest(IRestClient restClient)
         {
             base.SetupRestClientForTokenRequest(restClient);

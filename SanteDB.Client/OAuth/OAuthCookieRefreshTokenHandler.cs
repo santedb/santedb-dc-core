@@ -66,6 +66,7 @@ namespace SanteDB.Client.OAuth
             _AuditService = auditService;
         }
 
+#pragma warning disable CS0612
         /// <inheritdoc />
         public bool HandleRequest(OAuthTokenRequestContext context)
         {
@@ -103,5 +104,6 @@ namespace SanteDB.Client.OAuth
                 return false;
             }
         }
+#pragma warning restore
     }
 }

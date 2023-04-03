@@ -44,6 +44,9 @@ using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {
+    /// <summary>
+    /// Represents an implementation of the <see cref="IIdentityProviderService"/> which uses an upstream oauth server
+    /// </summary>
     [PreferredService(typeof(IIdentityProviderService))]
     [PreferredService(typeof(ISecurityChallengeIdentityService))]
     public class UpstreamIdentityProvider : UpstreamServiceBase, IIdentityProviderService, ISecurityChallengeIdentityService
@@ -61,6 +64,9 @@ namespace SanteDB.Client.Upstream.Security
         readonly bool _CanSyncPolicies;
         readonly bool _CanSyncRoles;
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public UpstreamIdentityProvider(
             IOAuthClient oauthClient,
             IRestClientFactory restClientFactory,
@@ -89,12 +95,20 @@ namespace SanteDB.Client.Upstream.Security
             _CanSyncRoles = null != _LocalRoleProviderService && _RemoteRoleProviderService != _LocalRoleProviderService;
         }
 
+        /// <inheritdoc/>
         public string ServiceName => "Upstream Identity Provider";
 
+        /// <inheritdoc/>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
+        /// <inheritdoc/>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
 
-        public bool ShouldDoRemoteAuthentication(string userName)
+        /// <summary>
+        /// Determines if <paramref name="userName"/> requires upstream authentication
+        /// </summary>
+        /// <param name="userName">The name of the user to check</param>
+        /// <returns>True if upstream authentication is required, false if local authentication can be used</returns>
+        private bool ShouldDoRemoteAuthentication(string userName)
         {
             //Null local provider so we're in online-only or initial mode.
             if (null == _LocalIdentityProvider || !IsUpstreamConfigured)
@@ -116,7 +130,14 @@ namespace SanteDB.Client.Upstream.Security
             return IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AuthenticationService);
         }
 
-        public void SynchronizeLocalIdentity(IClaimsPrincipal remoteIdentity, string password)
+        /// <summary>
+        /// Synchronize the remote <paramref name="remoteIdentity"/> with the successfully used <paramref name="password"/>
+        /// to the local cache
+        /// </summary>
+        /// <param name="password">The password used to successfully establish <paramref name="remoteIdentity"/></param>
+        /// <param name="remoteIdentity">The remote identity to be synchronized</param>
+        /// <remarks>Used to cache the most recent security credentials for offline authentication</remarks>
+        protected void SynchronizeLocalIdentity(IClaimsPrincipal remoteIdentity, string password)
         {
             if (null == remoteIdentity)
             {
@@ -198,8 +219,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
 
-
-        public void ChangeRemotePassword(string username, string newPassword)
+        private void ChangeRemotePassword(string username, string newPassword)
         {
             using (var amiclient = CreateAmiServiceClient())
             {
@@ -224,6 +244,7 @@ namespace SanteDB.Client.Upstream.Security
             }
         }
 
+        /// <inheritdoc/>
         public void AddClaim(string userName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
             if (_LocalIdentityProvider == null) // If this is online only configured - local not allowed
@@ -234,9 +255,11 @@ namespace SanteDB.Client.Upstream.Security
             _LocalIdentityProvider?.LocalProvider.AddClaim(userName, claim, principal, expiry);
         }
 
+        /// <inheritdoc/>
         public IPrincipal Authenticate(string userName, string password)
             => Authenticate(userName, password, null);
 
+        /// <inheritdoc/>
         public IPrincipal Authenticate(string userName, string password, string tfaSecret)
         {
             var authenticatingargs = new AuthenticatingEventArgs(userName);
@@ -303,6 +326,7 @@ namespace SanteDB.Client.Upstream.Security
 
 
 
+        /// <inheritdoc/>
         public void ChangePassword(string userName, string newPassword, IPrincipal principal, bool force)
         {
             _LocalIdentityProvider?.LocalProvider.ChangePassword(userName, newPassword, principal);
@@ -312,6 +336,7 @@ namespace SanteDB.Client.Upstream.Security
             }
         }
 
+        /// <inheritdoc/>
         public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
         {
             if (_LocalIdentityProvider == null)
@@ -328,6 +353,7 @@ namespace SanteDB.Client.Upstream.Security
             return result;
         }
 
+        /// <inheritdoc/>
         public void DeleteIdentity(string userName, IPrincipal principal)
         {
             if (_LocalIdentityProvider == null)
@@ -337,6 +363,7 @@ namespace SanteDB.Client.Upstream.Security
             _LocalIdentityProvider.LocalProvider.DeleteIdentity(userName, principal);
         }
 
+        /// <inheritdoc/>
         public AuthenticationMethod GetAuthenticationMethods(string userName)
         {
             if (null == _LocalIdentityProvider)
@@ -361,6 +388,7 @@ namespace SanteDB.Client.Upstream.Security
             return AuthenticationMethod.Local | AuthenticationMethod.Online;
         }
 
+        /// <inheritdoc/>
         public IEnumerable<IClaim> GetClaims(string userName)
         {
             if (_LocalIdentityProvider == null)
@@ -370,6 +398,7 @@ namespace SanteDB.Client.Upstream.Security
             return _LocalIdentityProvider.LocalProvider.GetClaims(userName);
         }
 
+        /// <inheritdoc/>
         public IIdentity GetIdentity(string userName)
         {
             if (_LocalIdentityProvider == null)
@@ -379,6 +408,7 @@ namespace SanteDB.Client.Upstream.Security
             return _LocalIdentityProvider.LocalProvider.GetIdentity(userName);
         }
 
+        /// <inheritdoc/>
         public IIdentity GetIdentity(Guid sid)
         {
             if (_LocalIdentityProvider == null)
@@ -388,6 +418,7 @@ namespace SanteDB.Client.Upstream.Security
             return _LocalIdentityProvider.LocalProvider.GetIdentity(sid);
         }
 
+        /// <inheritdoc/>
         public Guid GetSid(string name)
         {
             if (_LocalIdentityProvider == null)
@@ -397,6 +428,7 @@ namespace SanteDB.Client.Upstream.Security
             return _LocalIdentityProvider.LocalProvider.GetSid(name);
         }
 
+        /// <inheritdoc/>
         public IPrincipal ReAuthenticate(IPrincipal principal)
         {
             if (principal is OAuthClaimsPrincipal oacp)
@@ -424,6 +456,7 @@ namespace SanteDB.Client.Upstream.Security
             }
         }
 
+        /// <inheritdoc/>
         public void RemoveClaim(string userName, string claimType, IPrincipal principal)
         {
             if (_LocalIdentityProvider == null)
@@ -433,6 +466,7 @@ namespace SanteDB.Client.Upstream.Security
             _LocalIdentityProvider.LocalProvider.RemoveClaim(userName, claimType, principal);
         }
 
+        /// <inheritdoc/>
         public void SetLockout(string userName, bool lockout, IPrincipal principal)
         {
             if (_LocalIdentityProvider == null)
@@ -442,9 +476,7 @@ namespace SanteDB.Client.Upstream.Security
             _LocalIdentityProvider.LocalProvider.SetLockout(userName, lockout, principal);
         }
 
-        /// <summary>
-        /// Authenticate using the x_challenge authentication scheme
-        /// </summary>
+        /// <inheritdoc/>
         public IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret)
         {
             var authenticatingargs = new AuthenticatingEventArgs(userName);

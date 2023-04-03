@@ -52,6 +52,9 @@ using System.Threading;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
+    /// <summary>
+    /// An implementation of the <see cref="ISynchronizationService"/> which pulls HDSI and AMI data from the remote
+    /// </summary>
     public class UpstreamSynchronizationService : ISynchronizationService, IDaemonService
     {
         readonly Tracer _Tracer;
@@ -63,7 +66,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly IThreadPoolService _ThreadPool;
         readonly ISynchronizationLogService _SynchronizationLogService;
         readonly ISynchronizationQueueManager _QueueManager;
-        readonly ISubscriptionRepository _SubscriptionRepository;
         readonly IJobManagerService _JobManager;
         readonly IServiceManager _ServiceManager;
         readonly IRestClientFactory _RestClientFactory;
@@ -76,23 +78,35 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
 
+        /// <inheritdoc/>
         public bool IsRunning { get; private set; }
 
+        /// <inheritdoc/>
         public string ServiceName => "Remote Data Synchronization Service";
 
+        /// <inheritdoc/>
         public bool IsSynchronizing { get; private set; }
 
+        /// <inheritdoc/>
         public event EventHandler Starting;
+        /// <inheritdoc/>
         public event EventHandler Started;
+        /// <inheritdoc/>
         public event EventHandler Stopping;
+        /// <inheritdoc/>
         public event EventHandler Stopped;
+        /// <inheritdoc/>
         public event EventHandler PullCompleted;
+        /// <inheritdoc/>
         public event EventHandler PushCompleted;
-
+        
         private object _PushLock;
         private object _PullLock;
         private TimeSpan _LockTimeout;
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public UpstreamSynchronizationService(
             IConfigurationManager configurationManager,
             IUpstreamIntegrationService upstreamIntegrationService,

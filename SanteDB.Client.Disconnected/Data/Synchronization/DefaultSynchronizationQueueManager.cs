@@ -41,9 +41,21 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     /// </summary>
     public class DefaultSynchronizationQueueManager : ISynchronizationQueueManager
     {
+        /// <summary>
+        /// The name of the incoming queue
+        /// </summary>
         public const string QueueName_Incoming = "in";
+        /// <summary>
+        /// The name of the outbox queue
+        /// </summary>
         public const string QueueName_Outgoing = "out";
+        /// <summary>
+        /// The name of the administrative queue
+        /// </summary>
         public const string QueueName_Admin = "admin";
+        /// <summary>
+        /// The name of the dead letter queue
+        /// </summary>
         public const string QueueName_DeadLetter = "deadletter";
 
         private List<ISynchronizationQueue> _Queues;
@@ -89,8 +101,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             );
         }
 
+        /// <inheritdoc/>
         public string ServiceName => "Synchronization Queue Manager";
 
+        /// <inheritdoc/>
         public ISynchronizationQueue Get(string queueName)
         {
             if (!string.IsNullOrEmpty(queueName))
@@ -100,6 +114,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return null;
         }
 
+        /// <inheritdoc/>
         public IEnumerable<ISynchronizationQueue> GetAll(SynchronizationPattern queueType)
         {
             return _Queues.Where(q => q.Type == queueType);

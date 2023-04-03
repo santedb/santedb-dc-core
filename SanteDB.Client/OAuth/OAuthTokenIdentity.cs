@@ -31,14 +31,23 @@ using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
+    /// <summary>
+    /// An implementation of the <see cref="IClaimsIdentity"/> which is constructed from an OAUTH token
+    /// </summary>
     public class OAuthTokenIdentity : IClaimsIdentity
     {
         readonly SecurityToken _Token;
 
         readonly List<IClaim> _Claims;
 
-
-        public OAuthTokenIdentity(SecurityToken token, string authenticationType, bool isAuthenticated, List<IClaim> claims)
+        /// <summary>
+        /// Create a new token identity with the specified data from the oauth response
+        /// </summary>
+        /// <param name="token">The access token which was in th eresponse</param>
+        /// <param name="authenticationType">The authenticate mode </param>
+        /// <param name="isAuthenticated">True if the authentication actually occurred</param>
+        /// <param name="claims">The claims which were provided for the access token</param>
+        internal OAuthTokenIdentity(SecurityToken token, string authenticationType, bool isAuthenticated, List<IClaim> claims)
         {
             _Token = token;
             AuthenticationType = authenticationType;
@@ -49,17 +58,23 @@ namespace SanteDB.Client.OAuth
 
         }
 
+        /// <inheritdoc/>
         public IEnumerable<IClaim> Claims => _Claims;
 
+        /// <inheritdoc/>
         public string AuthenticationType { get; }
 
+        /// <inheritdoc/>
         public bool IsAuthenticated { get; }
 
+        /// <inheritdoc/>
         public string Name => FindFirst(SanteDBClaimTypes.Name)?.Value;
 
 
+        /// <inheritdoc/>
         public IEnumerable<IClaim> FindAll(string claimType) => _Claims.Where(c => c.Type == claimType);
 
+        /// <inheritdoc/>
         public IClaim FindFirst(string claimType) => _Claims.FirstOrDefault(c => c.Type == claimType);
     }
 }

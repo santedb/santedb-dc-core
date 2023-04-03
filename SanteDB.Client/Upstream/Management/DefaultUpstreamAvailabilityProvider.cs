@@ -36,13 +36,13 @@ namespace SanteDB.Client.Upstream.Management
     {
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IRestClientFactory m_restClientFactory;
-
+        private readonly IUpstreamManagementService m_upstreamManagementService;
+        
         /// <summary>
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
         private const int PING_TIMEOUT = 5_000;
 
-        public IUpstreamManagementService m_upstreamManagementService { get; }
 
         /// <summary>
         /// Get the service name

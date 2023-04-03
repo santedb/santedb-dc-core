@@ -62,6 +62,7 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         public string ServiceName => "Upstream Diagnostics Report Submitter";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<DataPersistedEventArgs<DiagnosticReport>> Inserted;
         /// <inheritdoc/>
@@ -82,6 +83,7 @@ namespace SanteDB.Client.Upstream.Management
         public event EventHandler<DataRetrievingEventArgs<DiagnosticReport>> Retrieving;
         /// <inheritdoc/>
         public event EventHandler<DataRetrievedEventArgs<DiagnosticReport>> Retrieved;
+#pragma warning restore 
 
         /// <inheritdoc/>
         public long Count(Expression<Func<DiagnosticReport, bool>> query, IPrincipal authContext = null)

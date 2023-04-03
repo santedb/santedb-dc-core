@@ -42,6 +42,8 @@ namespace SanteDB.Client.Configuration
         /// Provide the initial configuration
         /// </summary>
         /// <param name="configuration">The configuration to be provided</param>
+        /// <param name="hostContextType">The type of host context which the initial configuration provider 
+        /// is running wihtin</param>
         /// <returns>The provided configuration</returns>
         SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration);
 
