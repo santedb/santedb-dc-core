@@ -30,6 +30,9 @@ using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
+    /// <summary>
+    /// Represents a synchronization job which pulls data and pushes data to the remote
+    /// </summary>
     public class UpstreamSynchronizationJob : IJob
     {
         readonly Tracer _Tracer;
@@ -42,8 +45,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly ISynchronizationLogService _LogService;
         readonly ISynchronizationQueueManager _QueueManager;
 
-        private bool _CancelRequested = false;
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public UpstreamSynchronizationJob(IConfigurationManager configurationManager, IJobStateManagerService jobStateManager, ISynchronizationService synchronizationService, ISynchronizationLogService synchronizationLogService, ISynchronizationQueueManager synchronizationQueueManager)
         {
             _Tracer = new Tracer(nameof(UpstreamSynchronizationJob));

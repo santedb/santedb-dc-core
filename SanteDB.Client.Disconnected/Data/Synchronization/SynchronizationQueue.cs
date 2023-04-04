@@ -343,7 +343,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 return default;
             }
-            catch (IOException ioex)
+            catch (IOException)
             {
                 //TODO: Add Logging.
                 throw;

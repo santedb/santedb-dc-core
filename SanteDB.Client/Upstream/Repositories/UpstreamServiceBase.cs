@@ -40,6 +40,10 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IUpstreamAvailabilityProvider m_upstreamAvailabilityProvider;
         private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
         private readonly IUpstreamManagementService m_upstreamManagementService;
+
+        /// <summary>
+        /// The tracer to use to log messages
+        /// </summary>
         protected readonly Tracer _Tracer;
 
         /// <summary>

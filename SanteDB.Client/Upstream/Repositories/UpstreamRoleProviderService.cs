@@ -43,8 +43,7 @@ namespace SanteDB.Client.Repositories
     public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService
     {
         readonly ILocalizationService _LocalizationService;
-        readonly Tracer _Tracer;
-
+        
         /// <summary>
         /// DI ctor
         /// </summary>
@@ -55,7 +54,6 @@ namespace SanteDB.Client.Repositories
             IUpstreamIntegrationService upstreamIntegrationService)
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            this._Tracer = new Tracer(nameof(UpstreamRoleProviderService));
             this._LocalizationService = localizationService;
         }
 

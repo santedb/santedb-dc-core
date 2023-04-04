@@ -82,6 +82,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// Create a new upstream query result set with <paramref name="restClient"/> and <paramref name="query"/>
         /// </summary>
+        /// <param name="resourceName">The name of the upstream resource </param>
         /// <param name="restClient">The rest client to use to fetch results</param>
         /// <param name="query">The query to use to filter</param>
         /// <param name="fromWireFormatMapper">The mapper func to map wire level results to the <typeparamref name="TModel"/> </param>
@@ -356,6 +357,12 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
+        public IQueryResultSet<TModel> Except(Expression<Func<TModel, bool>> query)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
         public IQueryResultSet<TModel> Union(Expression<Func<TModel, bool>> query)
         {
             throw new NotSupportedException();
@@ -417,5 +424,6 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         IQueryResultSet IQueryResultSet.Take(int count) => this.Take(count);
+
     }
 }

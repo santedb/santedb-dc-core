@@ -45,14 +45,33 @@ namespace SanteDB.Client.OAuth
     public class OAuthClientCore : IOAuthClient
     {
 
+        /// <summary>
+        /// Gets or sets the token validation parameters
+        /// </summary>
         protected TokenValidationParameters TokenValidationParameters { get; set; }
+        /// <summary>
+        /// Gets or sets the discover document fetched from the server
+        /// </summary>
         protected OpenIdConnectDiscoveryDocument DiscoveryDocument { get; set; }
 
+        /// <summary>
+        /// Gets the tracer to use for logging
+        /// </summary>
         protected Tracer Tracer { get; }
+
+        /// <summary>
+        /// Gets the token handler
+        /// </summary>
         protected JsonWebTokenHandler TokenHandler {get;}
 
+        /// <summary>
+        /// Gets or sets the configured random number generator
+        /// </summary>
         protected System.Security.Cryptography.RandomNumberGenerator CryptoRNG { get; set; }
 
+        /// <summary>
+        /// Gets the <see cref="IRestClientFactory"/> service which is injected into this service
+        /// </summary>
         protected IRestClientFactory RestClientFactory { get; }
 
         /// <summary>
@@ -61,6 +80,9 @@ namespace SanteDB.Client.OAuth
         public string ClientId { get; set; }
         
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public OAuthClientCore(IRestClientFactory restClientFactory)
         {
             Tracer = new Tracer(GetType().Name);
@@ -92,6 +114,9 @@ namespace SanteDB.Client.OAuth
             return RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AuthenticationService);
         }
 
+        /// <summary>
+        /// Authenticate a user using the <paramref name="username"/> and <paramref name="password"/>
+        /// </summary>
         public virtual IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null)
         {
             var request = new OAuthClientTokenRequest
@@ -107,6 +132,11 @@ namespace SanteDB.Client.OAuth
             return GetPrincipal(request);
         }
 
+        /// <summary>
+        /// Gets a <see cref="IClaimsPrincipal"/> using the <paramref name="request"/> provided
+        /// </summary>
+        /// <param name="request">The oauth token request to be sent to the server</param>
+        /// <returns>The <see cref="IClaimsPrincipal"/> which was generated from the token response from the server</returns>
         protected virtual IClaimsPrincipal GetPrincipal(OAuthClientTokenRequest request)
         {
             var response = GetToken(request);
@@ -126,8 +156,17 @@ namespace SanteDB.Client.OAuth
             return CreatePrincipalFromResponse(response);
         }
 
+        /// <summary>
+        /// Map claims from the <paramref name="tokenValidationResult"/> into <paramref name="claims"/>
+        /// </summary>
+        /// <param name="tokenValidationResult">The token validation result from the identity token for claims</param>
+        /// <param name="response">The response which was received from the server</param>
+        /// <param name="claims">The claims which were mapped</param>
         protected virtual void MapClaims(TokenValidationResult tokenValidationResult, OAuthClientTokenResponse response, List<IClaim> claims) { }
 
+        /// <summary>
+        /// Set the token validation parameter to be used 
+        /// </summary>
         protected virtual void SetTokenValidationParameters()
         {
             var discoverydocument = GetDiscoveryDocument();
@@ -171,6 +210,11 @@ namespace SanteDB.Client.OAuth
             return OAuthConstants.ClaimType_Name;
         }
 
+        /// <summary>
+        /// Get the JWKS information from the server
+        /// </summary>
+        /// <param name="jwksEndpoint">The endpoint from which the JWKS data should be fetched</param>
+        /// <returns>The <see cref="JsonWebKeySet"/> from the server</returns>
         protected virtual JsonWebKeySet GetJsonWebKeySet(string jwksEndpoint)
         {
             var restclient = GetRestClient();
@@ -209,6 +253,11 @@ namespace SanteDB.Client.OAuth
             return jwks;
         }
 
+        /// <summary>
+        /// Create a principal from the <paramref name="response"/>
+        /// </summary>
+        /// <param name="response">The token response from the OAUTH server</param>
+        /// <returns>The <see cref="IClaimsPrincipal"/> which was created from the <paramref name="response"/></returns>
         protected virtual IClaimsPrincipal CreatePrincipalFromResponse(OAuthClientTokenResponse response)
         {
 #if DEBUG
@@ -240,10 +289,21 @@ namespace SanteDB.Client.OAuth
 
         }
 
+        /// <summary>
+        /// Setup the <paramref name="restClient"/> for a token request
+        /// </summary>
         protected virtual void SetupRestClientForTokenRequest(IRestClient restClient) { }
         
+        /// <summary>
+        /// Setup the <paramref name="restClient"/> for a JWKS fetch request
+        /// </summary>
         protected virtual void SetupRestClientForJwksRequest(IRestClient restClient) { }
 
+        /// <summary>
+        /// Send the <paramref name="request"/> to the OAUTH server and return the <see cref="OAuthClientTokenResponse"/>
+        /// </summary>
+        /// <param name="request">The request which is to be sent to the OAauth Server</param>
+        /// <returns>The response from the OAUTH server</returns>
         protected virtual OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request)
         {
             if (null == TokenValidationParameters)
@@ -271,8 +331,15 @@ namespace SanteDB.Client.OAuth
             return doc.TokenEndpoint;
         }
 
+        /// <summary>
+        /// Setup the <paramref name="restClient"/> for a discovery endpoint request
+        /// </summary>
         protected virtual void SetupRestClientForDiscoveryRequest(IRestClient restClient) { }
 
+        /// <summary>
+        /// Get the <see cref="OpenIdConnectDiscoveryDocument"/> from the remote OAUTH server
+        /// </summary>
+        /// <returns>The configured <see cref="OpenIdConnectDiscoveryDocument"/> which was emitted by the OAUTH server</returns>
         protected virtual OpenIdConnectDiscoveryDocument GetDiscoveryDocument()
         {
             if (null != DiscoveryDocument)
@@ -301,6 +368,12 @@ namespace SanteDB.Client.OAuth
             return DiscoveryDocument;
         }
 
+        /// <summary>
+        /// Create an authenticated <see cref="IClaimsPrincipal"/> using a client credential
+        /// </summary>
+        /// <param name="clientId">The client identifier to send to the oauth server</param>
+        /// <param name="clientSecret">The provided client secret</param>
+        /// <returns>The authenticated claims principal</returns>
         public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null)
         {
             var request = new OAuthClientTokenRequest
@@ -314,6 +387,11 @@ namespace SanteDB.Client.OAuth
             return GetPrincipal(request);
         }
 
+        /// <summary>
+        /// Issues a refresh token request to the OAUTH server
+        /// </summary>
+        /// <param name="refreshToken">The refresh token to be extended</param>
+        /// <returns>The updated <see cref="IClaimsPrincipal"/> with the extended session</returns>
         public IClaimsPrincipal Refresh(string refreshToken)
         {
             var request = new OAuthClientTokenRequest
@@ -329,6 +407,7 @@ namespace SanteDB.Client.OAuth
         #region IDisposable
         private bool disposedValue;
 
+        /// <inheritdoc/>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -352,6 +431,7 @@ namespace SanteDB.Client.OAuth
         //     Dispose(disposing: false);
         // }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

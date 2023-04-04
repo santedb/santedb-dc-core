@@ -59,7 +59,7 @@ namespace SanteDB.Client.Batteries
         }
 
         /// <summary>
-        /// Attempts to restore the environment from <paramref name="configDirectory"/>
+        /// Attempts to restore the environment 
         /// </summary>
         /// <remarks>After a Windows Update, if the software is running in C:\Windows\SysWow64\config\... then an update will move
         /// the directory to C:\Windows.old\ - the method will attempt to restore this</remarks>
