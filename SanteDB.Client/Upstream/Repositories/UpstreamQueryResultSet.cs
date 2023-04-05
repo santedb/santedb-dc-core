@@ -368,6 +368,7 @@ namespace SanteDB.Client.Upstream.Repositories
             throw new NotSupportedException();
         }
 
+
         /// <inheritdoc/>
         public IQueryResultSet Union(IQueryResultSet other)
         {
