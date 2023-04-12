@@ -10,7 +10,6 @@
         <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
         <ProjectReference Include="..\..\santedb-certs-bc\SanteDB.Security.Certs.BouncyCastle\SanteDB.Security.Certs.BouncyCastle.csproj" />
         <ProjectReference Include="..\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
-        <ProjectReference Include="..\..\santedb-tools\SanteDB.PakMan.Common\SanteDB.PakMan.Common.csproj" />
         <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
       </ItemGroup>
     </When>
