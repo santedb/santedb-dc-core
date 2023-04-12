@@ -1,4 +1,24 @@
-﻿using Newtonsoft.Json.Linq;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using Newtonsoft.Json.Linq;
 using SanteDB.Client.Configuration;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
@@ -32,15 +52,41 @@ namespace SanteDB.Client.Disconnected.Configuration
         private readonly IConfigurationManager m_configurationManager;
         private readonly ISubscriptionRepository m_subscriptionRepository;
         private readonly SynchronizationConfigurationSection m_configuration;
-
+        /// <summary>
+        /// The syncrhonization mode setting
+        /// </summary>
         public const string MODE_SETTING = "mode";
+        /// <summary>
+        /// The setting which controls whether the client overwrites the server
+        /// </summary>
         public const string OVERWRITE_SERVER_SETTING = "overwriteServer";
+        /// <summary>
+        /// The polling interval setting
+        /// </summary>
         public const string POLL_SETTING = "pollInterval";
+        /// <summary>
+        /// The setting which controls whether big bundles should be requested from the server
+        /// </summary>
         public const string BIG_BUNDLES_SETTING = "bigBundles";
+        /// <summary>
+        /// The setting which controls the subscriptions enabled
+        /// </summary>
         public const string ENABLED_SUBSCRIPTIONS_SETTING = "subscription";
+        /// <summary>
+        /// The setting which controls the types of objects to subscribe to
+        /// </summary>
         public const string SUBSCRIBED_OBJECT_TYPE_SETTING = "subscribeType";
+        /// <summary>
+        /// The setting which controls the instances of objects to subscribe to
+        /// </summary>
         public const string SUBSCRIBED_OBJECTS_SETTING = "subscribeTo";
+        /// <summary>
+        /// The setting which controls whether patches or full resources are sent to the server
+        /// </summary>
         public const string USE_PATCHES_SETTING = "usePatch";
+        /// <summary>
+        /// The setting which controls which resources are forbidden or to be ignored for synchronization
+        /// </summary>
         public const string FORBID_SYNC_SETTING = "forbidSync";
 
         /// <summary>

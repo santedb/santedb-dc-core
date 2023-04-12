@@ -1,4 +1,24 @@
-﻿using SanteDB.Client.Exceptions;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using SanteDB.Client.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
@@ -62,6 +82,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// Create a new upstream query result set with <paramref name="restClient"/> and <paramref name="query"/>
         /// </summary>
+        /// <param name="resourceName">The name of the upstream resource </param>
         /// <param name="restClient">The rest client to use to fetch results</param>
         /// <param name="query">The query to use to filter</param>
         /// <param name="fromWireFormatMapper">The mapper func to map wire level results to the <typeparamref name="TModel"/> </param>
@@ -336,10 +357,17 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
+        public IQueryResultSet<TModel> Except(Expression<Func<TModel, bool>> query)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
         public IQueryResultSet<TModel> Union(Expression<Func<TModel, bool>> query)
         {
             throw new NotSupportedException();
         }
+
 
         /// <inheritdoc/>
         public IQueryResultSet Union(IQueryResultSet other)
@@ -391,5 +419,6 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         IQueryResultSet IQueryResultSet.Take(int count) => this.Take(count);
+
     }
 }

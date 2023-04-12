@@ -1,4 +1,24 @@
-﻿using Newtonsoft.Json.Linq;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using Newtonsoft.Json.Linq;
 using SanteDB.Client.Configuration;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
@@ -27,8 +47,17 @@ namespace SanteDB.Client.Disconnected.Configuration
     public class DataRestConfigurationFeature : IClientConfigurationFeature
     {
 
+        /// <summary>
+        /// The name of the database provider setting
+        /// </summary>
         public const string GLOBAL_DATA_PROVIDER_SETTING = "provider";
+        /// <summary>
+        /// The name of the options for the database setting
+        /// </summary>
         public const string GLOBAL_CONNECTION_STRING_SETTING = "options";
+        /// <summary>
+        /// The name of the connection feature setting
+        /// </summary>
         public const string CONNECTION_PER_FEATURE_SETTING = "connections";
 
         private readonly DataConfigurationSection m_connectStringSection;

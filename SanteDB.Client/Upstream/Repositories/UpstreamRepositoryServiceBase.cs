@@ -1,4 +1,24 @@
-﻿using SanteDB.Client.Exceptions;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using SanteDB.Client.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
@@ -13,6 +33,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Text;
 using System.Linq;
+using Hl7.Fhir.Utility;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -20,7 +41,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// A generic implementation that calls the upstream for fetching data 
     /// </summary>
     public abstract class UpstreamRepositoryServiceBase<TModel, TWireFormat, TCollection> : UpstreamServiceBase,
-        IRepositoryService<TModel>,
+        IRepositoryServiceEx<TModel>,
         IRepositoryService
         where TModel : IdentifiedData, new()
         where TWireFormat : class, IIdentifiedResource, new()
@@ -253,5 +274,24 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         IdentifiedData IRepositoryService.Delete(Guid key) => this.Delete(key);
+
+        /// <inheritdoc/>
+        public void Touch(Guid key)
+        {
+            try
+            {
+                using (var client = this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal))
+                {
+                    // Create or Update
+                    client.Invoke<Object, Object>("TOUCH", $"{this.GetResourceName()}/{key}", null);
+                    this.m_cacheService.Remove(key);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localeService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR), e);
+            }
+
+        }
     }
 }

@@ -1,4 +1,24 @@
-﻿using Antlr.Runtime.Tree;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using Antlr.Runtime.Tree;
 using Newtonsoft.Json;
 using SanteDB.Core;
 using SanteDB.Core.Event;
@@ -21,9 +41,21 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     /// </summary>
     public class DefaultSynchronizationQueueManager : ISynchronizationQueueManager
     {
+        /// <summary>
+        /// The name of the incoming queue
+        /// </summary>
         public const string QueueName_Incoming = "in";
+        /// <summary>
+        /// The name of the outbox queue
+        /// </summary>
         public const string QueueName_Outgoing = "out";
+        /// <summary>
+        /// The name of the administrative queue
+        /// </summary>
         public const string QueueName_Admin = "admin";
+        /// <summary>
+        /// The name of the dead letter queue
+        /// </summary>
         public const string QueueName_DeadLetter = "deadletter";
 
         private List<ISynchronizationQueue> _Queues;
@@ -69,8 +101,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             );
         }
 
+        /// <inheritdoc/>
         public string ServiceName => "Synchronization Queue Manager";
 
+        /// <inheritdoc/>
         public ISynchronizationQueue Get(string queueName)
         {
             if (!string.IsNullOrEmpty(queueName))
@@ -80,6 +114,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return null;
         }
 
+        /// <inheritdoc/>
         public IEnumerable<ISynchronizationQueue> GetAll(SynchronizationPattern queueType)
         {
             return _Queues.Where(q => q.Type == queueType);

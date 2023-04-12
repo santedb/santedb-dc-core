@@ -1,4 +1,24 @@
-﻿using SanteDB.Client.Exceptions;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
@@ -23,8 +43,7 @@ namespace SanteDB.Client.Repositories
     public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService
     {
         readonly ILocalizationService _LocalizationService;
-        readonly Tracer _Tracer;
-
+        
         /// <summary>
         /// DI ctor
         /// </summary>
@@ -35,7 +54,6 @@ namespace SanteDB.Client.Repositories
             IUpstreamIntegrationService upstreamIntegrationService)
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            this._Tracer = new Tracer(nameof(UpstreamRoleProviderService));
             this._LocalizationService = localizationService;
         }
 
@@ -165,9 +183,9 @@ namespace SanteDB.Client.Repositories
             {
                 using (var amiclient = CreateAmiServiceClient())
                 {
-                    var user = amiclient.GetUsers(u => u.UserName == userName)?.CollectionItem?.OfType<SecurityUserInfo>()?.FirstOrDefault();
+                    var user = amiclient.GetUsers(u => u.UserName == userName && (u.ObsoletionTime != null || u.ObsoletionTime == null))?.CollectionItem?.OfType<SecurityUserInfo>()?.FirstOrDefault();
 
-                    return user?.Roles?.ToArray();
+                    return user?.Roles?.ToArray() ?? new string[0];
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))

@@ -1,4 +1,24 @@
-﻿using Microsoft.IdentityModel.JsonWebTokens;
+﻿/*
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-3-10
+ */
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RestSrvr;
@@ -24,6 +44,9 @@ using System.Threading;
 namespace SanteDB.Client.OAuth
 {
 
+    /// <summary>
+    /// An implementation of the OAuth client
+    /// </summary>
     public class OAuthClient : OAuthClientCore
     {
         IUpstreamRealmSettings _RealmSettings;
@@ -32,6 +55,9 @@ namespace SanteDB.Client.OAuth
         //IRestClient _AuthRestClient;
 
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory)
             : base(restClientFactory)
         {
@@ -43,6 +69,12 @@ namespace SanteDB.Client.OAuth
             //SetTokenValidationParameters();
         }
 
+        /// <summary>
+        /// Maps the claims from the <paramref name="tokenValidationResult"/> to the <paramref name="claims"/>
+        /// </summary>
+        /// <param name="tokenValidationResult">The token validation result to map claims for</param>
+        /// <param name="response">The OAUTH server response</param>
+        /// <param name="claims">The claims to be mapped</param>
         protected override void MapClaims(TokenValidationResult tokenValidationResult, OAuthClientTokenResponse response, List<IClaim> claims)
         {
             base.MapClaims(tokenValidationResult, response, claims);
@@ -51,6 +83,9 @@ namespace SanteDB.Client.OAuth
             claims.Add(new SanteDBClaim(SanteDBClaimTypes.Realm, _RealmSettings.Realm.ToString()));
         }
 
+        /// <summary>
+        /// Set the token validation parameters based on the configuration
+        /// </summary>
         protected override void SetTokenValidationParameters()
         {
             if (null != _RealmSettings) // This may be called before the UpstreamManagementService is fully configured - i.e. is configuring
@@ -65,6 +100,9 @@ namespace SanteDB.Client.OAuth
             }
         }
 
+        /// <summary>
+        /// handler for when the upstream realm has changed
+        /// </summary>
         protected virtual void UpstreamRealmChanging(object sender, UpstreamRealmChangedEventArgs eventArgs)
         {
             try
@@ -83,6 +121,9 @@ namespace SanteDB.Client.OAuth
             }
         }
 
+        /// <summary>
+        /// Event handler when the upstream realm has changed
+        /// </summary>
         protected virtual void UpstreamRealmChanged(object sender, UpstreamRealmChangedEventArgs eventArgs)
         {
             try
@@ -100,7 +141,11 @@ namespace SanteDB.Client.OAuth
             }
         }
 
-
+        /// <summary>
+        /// Contacts the OAUTH server with <paramref name="request"/>
+        /// </summary>
+        /// <param name="request">The OAUTH authentication request to send to the server</param>
+        /// <returns>The response provided by the OAUTH server</returns>
         protected override OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request)
         {
             if (null == _RealmSettings)
@@ -112,6 +157,9 @@ namespace SanteDB.Client.OAuth
             return base.GetToken(request);
         }
 
+        /// <summary>
+        /// Setup this class to send a token request
+        /// </summary>
         protected override void SetupRestClientForTokenRequest(IRestClient restClient)
         {
             base.SetupRestClientForTokenRequest(restClient);
