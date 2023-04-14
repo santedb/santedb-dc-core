@@ -29,7 +29,6 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
-using SanteDB.PakMan;
 using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using System;

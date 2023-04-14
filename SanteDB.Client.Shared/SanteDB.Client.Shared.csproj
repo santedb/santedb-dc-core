@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
+    <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
+    <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
+    <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Batteries\SanteDB.Client.Batteries.csproj" />
+    <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
+    <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client\SanteDB.Client.csproj" />
+    <ProjectReference Include="..\..\santedb-orm\SanteDB.OrmLite\SanteDB.OrmLite.csproj" />
+    <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
+  </ItemGroup>
+
+</Project>
