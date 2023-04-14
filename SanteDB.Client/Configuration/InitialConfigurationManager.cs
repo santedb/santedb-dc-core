@@ -165,5 +165,11 @@ namespace SanteDB.Client.Configuration
             var appSettings = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             appSettings.AddAppSetting(key, value);
         }
+
+        /// <inheritdoc/>
+        public void SetTransientConnectionString(string name, ConnectionString connectionString)
+        {
+            throw new NotSupportedException();
+        }
     }
 }
