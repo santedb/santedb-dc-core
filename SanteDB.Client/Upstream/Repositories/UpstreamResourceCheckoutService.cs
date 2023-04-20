@@ -18,14 +18,18 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using RestSrvr;
+using SanteDB.Core;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Fault;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Principal;
 using System.Text;
 
@@ -37,6 +41,7 @@ namespace SanteDB.Client.Upstream.Repositories
     public class UpstreamResourceCheckoutService : UpstreamServiceBase, IResourceCheckoutService
     {
         private readonly IDataCachingService m_dataCachingService;
+        private IDictionary<String, ServiceEndpointType> m_serviceEndpoints;
 
         /// <summary>
         /// DI Constructor
@@ -54,7 +59,7 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             try
             {
-                using(var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
+                using(var client = base.CreateRestClient(this.GetServiceEndpoint<T>(), AuthenticationContext.Current.Principal))
                 {
                     client.Invoke<Object, Object>("CHECKIN", $"{typeof(T).GetSerializationName()}/{key}", null);
                     this.m_dataCachingService.Remove(key);
@@ -72,7 +77,7 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             try
             {
-                using (var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
+                using (var client = base.CreateRestClient(this.GetServiceEndpoint<T>(), AuthenticationContext.Current.Principal))
                 {
                     client.Invoke<Object, Object>("CHECKOUT", $"{typeof(T).GetSerializationName()}/{key}", null);
                     this.m_dataCachingService.Remove(key);
@@ -98,7 +103,7 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             try
             {
-                using (var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.HealthDataService, AuthenticationContext.Current.Principal))
+                using (var client = base.CreateRestClient(this.GetServiceEndpoint<T>(), AuthenticationContext.Current.Principal))
                 {
                     var headers = client.Head($"{typeof(T).GetSerializationName()}/{key}", null);
                     if(headers.TryGetValue(ExtendedHttpHeaderNames.CheckoutStatusHeader, out var owner))
@@ -114,6 +119,35 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new Core.Exceptions.ObjectLockedException(ex.Result.Data[0]);
             }
+        }
+
+        /// <summary>
+        /// Get service endpoint
+        /// </summary>
+        private ServiceEndpointType GetServiceEndpoint<T>()
+        {
+            if(this.m_serviceEndpoints == null)
+            {
+                using (var amiClient = base.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var options = amiClient.Options<ServiceOptions>("/");
+                    this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
+                    {
+                        try
+                        {
+                            using (var client = base.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
+                            {
+                                return client.Options<ServiceOptions>("/").Resources.Select(o => new KeyValuePair<String, ServiceEndpointType>(o.ResourceName, e.ServiceType));
+                            }
+                        }
+                        catch
+                        {
+                            return new KeyValuePair<String, ServiceEndpointType>[0];
+                        }
+                    }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
+                }
+            }
+            return this.m_serviceEndpoints.TryGetValue(typeof(T).GetSerializationName(), out var retVal) ? retVal : ServiceEndpointType.HealthDataService;
         }
     }
 }
