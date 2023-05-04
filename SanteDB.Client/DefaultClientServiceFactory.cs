@@ -19,6 +19,8 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Upstream.Management;
+using SanteDB.Core.Applets.Services.Impl;
+using SanteDB.Core.Diagnostics.Tracing;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -37,7 +39,9 @@ namespace SanteDB.Client
             typeof(DefaultUpstreamManagementService),
             typeof(DefaultUpstreamAvailabilityProvider),
             typeof(DefaultUpstreamIntegrationService),
-            typeof(UpstreamDiagnosticRepository)
+            typeof(UpstreamDiagnosticRepository),
+            typeof(RolloverLogManagerService),
+            typeof(AppletNotificationTemplateRepository)
         };
         private readonly IServiceManager m_serviceManager;
 

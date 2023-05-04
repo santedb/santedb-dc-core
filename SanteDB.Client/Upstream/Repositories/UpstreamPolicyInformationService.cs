@@ -54,6 +54,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public IPolicyInformationService UpstreamProvider => this;
 
         private readonly ILocalizationService m_localizationSerice;
+        private readonly ILocalServiceProvider<IPolicyInformationService> m_localPolicyService;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamPolicyInformationService));
 
         /// <inheritdoc/>
@@ -66,9 +67,11 @@ namespace SanteDB.Client.Upstream.Repositories
             IRestClientFactory restClientFactory,
             IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider availabilityProvider,
+            ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService,
             IUpstreamIntegrationService integrationService) : base(restClientFactory, upstreamManagementService, availabilityProvider, integrationService)
         {
             this.m_localizationSerice = localizationService;
+            this.m_localPolicyService = localPolicyInformationService;
         }
 
         /// <inheritdoc/>

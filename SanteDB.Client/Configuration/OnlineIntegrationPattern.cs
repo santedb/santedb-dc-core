@@ -35,8 +35,14 @@ namespace SanteDB.Client.Configuration
     /// </summary>
     public class OnlineIntegrationPattern : IUpstreamIntegrationPattern
     {
+
+        /// <summary>
+        /// Integration pattern anme
+        /// </summary>
+        public const string INTEGRATION_PATTERN_NAME = "online";
+
         /// <inheritdoc/>
-        public string Name => "online";
+        public string Name => INTEGRATION_PATTERN_NAME;
 
         /// <inheritdoc/>
         public IEnumerable<Type> GetServices() =>

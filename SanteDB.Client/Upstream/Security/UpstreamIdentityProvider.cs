@@ -26,6 +26,7 @@ using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -59,7 +60,7 @@ namespace SanteDB.Client.Upstream.Security
         readonly ILocalServiceProvider<IPolicyInformationService> _LocalPolicyInformationService;
         readonly IRoleProviderService _RemoteRoleProviderService;
         readonly ILocalServiceProvider<IRoleProviderService> _LocalRoleProviderService;
-        readonly ISecurityRepositoryService _SecurityRepositoryService;
+        //readonly ISecurityRepositoryService _SecurityRepositoryService;
 
         readonly bool _CanSyncPolicies;
         readonly bool _CanSyncRoles;
@@ -75,7 +76,6 @@ namespace SanteDB.Client.Upstream.Security
             IUpstreamServiceProvider<IPolicyInformationService> remotePolicyInformationService,
             IRoleProviderService remoteRoleProviderService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
-            ISecurityRepositoryService securityRepositoryService,
             ILocalServiceProvider<ISecurityChallengeIdentityService> localSecurityChallengeService = null,
             ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService = null,
             ILocalServiceProvider<IRoleProviderService> localRoleProviderService = null,
@@ -87,7 +87,7 @@ namespace SanteDB.Client.Upstream.Security
             _RemotePolicyInformationService = remotePolicyInformationService;
             _RemoteRoleProviderService = remoteRoleProviderService;
             _LocalRoleProviderService = localRoleProviderService;
-            _SecurityRepositoryService = securityRepositoryService;
+            //_SecurityRepositoryService = securityRepositoryService;
             _LocalPolicyInformationService = localPolicyInformationService;
             _OAuthClient = oauthClient ?? throw new ArgumentNullException(nameof(oauthClient));
             _LocalSecurityChallengeService = localSecurityChallengeService;
@@ -223,7 +223,7 @@ namespace SanteDB.Client.Upstream.Security
         {
             using (var amiclient = CreateAmiServiceClient())
             {
-                var remoteuser = _SecurityRepositoryService.GetUser(username);
+                var remoteuser = amiclient.GetUsers(o => o.UserName.ToLowerInvariant() == username.ToLowerInvariant()).CollectionItem.OfType<SecurityUserInfo>().FirstOrDefault()?.Entity;
 
                 if (null == remoteuser?.Key)
                 {
