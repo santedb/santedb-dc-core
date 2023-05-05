@@ -18,8 +18,12 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using Antlr.Runtime;
+using DocumentFormat.OpenXml.Drawing;
+using SanteDB.BI.Model;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
+using SanteDB.Client.Http;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
 using SanteDB.Core.Applets.ViewModel.Json;
@@ -28,6 +32,7 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
@@ -39,12 +44,15 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.HDSI.Client;
+using SanteDB.Rest.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
+using System.Reflection;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -124,6 +132,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly ILocalizationService m_localizationService;
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IServiceManager m_serviceManager;
+        private readonly IAdhocCacheService m_adhocCache;
         private ConcurrentDictionary<String, Guid> s_templateKeys = new ConcurrentDictionary<string, Guid>();
         private ITokenPrincipal m_devicePrincipal;
 
@@ -147,6 +156,7 @@ namespace SanteDB.Client.Upstream.Management
             IConfigurationManager configurationManager,
             IServiceManager serviceManager,
             IUpstreamManagementService upstreamManagementService,
+            IAdhocCacheService adhocCacheService,
             ILocalizationService localizationService)
         {
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
@@ -155,8 +165,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_localizationService = localizationService;
             this.m_networkInformationService = networkInformationService;
             this.m_serviceManager = serviceManager;
-
-
+            this.m_adhocCache = adhocCacheService;
         }
 
         private IRepositoryService GetRepositoryService(Type modelType)
@@ -166,118 +175,93 @@ namespace SanteDB.Client.Upstream.Management
             return m_serviceManager.CreateInjected(repositorytype) as IRepositoryService;
         }
 
-        private IQueryResultSet<IdentifiedData> Transform(IQueryResultSet qrs)
+        /// <inheritdoc/>
+        public IResourceCollection Query(Type modelType, Expression filter, UpstreamIntegrationQueryControlOptions queryControl)
         {
-            if (null == qrs)
+            try
             {
-                return default;
+                var filterType = typeof(Expression<>).MakeGenericType(typeof(Func<,>).MakeGenericType(modelType, typeof(bool)));
+                var method = this.GetType().GetGenericMethod(nameof(Query), new[] { modelType }, new[] { filterType, typeof(UpstreamIntegrationQueryControlOptions) });
+                return method.Invoke(this, new object[] { filter, queryControl }) as IResourceCollection;
             }
-
-            if (qrs is IQueryResultSet<IdentifiedData> iqrsid)
+            catch (TargetInvocationException e)
             {
-                return iqrsid;
+                throw Activator.CreateInstance(e.InnerException.GetType(), "Error performing action", e) as Exception;
             }
+        }
 
-            var qrstype = qrs.GetType();
-            
-            if (qrstype.IsGenericType && qrstype.GetGenericTypeDefinition() == typeof(IQueryResultSet<>))
+        /// <inheritdoc/>
+        public IResourceCollection Query<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationQueryControlOptions queryControl) where TModel : IdentifiedData, new()
+        {
+            var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<TModel>();
+            using(var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+            using(var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
             {
-                var modeltype = qrstype.GetGenericArguments()[0];
+                var query = QueryExpressionBuilder.BuildQuery(predicate);
+                query.Add(QueryControlParameterNames.HttpCountParameterName, queryControl.Count.ToString());
+                query.Add(QueryControlParameterNames.HttpOffsetParameterName, queryControl.Offset.ToString());
+                query.Add(QueryControlParameterNames.HttpQueryStateParameterName, queryControl.QueryId.ToString());
+                client.Credentials = new UpstreamPrincipalCredentials(AuthenticationContext.Current.Principal);
 
-                if (!typeof(IdentifiedData).IsAssignableFrom(modeltype))
+                client.Requesting += (o, e) =>
                 {
-                    throw new NotSupportedException($"Result set model type {modeltype.Name} is not derived from {nameof(IdentifiedData)}");
+                    if (queryControl?.IfModifiedSince.HasValue == true)
+                        e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = queryControl?.IfModifiedSince.Value.ToString();
+                    else if (!String.IsNullOrEmpty(queryControl?.IfNoneMatch))
+                        e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = queryControl?.IfNoneMatch;
+
+                    if (queryControl.IncludeRelatedInformation)
+                    {
+                        e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.IncludeRelatedObjectsHeader, "true");
+                    }
+                };
+                client.Responding += (o, e) => this.Responding?.Invoke(o, e);
+
+                if (queryControl.Timeout.HasValue)
+                {
+                    client.SetTimeout(queryControl.Timeout.Value);
                 }
 
-                var transformertype = typeof(TransformQueryResultSet<,>).MakeGenericType(modeltype, typeof(IdentifiedData));
-
-                var parm = Expression.Parameter(modeltype, "o");
-                LambdaExpression converter = Expression.Lambda(
-                    Expression.Convert(parm, typeof(IdentifiedData)),
-                    parm
-                    );
-
-                var tqrs = (IQueryResultSet<IdentifiedData>)Activator.CreateInstance(transformertype, qrs, converter.Compile());
-
-                return tqrs;
+                switch (upstreamService )
+                {
+                    case ServiceEndpointType.HealthDataService:
+                        return client.Get<Bundle>($"/{typeof(TModel).GetSerializationName()}", query);
+                    case ServiceEndpointType.AdministrationIntegrationService:
+                        return client.Get<AmiCollection>($"/{typeof(TModel).GetSerializationName()}", query);
+                    default:
+                        throw new InvalidOperationException(ErrorMessages.SERVICE_NOT_FOUND);
+                }
             }
-            else
-            {
-                throw new NotSupportedException($"Cannot transform {qrstype.Name} into {typeof(IQueryResultSet<IdentifiedData>).ToString()}");
-            }
-            
         }
 
         /// <inheritdoc/>
-        public IQueryResultSet<IdentifiedData> Find(Type modelType, NameValueCollection filter, UpstreamIntegrationOptions options = null)
-        {
-            return Transform(GetRepositoryService(modelType)?.Find(QueryExpressionParser.BuildLinqExpression(modelType, filter)));
-        }
-
-        /// <inheritdoc/>
-        public IQueryResultSet<IdentifiedData> Find<TModel>(NameValueCollection filter, int offset, int? count, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData
-        {
-            return new TransformQueryResultSet<TModel, IdentifiedData>(m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Find(QueryExpressionParser.BuildLinqExpression<TModel>(filter)), tm => tm); ;
-        }
-
-        /// <inheritdoc/>
-        public IQueryResultSet<IdentifiedData> Find<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData
-        {
-            var qrs =  m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Find(predicate);
-
-            return new TransformQueryResultSet<TModel, IdentifiedData>(qrs, tm => tm);
-        }
-
-        /// <inheritdoc/>
-        public IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, UpstreamIntegrationOptions options = null)
+        public IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData
+        public TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null) where TModel : IdentifiedData
         {
-            if (null != versionKey)
-            {
-                return m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Get(key, versionKey.Value);
-            }
-            else
-            {
-                return m_serviceManager.CreateInjected<IRepositoryService<TModel>>()?.Get(key);
-            }
+            throw new NotImplementedException();
         }
-
 
         /// <inheritdoc/>
         public void Insert(IdentifiedData data)
         {
-            if (null == data)
-            {
-                return;
-            }
-
-            GetRepositoryService(data.GetType())?.Insert(data);
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
         public void Obsolete(IdentifiedData data, bool forceObsolete = false)
         {
-            if (null == data?.Key)
-            {
-                return;
-            }
-
-            GetRepositoryService(data.GetType())?.Delete(data.Key.Value);
-
-            //TODO: Handle forceObsolete by getting dependent objects and resolving.
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
         public void Update(IdentifiedData data, bool forceUpdate = false)
         {
-            GetRepositoryService(data.GetType())?.Save(data);
-
-            //TODO: Handle forceUpdate by getting dependent objects and resolving.
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -325,31 +309,61 @@ namespace SanteDB.Client.Upstream.Management
         }
 
 
+
         /// <summary>
-        /// Harmonize the template identifiers
+        /// Get the upstream template keys
         /// </summary>
-        public IHasTemplate HarmonizeTemplateId(IHasTemplate template)
+        private Guid GetUpstreamTemplateKey(TemplateDefinition template)
         {
-            if (template.Template != null &&
-                !template.TemplateKey.HasValue)
+            using (AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
             {
-                if (!s_templateKeys.TryGetValue(template.Template.Mnemonic, out Guid retVal))
+                using (var client = new HdsiServiceClient(this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService)))
                 {
-                    using (AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+
+                    // Check the cache first
+                    if (this.m_adhocCache?.TryGet("server.template.key", out TemplateDefinition[] cached) != true)
                     {
-                        using (var client = new HdsiServiceClient(this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService)))
-                        {
-                            var itm = client.Query<TemplateDefinition>(o => o.Mnemonic == template.Template.Mnemonic);
-                            itm.Item.OfType<TemplateDefinition>().ToList().ForEach(o => s_templateKeys.TryAdd(o.Mnemonic, o.Key.Value));
-                            return this.HarmonizeTemplateId(template);
-                        }
+                        cached = client.Query<TemplateDefinition>(e => e.ObsoletionTime == null).Item.OfType<TemplateDefinition>().ToArray();
+                        this.m_adhocCache?.Add("server.template.key", cached);
+                    }
+
+                    var serverTemplate = cached.FirstOrDefault(o => o.Mnemonic == template.Mnemonic);
+                    if (null == serverTemplate)
+                    {
+                        serverTemplate = template;
+                        return client.Create(serverTemplate).Key.Value;
+                    }
+                    else
+                    {
+                        return serverTemplate.Key.Value;
                     }
                 }
-                template.TemplateKey = retVal;
             }
-            return template;
-
         }
 
+        /// <summary>
+        /// Map an upstream template key to the local
+        /// </summary>
+        private IdentifiedData HarmonizeTemplateId(IdentifiedData data)
+        {
+            switch(data)
+            {
+                case Bundle bdl:
+                    bdl.Item.ForEach(r => this.HarmonizeTemplateId(r));
+                    return bdl;
+                case TemplateDefinition td:
+                    GetUpstreamTemplateKey(td); //Will force the insert to upstream.
+                    data.Key = td.Key;
+                    return data;
+                case IHasTemplate iht:
+                    iht.TemplateKey = GetUpstreamTemplateKey(data.LoadProperty<TemplateDefinition>(nameof(IHasTemplate.Template)));
+                    return data;
+                default:
+                    return data;
+            }
+        }
+
+        /// <inheritdoc/>
+        IHasTemplate IUpstreamIntegrationService.HarmonizeTemplateId(IHasTemplate iht) => this.HarmonizeTemplateId(iht as IdentifiedData) as IHasTemplate;
     }
 }

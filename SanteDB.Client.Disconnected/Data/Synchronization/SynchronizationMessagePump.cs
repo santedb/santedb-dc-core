@@ -82,7 +82,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 return;
             }
 
-            var entry = queue.Dequeue();
+            var entry = queue.Peek(); // we peek in case the user terminates the application before we can fully handle the data
             while (null != entry)
             {
                 try
@@ -97,13 +97,18 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         throw;
                     }
                 }
+                finally
+                {
+                    // The call back only returns when it has processed the message and continues - we want to dequeue the object to ensure that the next message is processed
+                    queue.Dequeue();
+                }
 
                 if (cont == Abort)
                 {
                     break;
                 }
 
-                entry = queue.Dequeue();
+                entry = queue.Peek(); // peek in case the user terminates the application between the time we get the object and we fully handle it
             }
 
             after?.Invoke();

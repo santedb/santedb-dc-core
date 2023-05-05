@@ -25,6 +25,7 @@ using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
@@ -59,12 +60,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public const string QueueName_DeadLetter = "deadletter";
 
         private List<ISynchronizationQueue> _Queues;
+        private readonly ISymmetricCryptographicProvider _SymmetricCryptographicProvider;
 
         /// <summary>
         /// Instantiates an instance of the class.
         /// </summary>
-        public DefaultSynchronizationQueueManager()
+        public DefaultSynchronizationQueueManager(ISymmetricCryptographicProvider symmetricCryptographicProvider)
         {
+            this._SymmetricCryptographicProvider = symmetricCryptographicProvider;
             _Queues = new List<ISynchronizationQueue>
             {
                 OpenQueue<SynchronizationDeadLetterQueueEntry>(QueueName_DeadLetter, SynchronizationPattern.DeadLetter),
@@ -75,7 +78,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         }
 
-        private static ISynchronizationQueue OpenQueue<TEntry>(string queueName, SynchronizationPattern type) where TEntry: ISynchronizationQueueEntry, new()
+        private ISynchronizationQueue OpenQueue<TEntry>(string queueName, SynchronizationPattern type) where TEntry: ISynchronizationQueueEntry, new()
         {
             var path = GetQueuePath(queueName);
 
@@ -84,10 +87,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 Directory.CreateDirectory(path);
             }
 
-            return new SynchronizationQueue<TEntry>(queueName, type, path);
+            return new SynchronizationQueue<TEntry>(queueName, type, path, this._SymmetricCryptographicProvider);
         }
 
-        private static string GetQueuePath(string queueName)
+        private string GetQueuePath(string queueName)
         {
             if (null == queueName)
             {

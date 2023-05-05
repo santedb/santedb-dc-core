@@ -69,5 +69,4 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
     }
 
-
 }

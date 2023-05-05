@@ -50,11 +50,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         bool IsSynchronizing { get; }
 
         /// <summary>
-        /// Fetch to see if there are any particular changes on the specified model type
-        /// </summary>
-        bool Fetch(Type modelType);
-
-        /// <summary>
         /// Perform a pull with the specified trigger
         /// </summary>
         void Pull(SubscriptionTriggerType trigger);
@@ -62,17 +57,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Pull data from the remove server and place it on the inbound queue
         /// </summary>
-        int Pull(Type modelType);
+        void Pull(Type modelType);
 
         /// <summary>
         /// Pull data from the remove server and place it on the inbound queue
         /// </summary>
-        int Pull(Type modelType, NameValueCollection filter);
+        void Pull(Type modelType, NameValueCollection filter);
 
         /// <summary>
         /// Pull data from the remove server and place it on the inbound queue
         /// </summary>
-        int Pull(Type modelType, NameValueCollection filter, bool always);
+        void Pull(Type modelType, NameValueCollection filter, bool always);
 
         /// <summary>
         /// Push data to the server

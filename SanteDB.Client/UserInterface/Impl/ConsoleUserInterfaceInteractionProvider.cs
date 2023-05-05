@@ -31,6 +31,9 @@ namespace SanteDB.Client.UserInterface.Impl
     /// </summary>
     public class ConsoleUserInterfaceInteractionProvider : IUserInterfaceInteractionProvider
     {
+        // Last progress reported
+        private float m_lastProgressReported = 0.0f;
+
         /// <inheritdoc/>
         public string ServiceName => "Console UI Interaction";
 

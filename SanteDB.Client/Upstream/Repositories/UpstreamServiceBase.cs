@@ -19,6 +19,7 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Http;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
@@ -27,6 +28,8 @@ using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.HDSI.Client;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Principal;
 
 namespace SanteDB.Client.Upstream.Repositories
@@ -55,6 +58,11 @@ namespace SanteDB.Client.Upstream.Repositories
         /// Get the upstream management service
         /// </summary>
         protected IUpstreamIntegrationService UpstreamIntegrationService => this.m_upstreamIntegrationService;
+
+        /// <summary>
+        /// Get the upstream availability provider
+        /// </summary>
+        protected IUpstreamAvailabilityProvider UpstreamAvailabilityProvider => this.m_upstreamAvailabilityProvider;
 
         /// <summary>
         /// Get the upstream client factory
@@ -121,5 +129,6 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             return new HdsiServiceClient(this.CreateRestClient(ServiceEndpointType.HealthDataService, authenticatedAs));
         }
+
     }
 }

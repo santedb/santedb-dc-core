@@ -36,4 +36,5 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public SynchronizationQueueEntryOperation Operation { get; set; }
         public bool IsRetry { get; set; }
     }
+
 }

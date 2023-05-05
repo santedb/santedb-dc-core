@@ -33,6 +33,7 @@ using System.Runtime.CompilerServices;
 using System.IO.Compression;
 using SanteDB.Core.Model.Query;
 using System.Collections.Specialized;
+using SanteDB.Core.Security.Services;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -44,7 +45,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private FileStream _BackingFile;
         private ReaderWriterLockSlim _Lock;
         private Queue<int> _EntryQueue;
-
+        private readonly ISymmetricCryptographicProvider _SymmetricEncryptionProvider;
         readonly JsonSerializer _Serializer;
 
         readonly Type _EntryType;
@@ -56,18 +57,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         public string Path { get; }
 
-        public SynchronizationQueue(string name, SynchronizationPattern type, string path)
+        public SynchronizationQueue(string name, SynchronizationPattern type, string path, ISymmetricCryptographicProvider symmetricCryptographicProvider)
         {
             Name = name;
             Type = type;
             Path = path;
             _EntryType = typeof(TEntry);
-
             _Lock = new ReaderWriterLockSlim();
             _BackingFile = new FileStream(GetQueueFilename(Path), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             _Serializer = CreateSerializer();
-
             _EntryQueue = ReadQueueFromFileInternal() ?? new Queue<int>(); //Safe without lock because we're constructing.
+            _SymmetricEncryptionProvider = symmetricCryptographicProvider;
         }
 
         private static string GetQueueFilename(string path) => System.IO.Path.Combine(path, "_queue.json");
@@ -161,7 +161,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             finally
             {
-                _Lock.ExitReadLock();
+                _Lock.ExitUpgradeableReadLock();
             }
         }
 
@@ -174,7 +174,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             finally
             {
-                _Lock.ExitReadLock();
+                _Lock.ExitUpgradeableReadLock();
             }
         }
 
@@ -323,16 +323,31 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 using (var fs = new FileStream(GetEntryFilename(Path, id), FileMode.Open, FileAccess.Read))
                 {
-                    using (var cs = new GZipStream(fs, CompressionLevel.Fastest))
+#if DEBUG
+                    using (var sr = new StreamReader(fs, Encoding.UTF8, true, 512, leaveOpen: false))
                     {
-                        using (var sr = new StreamReader(cs, Encoding.UTF8, true, 512, leaveOpen: false))
+                        using (var jtr = new JsonTextReader(sr))
                         {
-                            using (var jtr = new JsonTextReader(sr))
+                            return serializer.Deserialize<TEntry>(jtr);
+                        }
+                    }
+#else
+                    byte[] iv = new byte[16];
+                    fs.Read(iv, 0, 16);
+                    using (var es = this._SymmetricEncryptionProvider.CreateDecryptingStream(fs, this._SymmetricEncryptionProvider.GetContextKey(), iv))
+                    {
+                        using (var cs = new GZipStream(es, CompressionMode.Decompress))
+                        {
+                            using (var sr = new StreamReader(cs, Encoding.UTF8, true, 512, leaveOpen: false))
                             {
-                                return serializer.Deserialize<TEntry>(jtr);
+                                using (var jtr = new JsonTextReader(sr))
+                                {
+                                    return serializer.Deserialize<TEntry>(jtr);
+                                }
                             }
                         }
                     }
+#endif
                 }
             }
             catch (FileNotFoundException)
@@ -369,17 +384,33 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 using (var fs = new FileStream(GetEntryFilename(Path, entry.Id), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
                 {
-                    using (var cs = new GZipStream(fs, CompressionLevel.Fastest))
+#if DEBUG
+                    using (var sw = new StreamWriter(fs))
                     {
-                        using (var sw = new StreamWriter(cs))
+                        using (var jtw = new JsonTextWriter(sw))
                         {
-                            using (var jtw = new JsonTextWriter(sw))
+                            serializer.Serialize(jtw, entry, _EntryType);
+                            jtw.Flush();
+                        }
+                    }
+#else
+                    var iv = this._SymmetricEncryptionProvider.GenerateIV();
+                    fs.Write(iv, 0, iv.Length);
+                    using (var es = this._SymmetricEncryptionProvider.CreateEncryptingStream(fs, this._SymmetricEncryptionProvider.GetContextKey(), iv))
+                    {
+                        using (var cs = new GZipStream(es, CompressionLevel.Fastest))
+                        {
+                            using (var sw = new StreamWriter(cs))
                             {
-                                serializer.Serialize(jtw, entry, _EntryType);
-                                jtw.Flush();
+                                using (var jtw = new JsonTextWriter(sw))
+                                {
+                                    serializer.Serialize(jtw, entry, _EntryType);
+                                    jtw.Flush();
+                                }
                             }
                         }
                     }
+#endif
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
@@ -411,7 +442,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             return entry;
                         }
 
-                        //TODO: Log Bad entry.
 
                         _ = DequeueBadEntry();
                         //We do not do a file write here. We will write the next meaninful change.

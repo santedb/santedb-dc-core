@@ -31,7 +31,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     public interface ISynchronizationDeadLetterQueueEntry : ISynchronizationQueueEntry
     {
         /// <summary>
-        /// True if the object is a retry 
+        /// Original queue name 
         /// </summary>
         String OriginalQueue { get; }
 
@@ -39,5 +39,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Specialized tag data
         /// </summary>
         byte[] TagData { get; }
+
     }
 }
