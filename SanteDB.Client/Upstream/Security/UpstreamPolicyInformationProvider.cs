@@ -95,7 +95,8 @@ namespace SanteDB.Client.Upstream.Security
         {
             var cachekey = GetCacheKey(nameof(GetPolicies), securable);
 
-            if (null != cachekey && _CacheService?.TryGet<IEnumerable<IPolicyInstance>>(cachekey, out var cacheval) == true)
+            IEnumerable<IPolicyInstance> cacheval = null;
+            if (null != cachekey && _CacheService?.TryGet(cachekey, out cacheval) == true)
             {
                 return cacheval;
             }
@@ -127,7 +128,9 @@ namespace SanteDB.Client.Upstream.Security
         {
             var cachekey = GetCacheKey(nameof(GetPolicies)); //Cache key should never be null here since we're using a constant expression.
 
-            if (_CacheService?.TryGet<IEnumerable<IPolicy>>(cachekey, out var cacheresult) == true)
+            IEnumerable<IPolicy> cacheresult = null;
+
+            if (_CacheService?.TryGet<IEnumerable<IPolicy>>(cachekey, out cacheresult) == true)
             {
                 return cacheresult;
             }
@@ -156,7 +159,8 @@ namespace SanteDB.Client.Upstream.Security
         {
             var cachekey = GetCacheKey(nameof(GetPolicy), policyOid); //Cache key should never be null here because we're using a string expression.
 
-            if (_CacheService?.TryGet<IPolicy>(cachekey, out var cacheresult) == true)
+            IPolicy cacheresult = null;
+            if (_CacheService?.TryGet<IPolicy>(cachekey, out cacheresult) == true)
             {
                 return cacheresult;
             }
@@ -209,7 +213,8 @@ namespace SanteDB.Client.Upstream.Security
         {
             var cachekey = GetCacheKey(nameof(HasPolicy), securable, policyOid);
 
-            if (null != cachekey && _CacheService?.TryGet<bool>(cachekey, out var cacheresult) == true)
+            bool cacheresult = false;
+            if (null != cachekey && _CacheService?.TryGet<bool>(cachekey, out cacheresult) == true)
             {
                 return cacheresult;
             }
