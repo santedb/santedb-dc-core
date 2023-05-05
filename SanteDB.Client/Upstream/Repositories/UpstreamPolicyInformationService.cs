@@ -67,8 +67,8 @@ namespace SanteDB.Client.Upstream.Repositories
             IRestClientFactory restClientFactory,
             IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider availabilityProvider,
-            ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService,
-            IUpstreamIntegrationService integrationService) : base(restClientFactory, upstreamManagementService, availabilityProvider, integrationService)
+            IUpstreamIntegrationService integrationService,
+            ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService = null) : base(restClientFactory, upstreamManagementService, availabilityProvider, integrationService)
         {
             this.m_localizationSerice = localizationService;
             this.m_localPolicyService = localPolicyInformationService;
