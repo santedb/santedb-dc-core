@@ -321,7 +321,8 @@ namespace SanteDB.Client.Upstream.Management
                 {
 
                     // Check the cache first
-                    if (this.m_adhocCache?.TryGet("server.template.key", out TemplateDefinition[] cached) != true)
+                    TemplateDefinition[] cached = null;
+                    if (this.m_adhocCache?.TryGet("server.template.key", out cached) != true)
                     {
                         cached = client.Query<TemplateDefinition>(e => e.ObsoletionTime == null).Item.OfType<TemplateDefinition>().ToArray();
                         this.m_adhocCache?.Add("server.template.key", cached);
