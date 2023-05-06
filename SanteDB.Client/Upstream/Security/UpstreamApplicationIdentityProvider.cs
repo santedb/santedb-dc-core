@@ -421,6 +421,17 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
+        public IApplicationIdentity GetIdentity(Guid sid)
+        {
+            if (_LocalApplicationIdentityProvider == null)
+            {
+                throw new InvalidOperationException(ErrorMessages.LOCAL_SERVICE_NOT_SUPPORTED);
+            }
+
+            return _LocalApplicationIdentityProvider.LocalProvider.GetIdentity(sid);
+        }
+
+        /// <inheritdoc/>
         public byte[] GetPublicSigningKey(string applicationName)
         {
             if (_LocalApplicationIdentityProvider == null)
