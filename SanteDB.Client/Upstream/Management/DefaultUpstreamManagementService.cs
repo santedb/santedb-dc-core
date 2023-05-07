@@ -286,11 +286,12 @@ namespace SanteDB.Client.Upstream.Management
                         authEpConfiguration.Binding.Security.Mode == Core.Http.Description.SecurityScheme.ClientCertificate)
                     {
 
-                        var deviceSubjectName = $"CN={targetRealm.LocalDeviceName}.{targetRealm.Realm.Host}";
+                        var deviceSubjectName = $"CN={upstreamDevice.Key}, DC={targetRealm.LocalDeviceName}, DC={targetRealm.Realm.Host}";
                         if (!String.IsNullOrEmpty(dnSettings))
                         {
                             deviceSubjectName += $", {dnSettings}";
                         }
+
                         deviceCredential.CertificateSecret = new Core.Security.Configuration.X509ConfigurationElement(StoreLocation.CurrentUser, StoreName.My, X509FindType.FindBySubjectDistinguishedName, deviceSubjectName);
 
                         // Is there already a certificate that has a private key?
@@ -298,12 +299,12 @@ namespace SanteDB.Client.Upstream.Management
                         if (deviceCertificate == null ||
                             !deviceCertificate.Verify()) // No certificate
                         {
+                            this.m_tracer.TraceInfo("Will generate certificate with subject: {0}", deviceSubjectName);
+
                             if (this.m_certificateGenerator == null)
                             {
                                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CANNOT_GENERATE_CERTIFICATE));
                             }
-
-                            this.m_tracer.TraceInfo("Will generate certificate with subject: {0}", deviceSubjectName);
 
                             var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
                             if (isCaConfigured)
