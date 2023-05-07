@@ -329,6 +329,8 @@ namespace SanteDB.Client.Upstream.Management
                                 X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
                                 audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
                             }
+
+                            this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", deviceCertificate.Subject, deviceCertificate.HasPrivateKey);
                         }
 
                         authEpConfiguration.Binding.Security.CredentialProvider = null; // No need for credentials on OAUTH since the certificate is our credential
