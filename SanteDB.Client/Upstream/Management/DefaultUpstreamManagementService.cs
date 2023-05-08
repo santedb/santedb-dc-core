@@ -331,6 +331,11 @@ namespace SanteDB.Client.Upstream.Management
                             }
 
                             this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", deviceCertificate.Subject, deviceCertificate.HasPrivateKey);
+                            if(!deviceCertificate.HasPrivateKey)
+                            {
+                                this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", deviceCertificate.Subject, deviceCertificate.HasPrivateKey);
+                                throw new InvalidOperationException("Device certificate did not have a private key - ensure you are running on a supported platform");
+                            }
                         }
 
                         authEpConfiguration.Binding.Security.CredentialProvider = null; // No need for credentials on OAUTH since the certificate is our credential
