@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using DocumentFormat.OpenXml.Wordprocessing;
 using RestSrvr;
 using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
@@ -392,16 +393,25 @@ namespace SanteDB.Client.Upstream.Management
                         }
                     }
 
-                    this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", signingCertificate.Subject, signingCertificate.HasPrivateKey);
+                    this.m_tracer.TraceWarning("Installed Signing Certificate: {0} (PK: {1})", signingCertificate.Subject, signingCertificate.HasPrivateKey);
                     if (!signingCertificate.HasPrivateKey)
                     {
                         this.m_tracer.TraceWarning("SECURITY-ALERT: Signing Certificate: {0} (PK: {1}) could not be used since it does not contain a private key!!!!", signingCertificate.Subject, signingCertificate.HasPrivateKey);
                     }
                     else
                     {
-                        // Remove all HMAC and replace with RS256
-                        this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
-                        this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                        // Attempt to load from platform service
+                        if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindByThumbprint, signingCertificate.Thumbprint, out var validateCert) ||
+                            !validateCert.HasPrivateKey)
+                        {
+                            this.m_tracer.TraceWarning("SECURITY-ALERT: The signing certificate in the platform security provider does not have a private key! Ensure that you have configured the appropriate platform security service");
+                        }
+                        else
+                        {
+                            // Remove all HMAC and replace with RS256
+                            this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
+                            this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                        }
                     }
 
                     EntitySource.Current = new EntitySource(new RepositoryEntitySource());
