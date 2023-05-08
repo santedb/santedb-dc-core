@@ -391,9 +391,17 @@ namespace SanteDB.Client.Upstream.Management
                         }
                     }
 
-                    // Remove all HMAC and replace with RS256
-                    this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
-                    this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                    this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", signingCertificate.Subject, signingCertificate.HasPrivateKey);
+                    if (!signingCertificate.HasPrivateKey)
+                    {
+                        this.m_tracer.TraceWarning("SECURITY-ALERT: Signing Certificate: {0} (PK: {1}) could not be used since it does not contain a private key!!!!", signingCertificate.Subject, signingCertificate.HasPrivateKey);
+                    }
+                    else
+                    {
+                        // Remove all HMAC and replace with RS256
+                        this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
+                        this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                    }
 
                     EntitySource.Current = new EntitySource(new RepositoryEntitySource());
                 }
