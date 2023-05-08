@@ -47,7 +47,7 @@ namespace SanteDB.Client.Rest
             {
                 throw new InvalidOperationException(ErrorMessages.CANNOT_BIND_CERTIFICATES);
             }
-
+#pragma warning disable CS0618 
             var ssiDebugCert = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectDistinguishedName, StoreLocation.LocalMachine, StoreName.My, $"CN={bindingBase.Host}");
             if (ssiDebugCert == null)
             {
@@ -56,7 +56,7 @@ namespace SanteDB.Client.Rest
                 X509CertificateUtils.InstallMachineCertificate(ssiDebugCert);
                 X509CertificateUtils.InstallCertificate(StoreName.Root, ssiDebugCert);
             }
-
+#pragma warning restore
             try
             {
                 if (bindingBase.HostNameType == UriHostNameType.Dns)

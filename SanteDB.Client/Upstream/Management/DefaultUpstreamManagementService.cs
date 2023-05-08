@@ -79,6 +79,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly ApplicationServiceContextConfigurationSection m_applicationConfiguration;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultUpstreamManagementService));
         private readonly IGeographicLocationProvider m_geographicLocationService;
+        private readonly IPlatformSecurityProvider m_platformSecurityProvider;
         private IAuditService m_auditService;
         private readonly SecurityConfigurationSection m_securityConfiguration;
 
@@ -91,6 +92,7 @@ namespace SanteDB.Client.Upstream.Management
             ILocalizationService localizationService,
             IServiceManager serviceManager,
             IOperatingSystemInfoService operatingSystemInfoService,
+            IPlatformSecurityProvider platformSecurityProvider,
             IGeographicLocationProvider geographicLocationProvider = null,
             ICertificateGeneratorService certificateGenerator = null,
             IPolicyEnforcementService pepService = null
@@ -107,6 +109,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_certificateGenerator = certificateGenerator;
             this.m_operatingSystemInfo = operatingSystemInfoService;
             this.m_geographicLocationService = geographicLocationProvider;
+            this.m_platformSecurityProvider = platformSecurityProvider;
             if (m_configuration?.Realm != null)
             {
                 this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(m_configuration);
@@ -295,8 +298,7 @@ namespace SanteDB.Client.Upstream.Management
                         deviceCredential.CertificateSecret = new Core.Security.Configuration.X509ConfigurationElement(StoreLocation.CurrentUser, StoreName.My, X509FindType.FindBySubjectDistinguishedName, deviceSubjectName);
 
                         // Is there already a certificate that has a private key?
-                        var deviceCertificate = deviceCredential.CertificateSecret.Certificate;
-                        if (deviceCertificate == null ||
+                        if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, deviceSubjectName, StoreName.My, out var deviceCertificate) ||
                             !deviceCertificate.Verify()) // No certificate
                         {
                             this.m_tracer.TraceInfo("Will generate certificate with subject: {0}", deviceSubjectName);
@@ -315,7 +317,7 @@ namespace SanteDB.Client.Upstream.Management
                                     submissionResult.CertificatePkcs != null)
                                 {
                                     deviceCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
-                                    X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
+                                    _ = this.m_platformSecurityProvider.TryInstallCertificate(deviceCertificate);
                                     audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
                                 }
                                 else
@@ -326,7 +328,7 @@ namespace SanteDB.Client.Upstream.Management
                             else
                             {
                                 deviceCertificate = this.m_certificateGenerator.CreateSelfSignedCertificate(privateKeyPair, new X500DistinguishedName(deviceSubjectName), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
-                                X509CertificateUtils.InstallCertificate(StoreName.My, deviceCertificate);
+                                _ = this.m_platformSecurityProvider.TryInstallCertificate(deviceCertificate);
                                 audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, deviceCertificate);
                             }
 
@@ -358,8 +360,7 @@ namespace SanteDB.Client.Upstream.Management
                         subjectName += $", {dnSettings}";
                     }
 
-                    var signingCertificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectDistinguishedName, StoreLocation.CurrentUser, StoreName.My, subjectName);
-                    if (signingCertificate == null)
+                    if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, subjectName, StoreName.My, out var signingCertificate))
                     {
                         if (this.m_certificateGenerator == null)
                         {
@@ -375,7 +376,7 @@ namespace SanteDB.Client.Upstream.Management
                                 submissionResult.CertificatePkcs != null)
                             {
                                 signingCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
-                                X509CertificateUtils.InstallCertificate(StoreName.My, signingCertificate);
+                                _ = this.m_platformSecurityProvider.TryInstallCertificate(signingCertificate, StoreName.My);
                                 audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
                             }
                             else
@@ -386,7 +387,7 @@ namespace SanteDB.Client.Upstream.Management
                         else
                         {
                             signingCertificate = this.m_certificateGenerator.CreateSelfSignedCertificate(privateKeyPair, new X500DistinguishedName(subjectName), new TimeSpan(730, 0, 0, 0), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature);
-                            X509CertificateUtils.InstallCertificate(StoreName.My, signingCertificate);
+                            _ = this.m_platformSecurityProvider.TryInstallCertificate(signingCertificate, StoreName.My);
                             audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
                         }
                     }

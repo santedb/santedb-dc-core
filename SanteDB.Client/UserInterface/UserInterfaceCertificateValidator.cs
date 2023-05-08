@@ -36,14 +36,16 @@ namespace SanteDB.Client.UserInterface
     {
         private readonly ILocalizationService m_localizationService;
         private readonly IUserInterfaceInteractionProvider m_interactionProvider;
+        private readonly IPlatformSecurityProvider m_platformSecurityProvider;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UserInterfaceCertificateValidator(IUserInterfaceInteractionProvider interactionProvider, ILocalizationService localizationService)
+        public UserInterfaceCertificateValidator(IUserInterfaceInteractionProvider interactionProvider, IPlatformSecurityProvider platformSecurityProvider, ILocalizationService localizationService)
         {
             this.m_localizationService = localizationService;
             this.m_interactionProvider = interactionProvider;
+            this.m_platformSecurityProvider = platformSecurityProvider;
         }
 
         /// <inheritdoc/>
@@ -53,12 +55,11 @@ namespace SanteDB.Client.UserInterface
                 return false;
             else
             {
-                var trustedCertificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectName, StoreLocation.CurrentUser, StoreName.TrustedPeople, certificate.Subject);
-                if (trustedCertificate == null)
+                if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, certificate.Subject, out var trustedCertificate))
                 {
                     if (this.m_interactionProvider.Confirm(this.m_localizationService.GetString(UserMessageStrings.CONFIRM_CERTIFICATE_TRUST, new { cert = certificate.Subject })))
                     {
-                        X509CertificateUtils.InstallCertificate(StoreName.TrustedPeople, new X509Certificate2(certificate));
+                        this.m_platformSecurityProvider.TryInstallCertificate(new X509Certificate2(certificate), StoreName.TrustedPeople);
                         return true;
                     }
                     else
