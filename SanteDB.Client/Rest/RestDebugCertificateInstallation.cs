@@ -47,14 +47,14 @@ namespace SanteDB.Client.Rest
             {
                 throw new InvalidOperationException(ErrorMessages.CANNOT_BIND_CERTIFICATES);
             }
-#pragma warning disable CS0618 
-            var ssiDebugCert = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectDistinguishedName, StoreLocation.LocalMachine, StoreName.My, $"CN={bindingBase.Host}");
-            if (ssiDebugCert == null)
+
+            var platService = X509CertificateUtils.GetPlatformServiceOrDefault();
+            if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", out var ssiDebugCert))
             {
                 var keyPair = certificateGeneratorService.CreateKeyPair(2048);
                 ssiDebugCert = certificateGeneratorService.CreateSelfSignedCertificate(keyPair, new X500DistinguishedName($"CN={bindingBase.Host}"), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment, new string[] { ExtendedKeyUsageOids.ServerAuthentication }, new String[] { bindingBase.Host } );
-                X509CertificateUtils.InstallMachineCertificate(ssiDebugCert);
-                X509CertificateUtils.InstallCertificate(StoreName.Root, ssiDebugCert);
+                platService.TryInstallCertificate(ssiDebugCert, storeName: StoreName.My, storeLocation: StoreLocation.LocalMachine);
+                platService.TryInstallCertificate(ssiDebugCert, storeName: StoreName.Root);
             }
 #pragma warning restore
             try
