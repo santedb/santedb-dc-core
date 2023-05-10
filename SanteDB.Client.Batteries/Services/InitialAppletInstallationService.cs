@@ -137,7 +137,7 @@ namespace SanteDB.Client.Batteries.Services
 
         private void Irpc_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            this.m_userInterfaceInteraction.SetStatus(e.State, e.Progress);
+            this.m_userInterfaceInteraction.SetStatus("Applet Manager", e.State, e.Progress);
         }
     }
 }
