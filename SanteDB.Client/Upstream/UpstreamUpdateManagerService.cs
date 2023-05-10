@@ -176,7 +176,7 @@ namespace SanteDB.Client.Upstream
                     {
 
                         this.m_tracer.TraceInfo("Updating {0}...", packageId);
-                        restClient.ProgressChanged += (o, e) => this.m_userInterfaceService.SetStatus(String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
+                        restClient.ProgressChanged += (o, e) => this.m_userInterfaceService.SetStatus("Update Manager", String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
                         restClient.SetTimeout(30000);
 
                         using (var ms = new MemoryStream(restClient.Get($"AppletSolution/{this.m_configuration.UiSolution}/applet/{packageId}")))
@@ -220,7 +220,7 @@ namespace SanteDB.Client.Upstream
                     this.m_tracer.TraceInfo("Checking for updates with remote service...");
 
                     // Set progress 
-                    this.m_userInterfaceService.SetStatus(UserMessages.UPDATE_CHECK, 0.5f);
+                    this.m_userInterfaceService.SetStatus("Update Manager", UserMessages.UPDATE_CHECK, 0.5f);
                     using (AuthenticationContext.EnterContext(this.m_upstreamIntegrationService.AuthenticateAsDevice()))
                     {
                         using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))

@@ -114,7 +114,7 @@ namespace SanteDB.Client.Upstream.Management
         }
 
         /// <inheritdoc/>
-        public long GetUpstreamLatency(ServiceEndpointType endpointType)
+        public long? GetUpstreamLatency(ServiceEndpointType endpointType)
         {
             try
             {
@@ -132,11 +132,11 @@ namespace SanteDB.Client.Upstream.Management
                         return sw.ElapsedMilliseconds;
                     }
                 }
-                return -1;
+                return null;
             }
             catch 
             {
-                return -1 ;
+                return null;
             }
         }
     }

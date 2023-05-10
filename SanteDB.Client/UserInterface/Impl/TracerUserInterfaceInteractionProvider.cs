@@ -55,9 +55,9 @@ namespace SanteDB.Client.UserInterface.Impl
         }
 
         /// <inheritdoc/>
-        public void SetStatus(string statusText, float progressIndicator)
+        public void SetStatus(string taskIdentifier, string statusText, float progressIndicator)
         {
-            this.m_tracer.TraceInfo("STATUS: {0:#.#%} {1}", progressIndicator, statusText);
+            this.m_tracer.TraceInfo("{0} STATUS: {1:#.#%} {2}", taskIdentifier, progressIndicator, statusText);
         }
     }
 }

@@ -45,6 +45,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         void Save(Type modelType, String filter, String eTag, DateTime? since);
 
         /// <summary>
+        /// Save the error to the synchronization log
+        /// </summary>
+        void SaveError(Type modelType, String filter, Exception exception);
+
+        /// <summary>
         /// Get all log entries
         /// </summary>
         IEnumerable<ISynchronizationLogEntry> GetAll();
@@ -58,6 +63,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Mark the specified query as complete
         /// </summary>
         void CompleteQuery(Type modelType, String filter, Guid queryId);
+
         /// <summary>
         /// Mark the specified query as complete
         /// </summary>

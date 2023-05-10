@@ -46,7 +46,6 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// Represents a policy information service which communicates with an upstream policy information service
     /// </summary>
-    [PreferredService(typeof(IPolicyInformationService))]
     public class UpstreamPolicyInformationService : UpstreamServiceBase, IPolicyInformationService, IUpstreamServiceProvider<IPolicyInformationService>
     {
 

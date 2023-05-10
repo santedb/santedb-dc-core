@@ -50,5 +50,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Get the last etag that was successfully fetched.
         /// </summary>
         string LastETag { get; }
+
+        /// <summary>
+        /// Gets the last error encountered
+        /// </summary>
+        string LastError { get; }
     }
 }

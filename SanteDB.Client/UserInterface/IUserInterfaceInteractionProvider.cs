@@ -55,8 +55,9 @@ namespace SanteDB.Client.UserInterface
         /// <summary>
         /// Set the application status bar to to the specified value
         /// </summary>
+        /// <param name="taskIdentifier">Since there can be multiple tasks ocurring - this is the task identifier</param>
         /// <param name="statusText">The text to display on the status bar</param>
         /// <param name="progressIndicator">The progress indicator</param>
-        void SetStatus(String statusText, float progressIndicator);
+        void SetStatus(String taskIdentifier, String statusText, float progressIndicator);
     }
 }

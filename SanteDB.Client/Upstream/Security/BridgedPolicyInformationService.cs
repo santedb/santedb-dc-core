@@ -19,7 +19,7 @@ namespace SanteDB.Client.Upstream.Security
     /// Policy information service that uses either local or upstream policy provider.
     /// </summary>
     [PreferredService(typeof(IPolicyInformationService))]
-    public class UpstreamPolicyInformationProvider : UpstreamServiceBase, IPolicyInformationService
+    public class BridgedPolicyInformationService : UpstreamServiceBase, IPolicyInformationService
     {
         readonly ILocalServiceProvider<IPolicyInformationService> _localPolicyProvider;
         readonly IUpstreamServiceProvider<IPolicyInformationService> _upstreamPolicyProvider;
@@ -28,7 +28,7 @@ namespace SanteDB.Client.Upstream.Security
         readonly Tracer _Tracer;
         readonly TimeSpan _CacheTimeout;
 
-        public UpstreamPolicyInformationProvider(
+        public BridgedPolicyInformationService(
             IRestClientFactory restClientFactory,
             IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
@@ -37,7 +37,7 @@ namespace SanteDB.Client.Upstream.Security
             IAdhocCacheService cacheService,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            _Tracer = new Tracer(nameof(UpstreamPolicyInformationProvider));
+            _Tracer = new Tracer(nameof(BridgedPolicyInformationService));
             _localPolicyProvider = localPolicyProvider;
             _upstreamPolicyProvider = upstreamPolicyProvider;
             _CacheTimeout = TimeSpan.FromSeconds(120); //TODO: Make this a configuration setting?
@@ -172,7 +172,7 @@ namespace SanteDB.Client.Upstream.Security
                 try
                 {
                     retval = _upstreamPolicyProvider?.UpstreamProvider?.GetPolicy(policyOid);
-
+                    _localPolicyProvider.LocalProvider.CreatePolicy(retval, AuthenticationContext.SystemPrincipal);
                     _CacheService?.Add(cachekey, retval, _CacheTimeout);
                 }
                 catch (UpstreamIntegrationException)
@@ -298,7 +298,7 @@ namespace SanteDB.Client.Upstream.Security
             if (sb.Length > 0)
             {
                 //TODO: Optimize this.
-                sb.Insert(0, $"{nameof(UpstreamPolicyInformationProvider)}.");
+                sb.Insert(0, $"{nameof(BridgedPolicyInformationService)}.");
 
                 return sb.ToString();
             }

@@ -175,14 +175,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="endpointType">The endpoint from which the drift should be calculated</param>
         private TimeSpan GetUpstreamDrift(ServiceEndpointType endpointType)
         {
-            var result = this.UpstreamAvailabilityProvider.GetTimeDrift(endpointType) ?? TimeSpan.FromMilliseconds(this.UpstreamAvailabilityProvider.GetUpstreamLatency(endpointType));
+            var result = this.UpstreamAvailabilityProvider.GetTimeDrift(endpointType)?.TotalMilliseconds ?? this.UpstreamAvailabilityProvider.GetUpstreamLatency(endpointType);
 
-            if (result < TimeSpan.Zero) // GetUpstreamLatency returns -1 when the service is unavailable.
+            if (!result.HasValue) // GetUpstreamLatency returns -1 when the service is unavailable.
             {
                 throw new TimeoutException("Service Unavailable.");
             }
-
-            return result;
+            return TimeSpan.FromMilliseconds((double)result);
         }
 
         /// <summary>
@@ -560,7 +559,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             var estimatedlatency = this.UpstreamAvailabilityProvider.GetUpstreamLatency(ServiceEndpointType.HealthDataService);
 
-            if (estimatedlatency < 0) //Unavailable
+            if (!estimatedlatency.HasValue) //Unavailable
             {
                 _Tracer.TraceInfo("Upstream is unavialable. Exiting Pull.");
                 return;
@@ -599,6 +598,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             else
             {
                 _SynchronizationLogService.CompleteQuery(existingquery);
+                // Mark the start of our querying
                 _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, 0);
             }
 
@@ -609,42 +609,75 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 throw new NotSupportedException("No inbound queue available.");
             }
 
-            var filterExpression = QueryExpressionParser.BuildLinqExpression(modelType, filter);
+            var filterExpression = QueryExpressionParser.BuildLinqExpression(modelType, filter, "o", relayControlVariables: true);
 
-            // Continue to query until there are no further results 
-            IResourceCollection result = null;
-            var sw = new Stopwatch();
-            do
+            try
             {
+                // Continue to query until there are no further results 
+                IResourceCollection result = null;
+                var sw = new Stopwatch();
+                do
+                {
 
-                sw.Restart();
-                result = this.UpstreamIntegrationService.Query(modelType, filterExpression, queryControlOptions);
-                sw.Stop();
+                    sw.Restart();
+                    result = this.UpstreamIntegrationService.Query(modelType, filterExpression, queryControlOptions);
+                    sw.Stop();
+
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progressIndicator, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_STATE, new { resource = modelType.GetSerializationName(), count = queryControlOptions.Offset })));
+
+                    if (result == null)
+                    {
+                        break; // no result indicating a 304
+                    }
+                    if (!(result is Bundle bdl))
+                    {
+                        bdl = new Bundle(result.Item.OfType<IdentifiedData>());
+                    }
+
+                    if (bdl.Item.Any())
+                    {
+                        // Provenance objects from the upstream don't apply here since they're used for tracking only
+                        bdl = this.StripUpstreamMetadata(bdl);
+
+                        // We want to set the last e-tag not of any included objects but only of the focal object (the original thing we queried for and not any of the supporting objects)
+                        queryControlOptions.Count = ScaleTakeCount(bdl.Count, sw.ElapsedMilliseconds, estimatedlatency);
+                        queryControlOptions.Offset += bdl.Count;
+
+                        lastEtag = bdl.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
+                        inboundqueue.Enqueue(bdl, SynchronizationQueueEntryOperation.Sync);
+                        _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, queryControlOptions.Offset);
+                    }
+                } while (result.Item.Any());
                 
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progressIndicator, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_STATE, new { resource = modelType.GetSerializationName(), count = queryControlOptions.Offset })));
+                this._SynchronizationLogService.Save(modelType, filterstring, lastEtag, DateTime.Now);
 
-                if (!(result is Bundle bdl))
+            }
+            catch (Exception e)
+            {
+                this._SynchronizationLogService.SaveError(modelType, filterstring, e);
+                this._Tracer.TraceError("Error Synchronizing {0}?{1} - {2}", modelType, filterstring, e.ToHumanReadableString());
+            }
+
+
+        }
+
+        /// <summary>
+        /// Strips upstream metadata objects which may appear in the bundle and ensures that the data in the bundle is 
+        /// suitable for moving to this machine
+        /// </summary>
+        private Bundle StripUpstreamMetadata(Bundle bdl)
+        {
+            bdl.Item.RemoveAll(itm => itm is SecurityProvenance || itm is SecurityUser || itm is SecurityRole || itm is SecurityDevice || itm is SecurityApplication);
+            bdl.Item.ForEach(itm =>
+            {
+                if (itm is IVersionedData ver) // Versioned data - we don't download old versions of data we only replicate current - so we need to set appropriate parameters
                 {
-                    bdl = new Bundle(result.Item.OfType<IdentifiedData>());
+                    ver.IsHeadVersion = true;
+                    ver.PreviousVersionKey = null;
+                    ver.VersionSequence = null;
                 }
-
-                if (bdl.Item.Any())
-                {
-                    // Provenance objects from the upstream don't apply here since they're used for tracking only
-                    bdl.Item.RemoveAll(o => o is SecurityProvenance);
-
-                    // We want to set the last e-tag not of any included objects but only of the focal object (the original thing we queried for and not any of the supporting objects)
-                    queryControlOptions.Count = ScaleTakeCount(bdl.Count, sw.ElapsedMilliseconds, estimatedlatency);
-                    queryControlOptions.Offset += bdl.Count;
-                    
-                    lastEtag = bdl.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
-                    inboundqueue.Enqueue(bdl, SynchronizationQueueEntryOperation.Sync);
-                    _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, queryControlOptions.Offset);
-                }
-            } while (result.Item.Any());
-
-            this._SynchronizationLogService.Save(modelType, filterstring, lastEtag, lastmodificationdate);
-
+            });
+            return bdl;
         }
 
         /// <inheritdoc />
@@ -663,12 +696,19 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 var d = 0;
                 foreach (var def in applicableClientDefinitions)
                 {
-                    // We keep the reported progress for firing the progress indicator and because we want to inform the user of the progress of data as the pull is happening
-                    progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
-                    _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
-                    var objectstoevaluate = GetSubscribedtObjectsApplyingGuards(def, subscribedobjects);
-                    this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
+                    try
+                    {
+                        // We keep the reported progress for firing the progress indicator and because we want to inform the user of the progress of data as the pull is happening
+                        progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
+                        _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
+                        var objectstoevaluate = GetSubscribedtObjectsApplyingGuards(def, subscribedobjects);
+                        this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
+                    }
+                    catch (Exception e)
+                    {
+                        this._Tracer.TraceError("Error executing subscription definition for {0} - {1}", def.Resource, e.ToHumanReadableString());
+                    }
                 }
             }
 
@@ -707,8 +747,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
                     _JobManager.AddJob(job, JobStartType.DelayStart);
                     _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
-
                     // Background the initial pull so we don't block startup
+                    _ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump()); // Process anything in the inbox
                     _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
 
                 }

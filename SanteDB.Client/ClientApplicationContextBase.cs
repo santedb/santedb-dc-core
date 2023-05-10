@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -84,7 +85,9 @@ namespace SanteDB.Client
         /// </summary>
         private void MonitorStatus(Object sender, ProgressChangedEventArgs e)
         {
-            this.InteractionProvider.SetStatus(e.State.ToString(), e.Progress);
+            var taskIdentifier = sender.GetType().Name;
+            
+            this.InteractionProvider.SetStatus(taskIdentifier, e.State.ToString(), e.Progress);
         }
 
         /// <summary>
