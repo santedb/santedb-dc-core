@@ -24,8 +24,6 @@ using SanteDB.Core.Configuration;
 using SanteDB.Rest.AppService;
 using SanteDB.Rest.Common.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Rest
 {
@@ -43,13 +41,13 @@ namespace SanteDB.Client.Disconnected.Rest
         /// </summary>
         public SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
         {
-            if(hostContextType == SanteDBHostType.Test)
+            if (hostContextType == SanteDBHostType.Test)
             {
                 return configuration;
             }
 
-            var restConfiguration = configuration.GetSection<RestConfigurationSection>().Services.Find(o=>o.ConfigurationName == AppServiceMessageHandler.ConfigurationName);
-            if(restConfiguration != null)
+            var restConfiguration = configuration.GetSection<RestConfigurationSection>().Services.Find(o => o.ConfigurationName == AppServiceMessageHandler.ConfigurationName);
+            if (restConfiguration != null)
             {
                 restConfiguration.ServiceType = typeof(SynchronizedAppServiceBehavior);
                 restConfiguration.Endpoints.ForEach(o => o.Contract = typeof(ISynchronizedAppServiceContract));

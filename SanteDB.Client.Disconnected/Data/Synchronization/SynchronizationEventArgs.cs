@@ -19,9 +19,7 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -58,7 +56,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Synchronization type events
         /// </summary>
-        public SynchronizationEventArgs(Type type, NameValueCollection filter, DateTime fromDate, int totalSync) 
+        public SynchronizationEventArgs(Type type, NameValueCollection filter, DateTime fromDate, int totalSync)
         {
             this.Type = type;
             this.Filter = filter;

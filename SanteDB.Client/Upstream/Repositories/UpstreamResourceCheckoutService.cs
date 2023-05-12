@@ -18,20 +18,14 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using RestSrvr;
-using SanteDB.Core;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
-using SanteDB.Core.Interop;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Fault;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -58,14 +52,14 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             try
             {
-                using(var client = base.CreateRestClient(UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<T>(), AuthenticationContext.Current.Principal))
+                using (var client = base.CreateRestClient(UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<T>(), AuthenticationContext.Current.Principal))
                 {
                     client.Invoke<Object, Object>("CHECKIN", $"{typeof(T).GetSerializationName()}/{key}", null);
                     this.m_dataCachingService.Remove(key);
                     return true;
                 }
             }
-            catch(RestClientException<RestServiceFault> ex) when (ex.Result.Type == nameof(ObjectLockedException))
+            catch (RestClientException<RestServiceFault> ex) when (ex.Result.Type == nameof(ObjectLockedException))
             {
                 throw new Core.Exceptions.ObjectLockedException(ex.Result.Data[0]);
             }
@@ -87,7 +81,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new Core.Exceptions.ObjectLockedException(ex.Result.Data[0]);
             }
-            catch(RestClientException<Object> ex)  when (ex.Result is RestServiceFault rfe && ex.HttpStatus == (System.Net.HttpStatusCode)423)
+            catch (RestClientException<Object> ex) when (ex.Result is RestServiceFault rfe && ex.HttpStatus == (System.Net.HttpStatusCode)423)
             {
                 throw new ObjectLockedException(rfe.Data[0]);
             }
@@ -105,7 +99,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 using (var client = base.CreateRestClient(UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<T>(), AuthenticationContext.Current.Principal))
                 {
                     var headers = client.Head($"{typeof(T).GetSerializationName()}/{key}", null);
-                    if(headers.TryGetValue(ExtendedHttpHeaderNames.CheckoutStatusHeader, out var owner))
+                    if (headers.TryGetValue(ExtendedHttpHeaderNames.CheckoutStatusHeader, out var owner))
                     {
                         currentOwner = new GenericIdentity(owner);
                         return true;
@@ -120,6 +114,6 @@ namespace SanteDB.Client.Upstream.Repositories
             }
         }
 
-        
+
     }
 }

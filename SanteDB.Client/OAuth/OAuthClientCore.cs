@@ -21,18 +21,15 @@
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
-using SanteDB.BI.Model;
 using SanteDB.Client.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.OAuth;
 using SanteDB.Rest.OAuth;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -62,7 +59,7 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Gets the token handler
         /// </summary>
-        protected JsonWebTokenHandler TokenHandler {get;}
+        protected JsonWebTokenHandler TokenHandler { get; }
 
         /// <summary>
         /// Gets or sets the configured random number generator
@@ -78,7 +75,7 @@ namespace SanteDB.Client.OAuth
         /// The ClientId of the application.
         /// </summary>
         public string ClientId { get; set; }
-        
+
 
         /// <summary>
         /// DI constructor
@@ -89,7 +86,7 @@ namespace SanteDB.Client.OAuth
             CryptoRNG = System.Security.Cryptography.RandomNumberGenerator.Create();
             TokenHandler = new JsonWebTokenHandler();
             RestClientFactory = restClientFactory;
-            
+
         }
 
         /// <summary>
@@ -196,7 +193,7 @@ namespace SanteDB.Client.OAuth
         {
             if (ClaimMapper.Current.TryGetMapper(ClaimMapper.ExternalTokenTypeJwt, out var mappers))
             {
-                foreach(var mapper in mappers)
+                foreach (var mapper in mappers)
                 {
                     var mapped = mapper.MapToExternalClaimType(SanteDBClaimTypes.DefaultNameClaimType);
 
@@ -293,7 +290,7 @@ namespace SanteDB.Client.OAuth
         /// Setup the <paramref name="restClient"/> for a token request
         /// </summary>
         protected virtual void SetupRestClientForTokenRequest(IRestClient restClient) { }
-        
+
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a JWKS fetch request
         /// </summary>
@@ -449,7 +446,7 @@ namespace SanteDB.Client.OAuth
                 Username = userName,
                 GrantType = "x_challenge",
                 ClientId = clientId,
-                Challenge = challengeKey.ToString(), 
+                Challenge = challengeKey.ToString(),
                 Response = challengeResponse,
                 MfaCode = tfaSecret,
                 Nonce = GetNonce(),

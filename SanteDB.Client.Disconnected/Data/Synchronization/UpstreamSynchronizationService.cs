@@ -18,15 +18,11 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using DocumentFormat.OpenXml.Office2021.Excel.NamedSheetViews;
-using Microsoft.IdentityModel.Tokens;
 using Polly;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Core;
-using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
@@ -35,29 +31,21 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
-using SanteDB.Messaging.AMI.Client;
-using SharpCompress;
-using SharpCompress.Common;
 using System;
-using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.Caching;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
@@ -166,7 +154,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// on the configuration provided</remarks>
         private List<SubscriptionDefinition> GetSubscriptionDefinitions()
         {
-            return this._SubscriptionRepository.Find(o => this._Configuration.Subscriptions.Contains(o.Key.Value)).OrderBy(o=>o.Order).ToList();
+            return this._SubscriptionRepository.Find(o => this._Configuration.Subscriptions.Contains(o.Key.Value)).OrderBy(o => o.Order).ToList();
         }
 
 
@@ -395,7 +383,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 // Our timeout is 120 seconds but let's try to ensure we can fulfill the request in 30 seconds
                 var objsInThirty = 30000 / (peritemcost + 1);
-                if(!this._Configuration.BigBundles && objsInThirty > 5_000)
+                if (!this._Configuration.BigBundles && objsInThirty > 5_000)
                 {
                     return 2_500;
                 }
@@ -479,7 +467,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 throw new ArgumentNullException(nameof(definition));
             }
-            else if(subscribedObjects == null)
+            else if (subscribedObjects == null)
             {
                 return null;
             }
@@ -543,7 +531,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             else
             {
-                 this.PullInternal(clientDefinition.ResourceType, null, false, progressIndicator);
+                this.PullInternal(clientDefinition.ResourceType, null, false, progressIndicator);
             }
         }
 
@@ -649,7 +637,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, queryControlOptions.Offset);
                     }
                 } while (result.Item.Any());
-                
+
                 this._SynchronizationLogService.Save(modelType, filterstring, lastEtag, DateTime.Now);
 
             }
@@ -677,7 +665,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     ver.PreviousVersionKey = null;
                     ver.VersionSequence = null;
                 }
-                if(itm is ITaggable taggable)
+                if (itm is ITaggable taggable)
                 {
                     taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
                 }
@@ -765,13 +753,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
 
             // Subscribe to the inbound queues and run the inbound message pump whenever there is data enqueued
-            foreach(var itm in _QueueManager.GetAll(SynchronizationPattern.UpstreamToLocal))
+            foreach (var itm in _QueueManager.GetAll(SynchronizationPattern.UpstreamToLocal))
             {
-                itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_=> this.RunInboundMessagePump());
+                itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump());
             }
-            foreach(var itm in _QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
+            foreach (var itm in _QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
             {
-                itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_=> this.RunOutboundMessagePump());
+                itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunOutboundMessagePump());
             }
 
             IsRunning = true;

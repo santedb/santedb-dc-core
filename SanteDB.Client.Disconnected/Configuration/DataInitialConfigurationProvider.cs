@@ -23,12 +23,9 @@ using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.OrmLite.Configuration;
-using SanteDB.OrmLite.Providers;
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Configuration
 {
@@ -45,7 +42,7 @@ namespace SanteDB.Client.Disconnected.Configuration
         public SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
         {
             var ormSection = configuration.GetSection<OrmConfigurationSection>();
-            if(ormSection == null)
+            if (ormSection == null)
             {
                 ormSection = new OrmConfigurationSection();
                 configuration.AddSection(ormSection);
@@ -57,7 +54,7 @@ namespace SanteDB.Client.Disconnected.Configuration
             ormSection.AdoProvider = providers.Select(t => new ProviderRegistrationConfiguration(t.Invariant, t.AdoNetFactoryType)).ToList();
 
             // Construct the connection strings and initial configurations for the orm configuration section base
-            foreach(var itm in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(OrmConfigurationBase).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract))
+            foreach (var itm in AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(OrmConfigurationBase).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract))
             {
                 if (configuration.GetSection(itm) == null)
                 {
@@ -68,7 +65,7 @@ namespace SanteDB.Client.Disconnected.Configuration
 
             // Construct the inital data section
             var dataSection = configuration.GetSection<DataConfigurationSection>();
-            if(dataSection == null)
+            if (dataSection == null)
             {
                 dataSection = new DataConfigurationSection();
                 dataSection.ConnectionString = new List<ConnectionString>();

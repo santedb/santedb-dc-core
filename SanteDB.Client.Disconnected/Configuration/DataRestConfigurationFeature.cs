@@ -20,7 +20,6 @@
  */
 using Newtonsoft.Json.Linq;
 using SanteDB.Client.Configuration;
-using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -28,16 +27,11 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.OrmLite.Configuration;
-using SanteDB.Persistence.Auditing.ADO.Configuration;
-using SanteDB.Persistence.Data.Configuration;
-using SanteDB.Persistence.Data.Services;
-using SanteDB.Persistence.PubSub.ADO.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Configuration
 {
@@ -139,13 +133,13 @@ namespace SanteDB.Client.Disconnected.Configuration
         /// <inheritdoc/>
         public bool Configure(SanteDBConfiguration configuration, IDictionary<string, object> featureConfiguration)
         {
-            if(configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings?.Any(p=>p.Key == "integration-mode" && p.Value == "online") == true)
+            if (configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings?.Any(p => p.Key == "integration-mode" && p.Value == "online") == true)
             {
                 return true;
             }
 
             var dataSection = configuration.GetSection<DataConfigurationSection>();
-            if(dataSection == null)
+            if (dataSection == null)
             {
                 dataSection = new DataConfigurationSection()
                 {
@@ -154,7 +148,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                 configuration.AddSection(dataSection);
             }
             var ormSection = configuration.GetSection<OrmConfigurationSection>();
-            if(ormSection == null)
+            if (ormSection == null)
             {
                 ormSection = new OrmConfigurationSection()
                 {
@@ -199,7 +193,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                     }
                 }
             }
-            else if(featureConfiguration.TryGetValue(GLOBAL_DATA_PROVIDER_SETTING, out var providerRaw) &&
+            else if (featureConfiguration.TryGetValue(GLOBAL_DATA_PROVIDER_SETTING, out var providerRaw) &&
                 featureConfiguration.TryGetValue(GLOBAL_CONNECTION_STRING_SETTING, out var connectionStringDataRaw) &&
                 connectionStringDataRaw is JObject connectionStringData) // There is a global configuration?
             {
@@ -215,7 +209,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                     var cstr = provider.CreateConnectionString(connectionString.ToDictionary(o => o.Key, o => (object)o.Value));
                     cstr.Name = "main";
                     dataSection.ConnectionString.Add(cstr);
-                    foreach(var itm in this.m_dataConfigurationSections)
+                    foreach (var itm in this.m_dataConfigurationSections)
                     {
                         itm.ReadonlyConnectionString = itm.ReadWriteConnectionString = "main";
                     }

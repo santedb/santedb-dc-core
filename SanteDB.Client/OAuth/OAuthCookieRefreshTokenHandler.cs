@@ -22,12 +22,9 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using SanteDB.Rest.OAuth.Abstractions;
 using SanteDB.Rest.OAuth.Model;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
@@ -96,7 +93,7 @@ namespace SanteDB.Client.OAuth
 
                 return true;
             }
-            catch(SecuritySessionException ex)
+            catch (SecuritySessionException ex)
             {
                 _Tracer.TraceInfo("Failed to initialize session from refresh cookie: {0}", ex.ToString());
                 context.ErrorType = OAuthErrorType.invalid_grant;

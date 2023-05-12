@@ -18,16 +18,10 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.OAuth;
-using SanteDB.Core.Security.Principal;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
-using System.Text;
 
 namespace SanteDB.Client.OAuth
 {

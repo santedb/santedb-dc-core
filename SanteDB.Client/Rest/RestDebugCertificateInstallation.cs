@@ -24,10 +24,8 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Certs;
 using SanteDB.Rest.Common.Configuration.Interop;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Client.Rest
 {
@@ -52,7 +50,7 @@ namespace SanteDB.Client.Rest
             if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", out var ssiDebugCert))
             {
                 var keyPair = certificateGeneratorService.CreateKeyPair(2048);
-                ssiDebugCert = certificateGeneratorService.CreateSelfSignedCertificate(keyPair, new X500DistinguishedName($"CN={bindingBase.Host}"), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment, new string[] { ExtendedKeyUsageOids.ServerAuthentication }, new String[] { bindingBase.Host } );
+                ssiDebugCert = certificateGeneratorService.CreateSelfSignedCertificate(keyPair, new X500DistinguishedName($"CN={bindingBase.Host}"), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment, new string[] { ExtendedKeyUsageOids.ServerAuthentication }, new String[] { bindingBase.Host });
                 platService.TryInstallCertificate(ssiDebugCert, storeName: StoreName.My, storeLocation: StoreLocation.LocalMachine);
                 platService.TryInstallCertificate(ssiDebugCert, storeName: StoreName.Root);
             }

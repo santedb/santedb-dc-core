@@ -22,8 +22,6 @@ using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -61,7 +59,7 @@ namespace SanteDB.Client.Upstream.Management
             realmBuilder.Scheme = configuration.Realm.UseTls ? "https" : "http";
             realmBuilder.Host = configuration.Realm.DomainName;
             realmBuilder.Port = configuration.Realm.PortNumber;
-            this.Realm = new Uri( realmBuilder.ToString());
+            this.Realm = new Uri(realmBuilder.ToString());
             var applicationCredential = configuration.Credentials.Find(o => o.CredentialType == UpstreamCredentialType.Application);
             LocalClientName = applicationCredential?.CredentialName;
             LocalClientSecret = applicationCredential.Conveyance == UpstreamCredentialConveyance.ClientCertificate ? null : applicationCredential.CredentialSecret;

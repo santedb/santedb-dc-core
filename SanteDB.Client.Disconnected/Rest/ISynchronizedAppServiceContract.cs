@@ -26,7 +26,6 @@ using SanteDB.Core.Model.Patch;
 using SanteDB.Rest.AppService;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Rest
 {

@@ -19,9 +19,7 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Services;
-using SanteDB.Core;
 using SanteDB.Core.Applets;
-using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.Services.Impl;
@@ -29,15 +27,10 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
-using SharpCompress.Compressors.LZMA;
-using SharpCompress.IO;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Security;
-using System.Security.Cryptography;
 using System.Text;
-using System.Xml.Linq;
 
 namespace SanteDB.Client.Batteries.Services
 {
@@ -72,11 +65,11 @@ namespace SanteDB.Client.Batteries.Services
         /// </summary>
         public object ResolveAppletAsset(AppletAsset navigateAsset)
         {
-           
+
             if (navigateAsset.MimeType == "text/javascript" && navigateAsset.Name.Contains("santedb.js"))
             {
                 string script = String.Empty;
-                switch(navigateAsset.Content)
+                switch (navigateAsset.Content)
                 {
                     case String str:
                         script = str;

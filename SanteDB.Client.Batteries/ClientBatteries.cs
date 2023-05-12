@@ -19,20 +19,16 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Configuration.Upstream;
-using SanteDB.Core;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 
 namespace SanteDB.Client.Batteries
 {
     /// <summary>
     /// Client application context 
     /// </summary>
-    public static class ClientBatteries 
+    public static class ClientBatteries
     {
         /// <summary>
         /// The <see cref="AppDomain.CurrentDomain"/> data string for the data directory
@@ -69,7 +65,7 @@ namespace SanteDB.Client.Batteries
 
             var configDirectory = AppDomain.CurrentDomain.GetData(CONFIG_DIRECTORY)?.ToString();
             var dataDirectory = AppDomain.CurrentDomain.GetData(DATA_DIRECTORY)?.ToString();
-            if(String.IsNullOrEmpty(configDirectory) || String.IsNullOrEmpty(dataDirectory))
+            if (String.IsNullOrEmpty(configDirectory) || String.IsNullOrEmpty(dataDirectory))
             {
                 throw new InvalidOperationException($"{CONFIG_DIRECTORY} and {DATA_DIRECTORY} AppDomain parameters must be set");
             }

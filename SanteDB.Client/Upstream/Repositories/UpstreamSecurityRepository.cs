@@ -34,11 +34,9 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -507,8 +505,8 @@ namespace SanteDB.Client.Upstream.Repositories
                         (ISecurityEntityInfo)client.Get<SecurityDeviceInfo>($"{typeof(SecurityDevice).GetSerializationName()}/{sid}") ??
                         client.Get<SecurityApplicationInfo>($"{typeof(SecurityApplication).GetSerializationName()}/{sid}");
 
-                    String retVal = null; 
-                    switch(securityObject)
+                    String retVal = null;
+                    switch (securityObject)
                     {
                         case SecurityUserInfo sui:
                             retVal = sui.Entity.UserName;

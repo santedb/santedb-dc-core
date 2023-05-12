@@ -18,15 +18,9 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using Antlr.Runtime;
-using DocumentFormat.OpenXml.Drawing;
-using SanteDB.BI.Model;
 using SanteDB.Client.Configuration.Upstream;
-using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
-using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
-using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -37,7 +31,6 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
@@ -47,8 +40,6 @@ using SanteDB.Messaging.HDSI.Client;
 using SanteDB.Rest.Common;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -99,7 +90,8 @@ namespace SanteDB.Client.Upstream.Management
             /// </summary>
             public HttpBasicTokenPrincipal(UpstreamCredentialConfiguration credentialConfiguration)
             {
-                if (credentialConfiguration.Conveyance == UpstreamCredentialConveyance.ClientCertificate) {
+                if (credentialConfiguration.Conveyance == UpstreamCredentialConveyance.ClientCertificate)
+                {
                     throw new ArgumentOutOfRangeException(nameof(credentialConfiguration));
                 }
                 this.AddIdentity(new SanteDBClaimsIdentity(credentialConfiguration.CredentialName, true, "NONE"));
@@ -194,8 +186,8 @@ namespace SanteDB.Client.Upstream.Management
         public IResourceCollection Query<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationQueryControlOptions queryControl) where TModel : IdentifiedData, new()
         {
             var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<TModel>();
-            using(var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
-            using(var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+            using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+            using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
             {
                 var query = QueryExpressionBuilder.BuildQuery(predicate);
                 query.Add(QueryControlParameterNames.HttpCountParameterName, queryControl.Count.ToString());
@@ -222,7 +214,7 @@ namespace SanteDB.Client.Upstream.Management
                     client.SetTimeout(queryControl.Timeout.Value);
                 }
 
-                switch (upstreamService )
+                switch (upstreamService)
                 {
                     case ServiceEndpointType.HealthDataService:
                         return client.Get<Bundle>($"/{typeof(TModel).GetSerializationName()}", query);
@@ -272,7 +264,7 @@ namespace SanteDB.Client.Upstream.Management
             try
             {
 
-                if(this.m_devicePrincipal != null && this.m_devicePrincipal.ExpiresAt.AddMinutes(-2) > DateTimeOffset.Now)
+                if (this.m_devicePrincipal != null && this.m_devicePrincipal.ExpiresAt.AddMinutes(-2) > DateTimeOffset.Now)
                 {
                     return this.m_devicePrincipal;
                 }
@@ -347,7 +339,7 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private IdentifiedData HarmonizeTemplateId(IdentifiedData data)
         {
-            switch(data)
+            switch (data)
             {
                 case Bundle bdl:
                     bdl.Item.ForEach(r => this.HarmonizeTemplateId(r));

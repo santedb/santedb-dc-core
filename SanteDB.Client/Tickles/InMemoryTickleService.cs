@@ -23,7 +23,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Client.Tickles
 {
@@ -48,7 +47,7 @@ namespace SanteDB.Client.Tickles
         /// <inheritdoc/>
         public void SendTickle(Tickle tickle)
         {
-            if(tickle.Id == Guid.Empty)
+            if (tickle.Id == Guid.Empty)
             {
                 tickle.Id = Guid.NewGuid();
             }

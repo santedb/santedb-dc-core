@@ -30,16 +30,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Gets or sets the UUID of the query
         /// </summary>
-        Guid QueryId { get;  }
+        Guid QueryId { get; }
 
         /// <summary>
         /// Last successful record number
         /// </summary>
-        int QueryOffset { get;  }
+        int QueryOffset { get; }
 
         /// <summary>
         /// Start time of the query
         /// </summary>
-        DateTime QueryStartTime { get;  }
+        DateTime QueryStartTime { get; }
     }
 }

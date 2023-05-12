@@ -18,21 +18,17 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using DocumentFormat.OpenXml.Wordprocessing;
 using RestSrvr;
 using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
 using SanteDB.Client.Services;
-using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Client.Upstream.Security;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Http;
 using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
@@ -51,14 +47,11 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
-using SanteDB.Messaging.HDSI.Client;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -334,7 +327,7 @@ namespace SanteDB.Client.Upstream.Management
                             }
 
                             this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", deviceCertificate.Subject, deviceCertificate.HasPrivateKey);
-                            if(!deviceCertificate.HasPrivateKey)
+                            if (!deviceCertificate.HasPrivateKey)
                             {
                                 this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", deviceCertificate.Subject, deviceCertificate.HasPrivateKey);
                                 throw new InvalidOperationException("Device certificate did not have a private key - ensure you are running on a supported platform");

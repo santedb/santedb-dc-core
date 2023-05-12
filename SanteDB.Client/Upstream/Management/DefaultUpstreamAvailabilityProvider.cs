@@ -23,9 +23,7 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -37,7 +35,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamManagementService m_upstreamManagementService;
-        
+
         /// <summary>
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
@@ -61,7 +59,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_upstreamManagementService = upstreamManagementService;
         }
 
-        
+
         /// <inheritdoc/>
         public bool IsAvailable(ServiceEndpointType endpoint)
         {
@@ -107,7 +105,7 @@ namespace SanteDB.Client.Upstream.Management
                 }
                 return null;
             }
-            catch 
+            catch
             {
                 return null;
             }
@@ -134,7 +132,7 @@ namespace SanteDB.Client.Upstream.Management
                 }
                 return null;
             }
-            catch 
+            catch
             {
                 return null;
             }

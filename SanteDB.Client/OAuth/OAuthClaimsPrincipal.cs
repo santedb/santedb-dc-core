@@ -20,17 +20,11 @@
  */
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
@@ -99,7 +93,7 @@ namespace SanteDB.Client.OAuth
 
             this.ExpiresAt = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn));
             this.RenewAfter = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn / 2));
-            
+
         }
 
         /// <summary>
@@ -111,7 +105,7 @@ namespace SanteDB.Client.OAuth
         {
             return this._AccessToken;
         }
-        
+
         /// <summary>
         /// True if the principal can be refreshed
         /// </summary>

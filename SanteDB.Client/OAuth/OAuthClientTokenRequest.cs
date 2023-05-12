@@ -20,8 +20,6 @@
  */
 using SanteDB.Core.Http;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.OAuth
 {

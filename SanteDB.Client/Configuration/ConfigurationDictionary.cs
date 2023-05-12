@@ -18,10 +18,8 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Configuration
 {
@@ -35,10 +33,11 @@ namespace SanteDB.Client.Configuration
         private readonly IDictionary<TKey, TValue> m_wrapped = new Dictionary<TKey, TValue>();
 
         /// <inheritdoc/>
-        public TValue this[TKey key] {
+        public TValue this[TKey key]
+        {
             get
             {
-                if(this.m_wrapped.TryGetValue(key, out var value))
+                if (this.m_wrapped.TryGetValue(key, out var value))
                 {
                     return value;
                 }
@@ -49,7 +48,7 @@ namespace SanteDB.Client.Configuration
             }
             set
             {
-                if(this.m_wrapped.ContainsKey(key))
+                if (this.m_wrapped.ContainsKey(key))
                 {
                     this.m_wrapped[key] = value;
                 }

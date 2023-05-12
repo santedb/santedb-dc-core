@@ -18,12 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Http;
-using SanteDB.Core.Interop;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Exceptions
 {

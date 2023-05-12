@@ -20,13 +20,11 @@
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.OAuth;
-using SanteDB.Client.Repositories;
 using SanteDB.Client.Services;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
-using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -35,11 +33,9 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Client.Upstream.Security
@@ -66,7 +62,7 @@ namespace SanteDB.Client.Upstream.Security
 
         /// <inheritdoc/>
         public IApplicationIdentityProviderService UpstreamProvider => this;
-        
+
         /// <summary>
         /// DIConstructor
         /// </summary>
@@ -252,7 +248,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <param name="clientSecret">The client secret to change</param>
         public void ChangeRemoteSecret(string clientId, string clientSecret)
         {
-            using(var amiclient = CreateAmiServiceClient())
+            using (var amiclient = CreateAmiServiceClient())
             {
                 var remoteapp = amiclient.GetApplications(app => app.Name == clientId)?.CollectionItem?.OfType<SecurityApplicationInfo>()?.FirstOrDefault();
 

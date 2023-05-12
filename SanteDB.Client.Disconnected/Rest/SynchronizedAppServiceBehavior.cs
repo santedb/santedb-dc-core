@@ -22,9 +22,6 @@ using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Rest.AppService;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Rest
 {

@@ -20,19 +20,15 @@
  */
 using SanteDB.Client.Configuration;
 using SanteDB.Client.UserInterface;
-using SanteDB.Core;
 using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Client.Batteries.Services
 {

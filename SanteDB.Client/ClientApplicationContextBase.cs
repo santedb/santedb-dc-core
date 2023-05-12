@@ -20,18 +20,10 @@
  */
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
-using SanteDB.Core.Data;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Model.EntityLoader;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Client
@@ -61,7 +53,7 @@ namespace SanteDB.Client
         /// Localization service
         /// </summary>
         protected ILocalizationService LocalizationService => this.GetService<ILocalizationService>();
-        
+
         /// <summary>
         /// Threadpool
         /// </summary>
@@ -86,7 +78,7 @@ namespace SanteDB.Client
         private void MonitorStatus(Object sender, ProgressChangedEventArgs e)
         {
             var taskIdentifier = sender.GetType().Name;
-            
+
             this.InteractionProvider.SetStatus(taskIdentifier, e.State.ToString(), e.Progress);
         }
 
@@ -145,6 +137,6 @@ namespace SanteDB.Client
         /// </summary>
         /// <param name="sender">The sender of the restart request</param>
         protected abstract void OnRestartRequested(object sender);
-        
+
     }
 }

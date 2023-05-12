@@ -20,9 +20,6 @@
  */
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Configuration
 {

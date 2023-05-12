@@ -34,7 +34,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -205,7 +204,7 @@ namespace SanteDB.Client.Upstream.Management
         {
             try
             {
-                using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
                     return client.Post<PubSubSubscriptionDefinition, PubSubSubscriptionDefinition>($"{typeof(PubSubSubscriptionDefinition).GetSerializationName()}", new PubSubSubscriptionDefinition()
                     {
@@ -221,7 +220,7 @@ namespace SanteDB.Client.Upstream.Management
                     });
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = nameof(PubSubSubscriptionDefinition) }), e);
             }
@@ -237,7 +236,7 @@ namespace SanteDB.Client.Upstream.Management
                     return client.Delete<PubSubChannelDefinition>($"{typeof(PubSubChannelDefinition).GetSerializationName()}/{id}");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = nameof(PubSubChannelDefinition) }), e);
             }
@@ -273,8 +272,8 @@ namespace SanteDB.Client.Upstream.Management
                         Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
                 }
-            }  
-            catch(Exception e)
+            }
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = nameof(PubSubChannelDefinition) }), e);
             }

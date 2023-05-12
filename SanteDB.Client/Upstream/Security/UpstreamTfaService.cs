@@ -30,7 +30,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {
@@ -85,8 +84,8 @@ namespace SanteDB.Client.Upstream.Security
         /// <summary>
         /// DI construcotr
         /// </summary>
-        public UpstreamTfaService(IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
+        public UpstreamTfaService(IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             ILocalizationService localizationService,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
@@ -133,7 +132,7 @@ namespace SanteDB.Client.Upstream.Security
                 }
                 return String.Empty;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { resource = "Tfa" }), e);
             }

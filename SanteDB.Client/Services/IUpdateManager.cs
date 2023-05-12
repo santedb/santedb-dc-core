@@ -21,8 +21,6 @@
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Services
 {

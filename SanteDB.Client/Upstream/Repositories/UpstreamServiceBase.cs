@@ -19,7 +19,6 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Http;
-using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
@@ -27,9 +26,6 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.HDSI.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Principal;
 
 namespace SanteDB.Client.Upstream.Repositories
@@ -72,8 +68,8 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UpstreamServiceBase(IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
+        public UpstreamServiceBase(IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService = null)
         {

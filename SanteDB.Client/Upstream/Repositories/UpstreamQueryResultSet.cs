@@ -21,7 +21,6 @@
 using SanteDB.Client.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Rest.Common;
@@ -58,7 +57,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// </summary>
     internal class UpstreamQueryResultSet<TModel, TWireModel, TCollectionType> : IQueryResultSet<TModel>, IOrderableQueryResultSet<TModel>, IDisposable
         where TModel : IIdentifiedResource
-        where TWireModel: IIdentifiedResource, new()
+        where TWireModel : IIdentifiedResource, new()
         where TCollectionType : IResourceCollection
     {
         private readonly IRestClient m_restClient;
@@ -96,7 +95,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private UpstreamQueryResultSet(IRestClient restClient, string resourceName, NameValueCollection query, Func<TWireModel, TModel> fromWireFormatMapper)
         {
             this.m_restClient = restClient;
-            this.m_queryFilter = new NameValueCollection( query);
+            this.m_queryFilter = new NameValueCollection(query);
             this.m_fromWireFormatMapperFunc = fromWireFormatMapper;
             this.m_resourceName = resourceName;
 
@@ -178,7 +177,7 @@ namespace SanteDB.Client.Upstream.Repositories
             var hasExplicitLimit = Int32.TryParse(parameters[QueryControlParameterNames.HttpCountParameterName], out var explicitLimit);
             parameters[QueryControlParameterNames.HttpIncludeTotalParameterName] = "false";
 
-            if(hasExplicitLimit && explicitLimit == 0) // We are just doing a count so donn't load
+            if (hasExplicitLimit && explicitLimit == 0) // We are just doing a count so donn't load
             {
                 yield break;
             }

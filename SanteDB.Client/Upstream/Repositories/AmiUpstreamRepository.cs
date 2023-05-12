@@ -23,9 +23,6 @@ using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {

@@ -18,12 +18,8 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using System;
-using System.Collections.Generic;
-using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Services
 {

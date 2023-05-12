@@ -36,7 +36,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -274,7 +273,7 @@ namespace SanteDB.Client.Upstream.Management
                 var submission = client.Post<List<MultiPartFormData>, ForeignDataInfo>($"{typeof(ForeignDataInfo).GetSerializationName()}", $"multipart/form-data; boundary={Guid.NewGuid():N}", stageSubmission);
                 return new UpstreamForeignDataSubmission(submission, client);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = "ForeignData" }), e);
             }

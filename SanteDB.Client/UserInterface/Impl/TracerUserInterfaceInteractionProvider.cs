@@ -20,8 +20,6 @@
  */
 using SanteDB.Core.Diagnostics;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.UserInterface.Impl
 {

@@ -23,9 +23,7 @@ using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Diagnostics.Tracing;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client
 {
@@ -56,7 +54,7 @@ namespace SanteDB.Client
         /// <inheritdoc/>
         public bool TryCreateService<TService>(out TService serviceInstance)
         {
-            if(this.TryCreateService(typeof(TService), out var nonGenService))
+            if (this.TryCreateService(typeof(TService), out var nonGenService))
             {
                 serviceInstance = (TService)nonGenService;
                 return true;

@@ -18,10 +18,9 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using SanteDB.Core.Configuration;
 
 namespace SanteDB.Client.Configuration
 {

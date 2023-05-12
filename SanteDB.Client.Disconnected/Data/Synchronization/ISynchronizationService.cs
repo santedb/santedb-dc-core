@@ -21,9 +21,7 @@
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {

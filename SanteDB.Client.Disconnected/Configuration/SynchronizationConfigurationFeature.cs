@@ -20,27 +20,14 @@
  */
 using Newtonsoft.Json.Linq;
 using SanteDB.Client.Configuration;
-using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
-using SanteDB.Client.Repositories;
-using SanteDB.Client.Upstream.Management;
-using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Configuration;
-using SanteDB.Core.Data;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl.Repository;
-using SanteDB.Rest.AMI.Configuration;
-using SanteDB.Rest.BIS.Configuration;
-using SanteDB.Rest.HDSI.Configuration;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Xml;
 
 namespace SanteDB.Client.Disconnected.Configuration
 {
@@ -157,7 +144,7 @@ namespace SanteDB.Client.Disconnected.Configuration
             configSection.PollIntervalXml = featureConfiguration[POLL_SETTING]?.ToString() ?? configSection.PollIntervalXml;
             configSection.ForbidSending = ((IEnumerable)featureConfiguration[FORBID_SYNC_SETTING])?.OfType<JToken>().Select(o => new ResourceTypeReferenceConfiguration(o.ToString())).ToList();
 
-            
+
 
             switch (configSection.Mode)
             {

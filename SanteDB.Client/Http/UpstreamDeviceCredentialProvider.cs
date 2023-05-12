@@ -20,10 +20,7 @@
  */
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
-using System;
-using System.Collections.Generic;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Http
 {

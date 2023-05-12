@@ -18,22 +18,11 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using Antlr.Runtime.Tree;
-using Newtonsoft.Json;
-using SanteDB.Core;
-using SanteDB.Core.Event;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Query;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -78,7 +67,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         }
 
-        private ISynchronizationQueue OpenQueue<TEntry>(string queueName, SynchronizationPattern type) where TEntry: ISynchronizationQueueEntry, new()
+        private ISynchronizationQueue OpenQueue<TEntry>(string queueName, SynchronizationPattern type) where TEntry : ISynchronizationQueueEntry, new()
         {
             var path = GetQueuePath(queueName);
 
@@ -99,7 +88,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             return Path.Combine(
                 AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString(),
-                "synchronizationqueue", 
+                "synchronizationqueue",
                 queueName
             );
         }

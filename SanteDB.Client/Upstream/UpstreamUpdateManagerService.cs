@@ -19,7 +19,6 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Configuration;
-using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Services;
 using SanteDB.Client.Tickles;
@@ -35,10 +34,8 @@ using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Upstream
 {
@@ -83,9 +80,9 @@ namespace SanteDB.Client.Upstream
             this.m_tickleService = tickleService;
             this.m_localizationService = localizationService;
 
-            if(this.m_appletManager is IDaemonService ids)
+            if (this.m_appletManager is IDaemonService ids)
             {
-                if(ids.IsRunning)
+                if (ids.IsRunning)
                 {
                     this.AutoCheckForUpdates();
                 }

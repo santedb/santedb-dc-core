@@ -18,18 +18,14 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Queue;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -49,13 +45,13 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IDispatcherQueueManagerService m_dispatcherQueue;
 
         /// <inheritdoc/>
-        public UpstreamAuditRepository(IDispatcherQueueManagerService dispatcherQueueManagerService, 
-            ILocalizationService localizationService, 
-            IDataCachingService cacheService, 
-            IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
-            IUpstreamAvailabilityProvider upstreamAvailability, 
-            IUpstreamIntegrationService upstreamIntegrationService, 
+        public UpstreamAuditRepository(IDispatcherQueueManagerService dispatcherQueueManagerService,
+            ILocalizationService localizationService,
+            IDataCachingService cacheService,
+            IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
+            IUpstreamAvailabilityProvider upstreamAvailability,
+            IUpstreamIntegrationService upstreamIntegrationService,
             IAdhocCacheService adhocCacheService,
             IAuditDispatchService auditDispatchService = null) : base(localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService, adhocCacheService)
         {
@@ -70,7 +66,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// </summary>
         private void MonitorOutboundQueue(DispatcherMessageEnqueuedInfo enqueuedInfo)
         {
-            if(!this.IsUpstreamConfigured || !this.IsUpstreamAvailable())
+            if (!this.IsUpstreamConfigured || !this.IsUpstreamAvailable())
             {
                 return;
             }

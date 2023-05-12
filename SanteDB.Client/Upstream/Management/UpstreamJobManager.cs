@@ -33,7 +33,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -49,9 +48,9 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// DI constructor
         /// </summary>
-        public UpstreamJobManager(ILocalizationService localizationService, 
-            IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
+        public UpstreamJobManager(ILocalizationService localizationService,
+            IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IAdhocCacheService adhocCacheService,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
@@ -265,11 +264,11 @@ namespace SanteDB.Client.Upstream.Management
                 try
                 {
                     var jobs = this.m_adhocCache?.Get<UpstreamJob[]>(CACHE_KEY);
-                    if(jobs != null)
+                    if (jobs != null)
                     {
                         return jobs;
                     }
-                    using(var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                    using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                     {
                         jobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName()).CollectionItem.OfType<JobInfo>().Select(o => new UpstreamJob(o, this.RestClientFactory, this.m_adhocCache)).ToArray();
 
@@ -277,7 +276,7 @@ namespace SanteDB.Client.Upstream.Management
                         return jobs;
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = nameof(JobInfo) }), e);
                 }

@@ -23,9 +23,6 @@ using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -40,11 +37,11 @@ namespace SanteDB.Client.Upstream.Repositories
         /// DI constructor
         /// </summary>
         public HdsiUpstreamRepository(ILocalizationService localizationService, IDataCachingService cacheService, IRestClientFactory restClientFactory,
-            IUpstreamManagementService upstreamManagementService, 
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamIntegrationService upstreamIntegrationService,
             IAdhocCacheService adhocCacheService,
             IUpstreamAvailabilityProvider upstreamAvailability
-            ) 
+            )
             : base(ServiceEndpointType.HealthDataService, localizationService, cacheService, restClientFactory, upstreamManagementService, upstreamAvailability, upstreamIntegrationService, adhocCacheService)
         {
         }

@@ -26,7 +26,6 @@ using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Data;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Configuration
 {

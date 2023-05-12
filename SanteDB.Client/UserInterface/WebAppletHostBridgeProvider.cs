@@ -24,11 +24,9 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Client.UserInterface
 {

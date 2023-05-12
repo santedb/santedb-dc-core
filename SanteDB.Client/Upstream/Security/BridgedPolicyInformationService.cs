@@ -269,7 +269,7 @@ namespace SanteDB.Client.Upstream.Security
                 return null;
             }
 
-            
+
             StringBuilder sb = new StringBuilder(25); //TODO: 25 was chosen arbitrarily. Do some testing on real world values to tune this parameter.
 
             foreach (var obj in objs)

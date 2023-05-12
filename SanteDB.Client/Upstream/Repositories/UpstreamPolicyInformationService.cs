@@ -19,27 +19,21 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Exceptions;
-using SanteDB.Client.Upstream;
-using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
-using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Messaging.AMI.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -121,7 +115,7 @@ namespace SanteDB.Client.Upstream.Repositories
                     case SecurityDevice sd:
                         using (var client = this.CreateAmiServiceClient())
                         {
-                            retVal = client.GetDevices(d => d.Name == sd.Name).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(sd, o.Policy, o.Grant)) ;
+                            retVal = client.GetDevices(d => d.Name == sd.Name).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(sd, o.Policy, o.Grant));
                         }
                         break;
 
@@ -137,7 +131,7 @@ namespace SanteDB.Client.Upstream.Repositories
                         {
                             retVal = client.GetRoles(a => a.Name == sr.Name).CollectionItem.OfType<SecurityRoleInfo>().FirstOrDefault()?.Policies.Select(o => new UpstreamPolicyInstance(sr, o.Policy, o.Grant));
                         }
-                            break;
+                        break;
 
                     case IPrincipal ipr:
                         using (var client = this.CreateAmiServiceClient())

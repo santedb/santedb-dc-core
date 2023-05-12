@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Client.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -30,7 +29,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Configuration
 {
@@ -82,7 +80,7 @@ namespace SanteDB.Client.Configuration
                 }
             };
 
-            foreach(var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t=>typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface).Select(t=>Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>().OrderBy(o=>o.Order))
+            foreach (var initialProvider in AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(IInitialConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface).Select(t => Activator.CreateInstance(t)).OfType<IInitialConfigurationProvider>().OrderBy(o => o.Order))
             {
                 this.m_tracer.TraceInfo("Initializing {0}...", initialProvider);
                 configuration = initialProvider.Provide(hostType, configuration);
@@ -138,8 +136,8 @@ namespace SanteDB.Client.Configuration
         public void SaveConfiguration()
         {
             // Save configuration - 
-            var encryptionCertificiate = this.m_configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o=>o.KeyName == "default");
-            if(encryptionCertificiate?.Algorithm != SignatureAlgorithm.HS256)
+            var encryptionCertificiate = this.m_configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o => o.KeyName == "default");
+            if (encryptionCertificiate?.Algorithm != SignatureAlgorithm.HS256)
             {
                 this.m_configuration.ProtectedSectionKey = new X509ConfigurationElement(encryptionCertificiate);
             }
@@ -149,9 +147,9 @@ namespace SanteDB.Client.Configuration
             }
 
             this.m_configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == typeof(InitialConfigurationManager));
-            
+
             // Now we want to save
-            using(var fs = File.Create(this.m_localConfigurationPath))
+            using (var fs = File.Create(this.m_localConfigurationPath))
             {
                 this.m_configuration.Save(fs);
             }

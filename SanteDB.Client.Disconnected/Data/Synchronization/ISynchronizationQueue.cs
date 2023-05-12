@@ -19,13 +19,10 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Event;
-using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {

@@ -19,14 +19,12 @@
  * Date: 2023-3-10
  */
 using SanteDB.Client.Disconnected.Data.Synchronization;
-using SanteDB.Core;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Security;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Rest
 {
@@ -49,7 +47,7 @@ namespace SanteDB.Client.Disconnected.Rest
         {
             if (parameters.TryGet("resourceType", out string resourcetype))
             {
-                foreach(var entry in m_synchronizationLogService.GetAll())
+                foreach (var entry in m_synchronizationLogService.GetAll())
                 {
                     if (resourcetype?.Equals(entry.ResourceType, StringComparison.InvariantCulture) == true)
                     {
@@ -59,7 +57,7 @@ namespace SanteDB.Client.Disconnected.Rest
             }
             else
             {
-                foreach(var entry in m_synchronizationLogService.GetAll())
+                foreach (var entry in m_synchronizationLogService.GetAll())
                 {
                     m_synchronizationLogService.Delete(entry);
                 }
@@ -80,7 +78,8 @@ namespace SanteDB.Client.Disconnected.Rest
                     m_synchronizationService.PushCompleted -= push_completed;
                     m_synchronizationService.Pull(Core.Model.Subscription.SubscriptionTriggerType.Manual);
                 }
-                finally {
+                finally
+                {
                     m_synchronizationService.PushCompleted -= push_completed;
                 }
             };

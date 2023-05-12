@@ -22,10 +22,7 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using System;
-using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Client.UserInterface
 {

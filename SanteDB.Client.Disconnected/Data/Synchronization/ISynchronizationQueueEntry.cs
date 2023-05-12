@@ -18,11 +18,8 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {

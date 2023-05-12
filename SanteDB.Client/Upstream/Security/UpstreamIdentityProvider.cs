@@ -20,28 +20,21 @@
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.OAuth;
-using SanteDB.Client.Repositories;
 using SanteDB.Client.Services;
 using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Rest.AMI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {
@@ -292,7 +285,7 @@ namespace SanteDB.Client.Upstream.Security
 
                         return result;
                     }
-                    catch(RestClientException<OAuthClientTokenResponse> ex)
+                    catch (RestClientException<OAuthClientTokenResponse> ex)
                     {
                         // HACK: We want to relay the error from upstream
                         throw new RestClientException<Object>(ex.Result, ex, ex.Status, ex.Response);

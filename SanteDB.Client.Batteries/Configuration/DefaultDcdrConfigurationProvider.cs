@@ -33,7 +33,6 @@ using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Management;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.Upstream.Security;
-using SanteDB.Client.UserInterface.Impl;
 using SanteDB.Core;
 using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Services.Impl;
@@ -59,8 +58,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
 
 namespace SanteDB.Client.Batteries.Configuration
 {
@@ -75,7 +72,7 @@ namespace SanteDB.Client.Batteries.Configuration
         /// <inheritdoc/>
         public SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
         {
-            if(ClientBatteries.UpstreamCredentials == null)
+            if (ClientBatteries.UpstreamCredentials == null)
             {
                 throw new InvalidOperationException("Call ClientBatteries.Initialize()");
             }

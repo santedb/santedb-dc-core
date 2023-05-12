@@ -20,19 +20,14 @@
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
-using SanteDB.Core.Model.AMI.Collections;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Repositories
 {
@@ -43,13 +38,13 @@ namespace SanteDB.Client.Repositories
     public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService
     {
         readonly ILocalizationService _LocalizationService;
-        
+
         /// <summary>
         /// DI ctor
         /// </summary>
-        public UpstreamRoleProviderService(ILocalizationService localizationService, 
-            IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
+        public UpstreamRoleProviderService(ILocalizationService localizationService,
+            IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService)
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
@@ -67,7 +62,7 @@ namespace SanteDB.Client.Repositories
             {
                 throw new ArgumentNullException(nameof(users));
             }
-            else  if (null == roles)
+            else if (null == roles)
             {
                 throw new ArgumentNullException(nameof(roles));
             }
@@ -144,7 +139,7 @@ namespace SanteDB.Client.Repositories
                 using (var amiclient = CreateAmiServiceClient())
                 {
                     var amirole = amiclient.GetUsers(u => u.Roles.Any(r => r.Name == role))?.CollectionItem?.OfType<SecurityUserInfo>();
-                    return amirole.Select(o=>o.Entity.UserName).ToArray();
+                    return amirole.Select(o => o.Entity.UserName).ToArray();
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))

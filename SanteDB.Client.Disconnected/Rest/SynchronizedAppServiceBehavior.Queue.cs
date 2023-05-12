@@ -31,11 +31,8 @@ using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Rest
 {
@@ -202,7 +199,7 @@ namespace SanteDB.Client.Disconnected.Rest
             return GetQueueByName(queueName)?.Get(id).Data;
         }
 
-        
+
 
         /// <inheritdoc />
         [Demand(PermissionPolicyIdentifiers.LoginAsService)]

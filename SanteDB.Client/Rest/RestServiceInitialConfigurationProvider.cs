@@ -24,9 +24,7 @@ using SanteDB.Client.Configuration;
 using SanteDB.Client.OAuth;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.HDSI.Wcf;
@@ -36,19 +34,12 @@ using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Behavior;
 using SanteDB.Rest.Common.Behaviors;
 using SanteDB.Rest.Common.Configuration;
-using SanteDB.Rest.Common.Configuration.Interop;
 using SanteDB.Rest.Common.Security;
-using SanteDB.Rest.HDSI;
-using SanteDB.Rest.OAuth;
-using SanteDB.Rest.OAuth.Rest;
 using SanteDB.Rest.WWW.Behaviors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Client.Rest
 {
@@ -133,9 +124,9 @@ namespace SanteDB.Client.Rest
 
         /// <inheritdoc/>
         public virtual SanteDBConfiguration Provide(SanteDBHostType hostContextType, SanteDBConfiguration configuration)
-         {
+        {
 
-            if(AppDomain.CurrentDomain.GetData(BINDING_BASE_DATA) == null || hostContextType == SanteDBHostType.Test)
+            if (AppDomain.CurrentDomain.GetData(BINDING_BASE_DATA) == null || hostContextType == SanteDBHostType.Test)
             {
                 return configuration;
             }
@@ -169,7 +160,8 @@ namespace SanteDB.Client.Rest
                 new RestServiceBehaviorConfiguration(typeof(TokenAuthorizationAccessBehavior))
             };
 
-            var oauthBehaviors = new List<RestServiceBehaviorConfiguration>(apiBehaviors) {
+            var oauthBehaviors = new List<RestServiceBehaviorConfiguration>(apiBehaviors)
+            {
             };
 
             if (hostContextType == SanteDBHostType.Client)

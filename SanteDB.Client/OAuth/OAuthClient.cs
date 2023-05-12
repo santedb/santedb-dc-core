@@ -18,28 +18,16 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using RestSrvr;
-using SanteDB.Client.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.OAuth;
 using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Principal;
-using System.Text;
-using System.Threading;
 
 namespace SanteDB.Client.OAuth
 {

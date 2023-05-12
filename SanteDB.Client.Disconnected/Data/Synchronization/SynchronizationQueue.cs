@@ -19,21 +19,18 @@
  * Date: 2023-3-10
  */
 using Newtonsoft.Json;
+using SanteDB.Core;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
-using SanteDB.Core;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Text;
 using System.Threading;
-using SanteDB.Core.Interop;
-using System.Runtime.CompilerServices;
-using System.IO.Compression;
-using SanteDB.Core.Model.Query;
-using System.Collections.Specialized;
-using SanteDB.Core.Security.Services;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -221,7 +218,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 //TODO: Verbose Logging
             }
-            catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
                 //TODO: Logging.
                 throw;
@@ -263,11 +260,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             });
         }
 
-        
+
 
         private int DequeueBadEntry() => LockWrite(q => q.Dequeue());
 
-        public ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation) 
+        public ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation)
             => Enqueue(CreateEntry(data, operation));
 
         public TEntry Enqueue(TEntry entry)

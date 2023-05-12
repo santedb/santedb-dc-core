@@ -18,14 +18,11 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using DynamicExpresso;
-using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -72,7 +69,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="operation">The operation to enqueue the entities with.</param>
         public static void Enqueue(this ISynchronizationQueue queue, IEnumerable<IdentifiedData> entities, SynchronizationQueueEntryOperation operation)
         {
-            foreach(var entity in entities)
+            foreach (var entity in entities)
             {
                 queue.Enqueue(entity, operation);
             }

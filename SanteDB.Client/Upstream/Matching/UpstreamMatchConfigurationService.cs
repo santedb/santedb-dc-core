@@ -30,7 +30,6 @@ using SanteDB.Matcher.Definition;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Matching
 {
@@ -62,7 +61,7 @@ namespace SanteDB.Client.Upstream.Matching
                         return client.Get<AmiCollection>("MatchConfiguration").CollectionItem.OfType<IRecordMatchingConfiguration>();
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = "MatchConfiguration" }), e);
                 }
@@ -82,7 +81,7 @@ namespace SanteDB.Client.Upstream.Matching
                     return client.Delete<MatchConfiguration>($"MatchConfiguration/{configurationId}");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = "MatchConfiguration" }), e);
             }
@@ -93,16 +92,16 @@ namespace SanteDB.Client.Upstream.Matching
         {
             try
             {
-                using(var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                using (var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
                     return client.Get<MatchConfiguration>($"MatchConfiguration/{configurationId}");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = "MatchConfiguration" }), e);
             }
-         }
+        }
 
         /// <inheritdoc/>
         public IRecordMatchingConfiguration SaveConfiguration(IRecordMatchingConfiguration configuration)
@@ -121,7 +120,7 @@ namespace SanteDB.Client.Upstream.Matching
                     }
                 }
             }
-             catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = "MatchConfiguration" }), e);
             }
