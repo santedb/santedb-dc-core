@@ -34,6 +34,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
@@ -675,6 +676,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     ver.IsHeadVersion = true;
                     ver.PreviousVersionKey = null;
                     ver.VersionSequence = null;
+                }
+                if(itm is ITaggable taggable)
+                {
+                    taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
                 }
             });
             return bdl;
