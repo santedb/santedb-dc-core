@@ -20,6 +20,7 @@
  */
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
+using SanteDB.Core.Data;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Services;
 using System;
@@ -70,6 +71,8 @@ namespace SanteDB.Client
         protected ClientApplicationContextBase(SanteDBHostType hostEnvironment, String instanceName, IConfigurationManager configurationManager) : base(hostEnvironment, configurationManager)
         {
             this.m_instanceName = instanceName;
+            EntitySource.Current = new EntitySource(new RepositoryEntitySource());
+
         }
 
         /// <summary>

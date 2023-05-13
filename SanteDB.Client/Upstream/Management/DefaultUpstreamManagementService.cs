@@ -407,7 +407,6 @@ namespace SanteDB.Client.Upstream.Management
                         }
                     }
 
-                    EntitySource.Current = new EntitySource(new RepositoryEntitySource());
                 }
 
 
