@@ -19,10 +19,12 @@
  * Date: 2023-3-10
  */
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using SanteDB.Core;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
@@ -71,7 +73,19 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private static string GetQueueFilename(string path) => System.IO.Path.Combine(path, "_queue.json");
         private static string GetEntryFilename(string path, int id) => System.IO.Path.Combine(path, id.ToString() + ".json");
 
-        private static JsonSerializer CreateSerializer() => JsonSerializer.Create(s_SerializerSettings);
+        private static JsonSerializer CreateSerializer()
+        {
+            JsonSerializer jsz = new JsonSerializer()
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                NullValueHandling = NullValueHandling.Ignore,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.Auto,
+                SerializationBinder = new ModelSerializationBinder()
+            };
+            jsz.Converters.Add(new StringEnumConverter());
+            return jsz;
+        }
 
         /// <summary>
         /// Internal method to read the queue from the backing file. 
