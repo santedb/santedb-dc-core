@@ -40,6 +40,10 @@ namespace SanteDB.Client.Disconnected.Configuration
     /// </summary>
     public class DataRestConfigurationFeature : IClientConfigurationFeature
     {
+        /// <summary>
+        /// Configuration cache
+        /// </summary>
+        private ConfigurationDictionary<String, Object> m_configuration = null;
 
         /// <summary>
         /// The name of the database provider setting
@@ -81,19 +85,19 @@ namespace SanteDB.Client.Disconnected.Configuration
 
         private ConfigurationDictionary<string, object> GetConfiguration()
         {
-            var retVal = new ConfigurationDictionary<string, object>();
-
-            retVal[CONNECTION_PER_FEATURE_SETTING] = this.m_dataConfigurationSections.ToDictionary(o => o.GetType().Name, o => this.ParseDataConfigurationSection(o));
-
-            // Is there only one configuration section?
-            if (this.m_connectStringSection.ConnectionString.Count == 1)
+            if (this.m_configuration == null)
             {
-                var ctOI = this.m_connectStringSection.ConnectionString.First();
-                retVal[GLOBAL_DATA_PROVIDER_SETTING] = ctOI.Provider;
-                retVal[GLOBAL_CONNECTION_STRING_SETTING] = this.ParseConnectionString(ctOI);
+                this.m_configuration = new ConfigurationDictionary<string, object>();
+                this.m_configuration[CONNECTION_PER_FEATURE_SETTING] = this.m_dataConfigurationSections.ToDictionary(o => o.GetType().Name, o => this.ParseDataConfigurationSection(o));
+                // Is there only one configuration section?
+                if (this.m_connectStringSection.ConnectionString.Count == 1)
+                {
+                    var ctOI = this.m_connectStringSection.ConnectionString.First();
+                    this.m_configuration[GLOBAL_DATA_PROVIDER_SETTING] = ctOI.Provider;
+                    this.m_configuration[GLOBAL_CONNECTION_STRING_SETTING] = this.ParseConnectionString(ctOI);
+                }
             }
-
-            return retVal;
+            return this.m_configuration;
         }
 
         /// <summary>
@@ -236,6 +240,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                 appSetting.ServiceProviders.AddRange(servicesUsingConfiguration);
             }
 
+            this.m_configuration = null;
             return true;
         }
     }

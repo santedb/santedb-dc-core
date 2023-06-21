@@ -43,7 +43,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// A security repository that uses the upstream services to perform its duties
     /// </summary>
-    public class UpstreamSecurityRepository : UpstreamServiceBase, ISecurityRepositoryService
+    public class UpstreamSecurityRepository : UpstreamServiceBase, IUpstreamServiceProvider<ISecurityRepositoryService>, ISecurityRepositoryService
     {
         private readonly ILocalizationService m_localizationService;
         private readonly IAdhocCacheService m_adhocCache;
@@ -65,6 +65,9 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Security Repository";
+
+        /// <inheritdoc/>
+        public ISecurityRepositoryService UpstreamProvider => this;
 
         /// <inheritdoc/>
         public SecurityUser ChangePassword(Guid userId, string password)

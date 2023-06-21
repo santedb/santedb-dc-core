@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Http;
@@ -29,13 +30,12 @@ using System;
 using System.Linq;
 using System.Security.Principal;
 
-namespace SanteDB.Client.Repositories
+namespace SanteDB.Client.Upstream.Security
 {
     /// <summary>
     /// A <see cref="IRoleProviderService"/> which manages upstream roles
     /// </summary>
-    [PreferredService(typeof(IRoleProviderService))]
-    public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService
+    public class UpstreamRoleProviderService : UpstreamServiceBase, IRoleProviderService, IUpstreamServiceProvider<IRoleProviderService>
     {
         readonly ILocalizationService _LocalizationService;
 
@@ -49,11 +49,16 @@ namespace SanteDB.Client.Repositories
             IUpstreamIntegrationService upstreamIntegrationService)
             : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            this._LocalizationService = localizationService;
+            _LocalizationService = localizationService;
         }
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Role Provider Service";
+
+        /// <summary>
+        /// Upstream role provider
+        /// </summary>
+        public IRoleProviderService UpstreamProvider => this;
 
         /// <inheritdoc/>
         public void AddUsersToRoles(string[] users, string[] roles, IPrincipal principal)
@@ -73,7 +78,7 @@ namespace SanteDB.Client.Repositories
 
             if (!IsUpstreamConfigured)
             {
-                this._Tracer.TraceWarning("Upstream is not configured; skipping.");
+                _Tracer.TraceWarning("Upstream is not configured; skipping.");
                 return;
             }
 
@@ -89,8 +94,8 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                this._Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                _Tracer.TraceError("Error updating roles: {0}", ex);
+                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
@@ -99,11 +104,11 @@ namespace SanteDB.Client.Repositories
         {
             if (string.IsNullOrEmpty(roleName))
             {
-                throw new ArgumentNullException(nameof(roleName), this._LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(roleName), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
             }
             else if (null == principal)
             {
-                throw new ArgumentNullException(nameof(principal), this._LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+                throw new ArgumentNullException(nameof(principal), _LocalizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
             }
 
             try
@@ -121,8 +126,8 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                this._Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                _Tracer.TraceError("Error updating roles: {0}", ex);
+                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
@@ -144,8 +149,8 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                this._Tracer.TraceError("Error getting roles: {0}", ex);
-                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                _Tracer.TraceError("Error getting roles: {0}", ex);
+                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 
@@ -161,8 +166,8 @@ namespace SanteDB.Client.Repositories
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                this._Tracer.TraceError("Error updating roles: {0}", ex);
-                throw new UpstreamIntegrationException(this._LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
+                _Tracer.TraceError("Error updating roles: {0}", ex);
+                throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.SEC_ROL_GEN), ex);
             }
         }
 

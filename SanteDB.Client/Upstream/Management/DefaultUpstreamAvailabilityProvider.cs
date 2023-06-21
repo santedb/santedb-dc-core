@@ -63,7 +63,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public bool IsAvailable(ServiceEndpointType endpoint)
         {
-            return GetUpstreamLatency(endpoint) != -1;
+            return GetUpstreamLatency(endpoint).HasValue;
             //if (this.m_networkInformationService.IsNetworkAvailable &&
             //    this.m_networkInformationService.IsNetworkConnected &&
             //    this.m_upstreamManagementService.IsConfigured())
