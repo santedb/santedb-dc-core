@@ -109,9 +109,6 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
-        public SecurityUser CreateUser(SecurityUser userInfo, string password) => this.m_localSecurityRepository.CreateUser(userInfo, password);
-
-        /// <inheritdoc/>
         public IQueryResultSet<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query)
         {
             var localProvenance = this.m_localSecurityRepository.FindProvenance(query);

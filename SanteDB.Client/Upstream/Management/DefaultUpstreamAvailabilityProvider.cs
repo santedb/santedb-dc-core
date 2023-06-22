@@ -35,12 +35,13 @@ namespace SanteDB.Client.Upstream.Management
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamManagementService m_upstreamManagementService;
+        private readonly IAdhocCacheService m_adhocCacheService;
 
         /// <summary>
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
-        private const int PING_TIMEOUT = 5_000;
-
+        private const int PING_TIMEOUT = 2_000;
+        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 0, 15);
 
         /// <summary>
         /// Get the service name
@@ -52,11 +53,13 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         public DefaultUpstreamAvailabilityProvider(INetworkInformationService networkInformationService,
             IUpstreamManagementService upstreamManagementService,
-            IRestClientFactory restClientFactory)
+            IRestClientFactory restClientFactory,
+            IAdhocCacheService adhocCacheService = null)
         {
             this.m_networkInformationService = networkInformationService;
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamManagementService = upstreamManagementService;
+            this.m_adhocCacheService = adhocCacheService;
         }
 
 
@@ -90,9 +93,11 @@ namespace SanteDB.Client.Upstream.Management
         {
             try
             {
+                TimeSpan? retVal = null;
                 if (this.m_networkInformationService.IsNetworkAvailable &&
                  this.m_networkInformationService.IsNetworkConnected &&
-                 this.m_upstreamManagementService.IsConfigured())
+                 this.m_upstreamManagementService.IsConfigured() &&
+                 this.m_adhocCacheService?.TryGet($"us.drift.{endpoint}", out retVal) != true)
                 {
                     using (var client = m_restClientFactory.GetRestClientFor(endpoint))
                     {
@@ -100,10 +105,11 @@ namespace SanteDB.Client.Upstream.Management
                         var serverTime = DateTime.Now;
                         client.Responded += (o, e) => _ = DateTime.TryParse(e.Headers["X-GeneratedOn"], out serverTime) || DateTime.TryParse(e.Headers["Date"], out serverTime);
                         client.Invoke<object, object>("PING", "/", null);
-                        return serverTime.Subtract(DateTime.Now);
+                        retVal = serverTime.Subtract(DateTime.Now);
+                        this.m_adhocCacheService?.Add($"us.drift.{endpoint}", retVal, CACHE_TIMEOUT);
                     }
                 }
-                return null;
+                return retVal;
             }
             catch
             {
@@ -116,9 +122,11 @@ namespace SanteDB.Client.Upstream.Management
         {
             try
             {
+                long? retVal = null;
                 if (this.m_networkInformationService.IsNetworkAvailable &&
                     this.m_networkInformationService.IsNetworkConnected &&
-                    this.m_upstreamManagementService.IsConfigured())
+                    this.m_upstreamManagementService.IsConfigured() &&
+                    this.m_adhocCacheService?.TryGet($"us.latency.{endpointType}", out retVal) != true)
                 {
                     using (var client = m_restClientFactory.GetRestClientFor(endpointType))
                     {
@@ -127,10 +135,11 @@ namespace SanteDB.Client.Upstream.Management
                         sw.Start();
                         client.Invoke<object, object>("PING", "/", null);
                         sw.Stop();
-                        return sw.ElapsedMilliseconds;
+                        retVal = sw.ElapsedMilliseconds;
+                        this.m_adhocCacheService?.Add($"us.latency.{endpointType}", retVal, CACHE_TIMEOUT);
                     }
                 }
-                return null;
+                return retVal;
             }
             catch
             {
