@@ -424,7 +424,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 var upstreamEndpoint = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(subscribedToType);
                 var persistenceService = this.GetPersistenceService(subscribedToType);
                 var queryToExecute = new NameValueCollection();
-                queryToExecute.Add("_id", this._Configuration.SubscribedObjects.Select(o => o.ToString()).ToArray());
+                queryToExecute.Add("id", this._Configuration.SubscribedObjects.Select(o => o.ToString()).ToArray());
                 var expression = QueryExpressionParser.BuildLinqExpression(subscribedToType, queryToExecute);
                 var results = persistenceService.Query(expression);
 
@@ -510,15 +510,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     if (filter.IndexOf("$subscribed") > -1)
                     {
-                        object subscribed = null;
-                        var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
-                        {
-                            { "subscribed", () => subscribed }
-                        }, relayControlVariables: true);
-
                         foreach (var subscribedobject in subscribedObjects)
                         {
-                            subscribed = subscribedobject;
+                            var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
+                            {
+                                { "subscribed", () => subscribedobject }
+                            }, relayControlVariables: true, lazyExpandVariables: true);
+
                             var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr).ToHttpString();
                             this.PullInternal(clientDefinition.ResourceType, newfilter.ParseQueryString(), clientDefinition.IgnoreModifiedOn, progressIndicator);
                         }

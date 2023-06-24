@@ -159,7 +159,12 @@ namespace SanteDB.Client.Disconnected.Configuration
                     {
                         configSection.Subscriptions = ((IEnumerable)featureConfiguration[ENABLED_SUBSCRIPTIONS_SETTING])?.OfType<JToken>().Select(o => Guid.Parse(o.ToString())).ToList();
                         configSection.SubscribedObjects = ((IEnumerable)featureConfiguration[SUBSCRIBED_OBJECTS_SETTING])?.OfType<JToken>().Select(o => Guid.Parse(o.ToString())).ToList();
-                        configSection.SubscribeToResource = new ResourceTypeReferenceConfiguration(featureConfiguration[SUBSCRIBED_OBJECT_TYPE_SETTING].ToString());
+                        var subType = featureConfiguration[SUBSCRIBED_OBJECT_TYPE_SETTING].ToString();
+                        if(subType == "Facility")
+                        {
+                            subType = "Place";
+                        }
+                        configSection.SubscribeToResource = new ResourceTypeReferenceConfiguration(subType);
                     }
 
                     break;
