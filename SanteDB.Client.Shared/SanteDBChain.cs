@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SanteDB.Core.Security.Certs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,13 +15,16 @@ namespace SanteDB.Client.Shared
     /// </summary>
     public class SanteDBChain : IDisposable
     {
-        private const string ALL_ISSUANCE_POLICY = "2.5.29.32.0"; //This will be opened up in a future release of .NET, see https://github.com/dotnet/runtime/issues/87270
         readonly List<X509Certificate2> _TrustedCertificates;
         readonly List<X509Certificate2> _ValidatedAuthorities;
 
+        /// <summary>
+        /// Initializes a new instance of the class and loads the trust anchors from the asemblies.
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
         public SanteDBChain()
         {
-            var thisassembly = typeof(SanteDBChain)?.Assembly;
+            var thisassembly = typeof(ExtendedKeyUsageOids)?.Assembly; //typeof(SanteDBChain)?.Assembly;
 
             if (null == thisassembly)
             {
@@ -96,6 +100,12 @@ namespace SanteDB.Client.Shared
 
         }
 
+        /// <summary>
+        /// Loads a certificate from the assembly using the resource name.
+        /// </summary>
+        /// <param name="assembly">The assembly to load the certificate from.</param>
+        /// <param name="resourceName">The resource name used to load the certificate.</param>
+        /// <returns></returns>
         private static X509Certificate2? LoadCertificate(Assembly assembly, string resourceName)
         {
             using var stream = assembly.GetManifestResourceStream(resourceName);
@@ -245,7 +255,7 @@ namespace SanteDB.Client.Shared
         {
             var issuereku = issuer.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault();
 
-            if (null != issuereku && issuereku.EnhancedKeyUsages.OfType<Oid>().Any(o => o.Value == ALL_ISSUANCE_POLICY) != true)
+            if (null != issuereku && issuereku.EnhancedKeyUsages.OfType<Oid>().Any(o => o.Value == ExtendedKeyUsageOids.AllIssuancePolicy) != true)
             {
                 //We need to do an intersection check for the issuance policies from the issuer to us.
                 //If this was true, it means the issuer can issue for any policy and we didn't
@@ -356,6 +366,11 @@ namespace SanteDB.Client.Shared
             return true;
         }
 
+        /// <summary>
+        /// Validate a certificate is trusted by a built-in trust anchor.
+        /// </summary>
+        /// <param name="certificate">The certificate to validate.</param>
+        /// <returns><c>true</c> if the certificate is valid, <c>false</c> otherwise.</returns>
         public bool ValidateCertificate(X509Certificate2 certificate)
         {
             if (null == certificate)
@@ -367,10 +382,12 @@ namespace SanteDB.Client.Shared
             if (!ValidateEndEntityCertificate(certificate, _ValidatedAuthorities))
                 return false;
 
-
             _TrustedCertificates.Add(certificate);
+
             return true;
         }
+
+
 
         #region Disposable Support
         private bool disposedValue;
