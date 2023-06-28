@@ -356,7 +356,7 @@ namespace SanteDB.Client.Shared
                 return false;
             }
 
-            if (!basicconstraints.CertificateAuthority != false)
+            if (basicconstraints.CertificateAuthority == true || basicconstraints.HasPathLengthConstraint == true)
             {
                 return false;
             }
