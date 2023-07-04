@@ -102,7 +102,7 @@ namespace SanteDB.DisconnectedClient.Ags.Services
                 AppletAsset navigateAsset = null;
                 var appletManagerService = ApplicationContext.Current.GetService<IAppletManagerService>();
 
-                String appletPath = RestOperationContext.Current.IncomingRequest.Url.AbsolutePath.ToLower();
+                String appletPath = RestOperationContext.Current.IncomingRequest.Url.AbsolutePath;
                 if (!m_cacheApplets.TryGetValue(appletPath, out navigateAsset))
                 {
 
