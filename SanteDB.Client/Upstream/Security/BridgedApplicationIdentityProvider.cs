@@ -273,19 +273,7 @@ namespace SanteDB.Client.Upstream.Security
                 this.m_upstreamApplicationIdentityProvider.GetIdentity(sid);
         }
 
-        /// <inheritdoc/>
-        public byte[] GetPublicSigningKey(string applicationName)
-        {
-            if(this.IsLocalApplication(applicationName) || !this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
-            {
-                return this.m_localApplicationIdentityProvider.GetPublicSigningKey(applicationName);
-            }
-            else
-            {
-                return this.m_upstreamApplicationIdentityProvider.GetPublicSigningKey(applicationName);
-            }
-        }
-
+       
         /// <inheritdoc/>
         public Guid GetSid(string name)
         {
@@ -319,14 +307,5 @@ namespace SanteDB.Client.Upstream.Security
             }
         }
 
-        /// <inheritdoc/>
-        public void SetPublicKey(string applicationName, byte[] key, IPrincipal principal)
-        {
-            this.m_localApplicationIdentityProvider.SetPublicKey(applicationName, key, principal);
-            if (!this.IsLocalApplication(applicationName))
-            {
-                this.m_tracer.TraceWarning("Public signing {0} only applicable on local device", applicationName);
-            }
-        }
     }
 }

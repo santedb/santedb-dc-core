@@ -236,12 +236,6 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public byte[] GetPublicSigningKey(string applicationName)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <inheritdoc/>
         public Guid GetSid(string name)
         {
             return this.GetUpstreamSecurityApplication(o => o.Name.ToLowerInvariant() == name.ToLowerInvariant(), AuthenticationContext.Current.Principal)?.Key ?? Guid.Empty;
@@ -255,12 +249,6 @@ namespace SanteDB.Client.Upstream.Security
 
         /// <inheritdoc/>
         public void SetLockout(string applicationName, bool lockoutState, IPrincipal principal)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <inheritdoc/>
-        public void SetPublicKey(string applicationName, byte[] key, IPrincipal principal)
         {
             throw new NotSupportedException();
         }
