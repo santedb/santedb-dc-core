@@ -290,8 +290,8 @@ namespace SanteDB.Client.Upstream.Management
                         throw new InvalidOperationException(string.Format(ErrorMessages.NOT_SUPPORTED_IMPLEMENTATION, deviceCredentialSettings.Conveyance));
                 }
 
-                var applicationIdentityProvider = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>();
-                this.m_devicePrincipal = applicationIdentityProvider.Authenticate(applicationCredentialSettings.CredentialName, devicePrincipal) as ITokenPrincipal;
+                var applicationIdentityProvider = ApplicationServiceContext.Current.GetService<IUpstreamServiceProvider<IApplicationIdentityProviderService>>();
+                this.m_devicePrincipal = applicationIdentityProvider.UpstreamProvider.Authenticate(applicationCredentialSettings.CredentialName, devicePrincipal) as ITokenPrincipal;
                 return this.m_devicePrincipal;
             }
             catch (Exception e)
