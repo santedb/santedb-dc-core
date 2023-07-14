@@ -271,6 +271,8 @@ namespace SanteDB.Client.Upstream.Management
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
 
+                    this.m_configuration.LocalDeviceSid = upstreamDevice.Key.Value;
+
                     this.m_securityConfiguration.SetPolicy(SecurityPolicyIdentification.AssignedDeviceSecurityId, upstreamDevice.Key.Value);
 
                     var entity = this.CreateDeviceEntity(upstreamDevice);

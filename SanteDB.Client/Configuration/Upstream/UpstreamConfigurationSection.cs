@@ -20,6 +20,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
@@ -32,6 +33,12 @@ namespace SanteDB.Client.Configuration.Upstream
     [XmlType(nameof(UpstreamConfigurationSection), Namespace = "http://santedb.org/configuration")]
     public class UpstreamConfigurationSection : IEncryptedConfigurationSection
     {
+
+        /// <summary>
+        /// Gets or sets the local device security identifier
+        /// </summary>
+        [XmlElement("localSid"), JsonProperty("localSid")]
+        public Guid LocalDeviceSid { get; set; }
 
         /// <summary>
         /// The upstream domain configuration information

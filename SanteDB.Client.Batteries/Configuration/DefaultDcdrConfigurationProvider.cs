@@ -113,7 +113,7 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(InitialAppletInstallationService)),
                     new TypeReferenceConfiguration(typeof(UpstreamPolicyInformationService)),
                     new TypeReferenceConfiguration(typeof(DataPolicyFilterService)),
-                    new TypeReferenceConfiguration(typeof(DefaultOperatingSystemInfoService)),
+                    new TypeReferenceConfiguration(typeof(DefaultOperatingSystemService)),
                     new TypeReferenceConfiguration(typeof(AppletSubscriptionRepository)),
                     new TypeReferenceConfiguration(typeof(InMemoryPivotProvider)),
                     new TypeReferenceConfiguration(typeof(AuditDaemonService)),

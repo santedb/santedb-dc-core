@@ -43,6 +43,11 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public string LocalClientSecret { get; }
 
+        /// <summary>
+        /// Gets the local device key
+        /// </summary>
+        public Guid LocalDeviceSid { get; }
+
         /// <inheritdoc/>
         internal string LocalDeviceSecret { get; }
 
@@ -66,6 +71,7 @@ namespace SanteDB.Client.Upstream.Management
             var deviceCredential = configuration.Credentials.Find(o => o.CredentialType == UpstreamCredentialType.Device);
             LocalDeviceSecret = deviceCredential.Conveyance == UpstreamCredentialConveyance.ClientCertificate ? null : deviceCredential.CredentialSecret;
             LocalDeviceName = deviceCredential.CredentialName;
+            LocalDeviceSid = configuration.LocalDeviceSid;
         }
     }
 }

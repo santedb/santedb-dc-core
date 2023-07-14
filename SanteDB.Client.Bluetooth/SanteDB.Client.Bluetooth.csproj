@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="InTheHand.Net.Bluetooth" Version="4.0.34.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
+  </ItemGroup>
+
+</Project>

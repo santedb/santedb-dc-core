@@ -18,13 +18,17 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using HeyRed.Mime;
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
-namespace SanteDB.Client.Services
+namespace SanteDB.Client.PeerToPeer
 {
+
+
+
     /// <summary>
     /// Represents a peer to peer sharing service which allows the host to share data between one or more hosts via an appropriate protocol
     /// </summary>
@@ -55,17 +59,52 @@ namespace SanteDB.Client.Services
         /// <summary>
         /// Send the specified entity to the remote host
         /// </summary>
-        /// <param name="entity">The entity which should be sent</param>
-        /// <param name="recipient">The recipient of the data</param>
+        /// <param name="recipientNode">The peer the message should be sent to</param>
+        /// <param name="message">The payload of the message to be sent</param>
         /// <returns>The acknowledgement or error from the remote device</returns>
-        IdentifiedData Send(String recipient, IdentifiedData entity);
+        IPeerToPeerMessage Send(IPeerToPeerNode recipientNode, IPeerToPeerMessage message);
 
         /// <summary>
         /// Get a list of recipients which this share service can send to
         /// </summary>
         /// <returns>The list of recipients</returns>
-        IEnumerable<String> GetRecipientList();
+        IEnumerable<IPeerToPeerNode> GetPairedNodes();
 
+        /// <summary>
+        /// Discover recipients that are available for this provider
+        /// </summary>
+        /// <returns>The list of available recipients</returns>
+        IEnumerable<IPeerToPeerNode> DiscoverNodes();
+
+        /// <summary>
+        /// Establishes a secure link between this node and another node
+        /// </summary>
+        /// <param name="node">The other peer to be paired</param>
+        /// <param name="authorizingPassword">The password of the user on the remote node which is authorizing this pairing</param>
+        /// <param name="authorizingUserName">The user which is authorizing this pairing</param>
+        /// <returns>The paired node registration</returns>
+        IPeerToPeerNode PairNode(IPeerToPeerNode node, string authorizingUserName, string authorizingPassword);
+
+        /// <summary>
+        /// Remove the pairing information for the peer on this device and the remote device
+        /// </summary>
+        /// <param name="node">The peer to unpair</param>
+        /// <param name="authorizingPassword">The password of the user on the remote node which is authorizing this pairing</param>
+        /// <param name="authorizingUserName">The user which is authorizing this pairing</param>
+        /// <returns>The unpaired peer record</returns>
+        IPeerToPeerNode UnpairNode(IPeerToPeerNode node, string authorizingUserName, string authorizingPassword);
+
+        /// <summary>
+        /// Remove the pairing information from this node only
+        /// </summary>
+        /// <param name="node">The node to be removed</param>
+        /// <returns>The removed peer record</returns>
+        IPeerToPeerNode RemovePairedNode(IPeerToPeerNode node);
+
+        /// <summary>
+        /// Gets the local peer registration
+        /// </summary>
+        IPeerToPeerNode LocalNode { get; }
     }
 
     /// <summary>
@@ -76,16 +115,16 @@ namespace SanteDB.Client.Services
         /// <summary>
         /// Peer to peer event args
         /// </summary>
-        public PeerToPeerEventArgs(String remoteDevice, bool isReceiving)
+        public PeerToPeerEventArgs(IPeerToPeerNode node, bool isReceiving)
         {
-            this.RemoteDevice = remoteDevice;
-            this.RemoteIsInitiator = isReceiving;
+            RemoteNode = node;
+            RemoteIsInitiator = isReceiving;
         }
 
         /// <summary>
         /// The recipient of the data
         /// </summary>
-        public String RemoteDevice { get; }
+        public IPeerToPeerNode RemoteNode { get; }
 
         /// <summary>
         /// The initiator of the data is the remote machine
@@ -108,15 +147,15 @@ namespace SanteDB.Client.Services
         /// <summary>
         /// Peer to peer data event args
         /// </summary>
-        public PeerToPeerDataEventArgs(String recipient, bool isReceiving, IdentifiedData resource) : base(recipient, isReceiving)
+        public PeerToPeerDataEventArgs(IPeerToPeerNode node, bool isReceiving, IPeerToPeerMessage message) : base(node, isReceiving)
         {
-            this.Resource = resource;
+            Message = message;
         }
 
         /// <summary>
         /// Gets the object that was sent
         /// </summary>
-        IdentifiedData Resource { get; set; }
+        IPeerToPeerMessage Message { get; }
 
     }
 }
