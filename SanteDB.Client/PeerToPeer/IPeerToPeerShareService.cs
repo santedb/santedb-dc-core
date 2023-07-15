@@ -115,10 +115,10 @@ namespace SanteDB.Client.PeerToPeer
         /// <summary>
         /// Peer to peer event args
         /// </summary>
-        public PeerToPeerEventArgs(IPeerToPeerNode node, bool isReceiving)
+        public PeerToPeerEventArgs(IPeerToPeerNode node, bool remoteIsInitiator)
         {
             RemoteNode = node;
-            RemoteIsInitiator = isReceiving;
+            RemoteIsInitiator = remoteIsInitiator;
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace SanteDB.Client.PeerToPeer
         /// <summary>
         /// Peer to peer data event args
         /// </summary>
-        public PeerToPeerDataEventArgs(IPeerToPeerNode node, bool isReceiving, IPeerToPeerMessage message) : base(node, isReceiving)
+        public PeerToPeerDataEventArgs(IPeerToPeerNode node, bool remoteIsInitiator, IPeerToPeerMessage message) : base(node, remoteIsInitiator)
         {
             Message = message;
         }

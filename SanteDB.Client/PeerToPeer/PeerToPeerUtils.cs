@@ -232,7 +232,6 @@ namespace SanteDB.Client.PeerToPeer
             peerMessage.DestinationNode = inputStream.ReadGuid();
             peerMessage.OriginationTime = inputStream.ReadDate();
             peerMessage.TriggerEvent = inputStream.ReadString();
-
             var structureIdentifier = inputStream.ReadString();
             var payloadData = inputStream.ReadArray();
             var signature = inputStream.ReadArray();

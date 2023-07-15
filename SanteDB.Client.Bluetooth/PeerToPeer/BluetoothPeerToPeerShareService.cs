@@ -1,8 +1,10 @@
 ﻿using DocumentFormat.OpenXml.Wordprocessing;
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Utility;
 using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
 using Newtonsoft.Json;
+using SanteDB.Client.Bluetooth.Configuration;
 using SanteDB.Client.Bluetooth.PeerToPeer.Messages;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.PeerToPeer;
@@ -24,6 +26,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -42,6 +45,7 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
         private readonly IRepositoryService<SecurityDevice> m_deviceRepository;
         private readonly IOperatingSystemPermissionService m_operatingSystemSecurity;
         private readonly IPolicyEnforcementService m_pepService;
+        private readonly BluetoothPeerConfigurationSection m_configuration;
         private readonly IThreadPoolService m_threadPoolService;
         private readonly ITfaCodeProvider m_tfaCodeProvider; // TODO: Use a different, more dedicated time based one-time-key provider
         private readonly ManualResetEventSlim m_listenerResetEvent = new ManualResetEventSlim(false); // The MRE that signals between the main thread and the listener thread
@@ -60,7 +64,8 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
         /// <summary>
         /// DI constructor
         /// </summary>
-        public BluetoothPeerToPeerShareService(IUpstreamManagementService upstreamManagementService,
+        public BluetoothPeerToPeerShareService(IConfigurationManager configurationManager,
+            IUpstreamManagementService upstreamManagementService,
             IDeviceIdentityProviderService deviceIdentityProviderService,
             IPolicyEnforcementService pepService,
             IOperatingSystemPermissionService operatingSystemSecurity,
@@ -68,6 +73,8 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
             IThreadPoolService threadPoolService,
             IRepositoryService<SecurityDevice> securityDeviceRepository)
         {
+            this.m_configuration = configurationManager.GetSection<BluetoothPeerConfigurationSection>() ??
+                new BluetoothPeerConfigurationSection();
             this.m_threadPoolService = threadPoolService;
             this.m_tfaCodeProvider = tfaCodeProvider;
             this.m_operatingSystemSecurity = operatingSystemSecurity;
@@ -163,7 +170,7 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
             }
             else
             {
-                foreach(var node in this.m_registeredNodes)
+                foreach (var node in this.m_registeredNodes)
                 {
                     yield return node;
                 }
@@ -273,12 +280,14 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
 
                 using (var client = new BluetoothClient())
                 {
-                    client.Encrypt = true;
-                    client.Authenticate = true;
-                    client.Connect(btNode.BluetoothAddress, BluetoothConstants.P2P_SERVICE_ID);
-                    var stream = client.GetStream();
+                    NetworkStream stream = null;
                     try
                     {
+                        client.Encrypt = true;
+                        client.Authenticate = true;
+                        client.Connect(btNode.BluetoothAddress, BluetoothConstants.P2P_SERVICE_ID);
+                        stream = client.GetStream();
+
                         if (stream == null || !client.Connected)
                         {
                             throw new InvalidOperationException(ErrorMessages.PEER_NOT_CONNECTED);
@@ -288,9 +297,26 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
                         message.OriginNode = this.LocalNode.Uuid;
                         message.DestinationNode = recipientNode.Uuid;
                         PeerToPeerUtils.WriteMessage(message, stream, PeerTransferEncodingFlags.Compressed, oneTimeKey);
+
+                        // Notify sent
+                        this.Sent?.Invoke(this, new PeerToPeerDataEventArgs(recipientNode, false, message));
+
+                        // Wait for a response
+                        SpinWait.SpinUntil(() => stream.DataAvailable, this.m_configuration.Timeout);
+                        if(!stream.DataAvailable)
+                        {
+                            throw new TimeoutException();
+                        }
+
+                        // Fire that we are about to be recieving data
+                        this.Receiving?.Invoke(this, new PeerToPeerEventArgs(recipientNode, false));
+
+                        // Read response
                         var response = PeerToPeerUtils.ReadMessage<BluetoothPeerToPeerMessage>(stream, oneTimeKey, false);
 
-                        if(response.DestinationNode != this.LocalNode.Uuid)
+                        this.Received?.Invoke(this, new PeerToPeerDataEventArgs(recipientNode, false, response));
+
+                        if (response.DestinationNode != this.LocalNode.Uuid)
                         {
                             throw new InvalidOperationException(String.Format(ErrorMessages.ASSERTION_MISMATCH, this.LocalNode.Uuid, response.DestinationNode));
                         }
@@ -305,16 +331,17 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error sending data to {0} - {1}", recipientNode, e);
-                throw new PeerToPeerException(this.LocalNode, recipientNode, message.TriggerEvent, e); 
+                throw new PeerToPeerException(this.LocalNode, recipientNode, message.TriggerEvent, e);
             }
         }
 
         /// <summary>
         /// Get the one time key to communicate with the device identity
         /// </summary>
-        private byte[] GetOneTimeKey(IPeerToPeerNode node) {
-            
-            if(node is BluetoothPeerNode btp)
+        private byte[] GetOneTimeKey(IPeerToPeerNode node)
+        {
+
+            if (node is BluetoothPeerNode btp)
             {
                 var deviceIdentity = this.m_deviceIdentityProvider.GetIdentity(btp.Uuid);
                 return SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(this.m_tfaCodeProvider.GenerateTfaCode(deviceIdentity)));
@@ -333,7 +360,7 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
             {
                 throw new ArgumentNullException(nameof(node));
             }
-            else if(!this.GetPairedNodes().Any(o=>o.Uuid == node.Uuid))
+            else if (!this.GetPairedNodes().Any(o => o.Uuid == node.Uuid))
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.OBJECT_NOT_FOUND, node.Uuid));
             }
@@ -395,63 +422,12 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
                 };
                 this.m_listener.Start();
 
-                while(this.IsRunning)
+                while (this.IsRunning)
                 {
+                    SpinWait.SpinUntil(() => this.m_listener.Pending(), 100);
                     if (this.m_listener.Pending()) // There is a waiting request
                     {
-                        try
-                        {
-                            using (var connection = this.m_listener.AcceptBluetoothClient())
-                            {
-                                // Is this a registered bluetooth partner?
-                                connection.Encrypt = true;
-                                if (!this.IsRunning) break;
-
-                                // Read the message from the buffer no matter 
-                                using (var btStream = connection.GetStream())
-                                {
-                                    // Attempt to determine the node we're talking to
-                                    var node = this.GetPairedNodes().OfType<BluetoothPeerNode>().FirstOrDefault(o => o.Name == connection.RemoteMachineName);
-                                    if (node != null) // is registered
-                                    {
-                                        using (var request = new MemoryStream())
-                                        {
-                                            btStream.CopyTo(request);
-                                            request.Seek(0, SeekOrigin.Begin);
-
-                                            var otk = this.GetOneTimeKey(node);
-
-                                            var eventArgs = new PeerToPeerEventArgs(node, true);
-                                            this.Receiving?.Invoke(this, eventArgs);
-                                            if (eventArgs.Cancel)
-                                            {
-                                                PeerToPeerUtils.WriteMessage(BluetoothPeerToPeerMessage.Nack("Cancelled"), btStream, PeerTransferEncodingFlags.Compressed, otk);
-                                                continue;
-                                            }
-
-                                            // Read the message
-                                            try
-                                            {
-                                                var requestMessage = PeerToPeerUtils.ReadMessage<BluetoothPeerToPeerMessage>(request, otk, true);
-                                                var responseMessage = PeerToPeerUtils.ExecuteTrigger(requestMessage);
-                                                PeerToPeerUtils.WriteMessage(responseMessage, btStream, PeerTransferEncodingFlags.Compressed, otk);
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                this.m_tracer.TraceWarning("BluetoothReceiverError: Message interaction failed Client={0}, E={1}", connection.RemoteMachineName, e);
-                                                PeerToPeerUtils.WriteMessage(BluetoothPeerToPeerMessage.Nack(e.ToHumanReadableString()), btStream, PeerTransferEncodingFlags.Compressed, otk);
-                                            }
-                                        }
-                                    }
-
-                                }
-
-                            }
-                        }
-                        catch(Exception e)
-                        {
-                            this.m_tracer.TraceError("BluetoothReceiverError: Connection Accept Failed - {0}", e);
-                        }
+                        this.m_threadPoolService.QueueUserWorkItem(this.HandleConnection, this.m_listener.AcceptBluetoothClient());
                     }
                 }
             }
@@ -461,6 +437,86 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
                 this.m_listenerResetEvent.Set();
             }
 
+        }
+
+        /// <summary>
+        /// Handle a bluetooth connection request
+        /// </summary>
+        private void HandleConnection(BluetoothClient connection)
+        {
+            try
+            {
+                using (connection)
+                {
+                    this.m_tracer.TraceVerbose("Accepted BT connection from {0}", connection.RemoteMachineName);
+                    // Is this a registered bluetooth partner?
+                    connection.Encrypt = true;
+                    if (!this.IsRunning) return;
+
+                    // Attempt to determine the node we're talking to
+                    var node = this.GetPairedNodes().OfType<BluetoothPeerNode>().FirstOrDefault(o => o.Name == connection.RemoteMachineName);
+                    if (node != null) // is registered
+                    {
+                        // We call receiving to allow for us to hang-up on plugin decision to cancel
+                        var eventArgs = new PeerToPeerEventArgs(node, true);
+                        this.Receiving?.Invoke(this, eventArgs);
+                        if (eventArgs.Cancel)
+                        {
+                            this.m_tracer.TraceWarning("Pre-event signals cancel on bluetooth request from {0}", connection.RemoteMachineName);
+                            connection.Close();
+                            return;
+                        }
+
+                        // Read the message from the buffer no matter 
+                        using (var stream = connection.GetStream())
+                        {
+
+                            // Wait for a request to have data available
+                            SpinWait.SpinUntil(() => stream.DataAvailable, this.m_configuration.Timeout);
+                            if (!stream.DataAvailable)
+                            {
+                                throw new TimeoutException();
+                            }
+
+                            var otk = this.GetOneTimeKey(node);
+
+                            // Read the message
+                            try
+                            {
+                                var requestMessage = PeerToPeerUtils.ReadMessage<BluetoothPeerToPeerMessage>(stream, otk, true);
+
+                                // After interpreting the request - we have received the message
+                                this.Received?.Invoke(this, new PeerToPeerDataEventArgs(node, true, requestMessage));
+
+                                // Execute the trigger event 
+                                var responseMessage = PeerToPeerUtils.ExecuteTrigger(requestMessage);
+
+                                // Now we want to indicate we're sending a response
+                                var sendResponseEventArgs = new PeerToPeerDataEventArgs(node, true, responseMessage);
+                                this.Sending?.Invoke(this, sendResponseEventArgs);
+                                if (sendResponseEventArgs.Cancel)
+                                {
+                                    this.m_tracer.TraceWarning("Sending response for message has been cancelled by event handler for {0}", connection.RemoteMachineName);
+                                    connection.Close();
+                                    return;
+                                }
+
+                                PeerToPeerUtils.WriteMessage(responseMessage, stream, PeerTransferEncodingFlags.Compressed, otk);
+                                this.Sent?.Invoke(this, new PeerToPeerDataEventArgs(node, true, responseMessage));
+                            }
+                            catch (Exception e)
+                            {
+                                this.m_tracer.TraceWarning("BluetoothReceiverError: Message interaction failed Client={0}, E={1}", connection.RemoteMachineName, e);
+                                PeerToPeerUtils.WriteMessage(BluetoothPeerToPeerMessage.Nack(e.ToHumanReadableString()), stream, PeerTransferEncodingFlags.Compressed, otk);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("BluetoothReceiverError: Connection Accept Failed - {0}", e);
+            }
         }
 
         /// <inheritdoc/>
@@ -492,7 +548,7 @@ namespace SanteDB.Client.Bluetooth.PeerToPeer
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.OBJECT_NOT_FOUND, node.Uuid));
             }
-            
+
             this.m_pepService.Demand(PermissionPolicyIdentifiers.CreateDevice);
 
             // Remove the registration for this node
