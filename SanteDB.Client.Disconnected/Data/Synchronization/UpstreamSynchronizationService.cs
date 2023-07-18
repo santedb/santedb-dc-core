@@ -610,7 +610,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     result = this.UpstreamIntegrationService.Query(modelType, filterExpression, queryControlOptions);
                     sw.Stop();
 
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progressIndicator, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_STATE, new { resource = modelType.GetSerializationName(), count = queryControlOptions.Offset })));
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progressIndicator, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_STATE, new { resource = modelType.GetSerializationName(), count = queryControlOptions.Offset })));
 
                     if (result == null)
                     {
@@ -683,7 +683,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 var progress = (float)s++ / subscriptions.Length;
                 var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
                 var d = 0;
                 foreach (var def in applicableClientDefinitions)
                 {
@@ -691,7 +691,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     {
                         // We keep the reported progress for firing the progress indicator and because we want to inform the user of the progress of data as the pull is happening
                         progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
                         _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
                         var objectstoevaluate = GetSubscribedtObjectsApplyingGuards(def, subscribedobjects);
                         this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
