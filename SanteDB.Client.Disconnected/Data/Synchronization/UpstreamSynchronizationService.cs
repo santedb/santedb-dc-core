@@ -379,10 +379,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             if (lastoperation > 0) //Don't scale with a negative value. This is for init values.
             {
-                var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / takecount; //y=mx+b, m = (y - b) / x
+                var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / (float)takecount; //y=mx+b, m = (y - b) / x
+                if(peritemcost < 0)
+                {
+                    peritemcost = 1;
+                }
 
                 // Our timeout is 120 seconds but let's try to ensure we can fulfill the request in 30 seconds
                 var objsInThirty = 30000 / (peritemcost + 1);
+
                 if (!this._Configuration.BigBundles && objsInThirty > 5_000)
                 {
                     return 2_500;
@@ -663,6 +668,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     ver.PreviousVersionKey = null;
                     ver.VersionSequence = null;
                 }
+                itm.AddAnnotation(SystemTagNames.UpstreamDataTag);
                 if (itm is ITaggable taggable)
                 {
                     taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
