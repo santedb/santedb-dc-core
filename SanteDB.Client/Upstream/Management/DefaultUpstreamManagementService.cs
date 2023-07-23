@@ -222,7 +222,7 @@ namespace SanteDB.Client.Upstream.Management
                         // Is the server compatible?
                         if (!replaceExistingRegistration &&
                             (!Version.TryParse(realmOptions.InterfaceVersion, out var ifVersion) ||
-                            ifVersion.Major < this.GetType().Assembly.GetName().Version.Major))
+                            !ifVersion.IsCompatible(this.GetType().Assembly.GetName().Version)))
                         {
                             throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_VERSION_MISMATCH, new { remote = realmOptions.InterfaceVersion }));
                         }
