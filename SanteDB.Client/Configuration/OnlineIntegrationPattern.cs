@@ -50,6 +50,8 @@ namespace SanteDB.Client.Configuration
                         typeof(UpstreamRepositoryFactory),
                         typeof(UpstreamTfaService),
                         typeof(UpstreamIdentityProvider),
+                        typeof(UpstreamDeviceIdentityProvider),
+                        typeof(UpstreamCertificateAssociationManager),
                         typeof(UpstreamApplicationIdentityProvider),
                         typeof(UpstreamPolicyInformationService),
                         typeof(UpstreamRoleProviderService),

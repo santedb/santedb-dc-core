@@ -64,6 +64,7 @@ namespace SanteDB.Client.Upstream.Security
                 : base (application.Name, false, "NONE")
             {
                 this.AddClaim(new SanteDBClaim(SanteDBClaimTypes.Actor, ActorTypeKeys.Application.ToString()));
+                this.AddClaim(new SanteDBClaim(SanteDBClaimTypes.SecurityId, application.Key.ToString()));
                 this.AddClaim(new SanteDBClaim(SanteDBClaimTypes.NameIdentifier, application.Key.ToString()));
             }
         }
@@ -99,13 +100,13 @@ namespace SanteDB.Client.Upstream.Security
         /// <summary>
         /// Get upstream application based on the name
         /// </summary>
-        private SecurityApplication GetUpstreamSecurityApplication(Expression<Func<SecurityApplication, bool>> query, IPrincipal principal)
+        private SecurityApplicationInfo GetUpstreamSecurityApplication(Expression<Func<SecurityApplication, bool>> query, IPrincipal principal)
         {
             using (var amiclient = base.CreateAmiServiceClient())
             {
                 try
                 {
-                    return amiclient.GetApplications(query).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault()?.Entity;
+                    return amiclient.GetApplications(query).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault();
                 }
                 catch (Exception e)
                 {
@@ -219,7 +220,7 @@ namespace SanteDB.Client.Upstream.Security
             var remoteApplication = this.GetUpstreamSecurityApplication(o => o.Name.ToLowerInvariant() == applicationName.ToLowerInvariant(), AuthenticationContext.Current.Principal);
             if (remoteApplication != null)
             {
-                return new UpstreamApplicationIdentity(remoteApplication);
+                return new UpstreamApplicationIdentity(remoteApplication.Entity);
             }
             return null;
         }
@@ -230,7 +231,7 @@ namespace SanteDB.Client.Upstream.Security
             var remoteApplication = this.GetUpstreamSecurityApplication(o => o.Key == sid, AuthenticationContext.Current.Principal);
             if (remoteApplication != null)
             {
-                return new UpstreamApplicationIdentity(remoteApplication);
+                return new UpstreamApplicationIdentity(remoteApplication.Entity);
             }
             return null;
         }
