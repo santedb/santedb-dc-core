@@ -30,6 +30,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
     public enum SynchronizationMode
     {
         /// <summary>
+        /// No synchronization mode
+        /// </summary>
+        [XmlEnum("none")]
+        None = 0x0,
+        /// <summary>
         /// Synchronized based on subscriptions
         /// </summary>
         [XmlEnum("partial")]

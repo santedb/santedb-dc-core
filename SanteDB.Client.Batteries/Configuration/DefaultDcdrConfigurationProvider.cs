@@ -271,7 +271,7 @@ namespace SanteDB.Client.Batteries.Configuration
             });
             configuration.Sections.Add(new SynchronizationConfigurationSection()
             {
-                Mode = SynchronizationMode.Partial,
+                Mode = SynchronizationMode.None,
                 PollInterval = new TimeSpan(0, 15, 0),
                 ForbidSending = new List<ResourceTypeReferenceConfiguration>()
                 {
