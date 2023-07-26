@@ -168,7 +168,8 @@ namespace SanteDB.Client.Disconnected.Configuration
                     }
 
                     break;
-
+                case SynchronizationMode.None:
+                    break;
                 default:
                     throw new NotSupportedException();
             }
