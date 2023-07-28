@@ -33,6 +33,7 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
@@ -332,6 +333,17 @@ namespace SanteDB.Client.Upstream.Management
                                 this.m_tracer.TraceWarning("Installed Device Certificate: {0} (PK: {1})", deviceCertificate.Subject, deviceCertificate.HasPrivateKey);
                                 throw new InvalidOperationException("Device certificate did not have a private key - ensure you are running on a supported platform");
                             }
+
+                            // Attempt to send the device credential to the server
+                            try
+                            {
+                                this.m_tracer.TraceInfo("Sending authentication public key to server");
+                                amiClient.Client.Post<X509Certificate2Info, X509Certificate2Info>($"SecurityDevice/{upstreamDevice.Key}/auth_cert", new X509Certificate2Info(deviceCertificate));
+                            }
+                            catch(Exception e)
+                            {
+                                this.m_tracer.TraceError("Could not send authentication certificate to server - administrator will need to manually add it - {0}", e);
+                            }
                         }
 
                         authEpConfiguration.Binding.Security.CredentialProvider = null; // No need for credentials on OAUTH since the certificate is our credential
@@ -405,6 +417,17 @@ namespace SanteDB.Client.Upstream.Management
                             this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
                             this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
                         }
+                    }
+
+                    // Attempt to send the device credential to the server
+                    try
+                    {
+                        this.m_tracer.TraceInfo("Sending signature public key to server");
+                        amiClient.Client.Post<X509Certificate2Info, X509Certificate2Info>($"SecurityDevice/{upstreamDevice.Key}/dsig_cert", new X509Certificate2Info(signingCertificate));
+                    }
+                    catch (Exception e)
+                    {
+                        this.m_tracer.TraceError("Could not send signature certificate to server - administrator will need to manually add it - {0}", e);
                     }
 
                 }

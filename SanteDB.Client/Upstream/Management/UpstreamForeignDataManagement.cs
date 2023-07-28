@@ -35,6 +35,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace SanteDB.Client.Upstream.Management
@@ -74,6 +75,9 @@ namespace SanteDB.Client.Upstream.Management
 
             /// <inheritdoc/>
             public Guid ForeignDataMapKey => this.m_upstreamData.ForeignDataMap;
+
+            /// <inheritdoc/>
+            public IDictionary<String, String> ParameterValues => this.m_upstreamData.Parameters.ToDictionary(o => o.Key, o => o.Value);
 
             /// <inheritdoc/>
             public IEnumerable<DetectedIssue> Issues => this.m_upstreamData.Issues;
@@ -257,13 +261,15 @@ namespace SanteDB.Client.Upstream.Management
         }
 
         /// <inheritdoc/>
-        public IForeignDataSubmission Stage(Stream inputStream, string name, string description, Guid foreignDataMapKey)
+        public IForeignDataSubmission Stage(Stream inputStream, string name, string description, Guid foreignDataMapKey, IDictionary<String, String> parameterValues)
         {
             try
             {
                 List<MultiPartFormData> stageSubmission = new List<MultiPartFormData>();
                 stageSubmission.Add(new MultiPartFormData("description", description));
                 stageSubmission.Add(new MultiPartFormData("map", foreignDataMapKey.ToString()));
+                stageSubmission.AddRange(parameterValues.Select(o => new MultiPartFormData(o.Key, o.Value)));
+
                 using (var ms = new MemoryStream())
                 {
                     inputStream.CopyTo(ms);
