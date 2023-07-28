@@ -64,10 +64,12 @@ namespace SanteDB.Client.Upstream.Security
         /// </summary>
         public string ServiceName => throw new NotImplementedException();
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
         /// <inheritdoc/>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
+#pragma warning restore CS0067
 
         /// <summary>
         /// Get upstream device based on the name

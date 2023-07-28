@@ -45,9 +45,18 @@ namespace SanteDB.Client.Upstream.Security
         readonly IUpstreamServiceProvider<IPolicyInformationService> _upstreamPolicyProvider;
         readonly IAdhocCacheService _CacheService;
         readonly bool _CanSynchronize;
-        readonly Tracer _Tracer;
         readonly TimeSpan _CacheTimeout;
 
+        /// <summary>
+        /// Instantiates a new instance of this class. This constructor should be called by the dependency injection framework.
+        /// </summary>
+        /// <param name="restClientFactory"></param>
+        /// <param name="upstreamManagementService"></param>
+        /// <param name="upstreamAvailabilityProvider"></param>
+        /// <param name="localPolicyProvider"></param>
+        /// <param name="upstreamPolicyProvider"></param>
+        /// <param name="cacheService"></param>
+        /// <param name="upstreamIntegrationService"></param>
         public BridgedPolicyInformationService(
             IRestClientFactory restClientFactory,
             IUpstreamManagementService upstreamManagementService,
@@ -57,7 +66,6 @@ namespace SanteDB.Client.Upstream.Security
             IAdhocCacheService cacheService,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            _Tracer = new Tracer(nameof(BridgedPolicyInformationService));
             _localPolicyProvider = localPolicyProvider;
             _upstreamPolicyProvider = upstreamPolicyProvider;
             _CacheTimeout = TimeSpan.FromSeconds(120); //TODO: Make this a configuration setting?

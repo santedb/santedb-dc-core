@@ -42,10 +42,12 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public string ServiceName => "Upstream Certificate Mapping Provider";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
         /// <inheritdoc/>
         public event EventHandler<AuthenticatingEventArgs> Authenticating;
+#pragma warning restore CS0067
 
         /// <inheritdoc/>
         public void AddIdentityMap(IIdentity identityToBeMapped, X509Certificate2 authenticationCertificate, IPrincipal authenticatedPrincipal)

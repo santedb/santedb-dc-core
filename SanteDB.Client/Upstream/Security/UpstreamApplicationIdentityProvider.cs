@@ -49,7 +49,6 @@ namespace SanteDB.Client.Upstream.Security
     {
         readonly IOAuthClient _OAuthClient;
         readonly ILocalizationService _LocalizationService;
-        private bool disposedValue;
 
         /// <summary>
         /// Upstream application identity used for GetIdentity calls
