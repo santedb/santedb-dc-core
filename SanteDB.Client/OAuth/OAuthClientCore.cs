@@ -168,6 +168,11 @@ namespace SanteDB.Client.OAuth
         {
             var discoverydocument = GetDiscoveryDocument();
 
+            if(discoverydocument == null)
+            {
+                return;
+            }
+
             TokenValidationParameters = TokenValidationParameters ?? new TokenValidationParameters();
 
             TokenValidationParameters.ValidIssuers = new[] { discoverydocument.Issuer };
