@@ -232,26 +232,23 @@ namespace SanteDB.Client.Upstream.Management
             /// </summary>
             public void Run(object sender, EventArgs e, object[] parameters)
             {
-                if (parameters?.Length != this.Parameters?.Count && this.Parameters.Count > 0)
-                    throw new ArgumentException("Invalid number of arguments to job");
-                else
-                    try
+                try
+                {
+                    var parms = new ParameterCollection()
                     {
-                        var parms = new ParameterCollection()
-                        {
-                            Parameters = parameters?.Select(o => new Parameter("_", o)).ToList()
-                        };
-                        using (var client = this.m_restClient.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
-                        {
-                            client.Post<ParameterCollection, ParameterCollection>($"JobInfo/{this.Key}/$start", parms);
-                        }
-                        this.m_adhocCache?.Remove(UpstreamJobManager.CACHE_KEY);
+                        Parameters = parameters?.Select(o => new Parameter("_", o)).ToList()
+                    };
+                    using (var client = this.m_restClient.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                    {
+                        client.Post<ParameterCollection, ParameterCollection>($"JobInfo/{this.Key}/$start", parms);
+                    }
+                    this.m_adhocCache?.Remove(UpstreamJobManager.CACHE_KEY);
 
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception($"Error running job {this.Key}", ex);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error running job {this.Key}", ex);
+                }
             }
 
         }

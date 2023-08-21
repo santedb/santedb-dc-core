@@ -379,10 +379,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             if (lastoperation > 0) //Don't scale with a negative value. This is for init values.
             {
-                var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / takecount; //y=mx+b, m = (y - b) / x
+                var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / (float)takecount; //y=mx+b, m = (y - b) / x
+                if(peritemcost < 0)
+                {
+                    peritemcost = 1;
+                }
 
                 // Our timeout is 120 seconds but let's try to ensure we can fulfill the request in 30 seconds
                 var objsInThirty = 30000 / (peritemcost + 1);
+
                 if (!this._Configuration.BigBundles && objsInThirty > 5_000)
                 {
                     return 2_500;
@@ -424,7 +429,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 var upstreamEndpoint = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(subscribedToType);
                 var persistenceService = this.GetPersistenceService(subscribedToType);
                 var queryToExecute = new NameValueCollection();
-                queryToExecute.Add("_id", this._Configuration.SubscribedObjects.Select(o => o.ToString()).ToArray());
+                queryToExecute.Add("id", this._Configuration.SubscribedObjects.Select(o => o.ToString()).ToArray());
                 var expression = QueryExpressionParser.BuildLinqExpression(subscribedToType, queryToExecute);
                 var results = persistenceService.Query(expression);
 
@@ -510,15 +515,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     if (filter.IndexOf("$subscribed") > -1)
                     {
-                        object subscribed = null;
-                        var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
-                        {
-                            { "subscribed", () => subscribed }
-                        }, relayControlVariables: true);
-
                         foreach (var subscribedobject in subscribedObjects)
                         {
-                            subscribed = subscribedobject;
+                            var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
+                            {
+                                { "subscribed", () => subscribedobject }
+                            }, relayControlVariables: true, lazyExpandVariables: true);
+
                             var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr).ToHttpString();
                             this.PullInternal(clientDefinition.ResourceType, newfilter.ParseQueryString(), clientDefinition.IgnoreModifiedOn, progressIndicator);
                         }
@@ -612,7 +615,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     result = this.UpstreamIntegrationService.Query(modelType, filterExpression, queryControlOptions);
                     sw.Stop();
 
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progressIndicator, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_STATE, new { resource = modelType.GetSerializationName(), count = queryControlOptions.Offset })));
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progressIndicator, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_STATE, new { resource = modelType.GetSerializationName(), count = queryControlOptions.Offset })));
 
                     if (result == null)
                     {
@@ -665,6 +668,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     ver.PreviousVersionKey = null;
                     ver.VersionSequence = null;
                 }
+                itm.AddAnnotation(SystemTagNames.UpstreamDataTag);
                 if (itm is ITaggable taggable)
                 {
                     taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
@@ -685,7 +689,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 var progress = (float)s++ / subscriptions.Length;
                 var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
                 var d = 0;
                 foreach (var def in applicableClientDefinitions)
                 {
@@ -693,7 +697,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     {
                         // We keep the reported progress for firing the progress indicator and because we want to inform the user of the progress of data as the pull is happening
                         progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
                         _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
                         var objectstoevaluate = GetSubscribedtObjectsApplyingGuards(def, subscribedobjects);
                         this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);

@@ -27,7 +27,6 @@ using SanteDB.Client.Configuration;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Client.OAuth;
-using SanteDB.Client.Repositories;
 using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Management;
@@ -272,7 +271,7 @@ namespace SanteDB.Client.Batteries.Configuration
             });
             configuration.Sections.Add(new SynchronizationConfigurationSection()
             {
-                Mode = SynchronizationMode.Partial,
+                Mode = SynchronizationMode.None,
                 PollInterval = new TimeSpan(0, 15, 0),
                 ForbidSending = new List<ResourceTypeReferenceConfiguration>()
                 {

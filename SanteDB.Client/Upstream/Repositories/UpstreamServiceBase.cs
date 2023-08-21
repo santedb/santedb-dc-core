@@ -102,18 +102,16 @@ namespace SanteDB.Client.Upstream.Repositories
         protected IRestClient CreateRestClient(ServiceEndpointType serviceEndpointType, IPrincipal authenticatedAs)
         {
             var client = this.m_restClientFactory.GetRestClientFor(serviceEndpointType);
-            if (authenticatedAs != null)
-            {
-                client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
-            }
-            else if ((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
-                AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal) && this.m_upstreamIntegrationService != null) // We are the system - so we need to auth as the device
+            authenticatedAs = authenticatedAs ?? AuthenticationContext.Current.Principal;
+
+            if((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
+                AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal) && this.m_upstreamIntegrationService != null)
             {
                 client.Credentials = new UpstreamPrincipalCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
             }
-            else
+            else 
             {
-                client.Credentials = new UpstreamPrincipalCredentials(AuthenticationContext.Current.Principal);
+                client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
             }
             return client;
         }

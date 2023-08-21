@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Client.Repositories;
 using SanteDB.Client.Upstream.Management;
 using SanteDB.Client.Upstream.Matching;
 using SanteDB.Client.Upstream.Repositories;
@@ -51,6 +50,8 @@ namespace SanteDB.Client.Configuration
                         typeof(UpstreamRepositoryFactory),
                         typeof(UpstreamTfaService),
                         typeof(UpstreamIdentityProvider),
+                        typeof(UpstreamDeviceIdentityProvider),
+                        typeof(UpstreamCertificateAssociationManager),
                         typeof(UpstreamApplicationIdentityProvider),
                         typeof(UpstreamPolicyInformationService),
                         typeof(UpstreamRoleProviderService),

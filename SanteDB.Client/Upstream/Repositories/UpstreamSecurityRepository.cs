@@ -43,7 +43,7 @@ namespace SanteDB.Client.Upstream.Repositories
     /// <summary>
     /// A security repository that uses the upstream services to perform its duties
     /// </summary>
-    public class UpstreamSecurityRepository : UpstreamServiceBase, ISecurityRepositoryService
+    public class UpstreamSecurityRepository : UpstreamServiceBase, IUpstreamServiceProvider<ISecurityRepositoryService>, ISecurityRepositoryService
     {
         private readonly ILocalizationService m_localizationService;
         private readonly IAdhocCacheService m_adhocCache;
@@ -65,6 +65,9 @@ namespace SanteDB.Client.Upstream.Repositories
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Security Repository";
+
+        /// <inheritdoc/>
+        public ISecurityRepositoryService UpstreamProvider => this;
 
         /// <inheritdoc/>
         public SecurityUser ChangePassword(Guid userId, string password)
@@ -325,7 +328,7 @@ namespace SanteDB.Client.Upstream.Repositories
         }
 
         /// <inheritdoc/>
-        public IdentifiedData GetSecurityEntity(IPrincipal principal)
+        public SecurityEntity GetSecurityEntity(IPrincipal principal)
         {
             switch (principal.Identity)
             {
@@ -338,6 +341,49 @@ namespace SanteDB.Client.Upstream.Repositories
                 default:
                     throw new ArgumentOutOfRangeException(nameof(principal));
             }
+        }
+
+        /// <inheritdoc/>
+        public Entity GetCdrEntity(IPrincipal principal)
+        {
+            Entity retVal = null;
+            if (principal == null)
+            {
+                throw new ArgumentNullException(nameof(principal));
+            }
+            else if (this.m_adhocCache != null && this.m_adhocCache.TryGet($"sec.ee.{principal.Identity.Name}", out retVal))
+            {
+                return retVal;
+            }
+
+            try
+            {
+                using (var client = this.CreateHdsiServiceClient())
+                {
+                    
+                    switch(principal.Identity)
+                    {
+                        case IDeviceIdentity idi:
+                            retVal = client.Query<DeviceEntity>(o => o.SecurityDevice.Name.ToLowerInvariant() == idi.Name.ToLowerInvariant()).Item.OfType<DeviceEntity>().FirstOrDefault();
+                            break;
+                        case IApplicationIdentity iai:
+                            retVal = client.Query<ApplicationEntity>(o => o.SecurityApplication.Name.ToLowerInvariant() == iai.Name.ToLowerInvariant()).Item.OfType<ApplicationEntity>().FirstOrDefault();
+                            break;
+                        case IIdentity ii:
+                            retVal = client.Query<UserEntity>(o => o.SecurityUser.UserName.ToLowerInvariant() == ii.Name.ToLowerInvariant()).Item.OfType<UserEntity>().FirstOrDefault();
+                            break;
+                        default:
+                            throw new NotSupportedException(principal.Identity.GetType().Name);
+                    }
+                    this.m_adhocCache?.Add($"sec.ee.{principal.Identity.Name}", retVal);
+                    return retVal;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR), e);
+            }
+
         }
 
         /// <inheritdoc/>

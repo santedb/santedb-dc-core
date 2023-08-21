@@ -25,6 +25,7 @@ using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
@@ -51,8 +52,8 @@ namespace SanteDB.Client.Batteries.Services
         /// <summary>
         /// DI constructor
         /// </summary>
-        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider)
-            : base(configurationManager)
+        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider, IPlatformSecurityProvider platformSecurityProvider)
+            : base(configurationManager, platformSecurityProvider)
         {
             this.m_bridgeProvider = bridgeProvider;
             this.m_appletCollection[String.Empty].Resolver = this.ResolveAppletAsset;
