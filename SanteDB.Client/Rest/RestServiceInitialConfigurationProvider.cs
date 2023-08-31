@@ -205,7 +205,7 @@ namespace SanteDB.Client.Rest
             }
 
             // Are we working on SSL?
-            if (bindingBase.Scheme == "https")
+            if (bindingBase.Scheme == "https" && hostContextType == SanteDBHostType.Debugger)
             {
                 var appService = appConfiguration.ServiceProviders.Find(o => typeof(ICertificateGeneratorService).IsAssignableFrom(o.Type));
                 RestDebugCertificateInstallation.InstallDebuggerCertificate(bindingBase, Activator.CreateInstance(appService.Type) as ICertificateGeneratorService);
