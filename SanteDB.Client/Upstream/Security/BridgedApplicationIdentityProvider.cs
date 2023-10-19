@@ -59,7 +59,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public string ServiceName => throw new NotImplementedException();
+        public string ServiceName => nameof(BridgedApplicationIdentityProvider);
 
         /// <inheritdoc/>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;

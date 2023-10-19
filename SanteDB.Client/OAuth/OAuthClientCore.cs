@@ -72,6 +72,11 @@ namespace SanteDB.Client.OAuth
         protected IRestClientFactory RestClientFactory { get; }
 
         /// <summary>
+        /// The retry times that are cached from <see cref="GetRetryWaitTimes"/>.
+        /// </summary>
+        protected int[] _RetryTimes;
+
+        /// <summary>
         /// The ClientId of the application.
         /// </summary>
         public string ClientId { get; set; }
@@ -86,7 +91,7 @@ namespace SanteDB.Client.OAuth
             CryptoRNG = System.Security.Cryptography.RandomNumberGenerator.Create();
             TokenHandler = new JsonWebTokenHandler();
             RestClientFactory = restClientFactory;
-
+            _RetryTimes = GetRetryWaitTimes();
         }
 
         /// <summary>
@@ -162,6 +167,54 @@ namespace SanteDB.Client.OAuth
         protected virtual void MapClaims(TokenValidationResult tokenValidationResult, OAuthClientTokenResponse response, List<IClaim> claims) { }
 
         /// <summary>
+        /// Gets an array of wait times (in milliseconds) to wait during a retry operation. The size of the returned array denotes how many times to retry. This is used by <see cref="ExecuteWithRetry{T}(Func{T}, Func{Exception, bool})"/>.
+        /// </summary>
+        /// <returns>An array of integers for waiting during retry operations.</returns>
+        protected virtual int[] GetRetryWaitTimes()
+        {
+#if DEBUG //In debug, we want to fail quickly to aid in debugging.
+            return new[] { 1, 10 };
+#else
+            return new[] { 1, 10, 100, 1000, 1500 };
+#endif
+        }
+        /// <summary>
+        /// Executes <paramref name="func"/> with retry specified in <see cref="GetRetryWaitTimes"/>, sleeping the thread in between.
+        /// </summary>
+        /// <typeparam name="T">The result type of func.</typeparam>
+        /// <param name="func">The callback to execute and retry.</param>
+        /// <param name="errorCallback">An optional callback for when an exception ocurrs. This will typically log an error of some kind.</param>
+        /// <returns>The result of the call or null.</returns>
+        protected virtual T ExecuteWithRetry<T>(Func<T> func, Func<Exception, bool> errorCallback = null) where T: class
+        {
+            if ( null == errorCallback)
+            {
+                errorCallback = ex => true;
+            }
+
+            T result = null;
+
+            int c = 0;
+            while(result == null && c < _RetryTimes.Length)
+            {
+                try
+                {
+                    result = func();
+                }
+                catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+                    if (!errorCallback(ex))
+                    {
+                        break;
+                    }
+                    Thread.Sleep(_RetryTimes[c]);
+                }
+                c++;
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Set the token validation parameter to be used 
         /// </summary>
         protected virtual void SetTokenValidationParameters()
@@ -223,24 +276,19 @@ namespace SanteDB.Client.OAuth
 
             SetupRestClientForJwksRequest(restclient);
 
-            int requestcounter = 0;
-            string jwksjson = null;
-
-            while (jwksjson == null && (requestcounter++) < 5)
+            var jwksjson = ExecuteWithRetry(() =>
             {
-                try
-                {
-                    //TODO: Our rest client needs a better interface
-                    var bytes = restclient.Get(jwksEndpoint);
+                var bytes = restclient.Get(jwksEndpoint);
 
-                    jwksjson = Encoding.UTF8.GetString(bytes);
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-                    Tracer.TraceInfo("Exception getting jwks endpoint: {0}", ex);
-                    Thread.Sleep(1000);
-                }
-            }
+                if (null == bytes)
+                    return null;
+
+                return Encoding.UTF8.GetString(bytes);
+            }, ex =>
+            {
+                Tracer.TraceInfo("Exception getting jwks endpoint: {0}", ex);
+                return true;
+            });
 
             if (null == jwksjson)
             {
@@ -265,7 +313,7 @@ namespace SanteDB.Client.OAuth
 #if DEBUG
             // Allow PII to be included in exceptions
             IdentityModelEventSource.ShowPII = true;
-#endif 
+#endif
 
             var tokenvalidationresult = TokenHandler.ValidateToken(response.IdToken, TokenValidationParameters);
 
@@ -337,7 +385,7 @@ namespace SanteDB.Client.OAuth
         {
             var doc = GetDiscoveryDocument();
 
-            return doc.TokenEndpoint;
+            return doc?.TokenEndpoint;
         }
 
         /// <summary>
@@ -360,19 +408,15 @@ namespace SanteDB.Client.OAuth
 
             SetupRestClientForDiscoveryRequest(restclient);
 
-            int counter = 0;
-
-            while (DiscoveryDocument == null && (counter++) < 5)
+            DiscoveryDocument = ExecuteWithRetry(() =>
             {
-                try
-                {
-                    DiscoveryDocument = restclient.Get<OpenIdConnectDiscoveryDocument>(".well-known/openid-configuration");
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-                    Thread.Sleep(1000);
-                }
-            }
+                return restclient.Get<OpenIdConnectDiscoveryDocument>(".well-known/openid-configuration");
+            },
+            ex =>
+            {
+                Tracer.TraceError("Exception fetching discovery document: {0}", ex);
+                return true;
+            });
 
             return DiscoveryDocument;
         }
