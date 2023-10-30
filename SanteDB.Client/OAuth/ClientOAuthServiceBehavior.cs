@@ -84,8 +84,8 @@ namespace SanteDB.Client.OAuth
                 base.m_SessionProvider.Abandon(session as ISession);
             }
 
-            DiscardCookie(context, "_s");
-            DiscardCookie(context, "_r");
+            DiscardCookie(context, ExtendedCookieNames.SessionCookieName);
+            DiscardCookie(context, ExtendedCookieNames.RefreshCookieName);
 
             return true;
         }
@@ -98,10 +98,10 @@ namespace SanteDB.Client.OAuth
             {
                 if (null != response.RefreshToken)
                 {
-                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"_r={response.RefreshToken}; Path={GetAuthPathForCookie(context)}; HttpOnly");
+                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}={response.RefreshToken}; Path={GetAuthPathForCookie(context)}; HttpOnly");
                 }
 
-                context.OutgoingResponse.AppendHeader("Set-Cookie", $"_s={response.AccessToken}; Path=/; HttpOnly");
+                context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}={response.AccessToken}; Path=/; HttpOnly");
 
 
             }
