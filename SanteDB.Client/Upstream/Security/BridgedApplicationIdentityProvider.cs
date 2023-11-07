@@ -59,7 +59,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public string ServiceName => throw new NotImplementedException();
+        public string ServiceName => nameof(BridgedApplicationIdentityProvider);
 
         /// <inheritdoc/>
         public event EventHandler<AuthenticatedEventArgs> Authenticated;
@@ -184,7 +184,7 @@ namespace SanteDB.Client.Upstream.Security
                 {
                     try
                     {
-                        result = authenticationUnder != null ? this.m_upstreamApplicationIdentityProvider.Authenticate(applicationSecret, authenticationUnder) :
+                        result = authenticationUnder != null ? this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, authenticationUnder) :
                             this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, applicationSecret);
                         this.SynchronizeIdentity(result as IClaimsPrincipal, applicationSecret);
                     }
@@ -194,12 +194,12 @@ namespace SanteDB.Client.Upstream.Security
                     }
                     catch (UpstreamIntegrationException e) when (e.InnerException is TimeoutException)
                     {
-                        result = authenticationUnder != null ? this.m_localApplicationIdentityProvider.Authenticate(applicationSecret, authenticationUnder) :
+                        result = authenticationUnder != null ? this.m_localApplicationIdentityProvider.Authenticate(applicationName, authenticationUnder) :
                                 this.m_localApplicationIdentityProvider.Authenticate(applicationName, applicationSecret);
                     }
                     catch (TimeoutException)
                     {
-                        result = authenticationUnder != null ? this.m_localApplicationIdentityProvider.Authenticate(applicationSecret, authenticationUnder) :
+                        result = authenticationUnder != null ? this.m_localApplicationIdentityProvider.Authenticate(applicationName, authenticationUnder) :
                                 this.m_localApplicationIdentityProvider.Authenticate(applicationName, applicationSecret);
                     }
                     catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
@@ -209,7 +209,7 @@ namespace SanteDB.Client.Upstream.Security
                 }
                 else
                 {
-                    result = authenticationUnder != null ? this.m_localApplicationIdentityProvider.Authenticate(applicationSecret, authenticationUnder) :
+                    result = authenticationUnder != null ? this.m_localApplicationIdentityProvider.Authenticate(applicationName, authenticationUnder) :
                             this.m_localApplicationIdentityProvider.Authenticate(applicationName, applicationSecret);
                 }
             }

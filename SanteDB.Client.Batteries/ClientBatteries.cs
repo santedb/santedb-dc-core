@@ -109,7 +109,7 @@ namespace SanteDB.Client.Batteries
                     }
                     else
                     {
-                        Debug.WriteLine($"No configuration at {oldPath} to restore...", "RESTORE_UPDATE");
+                        Trace.WriteLine($"No configuration at {oldPath} to restore...", "RESTORE_UPDATE");
 
                         return false;
                     }

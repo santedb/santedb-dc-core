@@ -323,18 +323,7 @@ namespace SanteDB.Client.Shared
             if (null == certificate)
                 return false;
 
-            //Inspect the dates for the certificate
-            var now = DateTimeOffset.UtcNow;
-
-            if (now <= certificate.NotBefore)
-            {
-                return false;
-            }
-
-            if (now >= certificate.NotAfter)
-            {
-                return false;
-            }
+          
 
             X509Certificate2? issuer = FindIssuer(certificate, authorities);
 
@@ -370,19 +359,32 @@ namespace SanteDB.Client.Shared
         /// Validate a certificate is trusted by a built-in trust anchor.
         /// </summary>
         /// <param name="certificate">The certificate to validate.</param>
+        /// <param name="asOfDate">An optional date to validate the certificate for. This is typically used for durable assets which are signed at a particular date.</param>
         /// <returns><c>true</c> if the certificate is valid, <c>false</c> otherwise.</returns>
-        public bool ValidateCertificate(X509Certificate2 certificate)
+        public bool ValidateCertificate(X509Certificate2 certificate, DateTimeOffset? asOfDate = null)
         {
             if (null == certificate)
                 return false;
 
-            if (_TrustedCertificates.Contains(certificate))
-                return true;
+            if (!_TrustedCertificates.Contains(certificate))
+            {
+                if (!ValidateEndEntityCertificate(certificate, _ValidatedAuthorities))
+                {
+                    return false;
+                }
 
-            if (!ValidateEndEntityCertificate(certificate, _ValidatedAuthorities))
+                _TrustedCertificates.Add(certificate);
+            }
+
+            if (null != asOfDate)
+            {
+                asOfDate = DateTimeOffset.UtcNow;
+            }
+
+            if (certificate.NotBefore > asOfDate || certificate.NotAfter < asOfDate)
+            {
                 return false;
-
-            _TrustedCertificates.Add(certificate);
+            }
 
             return true;
         }
