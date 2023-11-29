@@ -62,7 +62,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <summary>
         /// Get the service name
         /// </summary>
-        public string ServiceName => throw new NotImplementedException();
+        public string ServiceName => "Upstream Device Identity Provider";
 
 #pragma warning disable CS0067
         /// <inheritdoc/>
