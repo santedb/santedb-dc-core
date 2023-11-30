@@ -58,6 +58,7 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
     <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AppService\SanteDB.Rest.AppService.csproj" />
   </ItemGroup>
 

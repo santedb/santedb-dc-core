@@ -438,5 +438,39 @@ namespace SanteDB.Client.Upstream.Management
                 StopDate = stopDate.GetValueOrDefault(),
                 StopDateSpecified = stopDate.HasValue
             }));
+
+        /// <inheritdoc/>
+        public IJob RegisterJob(Type jobType)
+        {
+            try
+            {
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var jobInfo = client.Post<TypeReferenceConfiguration, JobInfo>(typeof(JobInfo).GetSerializationName(), new TypeReferenceConfiguration(jobType));
+                    return new UpstreamJob(jobInfo, this.RestClientFactory, this.m_adhocCache);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = nameof(JobInfo) }), e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<Type> GetAvailableJobs()
+        {
+            try
+            {
+                using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var unConfiguredJobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName(), "_unconfigured=true".ParseQueryString()).CollectionItem.OfType<TypeReferenceConfiguration>().ToArray();
+                    return unConfiguredJobs.Select(o => o.Type).Union(this.Jobs.OfType<UpstreamJob>().Select(o => o.JobType));
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = nameof(JobInfo) }), e);
+            }
+        }
     }
 }

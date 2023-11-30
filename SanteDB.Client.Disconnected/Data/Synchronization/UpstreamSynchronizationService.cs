@@ -775,6 +775,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 try
                 {
                     var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
+                    
                     _JobManager.AddJob(job, JobStartType.DelayStart);
                     _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
                     // Background the initial pull so we don't block startup
