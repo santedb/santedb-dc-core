@@ -31,6 +31,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -236,7 +237,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                                 if (entry.Data is Bundle bdl)
                                 {
-                                    localPersistence.Insert(entry.Data);
+                                    FixupBundleData(bdl);
+                                    localPersistence.Insert(bdl);
                                 }
                                 else
                                 {
@@ -253,6 +255,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                     // If there is an existing - update otherwise insert
                                     if (existing == null)
                                     {
+                                        FixupEntity(entry.Data);
                                         localPersistence.Insert(entry.Data);
                                     }
                                     else
@@ -272,6 +275,28 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     PullCompleted?.Invoke(this, EventArgs.Empty);
                     Monitor.Exit(_InboundQueueLock);
                 }
+            }
+        }
+
+        private static void FixupBundleData(Bundle bundle)
+        {
+            if (null == bundle)
+            {
+                return;
+            }
+
+            bundle.Item?.ForEach(FixupEntity);
+        }
+
+        private static void FixupEntity(IdentifiedData item)
+        {
+            if (item is NonVersionedEntityData nved)
+            {
+                nved.UpdatedBy = null;
+                nved.UpdatedTime = null;
+                nved.UpdatedByKey = null;
+                nved.UpdatedTimeXml = null;
+                nved.CreationTimeXml = null;
             }
         }
 
@@ -387,7 +412,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (lastoperation > 0) //Don't scale with a negative value. This is for init values.
             {
                 var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / (float)takecount; //y=mx+b, m = (y - b) / x
-                if(peritemcost < 0)
+                if (peritemcost < 0)
                 {
                     peritemcost = 1;
                 }
@@ -628,22 +653,22 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     {
                         break; // no result indicating a 304
                     }
-                    if (!(result is Bundle bdl))
+                    if (!(result is Bundle bundle))
                     {
-                        bdl = new Bundle(result.Item.OfType<IdentifiedData>());
+                        bundle = new Bundle(result.Item.OfType<IdentifiedData>());
                     }
 
-                    if (bdl.Item.Any())
+                    if (bundle.Item.Any())
                     {
                         // Provenance objects from the upstream don't apply here since they're used for tracking only
-                        bdl = this.StripUpstreamMetadata(bdl);
+                        bundle = this.StripUpstreamMetadata(bundle);
 
                         // We want to set the last e-tag not of any included objects but only of the focal object (the original thing we queried for and not any of the supporting objects)
-                        queryControlOptions.Count = ScaleTakeCount(bdl.Count, sw.ElapsedMilliseconds, estimatedlatency);
-                        queryControlOptions.Offset += bdl.Count;
+                        queryControlOptions.Count = ScaleTakeCount(bundle.Count, sw.ElapsedMilliseconds, estimatedlatency);
+                        queryControlOptions.Offset += bundle.Count;
 
-                        lastEtag = bdl.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
-                        inboundqueue.Enqueue(bdl, SynchronizationQueueEntryOperation.Sync);
+                        lastEtag = bundle.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
+                        inboundqueue.Enqueue(bundle, SynchronizationQueueEntryOperation.Sync);
                         _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, queryControlOptions.Offset);
                     }
                 } while (result.Item.Any());
@@ -768,7 +793,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     _SynchronizationJobs.Clear();
                     _SynchronizationJobs.AddRange(_ServiceManager.CreateInjectedOfAll<ISynchronizationJob>());
 
-                    foreach(var job in _SynchronizationJobs)
+                    foreach (var job in _SynchronizationJobs)
                     {
                         _JobManager.AddJob(job, JobStartType.TimerOnly);
                         _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
@@ -790,7 +815,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunOutboundMessagePump());
             }
 
-            
+
 
             IsRunning = true;
 

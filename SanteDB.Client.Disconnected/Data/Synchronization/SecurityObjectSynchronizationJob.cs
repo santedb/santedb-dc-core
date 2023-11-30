@@ -190,6 +190,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private void GetUpstreamSecurityApplications()
         {
+            if (null == _UpstreamSecurityApplicationRepository) //SKIP Since there is no upstream repository for security applications.
+            {
+                return;
+            }
+
             var applications = _UpstreamSecurityApplicationRepository.Find(_ => true);
 
             foreach(var application in applications)
