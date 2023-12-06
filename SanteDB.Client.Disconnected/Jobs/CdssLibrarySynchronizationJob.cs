@@ -23,7 +23,7 @@ namespace SanteDB.Client.Disconnected.Jobs
     /// <see cref="CdssLibraryDefinition"/> instances and coordinating with the <see cref="ISynchronizationLogService"/>
     /// to record the synchronized times.
     /// </summary>
-    public class CdssLibrarySynchronizationJob : IJob
+    public class CdssLibrarySynchronizationJob : ISynchronizationJob
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(CdssLibrarySynchronizationJob));
 

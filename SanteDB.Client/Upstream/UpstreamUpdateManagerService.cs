@@ -229,7 +229,7 @@ namespace SanteDB.Client.Upstream
                                     this.m_tracer.TraceVerbose("Checking for local version of {0}...", i.AppletInfo);
                                     var installed = this.m_appletManager.GetApplet(i.AppletInfo.Id);
                                     return (installed == null ||
-                                        new Version(installed.Info.Version) < new Version(i.AppletInfo.Version));
+                                        installed.Info.Version.ParseVersion(out _) < i.AppletInfo.Version.ParseVersion(out _));
                                 }).ToList();
 
                             if (remoteVersionInfo.Any() &&
