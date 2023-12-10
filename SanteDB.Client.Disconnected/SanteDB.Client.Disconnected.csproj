@@ -15,15 +15,21 @@
         <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
         <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Auditing.ADO\SanteDB.Persistence.Auditing.ADO.csproj" />
         <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.PubSub.ADO\SanteDB.Persistence.PubSub.ADO.csproj" />
+        <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AppService\SanteDB.Rest.AppService.csproj" />
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
+        <PackageReference Include="RestSrvr" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Persistence.Data.Auditing" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Persistence.Data" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Persistence.Data.PubSub" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Cdss.Xml" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.Common" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Rest.AppService" Version="$(VersionNumber)" />
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -56,11 +62,6 @@
     <PackageReference Include="Polly" Version="7.2.3" />
   </ItemGroup>
 
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
-    <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AppService\SanteDB.Rest.AppService.csproj" />
-  </ItemGroup>
 
 
 </Project>

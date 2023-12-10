@@ -33,7 +33,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
   </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
@@ -49,6 +48,8 @@
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
         <ProjectReference Include="..\..\santedb-i18n\SanteDB.Core.i18n\SanteDB.Core.i18n.csproj" />
+        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
+
       </ItemGroup>
     </When>
     <Otherwise>
@@ -64,6 +65,7 @@
         <PackageReference Include="SanteDB.Rest.HDSI" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Rest.AMI" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.i18n" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Core.Applets" Version="$(VersionNumber)"/>
       </ItemGroup>
     </Otherwise>
   </Choose>
