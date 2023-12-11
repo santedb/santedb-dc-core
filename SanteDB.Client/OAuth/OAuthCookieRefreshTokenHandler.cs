@@ -19,9 +19,11 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
+using SanteDB.Rest.Common;
 using SanteDB.Rest.OAuth.Abstractions;
 using SanteDB.Rest.OAuth.Model;
 using System.Collections.Generic;
@@ -67,7 +69,7 @@ namespace SanteDB.Client.OAuth
         /// <inheritdoc />
         public bool HandleRequest(OAuthTokenRequestContext context)
         {
-            var cookie = context.IncomingRequest.Cookies["_r"];
+            var cookie = context.IncomingRequest.Cookies[ExtendedCookieNames.RefreshCookieName];
 
             if (null == cookie)
             {

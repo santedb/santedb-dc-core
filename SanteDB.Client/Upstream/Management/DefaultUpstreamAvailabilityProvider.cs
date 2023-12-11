@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using DocumentFormat.OpenXml.Drawing.Charts;
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
@@ -40,8 +41,10 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
-        private const int PING_TIMEOUT = 2_000;
+        private const int PING_TIMEOUT = 5_000;
         private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 0, 15);
+
+        
 
         /// <summary>
         /// Get the service name
@@ -67,25 +70,37 @@ namespace SanteDB.Client.Upstream.Management
         public bool IsAvailable(ServiceEndpointType endpoint)
         {
             return GetUpstreamLatency(endpoint).HasValue;
-            //if (this.m_networkInformationService.IsNetworkAvailable &&
-            //    this.m_networkInformationService.IsNetworkConnected &&
-            //    this.m_upstreamManagementService.IsConfigured())
-            //{
-            //    using (var restClient = m_restClientFactory.GetRestClientFor(endpoint))
-            //    {
-            //        try
-            //        {
-            //            restClient.SetTimeout(PING_TIMEOUT);
-            //            restClient.Invoke<object, object>("PING", "/", null);
-            //            return true;
-            //        }
-            //        catch
-            //        {
-            //            return false;
-            //        }
-            //    }
-            //}
-            //return false;
+        }
+
+        /// <summary>
+        /// Issues an HTTP PING request to the service endpoint and captures latency and time drift reported by the service.
+        /// </summary>
+        /// <param name="endpoint">The type of endpoint to create an <see cref="IRestClient"/> from. Services are not guaranteed to have similar parameters.</param>
+        /// <param name="latencyMs">The latency, in milliseconds, that the request took. This expects that the server will respond quickly.</param>
+        /// <param name="drift">The time difference between the local clock and the time reported by the server.</param>
+        /// <returns>True if the call succeeded, false otherwise.</returns>
+        protected virtual bool GetTimeDriftAndLatencyInternal(ServiceEndpointType endpoint, out long? latencyMs, out TimeSpan? drift)
+        {
+            using (var client = m_restClientFactory.GetRestClientFor(endpoint))
+            {
+                client.SetTimeout(PING_TIMEOUT);
+                var success = client.TryPing(out var latency, out var timedrift);
+
+                if (success)
+                {
+                    drift = timedrift;
+                    latencyMs = latency;
+                    this.m_adhocCacheService?.Add($"us.drift.{endpoint}", drift, CACHE_TIMEOUT);
+                    this.m_adhocCacheService?.Add($"us.latency.{endpoint}", latencyMs, CACHE_TIMEOUT);
+                }
+                else
+                {
+                    drift = null;
+                    latencyMs = null;
+                }
+
+                return success;
+            }
         }
 
         /// <inheritdoc/>
@@ -95,30 +110,25 @@ namespace SanteDB.Client.Upstream.Management
             {
                 TimeSpan? retVal = null;
                 if (this.m_networkInformationService.IsNetworkAvailable &&
-                 this.m_networkInformationService.IsNetworkConnected &&
-                 this.m_upstreamManagementService.IsConfigured() &&
-                 this.m_adhocCacheService?.TryGet($"us.drift.{endpoint}", out retVal) != true)
+                    this.m_networkInformationService.IsNetworkConnected &&
+                    this.m_upstreamManagementService.IsConfigured() &&
+                    this.m_adhocCacheService?.TryGet($"us.drift.{endpoint}", out retVal) != true)
                 {
-                    using (var client = m_restClientFactory.GetRestClientFor(endpoint))
+                    if (!GetTimeDriftAndLatencyInternal(endpoint, out _, out retVal))
                     {
-                        client.SetTimeout(PING_TIMEOUT);
-                        var serverTime = DateTime.Now;
-                        client.Responded += (o, e) => _ = DateTime.TryParse(e.Headers["X-GeneratedOn"], out serverTime) || DateTime.TryParse(e.Headers["Date"], out serverTime);
-                        client.Invoke<object, object>("PING", "/", null);
-                        retVal = serverTime.Subtract(DateTime.Now);
-                        this.m_adhocCacheService?.Add($"us.drift.{endpoint}", retVal, CACHE_TIMEOUT);
+                        return null;
                     }
                 }
                 return retVal;
             }
-            catch
+            catch(TimeoutException)
             {
                 return null;
             }
         }
 
         /// <inheritdoc/>
-        public long? GetUpstreamLatency(ServiceEndpointType endpointType)
+        public long? GetUpstreamLatency(ServiceEndpointType endpoint)
         {
             try
             {
@@ -126,22 +136,16 @@ namespace SanteDB.Client.Upstream.Management
                 if (this.m_networkInformationService.IsNetworkAvailable &&
                     this.m_networkInformationService.IsNetworkConnected &&
                     this.m_upstreamManagementService.IsConfigured() &&
-                    this.m_adhocCacheService?.TryGet($"us.latency.{endpointType}", out retVal) != true)
+                    this.m_adhocCacheService?.TryGet($"us.latency.{endpoint}", out retVal) != true)
                 {
-                    using (var client = m_restClientFactory.GetRestClientFor(endpointType))
+                    if (!GetTimeDriftAndLatencyInternal(endpoint, out retVal, out _))
                     {
-                        client.SetTimeout(PING_TIMEOUT);
-                        var sw = new Stopwatch();
-                        sw.Start();
-                        client.Invoke<object, object>("PING", "/", null);
-                        sw.Stop();
-                        retVal = sw.ElapsedMilliseconds;
-                        this.m_adhocCacheService?.Add($"us.latency.{endpointType}", retVal, CACHE_TIMEOUT);
+                        return null;
                     }
                 }
                 return retVal;
             }
-            catch
+            catch (TimeoutException)
             {
                 return null;
             }

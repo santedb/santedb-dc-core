@@ -62,7 +62,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <summary>
         /// Get the service name
         /// </summary>
-        public string ServiceName => throw new NotImplementedException();
+        public string ServiceName => "Upstream Device Identity Provider";
 
 #pragma warning disable CS0067
         /// <inheritdoc/>
@@ -92,7 +92,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public void AddClaim(string deviceName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(ErrorMessageStrings.UPSTREAM_CLAIMS_READONLY);
         }
 
         /// <inheritdoc/>

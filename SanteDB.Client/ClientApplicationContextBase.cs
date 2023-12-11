@@ -110,13 +110,13 @@ namespace SanteDB.Client
                 {
                     svc.RestartRequested += (o, e) =>
                     {
-                        ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nurfed
+                        ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nerfed
                     };
                 });
             }
-            catch//(Exception ex)
+            catch(Exception ex)
             {
-                //System.Diagnostics.Debugger.Break();
+                System.Diagnostics.Debugger.Break();
             }
         }
 

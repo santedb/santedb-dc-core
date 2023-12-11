@@ -204,8 +204,8 @@ namespace SanteDB.Client.Rest
                 appConfiguration.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RestServiceFactory)));
             }
 
-            // Are we working on SSL?
-            if (bindingBase.Scheme == "https")
+            // Are we working on SSL? In the debugger environment? If so then we want to set the 
+            if (bindingBase.Scheme == "https" && hostContextType == SanteDBHostType.Debugger)
             {
                 var appService = appConfiguration.ServiceProviders.Find(o => typeof(ICertificateGeneratorService).IsAssignableFrom(o.Type));
                 RestDebugCertificateInstallation.InstallDebuggerCertificate(bindingBase, Activator.CreateInstance(appService.Type) as ICertificateGeneratorService);

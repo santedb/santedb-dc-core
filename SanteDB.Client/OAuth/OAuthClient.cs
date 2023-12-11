@@ -28,6 +28,7 @@ using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace SanteDB.Client.OAuth
 {
@@ -79,7 +80,14 @@ namespace SanteDB.Client.OAuth
             if (null != _RealmSettings) // This may be called before the UpstreamManagementService is fully configured - i.e. is configuring
             {
                 base.SetTokenValidationParameters();
-                TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName, _RealmSettings.LocalDeviceName };
+                if (null != TokenValidationParameters)
+                {
+                    TokenValidationParameters.ValidAudiences = new[] { _RealmSettings.LocalClientName, _RealmSettings.LocalDeviceName };
+                }
+                else
+                {
+                    Tracer.TraceInfo("Unable to retrieve token validation parameters from upstream service.");
+                }
                 ClientId = _RealmSettings.LocalClientName;
             }
             else
@@ -96,15 +104,17 @@ namespace SanteDB.Client.OAuth
             try
             {
                 //Removed cached client and discovery document and rediscover with the new (soon to be joined realm)
+                Tracer.TraceVerbose("Removing upstream realm settings due to upstream realm changing notification.");
                 DiscoveryDocument = null;
                 ClientId = null;
                 _RealmSettings = eventArgs.UpstreamRealmSettings;
                 SetTokenValidationParameters();
+                Tracer.TraceVerbose("Removed upstream realm settings due to upstream realm changing notification.");
 
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                Tracer.TraceError("Exception clearing upstream realm settings: {0}", ex);
+                Tracer.TraceError("Exception removing upstream realm settings: {0}", ex);
                 _RealmSettings = null;
             }
         }
@@ -116,10 +126,10 @@ namespace SanteDB.Client.OAuth
         {
             try
             {
-                Tracer.TraceVerbose("Getting new Upstream Realm Settings.");
+                Tracer.TraceVerbose("Getting new upstream realm settings due to upstream realm changed notification.");
                 _RealmSettings = eventArgs.UpstreamRealmSettings;
                 ClientId = _RealmSettings.LocalClientName;
-                Tracer.TraceVerbose("Successfully updated Upstream Realm Settings.");
+                Tracer.TraceVerbose("Successfully updated upstream realm settings due to upstream realm changed notification.");
                 SetTokenValidationParameters();
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))

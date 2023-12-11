@@ -31,6 +31,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -68,11 +69,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly ILocalizationService _LocalizationService;
         readonly LocalRepositoryFactory _LocalRepositoryFactory;
 
+        readonly INetworkInformationService _NetworkInformationService;
+
         readonly SynchronizationMessagePump _MessagePump;
 
         readonly ISyncPolicy _PushExceptionPolicy;
 
         readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
+
+        readonly List<IJob> _SynchronizationJobs;
 
         /// <inheritdoc/>
         public bool IsRunning { get; private set; }
@@ -120,7 +125,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
             IAdhocCacheService adhocCacheService,
-            IRestClientFactory restClientFactory) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
+            IRestClientFactory restClientFactory,
+            INetworkInformationService networkInformationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this._Configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
             this._ThreadPool = threadPool;
@@ -136,6 +142,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._AdhocCache = adhocCacheService;
             this._LockTimeout = TimeSpan.FromMilliseconds(100);
             this._GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
+            this._NetworkInformationService = networkInformationService;
+            this._SynchronizationJobs = new List<IJob>();
 
             this._MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
 
@@ -229,7 +237,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                                 if (entry.Data is Bundle bdl)
                                 {
-                                    localPersistence.Insert(entry.Data);
+                                    FixupBundleData(bdl);
+                                    localPersistence.Insert(bdl);
                                 }
                                 else
                                 {
@@ -246,6 +255,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                     // If there is an existing - update otherwise insert
                                     if (existing == null)
                                     {
+                                        FixupEntity(entry.Data);
                                         localPersistence.Insert(entry.Data);
                                     }
                                     else
@@ -265,6 +275,28 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     PullCompleted?.Invoke(this, EventArgs.Empty);
                     Monitor.Exit(_InboundQueueLock);
                 }
+            }
+        }
+
+        private static void FixupBundleData(Bundle bundle)
+        {
+            if (null == bundle)
+            {
+                return;
+            }
+
+            bundle.Item?.ForEach(FixupEntity);
+        }
+
+        private static void FixupEntity(IdentifiedData item)
+        {
+            if (item is NonVersionedEntityData nved)
+            {
+                nved.UpdatedBy = null;
+                nved.UpdatedTime = null;
+                nved.UpdatedByKey = null;
+                nved.UpdatedTimeXml = null;
+                nved.CreationTimeXml = null;
             }
         }
 
@@ -380,7 +412,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (lastoperation > 0) //Don't scale with a negative value. This is for init values.
             {
                 var peritemcost = (lastoperation - (estimatedLatency ?? 0)) / (float)takecount; //y=mx+b, m = (y - b) / x
-                if(peritemcost < 0)
+                if (peritemcost < 0)
                 {
                     peritemcost = 1;
                 }
@@ -466,7 +498,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="subscribedObjects">A list of objects that are part of the subscription.</param>
         /// <returns>A list of the objects from <paramref name="subscribedObjects"/> that meet any guard conditions present in the definition.</returns>
         /// <exception cref="ArgumentNullException">Thrown when the definition is null.</exception>
-        private List<object> GetSubscribedtObjectsApplyingGuards(SubscriptionClientDefinition definition, List<object> subscribedObjects)
+        private List<object> GetSubscribedObjectsApplyingGuards(SubscriptionClientDefinition definition, List<object> subscribedObjects)
         {
             if (null == definition)
             {
@@ -621,22 +653,22 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     {
                         break; // no result indicating a 304
                     }
-                    if (!(result is Bundle bdl))
+                    if (!(result is Bundle bundle))
                     {
-                        bdl = new Bundle(result.Item.OfType<IdentifiedData>());
+                        bundle = new Bundle(result.Item.OfType<IdentifiedData>());
                     }
 
-                    if (bdl.Item.Any())
+                    if (bundle.Item.Any())
                     {
                         // Provenance objects from the upstream don't apply here since they're used for tracking only
-                        bdl = this.StripUpstreamMetadata(bdl);
+                        bundle = this.StripUpstreamMetadata(bundle);
 
                         // We want to set the last e-tag not of any included objects but only of the focal object (the original thing we queried for and not any of the supporting objects)
-                        queryControlOptions.Count = ScaleTakeCount(bdl.Count, sw.ElapsedMilliseconds, estimatedlatency);
-                        queryControlOptions.Offset += bdl.Count;
+                        queryControlOptions.Count = ScaleTakeCount(bundle.Count, sw.ElapsedMilliseconds, estimatedlatency);
+                        queryControlOptions.Offset += bundle.Count;
 
-                        lastEtag = bdl.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
-                        inboundqueue.Enqueue(bdl, SynchronizationQueueEntryOperation.Sync);
+                        lastEtag = bundle.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
+                        inboundqueue.Enqueue(bundle, SynchronizationQueueEntryOperation.Sync);
                         _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, queryControlOptions.Offset);
                     }
                 } while (result.Item.Any());
@@ -699,7 +731,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
                         this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
                         _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
-                        var objectstoevaluate = GetSubscribedtObjectsApplyingGuards(def, subscribedobjects);
+                        var objectstoevaluate = GetSubscribedObjectsApplyingGuards(def, subscribedobjects);
                         this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
                     }
                     catch (Exception e)
@@ -739,9 +771,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (_Configuration.PollInterval != default(TimeSpan))
             {
 
+                _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
                 try
                 {
                     var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
+                    
                     _JobManager.AddJob(job, JobStartType.DelayStart);
                     _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
                     // Background the initial pull so we don't block startup
@@ -754,6 +788,22 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
                 }
 
+                _Tracer.TraceVerbose($"Instantiating {nameof(ISynchronizationJob)} instances and configuring schedule.");
+                try
+                {
+                    _SynchronizationJobs.Clear();
+                    _SynchronizationJobs.AddRange(_ServiceManager.CreateInjectedOfAll<ISynchronizationJob>());
+
+                    foreach (var job in _SynchronizationJobs)
+                    {
+                        _JobManager.AddJob(job, JobStartType.TimerOnly);
+                        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
+                    }
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+
+                }
             }
 
             // Subscribe to the inbound queues and run the inbound message pump whenever there is data enqueued
@@ -765,6 +815,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunOutboundMessagePump());
             }
+
+
 
             IsRunning = true;
 

@@ -87,7 +87,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public void AddClaim(string userName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(ErrorMessageStrings.UPSTREAM_CLAIMS_READONLY);
         }
 
         /// <inheritdoc/>
