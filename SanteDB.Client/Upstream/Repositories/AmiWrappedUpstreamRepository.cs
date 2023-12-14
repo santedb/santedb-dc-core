@@ -55,7 +55,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         protected override TModel MapFromWire(TWrapper wireFormat)
         {
-            return wireFormat.Entity;
+            return wireFormat?.Entity;
         }
 
     }

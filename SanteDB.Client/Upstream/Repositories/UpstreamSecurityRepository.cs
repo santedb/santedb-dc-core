@@ -261,7 +261,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 using (var client = this.CreateAmiServiceClient())
                 {
                     var retVal = client.GetProvenance(provenanceId);
-                    this.m_adhocCache?.Add($"sec.prov.{provenanceId}", retVal, TEMP_CACHE_TIMEOUT);
+                    this.m_adhocCache?.Add($"sec.prov.{provenanceId}", retVal);
                     return retVal;
                 }
             }

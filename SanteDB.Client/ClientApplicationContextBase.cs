@@ -21,6 +21,7 @@
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
 using SanteDB.Core.Data;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Services;
 using System;
@@ -116,7 +117,7 @@ namespace SanteDB.Client
             }
             catch(Exception ex)
             {
-                System.Diagnostics.Debugger.Break();
+                throw new Exception(ErrorMessages.CANNOT_STARTUP_CONTEXT, ex);
             }
         }
 
