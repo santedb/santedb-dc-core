@@ -108,16 +108,18 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                         // Get the list of modified queries 
                         var updatedLibraries = client.Get<AmiCollection>("CdssLibraryDefinition");
-                        
+
                         // Updated libraries only contains the metadata - so we want to gether them 
-                        foreach(var itm in updatedLibraries.CollectionItem.OfType<CdssLibraryDefinitionInfo>())
+                        if (updatedLibraries != null)
                         {
-                            // fetch the libraries 
-                            var libraryData = client.Get<CdssLibraryDefinitionInfo>($"CdssLibraryDefinition/{itm.Key}");
-                            this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
+                            foreach (var itm in updatedLibraries.CollectionItem.OfType<CdssLibraryDefinitionInfo>())
+                            {
+                                // fetch the libraries 
+                                var libraryData = client.Get<CdssLibraryDefinitionInfo>($"CdssLibraryDefinition/{itm.Key}");
+                                this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
+                            }
+                            this.m_synchronizationLogService.Save(typeof(CdssLibraryDefinition), null, lastEtag, DateTime.Now);
                         }
-                 
-                        this.m_synchronizationLogService.Save(typeof(CdssLibraryDefinition), String.Empty, lastEtag, DateTime.Now);
                     }
 
                 }

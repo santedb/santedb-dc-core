@@ -796,7 +796,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                     foreach (var job in _SynchronizationJobs)
                     {
-                        _JobManager.AddJob(job, JobStartType.TimerOnly);
+                        _JobManager.AddJob(job, JobStartType.Immediate); // Run job on start
                         _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
                     }
                 }
