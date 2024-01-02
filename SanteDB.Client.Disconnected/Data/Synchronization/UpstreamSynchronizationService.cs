@@ -40,6 +40,7 @@ using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
+using SharpCompress;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -57,27 +58,27 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     /// // TODO: Add auditing to the entire class
     public class UpstreamSynchronizationService : UpstreamServiceBase, ISynchronizationService, IDaemonService, IReportProgressChanged
     {
-        readonly SynchronizationConfigurationSection _Configuration;
+        private readonly SynchronizationConfigurationSection _Configuration;
 
-        readonly IThreadPoolService _ThreadPool;
-        readonly ISynchronizationLogService _SynchronizationLogService;
-        readonly ISynchronizationQueueManager _QueueManager;
-        readonly IJobManagerService _JobManager;
+        private readonly IThreadPoolService _ThreadPool;
+        private readonly ISynchronizationLogService _SynchronizationLogService;
+        private readonly ISynchronizationQueueManager _QueueManager;
+        private readonly IJobManagerService _JobManager;
+        private readonly IJobStateManagerService _JobStateManager;
+        private readonly IJobScheduleManager _jobScheduleManager;
         private readonly ISubscriptionRepository _SubscriptionRepository;
-        readonly IServiceManager _ServiceManager;
+        private readonly IServiceManager _ServiceManager;
         private readonly IServiceProvider _ServiceProvider;
         private readonly ILocalizationService _LocalizationService;
-        readonly LocalRepositoryFactory _LocalRepositoryFactory;
+        private readonly LocalRepositoryFactory _LocalRepositoryFactory;
 
-        readonly INetworkInformationService _NetworkInformationService;
+        private readonly INetworkInformationService _NetworkInformationService;
 
-        readonly SynchronizationMessagePump _MessagePump;
+        private readonly SynchronizationMessagePump _MessagePump;
 
-        readonly ISyncPolicy _PushExceptionPolicy;
+        private readonly ISyncPolicy _PushExceptionPolicy;
 
-        readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
-
-        readonly List<IJob> _SynchronizationJobs;
+        private readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
 
         /// <inheritdoc/>
         public bool IsRunning { get; private set; }
@@ -121,6 +122,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             ISynchronizationQueueManager queueManager,
             ISubscriptionRepository subscriptionRepository,
             IJobManagerService jobManagerService,
+            IJobStateManagerService jobStateManagerService,
+            IJobScheduleManager jobScheduleManager,
             IServiceManager serviceManager,
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
@@ -133,6 +136,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._SynchronizationLogService = synchronizationLogService;
             this._QueueManager = queueManager;
             this._JobManager = jobManagerService;
+            this._JobStateManager = jobStateManagerService;
+            this._jobScheduleManager = jobScheduleManager;
             this._SubscriptionRepository = subscriptionRepository;
             this._ServiceManager = serviceManager;
             this._ServiceProvider = serviceProvider;
@@ -143,7 +148,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._LockTimeout = TimeSpan.FromMilliseconds(100);
             this._GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
             this._NetworkInformationService = networkInformationService;
-            this._SynchronizationJobs = new List<IJob>();
 
             this._MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
 
@@ -771,39 +775,64 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (_Configuration.PollInterval != default(TimeSpan))
             {
 
+                _Tracer.TraceVerbose($"Instantiating {nameof(ISynchronizationJob)} instances and configuring schedule.");
+                try
+                {
+                    // This block of code:
+                    //  - Retrieves all instances of ISynchronizationJob
+                    //  - Checks whether the job type is registered, if not it will register it
+                    //  - Checks whether a sechedule has been set, if not sets the schedule to the synchronization polling interval
+                    //  - If the job has never run - will run the job synchronously on startup
+                    _ServiceManager.GetAllTypes<ISynchronizationJob>().ForEach(jobType =>
+                    {
+                        IJob jobInstance = null;
+                        if (!_JobManager.IsJobRegistered(jobType))
+                        {
+                            jobInstance = _ServiceManager.CreateInjected(jobType) as IJob;
+                            _JobManager.AddJob(jobInstance, JobStartType.Never);
+                        }
+                        else
+                        {
+                            jobInstance = _JobManager.GetJobInstance(jobType);
+                        }
+
+                        // Is there a schedule for this instance?
+                        var jobSchedule = _jobScheduleManager.Get(jobInstance);
+                        if (jobSchedule?.Any() != true) // The user may have set a schedule already 
+                        {
+                            _jobScheduleManager.Add(jobInstance, _Configuration.PollInterval);
+                        }
+                        
+                        // If the jobs have never run before we want to run them
+                        if((_JobStateManager.GetJobState(jobInstance)?.CurrentState ?? JobStateType.NotRun) == JobStateType.NotRun)
+                        {
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), 0.0f, this._LocalizationService.GetString(UserMessageStrings.RUN_JOB, new { jobName = jobInstance.Name })));
+                            _JobManager.StartJob(jobInstance, new object[0]);
+                        }
+
+                    });
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+
+                }
+
                 _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
                 try
                 {
                     var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
-                    
+
                     _JobManager.AddJob(job, JobStartType.DelayStart);
                     _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
                     // Background the initial pull so we don't block startup
                     _ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump()); // Process anything in the inbox
                     _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
-
                 }
                 catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
                 }
 
-                _Tracer.TraceVerbose($"Instantiating {nameof(ISynchronizationJob)} instances and configuring schedule.");
-                try
-                {
-                    _SynchronizationJobs.Clear();
-                    _SynchronizationJobs.AddRange(_ServiceManager.CreateInjectedOfAll<ISynchronizationJob>());
-
-                    foreach (var job in _SynchronizationJobs)
-                    {
-                        _JobManager.AddJob(job, JobStartType.Immediate); // Run job on start
-                        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
-                    }
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-
-                }
             }
 
             // Subscribe to the inbound queues and run the inbound message pump whenever there is data enqueued

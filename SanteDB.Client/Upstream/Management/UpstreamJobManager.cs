@@ -299,6 +299,9 @@ namespace SanteDB.Client.Upstream.Management
         public IJob GetJobInstance(Guid jobKey) => this.Jobs.FirstOrDefault(o => o.Id == jobKey);
 
         /// <inheritdoc/>
+        public IJob GetJobInstance(Type jobType) => this.Jobs.OfType<UpstreamJob>().FirstOrDefault(o => o.JobType == jobType);
+
+        /// <inheritdoc/>
         public IEnumerable<IJobSchedule> GetJobSchedules(IJob job) => (this.GetJobInstance(job.Id) as UpstreamJob).Schedule;
 
         /// <inheritdoc/>
