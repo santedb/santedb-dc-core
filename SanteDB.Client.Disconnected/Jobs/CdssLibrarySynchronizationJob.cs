@@ -70,7 +70,10 @@ namespace SanteDB.Client.Disconnected.Jobs
         public bool CanCancel => false;
 
         /// <inheritdoc/>
-        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>();
+        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
+        {
+            { "resetCdss", typeof(Boolean) }
+        };
 
         /// <inheritdoc/>
         public void Cancel()
@@ -93,6 +96,15 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                 using (AuthenticationContext.EnterSystemContext()) {
                     var lastSynchronization = this.m_synchronizationLogService.GetLastTime(typeof(CdssLibraryDefinition));
+                    if (parameters?.Length == 1 && 
+                        Boolean.TryParse(parameters[0]?.ToString(), out bool resyncAll) && resyncAll)
+                    {
+                        lastSynchronization = null;
+                        // Remove all existing
+                        foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray()) {
+                            this.m_cdssLibraryRepositoryService.Remove(cdss.Uuid);
+                        }
+                    }
 
                     this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", lastSynchronization);
 

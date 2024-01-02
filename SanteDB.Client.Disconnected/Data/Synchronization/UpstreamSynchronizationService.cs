@@ -783,7 +783,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     //  - Checks whether the job type is registered, if not it will register it
                     //  - Checks whether a sechedule has been set, if not sets the schedule to the synchronization polling interval
                     //  - If the job has never run - will run the job synchronously on startup
-                    _ServiceManager.GetAllTypes<ISynchronizationJob>().ForEach(jobType =>
+                    _ServiceManager.GetAllTypes<ISynchronizationJob>()
+                        .Where(t=>!t.IsAbstract && !t.IsInterface)
+                        .ForEach(jobType =>
                     {
                         IJob jobInstance = null;
                         if (!_JobManager.IsJobRegistered(jobType))
@@ -802,13 +804,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         {
                             _jobScheduleManager.Add(jobInstance, _Configuration.PollInterval);
                         }
-                        
+
                         // If the jobs have never run before we want to run them
-                        if((_JobStateManager.GetJobState(jobInstance)?.CurrentState ?? JobStateType.NotRun) == JobStateType.NotRun)
-                        {
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), 0.0f, this._LocalizationService.GetString(UserMessageStrings.RUN_JOB, new { jobName = jobInstance.Name })));
-                            _JobManager.StartJob(jobInstance, new object[0]);
-                        }
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), 0.0f, this._LocalizationService.GetString(UserMessageStrings.RUN_JOB, new { jobName = jobInstance.Name })));
+                        _JobManager.StartJob(jobInstance, new object[0]);
 
                     });
                 }
@@ -817,21 +816,21 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 }
 
-                _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
-                try
-                {
-                    var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
+            //    _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
+            //    try
+            //    {
+            //        var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
 
-                    _JobManager.AddJob(job, JobStartType.DelayStart);
-                    _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
-                    // Background the initial pull so we don't block startup
-                    _ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump()); // Process anything in the inbox
-                    _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-                    _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
-                }
+            //        _JobManager.AddJob(job, JobStartType.DelayStart);
+            //        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
+            //        // Background the initial pull so we don't block startup
+            //        _ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump()); // Process anything in the inbox
+            //        _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
+            //    }
+            //    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            //    {
+            //        _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
+            //    }
 
             }
 
