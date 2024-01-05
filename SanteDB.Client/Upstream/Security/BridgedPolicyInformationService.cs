@@ -201,7 +201,8 @@ namespace SanteDB.Client.Upstream.Security
                 {
                     retval = _upstreamPolicyProvider?.UpstreamProvider?.GetPolicy(policyOid);
                     _CacheService?.Add(cachekey, retval, _CacheTimeout);
-                    _localPolicyProvider.LocalProvider.CreatePolicy(retval, AuthenticationContext.SystemPrincipal);
+                    // Local policies are created via the security synchronization - this is not needed
+                    // _localPolicyProvider.LocalProvider.CreatePolicy(retval, AuthenticationContext.SystemPrincipal);
                 }
                 catch (UpstreamIntegrationException)
                 {
