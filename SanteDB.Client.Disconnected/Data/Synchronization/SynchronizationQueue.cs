@@ -20,8 +20,11 @@
  */
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using SanteDB.Client.Disconnected.Exceptions;
 using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -32,6 +35,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -39,6 +43,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal class SynchronizationQueue<TEntry> : ISynchronizationQueue, IDisposable where TEntry : ISynchronizationQueueEntry, new()
     {
+        private readonly Tracer _Tracer = Tracer.GetTracer(typeof(SynchronizationQueue<TEntry>));
         private static JsonSerializerSettings s_SerializerSettings = new JsonSerializerSettings() { TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple, TypeNameHandling = TypeNameHandling.Auto };
         private static ThreadSafeRandomNumberGenerator s_Rand = new ThreadSafeRandomNumberGenerator();
 
@@ -95,6 +100,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             try
             {
+                _Tracer.TraceVerbose("Reading from queue index {0}", _BackingFile.Name);
                 using (var sr = new StreamReader(_BackingFile, Encoding.UTF8, true, 256, leaveOpen: true))
                 {
                     using (var jtr = new JsonTextReader(sr))
@@ -118,6 +124,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 _BackingFile.SetLength(0);
 
+                _Tracer.TraceVerbose("Writing to queue index {0}", _BackingFile.Name);
                 using (var sw = new StreamWriter(_BackingFile, Encoding.UTF8, 256, leaveOpen: true))
                 {
                     using (var jtw = new JsonTextWriter(sw))
@@ -136,7 +143,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         public event EventHandler<DataPersistingEventArgs<ISynchronizationQueueEntry>> Enqueuing;
         public event EventHandler<DataPersistedEventArgs<ISynchronizationQueueEntry>> Enqueued;
-
 
         private T LockRead<T>(Func<Queue<int>, T> func)
         {
@@ -216,27 +222,33 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
+        /// <summary>
+        /// Get all queue entries
+        /// </summary>
+        internal IEnumerable<int> GetQueueEntryIdentifiers() => this.LockRead(o => o).ToArray();
+
         public int Count() => LockRead(q => q.Count);
 
         public void Delete(int id)
         {
             try
             {
-                //We don't need to remove the entry from the queue. On Dequeue and Peek, not finding the file will silently move to the next entry.
+                // We don't need to remove the entry from the queue. On Dequeue and Peek, not finding the file will silently move to the next entry.
+                _Tracer.TraceVerbose("Removing queue entry {0} from {1}", id, _BackingFile.Name);
                 File.Delete(GetEntryFilename(Path, id));
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException e)
             {
-                //TODO: Verbose Logging
+                _Tracer.TraceWarning("Could not remove queue entry {0} from {1} - {2}", id, _BackingFile.Name, e.ToHumanReadableString());
             }
-            catch (DirectoryNotFoundException)
+            catch (DirectoryNotFoundException e)
             {
-                //TODO: Verbose Logging
+                _Tracer.TraceError("Could not remove queue entry {0} from {1} - {2}", id, _BackingFile.Name, e.ToHumanReadableString());
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                //TODO: Logging.
-                throw;
+                _Tracer.TraceError("Could not remove queue entry {0} from {1} - {2}", id, _BackingFile.Name, ex.ToHumanReadableString());
+                throw new SynchronizationQueueException(this, String.Format(ErrorMessages.DELETE_ERROR, id), ex);
             }
         }
 
@@ -264,7 +276,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             return entry;
                         }
 
-                        //TODO: Log bad entry.
+                        _Tracer.TraceWarning("Queue entry {0} is ignored - no content", id);
                     }
                 }
                 catch (InvalidOperationException)
@@ -274,8 +286,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
             });
         }
-
-
 
         private int DequeueBadEntry() => LockWrite(q => q.Dequeue());
 
@@ -293,7 +303,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 if (preevt.Success)
                 {
                     var successevt = new DataPersistedEventArgs<ISynchronizationQueueEntry>(preevt.Data, Core.Services.TransactionMode.Commit, AuthenticationContext.Current.Principal);
-
                     Enqueued?.Invoke(this, successevt);
                 }
                 //TODO: Logging
@@ -312,7 +321,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             return entry;
         }
-
         private TEntry CreateEntry(IdentifiedData data, SynchronizationQueueEntryOperation operation) => new TEntry()
         {
             CreationTime = DateTime.UtcNow,
@@ -362,23 +370,25 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 #endif
                 }
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException ex)
             {
+                _Tracer.TraceWarning("Could not read entry {0} from {1} - {2}", id, _BackingFile.Name, ex.ToHumanReadableString());
                 return default;
             }
-            catch (DirectoryNotFoundException)
+            catch (DirectoryNotFoundException ex)
             {
+                _Tracer.TraceWarning("Could not read entry {0} from {1} - {2}", id, _BackingFile.Name, ex.ToHumanReadableString());
                 return default;
             }
-            catch (IOException)
+            catch (IOException ex)
             {
-                //TODO: Add Logging.
-                throw;
+                _Tracer.TraceError("Could not read entry {0} from {1} - {2}", id, _BackingFile.Name, ex.ToHumanReadableString());
+                throw new SynchronizationQueueException(this, String.Format(ErrorMessages.READ_ERROR, id), ex);
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                //TODO: Add logging.
-                throw;
+                _Tracer.TraceError("Could not read entry {0} from {1} - {2}", id, _BackingFile.Name, ex.ToHumanReadableString());
+                throw new SynchronizationQueueException(this, String.Format(ErrorMessages.READ_ERROR, id), ex);
             }
         }
 
@@ -427,8 +437,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                //TODO: Logging
-                throw;
+                _Tracer.TraceError("Error writing synchronization queue entry {0} to {1} - {2}", entry.Id, _BackingFile.Name, ex.ToHumanReadableString());
+                throw new SynchronizationQueueException(this, String.Format(ErrorMessages.WRITE_ERROR, entry.Id), ex);
             }
         }
 
@@ -512,7 +522,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         IQueryResultSet<ISynchronizationQueueEntry> ISynchronizationQueue.Query(NameValueCollection search)
         {
-            throw new NotImplementedException();
+            // Optimization - we can prevent reading from the disk (full de-serialization) by not filtering if unnecessary
+            // since the result set can use skip/take/count without loading the data
+            if (search.AllKeys.Any(o => !o.StartsWith("_")))
+            {
+                var query = QueryExpressionParser.BuildLinqExpression<ISynchronizationQueueEntry>(search);
+                return (IQueryResultSet<ISynchronizationQueueEntry>)new SynchronizationQueueQueryResultSet<TEntry>(this).Where(query);
+            }
+            else
+            {
+                return (IQueryResultSet<ISynchronizationQueueEntry>)new SynchronizationQueueQueryResultSet<TEntry>(this);
+            }
         }
     }
 }

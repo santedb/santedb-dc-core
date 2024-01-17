@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.Model.Attributes;
 using System;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
@@ -31,12 +32,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Original queue name 
         /// </summary>
+        [QueryParameter("originalQueue")]
         String OriginalQueue { get; }
 
-        /// <summary>
-        /// Specialized tag data
-        /// </summary>
-        byte[] TagData { get; }
 
+        /// <summary>
+        /// Gets the reason why the dead-letter entry was rejected
+        /// </summary>
+        string ReasonForRejection { get; }
     }
 }

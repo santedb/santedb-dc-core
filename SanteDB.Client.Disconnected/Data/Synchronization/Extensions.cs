@@ -28,7 +28,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal static class Extensions
     {
-        public static ISynchronizationDeadLetterQueueEntry Enqueue(this SynchronizationQueue<SynchronizationDeadLetterQueueEntry> queue, ISynchronizationQueue originalQueue, ISynchronizationQueueEntry badEntry)
+        public static ISynchronizationDeadLetterQueueEntry Enqueue(this SynchronizationQueue<SynchronizationDeadLetterQueueEntry> queue, ISynchronizationQueue originalQueue, ISynchronizationQueueEntry badEntry, String reasonForRejection)
         {
             return queue.Enqueue(new SynchronizationDeadLetterQueueEntry()
             {
@@ -39,7 +39,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 IsRetry = false,
                 Operation = badEntry.Operation,
                 OriginalQueue = originalQueue.Name,
-                Type = badEntry.Type
+                Type = badEntry.Type,
+                ReasonForRejection = reasonForRejection
             });
         }
 
@@ -52,6 +53,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             service.CompleteQuery(query.ResourceType, query.Filter, query.QueryId);
         }
+
+        /// <summary>
+        /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.LocalToUpstream"/> queue pattern.
+        /// </summary>
+        /// <param name="service">The queue manager to query.</param>
+        /// <returns>The instance of <see cref="ISynchronizationQueue"/> or <c>default</c>.</returns>
+        public static ISynchronizationQueue GetOutboundQueue(this ISynchronizationQueueManager service)
+            => service.GetAll(SynchronizationPattern.LocalToUpstream)?.FirstOrDefault();
+
 
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.UpstreamToLocal"/> queue pattern.
@@ -103,7 +113,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         return SynchronizationMessagePump.Unhandled;
                     }
 
-                    dlqueue.Enqueue(queue, data);
+                    dlqueue.Enqueue(queue, data, ex.ToHumanReadableString());
 
                     return SynchronizationMessagePump.Handled;
 

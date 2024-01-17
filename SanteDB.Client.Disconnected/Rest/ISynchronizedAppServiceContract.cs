@@ -21,6 +21,7 @@
 using RestSrvr.Attributes;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Rest.AppService;
@@ -46,7 +47,7 @@ namespace SanteDB.Client.Disconnected.Rest
         /// Gets the queue entries
         /// </summary>
         [Get("/Queue/{queueName}")]
-        List<ISynchronizationQueueEntry> GetQueue(String queueName);
+        AmiCollection GetQueue(String queueName);
 
         /// <summary>
         /// Get the specific queue entry

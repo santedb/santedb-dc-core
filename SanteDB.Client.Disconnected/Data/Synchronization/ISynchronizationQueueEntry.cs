@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using System;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
@@ -32,36 +33,43 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Gets the identifier of the queue entry
         /// </summary>
+        [QueryParameter("id")]
         int Id { get; set; }
 
         /// <summary>
         /// Gets the time that the entry was created
         /// </summary>
+        [QueryParameter("creationTime")]
         DateTime CreationTime { get; set; }
 
         /// <summary>
         /// Gets the type of data
         /// </summary>
+        [QueryParameter("type")]
         String Type { get; set; }
 
         /// <summary>
         /// Gets the data of the object
         /// </summary>
+        [QueryParameter("dataFile")]
         String DataFileKey { get; set; }
 
         /// <summary>
         /// Gets or sets the transient data
         /// </summary>
+        [QueryParameter("data")]
         IdentifiedData Data { get; set; }
 
         /// <summary>
         /// Gets the operation of the object
         /// </summary>
+        [QueryParameter("operation")]
         SynchronizationQueueEntryOperation Operation { get; set; }
 
         /// <summary>
         /// Get whether the object is a retry
         /// </summary>
+        [QueryParameter("isRetry")]
         bool IsRetry { get; set; }
 
     }

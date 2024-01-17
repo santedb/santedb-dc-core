@@ -61,7 +61,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 OpenQueue<SynchronizationDeadLetterQueueEntry>(QueueName_DeadLetter, SynchronizationPattern.DeadLetter),
                 OpenQueue<SynchronizationQueueEntry>(QueueName_Outgoing, SynchronizationPattern.LocalToUpstream),
-                OpenQueue<SynchronizationQueueEntry>(QueueName_Admin, SynchronizationPattern.LocalToUpstream),
+                OpenQueue<SynchronizationQueueEntry>(QueueName_Admin, SynchronizationPattern.LocalToUpstream | SynchronizationPattern.LowPriority),
                 OpenQueue<SynchronizationQueueEntry>(QueueName_Incoming, SynchronizationPattern.UpstreamToLocal)
             };
 
@@ -109,7 +109,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <inheritdoc/>
         public IEnumerable<ISynchronizationQueue> GetAll(SynchronizationPattern queueType)
         {
-            return _Queues.Where(q => q.Type == queueType);
+            return _Queues.Where(q => queueType.HasFlag(q.Type));
         }
     }
 }

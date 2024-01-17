@@ -23,12 +23,14 @@ using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Core.Event;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
@@ -38,6 +40,7 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using SharpCompress;
@@ -48,7 +51,10 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Security.Principal;
 using System.Threading;
+using System.Xml.Serialization;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -58,8 +64,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     /// // TODO: Add auditing to the entire class
     public class UpstreamSynchronizationService : UpstreamServiceBase, ISynchronizationService, IDaemonService, IReportProgressChanged
     {
-        private readonly SynchronizationConfigurationSection _Configuration;
+        // Types of outbound data which goes onto low priority queues
+        private readonly Type[] _LowPriorityTypes = new Type[]
+        {
+            typeof(AuditEventData)
+        };
 
+        private readonly SynchronizationConfigurationSection _Configuration;
         private readonly IThreadPoolService _ThreadPool;
         private readonly ISynchronizationLogService _SynchronizationLogService;
         private readonly ISynchronizationQueueManager _QueueManager;
@@ -127,6 +138,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceManager serviceManager,
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
+            IAuditService auditService,
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
             INetworkInformationService networkInformationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
@@ -776,6 +788,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
 
                 _Tracer.TraceVerbose($"Instantiating {nameof(ISynchronizationJob)} instances and configuring schedule.");
+
+                // Start for pull
+                _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
+                this.SubscribeToEvents();
+                
                 try
                 {
                     // This block of code:
@@ -784,7 +801,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     //  - Checks whether a sechedule has been set, if not sets the schedule to the synchronization polling interval
                     //  - If the job has never run - will run the job synchronously on startup
                     _ServiceManager.GetAllTypes<ISynchronizationJob>()
-                        .Where(t=>!t.IsAbstract && !t.IsInterface)
+                        .Where(t => !t.IsAbstract && !t.IsInterface)
                         .ForEach(jobType =>
                     {
                         IJob jobInstance = null;
@@ -816,21 +833,22 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 }
 
-            //    _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
-            //    try
-            //    {
-            //        var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
 
-            //        _JobManager.AddJob(job, JobStartType.DelayStart);
-            //        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
-            //        // Background the initial pull so we don't block startup
-            //        _ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump()); // Process anything in the inbox
-            //        _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
-            //    }
-            //    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-            //    {
-            //        _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
-            //    }
+                //    _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
+                //    try
+                //    {
+                //        var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
+
+                //        _JobManager.AddJob(job, JobStartType.DelayStart);
+                //        _JobManager.SetJobSchedule(job, _Configuration.PollInterval);
+                //        // Background the initial pull so we don't block startup
+                //        _ThreadPool.QueueUserWorkItem(_ => this.RunInboundMessagePump()); // Process anything in the inbox
+                //        _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
+                //    }
+                //    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                //    {
+                //        _Tracer.TraceError("Error Adding Upstream Sync Job: {0}", ex);
+                //    }
 
             }
 
@@ -844,12 +862,93 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunOutboundMessagePump());
             }
 
-
-
             IsRunning = true;
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
+        }
+
+        /// <summary>
+        /// Subscribe to events in the CDR which require data to be sent to the central server
+        /// </summary>
+        private void SubscribeToEvents()
+        {
+            // Start for network status change
+            _NetworkInformationService.NetworkStatusChanged += (o, e) =>
+            {
+                _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnNetworkChange));
+            };
+
+            _ServiceManager.GetAllTypes()
+                .Where(type=>!type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
+                .ForEach(type =>
+            {
+                if (type == typeof(AuditEventData)) System.Diagnostics.Debugger.Break();
+
+                if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
+                    !this._Configuration.ForbidSending.Any(f=>f.Type == type)) // This is a type of resource that can be submitted to the API
+                {
+                    var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
+                    var repositoryInstance = _ServiceProvider.GetService(repositoryType);
+                    if (repositoryInstance != null)
+                    {
+                        try
+                        {
+                            repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Inserted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataInserted), type));
+                            repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Saved)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataSaved), type));
+                            repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Deleted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataDeleted), type));
+                        }
+                        catch(Exception e)
+                        {
+                            this._Tracer.TraceWarning("Cannot bind to {0} - data will not be pushed to server - {1}", type, e.ToHumanReadableString());
+                        }
+                    }
+                }
+            });
+        }
+
+        private Delegate CreateEventArgDelegate(string methodName, Type dataType)
+        {
+            var parmType = typeof(DataPersistedEventArgs<>).MakeGenericType(dataType);
+            var delegateType = typeof(EventHandler<>).MakeGenericType(parmType);
+            var methodInfo = (MethodInfo)this.GetType().GetGenericMethod(methodName, new Type[] { dataType }, new Type[] { typeof(object), parmType});
+            return Delegate.CreateDelegate(delegateType, this, methodInfo);
+        }
+
+        public void HandleDataInserted<TArgData>(Object sender, DataPersistedEventArgs<TArgData> args) where TArgData : IdentifiedData
+        {
+            if (this._LowPriorityTypes.Contains(typeof(TArgData)))
+            {
+                this._QueueManager.GetAll(SynchronizationPattern.LowPriority | SynchronizationPattern.LocalToUpstream).FirstOrDefault().Enqueue(args.Data, SynchronizationQueueEntryOperation.Insert);
+            }
+            else { 
+                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Insert);
+            }
+        }
+
+        public void HandleDataSaved<TArgData>(Object sender, DataPersistedEventArgs<TArgData> args) where TArgData : IdentifiedData
+        {
+            if (this._LowPriorityTypes.Contains(typeof(TArgData)))
+            {
+                this._QueueManager.GetAll(SynchronizationPattern.LowPriority | SynchronizationPattern.LocalToUpstream).FirstOrDefault().Enqueue(args.Data, SynchronizationQueueEntryOperation.Update);
+            }
+            else
+            {
+                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Update);
+            }
+        }
+
+        public void HandleDataDeleted<TArgData>(Object sender, DataPersistedEventArgs<TArgData> args) where TArgData : IdentifiedData
+        {
+            if (this._LowPriorityTypes.Contains(typeof(TArgData)))
+            {
+                this._QueueManager.GetAll(SynchronizationPattern.LowPriority | SynchronizationPattern.LocalToUpstream).FirstOrDefault().Enqueue(args.Data, SynchronizationQueueEntryOperation.Obsolete);
+            }
+            else
+            {
+                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Obsolete);
+            }
+
         }
 
         /// <inheritdoc />

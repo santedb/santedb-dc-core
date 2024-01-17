@@ -22,6 +22,7 @@ using RestSrvr;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Security;
@@ -134,7 +135,7 @@ namespace SanteDB.Client.Disconnected.Rest
         }
 
         /// <inheritdoc />
-        [Demand(PermissionPolicyIdentifiers.WriteClinicalData)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public IdentifiedData ResolveQueueConflict(int id, Patch resolution)
         {
             (var queueversion, var dbversion, var persistenceservice, var queue) = GetQueueConflictInternal(id);
@@ -161,12 +162,21 @@ namespace SanteDB.Client.Disconnected.Rest
         [Demand(PermissionPolicyIdentifiers.LoginAsService)]
         public Dictionary<string, int> GetQueue()
         {
-            return m_synchronizationQueueManager?.GetAll(SynchronizationPattern.BiDirectional)?.ToDictionary(k => k.Name, v => v.Count()) ?? new Dictionary<string, int>();
+            IEnumerable<ISynchronizationQueue> queues = null;
+            if (Enum.TryParse<SynchronizationPattern>(RestOperationContext.Current.IncomingRequest.QueryString["type"], out var filter))
+            {
+                queues = m_synchronizationQueueManager?.GetAll(filter);
+            }
+            else
+            {
+                queues = m_synchronizationQueueManager?.GetAll(SynchronizationPattern.All);
+            }
+            return queues?.ToDictionary(k => k.Name, v => v.Count());
         }
 
         /// <inheritdoc />
         [Demand(PermissionPolicyIdentifiers.LoginAsService)]
-        public List<ISynchronizationQueueEntry> GetQueue(string queueName)
+        public AmiCollection GetQueue(string queueName)
         {
             var qs = RestOperationContext.Current.IncomingRequest.QueryString;
 
@@ -174,12 +184,12 @@ namespace SanteDB.Client.Disconnected.Rest
 
             if (null == results)
             {
-                return new List<ISynchronizationQueueEntry>();
+                return new AmiCollection();
             }
 
-            var retVal = results.ApplyResultInstructions(qs, out _, out _)?.OfType<ISynchronizationQueueEntry>()?.ToList();
+            var retVal = results.ApplyResultInstructions(qs, out var offset, out var totalCount)?.OfType<ISynchronizationQueueEntry>()?.ToList();
 
-            return retVal;
+            return new AmiCollection(retVal, offset, totalCount);
 
         }
 
@@ -202,12 +212,11 @@ namespace SanteDB.Client.Disconnected.Rest
 
 
         /// <inheritdoc />
-        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
         public void RetryQueueEntry(int id, ParameterCollection parameters)
         {
             var queue = GetQueueByName(DeadletterQueueName);
             var item = (queue?.Get(id) as ISynchronizationDeadLetterQueueEntry) ?? throw new KeyNotFoundException(ErrorMessage_QueueEntryNotFound(id));
-
             queue?.Retry(item);
         }
     }

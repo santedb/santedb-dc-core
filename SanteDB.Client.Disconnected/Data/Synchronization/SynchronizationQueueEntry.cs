@@ -18,19 +18,36 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using System;
+using System.Xml.Serialization;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
-    internal class SynchronizationQueueEntry : ISynchronizationQueueEntry
+    [XmlType(nameof(SynchronizationQueueEntry), Namespace = "http://santedb.org/dcdr/queue")]
+    [XmlRoot(nameof(SynchronizationQueueEntry), Namespace = "http://santedb.org/dcdr/queueu")]
+    public class SynchronizationQueueEntry : ISynchronizationQueueEntry
     {
+        [JsonProperty("id"), XmlAttribute("id")]
         public int Id { get; set; }
+
+        [JsonProperty("creationTime"), XmlAttribute("creationTime")]
         public DateTime CreationTime { get; set; }
+
+        [JsonProperty("type"), XmlAttribute("type")]
         public string Type { get; set; }
+
+        [JsonProperty("dataFile"), XmlAttribute("dataFile")]
         public string DataFileKey { get; set; }
+
+        [JsonProperty("data"), XmlElement("data")]
         public IdentifiedData Data { get; set; }
+
+        [JsonProperty("operation"), XmlAttribute("operation")]
         public SynchronizationQueueEntryOperation Operation { get; set; }
+
+        [JsonProperty("isRetry"), XmlAttribute("isRetry")]
         public bool IsRetry { get; set; }
     }
 
