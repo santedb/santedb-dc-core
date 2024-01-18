@@ -82,13 +82,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly IServiceProvider _ServiceProvider;
         private readonly ILocalizationService _LocalizationService;
         private readonly LocalRepositoryFactory _LocalRepositoryFactory;
-
         private readonly INetworkInformationService _NetworkInformationService;
-
         private readonly SynchronizationMessagePump _MessagePump;
-
         private readonly ISyncPolicy _PushExceptionPolicy;
-
         private readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
 
         /// <inheritdoc/>
@@ -206,13 +202,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 try
                 {
-                    foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
+                    if (this.IsUpstreamAvailable(ServiceEndpointType.HealthDataService))
                     {
-                        this._MessagePump.RunDefault(outboundqueue, entry =>
+                        foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream).OrderBy(o=>o.Type.HasFlag(SynchronizationPattern.LowPriority) ? 999 : 0 )) // order-by is so that low priority queues go after the higher priority ones
                         {
-                            this.SendOutboundEntryInternal(entry);
-                            return SynchronizationMessagePump.Continue;
-                        });
+                            this._MessagePump.RunDefault(outboundqueue, entry =>
+                            {
+                                this.SendOutboundEntryInternal(entry);
+                                return SynchronizationMessagePump.Continue;
+                            });
+                        }
                     }
                 }
                 finally
@@ -350,7 +349,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
 
             var dataToSubmit = entry.Data;
-            if (entry.IsRetry)
+            if (entry.RetryCount.GetValueOrDefault() > 0)
             {
                 dataToSubmit = this.BundleDependentObjects(dataToSubmit);
             }
@@ -488,7 +487,19 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     {
                         using (var client = base.CreateRestClient(upstreamEndpoint, AuthenticationContext.SystemPrincipal))
                         {
-                            return client.Get<Bundle>($"/{subscribedToType.GetSerializationName()}", queryToExecute).Item;
+                            var remoteObjects = client.Get<Bundle>($"/{subscribedToType.GetSerializationName()}", queryToExecute).Item;
+                            foreach (var itm in remoteObjects)
+                            {
+                                try
+                                {
+                                    persistenceService.Insert(itm);
+                                }
+                                catch (Exception e)
+                                {
+                                    this._Tracer.TraceWarning("Could not create local copy of {0} - {1}", itm, e.ToHumanReadableString());
+                                }
+                            }
+                            return remoteObjects;
                         }
                     }
                     catch (Exception e)
@@ -728,33 +739,45 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <inheritdoc />
         public void Pull(SubscriptionTriggerType trigger)
         {
-            var subscriptions = GetSubscriptionDefinitions().ToArray();
-            var subscribedobjects = GetSubscribedObjects()?.OfType<Object>().ToList();
-
-            var s = 0;
-            float progressPerSubscription = 1.0f / subscriptions.Length;
-            foreach (var subscription in subscriptions)
+            try
             {
-                var progress = (float)s++ / subscriptions.Length;
-                var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
-                var d = 0;
-                foreach (var def in applicableClientDefinitions)
+                if(this.IsSynchronizing)
                 {
-                    try
+                    _Tracer.TraceInfo("Will ignore Pull request since synchronization is already occurring");
+                }
+                this.IsSynchronizing = true;
+                var subscriptions = GetSubscriptionDefinitions().ToArray();
+                var subscribedobjects = GetSubscribedObjects()?.OfType<Object>().ToList();
+
+                var s = 0;
+                float progressPerSubscription = 1.0f / subscriptions.Length;
+                foreach (var subscription in subscriptions)
+                {
+                    var progress = (float)s++ / subscriptions.Length;
+                    var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
+                    var d = 0;
+                    foreach (var def in applicableClientDefinitions)
                     {
-                        // We keep the reported progress for firing the progress indicator and because we want to inform the user of the progress of data as the pull is happening
-                        progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
-                        _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
-                        var objectstoevaluate = GetSubscribedObjectsApplyingGuards(def, subscribedobjects);
-                        this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
-                    }
-                    catch (Exception e)
-                    {
-                        this._Tracer.TraceError("Error executing subscription definition for {0} - {1}", def.Resource, e.ToHumanReadableString());
+                        try
+                        {
+                            // We keep the reported progress for firing the progress indicator and because we want to inform the user of the progress of data as the pull is happening
+                            progress = (float)d++ / applicableClientDefinitions.Length * progressPerSubscription + progressPerSubscription * (s - 1);
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(def.Name) })));
+                            _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
+                            var objectstoevaluate = GetSubscribedObjectsApplyingGuards(def, subscribedobjects);
+                            this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
+                        }
+                        catch (Exception e)
+                        {
+                            this._Tracer.TraceError("Error executing subscription definition for {0} - {1}", def.Resource, e.ToHumanReadableString());
+                        }
                     }
                 }
+            }
+            finally
+            {
+                this.IsSynchronizing = false;
             }
 
         }
@@ -776,6 +799,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <inheritdoc />
         public void Push()
         {
+            if (this.IsSynchronizing)
+            {
+                this._Tracer.TraceInfo("Call to Push() is ignored since synchronization is already ocurring");
+                return;
+            }
             _ThreadPool.QueueUserWorkItem(RunOutboundMessagePump);
         }
 
@@ -879,11 +907,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnNetworkChange));
             };
 
+           
             _ServiceManager.GetAllTypes()
                 .Where(type=>!type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
                 .ForEach(type =>
             {
-                if (type == typeof(AuditEventData)) System.Diagnostics.Debugger.Break();
 
                 if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
                     !this._Configuration.ForbidSending.Any(f=>f.Type == type)) // This is a type of resource that can be submitted to the API
@@ -915,6 +943,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return Delegate.CreateDelegate(delegateType, this, methodInfo);
         }
 
+        /// <summary>
+        /// Enqueue data to be pushed when it is inserted
+        /// </summary>
         public void HandleDataInserted<TArgData>(Object sender, DataPersistedEventArgs<TArgData> args) where TArgData : IdentifiedData
         {
             if (this._LowPriorityTypes.Contains(typeof(TArgData)))
@@ -926,6 +957,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
+        /// <summary>
+        /// Enqueue data when it has been saved (inserted or updated)
+        /// </summary>
         public void HandleDataSaved<TArgData>(Object sender, DataPersistedEventArgs<TArgData> args) where TArgData : IdentifiedData
         {
             if (this._LowPriorityTypes.Contains(typeof(TArgData)))
@@ -938,6 +972,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
         }
 
+        /// <summary>
+        /// Enqueue data when it has been deleted
+        /// </summary>
         public void HandleDataDeleted<TArgData>(Object sender, DataPersistedEventArgs<TArgData> args) where TArgData : IdentifiedData
         {
             if (this._LowPriorityTypes.Contains(typeof(TArgData)))

@@ -48,7 +48,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Work = new ConcurrentQueue<Action>();
         }
 
-        internal SynchronizationQueue<SynchronizationDeadLetterQueueEntry> GetDeadLetterQueue() => _QueueManager.GetAll(SynchronizationPattern.DeadLetter)?.OfType<SynchronizationQueue<SynchronizationDeadLetterQueueEntry>>()?.FirstOrDefault();
+        internal ISynchronizationQueue GetDeadLetterQueue() => _QueueManager.GetAll(SynchronizationPattern.DeadLetter).FirstOrDefault();
 
         /// <summary>
         /// Generic message loop for a queue. This method is ignorant of any threading concerns.

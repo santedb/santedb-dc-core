@@ -34,44 +34,55 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Gets the identifier of the queue entry
         /// </summary>
         [QueryParameter("id")]
-        int Id { get; set; }
+        int Id { get; }
+
+        /// <summary>
+        /// A uuid which correlates this queue entry throughout its lifecycle
+        /// </summary>
+        [QueryParameter("correlation")]
+        Guid CorrelationKey { get; }
 
         /// <summary>
         /// Gets the time that the entry was created
         /// </summary>
         [QueryParameter("creationTime")]
-        DateTime CreationTime { get; set; }
+        DateTimeOffset CreationTime { get;  }
 
         /// <summary>
         /// Gets the type of data
         /// </summary>
         [QueryParameter("type")]
-        String Type { get; set; }
+        String ResourceType { get; }
 
         /// <summary>
         /// Gets the data of the object
         /// </summary>
         [QueryParameter("dataFile")]
-        String DataFileKey { get; set; }
+        Guid DataFileKey { get; }
 
         /// <summary>
         /// Gets or sets the transient data
         /// </summary>
         [QueryParameter("data")]
-        IdentifiedData Data { get; set; }
+        IdentifiedData Data { get;  }
 
         /// <summary>
         /// Gets the operation of the object
         /// </summary>
         [QueryParameter("operation")]
-        SynchronizationQueueEntryOperation Operation { get; set; }
+        SynchronizationQueueEntryOperation Operation { get; }
 
         /// <summary>
         /// Get whether the object is a retry
         /// </summary>
-        [QueryParameter("isRetry")]
-        bool IsRetry { get; set; }
+        [QueryParameter("retry")]
+        int? RetryCount { get; }
 
+        /// <summary>
+        /// Gets the queue 
+        /// </summary>
+        [QueryParameter("queue")]
+        ISynchronizationQueue Queue { get; }
     }
 
 }

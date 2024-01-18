@@ -28,21 +28,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal static class Extensions
     {
-        public static ISynchronizationDeadLetterQueueEntry Enqueue(this SynchronizationQueue<SynchronizationDeadLetterQueueEntry> queue, ISynchronizationQueue originalQueue, ISynchronizationQueueEntry badEntry, String reasonForRejection)
-        {
-            return queue.Enqueue(new SynchronizationDeadLetterQueueEntry()
-            {
-                CreationTime = badEntry.CreationTime,
-                Data = badEntry.Data,
-                DataFileKey = badEntry.DataFileKey,
-                Id = badEntry.Id,
-                IsRetry = false,
-                Operation = badEntry.Operation,
-                OriginalQueue = originalQueue.Name,
-                Type = badEntry.Type,
-                ReasonForRejection = reasonForRejection
-            });
-        }
+       
 
         public static void CompleteQuery(this ISynchronizationLogService service, ISynchronizationLogQuery query)
         {
@@ -113,7 +99,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         return SynchronizationMessagePump.Unhandled;
                     }
 
-                    dlqueue.Enqueue(queue, data, ex.ToHumanReadableString());
+                    dlqueue.Enqueue(data, ex.ToHumanReadableString());
 
                     return SynchronizationMessagePump.Handled;
 

@@ -32,14 +32,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         [JsonProperty("id"), XmlAttribute("id")]
         public int Id { get; set; }
 
+        [JsonProperty("correlationKey"), XmlAttribute("correlationKey")]
+        public Guid CorrelationKey { get; set; }
+
         [JsonProperty("creationTime"), XmlAttribute("creationTime")]
-        public DateTime CreationTime { get; set; }
+        public DateTimeOffset CreationTime { get; set; }
 
         [JsonProperty("type"), XmlAttribute("type")]
-        public string Type { get; set; }
+        public string ResourceType { get; set; }
 
         [JsonProperty("dataFile"), XmlAttribute("dataFile")]
-        public string DataFileKey { get; set; }
+        public Guid DataFileKey { get; set; }
 
         [JsonProperty("data"), XmlElement("data")]
         public IdentifiedData Data { get; set; }
@@ -48,7 +51,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public SynchronizationQueueEntryOperation Operation { get; set; }
 
         [JsonProperty("isRetry"), XmlAttribute("isRetry")]
-        public bool IsRetry { get; set; }
+        public int? RetryCount { get; set; }
+
     }
 
 }

@@ -55,7 +55,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// All Queue patterns 
         /// </summary>
-        All = BiDirectional | LocalOnly | SynchronizationPattern.DeadLetter
+        All = BiDirectional | LocalOnly | SynchronizationPattern.DeadLetter | SynchronizationPattern.LowPriority
 
     }
 }

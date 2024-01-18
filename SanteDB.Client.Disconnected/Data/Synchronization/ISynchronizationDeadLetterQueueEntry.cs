@@ -33,12 +33,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Original queue name 
         /// </summary>
         [QueryParameter("originalQueue")]
-        String OriginalQueue { get; }
+        ISynchronizationQueue OriginalQueue { get; }
 
 
         /// <summary>
         /// Gets the reason why the dead-letter entry was rejected
         /// </summary>
+        [QueryParameter("reason")]
         string ReasonForRejection { get; }
     }
 }

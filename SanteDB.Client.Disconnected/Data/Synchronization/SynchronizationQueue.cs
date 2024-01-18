@@ -36,12 +36,13 @@ using System.Collections.Specialized;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
-    internal class SynchronizationQueue<TEntry> : ISynchronizationQueue, IDisposable where TEntry : ISynchronizationQueueEntry, new()
+    internal class SynchronizationQueue<TEntry> : ISynchronizationQueue, IDisposable where TEntry : SynchronizationQueueEntry, new()
     {
         private readonly Tracer _Tracer = Tracer.GetTracer(typeof(SynchronizationQueue<TEntry>));
         private static JsonSerializerSettings s_SerializerSettings = new JsonSerializerSettings() { TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple, TypeNameHandling = TypeNameHandling.Auto };
@@ -327,7 +328,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             Data = data,
             Id = s_Rand.Next(),
             Operation = operation,
-            Type = data.GetType().Name
+            ResourceType = data.GetType().Name
         };
 
         public TEntry Get(int id)
@@ -515,24 +516,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         ISynchronizationQueueEntry ISynchronizationQueue.Get(int id) => this.Get(id);
 
-        void ISynchronizationQueue.Retry(ISynchronizationDeadLetterQueueEntry queueItem)
+        ISynchronizationQueueEntry ISynchronizationQueue.Enqueue(ISynchronizationQueueEntry queueItem, String reason = null)
         {
             throw new NotImplementedException();
         }
 
-        IQueryResultSet<ISynchronizationQueueEntry> ISynchronizationQueue.Query(NameValueCollection search)
+        IQueryResultSet<ISynchronizationQueueEntry> ISynchronizationQueue.Query(Expression<Func<ISynchronizationQueueEntry, bool>> search)
         {
             // Optimization - we can prevent reading from the disk (full de-serialization) by not filtering if unnecessary
-            // since the result set can use skip/take/count without loading the data
-            if (search.AllKeys.Any(o => !o.StartsWith("_")))
-            {
-                var query = QueryExpressionParser.BuildLinqExpression<ISynchronizationQueueEntry>(search);
-                return (IQueryResultSet<ISynchronizationQueueEntry>)new SynchronizationQueueQueryResultSet<TEntry>(this).Where(query);
-            }
-            else
-            {
-                return (IQueryResultSet<ISynchronizationQueueEntry>)new SynchronizationQueueQueryResultSet<TEntry>(this);
-            }
+            return (IQueryResultSet<ISynchronizationQueueEntry>)new SynchronizationQueueQueryResultSet<TEntry>(this).Where(search.Compile());
         }
     }
 }

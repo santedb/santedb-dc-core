@@ -20,11 +20,13 @@
  */
 using RestSrvr;
 using SanteDB.Client.Disconnected.Data.Synchronization;
+using SanteDB.Client.Disconnected.Rest.Model;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Patch;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Rest.AppService;
@@ -118,9 +120,9 @@ namespace SanteDB.Client.Disconnected.Rest
                 throw new NotSupportedException(m_localizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
             }
 
-            var persistenceservice = GetDataPersistenceService(item.Type);
+            var persistenceservice = GetDataPersistenceService(item.ResourceType);
 
-            var dbversion = (persistenceservice.Get(queueversion.Key.Value) as IdentifiedData) ?? throw new KeyNotFoundException(m_localizationService.GetString(ErrorMessageStrings.NOT_FOUND, new { type = item.Type, id = queueversion.Key }));
+            var dbversion = (persistenceservice.Get(queueversion.Key.Value) as IdentifiedData) ?? throw new KeyNotFoundException(m_localizationService.GetString(ErrorMessageStrings.NOT_FOUND, new { type = item.ResourceType, id = queueversion.Key }));
 
             return (queueversion, dbversion, persistenceservice, queue);
         }
@@ -180,14 +182,18 @@ namespace SanteDB.Client.Disconnected.Rest
         {
             var qs = RestOperationContext.Current.IncomingRequest.QueryString;
 
-            var results = GetQueueByName(queueName)?.Query(qs);
+            var queryFilter = QueryExpressionParser.BuildLinqExpression<ISynchronizationQueueEntry>(qs);
+
+            var results = GetQueueByName(queueName)?.Query(queryFilter);
 
             if (null == results)
             {
                 return new AmiCollection();
             }
 
-            var retVal = results.ApplyResultInstructions(qs, out var offset, out var totalCount)?.OfType<ISynchronizationQueueEntry>()?.ToList();
+            var retVal = results.ApplyResultInstructions(qs, out var offset, out var totalCount).OfType<ISynchronizationQueueEntry>()
+                .Select(o => o is ISynchronizationDeadLetterQueueEntry dl ? new SynchronizationQueueDeadLetterEntryInfo(dl) : new SynchronizationQueueEntryInfo(o))
+                .ToList();
 
             return new AmiCollection(retVal, offset, totalCount);
 
@@ -217,7 +223,7 @@ namespace SanteDB.Client.Disconnected.Rest
         {
             var queue = GetQueueByName(DeadletterQueueName);
             var item = (queue?.Get(id) as ISynchronizationDeadLetterQueueEntry) ?? throw new KeyNotFoundException(ErrorMessage_QueueEntryNotFound(id));
-            queue?.Retry(item);
+            queue?.Enqueue(item, "RETRY");
         }
     }
 }
