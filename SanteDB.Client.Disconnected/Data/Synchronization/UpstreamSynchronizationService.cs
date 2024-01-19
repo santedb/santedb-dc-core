@@ -18,9 +18,11 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using ClosedXML;
 using Polly;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Client.Exceptions;
+using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Event;
@@ -72,6 +74,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private readonly SynchronizationConfigurationSection _Configuration;
         private readonly IThreadPoolService _ThreadPool;
+        private readonly ITickleService _TickleService;
         private readonly ISynchronizationLogService _SynchronizationLogService;
         private readonly ISynchronizationQueueManager _QueueManager;
         private readonly IJobManagerService _JobManager;
@@ -130,6 +133,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             ISubscriptionRepository subscriptionRepository,
             IJobManagerService jobManagerService,
             IJobStateManagerService jobStateManagerService,
+            ITickleService tickleService,
             IJobScheduleManager jobScheduleManager,
             IServiceManager serviceManager,
             IServiceProvider serviceProvider,
@@ -139,8 +143,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IRestClientFactory restClientFactory,
             INetworkInformationService networkInformationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
+
             this._Configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
             this._ThreadPool = threadPool;
+            this._TickleService = tickleService;
             this._SynchronizationLogService = synchronizationLogService;
             this._QueueManager = queueManager;
             this._JobManager = jobManagerService;
@@ -435,9 +441,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Our timeout is 120 seconds but let's try to ensure we can fulfill the request in 30 seconds
                 var objsInThirty = 30000 / (peritemcost + 1);
 
-                if (!this._Configuration.BigBundles && objsInThirty > 5_000)
+                if (objsInThirty > 1_000)
                 {
-                    return 2_500;
+                    return !this._Configuration.BigBundles ? 1_000 : 500;
                 }
                 else
                 {
@@ -633,7 +639,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             var queryControlOptions = new UpstreamIntegrationQueryControlOptions()
             {
                 IfModifiedSince = lastmodificationdate,
-                Count = _Configuration.BigBundles ? 1000 : 100,
+                Count = _Configuration.BigBundles ? 500 : 100,
                 Offset = 0,
                 QueryId = Guid.NewGuid(),
                 Timeout = 120_000
@@ -746,12 +752,18 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     _Tracer.TraceInfo("Will ignore Pull request since synchronization is already occurring");
                 }
                 this.IsSynchronizing = true;
+
+                if (trigger == SubscriptionTriggerType.OnStart)
+                {
+                    _TickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Toast, _LocalizationService.GetString(UserMessageStrings.SYNC_PULL_START_NOTIFY)));
+                }
+
                 var subscriptions = GetSubscriptionDefinitions().ToArray();
                 var subscribedobjects = GetSubscribedObjects()?.OfType<Object>().ToList();
 
                 var s = 0;
                 float progressPerSubscription = 1.0f / subscriptions.Length;
-                foreach (var subscription in subscriptions)
+                foreach (var subscription in subscriptions.OrderBy(o=>o.Order))
                 {
                     var progress = (float)s++ / subscriptions.Length;
                     var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
@@ -767,6 +779,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
                             var objectstoevaluate = GetSubscribedObjectsApplyingGuards(def, subscribedobjects);
                             this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
+
                         }
                         catch (Exception e)
                         {
@@ -774,6 +787,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         }
                     }
                 }
+
+                if (trigger == SubscriptionTriggerType.OnStart)
+                {
+                    _TickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Information, _LocalizationService.GetString(UserMessageStrings.SYNC_PULL_START_COMPLETE)));
+                }
+            }
+            catch (Exception e)
+            {
+                _TickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Danger, _LocalizationService.GetString(ErrorMessageStrings.SYNC_PULL_PROBLEM, new { error = e.Message })));
+                throw;
             }
             finally
             {
@@ -852,6 +875,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                         // If the jobs have never run before we want to run them
                         this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), 0.0f, this._LocalizationService.GetString(UserMessageStrings.RUN_JOB, new { jobName = jobInstance.Name })));
+
                         _JobManager.StartJob(jobInstance, new object[0]);
 
                     });
@@ -861,6 +885,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 }
 
+                // Schedule the periodic pull job
+                if (!_JobManager.IsJobRegistered(typeof(UpstreamSynchronizationJob))) {
+                    var job = _JobManager.RegisterJob(typeof(UpstreamSynchronizationJob));
+                    if (!_jobScheduleManager.Get(job)?.Any() != true)
+                    {
+                        _jobScheduleManager.Add(job, this._Configuration.PollInterval);
+                    }
+                }
 
                 //    _Tracer.TraceVerbose($"Instantiating {nameof(UpstreamSynchronizationJob)} instance and setting schedule.");
                 //    try

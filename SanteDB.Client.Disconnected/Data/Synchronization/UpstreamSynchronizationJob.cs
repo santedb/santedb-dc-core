@@ -32,7 +32,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     /// <summary>
     /// Represents a synchronization job which pulls data and pushes data to the remote
     /// </summary>
-    public class UpstreamSynchronizationJob : ISynchronizationJob
+    public class UpstreamSynchronizationJob : IJob
     {
         readonly Tracer _Tracer;
 
