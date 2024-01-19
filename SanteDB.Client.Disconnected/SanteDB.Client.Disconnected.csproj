@@ -59,24 +59,6 @@
 
 
   <ItemGroup>
-    <Compile Remove="Data\Synchronization\DefaultSynchronizationQueueManager.cs" />
-    <Compile Remove="Data\Synchronization\SynchronizationDeadLetterQueueEntry.cs" />
-    <Compile Remove="Data\Synchronization\SynchronizationQueue.cs" />
-    <Compile Remove="Data\Synchronization\SynchronizationQueueEntry.cs" />
-    <Compile Remove="Data\Synchronization\SynchronizationQueueQueryResultSet.cs" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <None Include="Data\Synchronization\DefaultSynchronizationQueueManager.cs" />
-    <None Include="Data\Synchronization\SynchronizationDeadLetterQueueEntry.cs" />
-    <None Include="Data\Synchronization\SynchronizationQueue.cs" />
-    <None Include="Data\Synchronization\SynchronizationQueueEntry.cs" />
-    <None Include="Data\Synchronization\SynchronizationQueueQueryResultSet.cs" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <PackageReference Include="Polly" Version="7.2.3" />
   </ItemGroup>
 

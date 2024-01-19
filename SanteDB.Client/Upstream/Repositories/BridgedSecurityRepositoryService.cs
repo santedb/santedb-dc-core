@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Exceptions;
+using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
@@ -32,6 +33,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IApplicationIdentityProviderService m_localApplicationProvider;
         private readonly IDeviceIdentityProviderService m_localDeviceProvider;
         private readonly ILocalizationService m_localizationService;
+        private readonly IRoleProviderService m_localRoleProvider;
         private readonly IRepositoryService<ApplicationEntity> m_localApplicationEntityProvider;
         private readonly IRepositoryService<DeviceEntity> m_localDeviceEntityProvider;
         
@@ -44,6 +46,7 @@ namespace SanteDB.Client.Upstream.Repositories
             IUpstreamServiceProvider<ISecurityRepositoryService> upstreamSecurityRepository,
             ILocalServiceProvider<IIdentityProviderService> localIdentityProvider,
             ILocalServiceProvider<IApplicationIdentityProviderService> localApplicationProvider,
+            ILocalServiceProvider<IRoleProviderService> localRoleProvider,
             ILocalServiceProvider<IDeviceIdentityProviderService> localDeviceProvider,
             ILocalServiceProvider<IRepositoryService<ApplicationEntity>> localApplicationEntityProvider,
             ILocalServiceProvider<IRepositoryService<DeviceEntity>> localDeviceEntityProvider,
@@ -57,6 +60,7 @@ namespace SanteDB.Client.Upstream.Repositories
             this.m_localApplicationProvider = localApplicationProvider.LocalProvider;
             this.m_localDeviceProvider = localDeviceProvider.LocalProvider;
             this.m_localizationService = localizationService;
+            this.m_localRoleProvider = localRoleProvider.LocalProvider;
             this.m_localApplicationEntityProvider = localApplicationEntityProvider.LocalProvider;
             this.m_localDeviceEntityProvider = localDeviceEntityProvider.LocalProvider;
         }
@@ -66,7 +70,8 @@ namespace SanteDB.Client.Upstream.Repositories
         /// </summary>
         private bool IsLocalUser(string userName)
         {
-            return this.m_localIdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
+            return this.m_localRoleProvider.IsUserInRole(userName, SanteDBConstants.LocalUserGroupName) ||
+                this.m_localIdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
         }
 
         /// <summary>

@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
@@ -124,7 +125,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private void GetUpstreamSecurityRolePolicies()
         {
-            var systemroles = new string[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS", "CLINICAL_STAFF", "LOCAL_USERS" }; //TODO: Get rid of this.
+            var systemroles = new string[] { 
+                SanteDBConstants.AdministratorGroupName,
+                SanteDBConstants.AnonymousGroupName,
+                SanteDBConstants.DeviceGroupName, 
+                SanteDBConstants.SystemGroupName,
+                SanteDBConstants.UserGroupName, 
+                SanteDBConstants.LocalUserGroupName,
+                SanteDBConstants.ClinicalStaffGroupName
+            }; //TODO: Get rid of this.
 
             foreach (var rolename in _LocalRoleProviderService.GetAllRoles().Union(systemroles))
             {
