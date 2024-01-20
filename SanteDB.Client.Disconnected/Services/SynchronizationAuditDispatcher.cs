@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
+using SanteDB.Core;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Security.Configuration;
@@ -21,11 +22,11 @@ namespace SanteDB.Client.Disconnected.Services
     /// In order to reduce the number of audits which are sent to the central environment, a dispatcher is used. This allows 
     /// only audits relevant audits to be sent to the central server via <see cref="ISynchronizationQueueManager"/>
     /// </remarks>
-    public class SynchronizationAuditDispatcher : IAuditDispatchService
+    public class SynchronizationAuditDispatcher : IAuditDispatchService, IDisposable
     {
         private readonly ISynchronizationQueueManager m_synchronizationQueueManager;
         private readonly ConcurrentQueue<AuditEventData> m_auditEventQueue = new ConcurrentQueue<AuditEventData>();
-        private const int AUDIT_SUBMISSION_SIZE = 20;
+        private const int AUDIT_SUBMISSION_SIZE = 10;
         private readonly object m_lockBox = new object();
         private readonly Guid m_deviceId;
 
@@ -36,6 +37,7 @@ namespace SanteDB.Client.Disconnected.Services
         {
             this.m_synchronizationQueueManager = synchronizationQueueManager;
             this.m_deviceId = configurationManager.GetSection<SecurityConfigurationSection>().GetSecurityPolicy(Core.Configuration.SecurityPolicyIdentification.AssignedDeviceSecurityId, Guid.Empty);
+
         }
 
         /// <inheritdoc/>
@@ -50,22 +52,36 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 if (this.m_auditEventQueue.Count > AUDIT_SUBMISSION_SIZE)
                 {
-                    var auditSubmission = new AuditSubmission()
-                    {
-                        ProcessId = Process.GetCurrentProcess().Id,
-                        SecurityDeviceId = this.m_deviceId
-                    };
-
-                    while (this.m_auditEventQueue.TryPeek(out var peekAudit))
-                    {
-                        auditSubmission.Audit.Add(peekAudit);
-                    }
-
-                    this.m_synchronizationQueueManager.GetAll(SynchronizationPattern.LocalToUpstream | SynchronizationPattern.LowPriority).FirstOrDefault().Enqueue(auditSubmission, SynchronizationQueueEntryOperation.Insert);
-                
+                    this.SubmitAuditEvents();
                 }
             }
 
+        }
+
+        /// <summary>
+        /// Service is being disposed - so send the audits out
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        public void Dispose()
+        {
+            this.SubmitAuditEvents();
+        }
+
+        /// <summary>
+        /// Submit all audit events in <see cref="m_auditEventQueue"/>
+        /// </summary>
+        private void SubmitAuditEvents()
+        {
+            var auditSubmission = new AuditSubmission()
+            {
+                ProcessId = Process.GetCurrentProcess().Id,
+                SecurityDeviceId = this.m_deviceId
+            };
+            while (this.m_auditEventQueue.TryDequeue(out var peekAudit))
+            {
+                auditSubmission.Audit.Add(peekAudit);
+            }
+            this.m_synchronizationQueueManager.GetAll(SynchronizationPattern.LocalToUpstream | SynchronizationPattern.LowPriority).FirstOrDefault().Enqueue(auditSubmission, SynchronizationQueueEntryOperation.Insert);
         }
     }
 }

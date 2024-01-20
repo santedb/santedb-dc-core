@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using DocumentFormat.OpenXml.Packaging;
 using RestSrvr;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Disconnected.Rest.Model;
@@ -51,8 +52,8 @@ namespace SanteDB.Client.Disconnected.Rest
         /// <summary>
         /// The queue name for the dead queue that is used by <see cref="GetQueueConflict(int)"/>, <see cref="ResolveQueueConflict(int, Patch)"/> and <see cref="RetryQueueEntry(int, ParameterCollection)"/>.
         /// </summary>
-        private const string DeadletterQueueName = "dead"; //TODO: Is this right or can it be defined on ISynchronizationQueueService somewhere?
-
+        private const string DeadletterQueueName = "deadletter"; //TODO: Is this right or can it be defined on ISynchronizationQueueService somewhere?
+        private const string IdParameterName = "id";
 
         /// <summary>
         /// Uses the <see cref="ILocalizationService"/> to create an error message with the <paramref name="queueName"/>.
@@ -129,11 +130,17 @@ namespace SanteDB.Client.Disconnected.Rest
 
         /// <inheritdoc />
         [Demand(PermissionPolicyIdentifiers.ReadClinicalData)]
-        public Patch GetQueueConflict(int id)
+        public Patch GetQueueConflict(ParameterCollection parameters)
         {
-            (var queueversion, var dbversion, _, _) = GetQueueConflictInternal(id);
+            if (parameters.TryGet(IdParameterName, out int id)) {
+                (var queueversion, var dbversion, _, _) = GetQueueConflictInternal(id);
 
-            return m_patchService?.Diff(dbversion, queueversion);
+                return m_patchService?.Diff(dbversion, queueversion);
+            }
+            else
+            {
+                throw new ArgumentNullException(IdParameterName);
+            }
         }
 
         /// <inheritdoc />
@@ -219,11 +226,28 @@ namespace SanteDB.Client.Disconnected.Rest
 
         /// <inheritdoc />
         [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
-        public void RetryQueueEntry(int id, ParameterCollection parameters)
+        public void RetryQueueEntry(ParameterCollection parameters)
         {
-            var queue = GetQueueByName(DeadletterQueueName);
-            var item = (queue?.Get(id) as ISynchronizationDeadLetterQueueEntry) ?? throw new KeyNotFoundException(ErrorMessage_QueueEntryNotFound(id));
-            queue?.Enqueue(item, "RETRY");
+            if (parameters.TryGet(IdParameterName, out int id))
+            {
+                var queue = GetQueueByName(DeadletterQueueName);
+                var item = (queue?.Get(id) as ISynchronizationDeadLetterQueueEntry) ?? throw new KeyNotFoundException(ErrorMessage_QueueEntryNotFound(id));
+                item.OriginalQueue?.Enqueue(item, "RETRY");
+                queue.Delete(id); // remove from DL
+            }
+            else if(parameters.TryGet("all", out bool all) && all)
+            {
+                var queue = GetQueueByName(DeadletterQueueName);
+                foreach (var item in queue.Query(o => true).OfType<ISynchronizationDeadLetterQueueEntry>())
+                {
+                    item.OriginalQueue.Enqueue(item);
+                    queue.Delete(item.Id);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException(IdParameterName);
+            }
         }
     }
 }

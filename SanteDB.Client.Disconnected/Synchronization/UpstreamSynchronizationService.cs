@@ -734,10 +734,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     ver.VersionSequence = null;
                 }
                 itm.AddAnnotation(SystemTagNames.UpstreamDataTag);
-                if (itm is ITaggable taggable)
-                {
-                    taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
-                }
             });
             return bdl;
         }
@@ -882,13 +878,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
                 catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
-
+                    _Tracer.TraceWarning("Could not initialize synchronization jobs - {0}", ex.ToHumanReadableString());
                 }
 
                 // Schedule the periodic pull job
                 if (!_JobManager.IsJobRegistered(typeof(UpstreamSynchronizationJob))) {
                     var job = _JobManager.RegisterJob(typeof(UpstreamSynchronizationJob));
-                    if (!_jobScheduleManager.Get(job)?.Any() != true)
+                    if (_jobScheduleManager.Get(job)?.Any() != true)
                     {
                         _jobScheduleManager.Add(job, this._Configuration.PollInterval);
                     }

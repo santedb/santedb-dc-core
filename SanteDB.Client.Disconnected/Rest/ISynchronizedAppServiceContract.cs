@@ -58,19 +58,19 @@ namespace SanteDB.Client.Disconnected.Rest
         /// <summary>
         /// Gets the conflict data a patch representing the difference between the server version and the local version being 
         /// </summary>
-        [Get("/Queue/dead/{id}/conflict")]
-        Patch GetQueueConflict(int id);
+        [Get("/Queue/deadletter/$diff")]
+        Patch GetQueueConflict(ParameterCollection parameters);
 
         /// <summary>
         /// Force a retry on the conflicted queue item
         /// </summary>
-        [Post("/Queue/dead/{id}/$retry")]
-        void RetryQueueEntry(int id, ParameterCollection parameters);
+        [Post("/Queue/deadletter/$retry")]
+        void RetryQueueEntry(ParameterCollection parameters);
 
         /// <summary>
         /// Perform a patch / resolution
         /// </summary>
-        [RestInvoke("PATCH", "/Queue/dead/{id}")]
+        [RestInvoke("PATCH", "/Queue/deadletter/{id}")]
         IdentifiedData ResolveQueueConflict(int id, Patch resolution);
 
         /// <summary>
