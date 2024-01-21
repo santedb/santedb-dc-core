@@ -90,16 +90,16 @@ namespace SanteDB.Client.Disconnected.Rest
         List<ISynchronizationLogEntry> GetSynchronizationLogs();
 
         /// <summary>
-        /// Synchronize the system immediately
-        /// </summary>
-        [Post("/Sync/$retry")]
-        void SynchronizeNow(ParameterCollection parameters);
-
-        /// <summary>
         /// Reset the synchornization status
         /// </summary>
         [Post("/Sync/$reset")]
-        void ResetSynchronizationStatus(ParameterCollection parameters);
+        void ResetSynchronizationStatus();
+
+        /// <summary>
+        /// Reset the synchornization status
+        /// </summary> 
+        [Post("/Sync/{id}/$reset")]
+        void ResetSynchronizationStatus(String id);
         #endregion
 
     }

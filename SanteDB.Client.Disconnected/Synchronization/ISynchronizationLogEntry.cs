@@ -29,6 +29,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     {
 
         /// <summary>
+        /// Get the uuid for the log entry
+        /// </summary>
+        Guid Key { get; }
+
+        /// <summary>
         /// Gets the type of resource that this entry referrs.
         /// </summary>
         string ResourceType { get; }

@@ -613,7 +613,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             //TODO: Fetch items from upstream
             var lastmodificationdate = !ignoreModifiedOn ? _SynchronizationLogService.GetLastTime(modelType, filterstring) : (DateTime?)null;
-
+            
             var estimatedlatency = this.UpstreamAvailabilityProvider.GetUpstreamLatency(ServiceEndpointType.HealthDataService);
 
             if (!estimatedlatency.HasValue) //Unavailable
@@ -762,7 +762,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 foreach (var subscription in subscriptions.OrderBy(o=>o.Order))
                 {
                     var progress = (float)s++ / subscriptions.Length;
-                    var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger & trigger) == trigger && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
+                    var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger.HasFlag(trigger) || trigger.HasFlag(cd.Trigger)) && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
                     this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), progress, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL, new { resource = this._LocalizationService.GetString(subscription.Name) })));
                     var d = 0;
                     foreach (var def in applicableClientDefinitions)

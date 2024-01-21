@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -26,6 +27,7 @@ using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -43,7 +45,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly IJobStateManagerService _JobStateManager;
         readonly ISynchronizationLogService _LogService;
         readonly ISynchronizationQueueManager _QueueManager;
-
+        readonly ManualResetEventSlim _ResetEvent = new ManualResetEventSlim(false);
 
         /// <summary>
         /// DI constructor
@@ -56,6 +58,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _Service = synchronizationService;
             _LogService = synchronizationLogService;
             _QueueManager = synchronizationQueueManager;
+
+            _Service.PushCompleted += (o, e) => _ResetEvent.Set();
         }
 
         /// <inheritdoc />
@@ -71,7 +75,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public bool CanCancel => false;
 
         /// <inheritdoc />
-        public IDictionary<string, Type> Parameters => null;
+        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
+        {
+            {  "mode", typeof(String) },
+            { "push", typeof(bool) }
+        };
 
         /// <inheritdoc />
         public void Cancel()
@@ -90,7 +98,18 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
 
                 _JobStateManager.SetState(this, JobStateType.Running);
-                _Service.Pull(SubscriptionTriggerType.PeriodicPoll);
+
+                // Load parameters 
+                var mode = SubscriptionTriggerType.PeriodicPoll;
+                _ = parameters.Length > 0 && Enum.TryParse<SubscriptionTriggerType>(parameters[0].ToString(), true, out mode);
+                if(parameters.Length > 1 && (parameters[1] is bool includePush || bool.TryParse(parameters[1].ToString(), out includePush)) && includePush)
+                {
+                    _Service.Push();
+                    _ResetEvent.Wait();
+                    _ResetEvent.Reset();
+                }
+
+                _Service.Pull(mode);
                 _JobStateManager.SetState(this, JobStateType.Completed);
 
             }
