@@ -38,6 +38,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
@@ -72,9 +73,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             typeof(AuditEventData)
         };
 
+        private readonly String[] _ignorePatchProperties = {
+            "sequence",
+            "previousVersion"
+        };
+
         private readonly SynchronizationConfigurationSection _Configuration;
         private readonly IThreadPoolService _ThreadPool;
         private readonly ITickleService _TickleService;
+        private readonly IPatchService _PatchService;
         private readonly ISynchronizationLogService _SynchronizationLogService;
         private readonly ISynchronizationQueueManager _QueueManager;
         private readonly IJobManagerService _JobManager;
@@ -138,6 +145,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceManager serviceManager,
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
+            IPatchService patchService,
             IAuditService auditService,
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
@@ -147,6 +155,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._Configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
             this._ThreadPool = threadPool;
             this._TickleService = tickleService;
+            this._PatchService = patchService;
             this._SynchronizationLogService = synchronizationLogService;
             this._QueueManager = queueManager;
             this._JobManager = jobManagerService;
@@ -210,7 +219,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     if (this.IsUpstreamAvailable(ServiceEndpointType.HealthDataService))
                     {
-                        foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream).OrderBy(o=>o.Type.HasFlag(SynchronizationPattern.LowPriority) ? 999 : 0 )) // order-by is so that low priority queues go after the higher priority ones
+                        foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream).OrderBy(o => o.Type.HasFlag(SynchronizationPattern.LowPriority) ? 999 : 0)) // order-by is so that low priority queues go after the higher priority ones
                         {
                             this._MessagePump.RunDefault(outboundqueue, entry =>
                             {
@@ -360,16 +369,22 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 dataToSubmit = this.BundleDependentObjects(dataToSubmit);
             }
 
+            // If we're sending a bundle we remove any forbidden objects
+            if (dataToSubmit is Bundle bundle)
+            {
+                bundle.Item.RemoveAll(o => this._Configuration.ForbidSending.Any(t => t.Type == o.GetType()));
+            }
+            
             switch (entry.Operation)
             {
                 case SynchronizationQueueEntryOperation.Insert:
                     this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Insert(dataToSubmit));
                     break;
                 case SynchronizationQueueEntryOperation.Update:
-                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Update(dataToSubmit, forceUpdate: this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
+                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Update(dataToSubmit, forceUpdate: entry.RetryCount > 0 && this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
                     break;
                 case SynchronizationQueueEntryOperation.Obsolete:
-                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Obsolete(dataToSubmit, forceObsolete: this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
+                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Obsolete(dataToSubmit, forceObsolete: entry.RetryCount > 0 && this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
                     break;
                 default:
                     break;
@@ -613,7 +628,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             //TODO: Fetch items from upstream
             var lastmodificationdate = !ignoreModifiedOn ? _SynchronizationLogService.GetLastTime(modelType, filterstring) : (DateTime?)null;
-            
+
             var estimatedlatency = this.UpstreamAvailabilityProvider.GetUpstreamLatency(ServiceEndpointType.HealthDataService);
 
             if (!estimatedlatency.HasValue) //Unavailable
@@ -743,7 +758,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             try
             {
-                if(this.IsSynchronizing)
+                if (this.IsSynchronizing)
                 {
                     _Tracer.TraceInfo("Will ignore Pull request since synchronization is already occurring");
                 }
@@ -759,7 +774,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 var s = 0;
                 float progressPerSubscription = 1.0f / subscriptions.Length;
-                foreach (var subscription in subscriptions.OrderBy(o=>o.Order))
+                foreach (var subscription in subscriptions.OrderBy(o => o.Order))
                 {
                     var progress = (float)s++ / subscriptions.Length;
                     var applicableClientDefinitions = subscription.ClientDefinitions.Where(cd => (cd.Trigger.HasFlag(trigger) || trigger.HasFlag(cd.Trigger)) && ((int)cd.Mode & (int)this._Configuration.Mode) == (int)this._Configuration.Mode).ToArray();
@@ -839,7 +854,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Start for pull
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
                 this.SubscribeToEvents();
-                
+
                 try
                 {
                     // This block of code:
@@ -882,7 +897,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
 
                 // Schedule the periodic pull job
-                if (!_JobManager.IsJobRegistered(typeof(UpstreamSynchronizationJob))) {
+                if (!_JobManager.IsJobRegistered(typeof(UpstreamSynchronizationJob)))
+                {
                     var job = _JobManager.RegisterJob(typeof(UpstreamSynchronizationJob));
                     if (_jobScheduleManager.Get(job)?.Any() != true)
                     {
@@ -935,14 +951,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnNetworkChange));
             };
 
-           
+
             _ServiceManager.GetAllTypes()
-                .Where(type=>!type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
+                .Where(type => !type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
                 .ForEach(type =>
             {
 
                 if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
-                    !this._Configuration.ForbidSending.Any(f=>f.Type == type)) // This is a type of resource that can be submitted to the API
+                    !this._Configuration.ForbidSending.Any(f => f.Type == type)) // This is a type of resource that can be submitted to the API
                 {
                     var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
                     var repositoryInstance = _ServiceProvider.GetService(repositoryType);
@@ -954,7 +970,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Saved)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataSaved), type));
                             repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Deleted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataDeleted), type));
                         }
-                        catch(Exception e)
+                        catch (Exception e)
                         {
                             this._Tracer.TraceWarning("Cannot bind to {0} - data will not be pushed to server - {1}", type, e.ToHumanReadableString());
                         }
@@ -967,7 +983,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             var parmType = typeof(DataPersistedEventArgs<>).MakeGenericType(dataType);
             var delegateType = typeof(EventHandler<>).MakeGenericType(parmType);
-            var methodInfo = (MethodInfo)this.GetType().GetGenericMethod(methodName, new Type[] { dataType }, new Type[] { typeof(object), parmType});
+            var methodInfo = (MethodInfo)this.GetType().GetGenericMethod(methodName, new Type[] { dataType }, new Type[] { typeof(object), parmType });
             return Delegate.CreateDelegate(delegateType, this, methodInfo);
         }
 
@@ -980,7 +996,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 this._QueueManager.GetAll(SynchronizationPattern.LowPriority | SynchronizationPattern.LocalToUpstream).FirstOrDefault().Enqueue(args.Data, SynchronizationQueueEntryOperation.Insert);
             }
-            else { 
+            else
+            {
                 this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Insert);
             }
         }
@@ -996,7 +1013,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             else
             {
-                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Update);
+                if (args is DataPersistedOriginalEventArgs<TArgData> updated && this._Configuration.UsePatches)
+                {
+                    var patchData = this._PatchService.Diff(updated.OriginalData, updated.Data, _ignorePatchProperties);
+                    this._QueueManager.GetOutboundQueue().Enqueue(patchData, SynchronizationQueueEntryOperation.Update);
+                }
+                else
+                {
+                    this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Update);
+                }
             }
         }
 
