@@ -465,7 +465,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 return false;
             }
-            return DateTime.UtcNow.Subtract(query.QueryStartTime).TotalHours <= 1;
+            return DateTimeOffset.Now.Subtract(query.QueryStartTime).TotalHours <= 1;
         }
 
         /// <summary>
