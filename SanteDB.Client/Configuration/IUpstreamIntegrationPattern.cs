@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
 
@@ -39,6 +40,10 @@ namespace SanteDB.Client.Configuration
         /// </summary>
         IEnumerable<Type> GetServices();
 
+        /// <summary>
+        /// Set the defaults on any configuration that this pattern requires
+        /// </summary>
+        void SetDefaults(SanteDBConfiguration configuration);
 
     }
 }
