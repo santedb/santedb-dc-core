@@ -95,26 +95,34 @@ namespace SanteDB.Client.Disconnected.Jobs
                 this.m_jobStateManagerService.SetState(this, JobStateType.Running);
 
                 using (AuthenticationContext.EnterSystemContext()) {
-                    var lastSynchronization = this.m_synchronizationLogService.GetLastTime(typeof(CdssLibraryDefinition));
+                    var synchronizationLog = this.m_synchronizationLogService.Get(typeof(CdssLibraryDefinition));
+
                     if (parameters?.Length == 1 && 
                         Boolean.TryParse(parameters[0]?.ToString(), out bool resyncAll) && resyncAll)
                     {
-                        lastSynchronization = null;
+                        this.m_synchronizationLogService.Delete(synchronizationLog);
+                        synchronizationLog = null;
                         // Remove all existing
                         foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray()) {
                             this.m_cdssLibraryRepositoryService.Remove(cdss.Uuid);
                         }
                     }
 
-                    this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", lastSynchronization);
+                    if (synchronizationLog == null)
+                    {
+                        synchronizationLog = this.m_synchronizationLogService.Create(typeof(CdssLibraryDefinition));
+                    }
+
+
+                    this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", synchronizationLog.LastSync);
 
                     // Determine the last synchronization query 
                     using(var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                     {
                         client.Credentials = new UpstreamDeviceCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
                         string lastEtag = null;
-                        if (lastSynchronization.HasValue) {
-                            client.Requesting += (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, lastSynchronization.ToString());
+                        if (synchronizationLog.LastSync.HasValue) {
+                            client.Requesting += (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, synchronizationLog.LastSync.ToString());
                         }
                         client.Responded += (o, ev) => lastEtag = ev.ETag;
 
@@ -130,7 +138,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                                 var libraryData = client.Get<CdssLibraryDefinitionInfo>($"CdssLibraryDefinition/{itm.Key}");
                                 this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
                             }
-                            this.m_synchronizationLogService.Save(typeof(CdssLibraryDefinition), null, lastEtag, DateTime.Now);
+                            this.m_synchronizationLogService.Save(synchronizationLog, lastEtag, DateTime.Now);
                         }
                     }
 

@@ -29,17 +29,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     internal static class Extensions
     {
        
-
-        public static void CompleteQuery(this ISynchronizationLogService service, ISynchronizationLogQuery query)
-        {
-            if (null == query)
-            {
-                return;
-            }
-
-            service.CompleteQuery(query.ResourceType, query.Filter, query.QueryId);
-        }
-
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.LocalToUpstream"/> queue pattern.
         /// </summary>

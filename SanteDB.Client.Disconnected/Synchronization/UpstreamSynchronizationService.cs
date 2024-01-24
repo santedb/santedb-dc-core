@@ -627,7 +627,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             var filterstring = filter?.ToHttpString();
 
             //TODO: Fetch items from upstream
-            var lastmodificationdate = !ignoreModifiedOn ? _SynchronizationLogService.GetLastTime(modelType, filterstring) : (DateTime?)null;
+            var syncLogEntry = _SynchronizationLogService.Get(modelType, filterstring);
+            if(syncLogEntry == null)
+            {
+                syncLogEntry = _SynchronizationLogService.Create(modelType, filterstring);
+            }
+            var lastmodificationdate = !ignoreModifiedOn ? syncLogEntry.LastSync : (DateTimeOffset?)null;
 
             var estimatedlatency = this.UpstreamAvailabilityProvider.GetUpstreamLatency(ServiceEndpointType.HealthDataService);
 
@@ -661,18 +666,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             };
 
             // Attempt to find an existing log of sync in the local database (for continuing queries)
-            var existingquery = _SynchronizationLogService.FindQueryData(modelType, filterstring);
-            if (IsExistingQueryLogValid(existingquery))
+            var syncQuery = _SynchronizationLogService.GetCurrentQuery(syncLogEntry)?? _SynchronizationLogService.StartQuery(syncLogEntry);
+            if (syncQuery != null && !IsExistingQueryLogValid(syncQuery))
             {
-                queryControlOptions.QueryId = existingquery.QueryId;
-                queryControlOptions.Offset = existingquery.QueryOffset;
-            }
-            else
-            {
-                _SynchronizationLogService.CompleteQuery(existingquery);
+                _SynchronizationLogService.CompleteQuery(syncQuery);
                 // Mark the start of our querying
-                _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, 0);
+                syncQuery = _SynchronizationLogService.StartQuery(syncLogEntry);
             }
+
+            queryControlOptions.QueryId = syncQuery.QueryId;
+            queryControlOptions.Offset = syncQuery.QueryOffset;
 
             var inboundqueue = _QueueManager.GetInboundQueue();
             if (null == inboundqueue)
@@ -717,16 +720,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                         lastEtag = bundle.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
                         inboundqueue.Enqueue(bundle, SynchronizationQueueEntryOperation.Sync);
-                        _SynchronizationLogService.SaveQuery(modelType, filterstring, queryControlOptions.QueryId, queryControlOptions.Offset);
+                        _SynchronizationLogService.SaveQuery(syncQuery, queryControlOptions.Offset);
                     }
                 } while (result.Item.Any());
 
-                this._SynchronizationLogService.Save(modelType, filterstring, lastEtag, DateTime.Now);
+                this._SynchronizationLogService.CompleteQuery(syncQuery);
+                this._SynchronizationLogService.Save(syncLogEntry, lastEtag, DateTime.Now);
 
             }
             catch (Exception e)
             {
-                this._SynchronizationLogService.SaveError(modelType, filterstring, e);
+                this._SynchronizationLogService.SaveError(syncLogEntry, e);
                 this._Tracer.TraceError("Error Synchronizing {0}?{1} - {2}", modelType, filterstring, e.ToHumanReadableString());
             }
 
@@ -899,7 +903,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Schedule the periodic pull job
                 if (!_JobManager.IsJobRegistered(typeof(UpstreamSynchronizationJob)))
                 {
-                    var job = _JobManager.RegisterJob(typeof(UpstreamSynchronizationJob));
+                    var job = _ServiceManager.CreateInjected<UpstreamSynchronizationJob>();
+                    _JobManager.AddJob(job, JobStartType.TimerOnly);
                     if (_jobScheduleManager.Get(job)?.Any() != true)
                     {
                         _jobScheduleManager.Add(job, this._Configuration.PollInterval);

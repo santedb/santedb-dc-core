@@ -28,25 +28,26 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     /// </summary>
     public interface ISynchronizationLogService
     {
+
+        /// <summary>
+        /// Create a new synchronization log entry
+        /// </summary>
+        ISynchronizationLogEntry Create(Type modelType, String filter = null);
+
         /// <summary>
         /// Get the last time that the specified type was synchronized
         /// </summary>
-        DateTime? GetLastTime(Type modelType, String filter = null);
-
-        /// <summary>
-        /// Get the last ETag of the type
-        /// </summary>
-        String GetLastEtag(Type modelType, String filter = null);
+        ISynchronizationLogEntry Get(Type modelType, String filter = null);
 
         /// <summary>
         /// Update the log entry 
         /// </summary>
-        void Save(Type modelType, String filter, String eTag, DateTime? since);
+        ISynchronizationLogEntry Save(ISynchronizationLogEntry entry, String eTag, DateTimeOffset? since);
 
         /// <summary>
         /// Save the error to the synchronization log
         /// </summary>
-        void SaveError(Type modelType, String filter, Exception exception);
+        ISynchronizationLogEntry SaveError(ISynchronizationLogEntry entry, Exception exception);
 
         /// <summary>
         /// Get all log entries
@@ -54,24 +55,23 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         IEnumerable<ISynchronizationLogEntry> GetAll();
 
         /// <summary>
+        /// Start a query record
+        /// </summary>
+        ISynchronizationLogQuery StartQuery(ISynchronizationLogEntry entry);
+        /// <summary>
         /// Save the specified query data for later continuation
         /// </summary>
-        void SaveQuery(Type modelType, String filter, Guid queryId, int offset);
+        ISynchronizationLogQuery SaveQuery(ISynchronizationLogQuery query, int offset);
 
         /// <summary>
         /// Mark the specified query as complete
         /// </summary>
-        void CompleteQuery(Type modelType, String filter, Guid queryId);
-
-        /// <summary>
-        /// Mark the specified query as complete
-        /// </summary>
-        void CompleteQuery(string modelType, String filter, Guid queryId);
+        void CompleteQuery(ISynchronizationLogQuery query);
 
         /// <summary>
         /// Find the query data
         /// </summary>
-        ISynchronizationLogQuery FindQueryData(Type modelType, String filter);
+        ISynchronizationLogQuery GetCurrentQuery(ISynchronizationLogEntry entry);
 
         /// <summary>
         /// Deletes the specified log entry
