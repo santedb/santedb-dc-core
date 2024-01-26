@@ -69,7 +69,6 @@ namespace SanteDB.Client.Disconnected.Configuration
             {
                 dataSection = new DataConfigurationSection();
                 dataSection.ConnectionString = new List<ConnectionString>();
-
                 configuration.AddSection(dataSection);
             }
 

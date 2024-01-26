@@ -42,5 +42,17 @@ namespace SanteDB.Client.Configuration
         /// </summary>
         [XmlAttribute("solution"), JsonProperty("solution")]
         public string UiSolution { get; set; }
+
+        /// <summary>
+        /// When true indicates that backups should be performed automatically
+        /// </summary>
+        [XmlElement("autoBackup"), JsonProperty("autoBackup")]
+        public bool AutomaticallyBackup { get; set; }
+
+        /// <summary>
+        /// Indicates the maximum number of automatic backups
+        /// </summary>
+        [XmlElement("maxBackups"), JsonProperty("maxBackups")]
+        public int MaxAutoBackups { get; set; }
     }
 }
