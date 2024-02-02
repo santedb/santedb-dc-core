@@ -42,7 +42,7 @@ namespace SanteDB.Client.Upstream.Management
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
         private const int PING_TIMEOUT = 5_000;
-        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 0, 60);
+        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 2, 00);
 
         
 
@@ -95,6 +95,8 @@ namespace SanteDB.Client.Upstream.Management
                 }
                 else
                 {
+                    this.m_adhocCacheService?.Add<TimeSpan?>($"us.drift.{endpoint}", null, CACHE_TIMEOUT);
+                    this.m_adhocCacheService?.Add<long?>($"us.latency.{endpoint}", null, CACHE_TIMEOUT);
                     drift = null;
                     latencyMs = null;
                 }

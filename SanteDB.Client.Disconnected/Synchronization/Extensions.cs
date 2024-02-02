@@ -23,11 +23,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal static class Extensions
     {
+       
        
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.LocalToUpstream"/> queue pattern.
@@ -82,15 +86,24 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 },
                 (data, ex) =>
                 {
-                    var dlqueue = messagepump.GetDeadLetterQueue();
-                    if (null == dlqueue)
+                    // If the exception indicates a connection error to the server - we don't want to dead-letter them - just leave them be in the queue
+                    if (!ex.IsCommunicationException())
                     {
-                        return SynchronizationMessagePump.Unhandled;
+
+                        var dlqueue = messagepump.GetDeadLetterQueue();
+                        if (null == dlqueue)
+                        {
+                            return SynchronizationMessagePump.Unhandled;
+                        }
+
+                        dlqueue.Enqueue(data, ex.ToHumanReadableString());
+                        return SynchronizationMessagePump.Handled;
+
                     }
-
-                    dlqueue.Enqueue(data, ex.ToHumanReadableString());
-
-                    return SynchronizationMessagePump.Handled;
+                    else
+                    {
+                        return SynchronizationMessagePump.Abort; // Abort sending the next message - leave this message in the queue for the next iteration of the pump
+                    }
 
                 });
 

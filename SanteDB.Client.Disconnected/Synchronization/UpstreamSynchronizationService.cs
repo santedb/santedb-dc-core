@@ -765,7 +765,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 if (this.IsSynchronizing)
                 {
                     _Tracer.TraceInfo("Will ignore Pull request since synchronization is already occurring");
+                    return;
                 }
+                else if(!this.IsUpstreamAvailable(ServiceEndpointType.AuthenticationService)) {
+                    _Tracer.TraceInfo("Will ignore Pull request since authentication service is not available");
+                    return;
+                }
+
                 this.IsSynchronizing = true;
 
                 if (trigger == SubscriptionTriggerType.OnStart)
