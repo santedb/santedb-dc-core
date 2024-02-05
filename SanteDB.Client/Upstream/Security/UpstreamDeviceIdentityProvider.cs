@@ -108,7 +108,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IDeviceIdentity CreateIdentity(string deviceName, string secret, IPrincipal principal)
+        public IDeviceIdentity CreateIdentity(string deviceName, string secret, IPrincipal principal, Guid? withSid = null)
         {
             throw new NotSupportedException();
         }
@@ -156,5 +156,6 @@ namespace SanteDB.Client.Upstream.Security
         {
             throw new NotSupportedException();
         }
+
     }
 }

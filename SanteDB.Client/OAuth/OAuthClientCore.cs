@@ -334,9 +334,7 @@ namespace SanteDB.Client.OAuth
             if (ClaimMapper.Current.TryGetMapper(ClaimMapper.ExternalTokenTypeJwt, out var mappers))
             {
                 var claims = mappers.SelectMany(o => o.MapToInternalIdentityClaims(tokenvalidationresult.Claims)).ToList();
-
                 MapClaims(tokenvalidationresult, response, claims);
-
                 return new OAuthClaimsPrincipal(response.AccessToken, tokenvalidationresult.SecurityToken, response.TokenType, response.RefreshToken, response.ExpiresIn, claims);
 
             }

@@ -202,7 +202,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IApplicationIdentity CreateIdentity(string applicationName, string password, IPrincipal principal)
+        public IApplicationIdentity CreateIdentity(string applicationName, string password, IPrincipal principal, Guid? withSid = null)
         {
             throw new NotSupportedException();
         }
@@ -268,6 +268,5 @@ namespace SanteDB.Client.Upstream.Security
 
         }
 
-       
     }
 }

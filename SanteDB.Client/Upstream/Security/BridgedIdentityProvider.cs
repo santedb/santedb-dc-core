@@ -142,6 +142,8 @@ namespace SanteDB.Client.Upstream.Security
                 if (localUser == null) // create the user with the same SID
                 {
                     var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
+                    upstreamUserInfo.Password = password;
+                    
                     localUser = localUserRepository.Insert(upstreamUserInfo);
                 }
                 
@@ -209,10 +211,15 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
+        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal, Guid? withSid = null)
         {
-            var localIdentity = this.m_localIdentityProvider.CreateIdentity(userName, password, principal);
-            this.m_localIdentityProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
+
+            var localIdentity = this.m_localIdentityProvider.CreateIdentity(userName, password, principal, withSid);
+
+            if (!withSid.HasValue) // This is a new user
+            {
+                this.m_localIdentityProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
+            }
             return this.m_localIdentityProvider.GetIdentity(userName);
         }
 
@@ -397,5 +404,6 @@ namespace SanteDB.Client.Upstream.Security
                 return this.m_localChallenge.Authenticate(userName, challengeKey, response, tfaSecret);
             }
         }
+
     }
 }

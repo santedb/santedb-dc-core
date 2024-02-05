@@ -188,7 +188,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
+        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal, Guid? withSid = null)
         {
             throw new NotSupportedException();
         }
@@ -305,5 +305,6 @@ namespace SanteDB.Client.Upstream.Security
                 Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, result, null != result));
             }
         }
+
     }
 }

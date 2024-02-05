@@ -533,7 +533,6 @@ namespace SanteDB.Client.Upstream.Management
         {
             try
             {
-
                 if (this.m_devicePrincipal != null && this.m_devicePrincipal.ExpiresAt.AddMinutes(-2) > DateTimeOffset.Now)
                 {
                     return this.m_devicePrincipal;

@@ -25,6 +25,7 @@ using SanteDB.Core.Security.Principal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace SanteDB.Client.OAuth
 {
@@ -90,6 +91,11 @@ namespace SanteDB.Client.OAuth
             _RefreshToken = refreshToken;
 
             this.AddIdentity(new OAuthTokenIdentity(_IdToken, "OAUTH", true, claims));
+
+            if(claims.Any(c=>c.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim))
+            {
+                this.AddIdentity(new OAuthApplicationIdentity(claims));
+            }
 
             this.ExpiresAt = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn));
             this.RenewAfter = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn / 2));
