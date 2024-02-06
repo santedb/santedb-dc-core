@@ -8,18 +8,7 @@
   </PropertyGroup>
   
   <Choose>
-    <When Condition="$(SolutionName.Contains('-ext'))">
-      <ItemGroup>
-        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
-        <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Auditing.ADO\SanteDB.Persistence.Auditing.ADO.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.PubSub.ADO\SanteDB.Persistence.PubSub.ADO.csproj" />
-        <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AppService\SanteDB.Rest.AppService.csproj" />
-      </ItemGroup>
-    </When>
-    <Otherwise>
+    <When Condition="$(SolutionName.Contains('-nuget'))">
       <ItemGroup>
         <PackageReference Include="RestSrvr" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
@@ -31,6 +20,18 @@
         <PackageReference Include="SanteDB.Rest.Common" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Rest.AppService" Version="$(VersionNumber)" />
       </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
+        <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
+        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
+        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Auditing.ADO\SanteDB.Persistence.Auditing.ADO.csproj" />
+        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.PubSub.ADO\SanteDB.Persistence.PubSub.ADO.csproj" />
+        <ProjectReference Include="..\..\santedb-cdss\SanteDB.Cdss.Xml\SanteDB.Cdss.Xml.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AppService\SanteDB.Rest.AppService.csproj" />
+      </ItemGroup>
+
     </Otherwise>
   </Choose>
 
