@@ -1,5 +1,6 @@
 ﻿using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
@@ -42,6 +43,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly IRoleProviderService _LocalRoleProviderService;
         readonly ISecurityRepositoryService _UpstreamSecurityRepositoryService;
         readonly ISecurityRepositoryService _LocalSecurityRepositoryService;
+        private readonly IUpstreamAvailabilityProvider _UpstreamAvailabilityProvider;
         readonly ISecurityChallengeService _UpstreamSecurityChallengeService;
         readonly ISecurityChallengeService _LocalSecurityChallengeService;
         readonly IRepositoryService<SecurityApplication> _UpstreamSecurityApplicationRepository;
@@ -53,6 +55,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public SecurityObjectSynchronizationJob(
             IJobStateManagerService jobStateManager,
             IUpstreamManagementService upstreamManagementService,
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamServiceProvider<IPolicyInformationService> upstreamPolicyInformationService,
             ILocalServiceProvider<IPolicyInformationService> localPolicyInformationService,
             IUpstreamServiceProvider<IRoleProviderService> upstreamRoleProviderService,
@@ -72,6 +75,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _LocalRoleProviderService = localRoleProviderService.LocalProvider;
             _UpstreamSecurityRepositoryService = upstreamSecurityProviderService.UpstreamProvider;
             _LocalSecurityRepositoryService = localSecurityProviderService.LocalProvider;
+            _UpstreamAvailabilityProvider = upstreamAvailabilityProvider;
             //_UpstreamSecurityChallengeService = upstreamSecurityChallengeService.UpstreamProvider;
             //_LocalSecurityChallengeService = localSecurityChallengeService.LocalProvider;
         }
@@ -85,7 +89,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <inheritdoc/>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
-            if (_UpstreamManagementService?.IsConfigured() != true)
+            if (_UpstreamManagementService?.IsConfigured() != true || _UpstreamAvailabilityProvider?.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) != true)
             {
                 _Tracer.TraceInfo("Job {0}: The upstream realm is not configured.", nameof(SecurityObjectSynchronizationJob));
                 _JobStateManager.SetState(this, JobStateType.Cancelled);
@@ -124,7 +128,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private void GetUpstreamSecurityRolePolicies()
         {
-            var systemroles = new string[] { "SYNCHRONIZERS", "ADMINISTRATORS", "ANONYMOUS", "DEVICE", "SYSTEM", "USERS", "CLINICAL_STAFF", "LOCAL_USERS" }; //TODO: Get rid of this.
+            var systemroles = new string[] { 
+                SanteDBConstants.AdministratorGroupName,
+                SanteDBConstants.AnonymousGroupName,
+                SanteDBConstants.DeviceGroupName, 
+                SanteDBConstants.SystemGroupName,
+                SanteDBConstants.UserGroupName, 
+                SanteDBConstants.LocalUserGroupName,
+                SanteDBConstants.LocalAdminGroupName,
+                SanteDBConstants.ClinicalStaffGroupName
+            }; //TODO: Get rid of this.
 
             foreach (var rolename in _LocalRoleProviderService.GetAllRoles().Union(systemroles))
             {

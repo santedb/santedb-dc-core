@@ -22,6 +22,7 @@ using SanteDB.Client.Upstream.Management;
 using SanteDB.Client.Upstream.Matching;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.Upstream.Security;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
 using System;
 using System.Collections.Generic;
@@ -61,5 +62,8 @@ namespace SanteDB.Client.Configuration
                         typeof(RepositoryEntitySource),
                         typeof(UpstreamResourceCheckoutService)
                     };
+
+        /// <inheritdoc/>
+        public void SetDefaults(SanteDBConfiguration configuration) { }
     }
 }

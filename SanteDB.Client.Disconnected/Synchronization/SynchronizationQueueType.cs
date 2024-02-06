@@ -22,21 +22,40 @@ using System;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
-
     /// <summary>
-    /// Represents a retry entry
+    /// Classification of the synchronization type
     /// </summary>
-    public interface ISynchronizationDeadLetterQueueEntry : ISynchronizationQueueEntry
+    [Flags]
+    public enum SynchronizationPattern
     {
         /// <summary>
-        /// Original queue name 
+        /// Inbound queue - The source of the queue is the upstream
         /// </summary>
-        String OriginalQueue { get; }
-
+        UpstreamToLocal = 0x1,
         /// <summary>
-        /// Specialized tag data
+        /// Outbound queue - The destination of this queue is to the upstream
         /// </summary>
-        byte[] TagData { get; }
+        LocalToUpstream = 0x2,
+        /// <summary>
+        /// The queue is for local-local communication
+        /// </summary>
+        LocalOnly = 0x4,
+        /// <summary>
+        /// Represents queues that are for administrative non-primary messages
+        /// </summary>
+        LowPriority= 0x8,
+        /// <summary>
+        /// The queue is both for inbound and outbound 
+        /// </summary>
+        BiDirectional = LocalToUpstream | UpstreamToLocal,
+        /// <summary>
+        /// The queue is a deadletter queue.
+        /// </summary>
+        DeadLetter = 0x80 | LocalOnly,
+        /// <summary>
+        /// All Queue patterns 
+        /// </summary>
+        All = BiDirectional | LocalOnly | SynchronizationPattern.DeadLetter | SynchronizationPattern.LowPriority
 
     }
 }

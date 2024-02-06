@@ -29,6 +29,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     {
 
         /// <summary>
+        /// Get the uuid for the log entry
+        /// </summary>
+        Guid Key { get; }
+
+        /// <summary>
         /// Gets the type of resource that this entry referrs.
         /// </summary>
         string ResourceType { get; }
@@ -41,7 +46,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Gets the last sync time that this was successfully completed. 
         /// </summary>
-        DateTime LastSync { get; }
+        DateTimeOffset? LastSync { get; }
 
         /// <summary>
         /// Get the last etag that was successfully fetched.

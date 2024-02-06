@@ -23,35 +23,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal static class Extensions
     {
-        public static ISynchronizationDeadLetterQueueEntry Enqueue(this SynchronizationQueue<SynchronizationDeadLetterQueueEntry> queue, ISynchronizationQueue originalQueue, ISynchronizationQueueEntry badEntry)
-        {
-            return queue.Enqueue(new SynchronizationDeadLetterQueueEntry()
-            {
-                CreationTime = badEntry.CreationTime,
-                Data = badEntry.Data,
-                DataFileKey = badEntry.DataFileKey,
-                Id = badEntry.Id,
-                IsRetry = false,
-                Operation = badEntry.Operation,
-                OriginalQueue = originalQueue.Name,
-                Type = badEntry.Type
-            });
-        }
+       
+       
+        /// <summary>
+        /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.LocalToUpstream"/> queue pattern.
+        /// </summary>
+        /// <param name="service">The queue manager to query.</param>
+        /// <returns>The instance of <see cref="ISynchronizationQueue"/> or <c>default</c>.</returns>
+        public static ISynchronizationQueue GetOutboundQueue(this ISynchronizationQueueManager service)
+            => service.GetAll(SynchronizationPattern.LocalToUpstream)?.FirstOrDefault();
 
-        public static void CompleteQuery(this ISynchronizationLogService service, ISynchronizationLogQuery query)
-        {
-            if (null == query)
-            {
-                return;
-            }
-
-            service.CompleteQuery(query.ResourceType, query.Filter, query.QueryId);
-        }
 
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.UpstreamToLocal"/> queue pattern.
@@ -97,15 +86,24 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 },
                 (data, ex) =>
                 {
-                    var dlqueue = messagepump.GetDeadLetterQueue();
-                    if (null == dlqueue)
+                    // If the exception indicates a connection error to the server - we don't want to dead-letter them - just leave them be in the queue
+                    if (!ex.IsCommunicationException())
                     {
-                        return SynchronizationMessagePump.Unhandled;
+
+                        var dlqueue = messagepump.GetDeadLetterQueue();
+                        if (null == dlqueue)
+                        {
+                            return SynchronizationMessagePump.Unhandled;
+                        }
+
+                        dlqueue.Enqueue(data, ex.ToHumanReadableString());
+                        return SynchronizationMessagePump.Handled;
+
                     }
-
-                    dlqueue.Enqueue(queue, data);
-
-                    return SynchronizationMessagePump.Handled;
+                    else
+                    {
+                        return SynchronizationMessagePump.Abort; // Abort sending the next message - leave this message in the queue for the next iteration of the pump
+                    }
 
                 });
 

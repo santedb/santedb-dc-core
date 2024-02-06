@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.HDSI.Client;
@@ -64,6 +65,13 @@ namespace SanteDB.Client.Upstream.Repositories
         /// Get the upstream client factory
         /// </summary>
         protected IRestClientFactory RestClientFactory => this.m_restClientFactory;
+
+        /// <summary>
+        /// Determine if the current auth context is appropriate for upstream communications
+        /// </summary>
+        /// <returns></returns>
+        protected bool HasUpstreamAuthContext() => AuthenticationContext.Current.Principal is ITokenPrincipal;
+
 
         /// <summary>
         /// DI constructor

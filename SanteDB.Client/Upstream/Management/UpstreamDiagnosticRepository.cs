@@ -20,6 +20,7 @@
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
@@ -42,6 +43,9 @@ namespace SanteDB.Client.Upstream.Management
     /// </summary>
     public class UpstreamDiagnosticRepository : UpstreamServiceBase, IDataPersistenceService<DiagnosticReport>
     {
+        private readonly IAppletManagerService m_appletManagerService;
+        private readonly INetworkInformationService m_networkInformationService;
+        private readonly IOperatingSystemInfoService m_operatingSystemInfo;
         private readonly ILocalizationService m_localeService;
         private readonly ILogManagerService m_logManagerService;
         private readonly IConfigurationManager m_configurationService;
@@ -49,8 +53,20 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Defaut CTOR
         /// </summary>
-        public UpstreamDiagnosticRepository(IRestClientFactory restClientFactory, IUpstreamManagementService upstreamManagementService, ILocalizationService localizationService, IUpstreamAvailabilityProvider upstreamAvailabilityProvider, ILogManagerService logManagerSerivce = null, IConfigurationManager configurationManager = null, IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
+        public UpstreamDiagnosticRepository(IRestClientFactory restClientFactory, 
+            IUpstreamManagementService upstreamManagementService, 
+            ILocalizationService localizationService, 
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider, 
+            IOperatingSystemInfoService operatingSystemInfoService,
+            INetworkInformationService networkInformationService,
+            IAppletManagerService appletManagerService,
+            ILogManagerService logManagerSerivce = null, 
+            IConfigurationManager configurationManager = null, 
+            IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
+            this.m_appletManagerService = appletManagerService;
+            this.m_networkInformationService = networkInformationService;
+            this.m_operatingSystemInfo = operatingSystemInfoService;
             this.m_localeService = localizationService;
             this.m_logManagerService = logManagerSerivce;
             this.m_configurationService = configurationManager;
@@ -143,11 +159,18 @@ namespace SanteDB.Client.Upstream.Management
                                 break;
                         }
                     }
-
-
                 }
 
                 data.ApplicationInfo = new DiagnosticApplicationInfo(Assembly.GetEntryAssembly() ?? this.GetType().Assembly);
+                data.ApplicationInfo.Applets = this.m_appletManagerService.Applets.Select(o => o.Info).ToList();
+                data.Tags.Add(new DiagnosticReportTag("os.type", this.m_operatingSystemInfo.OperatingSystem.ToString()));
+                data.Tags.Add(new DiagnosticReportTag("os.version", this.m_operatingSystemInfo.VersionString));
+                data.Tags.Add(new DiagnosticReportTag("os.manufacturer", this.m_operatingSystemInfo.ManufacturerName));
+                data.Tags.Add(new DiagnosticReportTag("dev.name", this.m_operatingSystemInfo.MachineName));
+                data.Tags.Add(new DiagnosticReportTag("net.wifi", this.m_networkInformationService.IsNetworkWifi.ToString()));
+                data.Tags.Add(new DiagnosticReportTag("net.name", this.m_networkInformationService.GetHostName()));
+                data.Tags.Add(new DiagnosticReportTag("net.ip", String.Join(",", this.m_networkInformationService.GetInterfaces().Select(o => $"{o.InterfaceType} {o.IpAddress} - {o.MacAddress}"))));
+
                 using (var client = base.CreateAmiServiceClient())
                 {
                     return client.SubmitDiagnosticReport(data);

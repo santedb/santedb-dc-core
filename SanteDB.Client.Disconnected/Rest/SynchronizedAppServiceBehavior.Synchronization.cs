@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Client.Disconnected.Data.Synchronization;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Security;
 using SanteDB.Rest.Common.Attributes;
@@ -42,51 +43,30 @@ namespace SanteDB.Client.Disconnected.Rest
         }
 
         /// <inheritdoc />
-        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
-        public void ResetSynchronizationStatus(ParameterCollection parameters)
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public void ResetSynchronizationStatus()
         {
-            if (parameters.TryGet("resourceType", out string resourcetype))
+            foreach (var entry in m_synchronizationLogService.GetAll())
             {
-                foreach (var entry in m_synchronizationLogService.GetAll())
-                {
-                    if (resourcetype?.Equals(entry.ResourceType, StringComparison.InvariantCulture) == true)
-                    {
-                        m_synchronizationLogService.Delete(entry);
-                    }
-                }
+                m_synchronizationLogService.Delete(entry);
+            }
+           
+        }
+
+        [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]
+        public void ResetSynchronizationStatus(string entryId)
+        {
+            if (Guid.TryParse(entryId, out var uuid))
+            {
+                var logEntry = m_synchronizationLogService.GetAll().FirstOrDefault(o => o.Key == uuid) ?? throw new KeyNotFoundException();
+                m_synchronizationLogService.Delete(logEntry);
             }
             else
             {
-                foreach (var entry in m_synchronizationLogService.GetAll())
-                {
-                    m_synchronizationLogService.Delete(entry);
-                }
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.INVALID_FORMAT, entryId, Guid.Empty));
             }
         }
 
-
-        /// <inheritdoc />
-        [Demand(PermissionPolicyIdentifiers.LoginAsService)]
-        public void SynchronizeNow(ParameterCollection parameters)
-        {
-            m_tracer.TraceInfo("Manual Synchronization requested.");
-            void push_completed(object sender, EventArgs e)
-            {
-                try
-                {
-                    m_tracer.TraceVerbose("Push Completed event fired. Executing manual pull.");
-                    m_synchronizationService.PushCompleted -= push_completed;
-                    m_synchronizationService.Pull(Core.Model.Subscription.SubscriptionTriggerType.Manual);
-                }
-                finally
-                {
-                    m_synchronizationService.PushCompleted -= push_completed;
-                }
-            };
-
-            m_synchronizationService.PushCompleted += push_completed;
-            m_synchronizationService.Push();
-        }
 
     }
 }

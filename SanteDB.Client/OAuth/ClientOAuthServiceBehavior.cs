@@ -84,8 +84,9 @@ namespace SanteDB.Client.OAuth
                 base.m_SessionProvider.Abandon(session as ISession);
             }
 
-            DiscardCookie(context, ExtendedCookieNames.SessionCookieName);
-            DiscardCookie(context, ExtendedCookieNames.RefreshCookieName);
+            // HACK: Chrome does not like the way SetCookie works for the two cookies so we're going to clear them manually
+            context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}=; Max-Age=0; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
+            context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}=; Max-Age=0; Path=/; HttpOnly; Discard");
 
             return true;
         }
@@ -98,10 +99,10 @@ namespace SanteDB.Client.OAuth
             {
                 if (null != response.RefreshToken)
                 {
-                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}={response.RefreshToken}; Path={GetAuthPathForCookie(context)}; HttpOnly");
+                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}={response.RefreshToken}; Max-Age={response.ExpiresIn}; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
                 }
 
-                context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}={response.AccessToken}; Path=/; HttpOnly");
+                context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}={response.AccessToken}; Max-Age={response.ExpiresIn + 10}; Path=/; HttpOnly; Discard");
 
 
             }
@@ -123,19 +124,5 @@ namespace SanteDB.Client.OAuth
             return "/" + context.OperationContext.ServiceEndpoint.Description.ListenUri.GetComponents(UriComponents.Path, UriFormat.SafeUnescaped);
         }
 
-        /// <summary>
-        /// Helper method to set a cookie in the response that discards the cookie.
-        /// </summary>
-        /// <param name="context">The context to access the outgoing response from.</param>
-        /// <param name="cookieName">The name of the cookie to discard.</param>
-        private static void DiscardCookie(OAuthRequestContextBase context, string cookieName)
-        {
-            context.OutgoingResponse.SetCookie(new Cookie(cookieName, "")
-            {
-                Discard = true,
-                Expired = true,
-                Expires = DateTime.Now
-            });
-        }
     }
 }

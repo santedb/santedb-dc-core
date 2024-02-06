@@ -18,64 +18,71 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using System;
-using System.Collections.Generic;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     /// <summary>
-    /// Represents a synchronization log service
+    /// Represents a synchronization queue entry
     /// </summary>
-    public interface ISynchronizationLogService
+    public interface ISynchronizationQueueEntry
     {
-        /// <summary>
-        /// Get the last time that the specified type was synchronized
-        /// </summary>
-        DateTime? GetLastTime(Type modelType, String filter = null);
 
         /// <summary>
-        /// Get the last ETag of the type
+        /// Gets the identifier of the queue entry
         /// </summary>
-        String GetLastEtag(Type modelType, String filter = null);
+        [QueryParameter("id")]
+        int Id { get; }
 
         /// <summary>
-        /// Update the log entry 
+        /// A uuid which correlates this queue entry throughout its lifecycle
         /// </summary>
-        void Save(Type modelType, String filter, String eTag, DateTime? since);
+        [QueryParameter("correlation")]
+        Guid CorrelationKey { get; }
 
         /// <summary>
-        /// Save the error to the synchronization log
+        /// Gets the time that the entry was created
         /// </summary>
-        void SaveError(Type modelType, String filter, Exception exception);
+        [QueryParameter("creationTime")]
+        DateTimeOffset CreationTime { get;  }
 
         /// <summary>
-        /// Get all log entries
+        /// Gets the type of data
         /// </summary>
-        IEnumerable<ISynchronizationLogEntry> GetAll();
+        [QueryParameter("type")]
+        String ResourceType { get; }
 
         /// <summary>
-        /// Save the specified query data for later continuation
+        /// Gets the data of the object
         /// </summary>
-        void SaveQuery(Type modelType, String filter, Guid queryId, int offset);
+        [QueryParameter("dataFile")]
+        Guid DataFileKey { get; }
 
         /// <summary>
-        /// Mark the specified query as complete
+        /// Gets or sets the transient data
         /// </summary>
-        void CompleteQuery(Type modelType, String filter, Guid queryId);
+        [QueryParameter("data")]
+        IdentifiedData Data { get;  }
 
         /// <summary>
-        /// Mark the specified query as complete
+        /// Gets the operation of the object
         /// </summary>
-        void CompleteQuery(string modelType, String filter, Guid queryId);
+        [QueryParameter("operation")]
+        SynchronizationQueueEntryOperation Operation { get; }
 
         /// <summary>
-        /// Find the query data
+        /// Get whether the object is a retry
         /// </summary>
-        ISynchronizationLogQuery FindQueryData(Type modelType, String filter);
+        [QueryParameter("retry")]
+        int? RetryCount { get; }
 
         /// <summary>
-        /// Deletes the specified log entry
+        /// Gets the queue 
         /// </summary>
-        void Delete(ISynchronizationLogEntry itm);
+        [QueryParameter("queue")]
+        ISynchronizationQueue Queue { get; }
     }
+
 }

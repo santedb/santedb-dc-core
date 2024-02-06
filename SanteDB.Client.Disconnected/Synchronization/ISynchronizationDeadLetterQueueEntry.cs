@@ -18,20 +18,28 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using System;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
-    internal class SynchronizationQueueEntry : ISynchronizationQueueEntry
-    {
-        public int Id { get; set; }
-        public DateTime CreationTime { get; set; }
-        public string Type { get; set; }
-        public string DataFileKey { get; set; }
-        public IdentifiedData Data { get; set; }
-        public SynchronizationQueueEntryOperation Operation { get; set; }
-        public bool IsRetry { get; set; }
-    }
 
+    /// <summary>
+    /// Represents a retry entry
+    /// </summary>
+    public interface ISynchronizationDeadLetterQueueEntry : ISynchronizationQueueEntry
+    {
+        /// <summary>
+        /// Original queue name 
+        /// </summary>
+        [QueryParameter("originalQueue")]
+        ISynchronizationQueue OriginalQueue { get; }
+
+
+        /// <summary>
+        /// Gets the reason why the dead-letter entry was rejected
+        /// </summary>
+        [QueryParameter("reason")]
+        string ReasonForRejection { get; }
+    }
 }

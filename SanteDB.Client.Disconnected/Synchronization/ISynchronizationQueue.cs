@@ -20,9 +20,11 @@
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Specialized;
+using System.Linq.Expressions;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -35,11 +37,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Gets the name of the queue
         /// </summary>
+        [QueryParameter("name")]
         String Name { get; }
 
         /// <summary>
         /// Gets the type of the queue
         /// </summary>
+        [QueryParameter("type")]
         SynchronizationPattern Type { get; }
 
         /// <summary>
@@ -58,6 +62,20 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="data">The data to enqueue</param>
         /// <param name="operation">The sync operation </param>
         ISynchronizationQueueEntry Enqueue(IdentifiedData data, SynchronizationQueueEntryOperation operation);
+
+        /// <summary>
+        /// Enqueues the specified <paramref name="otherQueueEntry"/> directly into this queue (used for copying queue entries) with a reason 
+        /// </summary>
+        /// <param name="otherQueueEntry">The queue entry which should be enqueued in this queue</param>
+        /// <param name="reasonText">The reason for the other queue entry being placed onto this queue</param>
+        /// <remarks>
+        /// Implementers should not make assumptions that this queue entry has been de-queued and should preserve the original <paramref name="otherQueueEntry"/> data 
+        /// if they are using a shared record of data files. Typically a "retry" occurs when a queue entry of type <see cref="ISynchronizationDeadLetterQueueEntry"/> is
+        /// being queued into a queue without the <see cref="SynchronizationPattern.DeadLetter"/> attribute, if an entry of <see cref="ISynchronizationQueueEntry"/> is being
+        /// enqueued to a queue with <see cref="SynchronizationPattern.DeadLetter"/> attribute then it represents a "cannot deliver" condition.
+        /// </remarks>
+        /// <returns>The newly created queue entry</returns>
+        ISynchronizationQueueEntry Enqueue(ISynchronizationQueueEntry otherQueueEntry, String reasonText = null);
 
         /// <summary>
         /// Peek the next item on the queue
@@ -90,13 +108,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         ISynchronizationQueueEntry Get(int id);
 
         /// <summary>
-        /// Requeue the queue item
-        /// </summary>
-        void Retry(ISynchronizationDeadLetterQueueEntry queueItem);
-
-        /// <summary>
         /// Query the dataset from the specified search parameters
         /// </summary>
-        IQueryResultSet<ISynchronizationQueueEntry> Query(NameValueCollection search);
+        IQueryResultSet<ISynchronizationQueueEntry> Query(Expression<Func<ISynchronizationQueueEntry, bool>> query);
+
     }
 }

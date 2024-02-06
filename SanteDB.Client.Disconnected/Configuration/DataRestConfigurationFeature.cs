@@ -58,6 +58,13 @@ namespace SanteDB.Client.Disconnected.Configuration
         /// </summary>
         public const string CONNECTION_PER_FEATURE_SETTING = "connections";
 
+        /// <summary>
+        /// ALE fields
+        /// </summary>
+        public const string ALE_SETTING = "ale";
+        public const string ALE_ENABLED_SETTING = "enabled";
+        public const string ALE_FIELDS_SETTING = "fields";
+
         private readonly DataConfigurationSection m_connectStringSection;
         private readonly DataRetentionConfigurationSection m_retentionConfigurationSection;
         private readonly OrmConfigurationSection m_ormConfigurationSection;
@@ -161,6 +168,12 @@ namespace SanteDB.Client.Disconnected.Configuration
                 };
             }
 
+            JObject aleFieldSetting = null;
+            if (featureConfiguration.TryGetValue(ALE_SETTING, out var aleFieldSettingRaw))
+            {
+                aleFieldSetting = aleFieldSettingRaw as JObject;
+            }
+
             // Create and update the configuration feature settings
             dataSection.ConnectionString.Clear();
             if (featureConfiguration.TryGetValue(CONNECTION_PER_FEATURE_SETTING, out var itmSettingCollectionRaw) && itmSettingCollectionRaw is JObject itmSettingCollection)
@@ -188,7 +201,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                             cstr.Provider = itm.ProviderType = provider.Invariant;
                             dataSection.ConnectionString.Add(cstr);
                             itm.ReadWriteConnectionString = itm.ReadonlyConnectionString = cstr.Name;
-
+                            this.SetAleConfigurationSettings(configuration, itm, aleFieldSetting);
                         }
                     }
                     else
@@ -216,6 +229,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                     foreach (var itm in this.m_dataConfigurationSections)
                     {
                         itm.ReadonlyConnectionString = itm.ReadWriteConnectionString = "main";
+                        this.SetAleConfigurationSettings(configuration, itm, aleFieldSetting);
                     }
                 }
 
@@ -242,6 +256,28 @@ namespace SanteDB.Client.Disconnected.Configuration
 
             this.m_configuration = null;
             return true;
+        }
+
+        /// <summary>
+        /// Update extended configuration options
+        /// </summary>
+        private void SetAleConfigurationSettings(SanteDBConfiguration configuration, OrmConfigurationBase configurationSection, JObject aleFieldSetting)
+        {
+
+            if (aleFieldSetting?.Value<bool>(ALE_ENABLED_SETTING) == true && configuration.ProtectedSectionKey != null)
+            {
+                configurationSection.AleConfiguration = new OrmAleConfiguration()
+                {
+                    AleEnabled = true,
+                    EnableFields = (aleFieldSetting?.GetValue(ALE_FIELDS_SETTING) as JArray).Select(o => new OrmFieldConfiguration()
+                    {
+                        Mode = OrmAleMode.Deterministic,
+                        Name = o.Value<String>()
+                    }).ToList(),
+                    Certificate = configuration.ProtectedSectionKey
+                };
+            }
+
         }
     }
 }

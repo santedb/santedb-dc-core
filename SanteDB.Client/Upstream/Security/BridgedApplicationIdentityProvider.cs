@@ -56,6 +56,17 @@ namespace SanteDB.Client.Upstream.Security
             this.m_upstreamApplicationIdentityProvider = upstreamApplicationIdentityProivder.UpstreamProvider;
             this.m_localizationService = localizationService;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>().Credentials.Find(o => o.CredentialType == UpstreamCredentialType.Application);
+
+            // Attempt to get the local record for this client and update if required
+            this.m_tracer.TraceInfo("Initializing local application credential...");
+            if(this.m_localApplicationIdentityProvider.GetIdentity(this.m_configuration.CredentialName) == null)
+            {
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    var sid = this.m_upstreamApplicationIdentityProvider.GetSid(this.m_configuration.CredentialName);
+                    this.m_localApplicationIdentityProvider.CreateIdentity(this.m_configuration.CredentialName, this.m_configuration.CredentialSecret, AuthenticationContext.SystemPrincipal, sid);
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -180,7 +191,7 @@ namespace SanteDB.Client.Upstream.Security
             IPrincipal result = null;
             try
             {
-                if (this.ShouldDoRemoteAuthentication(applicationName))
+                if (this.ShouldDoRemoteAuthentication(applicationName) && (authenticationUnder == null || authenticationUnder is ITokenPrincipal)) // Only token principals can auth upstream so don't bother 
                 {
                     try
                     {
@@ -243,9 +254,9 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IApplicationIdentity CreateIdentity(string applicationName, string password, IPrincipal principal)
+        public IApplicationIdentity CreateIdentity(string applicationName, string password, IPrincipal principal, Guid? withSid = null)
         {
-            var localIdentity = this.m_localApplicationIdentityProvider.CreateIdentity(applicationName, password, principal);
+            var localIdentity = this.m_localApplicationIdentityProvider.CreateIdentity(applicationName, password, principal, withSid);
             this.m_localApplicationIdentityProvider.AddClaim(applicationName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
             return this.m_localApplicationIdentityProvider.GetIdentity(applicationName);
         }
@@ -273,7 +284,6 @@ namespace SanteDB.Client.Upstream.Security
                 this.m_upstreamApplicationIdentityProvider.GetIdentity(sid);
         }
 
-       
         /// <inheritdoc/>
         public Guid GetSid(string name)
         {

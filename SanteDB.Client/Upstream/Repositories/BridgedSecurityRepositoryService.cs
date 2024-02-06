@@ -1,4 +1,5 @@
 ﻿using SanteDB.Client.Exceptions;
+using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
@@ -32,6 +33,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IApplicationIdentityProviderService m_localApplicationProvider;
         private readonly IDeviceIdentityProviderService m_localDeviceProvider;
         private readonly ILocalizationService m_localizationService;
+        private readonly IRoleProviderService m_localRoleProvider;
         private readonly IRepositoryService<ApplicationEntity> m_localApplicationEntityProvider;
         private readonly IRepositoryService<DeviceEntity> m_localDeviceEntityProvider;
         
@@ -44,6 +46,7 @@ namespace SanteDB.Client.Upstream.Repositories
             IUpstreamServiceProvider<ISecurityRepositoryService> upstreamSecurityRepository,
             ILocalServiceProvider<IIdentityProviderService> localIdentityProvider,
             ILocalServiceProvider<IApplicationIdentityProviderService> localApplicationProvider,
+            ILocalServiceProvider<IRoleProviderService> localRoleProvider,
             ILocalServiceProvider<IDeviceIdentityProviderService> localDeviceProvider,
             ILocalServiceProvider<IRepositoryService<ApplicationEntity>> localApplicationEntityProvider,
             ILocalServiceProvider<IRepositoryService<DeviceEntity>> localDeviceEntityProvider,
@@ -57,6 +60,7 @@ namespace SanteDB.Client.Upstream.Repositories
             this.m_localApplicationProvider = localApplicationProvider.LocalProvider;
             this.m_localDeviceProvider = localDeviceProvider.LocalProvider;
             this.m_localizationService = localizationService;
+            this.m_localRoleProvider = localRoleProvider.LocalProvider;
             this.m_localApplicationEntityProvider = localApplicationEntityProvider.LocalProvider;
             this.m_localDeviceEntityProvider = localDeviceEntityProvider.LocalProvider;
         }
@@ -66,7 +70,8 @@ namespace SanteDB.Client.Upstream.Repositories
         /// </summary>
         private bool IsLocalUser(string userName)
         {
-            return this.m_localIdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
+            return this.m_localRoleProvider.IsUserInRole(userName, SanteDBConstants.LocalUserGroupName) ||
+                this.m_localIdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
         }
 
         /// <summary>
@@ -103,7 +108,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 return this.m_localSecurityRepository.ChangePassword(userId, password);
             }
-            else if (!this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            else if (!this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) || !this.HasUpstreamAuthContext())
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.CONNECTION_REQUIRED));
             }
@@ -118,7 +123,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public IQueryResultSet<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query)
         {
             var localProvenance = this.m_localSecurityRepository.FindProvenance(query);
-            if (this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            if (this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) && this.HasUpstreamAuthContext())
             {
                 localProvenance = localProvenance.Union(this.m_upstreamSecurityRepository.FindProvenance(query));
             }
@@ -128,7 +133,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityApplication GetApplication(string applicationName)
         {
-            if (this.IsLocalApplication(applicationName))
+            if (this.IsLocalApplication(applicationName) || !this.HasUpstreamAuthContext())
             {
                 return this.m_localSecurityRepository.GetApplication(applicationName);
             }
@@ -141,7 +146,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityApplication GetApplication(IIdentity identity)
         {
-            if (this.IsLocalApplication(identity.Name))
+            if (this.IsLocalApplication(identity.Name) || !this.HasUpstreamAuthContext())
             {
                 return this.m_localSecurityRepository.GetApplication(identity);
             }
@@ -154,7 +159,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityDevice GetDevice(string deviceName)
         {
-            if (this.IsLocalDevice(deviceName))
+            if (this.IsLocalDevice(deviceName) || !this.HasUpstreamAuthContext())
             {
                 return this.m_localSecurityRepository.GetDevice(deviceName);
             }
@@ -167,7 +172,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityDevice GetDevice(IIdentity identity)
         {
-            if (this.IsLocalDevice(identity.Name))
+            if (this.IsLocalDevice(identity.Name) || !this.HasUpstreamAuthContext())
             {
                 return this.m_localSecurityRepository.GetDevice(identity);
             }
@@ -180,7 +185,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityPolicy GetPolicy(string policyOid)
         {
-            if (this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            if (this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) && this.HasUpstreamAuthContext())
             {
                 return this.m_upstreamSecurityRepository.GetPolicy(policyOid);
             }
@@ -204,7 +209,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 return this.m_localSecurityRepository.GetProviderEntity(identity);
             }
-            else if (this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.HealthDataService))
+            else if (this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.HealthDataService) && this.HasUpstreamAuthContext())
             {
                 return this.m_upstreamSecurityRepository.GetProviderEntity(identity);
             }
@@ -218,7 +223,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public SecurityRole GetRole(string roleName)
         {
             var role = this.m_localSecurityRepository.GetRole(roleName);
-            if (role == null && this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            if (role == null && this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) && this.HasUpstreamAuthContext())
             {
                 role = this.m_upstreamSecurityRepository.GetRole(roleName);
             }
@@ -228,7 +233,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityEntity GetSecurityEntity(IPrincipal principal)
         {
-            var upstreamAvailable = this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService);
+            var upstreamAvailable = this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) && this.HasUpstreamAuthContext();
             switch (principal.Identity)
             {
                 case IDeviceIdentity idi:
@@ -266,7 +271,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public Entity GetCdrEntity(IPrincipal principal)
         {
-            var upstreamAvailable = this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.HealthDataService);
+            var upstreamAvailable = this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.HealthDataService) && this.HasUpstreamAuthContext();
             if (this.IsLocalApplication(principal.Identity.Name) || this.IsLocalDevice(principal.Identity.Name) || this.IsLocalUser(principal.Identity.Name) || !upstreamAvailable)
             {
                 switch (principal.Identity)
@@ -306,7 +311,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public SecurityUser GetUser(string userName)
         {
-            if (this.IsLocalUser(userName) || !this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            if (this.IsLocalUser(userName) || !this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) || !this.HasUpstreamAuthContext())
             {
                 return this.m_localSecurityRepository.GetUser(userName);
             }
@@ -322,7 +327,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public UserEntity GetUserEntity(IIdentity identity)
         {
-            if (this.IsLocalUser(identity.Name) || !this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.HealthDataService))
+            if (this.IsLocalUser(identity.Name) || !this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.HealthDataService) || !this.HasUpstreamAuthContext())
             {
                 return this.m_localSecurityRepository.GetUserEntity(identity);
             }
@@ -357,7 +362,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public string ResolveName(Guid sid)
         {
             var resolved = this.m_localSecurityRepository.ResolveName(sid);
-            if (resolved == null && this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            if (resolved == null && this.IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) && this.HasUpstreamAuthContext())
             {
                 resolved = this.m_upstreamSecurityRepository.ResolveName(sid);
             }
