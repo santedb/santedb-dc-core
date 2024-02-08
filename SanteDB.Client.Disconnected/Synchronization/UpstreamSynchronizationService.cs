@@ -25,6 +25,7 @@ using SanteDB.Client.Exceptions;
 using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Client.UserInterface;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -84,6 +85,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly IPatchService _PatchService;
         private readonly ISynchronizationLogService _SynchronizationLogService;
         private readonly ISynchronizationQueueManager _QueueManager;
+        private readonly IUserInterfaceInteractionProvider _UserInterfaceInteractionProvider;
         private readonly IJobManagerService _JobManager;
         private readonly IJobStateManagerService _JobStateManager;
         private readonly IJobScheduleManager _jobScheduleManager;
@@ -146,6 +148,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
             IPatchService patchService,
+            IUserInterfaceInteractionProvider userInterfaceInteractionProvider,
             IAuditService auditService,
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
@@ -158,6 +161,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._PatchService = patchService;
             this._SynchronizationLogService = synchronizationLogService;
             this._QueueManager = queueManager;
+            this._UserInterfaceInteractionProvider = userInterfaceInteractionProvider;
             this._JobManager = jobManagerService;
             this._JobStateManager = jobStateManagerService;
             this._jobScheduleManager = jobScheduleManager;
@@ -320,13 +324,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private static void FixupEntity(IdentifiedData item)
         {
-            if (item is NonVersionedEntityData nved)
+            if(item is IVersionedData ivd)
             {
-                nved.UpdatedBy = null;
-                nved.UpdatedTime = null;
-                nved.UpdatedByKey = null;
-                nved.UpdatedTimeXml = null;
-                nved.CreationTimeXml = null;
+                //ivd.VersionSequence = null;
+                //ivd.PreviousVersionKey = null; // previous version won't exist 
             }
         }
 
@@ -513,7 +514,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             {
                                 try
                                 {
-                                    persistenceService.Insert(itm);
+                                    if (persistenceService.Get(itm.Key.Value) != null)
+                                    {
+                                        persistenceService.Update(itm);
+                                    }
+                                    else
+                                    {
+                                        persistenceService.Insert(itm);
+                                    }
                                 }
                                 catch (Exception e)
                                 {
@@ -762,6 +770,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             try
             {
+                _ThreadPool.QueueUserWorkItem(this.RunInboundMessagePump);
                 if (this.IsSynchronizing)
                 {
                     _Tracer.TraceInfo("Will ignore Pull request since synchronization is already occurring");
@@ -861,6 +870,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 _Tracer.TraceVerbose($"Instantiating {nameof(ISynchronizationJob)} instances and configuring schedule.");
 
+                // Check if there are conflicts and ask the user if they'd like us to reprocess them?
+                if(_QueueManager.GetDeadletter().Count() > 0 && _UserInterfaceInteractionProvider.Confirm(_LocalizationService.GetString(UserMessageStrings.RESUBMIT_DEADLETTER_QUEUE)))
+                {
+                    var deadLetterQueue = _QueueManager.GetDeadletter();
+                    foreach(var message in deadLetterQueue.Query(o=>true).OfType<ISynchronizationDeadLetterQueueEntry>()) { 
+                        message.OriginalQueue.Enqueue(message, "RETRY");
+                        deadLetterQueue.Delete(message.Id);
+                    }
+                }
                 // Start for pull
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
                 this.SubscribeToEvents();

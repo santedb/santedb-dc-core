@@ -294,7 +294,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public IPrincipal ReAuthenticate(IPrincipal principal)
         {
-            if (principal is ITokenPrincipal || this.ShouldDoRemoteAuthentication(principal.Identity.Name)) // It is upstream so we have to do upstream
+            if (principal is ITokenPrincipal) // It is upstream so we have to do upstream
             {
                 var result = this.m_upstreamIdentityProvider.ReAuthenticate(principal);
                 this.SynchronizeIdentity(result as IClaimsPrincipal, null);
