@@ -116,7 +116,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
                 catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
-                    _JobStateManager.SetState(this, JobStateType.Aborted);
+                    _JobStateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                     _JobStateManager.SetProgress(this, ex.Message, 0f);
 
                     //TODO: Do we still need local notifications (tickles)?

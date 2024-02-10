@@ -341,7 +341,7 @@ namespace SanteDB.Client.Upstream.Management
 
         /// <inheritdoc/>
         /// <exception cref="NotSupportedException">This method is not supported</exception>
-        public void SetState(IJob job, JobStateType state)
+        public void SetState(IJob job, JobStateType state, string statusText = null)
         {
             throw new NotSupportedException();
         }

@@ -116,7 +116,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
                 _Tracer.TraceError("Error running Synchronization Job: {0}", ex);
-                _JobStateManager.SetState(this, JobStateType.Aborted);
+                _JobStateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
             }
         }
     }

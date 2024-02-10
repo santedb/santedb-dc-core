@@ -106,7 +106,7 @@ namespace SanteDB.Client.Backup
             catch (Exception ex)
             {
                 m_tracer.TraceError("Error running backup job: {0}", ex.ToHumanReadableString());
-                m_jobStateManager.SetState(this, JobStateType.Aborted);
+                m_jobStateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                 m_tickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Danger, m_localizationService.GetString(UserMessageStrings.BACKUP_ERROR, new { error = ex.ToHumanReadableString() })));
             }
         }

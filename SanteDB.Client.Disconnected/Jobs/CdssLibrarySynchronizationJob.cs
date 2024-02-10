@@ -147,9 +147,9 @@ namespace SanteDB.Client.Disconnected.Jobs
             }
             catch(Exception ex)
             {
-                this.m_jobStateManagerService.SetState(this, JobStateType.Aborted);
+                this.m_jobStateManagerService.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                 this.m_jobStateManagerService.SetProgress(this, ex.Message, 0.0f);
-                this.m_tracer.TraceError("Error executing job {0} - {1}", nameof(CdssLibrarySynchronizationJob), ex.ToHumanReadableString());
+                this.m_tracer.TraceError("Error executing job {0} - {1}", nameof(CdssLibrarySynchronizationJob), ex);
             }
         }
     }
