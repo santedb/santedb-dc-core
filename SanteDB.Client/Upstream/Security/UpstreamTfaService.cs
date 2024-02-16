@@ -20,6 +20,7 @@
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
@@ -57,10 +58,33 @@ namespace SanteDB.Client.Upstream.Security
             }
 
             /// <inheritdoc/>
+            public SanteDBHostType[] HostTypes => new SanteDBHostType[] {
+                SanteDBHostType.Client, SanteDBHostType.Debugger, SanteDBHostType.Gateway, SanteDBHostType.Other, SanteDBHostType.Test
+            };
+
+            /// <inheritdoc/>
             public Guid Id => this.m_mechanismInfo.Id;
 
             /// <inheritdoc/>
             public string Name => this.m_mechanismInfo.Name;
+
+            /// <inheritdoc/>
+            public TfaMechanismClassification Classification => this.m_mechanismInfo.Classification;
+
+            /// <inheritdoc/>
+            public string SetupHelpText => this.m_mechanismInfo.HelpText;
+
+            /// <inheritdoc/>
+            public string BeginSetup(IIdentity user)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <inheritdoc/>
+            public bool EndSetup(IIdentity user, string verificationCode)
+            {
+                throw new NotImplementedException();
+            }
 
             /// <inheritdoc/>
             public string Send(IIdentity user)

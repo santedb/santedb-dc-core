@@ -131,22 +131,25 @@ namespace SanteDB.Client.Upstream.Security
                 var localUserRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityUser>>();
 
                 // Get the user identity 
-                var userIdentity = remoteIdentity.Identities.FirstOrDefault(o=>o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.HumanUser.ToString());
+                var userIdentity = remoteIdentity.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.HumanUser.ToString());
                 if (userIdentity == null)
                 {
                     throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(SynchronizeIdentity)));
                 }
 
                 // Create local identity 
-                var localUser = localUserRepository.Find(o=>o.UserName.ToLowerInvariant() == userIdentity.Name.ToLowerInvariant() && o.ObsoletionTime == null).FirstOrDefault();
+                var localUser = localUserRepository.Find(o => o.UserName.ToLowerInvariant() == userIdentity.Name.ToLowerInvariant() && o.ObsoletionTime == null).FirstOrDefault();
+                var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
                 if (localUser == null) // create the user with the same SID
                 {
-                    var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
                     upstreamUserInfo.Password = password;
-                    
                     localUser = localUserRepository.Insert(upstreamUserInfo);
                 }
-                
+                else
+                {
+                    localUser = localUserRepository.Save(upstreamUserInfo);
+                }
+
                 if (!String.IsNullOrEmpty(password))
                 {
                     this.m_localIdentityProvider.ChangePassword(userIdentity.Name, password, remoteIdentity, true);
@@ -158,7 +161,7 @@ namespace SanteDB.Client.Upstream.Security
                 // Remove all roles for the local user
                 this.m_localRoleProvider.RemoveUsersFromRoles(new string[] { userIdentity.Name }, localRoles, AuthenticationContext.SystemPrincipal);
                 var upstreamUserRoles = userIdentity.FindAll(SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray();
-                
+
                 // We want to prevent there from being multiple users with multiple roles all hitting the role provider
                 lock (this.m_lockObject)
                 {
@@ -268,7 +271,7 @@ namespace SanteDB.Client.Upstream.Security
                     {
                         result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
                     }
-                    catch(TimeoutException)
+                    catch (TimeoutException)
                     {
                         result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
                     }
@@ -327,7 +330,7 @@ namespace SanteDB.Client.Upstream.Security
         public void DeleteIdentity(string userName, IPrincipal principal)
         {
             this.m_localIdentityProvider.DeleteIdentity(userName, principal);
-            if(!this.IsLocalIdentity(userName))
+            if (!this.IsLocalIdentity(userName))
             {
                 this.m_tracer.TraceWarning("Identity {0} only deleted on loca device", userName);
             }
@@ -382,7 +385,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public AuthenticationMethod GetAuthenticationMethods(string userName)
         {
-            if(this.IsLocalIdentity(userName))
+            if (this.IsLocalIdentity(userName))
             {
                 return AuthenticationMethod.Local;
             }
@@ -395,7 +398,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret)
         {
-            if(this.ShouldDoRemoteAuthentication(userName))
+            if (this.ShouldDoRemoteAuthentication(userName))
             {
                 return this.m_upstreamChallenge.Authenticate(userName, challengeKey, response, tfaSecret);
             }

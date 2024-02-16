@@ -267,14 +267,14 @@ namespace SanteDB.Client.Upstream.Management
                         else if (!String.IsNullOrEmpty(options?.IfNoneMatch))
                             e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = options?.IfNoneMatch;
 
-                        if (options.IncludeRelatedInformation)
+                        if (options?.IncludeRelatedInformation == true)
                         {
                             e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.IncludeRelatedObjectsHeader, "true");
                         }
                     };
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
 
-                    if (options.Timeout.HasValue)
+                    if (options?.Timeout.HasValue == true)
                     {
                         client.SetTimeout(options.Timeout.Value);
                     }
@@ -383,7 +383,7 @@ namespace SanteDB.Client.Upstream.Management
         }
 
         /// <inheritdoc/>
-        public void Update(IdentifiedData data, bool forceUpdate = false)
+        public void Update(IdentifiedData data, bool forceUpdate = false, bool autoResolveConflict = false)
         {
             if(data == null)
             {
@@ -428,7 +428,7 @@ namespace SanteDB.Client.Upstream.Management
                             newVersionId = this.ExtractVersionFromPatchResult(client.Patch($"{patch.AppliesTo.Type.GetSerializationName()}/{patch.AppliesTo.Key}", patch.AppliesTo.Tag, patch));
                         }
                         // DETECT CONDITION: Server rejects the patch because there is a conflict (i.e. server copy is not the expected version to apply patch)
-                        catch (WebException e) when (e.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.Conflict)
+                        catch (WebException e) when (e.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.Conflict && autoResolveConflict)
                         {
                             this.m_tracer.TraceWarning("Server indicates conflict condition - will attempt to resolve patch automatically - {0}", e.ToHumanReadableString());
                             // Attempt to get the server copy, create a new patch from our object, and then re-submit 
@@ -460,7 +460,7 @@ namespace SanteDB.Client.Upstream.Management
                             }
                         }
                         // DETECT CONDITION: Server rejects the patch because it does not know about the object - resubmit the object
-                        catch (WebException e) when (e.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.NotFound)
+                        catch (WebException e) when (e.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.NotFound && autoResolveConflict)
                         {
                             this.m_tracer.TraceWarning("Server indicates not found on update - will resubmit original object in create mode- {0}", e.ToHumanReadableString());
                             var localObject = dataPersistenceService.Get(patch.AppliesTo.Key.Value) as IdentifiedData;
@@ -490,17 +490,47 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     else // Regular object
                     {
-                        if (data is IVersionedData ivd && !forceUpdate) // Use the tag to ensure the server does not have this version of the data
+                        IdentifiedData serverResponse = null;
+                        try
                         {
-                            client.Requesting += (o, e) => e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{data.Type}.{ivd.PreviousVersionKey}");
-                        }
+                            var focalData = data is Bundle bunde && bunde.FocalObjects.Count == 1 ? bunde.GetFocalItems().First() : data;
+                            if (!forceUpdate) // Use the tag to ensure the server does not have this version of the data
+                            {
+                                client.Requesting += (o, e) =>
+                                {
+                                    if (focalData is IVersionedData ivd && ivd.PreviousVersionKey.HasValue)
+                                    {
+                                        e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{data.Type}.{ivd.PreviousVersionKey}");
+                                    }
+                                };
+                            }
 
-                        var serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                            serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                        }
+                        catch (WebException we) when (we.Response is HttpWebResponse hwr && hwr.StatusCode == HttpStatusCode.Conflict)
+                        {
+                            // Attempt to fetch the current object (if we can) and see if it is just a version mismatch on our update - i.e. no conflicts
+                            if (!(data is Bundle))
+                            {
+                                var serverCopy = this.Get(data.GetType(), data.Key.Value, null);
+                                patch = this.m_patchService.Diff(serverCopy, data);
+                                if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
+                                {
+                                    data.CopyObjectData(this.m_patchService.Patch(patch, serverCopy, true));
+                                    if(data is IVersionedData ivd)
+                                    {
+                                        ivd.PreviousVersionKey = null;
+                                    }
+                                    serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                                }
+                            }
+                        }
                         this.UpdateToServerCopy(serverResponse, data);
                         this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, serverResponse));
                     }
                 }
             }
+           
             catch(Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.Type }), e);

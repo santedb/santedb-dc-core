@@ -12,6 +12,43 @@ namespace SanteDB.Client
     /// </summary>
     public static class Extensions
     {
+
+        /// <summary>
+        /// Determines if <paramref name="exception"/> represents an HTTP error condition
+        /// </summary>
+        /// <param name="exception">The exception which is to be checked</param>
+        /// <param name="statusCode">The status code if the <paramref name="exception"/> is a <see cref="WebException"/></param>
+        /// <returns>True if <paramref name="exception"/> is an <see cref="WebException"/></returns>
+        public static bool IsHttpException(this Exception exception, out HttpStatusCode statusCode)
+        {
+            while (exception != null)
+            {
+                if(exception is WebException we && we.Response is HttpWebResponse hwr)
+                {
+                    statusCode = hwr.StatusCode;
+                    return true;
+                }
+                exception = exception.InnerException;
+            }
+            statusCode = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Iterates through the exception causes and returns true if any exception in the hierarchy is a <see cref="TimeoutException"/>
+        /// </summary>
+        /// <param name="exception">The exception to check</param>
+        /// <returns>True if any exception is an instance of <see cref="TimeoutException"/></returns>
+        public static bool IsTimeoutException(this Exception exception)
+        {
+            while(exception != null)
+            {
+                if (exception is TimeoutException) return true;
+                exception = exception.InnerException;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Will iterate through the <paramref name="exception"/> and determine whether the exception was caused by a communication/network issue
         /// </summary>

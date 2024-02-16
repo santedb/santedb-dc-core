@@ -68,6 +68,10 @@
   
     <PackageReference Include="System.Text.Json" Version="7.0.3" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
+  </ItemGroup>
   <PropertyGroup>
     <PackageId>SanteDB.Client</PackageId>
     <Title>SanteDB.Client</Title>

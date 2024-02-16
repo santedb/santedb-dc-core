@@ -41,10 +41,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         public bool BigBundles { get; set; }
 
         /// <summary>
-        /// True if automatic merging should occur on the server and client
+        /// True if automatic merging should occur on the server and client without the user's interaction
         /// </summary>
         [XmlAttribute("overwriteServer"), JsonProperty("overwriteServer")]
         public bool OverwriteServer { get; set; }
+
+        /// <summary>
+        /// True if the system should try to automatically update conflicts (this will increase bandwidth use but reduces the number of 
+        /// conflicts in the dead letter queue due to version UUID mismatches)
+        /// </summary>
+        [XmlAttribute("autoRetry"), JsonProperty("autoRetry")]
+        public bool AutomaticRetry { get; set; }
 
         /// <summary>
         /// Use patches instead of updates

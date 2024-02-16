@@ -93,16 +93,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 },
                 (data, ex) =>
                 {
+                    var dlqueue = messagepump.GetDeadLetterQueue();
+                    if (null == dlqueue)
+                    {
+                        return SynchronizationMessagePump.Unhandled;
+                    }
+
                     // If the exception indicates a connection error to the server - we don't want to dead-letter them - just leave them be in the queue
                     if (!ex.IsCommunicationException())
                     {
-
-                        var dlqueue = messagepump.GetDeadLetterQueue();
-                        if (null == dlqueue)
-                        {
-                            return SynchronizationMessagePump.Unhandled;
-                        }
-
                         dlqueue.Enqueue(data, ex.ToHumanReadableString());
                         return SynchronizationMessagePump.Handled;
 
