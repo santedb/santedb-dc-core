@@ -71,12 +71,12 @@ namespace SanteDB.Client.UserInterface.Impl
                 };
             }
 
-            var settingsDictionary = extension?.ExtensionValue as IDictionary ?? new Dictionary<String, object>();
+            var settingsDictionary = extension?.ExtensionValue as JObject ?? new JObject();
 
             // Add settings to dictionary
             foreach(var itm in settings)
             {
-                if(settingsDictionary.Contains(itm.Key))
+                if(settingsDictionary.ContainsKey(itm.Key))
                 {
                     settingsDictionary[itm.Key] = itm.Value;
                 }

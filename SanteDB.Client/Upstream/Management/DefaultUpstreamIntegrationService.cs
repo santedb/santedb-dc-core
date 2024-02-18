@@ -606,6 +606,10 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private Guid GetUpstreamTemplateKey(TemplateDefinition template)
         {
+            if(template == null)
+            {
+                return Guid.Empty;
+            }
             using (AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
             {
                 using (var client = new HdsiServiceClient(this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService)))
