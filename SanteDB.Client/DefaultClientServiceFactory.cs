@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Client.Upstream.Management;
+using SanteDB.Client.UserInterface.Impl;
 using SanteDB.Core.Applets.Services.Impl;
 using SanteDB.Core.Diagnostics.Tracing;
 using SanteDB.Core.Services;
@@ -34,6 +35,7 @@ namespace SanteDB.Client
     {
         private readonly Type[] m_serviceTypes = new Type[]
         {
+            typeof(DefaultUserPreferenceManager),
             typeof(DefaultUpstreamManagementService),
             typeof(DefaultUpstreamAvailabilityProvider),
             typeof(DefaultUpstreamIntegrationService),
