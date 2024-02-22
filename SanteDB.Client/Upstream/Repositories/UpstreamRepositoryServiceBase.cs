@@ -120,6 +120,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public virtual IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query)
         {
+            // Determine if we have a result already?
             return new UpstreamQueryResultSet<TModel, TWireFormat, TCollection>(this.CreateRestClient(this.m_endpoint, AuthenticationContext.Current.Principal), query, this.MapFromWire);
         }
 
