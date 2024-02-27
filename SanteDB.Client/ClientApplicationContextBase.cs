@@ -25,6 +25,7 @@ using SanteDB.Core.Data;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
@@ -133,23 +134,26 @@ namespace SanteDB.Client
         /// </remarks>
         private void AutoRestoreEnvironment()
         {
-            var backupServiceManager = this.GetService<IBackupService>();
-            var configurationManager = this.GetService<IConfigurationManager>();
-            var uiInteraction = this.GetService<IUserInterfaceInteractionProvider>();
-            if (configurationManager is InitialConfigurationManager &&
-                backupServiceManager?.HasBackup(BackupMedia.Public) == true &&
-                uiInteraction?.Confirm(UserMessages.AUTO_RESTORE_BACKUP_CONFIGURATION_PROMPT) == true)
+            using (AuthenticationContext.EnterSystemContext())
             {
-                try
+                var backupServiceManager = this.GetService<IBackupService>();
+                var configurationManager = this.GetService<IConfigurationManager>();
+                var uiInteraction = this.GetService<IUserInterfaceInteractionProvider>();
+                if (configurationManager is InitialConfigurationManager &&
+                    backupServiceManager?.HasBackup(BackupMedia.Public) == true &&
+                    uiInteraction?.Confirm(UserMessages.AUTO_RESTORE_BACKUP_CONFIGURATION_PROMPT) == true)
                 {
-                    var backupDescriptor = backupServiceManager.GetBackupDescriptors(BackupMedia.Public).OrderByDescending(o => o.Timestamp).First();
-                    string backupSecret = backupDescriptor.IsEnrypted ? uiInteraction.Prompt(UserMessages.AUTO_RESTORE_BACKUP_SECRET, true) : null;
-                    backupServiceManager.Restore(BackupMedia.Public, backupDescriptor.Label, backupSecret);
-                    this.OnRestartRequested(this);
-                }
-                catch(Exception e)
-                {
-                    uiInteraction.Alert(e.ToHumanReadableString());
+                    try
+                    {
+                        var backupDescriptor = backupServiceManager.GetBackupDescriptors(BackupMedia.Public).OrderByDescending(o => o.Timestamp).First();
+                        string backupSecret = backupDescriptor.IsEnrypted ? uiInteraction.Prompt(UserMessages.AUTO_RESTORE_BACKUP_SECRET, true) : null;
+                        backupServiceManager.Restore(BackupMedia.Public, backupDescriptor.Label, backupSecret);
+                        this.OnRestartRequested(this);
+                    }
+                    catch (Exception e)
+                    {
+                        uiInteraction.Alert(e.ToHumanReadableString());
+                    }
                 }
             }
 

@@ -103,6 +103,14 @@ namespace SanteDB.Client.Upstream.Repositories
             }
             else if (!this.IsUpstreamConfigured)
             {
+                // Is this the system principal? If so - we will allow system to do anything prior to configuration
+                if(securable == AuthenticationContext.SystemPrincipal)
+                {
+                    return typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                        .Select(o=>new UpstreamPolicyInstance(securable, new SecurityPolicy(o.Name, (string)o.GetValue(null), false, false), PolicyGrantType.Grant))
+                        .ToArray();
+                }
+
                 this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
                 return new IPolicyInstance[0];
             }
@@ -180,8 +188,10 @@ namespace SanteDB.Client.Upstream.Repositories
         {
             if (!this.IsUpstreamConfigured)
             {
-                this.m_tracer.TraceWarning("Upstream is not conifgured - skipping policy check");
-                return new IPolicy[0];
+                this.m_tracer.TraceWarning("Upstream is not conifgured - returning default list for policy check");
+                return typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                        .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false))
+                        .ToArray();
             }
 
             try

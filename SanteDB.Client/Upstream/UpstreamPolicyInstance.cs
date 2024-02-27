@@ -34,7 +34,7 @@ namespace SanteDB.Client.Upstream
         /// </summary>
         public UpstreamPolicyInstance(object securable, SecurityPolicy policy, PolicyGrantType grant)
         {
-            this.Policy = new GenericPolicy(policy.Key.Value, policy.Oid, policy.Name, policy.CanOverride);
+            this.Policy = new GenericPolicy(policy.Key.GetValueOrDefault(), policy.Oid, policy.Name, policy.CanOverride);
             this.Securable = securable;
             this.Rule = grant;
         }

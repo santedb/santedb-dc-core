@@ -192,7 +192,7 @@ namespace SanteDB.Client.Upstream.Repositories
 
             var cacheKey = $"{typeof(TModel).GetSerializationName()}.qry.{parameters.ToHttpString()}";
             TModel[] cacheResult = null;
-            if (this.m_cacheService?.TryGet<TModel[]>(cacheKey, out cacheResult) == true)
+            if (this.m_cacheService?.TryGet(cacheKey, out cacheResult) == true)
             {
                 foreach (var itm in cacheResult)
                 {
