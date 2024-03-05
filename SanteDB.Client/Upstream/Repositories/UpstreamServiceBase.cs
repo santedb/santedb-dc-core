@@ -112,12 +112,12 @@ namespace SanteDB.Client.Upstream.Repositories
             var client = this.m_restClientFactory.GetRestClientFor(serviceEndpointType);
             authenticatedAs = authenticatedAs ?? AuthenticationContext.Current.Principal;
 
-            if((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
+            if ((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
                 AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal) && this.m_upstreamIntegrationService != null)
             {
                 client.Credentials = new UpstreamPrincipalCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
             }
-            else 
+            else
             {
                 client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
             }

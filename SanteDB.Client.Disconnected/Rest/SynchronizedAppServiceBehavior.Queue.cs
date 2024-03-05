@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using DocumentFormat.OpenXml.Packaging;
 using RestSrvr;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Disconnected.Rest.Model;
@@ -132,7 +131,8 @@ namespace SanteDB.Client.Disconnected.Rest
         [Demand(PermissionPolicyIdentifiers.ReadClinicalData)]
         public Patch GetQueueConflict(ParameterCollection parameters)
         {
-            if (parameters.TryGet(IdParameterName, out int id)) {
+            if (parameters.TryGet(IdParameterName, out int id))
+            {
                 (var queueversion, var dbversion, _, _) = GetQueueConflictInternal(id);
 
                 return m_patchService?.Diff(dbversion, queueversion);
@@ -235,7 +235,7 @@ namespace SanteDB.Client.Disconnected.Rest
                 item.OriginalQueue?.Enqueue(item, "RETRY");
                 queue.Delete(id); // remove from DL
             }
-            else if(parameters.TryGet("all", out bool all) && all)
+            else if (parameters.TryGet("all", out bool all) && all)
             {
                 var queue = GetQueueByName(DeadletterQueueName);
                 foreach (var item in queue.Query(o => true).OfType<ISynchronizationDeadLetterQueueEntry>())

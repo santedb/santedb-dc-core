@@ -43,7 +43,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <summary>
         /// Represents queues that are for administrative non-primary messages
         /// </summary>
-        LowPriority= 0x8,
+        LowPriority = 0x8,
         /// <summary>
         /// The queue is both for inbound and outbound 
         /// </summary>

@@ -1,9 +1,5 @@
 ﻿using Newtonsoft.Json;
 using SanteDB.Client.Disconnected.Data.Synchronization;
-using SanteDB.Core.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Client.Disconnected.Rest.Model

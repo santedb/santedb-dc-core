@@ -13,7 +13,7 @@ namespace SanteDB.Client.Disconnected.Rest.Model
 
         public SynchronizationQueueInfo()
         {
-            
+
         }
 
         public SynchronizationQueueInfo(ISynchronizationQueue synchronizationQueue)

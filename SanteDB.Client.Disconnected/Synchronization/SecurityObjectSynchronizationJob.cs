@@ -1,6 +1,4 @@
-﻿using SanteDB.Client.Tickles;
-using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Core;
+﻿using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
@@ -8,12 +6,9 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl.Repository;
-using SanteDB.Persistence.Data.Services.Persistence.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -48,7 +43,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly ISecurityChallengeService _LocalSecurityChallengeService;
         readonly IRepositoryService<SecurityApplication> _UpstreamSecurityApplicationRepository;
         readonly IRepositoryService<SecurityApplication> _LocalSecurityApplicationRepository;
-        
+
         /// <summary>
         /// Dependency-Injection Constructor
         /// </summary>
@@ -109,7 +104,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                     GetUpstreamSecurityRolePolicies();
 
-                    
+
 
                     //TODO: Do we still need local notifications (tickles)?
                     _JobStateManager.SetState(this, JobStateType.Completed);
@@ -128,12 +123,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private void GetUpstreamSecurityRolePolicies()
         {
-            var systemroles = new string[] { 
+            var systemroles = new string[] {
                 SanteDBConstants.AdministratorGroupName,
                 SanteDBConstants.AnonymousGroupName,
-                SanteDBConstants.DeviceGroupName, 
+                SanteDBConstants.DeviceGroupName,
                 SanteDBConstants.SystemGroupName,
-                SanteDBConstants.UserGroupName, 
+                SanteDBConstants.UserGroupName,
                 SanteDBConstants.LocalUserGroupName,
                 SanteDBConstants.LocalAdminGroupName,
                 SanteDBConstants.ClinicalStaffGroupName
@@ -189,10 +184,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 foreach (var policy in _UpstreamPolicyInformationService.GetPolicies())
                 {
                     if (null == policy)
+                    {
                         continue;
+                    }
 
                     if (null == _LocalPolicyInformationService.GetPolicy(policy.Oid))
+                    {
                         _LocalPolicyInformationService.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                    }
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
@@ -210,12 +209,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             var applications = _UpstreamSecurityApplicationRepository.Find(_ => true);
 
-            foreach(var application in applications)
+            foreach (var application in applications)
             {
                 try
                 {
                     if (application?.Key.HasValue != true)
+                    {
                         continue;
+                    }
 
                     var localapp = _LocalSecurityApplicationRepository.Get(application.Key.Value);
 
@@ -234,7 +235,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     }
 
                 }
-                catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     _Tracer.TraceWarning("Job {1}: Failed to insert/update Application {0}", application.Name, nameof(SecurityObjectSynchronizationJob));
                 }

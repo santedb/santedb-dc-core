@@ -5,7 +5,6 @@ using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SanteDB.Client.Backup
 {
@@ -55,7 +54,7 @@ namespace SanteDB.Client.Backup
 
             // Configure the backup locations
             var backupConfig = configuration.GetSection<BackupConfigurationSection>();
-            if(backupConfig == null)
+            if (backupConfig == null)
             {
                 backupConfig = configuration.AddSection(new BackupConfigurationSection());
             }

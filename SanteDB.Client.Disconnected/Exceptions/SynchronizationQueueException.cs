@@ -1,7 +1,5 @@
 ﻿using SanteDB.Client.Disconnected.Data.Synchronization;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Exceptions
 {

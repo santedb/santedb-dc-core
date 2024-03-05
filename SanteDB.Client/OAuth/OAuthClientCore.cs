@@ -22,7 +22,6 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using SanteDB.Client.Services;
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
@@ -282,7 +281,9 @@ namespace SanteDB.Client.OAuth
                 var bytes = restclient.Get(jwksEndpoint);
 
                 if (null == bytes)
+                {
                     return null;
+                }
 
                 return Encoding.UTF8.GetString(bytes);
             }, ex =>

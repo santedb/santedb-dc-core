@@ -119,7 +119,7 @@ namespace SanteDB.Client
                     };
                 });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception(ErrorMessages.CANNOT_STARTUP_CONTEXT, ex);
             }

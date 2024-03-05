@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -102,7 +101,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Load parameters 
                 var mode = SubscriptionTriggerType.PeriodicPoll;
                 _ = parameters.Length > 0 && Enum.TryParse<SubscriptionTriggerType>(parameters[0].ToString(), true, out mode);
-                if(parameters.Length > 1 && (parameters[1] is bool includePush || bool.TryParse(parameters[1].ToString(), out includePush)) && includePush)
+                if (parameters.Length > 1 && (parameters[1] is bool includePush || bool.TryParse(parameters[1].ToString(), out includePush)) && includePush)
                 {
                     _Service.Push();
                     _ResetEvent.Wait();

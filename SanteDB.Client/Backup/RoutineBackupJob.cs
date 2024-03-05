@@ -1,7 +1,5 @@
 ﻿using SanteDB.Client.Configuration;
-using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Tickles;
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
@@ -12,7 +10,6 @@ using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Backup
 {

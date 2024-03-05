@@ -18,9 +18,6 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using DocumentFormat.OpenXml.Office2019.Presentation;
-using Hl7.Fhir.Utility;
-using Irony.Parsing;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
@@ -209,9 +206,13 @@ namespace SanteDB.Client.Upstream.Management
                     client.Requesting += (o, e) =>
                     {
                         if (queryControl?.IfModifiedSince.HasValue == true)
+                        {
                             e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = queryControl?.IfModifiedSince.Value.ToString();
+                        }
                         else if (!String.IsNullOrEmpty(queryControl?.IfNoneMatch))
+                        {
                             e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = queryControl?.IfNoneMatch;
+                        }
 
                         if (queryControl.IncludeRelatedInformation)
                         {
@@ -263,9 +264,13 @@ namespace SanteDB.Client.Upstream.Management
                     {
 
                         if (options?.IfModifiedSince.HasValue == true)
+                        {
                             e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = options?.IfModifiedSince.Value.ToString();
+                        }
                         else if (!String.IsNullOrEmpty(options?.IfNoneMatch))
+                        {
                             e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = options?.IfNoneMatch;
+                        }
 
                         if (options?.IncludeRelatedInformation == true)
                         {
@@ -341,14 +346,14 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public void Insert(IdentifiedData data)
         {
-            if(data == null)
+            if (data == null)
             {
                 throw new ArgumentNullException(nameof(data));
             }
 
             try
             {
-                
+
                 if (data is Bundle bdl && !bdl.Item.Any())
                 {
                     return; // no need to send an empty bundle
@@ -369,7 +374,7 @@ namespace SanteDB.Client.Upstream.Management
                     this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, serverResponse));
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.ToString() }), e);
             }
@@ -385,7 +390,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public void Update(IdentifiedData data, bool forceUpdate = false, bool autoResolveConflict = false)
         {
-            if(data == null)
+            if (data == null)
             {
                 throw new ArgumentNullException(nameof(data));
             }
@@ -477,7 +482,7 @@ namespace SanteDB.Client.Upstream.Management
                             throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_PATCH_ERR, new { patch = patch }), e);
                         }
 
-                        if(newVersionId != Guid.Empty)
+                        if (newVersionId != Guid.Empty)
                         {
                             var existing = dataPersistenceService.Get(patch.AppliesTo.Key.Value) as IVersionedData;
                             if (existing != null)
@@ -517,7 +522,7 @@ namespace SanteDB.Client.Upstream.Management
                                 if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
                                 {
                                     data.CopyObjectData(this.m_patchService.Patch(patch, serverCopy, true));
-                                    if(data is IVersionedData ivd)
+                                    if (data is IVersionedData ivd)
                                     {
                                         ivd.PreviousVersionKey = null;
                                     }
@@ -530,8 +535,8 @@ namespace SanteDB.Client.Upstream.Management
                     }
                 }
             }
-           
-            catch(Exception e)
+
+            catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.Type }), e);
             }
@@ -542,11 +547,11 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private Guid ExtractVersionFromPatchResult(string remoteTag)
         {
-            if(remoteTag.Contains("."))
+            if (remoteTag.Contains("."))
             {
                 return Guid.Parse(remoteTag.Split('.')[1]);
             }
-            else if(Guid.TryParse(remoteTag, out var uuid)) 
+            else if (Guid.TryParse(remoteTag, out var uuid))
             {
                 return uuid;
             }
@@ -606,7 +611,7 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private Guid GetUpstreamTemplateKey(TemplateDefinition template)
         {
-            if(template == null)
+            if (template == null)
             {
                 return Guid.Empty;
             }

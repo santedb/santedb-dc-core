@@ -1,5 +1,4 @@
-﻿using ClosedXML.Excel;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Extensions;
 using SanteDB.Core.Model.Constants;
@@ -7,13 +6,8 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SharpCompress;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
 
 namespace SanteDB.Client.UserInterface.Impl
 {
@@ -44,9 +38,9 @@ namespace SanteDB.Client.UserInterface.Impl
             {
                 yield break;
             }
-            else if(extension.ExtensionValue is JObject dict)
+            else if (extension.ExtensionValue is JObject dict)
             {
-                foreach(var itm in dict)
+                foreach (var itm in dict)
                 {
                     yield return new AppSettingKeyValuePair(itm.Key, itm.Value.Value<String>());
                 }
@@ -57,7 +51,7 @@ namespace SanteDB.Client.UserInterface.Impl
         public void SetUserSettings(string forUser, IEnumerable<AppSettingKeyValuePair> settings)
         {
             var extension = this.m_entityExtensionRepository.Find(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension).FirstOrDefault();
-            if(extension == null) // No profile so create one
+            if (extension == null) // No profile so create one
             {
                 var ue = this.m_userEntityRepository.Find(o => o.SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant()).FirstOrDefault() ??
                     this.m_userEntityRepository.Insert(new UserEntity()
@@ -74,9 +68,9 @@ namespace SanteDB.Client.UserInterface.Impl
             var settingsDictionary = extension?.ExtensionValue as JObject ?? new JObject();
 
             // Add settings to dictionary
-            foreach(var itm in settings)
+            foreach (var itm in settings)
             {
-                if(settingsDictionary.ContainsKey(itm.Key))
+                if (settingsDictionary.ContainsKey(itm.Key))
                 {
                     settingsDictionary[itm.Key] = itm.Value;
                 }

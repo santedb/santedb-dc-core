@@ -19,7 +19,6 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Model.Attributes;
-using System;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {

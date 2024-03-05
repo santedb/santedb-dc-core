@@ -213,6 +213,7 @@ namespace SanteDB.Client.Upstream.Management
             public void Cancel()
             {
                 if (this.CanCancel)
+                {
                     try
                     {
                         using (var client = this.m_restClient.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
@@ -225,6 +226,7 @@ namespace SanteDB.Client.Upstream.Management
                     {
                         throw new Exception($"Error canceling job {this.Key}", e);
                     }
+                }
             }
 
             /// <summary>
@@ -467,7 +469,7 @@ namespace SanteDB.Client.Upstream.Management
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
                     var unConfiguredJobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName(), "_unconfigured=true".ParseQueryString()).CollectionItem.OfType<TypeReferenceConfiguration>().ToArray();
-                    return unConfiguredJobs.Select(o => o.Type).Union(this.Jobs.OfType<UpstreamJob>().Select(o => o.JobType));
+                    return unConfiguredJobs.Select(o => o.Type);
                 }
             }
             catch (Exception e)

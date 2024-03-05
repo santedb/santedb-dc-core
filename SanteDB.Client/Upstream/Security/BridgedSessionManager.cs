@@ -1,5 +1,4 @@
 ﻿using SanteDB.Caching.Memory.Session;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
@@ -9,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {

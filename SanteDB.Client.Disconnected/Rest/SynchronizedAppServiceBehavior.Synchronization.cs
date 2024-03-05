@@ -20,7 +20,6 @@
  */
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Security;
 using SanteDB.Rest.Common.Attributes;
 using System;
@@ -50,7 +49,7 @@ namespace SanteDB.Client.Disconnected.Rest
             {
                 m_synchronizationLogService.Delete(entry);
             }
-           
+
         }
 
         [Demand(PermissionPolicyIdentifiers.AccessClientAdministrativeFunction)]

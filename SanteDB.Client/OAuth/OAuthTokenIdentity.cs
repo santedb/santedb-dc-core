@@ -49,7 +49,7 @@ namespace SanteDB.Client.OAuth
             // HACK: The "sub" field from the JWT may contain multiples - the first of the "sub" claims is the focal identity (either device or user) 
             //        that is the "sub" of the primary identity which is this token identity
             var userKeyClaim = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.SecurityId);
-            _Claims = claims.Where(o=>o.Type != SanteDBClaimTypes.SecurityId || o.Type == SanteDBClaimTypes.SecurityId && o.Value == userKeyClaim.Value).ToList(); 
+            _Claims = claims.Where(o => o.Type != SanteDBClaimTypes.SecurityId || o.Type == SanteDBClaimTypes.SecurityId && o.Value == userKeyClaim.Value).ToList();
 
         }
 

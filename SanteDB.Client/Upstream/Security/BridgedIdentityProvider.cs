@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using SanteDB.Client.Exceptions;
+﻿using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -12,13 +11,11 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Rest.OAuth.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {

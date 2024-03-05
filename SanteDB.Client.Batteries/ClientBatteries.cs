@@ -79,8 +79,10 @@ namespace SanteDB.Client.Batteries
                     .ToUpper();
 
                 if (Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
+                {
                     oldPath = oldPath.Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
                     ;
+                }
 
                 try
                 {
@@ -93,7 +95,10 @@ namespace SanteDB.Client.Batteries
 
                         // Copy the config file
                         if (!Directory.Exists(Path.GetDirectoryName(configDirectory)))
+                        {
                             Directory.CreateDirectory(Path.GetDirectoryName(configDirectory));
+                        }
+
                         File.Copy(oldPath, configDirectory);
 
                         var oldDataPath = dataDirectory.Replace(
@@ -103,7 +108,10 @@ namespace SanteDB.Client.Batteries
                             .Replace("SYSTEM32", "SYSWOW64");
 
                         if (Directory.Exists(dataDirectory))
+                        {
                             Directory.Delete(dataDirectory, true);
+                        }
+
                         Directory.Move(oldDataPath, dataDirectory);
                         return true;
                     }
@@ -121,7 +129,9 @@ namespace SanteDB.Client.Batteries
                 }
             }
             else
+            {
                 return false;
+            }
         }
     }
 }

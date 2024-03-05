@@ -104,10 +104,10 @@ namespace SanteDB.Client.Upstream.Repositories
             else if (!this.IsUpstreamConfigured)
             {
                 // Is this the system principal? If so - we will allow system to do anything prior to configuration
-                if(securable == AuthenticationContext.SystemPrincipal)
+                if (securable == AuthenticationContext.SystemPrincipal)
                 {
                     return typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-                        .Select(o=>new UpstreamPolicyInstance(securable, new SecurityPolicy(o.Name, (string)o.GetValue(null), false, false), PolicyGrantType.Grant))
+                        .Select(o => new UpstreamPolicyInstance(securable, new SecurityPolicy(o.Name, (string)o.GetValue(null), false, false), PolicyGrantType.Grant))
                         .ToArray();
                 }
 

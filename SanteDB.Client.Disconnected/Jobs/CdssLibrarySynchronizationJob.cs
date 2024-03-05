@@ -1,5 +1,4 @@
-﻿using Hl7.Fhir.Utility;
-using SanteDB.Cdss.Xml;
+﻿using SanteDB.Cdss.Xml;
 using SanteDB.Cdss.Xml.Ami;
 using SanteDB.Cdss.Xml.Model;
 using SanteDB.Client.Disconnected.Data.Synchronization;
@@ -14,7 +13,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Jobs
 {
@@ -42,8 +40,8 @@ namespace SanteDB.Client.Disconnected.Jobs
         /// <summary>
         /// DI constructor
         /// </summary>
-        public CdssLibrarySynchronizationJob(ISynchronizationLogService synchronizationLogService, 
-            IJobStateManagerService jobStateManagerService, 
+        public CdssLibrarySynchronizationJob(ISynchronizationLogService synchronizationLogService,
+            IJobStateManagerService jobStateManagerService,
             IUpstreamIntegrationService upstreamIntegrationService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IRestClientFactory restClientFactory,
@@ -86,7 +84,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         {
             try
             {
-                if(!this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                if (!this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                 {
                     this.m_jobStateManagerService.SetState(this, JobStateType.Cancelled);
                     return;
@@ -94,16 +92,18 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                 this.m_jobStateManagerService.SetState(this, JobStateType.Running);
 
-                using (AuthenticationContext.EnterSystemContext()) {
+                using (AuthenticationContext.EnterSystemContext())
+                {
                     var synchronizationLog = this.m_synchronizationLogService.Get(typeof(CdssLibraryDefinition));
 
-                    if (parameters?.Length == 1 && 
+                    if (parameters?.Length == 1 &&
                         Boolean.TryParse(parameters[0]?.ToString(), out bool resyncAll) && resyncAll)
                     {
                         this.m_synchronizationLogService.Delete(synchronizationLog);
                         synchronizationLog = null;
                         // Remove all existing
-                        foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray()) {
+                        foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray())
+                        {
                             this.m_cdssLibraryRepositoryService.Remove(cdss.Uuid);
                         }
                     }
@@ -117,11 +117,12 @@ namespace SanteDB.Client.Disconnected.Jobs
                     this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", synchronizationLog.LastSync);
 
                     // Determine the last synchronization query 
-                    using(var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                    using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                     {
                         client.Credentials = new UpstreamDeviceCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
                         string lastEtag = null;
-                        if (synchronizationLog.LastSync.HasValue) {
+                        if (synchronizationLog.LastSync.HasValue)
+                        {
                             client.Requesting += (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, synchronizationLog.LastSync.ToString());
                         }
                         client.Responded += (o, ev) => lastEtag = ev.ETag;
@@ -145,7 +146,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                 }
                 this.m_jobStateManagerService.SetState(this, JobStateType.Completed);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_jobStateManagerService.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                 this.m_jobStateManagerService.SetProgress(this, ex.Message, 0.0f);

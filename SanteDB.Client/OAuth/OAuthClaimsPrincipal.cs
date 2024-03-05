@@ -92,7 +92,7 @@ namespace SanteDB.Client.OAuth
 
             this.AddIdentity(new OAuthTokenIdentity(_IdToken, "OAUTH", true, claims));
 
-            if(claims.Any(c=>c.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim))
+            if (claims.Any(c => c.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim))
             {
                 this.AddIdentity(new OAuthApplicationIdentity(claims));
             }

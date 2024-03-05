@@ -23,7 +23,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Query;
 using System;
-using System.Collections.Specialized;
 using System.Linq.Expressions;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization

@@ -49,7 +49,9 @@ namespace SanteDB.Client.UserInterface
         public bool ValidateCertificate(X509Certificate2 certificate, X509Chain chain)
         {
             if (certificate == null || chain == null)
+            {
                 return false;
+            }
             else
             {
                 if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, certificate.Subject, out var trustedCertificate))

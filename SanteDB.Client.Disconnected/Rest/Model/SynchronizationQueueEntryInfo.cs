@@ -1,9 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SanteDB.Client.Disconnected.Data.Synchronization;
-using SanteDB.Core.Model;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Client.Disconnected.Rest.Model
@@ -14,7 +11,7 @@ namespace SanteDB.Client.Disconnected.Rest.Model
     [XmlType(nameof(SynchronizationQueueEntryInfo), Namespace = "http://santedb.org/ami")]
     [XmlRoot(nameof(SynchronizationQueueEntryInfo), Namespace = "http://santedb.org/ami")]
     [JsonObject(nameof(SynchronizationQueueEntryInfo))]
-    public class SynchronizationQueueEntryInfo 
+    public class SynchronizationQueueEntryInfo
     {
 
         /// <summary>

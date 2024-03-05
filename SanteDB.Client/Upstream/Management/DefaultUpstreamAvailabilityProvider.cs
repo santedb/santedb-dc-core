@@ -18,13 +18,11 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using DocumentFormat.OpenXml.Drawing.Charts;
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
 using System;
-using System.Diagnostics;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -121,7 +119,7 @@ namespace SanteDB.Client.Upstream.Management
                 }
                 return retVal;
             }
-            catch(TimeoutException)
+            catch (TimeoutException)
             {
                 return null;
             }

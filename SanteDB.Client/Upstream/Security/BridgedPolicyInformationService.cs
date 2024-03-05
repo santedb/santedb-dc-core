@@ -20,7 +20,6 @@
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
@@ -203,7 +202,7 @@ namespace SanteDB.Client.Upstream.Security
                     _CacheService?.Add(cachekey, retval, _CacheTimeout);
                     // Local policies are created via the security synchronization - this is not needed
                     // _localPolicyProvider.LocalProvider.CreatePolicy(retval, AuthenticationContext.SystemPrincipal);
-                 }
+                }
                 catch (UpstreamIntegrationException)
                 {
                     _Tracer.TraceError("[LOCALIZE ME] Exception getting upstream policy for {0}", policyOid);

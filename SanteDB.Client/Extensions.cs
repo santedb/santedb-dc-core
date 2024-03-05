@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Net;
-using System.Text;
 
 namespace SanteDB.Client
 {
@@ -23,7 +21,7 @@ namespace SanteDB.Client
         {
             while (exception != null)
             {
-                if(exception is WebException we && we.Response is HttpWebResponse hwr)
+                if (exception is WebException we && we.Response is HttpWebResponse hwr)
                 {
                     statusCode = hwr.StatusCode;
                     return true;
@@ -41,9 +39,13 @@ namespace SanteDB.Client
         /// <returns>True if any exception is an instance of <see cref="TimeoutException"/></returns>
         public static bool IsTimeoutException(this Exception exception)
         {
-            while(exception != null)
+            while (exception != null)
             {
-                if (exception is TimeoutException) return true;
+                if (exception is TimeoutException)
+                {
+                    return true;
+                }
+
                 exception = exception.InnerException;
             }
             return false;

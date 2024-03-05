@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {
@@ -50,8 +49,8 @@ namespace SanteDB.Client.Upstream.Security
         /// DI ctor
         /// </summary>
         public UpstreamDeviceIdentityProvider(
-            IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
+            IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             ILocalizationService localizationService,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
@@ -123,7 +122,7 @@ namespace SanteDB.Client.Upstream.Security
         public IDeviceIdentity GetIdentity(string deviceName)
         {
             var remoteData = this.GetUpstreamDeviceData(o => o.Name.ToLowerInvariant() == deviceName.ToLowerInvariant(), AuthenticationContext.Current.Principal);
-            if(remoteData != null)
+            if (remoteData != null)
             {
                 return new UpstreamDeviceIdentity(remoteData.Entity);
             }

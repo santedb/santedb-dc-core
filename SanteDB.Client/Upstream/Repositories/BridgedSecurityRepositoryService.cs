@@ -2,12 +2,10 @@
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
@@ -17,7 +15,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Repositories
 {
@@ -36,7 +33,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly IRoleProviderService m_localRoleProvider;
         private readonly IRepositoryService<ApplicationEntity> m_localApplicationEntityProvider;
         private readonly IRepositoryService<DeviceEntity> m_localDeviceEntityProvider;
-        
+
         /// <summary>
         /// DI constructor
         /// </summary>

@@ -46,7 +46,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Gets the time that the entry was created
         /// </summary>
         [QueryParameter("creationTime")]
-        DateTimeOffset CreationTime { get;  }
+        DateTimeOffset CreationTime { get; }
 
         /// <summary>
         /// Gets the type of data
@@ -64,7 +64,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Gets or sets the transient data
         /// </summary>
         [QueryParameter("data")]
-        IdentifiedData Data { get;  }
+        IdentifiedData Data { get; }
 
         /// <summary>
         /// Gets the operation of the object

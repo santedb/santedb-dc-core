@@ -23,16 +23,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
     internal static class Extensions
     {
-       
-       
+
+
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.LocalToUpstream"/> queue pattern.
         /// </summary>

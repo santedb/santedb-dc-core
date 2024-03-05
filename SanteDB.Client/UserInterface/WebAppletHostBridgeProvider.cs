@@ -111,7 +111,10 @@ namespace SanteDB.Client.UserInterface
                     sw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");
                     sw.WriteLine("\tswitch(assetId) {");
                     foreach (var itm in m_appletService.Applets.SelectMany(o => o.Assets).Where(o => o.Name.StartsWith("data/")))
+                    {
                         sw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Name.Replace("data/", ""), Convert.ToBase64String(m_appletService.Applets.RenderAssetContent(itm)).Replace("'", "\\'"));
+                    }
+
                     sw.WriteLine("\t}");
                     sw.WriteLine("}");
                     using (var streamReader = new StreamReader(typeof(WebAppletHostBridgeProvider).Assembly.GetManifestResourceStream("SanteDB.Client.Resources.WebAppletBridge.js")))

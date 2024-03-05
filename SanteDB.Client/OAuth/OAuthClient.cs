@@ -28,7 +28,6 @@ using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace SanteDB.Client.OAuth
 {

@@ -21,7 +21,6 @@
 using SanteDB.Client.Exceptions;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Collection;
@@ -360,8 +359,8 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateHdsiServiceClient())
                 {
-                    
-                    switch(principal.Identity)
+
+                    switch (principal.Identity)
                     {
                         case IDeviceIdentity idi:
                             retVal = client.Query<DeviceEntity>(o => o.SecurityDevice.Name.ToLowerInvariant() == idi.Name.ToLowerInvariant()).Item.OfType<DeviceEntity>().FirstOrDefault();

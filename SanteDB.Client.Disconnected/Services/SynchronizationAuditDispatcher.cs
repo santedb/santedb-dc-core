@@ -1,17 +1,12 @@
 ﻿using SanteDB.Client.Disconnected.Data.Synchronization;
-using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
-using SanteDB.Core;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Services
 {

@@ -22,10 +22,8 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 
 namespace SanteDB.Client.OAuth
 {
@@ -44,7 +42,7 @@ namespace SanteDB.Client.OAuth
         public OAuthApplicationIdentity(IEnumerable<IClaim> claims)
         {
             // Audience of the claim is the application name
-            this.Name = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AudienceClaim)?.Value ?? claims.First(o=>o.Type == SanteDBClaimTypes.SanteDBApplicationNameClaim).Value;
+            this.Name = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AudienceClaim)?.Value ?? claims.First(o => o.Type == SanteDBClaimTypes.SanteDBApplicationNameClaim).Value;
             this.m_applicationSid = Guid.Parse(claims.First(o => o.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim).Value);
         }
 

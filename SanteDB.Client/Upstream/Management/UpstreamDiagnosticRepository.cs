@@ -53,15 +53,15 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Defaut CTOR
         /// </summary>
-        public UpstreamDiagnosticRepository(IRestClientFactory restClientFactory, 
-            IUpstreamManagementService upstreamManagementService, 
-            ILocalizationService localizationService, 
-            IUpstreamAvailabilityProvider upstreamAvailabilityProvider, 
+        public UpstreamDiagnosticRepository(IRestClientFactory restClientFactory,
+            IUpstreamManagementService upstreamManagementService,
+            ILocalizationService localizationService,
+            IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IOperatingSystemInfoService operatingSystemInfoService,
             INetworkInformationService networkInformationService,
             IAppletManagerService appletManagerService,
-            ILogManagerService logManagerSerivce = null, 
-            IConfigurationManager configurationManager = null, 
+            ILogManagerService logManagerSerivce = null,
+            IConfigurationManager configurationManager = null,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_appletManagerService = appletManagerService;

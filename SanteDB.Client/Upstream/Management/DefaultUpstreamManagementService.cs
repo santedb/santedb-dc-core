@@ -27,7 +27,6 @@ using SanteDB.Client.Services;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Http;
-using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -38,7 +37,6 @@ using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
@@ -341,7 +339,7 @@ namespace SanteDB.Client.Upstream.Management
                                 this.m_tracer.TraceInfo("Sending authentication public key to server");
                                 amiClient.Client.Post<X509Certificate2Info, X509Certificate2Info>($"SecurityDevice/{upstreamDevice.Key}/auth_cert", new X509Certificate2Info(deviceCertificate));
                             }
-                            catch(Exception e)
+                            catch (Exception e)
                             {
                                 this.m_tracer.TraceError("Could not send authentication certificate to server - administrator will need to manually add it - {0}", e);
                             }

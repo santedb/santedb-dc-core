@@ -30,7 +30,6 @@ using SanteDB.Rest.OAuth.Model;
 using SanteDB.Rest.OAuth.Rest;
 using System;
 using System.Linq;
-using System.Net;
 
 namespace SanteDB.Client.OAuth
 {
