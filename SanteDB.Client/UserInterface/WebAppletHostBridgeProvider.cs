@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Services;
 using SanteDB.Core;
@@ -111,7 +111,10 @@ namespace SanteDB.Client.UserInterface
                     sw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");
                     sw.WriteLine("\tswitch(assetId) {");
                     foreach (var itm in m_appletService.Applets.SelectMany(o => o.Assets).Where(o => o.Name.StartsWith("data/")))
+                    {
                         sw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Name.Replace("data/", ""), Convert.ToBase64String(m_appletService.Applets.RenderAssetContent(itm)).Replace("'", "\\'"));
+                    }
+
                     sw.WriteLine("\t}");
                     sw.WriteLine("}");
                     using (var streamReader = new StreamReader(typeof(WebAppletHostBridgeProvider).Assembly.GetManifestResourceStream("SanteDB.Client.Resources.WebAppletBridge.js")))

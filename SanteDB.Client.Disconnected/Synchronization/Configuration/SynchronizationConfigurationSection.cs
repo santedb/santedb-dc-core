@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-1-23
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
@@ -41,10 +41,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization.Configuration
         public bool BigBundles { get; set; }
 
         /// <summary>
-        /// True if automatic merging should occur on the server and client
+        /// True if automatic merging should occur on the server and client without the user's interaction
         /// </summary>
         [XmlAttribute("overwriteServer"), JsonProperty("overwriteServer")]
         public bool OverwriteServer { get; set; }
+
+        /// <summary>
+        /// True if the system should try to automatically update conflicts (this will increase bandwidth use but reduces the number of 
+        /// conflicts in the dead letter queue due to version UUID mismatches)
+        /// </summary>
+        [XmlAttribute("autoRetry"), JsonProperty("autoRetry")]
+        public bool AutomaticRetry { get; set; }
 
         /// <summary>
         /// Use patches instead of updates

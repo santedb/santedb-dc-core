@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,15 +16,13 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
-using DocumentFormat.OpenXml.Drawing.Charts;
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
 using System;
-using System.Diagnostics;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -41,10 +39,8 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
-        private const int PING_TIMEOUT = 5_000;
-        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 2, 00);
-
-        
+        private const int PING_TIMEOUT = 2_000;
+        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 1, 00);
 
         /// <summary>
         /// Get the service name
@@ -123,7 +119,7 @@ namespace SanteDB.Client.Upstream.Management
                 }
                 return retVal;
             }
-            catch(TimeoutException)
+            catch (TimeoutException)
             {
                 return null;
             }

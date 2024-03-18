@@ -1,5 +1,23 @@
-﻿using SanteDB.Client.Tickles;
-using SanteDB.Client.Upstream.Repositories;
+﻿/*
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2024-1-23
+ */
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
@@ -8,12 +26,9 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl.Repository;
-using SanteDB.Persistence.Data.Services.Persistence.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
 {
@@ -48,7 +63,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly ISecurityChallengeService _LocalSecurityChallengeService;
         readonly IRepositoryService<SecurityApplication> _UpstreamSecurityApplicationRepository;
         readonly IRepositoryService<SecurityApplication> _LocalSecurityApplicationRepository;
-        
+
         /// <summary>
         /// Dependency-Injection Constructor
         /// </summary>
@@ -109,14 +124,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                     GetUpstreamSecurityRolePolicies();
 
-                    
+
 
                     //TODO: Do we still need local notifications (tickles)?
                     _JobStateManager.SetState(this, JobStateType.Completed);
                 }
                 catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
-                    _JobStateManager.SetState(this, JobStateType.Aborted);
+                    _JobStateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                     _JobStateManager.SetProgress(this, ex.Message, 0f);
 
                     //TODO: Do we still need local notifications (tickles)?
@@ -128,12 +143,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private void GetUpstreamSecurityRolePolicies()
         {
-            var systemroles = new string[] { 
+            var systemroles = new string[] {
                 SanteDBConstants.AdministratorGroupName,
                 SanteDBConstants.AnonymousGroupName,
-                SanteDBConstants.DeviceGroupName, 
+                SanteDBConstants.DeviceGroupName,
                 SanteDBConstants.SystemGroupName,
-                SanteDBConstants.UserGroupName, 
+                SanteDBConstants.UserGroupName,
                 SanteDBConstants.LocalUserGroupName,
                 SanteDBConstants.LocalAdminGroupName,
                 SanteDBConstants.ClinicalStaffGroupName
@@ -189,10 +204,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 foreach (var policy in _UpstreamPolicyInformationService.GetPolicies())
                 {
                     if (null == policy)
+                    {
                         continue;
+                    }
 
                     if (null == _LocalPolicyInformationService.GetPolicy(policy.Oid))
+                    {
                         _LocalPolicyInformationService.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                    }
                 }
             }
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
@@ -210,12 +229,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             var applications = _UpstreamSecurityApplicationRepository.Find(_ => true);
 
-            foreach(var application in applications)
+            foreach (var application in applications)
             {
                 try
                 {
                     if (application?.Key.HasValue != true)
+                    {
                         continue;
+                    }
 
                     var localapp = _LocalSecurityApplicationRepository.Get(application.Key.Value);
 
@@ -234,7 +255,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     }
 
                 }
-                catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     _Tracer.TraceWarning("Job {1}: Failed to insert/update Application {0}", application.Name, nameof(SecurityObjectSynchronizationJob));
                 }

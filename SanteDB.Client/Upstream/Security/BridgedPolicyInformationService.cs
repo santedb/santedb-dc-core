@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,11 +16,10 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
-using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
@@ -203,7 +202,7 @@ namespace SanteDB.Client.Upstream.Security
                     _CacheService?.Add(cachekey, retval, _CacheTimeout);
                     // Local policies are created via the security synchronization - this is not needed
                     // _localPolicyProvider.LocalProvider.CreatePolicy(retval, AuthenticationContext.SystemPrincipal);
-                 }
+                }
                 catch (UpstreamIntegrationException)
                 {
                     _Tracer.TraceError("[LOCALIZE ME] Exception getting upstream policy for {0}", policyOid);

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.OAuth;
@@ -25,20 +25,19 @@ using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Threading;
-using System;
-using SanteDB.Core.Model.Constants;
 
 namespace SanteDB.Client.Upstream.Security
 {
@@ -60,7 +59,7 @@ namespace SanteDB.Client.Upstream.Security
             /// </summary>
             /// <param name="application"></param>
             public UpstreamApplicationIdentity(SecurityApplication application)
-                : base (application.Name, false, "NONE")
+                : base(application.Name, false, "NONE")
             {
                 this.AddClaim(new SanteDBClaim(SanteDBClaimTypes.Actor, ActorTypeKeys.Application.ToString()));
                 this.AddClaim(new SanteDBClaim(SanteDBClaimTypes.SecurityId, application.Key.ToString()));

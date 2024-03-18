@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,16 +16,14 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-2-5
  */
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 
 namespace SanteDB.Client.OAuth
 {
@@ -44,7 +42,7 @@ namespace SanteDB.Client.OAuth
         public OAuthApplicationIdentity(IEnumerable<IClaim> claims)
         {
             // Audience of the claim is the application name
-            this.Name = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AudienceClaim)?.Value ?? claims.First(o=>o.Type == SanteDBClaimTypes.SanteDBApplicationNameClaim).Value;
+            this.Name = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.AudienceClaim)?.Value ?? claims.First(o => o.Type == SanteDBClaimTypes.SanteDBApplicationNameClaim).Value;
             this.m_applicationSid = Guid.Parse(claims.First(o => o.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim).Value);
         }
 

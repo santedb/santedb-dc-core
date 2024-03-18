@@ -1,4 +1,23 @@
-﻿using Hl7.Fhir.Utility;
+﻿/*
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-11-27
+ */
 using SanteDB.Cdss.Xml;
 using SanteDB.Cdss.Xml.Ami;
 using SanteDB.Cdss.Xml.Model;
@@ -14,7 +33,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Jobs
 {
@@ -42,8 +60,8 @@ namespace SanteDB.Client.Disconnected.Jobs
         /// <summary>
         /// DI constructor
         /// </summary>
-        public CdssLibrarySynchronizationJob(ISynchronizationLogService synchronizationLogService, 
-            IJobStateManagerService jobStateManagerService, 
+        public CdssLibrarySynchronizationJob(ISynchronizationLogService synchronizationLogService,
+            IJobStateManagerService jobStateManagerService,
             IUpstreamIntegrationService upstreamIntegrationService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IRestClientFactory restClientFactory,
@@ -86,7 +104,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         {
             try
             {
-                if(!this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                if (!this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                 {
                     this.m_jobStateManagerService.SetState(this, JobStateType.Cancelled);
                     return;
@@ -94,16 +112,18 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                 this.m_jobStateManagerService.SetState(this, JobStateType.Running);
 
-                using (AuthenticationContext.EnterSystemContext()) {
+                using (AuthenticationContext.EnterSystemContext())
+                {
                     var synchronizationLog = this.m_synchronizationLogService.Get(typeof(CdssLibraryDefinition));
 
-                    if (parameters?.Length == 1 && 
+                    if (parameters?.Length == 1 &&
                         Boolean.TryParse(parameters[0]?.ToString(), out bool resyncAll) && resyncAll)
                     {
                         this.m_synchronizationLogService.Delete(synchronizationLog);
                         synchronizationLog = null;
                         // Remove all existing
-                        foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray()) {
+                        foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray())
+                        {
                             this.m_cdssLibraryRepositoryService.Remove(cdss.Uuid);
                         }
                     }
@@ -117,11 +137,12 @@ namespace SanteDB.Client.Disconnected.Jobs
                     this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", synchronizationLog.LastSync);
 
                     // Determine the last synchronization query 
-                    using(var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                    using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                     {
                         client.Credentials = new UpstreamDeviceCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
                         string lastEtag = null;
-                        if (synchronizationLog.LastSync.HasValue) {
+                        if (synchronizationLog.LastSync.HasValue)
+                        {
                             client.Requesting += (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, synchronizationLog.LastSync.ToString());
                         }
                         client.Responded += (o, ev) => lastEtag = ev.ETag;
@@ -145,11 +166,11 @@ namespace SanteDB.Client.Disconnected.Jobs
                 }
                 this.m_jobStateManagerService.SetState(this, JobStateType.Completed);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                this.m_jobStateManagerService.SetState(this, JobStateType.Aborted);
+                this.m_jobStateManagerService.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                 this.m_jobStateManagerService.SetProgress(this, ex.Message, 0.0f);
-                this.m_tracer.TraceError("Error executing job {0} - {1}", nameof(CdssLibrarySynchronizationJob), ex.ToHumanReadableString());
+                this.m_tracer.TraceError("Error executing job {0} - {1}", nameof(CdssLibrarySynchronizationJob), ex);
             }
         }
     }

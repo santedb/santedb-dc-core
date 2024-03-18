@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,15 +16,15 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-1-23
  */
-using ClosedXML;
 using Polly;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Client.UserInterface;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -35,11 +35,10 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
@@ -54,8 +53,8 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
 using System.Reflection;
-using System.Security.Principal;
 using System.Threading;
 using System.Xml.Serialization;
 
@@ -84,6 +83,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly IPatchService _PatchService;
         private readonly ISynchronizationLogService _SynchronizationLogService;
         private readonly ISynchronizationQueueManager _QueueManager;
+        private readonly IUserInterfaceInteractionProvider _UserInterfaceInteractionProvider;
         private readonly IJobManagerService _JobManager;
         private readonly IJobStateManagerService _JobStateManager;
         private readonly IJobScheduleManager _jobScheduleManager;
@@ -146,6 +146,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
             IPatchService patchService,
+            IUserInterfaceInteractionProvider userInterfaceInteractionProvider,
             IAuditService auditService,
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
@@ -158,6 +159,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._PatchService = patchService;
             this._SynchronizationLogService = synchronizationLogService;
             this._QueueManager = queueManager;
+            this._UserInterfaceInteractionProvider = userInterfaceInteractionProvider;
             this._JobManager = jobManagerService;
             this._JobStateManager = jobStateManagerService;
             this._jobScheduleManager = jobScheduleManager;
@@ -177,9 +179,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._LocalRepositoryFactory = _ServiceManager.CreateInjected<LocalRepositoryFactory>();
 
             //Exception policies
-            this._PushExceptionPolicy = Policy.Handle<UpstreamIntegrationException>(ex => ex.InnerException != null)
-                .Retry(2);
-
+            ISyncPolicy communicationExceptionPolicy = Policy.Handle<Exception>(ex => ex.IsCommunicationException() || ex.IsTimeoutException()).WaitAndRetry(2, o => new TimeSpan(0, o, 0)),  // Communication exceptions are ignored
+                otherExceptionPolicy = this._PushExceptionPolicy = Policy.Handle<UpstreamIntegrationException>(ex => ex.InnerException != null && !ex.IsHttpException(out _)).Retry(1); // Retry if there is no indication that the server got the message
+            this._PushExceptionPolicy = Policy.Wrap(communicationExceptionPolicy, otherExceptionPolicy);
         }
 
         /// <summary>
@@ -320,13 +322,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private static void FixupEntity(IdentifiedData item)
         {
-            if (item is NonVersionedEntityData nved)
+            if (item is IVersionedData ivd)
             {
-                nved.UpdatedBy = null;
-                nved.UpdatedTime = null;
-                nved.UpdatedByKey = null;
-                nved.UpdatedTimeXml = null;
-                nved.CreationTimeXml = null;
+                //ivd.VersionSequence = null;
+                //ivd.PreviousVersionKey = null; // previous version won't exist 
             }
         }
 
@@ -352,7 +351,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Sends a single queue entry to the upstream
         /// </summary>
         /// <param name="entry">The queue entry to send</param>
-        private void SendOutboundEntryInternal(ISynchronizationQueueEntry entry)
+        private void SendOutboundEntryInternal(ISynchronizationQueueEntry entry, bool automatedRetry = false)
         {
             if (null == entry)
             {
@@ -374,20 +373,42 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 bundle.Item.RemoveAll(o => this._Configuration.ForbidSending.Any(t => t.Type == o.GetType()));
             }
-            
-            switch (entry.Operation)
+
+            try
             {
-                case SynchronizationQueueEntryOperation.Insert:
-                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Insert(dataToSubmit));
-                    break;
-                case SynchronizationQueueEntryOperation.Update:
-                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Update(dataToSubmit, forceUpdate: entry.RetryCount > 0 && this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
-                    break;
-                case SynchronizationQueueEntryOperation.Obsolete:
-                    this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Obsolete(dataToSubmit, forceObsolete: entry.RetryCount > 0 && this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
-                    break;
-                default:
-                    break;
+                switch (entry.Operation)
+                {
+                    case SynchronizationQueueEntryOperation.Insert:
+                        this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Insert(dataToSubmit));
+                        break;
+                    case SynchronizationQueueEntryOperation.Update:
+                        this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Update(dataToSubmit, forceUpdate: (automatedRetry || entry.RetryCount > 0) && this._Configuration.OverwriteServer, autoResolveConflict: automatedRetry)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
+                        break;
+                    case SynchronizationQueueEntryOperation.Obsolete:
+                        this._PushExceptionPolicy.Execute(() => this.UpstreamIntegrationService.Obsolete(dataToSubmit, forceObsolete: (automatedRetry || entry.RetryCount > 0) && this._Configuration.OverwriteServer)); // TODO: Add option for a re-queued dead letter queue entry to force retry || entry.Force));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) when (ex.IsHttpException(out var httpStatus))
+            {
+                switch (httpStatus)
+                {
+                    case HttpStatusCode.PreconditionFailed:
+                    case HttpStatusCode.Conflict: // Auto-retry if the configuration allows us to overwrite the server automatically 
+                        if (this._Configuration.OverwriteServer && !automatedRetry && this._Configuration.AutomaticRetry)
+                        {
+                            this.SendOutboundEntryInternal(entry, true);
+                            break;
+                        }
+                        else
+                        {
+                            throw; // Throw and allow for upstream to handle
+                        }
+                    default:
+                        throw;
+                }
             }
         }
 
@@ -400,44 +421,61 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private IdentifiedData BundleDependentObjects(IdentifiedData data, Bundle currentBundle = null)
         {
             // Bundle establishment
-            currentBundle = currentBundle ?? new Bundle();
+            currentBundle = currentBundle ?? new Bundle() { Key = Guid.NewGuid() };
             if (data is Bundle dataBundle)
+            {
                 currentBundle.Item.AddRange(dataBundle.Item);
-
-            if (data is Person entity) // Fix entity key
-            {
-                foreach (var rel in entity.Relationships)
-                    if (!currentBundle.Item.Any(i => i.Key == rel.TargetEntityKey))// && !integrationService.Exists<Entity>(rel.TargetEntityKey.Value))
-                    {
-                        var loaded = rel.LoadProperty<Entity>(nameof(EntityRelationship.TargetEntity));
-                        currentBundle.Item.Insert(0, loaded);
-                        this.BundleDependentObjects(loaded, currentBundle); // cascade load
-                    }
-
             }
-            else if (data is Act act)
+            else
             {
-                foreach (var rel in act.Relationships)
-                    if (!currentBundle.Item.Any(i => i.Key == rel.TargetActKey))// && !integrationService.Exists<Act>(rel.TargetActKey.Value))
-                    {
-                        var loaded = rel.LoadProperty<Act>(nameof(ActRelationship.TargetAct));
-                        currentBundle.Item.Insert(0, loaded);
-                        this.BundleDependentObjects(loaded, currentBundle);
-                    }
-                foreach (var rel in act.Participations)
-                    if (!currentBundle.Item.Any(i => i.Key == rel.PlayerEntityKey))// && !integrationService.Exists<Entity>(rel.PlayerEntityKey.Value))
-                    {
-                        var loaded = rel.LoadProperty<Entity>(nameof(ActParticipation.PlayerEntity));
-                        currentBundle.Item.Insert(0, loaded);
-                        this.BundleDependentObjects(loaded, currentBundle);
-                    }
+                currentBundle.Add(data);
+                currentBundle.FocalObjects.Add(data.Key.Value);
             }
-            else if (data is Bundle bundle)
+
+            switch (data) // Fix entity key
             {
-                foreach (var itm in bundle.Item.ToArray())
-                {
-                    this.BundleDependentObjects(itm, currentBundle);
-                }
+                case Patient patient:
+                    foreach (var rel in patient.Relationships)
+                    {
+                        if (!currentBundle.Item.Any(i => i.Key == rel.TargetEntityKey))// && !integrationService.Exists<Entity>(rel.TargetEntityKey.Value))
+                        {
+                            var loaded = rel.LoadProperty<Entity>(nameof(EntityRelationship.TargetEntity));
+                            currentBundle.Item.Insert(0, loaded);
+                            this.BundleDependentObjects(loaded, currentBundle); // cascade load
+                        }
+                    }
+
+                    break;
+                case Act act:
+                    foreach (var rel in act.Relationships)
+                    {
+                        if (!currentBundle.Item.Any(i => i.Key == rel.TargetActKey))// && !integrationService.Exists<Act>(rel.TargetActKey.Value))
+                        {
+                            var loaded = rel.LoadProperty<Act>(nameof(ActRelationship.TargetAct));
+                            currentBundle.Item.Insert(0, loaded);
+                            this.BundleDependentObjects(loaded, currentBundle);
+                        }
+                    }
+
+                    foreach (var rel in act.Participations)
+                    {
+                        if (!currentBundle.Item.Any(i => i.Key == rel.PlayerEntityKey))// && !integrationService.Exists<Entity>(rel.PlayerEntityKey.Value))
+                        {
+                            var loaded = rel.LoadProperty<Entity>(nameof(ActParticipation.PlayerEntity));
+                            currentBundle.Item.Insert(0, loaded);
+                            this.BundleDependentObjects(loaded, currentBundle);
+                        }
+                    }
+
+                    break;
+                case Bundle bundle:
+                    foreach (var itm in bundle.Item.ToArray())
+                    {
+                        this.BundleDependentObjects(itm, currentBundle);
+                    }
+                    break;
+                default:
+                    return data;
             }
 
             return currentBundle;
@@ -513,7 +551,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             {
                                 try
                                 {
-                                    persistenceService.Insert(itm);
+                                    if (persistenceService.Get(itm.Key.Value) != null)
+                                    {
+                                        persistenceService.Update(itm);
+                                    }
+                                    else
+                                    {
+                                        persistenceService.Insert(itm);
+                                    }
                                 }
                                 catch (Exception e)
                                 {
@@ -628,7 +673,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             //TODO: Fetch items from upstream
             var syncLogEntry = _SynchronizationLogService.Get(modelType, filterstring);
-            if(syncLogEntry == null)
+            if (syncLogEntry == null)
             {
                 syncLogEntry = _SynchronizationLogService.Create(modelType, filterstring);
             }
@@ -666,7 +711,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             };
 
             // Attempt to find an existing log of sync in the local database (for continuing queries)
-            var syncQuery = _SynchronizationLogService.GetCurrentQuery(syncLogEntry)?? _SynchronizationLogService.StartQuery(syncLogEntry);
+            var syncQuery = _SynchronizationLogService.GetCurrentQuery(syncLogEntry) ?? _SynchronizationLogService.StartQuery(syncLogEntry);
             if (syncQuery != null && !IsExistingQueryLogValid(syncQuery))
             {
                 _SynchronizationLogService.CompleteQuery(syncQuery);
@@ -762,12 +807,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         {
             try
             {
+                _ThreadPool.QueueUserWorkItem(this.RunInboundMessagePump);
                 if (this.IsSynchronizing)
                 {
                     _Tracer.TraceInfo("Will ignore Pull request since synchronization is already occurring");
                     return;
                 }
-                else if(!this.IsUpstreamAvailable(ServiceEndpointType.AuthenticationService)) {
+                else if (!this.IsUpstreamAvailable(ServiceEndpointType.AuthenticationService))
+                {
                     _Tracer.TraceInfo("Will ignore Pull request since authentication service is not available");
                     return;
                 }
@@ -861,6 +908,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 _Tracer.TraceVerbose($"Instantiating {nameof(ISynchronizationJob)} instances and configuring schedule.");
 
+                // Check if there are conflicts and ask the user if they'd like us to reprocess them?
+                if (_QueueManager.GetDeadletter().Count() > 0 && _UserInterfaceInteractionProvider.Confirm(_LocalizationService.GetString(UserMessageStrings.RESUBMIT_DEADLETTER_QUEUE)))
+                {
+                    var deadLetterQueue = _QueueManager.GetDeadletter();
+                    foreach (var message in deadLetterQueue.Query(o => true).OfType<ISynchronizationDeadLetterQueueEntry>())
+                    {
+                        message.OriginalQueue.Enqueue(message, "RETRY");
+                        deadLetterQueue.Delete(message.Id);
+                    }
+                }
                 // Start for pull
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
                 this.SubscribeToEvents();

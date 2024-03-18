@@ -1,4 +1,24 @@
-﻿using SanteDB.Client.Configuration.Upstream;
+﻿/*
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-6-21
+ */
+using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
@@ -17,7 +37,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {
@@ -59,7 +78,7 @@ namespace SanteDB.Client.Upstream.Security
 
             // Attempt to get the local record for this client and update if required
             this.m_tracer.TraceInfo("Initializing local application credential...");
-            if(this.m_localApplicationIdentityProvider.GetIdentity(this.m_configuration.CredentialName) == null)
+            if (this.m_localApplicationIdentityProvider.GetIdentity(this.m_configuration.CredentialName) == null)
             {
                 using (AuthenticationContext.EnterSystemContext())
                 {
@@ -82,7 +101,7 @@ namespace SanteDB.Client.Upstream.Security
         /// </summary>
         private void SynchronizeIdentity(IClaimsPrincipal remoteIdentity, string secret)
         {
-            using (remoteIdentity.Identity.Name == this.m_configuration.CredentialName ? 
+            using (remoteIdentity.Identity.Name == this.m_configuration.CredentialName ?
                 AuthenticationContext.EnterContext(remoteIdentity) :
                 AuthenticationContext.EnterSystemContext())
             {
@@ -96,7 +115,7 @@ namespace SanteDB.Client.Upstream.Security
                 var localSecurityRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityApplication>>();
 
                 // Get the user identity 
-                var applicationIdentity = remoteIdentity.Identities.FirstOrDefault(o=>o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.Application.ToString());
+                var applicationIdentity = remoteIdentity.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.Application.ToString());
                 if (applicationIdentity == null)
                 {
                     throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(SynchronizeIdentity)));
@@ -115,13 +134,13 @@ namespace SanteDB.Client.Upstream.Security
                 }
 
                 // Synchronize the policies 
-                lock(this.m_lockObject)
+                lock (this.m_lockObject)
                 {
                     var remotePolicies = this.m_upstreamPip.GetPolicies(localApplication);
                     // Remove all 
                     var localPolicies = this.m_localPip.GetPolicies();
                     this.m_localPip.RemovePolicies(localApplication, AuthenticationContext.SystemPrincipal, localPolicies.Select(o => o.Oid).ToArray());
-                    foreach(var itm in remotePolicies.GroupBy(o => o.Rule))
+                    foreach (var itm in remotePolicies.GroupBy(o => o.Rule))
                     {
                         this.m_localPip.AddPolicies(localApplication, itm.Key, AuthenticationContext.SystemPrincipal, itm.Select(o => o.Policy.Oid).ToArray());
                     }
@@ -239,7 +258,7 @@ namespace SanteDB.Client.Upstream.Security
         public void ChangeSecret(string applicationName, string secret, IPrincipal principal)
         {
             // Changing secret on a bridged application only applies if the application has been logged in
-            if(this.m_localApplicationIdentityProvider.GetIdentity(applicationName) == null)
+            if (this.m_localApplicationIdentityProvider.GetIdentity(applicationName) == null)
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(ChangeSecret)));
             }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,9 +16,8 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-1-23
  */
-using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -102,7 +101,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Load parameters 
                 var mode = SubscriptionTriggerType.PeriodicPoll;
                 _ = parameters.Length > 0 && Enum.TryParse<SubscriptionTriggerType>(parameters[0].ToString(), true, out mode);
-                if(parameters.Length > 1 && (parameters[1] is bool includePush || bool.TryParse(parameters[1].ToString(), out includePush)) && includePush)
+                if (parameters.Length > 1 && (parameters[1] is bool includePush || bool.TryParse(parameters[1].ToString(), out includePush)) && includePush)
                 {
                     _Service.Push();
                     _ResetEvent.Wait();
@@ -116,7 +115,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
                 _Tracer.TraceError("Error running Synchronization Job: {0}", ex);
-                _JobStateManager.SetState(this, JobStateType.Aborted);
+                _JobStateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
             }
         }
     }

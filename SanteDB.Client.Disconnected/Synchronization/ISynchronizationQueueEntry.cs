@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-1-23
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
@@ -46,7 +46,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Gets the time that the entry was created
         /// </summary>
         [QueryParameter("creationTime")]
-        DateTimeOffset CreationTime { get;  }
+        DateTimeOffset CreationTime { get; }
 
         /// <summary>
         /// Gets the type of data
@@ -64,7 +64,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Gets or sets the transient data
         /// </summary>
         [QueryParameter("data")]
-        IdentifiedData Data { get;  }
+        IdentifiedData Data { get; }
 
         /// <summary>
         /// Gets the operation of the object
