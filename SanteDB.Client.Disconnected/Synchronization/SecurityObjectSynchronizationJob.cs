@@ -19,15 +19,22 @@
  * Date: 2024-1-23
  */
 using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.Messaging.AMI.Client;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 
 namespace SanteDB.Client.Disconnected.Data.Synchronization
@@ -59,6 +66,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         readonly ISecurityRepositoryService _UpstreamSecurityRepositoryService;
         readonly ISecurityRepositoryService _LocalSecurityRepositoryService;
         private readonly IUpstreamAvailabilityProvider _UpstreamAvailabilityProvider;
+        private readonly IRestClientFactory _RestClientFactory;
+        private readonly IConfigurationManager _ConfigurationManager;
         readonly ISecurityChallengeService _UpstreamSecurityChallengeService;
         readonly ISecurityChallengeService _LocalSecurityChallengeService;
         readonly IRepositoryService<SecurityApplication> _UpstreamSecurityApplicationRepository;
@@ -76,7 +85,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IUpstreamServiceProvider<IRoleProviderService> upstreamRoleProviderService,
             ILocalServiceProvider<IRoleProviderService> localRoleProviderService,
             IUpstreamServiceProvider<ISecurityRepositoryService> upstreamSecurityProviderService,
-            ILocalServiceProvider<ISecurityRepositoryService> localSecurityProviderService
+            ILocalServiceProvider<ISecurityRepositoryService> localSecurityProviderService,
+            IRestClientFactory restClientFactory,
+            IConfigurationManager configurationManager
             //IUpstreamServiceProvider<ISecurityChallengeService> upstreamSecurityChallengeService = null,
             //ILocalServiceProvider<ISecurityChallengeService> localSecurityChallengeService = null
             )
@@ -91,6 +102,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             _UpstreamSecurityRepositoryService = upstreamSecurityProviderService.UpstreamProvider;
             _LocalSecurityRepositoryService = localSecurityProviderService.LocalProvider;
             _UpstreamAvailabilityProvider = upstreamAvailabilityProvider;
+            _RestClientFactory = restClientFactory;
+            _ConfigurationManager = configurationManager;
             //_UpstreamSecurityChallengeService = upstreamSecurityChallengeService.UpstreamProvider;
             //_LocalSecurityChallengeService = localSecurityChallengeService.LocalProvider;
         }
@@ -120,11 +133,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     GetUpstreamSecurityPolicies();
 
                     GetUpstreamSecurityApplications();
-                    //TODO: Should we sync devices as well?
-
+                    
                     GetUpstreamSecurityRolePolicies();
 
-
+                    GetUpstreamSecuritySettings();
 
                     //TODO: Do we still need local notifications (tickles)?
                     _JobStateManager.SetState(this, JobStateType.Completed);
@@ -137,6 +149,34 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     //TODO: Do we still need local notifications (tickles)?
 
                     _Tracer.TraceWarning("Job {1}: Could not refresh system roles and policies. Exception: {0}", ex.ToString(), nameof(SecurityObjectSynchronizationJob));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the upstream security configuration policies that may have changed (allowing local users, mandating MFA, etc.)
+        /// </summary>
+        private void GetUpstreamSecuritySettings()
+        {
+            if(this._UpstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            {
+                // Use an options
+                using (var client = this._RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+                using (var amiServiceClient = new AmiServiceClient(client))
+                {
+                    var serviceOptions = amiServiceClient.Options();
+                    var securitySettings = _ConfigurationManager.GetSection<SecurityConfigurationSection>();
+                    securitySettings.PasswordRegex = serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
+                            securitySettings.PasswordRegex;
+                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireMfa, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireMfaName)?.Value ?? "false"));
+                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
+                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
+                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
+
+                    // Get the general configuration and set them 
+                    var appSetting = _ConfigurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
+                    serviceOptions.Settings.Where(o => o.Key.StartsWith("dcdr.")).ForEach(o => appSetting.AddAppSetting(o.Key.Substring(5), o.Value));
+                    _ConfigurationManager.SaveConfiguration(restart: false);
                 }
             }
         }

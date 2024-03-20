@@ -354,7 +354,9 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a JWKS fetch request
         /// </summary>
-        protected virtual void SetupRestClientForJwksRequest(IRestClient restClient) { }
+        protected virtual void SetupRestClientForJwksRequest(IRestClient restClient) {
+            restClient.Accept = "application/json";
+        }
 
         /// <summary>
         /// Send the <paramref name="request"/> to the OAUTH server and return the <see cref="OAuthClientTokenResponse"/>

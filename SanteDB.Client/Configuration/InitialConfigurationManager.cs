@@ -21,6 +21,7 @@
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
@@ -36,10 +37,11 @@ namespace SanteDB.Client.Configuration
     /// A configuration manager which uses a temporary configuration in memory 
     /// via implementations of <see cref="IInitialConfigurationProvider"/>
     /// </summary>
-    public class InitialConfigurationManager : IConfigurationManager, IRequestRestarts
+    public class InitialConfigurationManager : IConfigurationManager, IRequestRestarts, IRestoreBackupAssets
     {
+        private static readonly Guid CONFIGURATION_FILE_ASSET_ID = Guid.Parse("09379015-3823-40F1-B051-573E9009E849");
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(InitialConfigurationManager));
-        private readonly SanteDBConfiguration m_configuration;
+        private SanteDBConfiguration m_configuration;
         private readonly string m_localConfigurationPath;
 
         /// <inheritdoc/>
@@ -59,6 +61,9 @@ namespace SanteDB.Client.Configuration
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Temporary Configuration Service";
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new[] { CONFIGURATION_FILE_ASSET_ID }; 
 
         /// <summary>
         /// Initial configuration manager 
@@ -133,7 +138,7 @@ namespace SanteDB.Client.Configuration
         }
 
         /// <inheritdoc/>
-        public void SaveConfiguration()
+        public void SaveConfiguration(bool restart = true)
         {
             // Save configuration - 
             var encryptionCertificiate = this.m_configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o => o.KeyName == "default");
@@ -153,7 +158,11 @@ namespace SanteDB.Client.Configuration
             {
                 this.m_configuration.Save(fs);
             }
-            this.RestartRequested?.Invoke(null, EventArgs.Empty);
+
+            if (restart)
+            {
+                this.RestartRequested?.Invoke(null, EventArgs.Empty);
+            }
 
         }
 
@@ -168,6 +177,25 @@ namespace SanteDB.Client.Configuration
         public void SetTransientConnectionString(string name, ConnectionString connectionString)
         {
             throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if (backupAsset.AssetClassId.Equals(CONFIGURATION_FILE_ASSET_ID))
+            {
+                using (var assetStream = backupAsset.Open())
+                {
+                    using (var configStream = File.Create(this.m_localConfigurationPath))
+                    {
+                        assetStream.CopyTo(configStream);
+                        configStream.Seek(0, SeekOrigin.Begin);
+                        this.m_configuration = SanteDBConfiguration.Load(configStream);
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }
