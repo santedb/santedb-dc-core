@@ -175,7 +175,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                     // Get the general configuration and set them 
                     var appSetting = _ConfigurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
-                    serviceOptions.Settings.Where(o => o.Key.StartsWith("dcdr.")).ForEach(o => appSetting.AddAppSetting(o.Key.Substring(5), o.Value));
+                    serviceOptions.Settings.Where(o => !o.Key.StartsWith("$")).ForEach(o => appSetting.AddAppSetting(o.Key.Substring(5), o.Value));
                     _ConfigurationManager.SaveConfiguration(restart: false);
                 }
             }

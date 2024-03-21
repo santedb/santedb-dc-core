@@ -204,10 +204,10 @@ namespace SanteDB.Client.Upstream.Management
                             allowHs256 = true;
                         }
 
-                        welcomeMessage = realmOptions.Settings.Find(o => o.Key.Equals("welcome"))?.Value ?? this.m_localizationService.GetString(UserMessageStrings.JOIN_REALM_SUCCESS, new { realm = targetRealm.Realm.Host });
+                        welcomeMessage = realmOptions.Settings.Find(o => o.Key.Equals("$welcome"))?.Value ?? this.m_localizationService.GetString(UserMessageStrings.JOIN_REALM_SUCCESS, new { realm = targetRealm.Realm.Host });
 
                         // Copy central app settings 
-                        foreach (var set in realmOptions.Settings.Where(o => o.Key.StartsWith("dcdr.")))
+                        foreach (var set in realmOptions.Settings.Where(o => !o.Key.StartsWith("$")))
                         {
                             this.m_applicationConfiguration.AddAppSetting(set.Key.Substring(5), set.Value);
                         }

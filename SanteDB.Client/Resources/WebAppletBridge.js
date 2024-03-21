@@ -90,7 +90,7 @@ __SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function ()
                 var cameraDivNode = document.createElement("div");
                 cameraDivNode.id = "cameraDiv";
                 cameraDivNode.style = "position:absolute; top:0px; left:0px; width: 100%; height: 100vh; z-index: 9000; background-color:#fff";
-                cameraDivNode.innerHTML = "<div id='reader' style='width:600px; height:600px; margin:auto'></div><div class='text-muted m-auto d-block text-center' id='qrmessage'></div>";
+                cameraDivNode.innerHTML = "<div id='reader' style='width:600px; height:500px; margin:auto'></div><div class='text-muted m-auto d-block text-center' id='qrmessage'></div>";
 
                 var closeButton = document.createElement("button");
                 closeButton.classList = "btn btn-danger d-block m-auto";
@@ -109,9 +109,9 @@ __SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function ()
                     cameraId, // retreived in the previous step.
                     {
                         fps: 2,    // sets the framerate to 10 frame per second
-                        qrbox: 300  // sets only 250 X 250 region of viewfinder to
+                        qrbox: 300
                     },
-                    function (qrCodeMessage) {
+                    function (qrCodeMessage, decodedResult) {
                         // do something when code is read. For example:
                         console.log(`QR Code detected: ${qrCodeMessage}`);
 
