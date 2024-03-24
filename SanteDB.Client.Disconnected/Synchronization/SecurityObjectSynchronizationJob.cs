@@ -31,6 +31,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
+using SanteDB.Rest.OAuth.Configuration;
 using SharpCompress;
 using System;
 using System.Collections.Generic;
@@ -173,9 +174,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
                     securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
 
+                    // Allow OAUTH client credentials to be authenticated with an authenticated user principal
+                    _ConfigurationManager.GetSection<OAuthConfigurationSection>().AllowClientOnlyGrant = securitySettings.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false);
                     // Get the general configuration and set them 
                     var appSetting = _ConfigurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
                     serviceOptions.Settings.Where(o => !o.Key.StartsWith("$")).ForEach(o => appSetting.AddAppSetting(o.Key.Substring(5), o.Value));
+
                     _ConfigurationManager.SaveConfiguration(restart: false);
                 }
             }

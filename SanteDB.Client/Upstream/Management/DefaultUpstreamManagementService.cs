@@ -46,6 +46,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
+using SanteDB.Rest.OAuth.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -75,6 +76,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly IPlatformSecurityProvider m_platformSecurityProvider;
         private IAuditService m_auditService;
         private readonly SecurityConfigurationSection m_securityConfiguration;
+        private readonly OAuthConfigurationSection m_oauthConfigurationSection;
 
         /// <summary>
         /// DI constructor
@@ -96,6 +98,7 @@ namespace SanteDB.Client.Upstream.Management
             this.m_restConfiguration = configurationManager.GetSection<RestClientConfigurationSection>();
             this.m_applicationConfiguration = configurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
             this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_oauthConfigurationSection = configurationManager.GetSection<OAuthConfigurationSection>();
             this.m_localizationService = localizationService;
             this.m_policyEnforcementService = pepService;
             this.m_serviceManager = serviceManager;
@@ -219,6 +222,9 @@ namespace SanteDB.Client.Upstream.Management
                         this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
                         this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
                         this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
+
+                        // If the server allows for local user accounts then we will allow the application credential to be obtained in the UI
+                        this.m_oauthConfigurationSection.AllowClientOnlyGrant = this.m_securityConfiguration.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false);
 
                         // Is the server compatible?
                         if (!replaceExistingRegistration &&

@@ -564,7 +564,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Get a <see cref="IPrincipal"/> representing the authenticated device with the upstream
         /// </summary>
-        public IPrincipal AuthenticateAsDevice()
+        public IPrincipal AuthenticateAsDevice(IPrincipal onBehalfOf = null)
         {
             try
             {
