@@ -25,6 +25,7 @@ using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.UserInterface;
+using SanteDB.Core;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -1118,6 +1119,57 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return true;
         }
 
+        /// <inheritdoc/>
+        public void SubscribeTo(Type modelType, Guid objectKey)
+        {
+            // Update te object 
+            var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(modelType);
+            var persistenceService = this._ServiceProvider.GetService(persistenceServiceType) as IDataPersistenceService;
+            // Fetch the record which is to be subscribed to
+            var subscribeObject = persistenceService.Get(objectKey) as IdentifiedData;
+
+            if (this._Configuration.SubscribeToResource.Type == typeof(Place)) // We are subscribed to a place - so we want to ensure that we add a relationship
+            {
+                var insertBundle = new Bundle();
+                foreach (var itm in this._Configuration.SubscribedObjects)
+                {
+                    switch (subscribeObject)
+                    {
+                        case Entity ent:
+                            if (!ent.LoadProperty(o => o.Relationships).Any(r => r.TargetEntityKey == itm && r.RelationshipTypeKey == EntityRelationshipTypeKeys.IncidentalServiceDeliveryLocation))
+                            {
+                                var er = new EntityRelationship(EntityRelationshipTypeKeys.IncidentalServiceDeliveryLocation, itm)
+                                {
+                                    SourceEntityKey = objectKey,
+                                    Key = Guid.NewGuid()
+                                };
+                                insertBundle.Add(er);
+                            }
+                            break;
+                        case Act act:
+                            if (!act.LoadProperty(o => o.Participations).Any(o => o.PlayerEntityKey == itm && o.ParticipationRoleKey == ActParticipationKeys.InformationRecipient))
+                            {
+                                var ap = new ActParticipation(ActParticipationKeys.InformationRecipient, itm)
+                                {
+                                    SourceEntityKey = objectKey,
+                                    Key = Guid.NewGuid()
+                                };
+                                insertBundle.Add(ap);
+                            }
+                            break;
+                    }
+                }
+
+                insertBundle = this._ServiceProvider.GetService<IDataPersistenceService<Bundle>>().Insert(insertBundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                this._QueueManager.GetOutboundQueue().Enqueue(insertBundle, SynchronizationQueueEntryOperation.Insert); // Queue the update 
+
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
+
+        }
 
     }
 }

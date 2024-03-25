@@ -21,6 +21,7 @@
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -29,6 +30,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
     internal static class Extensions
     {
 
+        public const string OUTBOUND_QUEUE_NAME = "out";
+        public const string INBOUND_QUEUE_NAME = "in";
+        public const string ADMIN_QUEUE_NAME = "admin";
+        public const string DEADLETTER_QUEUE_NAME = "admin";
+
+
+        /// <summary>
+        /// Get the administrative queue for low priority messages
+        /// </summary>
+        public static ISynchronizationQueue GetAdminQueue(this ISynchronizationQueueManager service) =>
+            service.Get(ADMIN_QUEUE_NAME);
 
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.LocalToUpstream"/> queue pattern.
@@ -36,7 +48,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="service">The queue manager to query.</param>
         /// <returns>The instance of <see cref="ISynchronizationQueue"/> or <c>default</c>.</returns>
         public static ISynchronizationQueue GetOutboundQueue(this ISynchronizationQueueManager service)
-            => service.GetAll(SynchronizationPattern.LocalToUpstream)?.FirstOrDefault();
+            => service.Get(OUTBOUND_QUEUE_NAME);
 
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.DeadLetter"/> queue pattern.
@@ -44,7 +56,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="service">The queue manager to query.</param>
         /// <returns>The instance of <see cref="ISynchronizationQueue"/> or <c>default</c>.</returns>
         public static ISynchronizationQueue GetDeadletter(this ISynchronizationQueueManager service)
-            => service.GetAll(SynchronizationPattern.DeadLetter)?.FirstOrDefault();
+            => service.Get(DEADLETTER_QUEUE_NAME);
 
         /// <summary>
         /// Gets the first queue from the queue manager that has an <see cref="SynchronizationPattern.UpstreamToLocal"/> queue pattern.
@@ -52,7 +64,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <param name="service">The queue manager to query.</param>
         /// <returns>The instance of <see cref="ISynchronizationQueue"/> or <c>default</c>.</returns>
         public static ISynchronizationQueue GetInboundQueue(this ISynchronizationQueueManager service)
-            => service.GetAll(SynchronizationPattern.UpstreamToLocal)?.FirstOrDefault();
+            => service.Get(INBOUND_QUEUE_NAME);
 
         /// <summary>
         /// Enqueue multiple <see cref="IdentifiedData"/> objects to a queue.
