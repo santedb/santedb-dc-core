@@ -33,7 +33,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public const string OUTBOUND_QUEUE_NAME = "out";
         public const string INBOUND_QUEUE_NAME = "in";
         public const string ADMIN_QUEUE_NAME = "admin";
-        public const string DEADLETTER_QUEUE_NAME = "admin";
+        public const string DEADLETTER_QUEUE_NAME = "deadletter";
 
 
         /// <summary>
@@ -112,6 +112,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     if (!ex.IsCommunicationException())
                     {
                         dlqueue.Enqueue(data, ex.ToHumanReadableString());
+                        //data.Queue.Delete(data.Id);
                         return SynchronizationMessagePump.Handled;
 
                     }

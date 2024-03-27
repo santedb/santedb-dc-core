@@ -43,6 +43,7 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
@@ -94,6 +95,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly ILocalizationService _LocalizationService;
         private readonly LocalRepositoryFactory _LocalRepositoryFactory;
         private readonly INetworkInformationService _NetworkInformationService;
+        private readonly IUserPreferencesManager _UserPreferenceManager;
         private readonly SynchronizationMessagePump _MessagePump;
         private readonly ISyncPolicy _PushExceptionPolicy;
         private readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
@@ -151,6 +153,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IAuditService auditService,
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
+            IUserPreferencesManager userPreferenceManager,
             INetworkInformationService networkInformationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
 
@@ -174,6 +177,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._LockTimeout = TimeSpan.FromMilliseconds(100);
             this._GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
             this._NetworkInformationService = networkInformationService;
+            this._UserPreferenceManager = userPreferenceManager;
 
             this._MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
 
@@ -1020,6 +1024,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnNetworkChange));
             };
 
+            // User preferences
+            this._UserPreferenceManager.Updated += (o, e) =>
+            {
+                // If the user is not local then we want to push the update to the admin queue
+                if (e.SettingsObject is IdentifiedData settingData && ApplicationServiceContext.Current.GetService<IIdentityProviderService>().GetClaims(e.User)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) != true)
+                {
+                    this._QueueManager.GetAdminQueue().Enqueue(settingData, SynchronizationQueueEntryOperation.Insert);
+                }
+            };
 
             _ServiceManager.GetAllTypes()
                 .Where(type => !type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
@@ -1027,7 +1040,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
 
                 if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
-                    !this._Configuration.ForbidSending.Any(f => f.Type == type)) // This is a type of resource that can be submitted to the API
+                    !this._Configuration.ForbidSending.Any(f => f.Type == type) &&
+                     UpstreamEndpointMetadataUtil.Current.CanWrite(type)) // This is a type of resource that can be submitted to the API
                 {
                     var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
                     var repositoryInstance = _ServiceProvider.GetService(repositoryType);

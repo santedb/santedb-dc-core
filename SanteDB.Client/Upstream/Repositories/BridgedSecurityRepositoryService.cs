@@ -87,8 +87,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// </summary>
         private bool IsLocalUser(string userName)
         {
-            return this.m_localRoleProvider.IsUserInRole(userName, SanteDBConstants.LocalUserGroupName) ||
-                this.m_localIdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
+            return this.m_localIdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
         }
 
         /// <summary>

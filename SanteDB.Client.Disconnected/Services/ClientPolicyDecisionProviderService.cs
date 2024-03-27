@@ -70,25 +70,31 @@ namespace SanteDB.Client.Disconnected.Services
         /// <inheritdoc/>
         public override IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal principal)
         {
-            var basePolicySet = base.GetEffectivePolicySet(principal);
-            foreach(var pi in basePolicySet)
+            var cacheKey = this.ComputeCacheKey(principal);
+            EffectivePolicyInstance[] basePolicySet = null;
+            if (this.m_adhocCacheService?.TryGet(cacheKey, out basePolicySet) != true)
             {
-                if(this.m_policyMaps.TryGetValue(pi.Policy.Oid, out var mappedPolicies))
-                { 
-                    foreach(var mp in mappedPolicies)
+                basePolicySet = base.GetEffectivePolicySet(principal).OfType<EffectivePolicyInstance>().ToArray();
+                foreach (var pi in basePolicySet)
+                {
+                    if (this.m_policyMaps.TryGetValue(pi.Policy.Oid, out var mappedPolicies))
                     {
-
-                        basePolicySet.Where(o => o.Policy.Oid == mp || o.Policy.Oid.StartsWith($"{mp}.")).OfType<EffectivePolicyInstance>().ForEach(basePolicy =>
+                        foreach (var mp in mappedPolicies)
                         {
-                            if (pi.Rule != basePolicy?.Rule)
+
+                            basePolicySet.Where(o => o.Policy.Oid == mp || o.Policy.Oid.StartsWith($"{mp}.")).ForEach(basePolicy =>
                             {
-                                basePolicy.Rule = pi.Rule;
-                            }
-                        });
+                                if (pi.Rule >= basePolicy?.Rule) // Mapped local policy is more liberal than another policy so set the policy to the local policy
+                                {
+                                    basePolicy.Rule = pi.Rule;
+                                }
+                            });
+                        }
                     }
                 }
+                this.m_adhocCacheService.Add(cacheKey, basePolicySet);
             }
-            return basePolicySet;
+            return basePolicySet.OfType<IPolicyInstance>();
         }
     }
 }

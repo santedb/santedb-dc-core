@@ -24,6 +24,7 @@ using SanteDB.Core.Extensions;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -36,14 +37,19 @@ namespace SanteDB.Client.UserInterface.Impl
     /// </summary>
     public class DefaultUserPreferenceManager : IUserPreferencesManager
     {
-        private readonly IRepositoryService<EntityExtension> m_entityExtensionRepository;
+        private readonly IDataPersistenceService<EntityExtension> m_entityExtensionRepository;
         private readonly IIdentityProviderService m_identityProvider;
-        private readonly IRepositoryService<UserEntity> m_userEntityRepository;
+        private readonly IDataPersistenceService<UserEntity> m_userEntityRepository;
+
+        /// <summary>
+        /// Settings have been updated
+        /// </summary>
+        public event EventHandler<UserPreferencesUpdatedEventArgs> Updated;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DefaultUserPreferenceManager(IRepositoryService<EntityExtension> entityExtensionRepository, IRepositoryService<UserEntity> userEntityRepository, IIdentityProviderService identityProvider)
+        public DefaultUserPreferenceManager(IDataPersistenceService<EntityExtension> entityExtensionRepository, IDataPersistenceService<UserEntity> userEntityRepository, IIdentityProviderService identityProvider)
         {
             this.m_entityExtensionRepository = entityExtensionRepository;
             this.m_identityProvider = identityProvider;
@@ -53,7 +59,7 @@ namespace SanteDB.Client.UserInterface.Impl
         /// <inheritdoc/>
         public IEnumerable<AppSettingKeyValuePair> GetUserSettings(string forUser)
         {
-            var extension = this.m_entityExtensionRepository.Find(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension).FirstOrDefault();
+            var extension = this.m_entityExtensionRepository.Query(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension, AuthenticationContext.SystemPrincipal).FirstOrDefault();
             if (extension == null)
             {
                 yield break;
@@ -70,19 +76,19 @@ namespace SanteDB.Client.UserInterface.Impl
         /// <inheritdoc/>
         public void SetUserSettings(string forUser, IEnumerable<AppSettingKeyValuePair> settings)
         {
-            var extension = this.m_entityExtensionRepository.Find(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension).FirstOrDefault();
+            var extension = this.m_entityExtensionRepository.Query(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension, AuthenticationContext.SystemPrincipal).FirstOrDefault();
             if (extension == null) // No profile so create one
             {
-                var ue = this.m_userEntityRepository.Find(o => o.SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant()).FirstOrDefault() ??
+                var ue = this.m_userEntityRepository.Query(o => o.SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant(), AuthenticationContext.SystemPrincipal).FirstOrDefault() ??
                     this.m_userEntityRepository.Insert(new UserEntity()
                     {
                         SecurityUserKey = this.m_identityProvider.GetSid(forUser)
-                    });
+                    }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
 
-                extension = new EntityExtension(ExtensionTypeKeys.UserPreferenceExtension, typeof(DictionaryExtensionHandler), null)
+                extension = this.m_entityExtensionRepository.Insert(new EntityExtension(ExtensionTypeKeys.UserPreferenceExtension, typeof(DictionaryExtensionHandler), null)
                 {
                     SourceEntityKey = ue.Key
-                };
+                }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
             }
 
             var settingsDictionary = extension?.ExtensionValue as JObject ?? new JObject();
@@ -100,7 +106,8 @@ namespace SanteDB.Client.UserInterface.Impl
                 }
             }
             extension.ExtensionValue = settingsDictionary;
-            this.m_entityExtensionRepository.Save(extension);
+            this.m_entityExtensionRepository.Update(extension, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            this.Updated?.Invoke(this, new UserPreferencesUpdatedEventArgs(forUser, settings, extension));
         }
     }
 }
