@@ -127,6 +127,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private object _OutboundQueueLock;
         private object _InboundQueueLock;
         private readonly IAdhocCacheService _AdhocCache;
+        private readonly IIdentityProviderService _IdentityProvider;
         private TimeSpan _LockTimeout;
 
         /// <summary>
@@ -149,6 +150,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
             IPatchService patchService,
+            IIdentityProviderService identityProviderService,
             IUserInterfaceInteractionProvider userInterfaceInteractionProvider,
             IAuditService auditService,
             IAdhocCacheService adhocCacheService,
@@ -174,6 +176,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._OutboundQueueLock = new object();
             this._InboundQueueLock = new object();
             this._AdhocCache = adhocCacheService;
+            this._IdentityProvider = identityProviderService;
             this._LockTimeout = TimeSpan.FromMilliseconds(100);
             this._GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
             this._NetworkInformationService = networkInformationService;
@@ -416,7 +419,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
             }
         }
-
 
         /// <summary>
         /// Bundle dependent objects for resubmit
@@ -1014,6 +1016,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         }
 
         /// <summary>
+        /// Determine if <paramref name="userName"/> is local user (i.e. should data be synchronized or queued)
+        /// </summary>
+        private bool IsLocalUser(String userName)
+        {
+            return _IdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) != true;
+        }
+
+        /// <summary>
         /// Subscribe to events in the CDR which require data to be sent to the central server
         /// </summary>
         private void SubscribeToEvents()
@@ -1028,7 +1038,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._UserPreferenceManager.Updated += (o, e) =>
             {
                 // If the user is not local then we want to push the update to the admin queue
-                if (e.SettingsObject is IdentifiedData settingData && ApplicationServiceContext.Current.GetService<IIdentityProviderService>().GetClaims(e.User)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) != true)
+                if (e.SettingsObject is IdentifiedData settingData && !this.IsLocalUser(e.User))
                 {
                     this._QueueManager.GetAdminQueue().Enqueue(settingData, SynchronizationQueueEntryOperation.Insert);
                 }
@@ -1081,7 +1091,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             else
             {
-                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Insert);
+                this._QueueManager.GetOutboundQueue().Enqueue(this.FixupSubmissionObject(args.Data), SynchronizationQueueEntryOperation.Insert);
             }
         }
 
@@ -1103,7 +1113,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
                 else
                 {
-                    this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Update);
+                    this._QueueManager.GetOutboundQueue().Enqueue(this.FixupSubmissionObject(args.Data), SynchronizationQueueEntryOperation.Update);
                 }
             }
         }
@@ -1119,10 +1129,37 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             else
             {
-                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Obsolete);
+                this._QueueManager.GetOutboundQueue().Enqueue(this.FixupSubmissionObject(args.Data), SynchronizationQueueEntryOperation.Obsolete);
             }
 
         }
+
+
+        /// <summary>
+        /// Fixes up submitted object to increase chance of successful synchronization
+        /// </summary>
+        /// <remarks>
+        /// There are a few cases where the submission object may be logically invalid on the server. For example, <see cref="UserEntity"/> objects should be sent to the central server, however
+        /// the <see cref="UserEntity.SecurityUserKey"/> may point to a local user - so we remove this
+        /// </remarks>
+        private IdentifiedData FixupSubmissionObject(IdentifiedData dataToSubmit)
+        {
+            switch (dataToSubmit)
+            {
+                case UserEntity ue:
+
+                    // Do not submit pointer to security user 
+                    if(this.IsLocalUser(ue.LoadProperty(o=>o.SecurityUser).UserName))
+                    {
+                        ue.SecurityUserKey = null;
+                        ue.SecurityUser = null;
+                    }
+                    break;
+            }
+            return dataToSubmit;
+        }
+
+
 
         /// <inheritdoc />
         public bool Stop()
