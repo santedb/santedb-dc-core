@@ -149,10 +149,14 @@ namespace SanteDB.Client.Upstream.Security
             {
                 using (var client = this.CreateAmiServiceClient())
                 {
-                    client.Client.Post<ParameterCollection, object>("/Tfa/$send", new ParameterCollection(
+                    var response = client.Client.Post<ParameterCollection, ParameterCollection>("/Tfa/$send", new ParameterCollection(
                         new Parameter("userName", user.Name),
                         new Parameter("mechanism", mechanismId)
                     ));
+                    if(response.TryGet("challenge", out string challenge))
+                    {
+                        return challenge;
+                    }
                 }
                 return String.Empty;
             }

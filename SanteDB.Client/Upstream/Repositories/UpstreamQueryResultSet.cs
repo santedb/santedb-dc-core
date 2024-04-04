@@ -198,6 +198,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     yield return itm;
                 }
+                yield break;
             }
 
             var cacheList = new List<TModel>();
