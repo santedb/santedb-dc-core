@@ -306,5 +306,25 @@ namespace SanteDB.Client.Upstream.Security
             }
         }
 
+        /// <inheritdoc/>
+        public void ExpirePassword(string userName, IPrincipal principal)
+        {
+            var remoteUser = this.GetUpstreamSecurityUser(o => o.UserName.ToLowerInvariant() == userName.ToLowerInvariant(), principal);
+            if (remoteUser == null)
+            {
+                throw new KeyNotFoundException(userName);
+            }
+            using (var amiclient = CreateAmiServiceClient())
+            {
+                try
+                {
+                    var result = amiclient.UpdateUser(remoteUser.Key.Value, new Core.Model.AMI.Auth.SecurityUserInfo(remoteUser) { ExpirePassword = true });
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+                    throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = remoteUser.Key.Value }), ex);
+                }
+            }
+        }
     }
 }
