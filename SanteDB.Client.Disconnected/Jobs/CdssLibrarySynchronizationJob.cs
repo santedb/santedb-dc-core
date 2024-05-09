@@ -86,7 +86,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         public Guid Id => JOB_ID;
 
         /// <inheritdoc/>
-        public string Name => "CDSS Library & Data Quality Synrhonization Job";
+        public string Name => "CDSS Library & Data Quality Synchronization Job";
 
         /// <inheritdoc/>
         public string Description => "Synchronizes CDSS libraries and data quality rules from the iCDR and ensures that the local instance of decision support rules are up to date";
