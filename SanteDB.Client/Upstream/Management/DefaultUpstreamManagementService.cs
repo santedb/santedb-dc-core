@@ -212,7 +212,7 @@ namespace SanteDB.Client.Upstream.Management
                         // Copy central app settings 
                         foreach (var set in realmOptions.Settings.Where(o => !o.Key.StartsWith("$")))
                         {
-                            this.m_applicationConfiguration.AddAppSetting(set.Key.Substring(5), set.Value);
+                            this.m_applicationConfiguration.AddAppSetting(set.Key, set.Value);
                         }
 
                         // Pull security configuration sections from the AMI - these are only disclosed when the AMI has our authentication as an administrator
