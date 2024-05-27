@@ -18,8 +18,13 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Client.Configuration;
+using SanteDB.Core;
 using SanteDB.Core.Http;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
+using SanteDB.Core.Services;
+using System.Linq;
 using System.Net;
 using System.Security.Principal;
 
@@ -52,7 +57,16 @@ namespace SanteDB.Client.Http
                         webRequest.ClientCertificates.Add(icp.AuthenticationCertificate);
                     }
                     break;
+                case IClaimsPrincipal cp:
 
+                    // Determine if this is a local user - if so we want to authenticate as the device 
+                    if(cp.Claims.Any(o=>o.Type == SanteDBClaimTypes.LocalOnly && bool.TryParse(o.Value, out var b) && b))
+                    {
+                        // Authenticate as the device
+                        var integrationService = ApplicationServiceContext.Current.GetService<IUpstreamIntegrationService>();
+                        new UpstreamPrincipalCredentials(integrationService.AuthenticateAsDevice(cp)).SetCredentials(webRequest);
+                    }
+                    break;
             }
         }
 

@@ -24,6 +24,7 @@ using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
+using SanteDB.Core.Security;
 using System;
 using System.Collections.Generic;
 
@@ -46,6 +47,7 @@ namespace SanteDB.Client.Configuration
         /// <inheritdoc/>
         public IEnumerable<Type> GetServices() =>
                     new Type[] {
+                        typeof(DefaultPolicyDecisionService),
                         typeof(UpstreamJobManager),
                         typeof(UpstreamForeignDataManagement),
                         typeof(UpstreamRepositoryFactory),

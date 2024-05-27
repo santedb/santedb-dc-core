@@ -96,7 +96,7 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 auditSubmission.Audit.Add(peekAudit);
             }
-            this.m_synchronizationQueueManager.GetAll(SynchronizationPattern.LocalToUpstream | SynchronizationPattern.LowPriority).FirstOrDefault().Enqueue(auditSubmission, SynchronizationQueueEntryOperation.Insert);
+            this.m_synchronizationQueueManager.GetAdminQueue().Enqueue(auditSubmission, SynchronizationQueueEntryOperation.Insert);
         }
     }
 }

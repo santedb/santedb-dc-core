@@ -249,7 +249,7 @@ namespace SanteDB.Client.Batteries.Configuration
             configuration.Sections.Add(new OAuthConfigurationSection()
             {
                 IssuerName = upstreamConfiguration.Credentials[0].CredentialName,
-                AllowClientOnlyGrant = false,
+                AllowClientOnlyGrant = false, // DCDR allows this 
                 JwtSigningKey = "jwsdefault",
                 TokenType = "bearer"
             });

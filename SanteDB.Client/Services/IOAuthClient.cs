@@ -43,6 +43,7 @@ namespace SanteDB.Client.Services
         /// </summary>
         /// <param name="clientId">The client_id to pass to the oauth service</param>
         /// <param name="clientSecret">The client secret to pass to the oauth service</param>
+        /// <param name="onBehalfOfUser">The user under which the authentication request is being made</param>
         /// <returns>The claims principal if the session was authenticated</returns>
         IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null);
 

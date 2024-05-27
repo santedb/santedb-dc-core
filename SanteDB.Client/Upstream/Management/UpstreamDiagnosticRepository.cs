@@ -163,6 +163,7 @@ namespace SanteDB.Client.Upstream.Management
 
                 data.ApplicationInfo = new DiagnosticApplicationInfo(Assembly.GetEntryAssembly() ?? this.GetType().Assembly);
                 data.ApplicationInfo.Applets = this.m_appletManagerService.Applets.Select(o => o.Info).ToList();
+                data.Tags = new List<DiagnosticReportTag>();
                 data.Tags.Add(new DiagnosticReportTag("os.type", this.m_operatingSystemInfo.OperatingSystem.ToString()));
                 data.Tags.Add(new DiagnosticReportTag("os.version", this.m_operatingSystemInfo.VersionString));
                 data.Tags.Add(new DiagnosticReportTag("os.manufacturer", this.m_operatingSystemInfo.ManufacturerName));

@@ -71,5 +71,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// Push data to the server
         /// </summary>
         void Push();
+
+        /// <summary>
+        /// Instructs the synchronization service to perform the necessary steps to ensure that 
+        /// the specified object is included on subsequent pull requests
+        /// </summary>
+        /// <param name="modelType">The type of object being subscribed to</param>
+        /// <param name="objectKey">The key of the object which is to be subsribed to</param>
+        void SubscribeTo(Type modelType, Guid objectKey);
     }
 }

@@ -198,9 +198,12 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     this.m_tracer.TraceVerbose("Querying upstream as device {0}/{1}...", typeof(TModel).GetSerializationName(), predicate);
                     var query = QueryExpressionBuilder.BuildQuery(predicate);
-                    query.Add(QueryControlParameterNames.HttpCountParameterName, queryControl.Count.ToString());
-                    query.Add(QueryControlParameterNames.HttpOffsetParameterName, queryControl.Offset.ToString());
-                    query.Add(QueryControlParameterNames.HttpQueryStateParameterName, queryControl.QueryId.ToString());
+                    query.Add(QueryControlParameterNames.HttpCountParameterName, (queryControl?.Count ?? 100).ToString());
+                    query.Add(QueryControlParameterNames.HttpOffsetParameterName, (queryControl?.Offset ?? 0).ToString());
+                    if (queryControl?.QueryId != null)
+                    {
+                        query.Add(QueryControlParameterNames.HttpQueryStateParameterName, queryControl?.QueryId.ToString());
+                    }
                     client.Credentials = new UpstreamPrincipalCredentials(AuthenticationContext.Current.Principal);
 
                     client.Requesting += (o, e) =>
@@ -214,14 +217,14 @@ namespace SanteDB.Client.Upstream.Management
                             e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = queryControl?.IfNoneMatch;
                         }
 
-                        if (queryControl.IncludeRelatedInformation)
+                        if (queryControl?.IncludeRelatedInformation == true)
                         {
                             e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.IncludeRelatedObjectsHeader, "true");
                         }
                     };
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
 
-                    if (queryControl.Timeout.HasValue)
+                    if (queryControl?.Timeout.HasValue == true)
                     {
                         client.SetTimeout(queryControl.Timeout.Value);
                     }
@@ -564,7 +567,7 @@ namespace SanteDB.Client.Upstream.Management
         /// <summary>
         /// Get a <see cref="IPrincipal"/> representing the authenticated device with the upstream
         /// </summary>
-        public IPrincipal AuthenticateAsDevice()
+        public IPrincipal AuthenticateAsDevice(IPrincipal onBehalfOf = null)
         {
             try
             {

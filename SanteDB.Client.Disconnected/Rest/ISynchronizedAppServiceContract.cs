@@ -82,6 +82,7 @@ namespace SanteDB.Client.Disconnected.Rest
 
 
         #region Synchronization
+
         /// <summary>
         /// Get synchronization logs
         /// </summary>

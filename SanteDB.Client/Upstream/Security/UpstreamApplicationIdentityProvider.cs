@@ -36,6 +36,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security;
 using System.Security.Authentication;
 using System.Security.Principal;
 
@@ -126,7 +127,7 @@ namespace SanteDB.Client.Upstream.Security
         public IPrincipal Authenticate(string clientId, IPrincipal authenticationContext)
             => AuthenticateInternal(clientId, null, authenticationContext);
 
-        private IPrincipal AuthenticateInternal(string clientId, string clientSecret = null, IPrincipal authenticationContext = null)
+        private IPrincipal AuthenticateInternal(string clientId, string clientSecret = null, IPrincipal authenticationContext = null, IIdentity onBehalfOf = null)
         {
             var authenticatingargs = new AuthenticatingEventArgs(clientId);
             Authenticating?.Invoke(this, authenticatingargs);

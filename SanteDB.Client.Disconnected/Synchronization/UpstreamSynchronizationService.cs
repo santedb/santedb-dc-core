@@ -25,6 +25,7 @@ using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.UserInterface;
+using SanteDB.Core;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
@@ -42,6 +43,7 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
@@ -93,6 +95,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly ILocalizationService _LocalizationService;
         private readonly LocalRepositoryFactory _LocalRepositoryFactory;
         private readonly INetworkInformationService _NetworkInformationService;
+        private readonly IUserPreferencesManager _UserPreferenceManager;
         private readonly SynchronizationMessagePump _MessagePump;
         private readonly ISyncPolicy _PushExceptionPolicy;
         private readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
@@ -124,6 +127,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private object _OutboundQueueLock;
         private object _InboundQueueLock;
         private readonly IAdhocCacheService _AdhocCache;
+        private readonly IIdentityProviderService _IdentityProvider;
         private TimeSpan _LockTimeout;
 
         /// <summary>
@@ -146,10 +150,12 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IServiceProvider serviceProvider,
             ILocalizationService localizationService,
             IPatchService patchService,
+            IIdentityProviderService identityProviderService,
             IUserInterfaceInteractionProvider userInterfaceInteractionProvider,
             IAuditService auditService,
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
+            IUserPreferencesManager userPreferenceManager,
             INetworkInformationService networkInformationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
 
@@ -170,9 +176,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._OutboundQueueLock = new object();
             this._InboundQueueLock = new object();
             this._AdhocCache = adhocCacheService;
+            this._IdentityProvider = identityProviderService;
             this._LockTimeout = TimeSpan.FromMilliseconds(100);
             this._GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
             this._NetworkInformationService = networkInformationService;
+            this._UserPreferenceManager = userPreferenceManager;
 
             this._MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
 
@@ -411,7 +419,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
             }
         }
-
 
         /// <summary>
         /// Bundle dependent objects for resubmit
@@ -1009,6 +1016,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         }
 
         /// <summary>
+        /// Determine if <paramref name="userName"/> is local user (i.e. should data be synchronized or queued)
+        /// </summary>
+        private bool IsLocalUser(String userName)
+        {
+            return _IdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) != true;
+        }
+
+        /// <summary>
         /// Subscribe to events in the CDR which require data to be sent to the central server
         /// </summary>
         private void SubscribeToEvents()
@@ -1019,6 +1034,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnNetworkChange));
             };
 
+            // User preferences
+            this._UserPreferenceManager.Updated += (o, e) =>
+            {
+                // If the user is not local then we want to push the update to the admin queue
+                if (e.SettingsObject is IdentifiedData settingData && !this.IsLocalUser(e.User))
+                {
+                    this._QueueManager.GetAdminQueue().Enqueue(settingData, SynchronizationQueueEntryOperation.Insert);
+                }
+            };
 
             _ServiceManager.GetAllTypes()
                 .Where(type => !type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
@@ -1026,7 +1050,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
 
                 if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
-                    !this._Configuration.ForbidSending.Any(f => f.Type == type)) // This is a type of resource that can be submitted to the API
+                    !this._Configuration.ForbidSending.Any(f => f.Type == type) &&
+                     UpstreamEndpointMetadataUtil.Current.CanWrite(type)) // This is a type of resource that can be submitted to the API
                 {
                     var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
                     var repositoryInstance = _ServiceProvider.GetService(repositoryType);
@@ -1066,7 +1091,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             else
             {
-                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Insert);
+                this._QueueManager.GetOutboundQueue().Enqueue(this.FixupSubmissionObject(args.Data), SynchronizationQueueEntryOperation.Insert);
             }
         }
 
@@ -1088,7 +1113,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
                 else
                 {
-                    this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Update);
+                    this._QueueManager.GetOutboundQueue().Enqueue(this.FixupSubmissionObject(args.Data), SynchronizationQueueEntryOperation.Update);
                 }
             }
         }
@@ -1104,10 +1129,37 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             else
             {
-                this._QueueManager.GetOutboundQueue().Enqueue(args.Data, SynchronizationQueueEntryOperation.Obsolete);
+                this._QueueManager.GetOutboundQueue().Enqueue(this.FixupSubmissionObject(args.Data), SynchronizationQueueEntryOperation.Obsolete);
             }
 
         }
+
+
+        /// <summary>
+        /// Fixes up submitted object to increase chance of successful synchronization
+        /// </summary>
+        /// <remarks>
+        /// There are a few cases where the submission object may be logically invalid on the server. For example, <see cref="UserEntity"/> objects should be sent to the central server, however
+        /// the <see cref="UserEntity.SecurityUserKey"/> may point to a local user - so we remove this
+        /// </remarks>
+        private IdentifiedData FixupSubmissionObject(IdentifiedData dataToSubmit)
+        {
+            switch (dataToSubmit)
+            {
+                case UserEntity ue:
+
+                    // Do not submit pointer to security user 
+                    if(this.IsLocalUser(ue.LoadProperty(o=>o.SecurityUser).UserName))
+                    {
+                        ue.SecurityUserKey = null;
+                        ue.SecurityUser = null;
+                    }
+                    break;
+            }
+            return dataToSubmit;
+        }
+
+
 
         /// <inheritdoc />
         public bool Stop()
@@ -1118,6 +1170,57 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return true;
         }
 
+        /// <inheritdoc/>
+        public void SubscribeTo(Type modelType, Guid objectKey)
+        {
+            // Update te object 
+            var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(modelType);
+            var persistenceService = this._ServiceProvider.GetService(persistenceServiceType) as IDataPersistenceService;
+            // Fetch the record which is to be subscribed to
+            var subscribeObject = persistenceService.Get(objectKey) as IdentifiedData;
+
+            if (this._Configuration.SubscribeToResource.Type == typeof(Place)) // We are subscribed to a place - so we want to ensure that we add a relationship
+            {
+                var insertBundle = new Bundle();
+                foreach (var itm in this._Configuration.SubscribedObjects)
+                {
+                    switch (subscribeObject)
+                    {
+                        case Entity ent:
+                            if (!ent.LoadProperty(o => o.Relationships).Any(r => r.TargetEntityKey == itm && r.RelationshipTypeKey == EntityRelationshipTypeKeys.IncidentalServiceDeliveryLocation))
+                            {
+                                var er = new EntityRelationship(EntityRelationshipTypeKeys.IncidentalServiceDeliveryLocation, itm)
+                                {
+                                    SourceEntityKey = objectKey,
+                                    Key = Guid.NewGuid()
+                                };
+                                insertBundle.Add(er);
+                            }
+                            break;
+                        case Act act:
+                            if (!act.LoadProperty(o => o.Participations).Any(o => o.PlayerEntityKey == itm && o.ParticipationRoleKey == ActParticipationKeys.InformationRecipient))
+                            {
+                                var ap = new ActParticipation(ActParticipationKeys.InformationRecipient, itm)
+                                {
+                                    SourceEntityKey = objectKey,
+                                    Key = Guid.NewGuid()
+                                };
+                                insertBundle.Add(ap);
+                            }
+                            break;
+                    }
+                }
+
+                insertBundle = this._ServiceProvider.GetService<IDataPersistenceService<Bundle>>().Insert(insertBundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                this._QueueManager.GetOutboundQueue().Enqueue(insertBundle, SynchronizationQueueEntryOperation.Insert); // Queue the update 
+
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
+
+        }
 
     }
 }

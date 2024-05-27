@@ -425,5 +425,14 @@ namespace SanteDB.Client.Upstream.Security
             }
         }
 
+        /// <inheritdoc/>
+        public void ExpirePassword(string userName, IPrincipal principal)
+        {
+            this.m_localIdentityProvider.ExpirePassword(userName, principal);
+            if (!this.IsLocalIdentity(userName))
+            {
+                this.m_tracer.TraceWarning("Identity {0} only lockout on local device", userName);
+            }
+        }
     }
 }

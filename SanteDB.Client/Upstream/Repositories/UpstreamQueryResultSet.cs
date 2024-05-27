@@ -70,7 +70,7 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly string m_resourceName;
         private readonly IAdhocCacheService m_cacheService;
 
-        private const int CACHE_TIMEOUT = 5_000;
+        private static readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 0, 10);
 
         /// <inheritdoc/>
         public Type ElementType => typeof(TModel);
@@ -198,6 +198,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     yield return itm;
                 }
+                yield break;
             }
 
             var cacheList = new List<TModel>();
@@ -220,7 +221,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 fetchNextPage &= resultSetOffset < fetchUntilOffset;
                 parameters[QueryControlParameterNames.HttpOffsetParameterName] = offset.ToString(); // fetch next page
             }
-            this.m_cacheService?.Add(cacheKey, cacheList.ToArray(), new TimeSpan(0, 0, CACHE_TIMEOUT));
+            this.m_cacheService?.Add(cacheKey, cacheList.ToArray(), CACHE_TIMEOUT);
         }
 
         /// <inheritdoc/>

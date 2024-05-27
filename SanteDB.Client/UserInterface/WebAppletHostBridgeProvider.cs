@@ -117,11 +117,25 @@ namespace SanteDB.Client.UserInterface
 
                     sw.WriteLine("\t}");
                     sw.WriteLine("}");
-                    using (var streamReader = new StreamReader(typeof(WebAppletHostBridgeProvider).Assembly.GetManifestResourceStream("SanteDB.Client.Resources.WebAppletBridge.js")))
+
+#if DEBUG
+                    var userProvidedShimPath = Path.Combine(Path.GetDirectoryName(typeof(WebAppletHostBridgeProvider).Assembly.Location), "WebAppletBridge.js");
+                    if (File.Exists(userProvidedShimPath))
                     {
-                        sw.Write(streamReader.ReadToEnd());
+                        sw.Write(File.ReadAllText(userProvidedShimPath));
+                        return sw.ToString();
                     }
-                    this.m_shim = sw.ToString();
+                    else
+                    {
+#endif
+                        using (var streamReader = new StreamReader(typeof(WebAppletHostBridgeProvider).Assembly.GetManifestResourceStream("SanteDB.Client.Resources.WebAppletBridge.js")))
+                        {
+                            sw.Write(streamReader.ReadToEnd());
+                        }
+                        this.m_shim = sw.ToString();
+#if DEBUG
+                    }
+#endif
                 }
             }
             return this.m_shim;

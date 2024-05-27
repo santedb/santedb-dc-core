@@ -26,6 +26,7 @@ using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
@@ -100,6 +101,9 @@ namespace SanteDB.Client
                 base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
                 base.Start();
+
+                this.AutoRestoreEnvironment();
+
                 base.DependencyServiceManager.ProgressChanged -= this.MonitorStatus;
 
                 // Bind to status updates on our UI
@@ -109,7 +113,6 @@ namespace SanteDB.Client
                 }
                 EntitySource.Current = this.DependencyServiceManager.CreateInjected<EntitySource>();
 
-                this.AutoRestoreEnvironment();
                 // A component has requested a restart 
                 this.ServiceManager.GetServices().OfType<IRequestRestarts>().ToList().ForEach(svc =>
                 {
@@ -118,6 +121,7 @@ namespace SanteDB.Client
                         ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nerfed
                     };
                 });
+
             }
             catch (Exception ex)
             {
@@ -137,6 +141,7 @@ namespace SanteDB.Client
             using (AuthenticationContext.EnterSystemContext())
             {
                 var backupServiceManager = this.GetService<IBackupService>();
+                var symmEncryption = this.GetService<ISymmetricCryptographicProvider>();
                 var configurationManager = this.GetService<IConfigurationManager>();
                 var uiInteraction = this.GetService<IUserInterfaceInteractionProvider>();
                 if (configurationManager is InitialConfigurationManager &&
@@ -146,7 +151,7 @@ namespace SanteDB.Client
                     try
                     {
                         var backupDescriptor = backupServiceManager.GetBackupDescriptors(BackupMedia.Public).OrderByDescending(o => o.Timestamp).First();
-                        string backupSecret = backupDescriptor.IsEnrypted ? uiInteraction.Prompt(UserMessages.AUTO_RESTORE_BACKUP_SECRET, true) : null;
+                        string backupSecret = backupDescriptor.IsEnrypted ? uiInteraction.Prompt(UserMessages.AUTO_RESTORE_BACKUP_SECRET, true) : String.Empty;
                         backupServiceManager.Restore(BackupMedia.Public, backupDescriptor.Label, backupSecret);
                         this.OnRestartRequested(this);
                     }
@@ -155,6 +160,7 @@ namespace SanteDB.Client
                         uiInteraction.Alert(e.ToHumanReadableString());
                     }
                 }
+               
             }
 
         }

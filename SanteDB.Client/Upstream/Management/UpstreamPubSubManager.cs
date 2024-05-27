@@ -182,7 +182,7 @@ namespace SanteDB.Client.Upstream.Management
                         Endpoint = endpoint.ToString(),
                         IsActive = true,
                         DispatcherFactoryId = dispatchFactoryId,
-                        Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
+                        Settings = settings?.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
                 }
             }
