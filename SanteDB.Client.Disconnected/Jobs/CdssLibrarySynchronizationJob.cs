@@ -173,7 +173,10 @@ namespace SanteDB.Client.Disconnected.Jobs
                             {
                                 // fetch the libraries 
                                 var libraryData = client.Get<CdssLibraryDefinitionInfo>($"CdssLibraryDefinition/{itm.Key}");
-                                this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
+                                if (libraryData != null)
+                                {
+                                    this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
+                                }
                             }
                             this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTime.Now);
                         }
