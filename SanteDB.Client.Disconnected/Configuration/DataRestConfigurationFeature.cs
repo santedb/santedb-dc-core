@@ -113,7 +113,7 @@ namespace SanteDB.Client.Disconnected.Configuration
         private IDictionary<String, Object> ParseDataConfigurationSection(OrmConfigurationBase ormSection)
         {
             var retVal = new ConfigurationDictionary<String, Object>();
-            retVal[GLOBAL_DATA_PROVIDER_SETTING] = ormSection.Provider.Invariant;
+            retVal[GLOBAL_DATA_PROVIDER_SETTING] = ormSection.Provider?.Invariant;
             var connectionString = this.m_connectStringSection.ConnectionString.Find(o => o.Name == ormSection.ReadWriteConnectionString);
             retVal[GLOBAL_CONNECTION_STRING_SETTING] = this.ParseConnectionString(connectionString);
             return retVal;
