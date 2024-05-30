@@ -47,7 +47,7 @@ namespace SanteDB.Client.Upstream
             };
             private readonly ResourceCapabilityType[] CAN_READ = new[]
             {
-                ResourceCapabilityType.Get, 
+                ResourceCapabilityType.Get,
                 ResourceCapabilityType.Search
             };
 
@@ -84,7 +84,8 @@ namespace SanteDB.Client.Upstream
         private static UpstreamEndpointMetadataUtil s_current = null;
         private static readonly object s_lock = new object();
 
-        private readonly IDictionary<String, UpstreamServiceCapability> m_serviceEndpoints;
+        private IDictionary<String, UpstreamServiceCapability> m_serviceEndpoints;
+        private readonly object m_lock = new object();
 
         /// <summary>
         /// Creates a new instance of the metadata utility
@@ -94,27 +95,7 @@ namespace SanteDB.Client.Upstream
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            using (var amiClient = this.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
-            {
-                var options = amiClient.Options<ServiceOptions>("/");
-                this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
-                {
-                    try
-                    {
-                        using (var client = this.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
-                        {
-                            return client
-                                .Options<ServiceOptions>("/")
-                                .Resources
-                                .Select(o => new KeyValuePair<String, UpstreamServiceCapability>(o.ResourceName, new UpstreamServiceCapability(e.ServiceType, o)));
-                        }
-                    }
-                    catch
-                    {
-                        return new KeyValuePair<String, UpstreamServiceCapability>[0];
-                    }
-                }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
-            }
+
         }
 
         /// <summary>
@@ -145,27 +126,27 @@ namespace SanteDB.Client.Upstream
         /// <summary>
         /// Get all supported resource types on the specified <paramref name="serviceEndpoint"/>
         /// </summary>
-        public IEnumerable<String> GetSupportedResources(ServiceEndpointType serviceEndpoint) => this.m_serviceEndpoints.Where(o => o.Value.ServiceEndpoint == serviceEndpoint).Select(o => o.Key);
+        public IEnumerable<String> GetSupportedResources(ServiceEndpointType serviceEndpoint) => this.GetServiceEndpoints().Where(o => o.Value.ServiceEndpoint == serviceEndpoint).Select(o => o.Key);
 
         /// <summary>
         /// Get resource which can be read
         /// </summary>
-        public IEnumerable<Type> GetReadResources(ServiceEndpointType serviceEndpoint) => this.m_serviceEndpoints.Where(o => o.Value.ServiceEndpoint == serviceEndpoint).Select(o => o.Value.Resource);
+        public IEnumerable<Type> GetReadResources(ServiceEndpointType serviceEndpoint) => this.GetServiceEndpoints().Where(o => o.Value.ServiceEndpoint == serviceEndpoint).Select(o => o.Value.Resource);
 
         /// <summary>
         /// Get resources which can be written
         /// </summary>
-        public IEnumerable<Type> GetWriteResources(ServiceEndpointType serviceEndpoint) => this.m_serviceEndpoints.Where(o => o.Value.ServiceEndpoint == serviceEndpoint).Select(o => o.Value.Resource);
+        public IEnumerable<Type> GetWriteResources(ServiceEndpointType serviceEndpoint) => this.GetServiceEndpoints().Where(o => o.Value.ServiceEndpoint == serviceEndpoint).Select(o => o.Value.Resource);
 
         /// <summary>
         /// True if <paramref name="resourceType"/> can be read from a service
         /// </summary>
-        public bool CanRead(Type resourceType) => this.m_serviceEndpoints.Any(o => o.Value.Resource == resourceType && o.Value.CanRead);
+        public bool CanRead(Type resourceType) => this.GetServiceEndpoints().Any(o => o.Value.Resource == resourceType && o.Value.CanRead);
 
         /// <summary>
         /// True if <paramref name="resourceType"/> can be written to a service
         /// </summary>
-        public bool CanWrite(Type resourceType) => this.m_serviceEndpoints.Any(o => o.Value.Resource == resourceType && o.Value.CanWrite);
+        public bool CanWrite(Type resourceType) => this.GetServiceEndpoints().Any(o => o.Value.Resource == resourceType && o.Value.CanWrite);
 
         /// <summary>
         /// Get service endpoint
@@ -177,7 +158,42 @@ namespace SanteDB.Client.Upstream
         /// </summary>
         public ServiceEndpointType GetServiceEndpoint(Type t)
         {
-            return this.m_serviceEndpoints.TryGetValue(t.GetSerializationName(), out var retVal) ? retVal.ServiceEndpoint : ServiceEndpointType.Other;
+            return this.GetServiceEndpoints().TryGetValue(t.GetSerializationName(), out var retVal) ? retVal.ServiceEndpoint : ServiceEndpointType.Other;
+        }
+
+        private IDictionary<String, UpstreamServiceCapability> GetServiceEndpoints()
+        {
+            if (this.m_serviceEndpoints == null)
+            {
+                lock (this.m_lock)
+                {
+                    if (this.m_serviceEndpoints == null)
+                    {
+                        using (var amiClient = this.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                        {
+                            var options = amiClient.Options<ServiceOptions>("/");
+                            this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
+                            {
+                                try
+                                {
+                                    using (var client = this.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
+                                    {
+                                        return client
+                                            .Options<ServiceOptions>("/")
+                                            .Resources
+                                            .Select(o => new KeyValuePair<String, UpstreamServiceCapability>(o.ResourceName, new UpstreamServiceCapability(e.ServiceType, o)));
+                                    }
+                                }
+                                catch
+                                {
+                                    return new KeyValuePair<String, UpstreamServiceCapability>[0];
+                                }
+                            }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
+                        }
+                    }
+                }
+            }
+            return this.m_serviceEndpoints;
         }
     }
 }
