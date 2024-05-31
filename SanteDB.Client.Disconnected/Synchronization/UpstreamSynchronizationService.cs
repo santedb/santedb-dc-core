@@ -335,6 +335,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 //ivd.VersionSequence = null;
                 //ivd.PreviousVersionKey = null; // previous version won't exist 
             }
+            item.AddAnnotation(SystemTagNames.UpstreamDataTag); // Tag as upstream
+            if(item is ITaggable taggable)
+            {
+                taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
+            }
         }
 
         /// <summary>

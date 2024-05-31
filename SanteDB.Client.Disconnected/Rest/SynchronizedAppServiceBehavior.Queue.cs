@@ -231,8 +231,11 @@ namespace SanteDB.Client.Disconnected.Rest
             if (parameters.TryGet(IdParameterName, out int id))
             {
                 var queue = GetQueueByName(DeadletterQueueName);
-                var item = (queue?.Get(id) as ISynchronizationDeadLetterQueueEntry) ?? throw new KeyNotFoundException(ErrorMessage_QueueEntryNotFound(id));
-                item.OriginalQueue?.Enqueue(item, "RETRY");
+                var item = queue?.Get(id);
+                if (item is ISynchronizationDeadLetterQueueEntry dlq)
+                {
+                    dlq.OriginalQueue?.Enqueue(item, "RETRY");
+                }
                 queue.Delete(id); // remove from DL
             }
             else if (parameters.TryGet("all", out bool all) && all)
