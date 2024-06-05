@@ -1025,7 +1025,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </summary>
         private bool IsLocalUser(String userName)
         {
-            return _IdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) != true;
+            return _IdentityProvider.GetClaims(userName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) != false;
         }
 
         /// <summary>
