@@ -137,7 +137,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     
                     GetUpstreamSecurityRolePolicies();
 
-                    GetUpstreamSecuritySettings();
 
                     //TODO: Do we still need local notifications (tickles)?
                     _JobStateManager.SetState(this, JobStateType.Completed);
@@ -150,37 +149,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     //TODO: Do we still need local notifications (tickles)?
 
                     _Tracer.TraceWarning("Job {1}: Could not refresh system roles and policies. Exception: {0}", ex.ToString(), nameof(SecurityObjectSynchronizationJob));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the upstream security configuration policies that may have changed (allowing local users, mandating MFA, etc.)
-        /// </summary>
-        private void GetUpstreamSecuritySettings()
-        {
-            if(this._UpstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
-            {
-                // Use an options
-                using (var client = this._RestClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
-                using (var amiServiceClient = new AmiServiceClient(client))
-                {
-                    var serviceOptions = amiServiceClient.Options();
-                    var securitySettings = _ConfigurationManager.GetSection<SecurityConfigurationSection>();
-                    securitySettings.PasswordRegex = serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
-                            securitySettings.PasswordRegex;
-                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireMfa, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireMfaName)?.Value ?? "false"));
-                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
-                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
-                    securitySettings.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(serviceOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
-
-                    // Allow OAUTH client credentials to be authenticated with an authenticated user principal
-                    _ConfigurationManager.GetSection<OAuthConfigurationSection>().AllowClientOnlyGrant = securitySettings.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false);
-                    // Get the general configuration and set them 
-                    var appSetting = _ConfigurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
-                    serviceOptions.Settings.Where(o => !o.Key.StartsWith("$")).ForEach(o => appSetting.AddAppSetting(o.Key.Substring(5), o.Value));
-
-                    _ConfigurationManager.SaveConfiguration(restart: false);
                 }
             }
         }
