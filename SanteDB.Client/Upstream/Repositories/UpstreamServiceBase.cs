@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,13 +16,14 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Http;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Messaging.HDSI.Client;
@@ -66,6 +67,13 @@ namespace SanteDB.Client.Upstream.Repositories
         protected IRestClientFactory RestClientFactory => this.m_restClientFactory;
 
         /// <summary>
+        /// Determine if the current auth context is appropriate for upstream communications
+        /// </summary>
+        /// <returns></returns>
+        protected bool HasUpstreamAuthContext() => AuthenticationContext.Current.Principal is ITokenPrincipal;
+
+
+        /// <summary>
         /// DI constructor
         /// </summary>
         public UpstreamServiceBase(IRestClientFactory restClientFactory,
@@ -104,12 +112,12 @@ namespace SanteDB.Client.Upstream.Repositories
             var client = this.m_restClientFactory.GetRestClientFor(serviceEndpointType);
             authenticatedAs = authenticatedAs ?? AuthenticationContext.Current.Principal;
 
-            if((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
+            if ((AuthenticationContext.Current.Principal == AuthenticationContext.SystemPrincipal ||
                 AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal) && this.m_upstreamIntegrationService != null)
             {
                 client.Credentials = new UpstreamPrincipalCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
             }
-            else 
+            else
             {
                 client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
             }

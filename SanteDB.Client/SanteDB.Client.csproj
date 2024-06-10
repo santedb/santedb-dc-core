@@ -4,6 +4,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(VersionNumber)' == ''">
+    <VersionNumber>3.0-debug</VersionNumber>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Remove="Resources\WebAppletBridge.js" />
   </ItemGroup>
@@ -17,25 +21,7 @@
   </ItemGroup>
 
   <Choose>
-    <When Condition="$(SolutionName.Contains('-ext'))">
-      <ItemGroup>
-      <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
-      <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
-      <ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
-      <ProjectReference Include="..\..\santedb-mdm\SanteDB.Persistence.MDM\SanteDB.Persistence.MDM.csproj" />
-        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
-        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.WWW\SanteDB.Rest.WWW.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.OAuth\SanteDB.Rest.OAuth.csproj" />
-        <ProjectReference Include="..\..\santedb-bis\SanteDB.Rest.BIS\SanteDB.Rest.BIS.csproj" />
-
-      </ItemGroup>
-    </When>
-    <Otherwise>
+    <When Condition="$(SolutionName.Contains('-nuget'))">
       <ItemGroup>
         <PackageReference Include="RestSrvr" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Messaging.AMI.Client" Version="$(VersionNumber)" />
@@ -53,20 +39,33 @@
         <PackageReference Include="SanteDB.Rest.BIS" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Rest.OAuth" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model.ViewModelSerializers" Version="$(VersionNumber)" />
-       
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj" />
+        <ProjectReference Include="..\..\santedb-client\SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj" />
+        <ProjectReference Include="..\..\santedb-match\SanteDB.Matcher\SanteDB.Matcher.csproj" />
+        <ProjectReference Include="..\..\santedb-mdm\SanteDB.Persistence.MDM\SanteDB.Persistence.MDM.csproj" />
+        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
+        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Core.Model.AMI\SanteDB.Core.Model.AMI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.Common\SanteDB.Rest.Common.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.WWW\SanteDB.Rest.WWW.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.OAuth\SanteDB.Rest.OAuth.csproj" />
+        <ProjectReference Include="..\..\santedb-bis\SanteDB.Rest.BIS\SanteDB.Rest.BIS.csproj" />
       </ItemGroup>
     </Otherwise>
   </Choose>
-
-  <PropertyGroup Condition="'$(VersionNumber)' == ''">
-    <VersionNumber>3.0-debug</VersionNumber>
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Text.Json" Version="7.0.3" />
+  </ItemGroup>
 
   <ItemGroup>
-  
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  
-    <PackageReference Include="System.Text.Json" Version="7.0.3" />
+    <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
   </ItemGroup>
   <PropertyGroup>
     <PackageId>SanteDB.Client</PackageId>

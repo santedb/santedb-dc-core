@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.OAuth;
@@ -188,7 +188,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
+        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal, Guid? withSid = null)
         {
             throw new NotSupportedException();
         }
@@ -303,6 +303,27 @@ namespace SanteDB.Client.Upstream.Security
             finally
             {
                 Authenticated?.Invoke(this, new AuthenticatedEventArgs(userName, result, null != result));
+            }
+        }
+
+        /// <inheritdoc/>
+        public void ExpirePassword(string userName, IPrincipal principal)
+        {
+            var remoteUser = this.GetUpstreamSecurityUser(o => o.UserName.ToLowerInvariant() == userName.ToLowerInvariant(), principal);
+            if (remoteUser == null)
+            {
+                throw new KeyNotFoundException(userName);
+            }
+            using (var amiclient = CreateAmiServiceClient())
+            {
+                try
+                {
+                    var result = amiclient.UpdateUser(remoteUser.Key.Value, new Core.Model.AMI.Auth.SecurityUserInfo(remoteUser) { ExpirePassword = true });
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                {
+                    throw new UpstreamIntegrationException(_LocalizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = remoteUser.Key.Value }), ex);
+                }
             }
         }
     }

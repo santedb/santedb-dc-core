@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +25,7 @@ using SanteDB.Core.Security.Principal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace SanteDB.Client.OAuth
 {
@@ -90,6 +91,11 @@ namespace SanteDB.Client.OAuth
             _RefreshToken = refreshToken;
 
             this.AddIdentity(new OAuthTokenIdentity(_IdToken, "OAUTH", true, claims));
+
+            if (claims.Any(c => c.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim))
+            {
+                this.AddIdentity(new OAuthApplicationIdentity(claims));
+            }
 
             this.ExpiresAt = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn));
             this.RenewAfter = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn / 2));

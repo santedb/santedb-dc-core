@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,10 +16,11 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
+using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Auth;
@@ -57,10 +58,33 @@ namespace SanteDB.Client.Upstream.Security
             }
 
             /// <inheritdoc/>
+            public SanteDBHostType[] HostTypes => new SanteDBHostType[] {
+                SanteDBHostType.Client, SanteDBHostType.Debugger, SanteDBHostType.Gateway, SanteDBHostType.Other, SanteDBHostType.Test
+            };
+
+            /// <inheritdoc/>
             public Guid Id => this.m_mechanismInfo.Id;
 
             /// <inheritdoc/>
             public string Name => this.m_mechanismInfo.Name;
+
+            /// <inheritdoc/>
+            public TfaMechanismClassification Classification => this.m_mechanismInfo.Classification;
+
+            /// <inheritdoc/>
+            public string SetupHelpText => this.m_mechanismInfo.HelpText;
+
+            /// <inheritdoc/>
+            public string BeginSetup(IIdentity user)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <inheritdoc/>
+            public bool EndSetup(IIdentity user, string verificationCode)
+            {
+                throw new NotImplementedException();
+            }
 
             /// <inheritdoc/>
             public string Send(IIdentity user)
@@ -125,10 +149,14 @@ namespace SanteDB.Client.Upstream.Security
             {
                 using (var client = this.CreateAmiServiceClient())
                 {
-                    client.Client.Post<ParameterCollection, object>("/Tfa/$send", new ParameterCollection(
+                    var response = client.Client.Post<ParameterCollection, ParameterCollection>("/Tfa/$send", new ParameterCollection(
                         new Parameter("userName", user.Name),
                         new Parameter("mechanism", mechanismId)
                     ));
+                    if(response.TryGet("challenge", out string challenge))
+                    {
+                        return challenge;
+                    }
                 }
                 return String.Empty;
             }

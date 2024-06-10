@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Microsoft.IdentityModel.Tokens;
 using SanteDB.Core.Security.Claims;
@@ -46,9 +46,10 @@ namespace SanteDB.Client.OAuth
             _Token = token;
             AuthenticationType = authenticationType;
             IsAuthenticated = isAuthenticated;
-
-
-            _Claims = claims; // TODO: throw an exception?
+            // HACK: The "sub" field from the JWT may contain multiples - the first of the "sub" claims is the focal identity (either device or user) 
+            //        that is the "sub" of the primary identity which is this token identity
+            var userKeyClaim = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.SecurityId);
+            _Claims = claims.Where(o => o.Type != SanteDBClaimTypes.SecurityId || o.Type == SanteDBClaimTypes.SecurityId && o.Value == userKeyClaim.Value).ToList();
 
         }
 

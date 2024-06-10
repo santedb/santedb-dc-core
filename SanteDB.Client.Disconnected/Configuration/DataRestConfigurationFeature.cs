@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json.Linq;
 using SanteDB.Client.Configuration;
@@ -57,6 +57,13 @@ namespace SanteDB.Client.Disconnected.Configuration
         /// The name of the connection feature setting
         /// </summary>
         public const string CONNECTION_PER_FEATURE_SETTING = "connections";
+
+        /// <summary>
+        /// ALE fields
+        /// </summary>
+        public const string ALE_SETTING = "ale";
+        public const string ALE_ENABLED_SETTING = "enabled";
+        public const string ALE_FIELDS_SETTING = "fields";
 
         private readonly DataConfigurationSection m_connectStringSection;
         private readonly DataRetentionConfigurationSection m_retentionConfigurationSection;
@@ -106,7 +113,7 @@ namespace SanteDB.Client.Disconnected.Configuration
         private IDictionary<String, Object> ParseDataConfigurationSection(OrmConfigurationBase ormSection)
         {
             var retVal = new ConfigurationDictionary<String, Object>();
-            retVal[GLOBAL_DATA_PROVIDER_SETTING] = ormSection.Provider;
+            retVal[GLOBAL_DATA_PROVIDER_SETTING] = ormSection.Provider?.Invariant;
             var connectionString = this.m_connectStringSection.ConnectionString.Find(o => o.Name == ormSection.ReadWriteConnectionString);
             retVal[GLOBAL_CONNECTION_STRING_SETTING] = this.ParseConnectionString(connectionString);
             return retVal;
@@ -161,6 +168,12 @@ namespace SanteDB.Client.Disconnected.Configuration
                 };
             }
 
+            JObject aleFieldSetting = null;
+            if (featureConfiguration.TryGetValue(ALE_SETTING, out var aleFieldSettingRaw))
+            {
+                aleFieldSetting = aleFieldSettingRaw as JObject;
+            }
+
             // Create and update the configuration feature settings
             dataSection.ConnectionString.Clear();
             if (featureConfiguration.TryGetValue(CONNECTION_PER_FEATURE_SETTING, out var itmSettingCollectionRaw) && itmSettingCollectionRaw is JObject itmSettingCollection)
@@ -188,7 +201,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                             cstr.Provider = itm.ProviderType = provider.Invariant;
                             dataSection.ConnectionString.Add(cstr);
                             itm.ReadWriteConnectionString = itm.ReadonlyConnectionString = cstr.Name;
-
+                            this.SetAleConfigurationSettings(configuration, itm, aleFieldSetting);
                         }
                     }
                     else
@@ -216,6 +229,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                     foreach (var itm in this.m_dataConfigurationSections)
                     {
                         itm.ReadonlyConnectionString = itm.ReadWriteConnectionString = "main";
+                        this.SetAleConfigurationSettings(configuration, itm, aleFieldSetting);
                     }
                 }
 
@@ -242,6 +256,28 @@ namespace SanteDB.Client.Disconnected.Configuration
 
             this.m_configuration = null;
             return true;
+        }
+
+        /// <summary>
+        /// Update extended configuration options
+        /// </summary>
+        private void SetAleConfigurationSettings(SanteDBConfiguration configuration, OrmConfigurationBase configurationSection, JObject aleFieldSetting)
+        {
+
+            if (aleFieldSetting?.Value<bool>(ALE_ENABLED_SETTING) == true && configuration.ProtectedSectionKey != null)
+            {
+                configurationSection.AleConfiguration = new OrmAleConfiguration()
+                {
+                    AleEnabled = true,
+                    EnableFields = (aleFieldSetting?.GetValue(ALE_FIELDS_SETTING) as JArray).Select(o => new OrmFieldConfiguration()
+                    {
+                        Mode = OrmAleMode.Deterministic,
+                        Name = o.Value<String>()
+                    }).ToList(),
+                    Certificate = configuration.ProtectedSectionKey
+                };
+            }
+
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,13 +16,15 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
+using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
 using System.Collections;
@@ -41,6 +43,8 @@ namespace SanteDB.Client.Upstream.Repositories
         where TModel : IIdentifiedResource, new()
         where TCollectionType : IResourceCollection
     {
+        // How long to keep results in the cache
+
         /// <inheritdoc/>
         public UpstreamQueryResultSet(IRestClient restClient, Expression<Func<TModel, bool>> query) : base(restClient, query, o => o)
         {
@@ -64,6 +68,9 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly NameValueCollection m_queryFilter;
         private Func<TWireModel, TModel> m_fromWireFormatMapperFunc;
         private readonly string m_resourceName;
+        private readonly IAdhocCacheService m_cacheService;
+
+        private static readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 0, 10);
 
         /// <inheritdoc/>
         public Type ElementType => typeof(TModel);
@@ -98,6 +105,7 @@ namespace SanteDB.Client.Upstream.Repositories
             this.m_queryFilter = new NameValueCollection(query);
             this.m_fromWireFormatMapperFunc = fromWireFormatMapper;
             this.m_resourceName = resourceName;
+            this.m_cacheService = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
 
         }
 
@@ -182,6 +190,18 @@ namespace SanteDB.Client.Upstream.Repositories
                 yield break;
             }
 
+            var cacheKey = $"{typeof(TModel).GetSerializationName()}.qry.{parameters.ToHttpString()}";
+            TModel[] cacheResult = null;
+            if (this.m_cacheService?.TryGet(cacheKey, out cacheResult) == true)
+            {
+                foreach (var itm in cacheResult)
+                {
+                    yield return itm;
+                }
+                yield break;
+            }
+
+            var cacheList = new List<TModel>();
             bool fetchNextPage = true;
             var fetchUntilOffset = hasExplicitLimit ? offset + explicitLimit : Int32.MaxValue;
             while (fetchNextPage)
@@ -190,7 +210,9 @@ namespace SanteDB.Client.Upstream.Repositories
                 foreach (var r in bundle.Item.OfType<TWireModel>())
                 {
                     fetchNextPage = true;
-                    yield return this.m_fromWireFormatMapperFunc(r);
+                    var retVal = this.m_fromWireFormatMapperFunc(r);
+                    cacheList.Add(retVal);
+                    yield return retVal;
                 }
                 var thisBundleCount = bundle.Item.Count();
                 var resultSetOffset = thisBundleCount + offset; // the result this is in the bundle
@@ -199,6 +221,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 fetchNextPage &= resultSetOffset < fetchUntilOffset;
                 parameters[QueryControlParameterNames.HttpOffsetParameterName] = offset.ToString(); // fetch next page
             }
+            this.m_cacheService?.Add(cacheKey, cacheList.ToArray(), CACHE_TIMEOUT);
         }
 
         /// <inheritdoc/>

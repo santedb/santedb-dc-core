@@ -35,24 +35,7 @@
   <ItemGroup>
   </ItemGroup>
   <Choose>
-    <When Condition="$(SolutionName.Contains('-ext'))">
-      <ItemGroup>
-        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
-        <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Synchronization.ADO\SanteDB.Persistence.Synchronization.ADO.csproj" />
-        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Batteries\SanteDB.Client.Batteries.csproj" />
-        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
-        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client\SanteDB.Client.csproj" />
-        <ProjectReference Include="..\..\santedb-orm\SanteDB.OrmLite\SanteDB.OrmLite.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
-        <ProjectReference Include="..\..\santedb-i18n\SanteDB.Core.i18n\SanteDB.Core.i18n.csproj" />
-        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
-
-      </ItemGroup>
-    </When>
-    <Otherwise>
+    <When Condition="$(SolutionName.Contains('-nuget'))">
       <ItemGroup>
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
@@ -66,6 +49,22 @@
         <PackageReference Include="SanteDB.Rest.AMI" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.i18n" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Applets" Version="$(VersionNumber)"/>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
+        <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
+        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
+        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Synchronization.ADO\SanteDB.Persistence.Synchronization.ADO.csproj" />
+        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Batteries\SanteDB.Client.Batteries.csproj" />
+        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
+        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client\SanteDB.Client.csproj" />
+        <ProjectReference Include="..\..\santedb-orm\SanteDB.OrmLite\SanteDB.OrmLite.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
+        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
+        <ProjectReference Include="..\..\santedb-i18n\SanteDB.Core.i18n\SanteDB.Core.i18n.csproj" />
+        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
       </ItemGroup>
     </Otherwise>
   </Choose>

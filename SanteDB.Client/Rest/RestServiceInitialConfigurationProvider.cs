@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using RestSrvr;
 using RestSrvr.Attributes;
@@ -184,11 +184,11 @@ namespace SanteDB.Client.Rest
                 new RestEndpointBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior))
             };
 
-            var oauth = this.AddRestServiceFor(configuration, ServiceEndpointType.AuthenticationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/auth/", oauthBehaviors, endpointBehaviors);
-            var hdsi = this.AddRestServiceFor(configuration, ServiceEndpointType.HealthDataService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/hdsi/", apiBehaviors, endpointBehaviors);
-            var ami = this.AddRestServiceFor(configuration, ServiceEndpointType.AdministrationIntegrationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/ami/", apiBehaviors, endpointBehaviors);
-            var bis = this.AddRestServiceFor(configuration, ServiceEndpointType.BusinessIntelligenceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/bis/", apiBehaviors, endpointBehaviors);
-            this.AddRestServiceFor(configuration, ServiceEndpointType.ApplicationControlService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/app/", webBehaviors, endpointBehaviors);
+            var oauth = this.AddRestServiceFor(configuration, ServiceEndpointType.AuthenticationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/auth", oauthBehaviors, endpointBehaviors);
+            var hdsi = this.AddRestServiceFor(configuration, ServiceEndpointType.HealthDataService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/hdsi", apiBehaviors, endpointBehaviors);
+            var ami = this.AddRestServiceFor(configuration, ServiceEndpointType.AdministrationIntegrationService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/ami", apiBehaviors, endpointBehaviors);
+            var bis = this.AddRestServiceFor(configuration, ServiceEndpointType.BusinessIntelligenceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/bis", apiBehaviors, endpointBehaviors);
+            this.AddRestServiceFor(configuration, ServiceEndpointType.ApplicationControlService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/app", webBehaviors, endpointBehaviors);
             this.AddRestServiceFor(configuration, ServiceEndpointType.WebUserInterfaceService, $"{bindingBase.Scheme}://{bindingBase.Host}:{bindingBase.Port}/", webBehaviors, endpointBehaviors);
 
             oauth.ServiceType = typeof(ClientOAuthServiceBehavior);

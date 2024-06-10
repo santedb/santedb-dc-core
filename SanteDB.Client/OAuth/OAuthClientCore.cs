@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
@@ -185,9 +185,9 @@ namespace SanteDB.Client.OAuth
         /// <param name="func">The callback to execute and retry.</param>
         /// <param name="errorCallback">An optional callback for when an exception ocurrs. This will typically log an error of some kind.</param>
         /// <returns>The result of the call or null.</returns>
-        protected virtual T ExecuteWithRetry<T>(Func<T> func, Func<Exception, bool> errorCallback = null) where T: class
+        protected virtual T ExecuteWithRetry<T>(Func<T> func, Func<Exception, bool> errorCallback = null) where T : class
         {
-            if ( null == errorCallback)
+            if (null == errorCallback)
             {
                 errorCallback = ex => true;
             }
@@ -195,17 +195,17 @@ namespace SanteDB.Client.OAuth
             T result = null;
 
             int c = 0;
-            while(result == null && c < _RetryTimes.Length)
+            while (result == null && c < _RetryTimes.Length)
             {
                 try
                 {
                     result = func();
                 }
-                catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
-                    if (!errorCallback(ex))
+                    if (ex.IsCommunicationException() || !errorCallback(ex))
                     {
-                        break;
+                        break; // if the exception is a communication exception (socket error, proxy missing, etc.) and not an application layer error or if the error callback wants a cancel we break out
                     }
                     Thread.Sleep(_RetryTimes[c]);
                 }
@@ -221,7 +221,7 @@ namespace SanteDB.Client.OAuth
         {
             var discoverydocument = GetDiscoveryDocument();
 
-            if(discoverydocument == null)
+            if (discoverydocument == null)
             {
                 return;
             }
@@ -281,7 +281,9 @@ namespace SanteDB.Client.OAuth
                 var bytes = restclient.Get(jwksEndpoint);
 
                 if (null == bytes)
+                {
                     return null;
+                }
 
                 return Encoding.UTF8.GetString(bytes);
             }, ex =>
@@ -320,7 +322,7 @@ namespace SanteDB.Client.OAuth
             if (tokenvalidationresult?.IsValid != true)
             {
                 // HACK: Sometimes on startup the discovery document wasn't downloaded properly so attempt to locate this information
-                if(String.IsNullOrEmpty(this.TokenValidationParameters.ValidIssuer) && this.TokenValidationParameters.ValidIssuers == null)
+                if (String.IsNullOrEmpty(this.TokenValidationParameters.ValidIssuer) && this.TokenValidationParameters.ValidIssuers == null)
                 {
                     this.DiscoveryDocument = null;
                     this.SetTokenValidationParameters();
@@ -333,9 +335,7 @@ namespace SanteDB.Client.OAuth
             if (ClaimMapper.Current.TryGetMapper(ClaimMapper.ExternalTokenTypeJwt, out var mappers))
             {
                 var claims = mappers.SelectMany(o => o.MapToInternalIdentityClaims(tokenvalidationresult.Claims)).ToList();
-
                 MapClaims(tokenvalidationresult, response, claims);
-
                 return new OAuthClaimsPrincipal(response.AccessToken, tokenvalidationresult.SecurityToken, response.TokenType, response.RefreshToken, response.ExpiresIn, claims);
 
             }
@@ -354,7 +354,9 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a JWKS fetch request
         /// </summary>
-        protected virtual void SetupRestClientForJwksRequest(IRestClient restClient) { }
+        protected virtual void SetupRestClientForJwksRequest(IRestClient restClient) {
+            restClient.Accept = "application/json";
+        }
 
         /// <summary>
         /// Send the <paramref name="request"/> to the OAUTH server and return the <see cref="OAuthClientTokenResponse"/>
@@ -378,7 +380,20 @@ namespace SanteDB.Client.OAuth
             // Copy inbound client claims to the claims that the server is getting (purpose of use, overrride, etc.)
             SetupRestClientForTokenRequest(restclient);
 
-            return restclient.Post<OAuthClientTokenRequest, OAuthClientTokenResponse>(GetTokenEndpoint(), "application/x-www-form-urlencoded", request);
+            var tokenEndpoint = GetTokenEndpoint();
+            if (!String.IsNullOrEmpty(tokenEndpoint))
+            {
+                return restclient.Post<OAuthClientTokenRequest, OAuthClientTokenResponse>(tokenEndpoint, "application/x-www-form-urlencoded", request);
+            }
+            else
+            {
+                Tracer.TraceWarning("Could not fetch token endpoint - online authentication is non-functional until this condition is cleared");
+                return new OAuthClientTokenResponse() // HACK: Compute this or return null and have upstream callers handle a null condition
+                {
+                    Error = "connect_failure",
+                    ErrorDescription = "Token endpoint unknown"
+                };
+            }
         }
 
         private string GetTokenEndpoint()
@@ -414,7 +429,7 @@ namespace SanteDB.Client.OAuth
             },
             ex =>
             {
-                Tracer.TraceError("Exception fetching discovery document: {0}", ex);
+                Tracer.TraceError("Exception fetching discovery document: {0}", ex.ToHumanReadableString());
                 return true;
             });
 

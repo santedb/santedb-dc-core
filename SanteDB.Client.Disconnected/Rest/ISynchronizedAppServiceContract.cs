@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,11 +16,12 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using RestSrvr.Attributes;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Rest.AppService;
@@ -46,7 +47,7 @@ namespace SanteDB.Client.Disconnected.Rest
         /// Gets the queue entries
         /// </summary>
         [Get("/Queue/{queueName}")]
-        List<ISynchronizationQueueEntry> GetQueue(String queueName);
+        AmiCollection GetQueue(String queueName);
 
         /// <summary>
         /// Get the specific queue entry
@@ -57,19 +58,19 @@ namespace SanteDB.Client.Disconnected.Rest
         /// <summary>
         /// Gets the conflict data a patch representing the difference between the server version and the local version being 
         /// </summary>
-        [Get("/Queue/dead/{id}/conflict")]
-        Patch GetQueueConflict(int id);
+        [Get("/Queue/deadletter/$diff")]
+        Patch GetQueueConflict(ParameterCollection parameters);
 
         /// <summary>
         /// Force a retry on the conflicted queue item
         /// </summary>
-        [Post("/Queue/dead/{id}/$retry")]
-        void RetryQueueEntry(int id, ParameterCollection parameters);
+        [Post("/Queue/deadletter/$retry")]
+        void RetryQueueEntry(ParameterCollection parameters);
 
         /// <summary>
         /// Perform a patch / resolution
         /// </summary>
-        [RestInvoke("PATCH", "/Queue/dead/{id}")]
+        [RestInvoke("PATCH", "/Queue/deadletter/{id}")]
         IdentifiedData ResolveQueueConflict(int id, Patch resolution);
 
         /// <summary>
@@ -81,6 +82,7 @@ namespace SanteDB.Client.Disconnected.Rest
 
 
         #region Synchronization
+
         /// <summary>
         /// Get synchronization logs
         /// </summary>
@@ -89,16 +91,16 @@ namespace SanteDB.Client.Disconnected.Rest
         List<ISynchronizationLogEntry> GetSynchronizationLogs();
 
         /// <summary>
-        /// Synchronize the system immediately
-        /// </summary>
-        [Post("/Sync/$retry")]
-        void SynchronizeNow(ParameterCollection parameters);
-
-        /// <summary>
         /// Reset the synchornization status
         /// </summary>
         [Post("/Sync/$reset")]
-        void ResetSynchronizationStatus(ParameterCollection parameters);
+        void ResetSynchronizationStatus();
+
+        /// <summary>
+        /// Reset the synchornization status
+        /// </summary> 
+        [Post("/Sync/{id}/$reset")]
+        void ResetSynchronizationStatus(String id);
         #endregion
 
     }

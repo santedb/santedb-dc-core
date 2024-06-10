@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.BI.Services.Impl;
 using SanteDB.BusinessRules.JavaScript;
@@ -249,7 +249,7 @@ namespace SanteDB.Client.Batteries.Configuration
             configuration.Sections.Add(new OAuthConfigurationSection()
             {
                 IssuerName = upstreamConfiguration.Credentials[0].CredentialName,
-                AllowClientOnlyGrant = false,
+                AllowClientOnlyGrant = false, // DCDR allows this 
                 JwtSigningKey = "jwsdefault",
                 TokenType = "bearer"
             });
@@ -266,7 +266,10 @@ namespace SanteDB.Client.Batteries.Configuration
                     // Audit any failure - No matter which event
                     new AuditFilterConfiguration(null, null, OutcomeIndicator.EpicFail | OutcomeIndicator.MinorFail | OutcomeIndicator.SeriousFail, true, true),
                     // Audit anything that creates, reads, or updates data
-                    new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, true)
+                    new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, false),
+                    // Audit any break the glass execution
+                    new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.EmergencyOverrideStarted | EventIdentifierType.SecurityAlert, null, true, true)
+
                 }
             });
             configuration.Sections.Add(new SynchronizationConfigurationSection()

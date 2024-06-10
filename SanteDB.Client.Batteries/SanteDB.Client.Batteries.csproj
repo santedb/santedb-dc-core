@@ -3,8 +3,21 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(VersionNumber)' == ''">
+    <VersionNumber>3.0-debug</VersionNumber>
+  </PropertyGroup>
   <Choose>
-    <When Condition="$(SolutionName.Contains('-ext'))">
+    <When Condition="$(SolutionName.Contains('-nuget'))">
+      <ItemGroup>
+        <PackageReference Include="SanteDB.BusinessRules.JavaScript" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Security.Certs.BouncyCastle" Version="$(VersionNumber)" />
+        <!--<PackageReference Include="SanteDB.PakMan.Common" Version="$(VersionNumber)" />-->
+        <PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Client.Disconnected" Version="$(VersionNumber)" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
       <ItemGroup>
         <ProjectReference Include="..\..\santedb-bre-js\SanteDB.BusinessRules.JavaScript\SanteDB.BusinessRules.JavaScript.csproj" />
         <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
@@ -12,22 +25,8 @@
         <ProjectReference Include="..\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
         <ProjectReference Include="..\SanteDB.Client\SanteDB.Client.csproj" />
       </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <PackageReference Include="SanteDB.BusinessRules.JavaScript" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Security.Certs.BouncyCastle" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.PakMan.Common" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Client.Disconnected" Version="$(VersionNumber)" />
-      </ItemGroup>
     </Otherwise>
   </Choose>
-  <PropertyGroup Condition="'$(VersionNumber)' == ''">
-    <VersionNumber>3.0-debug</VersionNumber>
-  </PropertyGroup>
-
   <PropertyGroup>
     <PackageId>SanteDB.Client.Batteries</PackageId>
     <Title>SanteDB.Client.Batteries</Title>

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,12 +16,17 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Client.Configuration;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
 using SanteDB.Core.Data;
+using SanteDB.Core.Data.Backup;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
@@ -96,6 +101,9 @@ namespace SanteDB.Client
                 base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
                 base.Start();
+
+                this.AutoRestoreEnvironment();
+
                 base.DependencyServiceManager.ProgressChanged -= this.MonitorStatus;
 
                 // Bind to status updates on our UI
@@ -113,11 +121,48 @@ namespace SanteDB.Client
                         ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nerfed
                     };
                 });
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                System.Diagnostics.Debugger.Break();
+                throw new Exception(ErrorMessages.CANNOT_STARTUP_CONTEXT, ex);
             }
+        }
+
+        /// <summary>
+        /// Perform automatic restoration of a previous environment
+        /// </summary>
+        /// <remarks>
+        /// In order to restore a device environment - a user may create a backup on an old environment and then restore that environment on a new tablet. This method prompts the user 
+        /// for the restoration password of the previous tablet.
+        /// </remarks>
+        private void AutoRestoreEnvironment()
+        {
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                var backupServiceManager = this.GetService<IBackupService>();
+                var symmEncryption = this.GetService<ISymmetricCryptographicProvider>();
+                var configurationManager = this.GetService<IConfigurationManager>();
+                var uiInteraction = this.GetService<IUserInterfaceInteractionProvider>();
+                if (configurationManager is InitialConfigurationManager &&
+                    backupServiceManager?.HasBackup(BackupMedia.Public) == true &&
+                    uiInteraction?.Confirm(UserMessages.AUTO_RESTORE_BACKUP_CONFIGURATION_PROMPT) == true)
+                {
+                    try
+                    {
+                        var backupDescriptor = backupServiceManager.GetBackupDescriptors(BackupMedia.Public).OrderByDescending(o => o.Timestamp).First();
+                        string backupSecret = backupDescriptor.IsEnrypted ? uiInteraction.Prompt(UserMessages.AUTO_RESTORE_BACKUP_SECRET, true) : String.Empty;
+                        backupServiceManager.Restore(BackupMedia.Public, backupDescriptor.Label, backupSecret);
+                        this.OnRestartRequested(this);
+                    }
+                    catch (Exception e)
+                    {
+                        uiInteraction.Alert(e.ToHumanReadableString());
+                    }
+                }
+               
+            }
+
         }
 
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,9 +16,10 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-2-16
  */
 using SanteDB.Client.Configuration.Upstream;
+using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -30,6 +31,7 @@ using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -121,6 +123,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamManagementService m_upstreamManager;
         private readonly UpstreamConfigurationSection m_configuration;
+        private readonly IPatchService m_patchService;
         private readonly ILocalizationService m_localizationService;
         private readonly INetworkInformationService m_networkInformationService;
         private readonly IServiceManager m_serviceManager;
@@ -148,10 +151,12 @@ namespace SanteDB.Client.Upstream.Management
             IConfigurationManager configurationManager,
             IServiceManager serviceManager,
             IUpstreamManagementService upstreamManagementService,
+            IPatchService patchService,
             IAdhocCacheService adhocCacheService,
             ILocalizationService localizationService)
         {
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
+            this.m_patchService = patchService;
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamManager = upstreamManagementService;
             this.m_localizationService = localizationService;
@@ -185,64 +190,199 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public IResourceCollection Query<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationQueryControlOptions queryControl) where TModel : IdentifiedData, new()
         {
-            var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<TModel>();
-            using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
-            using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+            try
             {
-                var query = QueryExpressionBuilder.BuildQuery(predicate);
-                query.Add(QueryControlParameterNames.HttpCountParameterName, queryControl.Count.ToString());
-                query.Add(QueryControlParameterNames.HttpOffsetParameterName, queryControl.Offset.ToString());
-                query.Add(QueryControlParameterNames.HttpQueryStateParameterName, queryControl.QueryId.ToString());
-                client.Credentials = new UpstreamPrincipalCredentials(AuthenticationContext.Current.Principal);
-
-                client.Requesting += (o, e) =>
+                var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint<TModel>();
+                using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+                using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
-                    if (queryControl?.IfModifiedSince.HasValue == true)
-                        e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = queryControl?.IfModifiedSince.Value.ToString();
-                    else if (!String.IsNullOrEmpty(queryControl?.IfNoneMatch))
-                        e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = queryControl?.IfNoneMatch;
-
-                    if (queryControl.IncludeRelatedInformation)
+                    this.m_tracer.TraceVerbose("Querying upstream as device {0}/{1}...", typeof(TModel).GetSerializationName(), predicate);
+                    var query = QueryExpressionBuilder.BuildQuery(predicate);
+                    query.Add(QueryControlParameterNames.HttpCountParameterName, (queryControl?.Count ?? 100).ToString());
+                    query.Add(QueryControlParameterNames.HttpOffsetParameterName, (queryControl?.Offset ?? 0).ToString());
+                    if (queryControl?.QueryId != null)
                     {
-                        e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.IncludeRelatedObjectsHeader, "true");
+                        query.Add(QueryControlParameterNames.HttpQueryStateParameterName, queryControl?.QueryId.ToString());
                     }
-                };
-                client.Responding += (o, e) => this.Responding?.Invoke(o, e);
+                    client.Credentials = new UpstreamPrincipalCredentials(AuthenticationContext.Current.Principal);
 
-                if (queryControl.Timeout.HasValue)
-                {
-                    client.SetTimeout(queryControl.Timeout.Value);
-                }
+                    client.Requesting += (o, e) =>
+                    {
+                        if (queryControl?.IfModifiedSince.HasValue == true)
+                        {
+                            e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = queryControl?.IfModifiedSince.Value.ToString();
+                        }
+                        else if (!String.IsNullOrEmpty(queryControl?.IfNoneMatch))
+                        {
+                            e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = queryControl?.IfNoneMatch;
+                        }
 
-                switch (upstreamService)
-                {
-                    case ServiceEndpointType.HealthDataService:
-                        return client.Get<Bundle>($"/{typeof(TModel).GetSerializationName()}", query);
-                    case ServiceEndpointType.AdministrationIntegrationService:
-                        return client.Get<AmiCollection>($"/{typeof(TModel).GetSerializationName()}", query);
-                    default:
-                        throw new InvalidOperationException(ErrorMessages.SERVICE_NOT_FOUND);
+                        if (queryControl?.IncludeRelatedInformation == true)
+                        {
+                            e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.IncludeRelatedObjectsHeader, "true");
+                        }
+                    };
+                    client.Responding += (o, e) => this.Responding?.Invoke(this, e);
+
+                    if (queryControl?.Timeout.HasValue == true)
+                    {
+                        client.SetTimeout(queryControl.Timeout.Value);
+                    }
+
+                    object retVal = null;
+                    switch (upstreamService)
+                    {
+                        case ServiceEndpointType.HealthDataService:
+                            retVal = client.Get<Bundle>($"/{typeof(TModel).GetSerializationName()}", query);
+                            break;
+                        case ServiceEndpointType.AdministrationIntegrationService:
+                            retVal = client.Get<AmiCollection>($"/{typeof(TModel).GetSerializationName()}", query);
+                            break;
+                        default:
+                            throw new InvalidOperationException(ErrorMessages.SERVICE_NOT_FOUND);
+                    }
+
+                    this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(null, retVal as IdentifiedData));
+                    return retVal as IResourceCollection;
+
                 }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = typeof(TModel).GetSerializationName() }), e);
             }
         }
 
         /// <inheritdoc/>
         public IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(modelType);
+                using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+                using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+                {
+                    this.m_tracer.TraceVerbose("Fetching upstream as device {0}/{1}", modelType.GetSerializationName(), key);
+                    client.Requesting += (o, e) =>
+                    {
+
+                        if (options?.IfModifiedSince.HasValue == true)
+                        {
+                            e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = options?.IfModifiedSince.Value.ToString();
+                        }
+                        else if (!String.IsNullOrEmpty(options?.IfNoneMatch))
+                        {
+                            e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = options?.IfNoneMatch;
+                        }
+
+                        if (options?.IncludeRelatedInformation == true)
+                        {
+                            e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.IncludeRelatedObjectsHeader, "true");
+                        }
+                    };
+                    client.Responding += (o, e) => this.Responding?.Invoke(this, e);
+
+                    if (options?.Timeout.HasValue == true)
+                    {
+                        client.SetTimeout(options.Timeout.Value);
+                    }
+
+                    var requestTarget = $"{modelType.GetSerializationName()}/{key}";
+                    if (versionKey.HasValue)
+                    {
+                        requestTarget += $"/_history/{versionKey}";
+                    }
+
+                    var retVal = client.Get<IdentifiedData>(requestTarget);
+                    switch (retVal)
+                    {
+                        case Bundle bdl:
+                            retVal = bdl.GetFocalObject();
+                            break;
+                    }
+
+                    this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(null, retVal));
+                    return retVal;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = modelType.GetSerializationName() }), e);
+            }
         }
 
         /// <inheritdoc/>
-        public TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null) where TModel : IdentifiedData
+        public TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null) where TModel : IdentifiedData => (TModel)this.Get(typeof(TModel), key, versionKey, options);
+
+        /// <summary>
+        /// Harmonizes the keys on the server version with this version
+        /// </summary>
+        /// <param name="received"></param>
+        /// <param name="submitted"></param>
+        private void UpdateToServerCopy(IdentifiedData received, IdentifiedData submitted)
         {
-            throw new NotImplementedException();
+            switch (received)
+            {
+                case IVersionedData receivedVersioned:
+                    var submittedVersioned = submitted as IVersionedData;
+
+                    this.m_tracer.TraceVerbose("Updating {0} to server version {1}", submitted, received);
+                    var idp = ApplicationServiceContext.Current.GetService(typeof(IDataPersistenceService<>).MakeGenericType(submittedVersioned.GetType())) as IDataPersistenceService;
+                    if (idp != null)
+                    {
+                        submittedVersioned.VersionKey = receivedVersioned.VersionKey;
+                        submittedVersioned.VersionSequence = receivedVersioned.VersionSequence;
+                        submittedVersioned.PreviousVersionKey = receivedVersioned.PreviousVersionKey;
+                        idp.Update(submitted);
+                    }
+                    break;
+                case Bundle receivedBundle:
+                    var submittedBundle = submitted as Bundle;
+                    foreach (var itm in submittedBundle.Item)
+                    {
+                        this.UpdateToServerCopy(itm, submittedBundle.Item.Find(o => o.Key == itm.Key));
+                    }
+                    break;
+            }
         }
 
         /// <inheritdoc/>
         public void Insert(IdentifiedData data)
         {
-            throw new NotImplementedException();
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            try
+            {
+
+                if (data is Bundle bdl && !bdl.Item.Any())
+                {
+                    return; // no need to send an empty bundle
+                }
+
+                // create the appropriate message
+                var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(data.GetType());
+                using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+                using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+                {
+                    this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetSerializationName(), data.Key);
+
+                    client.Responding += (o, e) => this.Responding?.Invoke(this, e);
+
+                    // Submit the object
+                    var serverResponse = client.Post<IdentifiedData, IdentifiedData>(data.GetType().GetSerializationName(), data);
+                    this.UpdateToServerCopy(serverResponse, data);
+                    this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, serverResponse));
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.ToString() }), e);
+            }
         }
+
 
         /// <inheritdoc/>
         public void Obsolete(IdentifiedData data, bool forceObsolete = false)
@@ -251,19 +391,186 @@ namespace SanteDB.Client.Upstream.Management
         }
 
         /// <inheritdoc/>
-        public void Update(IdentifiedData data, bool forceUpdate = false)
+        public void Update(IdentifiedData data, bool forceUpdate = false, bool autoResolveConflict = false)
         {
-            throw new NotImplementedException();
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            try
+            {
+                if (data is Bundle bdl && !bdl.Item.Any())
+                {
+                    return; // no need to send an empty bundle
+                }
+
+
+                // create the appropriate message endpoint
+                var patch = data as Patch;
+                var upstreamService = patch != null ? UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(patch.AppliesTo.Type) : UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(data.GetType());
+                using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+                using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+                {
+                    this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetSerializationName(), data.Key);
+
+                    client.Responding += (o, e) => this.Responding?.Invoke(this, e);
+
+                    Guid newVersionId = Guid.Empty;
+
+                    if (patch != null)
+                    {
+                        var dataPersistenceService = ApplicationServiceContext.Current.GetService(typeof(IDataPersistenceService<>).MakeGenericType(patch.AppliesTo.Type)) as IDataPersistenceService;
+
+                        // Are we configured to have unsafe patching performed?
+                        if (forceUpdate)
+                        {
+                            client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.ForceApplyPatchHeaderName, "true");
+                            patch.Operation.RemoveAll(o => o.OperationType == PatchOperationType.Test); // remove all safety
+                        }
+
+                        this.m_tracer.TraceVerbose("Performing patch: {0}", patch);
+                        var existingObjectKey = patch.AppliesTo.Key;
+                        try
+                        {
+                            newVersionId = this.ExtractVersionFromPatchResult(client.Patch($"{patch.AppliesTo.Type.GetSerializationName()}/{patch.AppliesTo.Key}", patch.AppliesTo.Tag, patch));
+                        }
+                        // DETECT CONDITION: Server rejects the patch because there is a conflict (i.e. server copy is not the expected version to apply patch)
+                        catch (WebException e) when (e.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.Conflict && autoResolveConflict)
+                        {
+                            this.m_tracer.TraceWarning("Server indicates conflict condition - will attempt to resolve patch automatically - {0}", e.ToHumanReadableString());
+                            // Attempt to get the server copy, create a new patch from our object, and then re-submit 
+                            var serverCopy = this.Get(patch.AppliesTo.Type, patch.AppliesTo.Key.Value, null);
+                            // Can we apply the patch?
+                            if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
+                            {
+                                var newVersion = this.m_patchService.Patch(patch, serverCopy, true);
+                                if (client.Put<IdentifiedData, IdentifiedData>($"{newVersion.GetType().GetSerializationName()}/{newVersion.Key}", newVersion) is IVersionedData ivd)
+                                {
+                                    newVersionId = ivd.VersionKey.Value;
+                                }
+                            }
+                            else
+                            {
+                                var idp = ApplicationServiceContext.Current.GetService(typeof(IDataPersistenceService<>).MakeGenericType(patch.AppliesTo.Type)) as IDataPersistenceService;
+                                var myCopy = idp.Get(patch.AppliesTo.Key.Value) as IdentifiedData;
+                                var serverDiff = this.m_patchService.Diff(serverCopy, myCopy);
+                                // The difference between the server version and my copy have no differing properties - so just force the patch
+                                if (!serverDiff.Operation.Any(sd => patch.Operation.Any(po => po.Path == sd.Path && sd.OperationType != PatchOperationType.Test)))
+                                {
+                                    client.Requesting += (o, ev) => ev.AdditionalHeaders.Add(ExtendedHttpHeaderNames.ForceApplyPatchHeaderName, "true");
+                                    newVersionId = this.ExtractVersionFromPatchResult(client.Patch($"{patch.AppliesTo.Type.GetSerializationName()}/{patch.AppliesTo.Key}", patch.AppliesTo.Tag, patch));
+                                }
+                                else
+                                {
+                                    throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_PATCH_ERR, new { patch = patch }), e);
+                                }
+                            }
+                        }
+                        // DETECT CONDITION: Server rejects the patch because it does not know about the object - resubmit the object
+                        catch (WebException e) when (e.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.NotFound && autoResolveConflict)
+                        {
+                            this.m_tracer.TraceWarning("Server indicates not found on update - will resubmit original object in create mode- {0}", e.ToHumanReadableString());
+                            var localObject = dataPersistenceService.Get(patch.AppliesTo.Key.Value) as IdentifiedData;
+                            if (localObject is IVersionedData ivd)
+                            {
+                                ivd.VersionKey = null;
+                                ivd.VersionSequence = null;
+                                ivd.IsHeadVersion = true;
+                            }
+                            this.Insert(Bundle.CreateBundle(localObject));
+                        }
+                        catch (Exception e)
+                        {
+                            throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_PATCH_ERR, new { patch = patch }), e);
+                        }
+
+                        if (newVersionId != Guid.Empty)
+                        {
+                            var existing = dataPersistenceService.Get(patch.AppliesTo.Key.Value) as IVersionedData;
+                            if (existing != null)
+                            {
+                                existing.VersionKey = newVersionId;
+                                existing = dataPersistenceService.Update(existing) as IVersionedData;
+                                this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, existing as IdentifiedData));
+                            }
+                        }
+                    }
+                    else // Regular object
+                    {
+                        IdentifiedData serverResponse = null;
+                        try
+                        {
+                            var focalData = data is Bundle bunde && bunde.FocalObjects.Count == 1 ? bunde.GetFocalItems().First() : data;
+                            if (!forceUpdate) // Use the tag to ensure the server does not have this version of the data
+                            {
+                                client.Requesting += (o, e) =>
+                                {
+                                    if (focalData is IVersionedData ivd && ivd.PreviousVersionKey.HasValue)
+                                    {
+                                        e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{data.Type}.{ivd.PreviousVersionKey}");
+                                    }
+                                };
+                            }
+
+                            serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                        }
+                        catch (WebException we) when (we.Response is HttpWebResponse hwr && hwr.StatusCode == HttpStatusCode.Conflict)
+                        {
+                            // Attempt to fetch the current object (if we can) and see if it is just a version mismatch on our update - i.e. no conflicts
+                            if (!(data is Bundle))
+                            {
+                                var serverCopy = this.Get(data.GetType(), data.Key.Value, null);
+                                patch = this.m_patchService.Diff(serverCopy, data);
+                                if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
+                                {
+                                    data.CopyObjectData(this.m_patchService.Patch(patch, serverCopy, true));
+                                    if (data is IVersionedData ivd)
+                                    {
+                                        ivd.PreviousVersionKey = null;
+                                    }
+                                    serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                                }
+                            }
+                        }
+                        this.UpdateToServerCopy(serverResponse, data);
+                        this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, serverResponse));
+                    }
+                }
+            }
+
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.Type }), e);
+            }
+        }
+
+        /// <summary>
+        /// Extract version from the patch result
+        /// </summary>
+        private Guid ExtractVersionFromPatchResult(string remoteTag)
+        {
+            if (remoteTag.Contains("."))
+            {
+                return Guid.Parse(remoteTag.Split('.')[1]);
+            }
+            else if (Guid.TryParse(remoteTag, out var uuid))
+            {
+                return uuid;
+            }
+            else
+            {
+                throw new FormatException(String.Format(ErrorMessages.INVALID_FORMAT, remoteTag, $"ResourceName.{Guid.Empty}"));
+            }
         }
 
         /// <summary>
         /// Get a <see cref="IPrincipal"/> representing the authenticated device with the upstream
         /// </summary>
-        public IPrincipal AuthenticateAsDevice()
+        public IPrincipal AuthenticateAsDevice(IPrincipal onBehalfOf = null)
         {
             try
             {
-
                 if (this.m_devicePrincipal != null && this.m_devicePrincipal.ExpiresAt.AddMinutes(-2) > DateTimeOffset.Now)
                 {
                     return this.m_devicePrincipal;
@@ -307,6 +614,10 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private Guid GetUpstreamTemplateKey(TemplateDefinition template)
         {
+            if (template == null)
+            {
+                return Guid.Empty;
+            }
             using (AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
             {
                 using (var client = new HdsiServiceClient(this.m_restClientFactory.GetRestClientFor(ServiceEndpointType.HealthDataService)))
@@ -345,11 +656,21 @@ namespace SanteDB.Client.Upstream.Management
                     bdl.Item.ForEach(r => this.HarmonizeTemplateId(r));
                     return bdl;
                 case TemplateDefinition td:
-                    GetUpstreamTemplateKey(td); //Will force the insert to upstream.
-                    data.Key = td.Key;
+                    if (!td.Key.HasValue)
+                    {
+                        GetUpstreamTemplateKey(td); //Will force the insert to upstream.
+                        data.Key = td.Key;
+                    }
                     return data;
                 case IHasTemplate iht:
-                    iht.TemplateKey = GetUpstreamTemplateKey(data.LoadProperty<TemplateDefinition>(nameof(IHasTemplate.Template)));
+                    if (iht.Template?.Key.HasValue == true && !iht.TemplateKey.HasValue)
+                    {
+                        iht.TemplateKey = iht.Template.Key;
+                    }
+                    else if (!iht.TemplateKey.HasValue)
+                    {
+                        iht.TemplateKey = GetUpstreamTemplateKey(data.LoadProperty<TemplateDefinition>(nameof(IHasTemplate.Template)));
+                    }
                     return data;
                 default:
                     return data;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,10 +16,15 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Client.Configuration;
+using SanteDB.Core;
 using SanteDB.Core.Http;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
+using SanteDB.Core.Services;
+using System.Linq;
 using System.Net;
 using System.Security.Principal;
 
@@ -52,7 +57,16 @@ namespace SanteDB.Client.Http
                         webRequest.ClientCertificates.Add(icp.AuthenticationCertificate);
                     }
                     break;
+                case IClaimsPrincipal cp:
 
+                    // Determine if this is a local user - if so we want to authenticate as the device 
+                    if(cp.Claims.Any(o=>o.Type == SanteDBClaimTypes.LocalOnly && bool.TryParse(o.Value, out var b) && b))
+                    {
+                        // Authenticate as the device
+                        var integrationService = ApplicationServiceContext.Current.GetService<IUpstreamIntegrationService>();
+                        new UpstreamPrincipalCredentials(integrationService.AuthenticateAsDevice(cp)).SetCredentials(webRequest);
+                    }
+                    break;
             }
         }
 

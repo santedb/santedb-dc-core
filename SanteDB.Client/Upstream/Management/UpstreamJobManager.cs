@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
@@ -213,6 +213,7 @@ namespace SanteDB.Client.Upstream.Management
             public void Cancel()
             {
                 if (this.CanCancel)
+                {
                     try
                     {
                         using (var client = this.m_restClient.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
@@ -225,6 +226,7 @@ namespace SanteDB.Client.Upstream.Management
                     {
                         throw new Exception($"Error canceling job {this.Key}", e);
                     }
+                }
             }
 
             /// <summary>
@@ -299,6 +301,9 @@ namespace SanteDB.Client.Upstream.Management
         public IJob GetJobInstance(Guid jobKey) => this.Jobs.FirstOrDefault(o => o.Id == jobKey);
 
         /// <inheritdoc/>
+        public IJob GetJobInstance(Type jobType) => this.Jobs.OfType<UpstreamJob>().FirstOrDefault(o => o.JobType == jobType);
+
+        /// <inheritdoc/>
         public IEnumerable<IJobSchedule> GetJobSchedules(IJob job) => (this.GetJobInstance(job.Id) as UpstreamJob).Schedule;
 
         /// <inheritdoc/>
@@ -338,7 +343,7 @@ namespace SanteDB.Client.Upstream.Management
 
         /// <inheritdoc/>
         /// <exception cref="NotSupportedException">This method is not supported</exception>
-        public void SetState(IJob job, JobStateType state)
+        public void SetState(IJob job, JobStateType state, string statusText = null)
         {
             throw new NotSupportedException();
         }
@@ -464,7 +469,7 @@ namespace SanteDB.Client.Upstream.Management
                 using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                 {
                     var unConfiguredJobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName(), "_unconfigured=true".ParseQueryString()).CollectionItem.OfType<TypeReferenceConfiguration>().ToArray();
-                    return unConfiguredJobs.Select(o => o.Type).Union(this.Jobs.OfType<UpstreamJob>().Select(o => o.JobType));
+                    return unConfiguredJobs.Select(o => o.Type);
                 }
             }
             catch (Exception e)

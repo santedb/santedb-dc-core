@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Client.Configuration.Upstream;
 using System;
@@ -79,8 +79,10 @@ namespace SanteDB.Client.Batteries
                     .ToUpper();
 
                 if (Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
+                {
                     oldPath = oldPath.Replace("SYSTEM32", "SYSWOW64") // HACK: System folders are rewritten but the backup folders are not
                     ;
+                }
 
                 try
                 {
@@ -93,7 +95,10 @@ namespace SanteDB.Client.Batteries
 
                         // Copy the config file
                         if (!Directory.Exists(Path.GetDirectoryName(configDirectory)))
+                        {
                             Directory.CreateDirectory(Path.GetDirectoryName(configDirectory));
+                        }
+
                         File.Copy(oldPath, configDirectory);
 
                         var oldDataPath = dataDirectory.Replace(
@@ -103,7 +108,10 @@ namespace SanteDB.Client.Batteries
                             .Replace("SYSTEM32", "SYSWOW64");
 
                         if (Directory.Exists(dataDirectory))
+                        {
                             Directory.Delete(dataDirectory, true);
+                        }
+
                         Directory.Move(oldDataPath, dataDirectory);
                         return true;
                     }
@@ -121,7 +129,9 @@ namespace SanteDB.Client.Batteries
                 }
             }
             else
+            {
                 return false;
+            }
         }
     }
 }

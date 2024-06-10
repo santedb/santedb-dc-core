@@ -1,4 +1,23 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+﻿/*
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * User: fyfej
+ * Date: 2023-6-21
+ */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
@@ -12,13 +31,11 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Rest.OAuth.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Client.Upstream.Security
 {
@@ -131,20 +148,25 @@ namespace SanteDB.Client.Upstream.Security
                 var localUserRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityUser>>();
 
                 // Get the user identity 
-                var userIdentity = remoteIdentity.Identities.FirstOrDefault(o=>o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.HumanUser.ToString());
+                var userIdentity = remoteIdentity.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.HumanUser.ToString());
                 if (userIdentity == null)
                 {
                     throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(SynchronizeIdentity)));
                 }
 
                 // Create local identity 
-                var localUser = localUserRepository.Find(o=>o.UserName.ToLowerInvariant() == userIdentity.Name.ToLowerInvariant() && o.ObsoletionTime == null).FirstOrDefault();
+                var localUser = localUserRepository.Find(o => o.UserName.ToLowerInvariant() == userIdentity.Name.ToLowerInvariant() && o.ObsoletionTime == null).FirstOrDefault();
+                var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
                 if (localUser == null) // create the user with the same SID
                 {
-                    var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
+                    upstreamUserInfo.Password = password;
                     localUser = localUserRepository.Insert(upstreamUserInfo);
                 }
-                
+                else
+                {
+                    localUser = localUserRepository.Save(upstreamUserInfo);
+                }
+
                 if (!String.IsNullOrEmpty(password))
                 {
                     this.m_localIdentityProvider.ChangePassword(userIdentity.Name, password, remoteIdentity, true);
@@ -156,7 +178,7 @@ namespace SanteDB.Client.Upstream.Security
                 // Remove all roles for the local user
                 this.m_localRoleProvider.RemoveUsersFromRoles(new string[] { userIdentity.Name }, localRoles, AuthenticationContext.SystemPrincipal);
                 var upstreamUserRoles = userIdentity.FindAll(SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray();
-                
+
                 // We want to prevent there from being multiple users with multiple roles all hitting the role provider
                 lock (this.m_lockObject)
                 {
@@ -209,10 +231,15 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal)
+        public IIdentity CreateIdentity(string userName, string password, IPrincipal principal, Guid? withSid = null)
         {
-            var localIdentity = this.m_localIdentityProvider.CreateIdentity(userName, password, principal);
-            this.m_localIdentityProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
+
+            var localIdentity = this.m_localIdentityProvider.CreateIdentity(userName, password, principal, withSid);
+
+            if (!withSid.HasValue) // This is a new user
+            {
+                this.m_localIdentityProvider.AddClaim(userName, new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"), principal);
+            }
             return this.m_localIdentityProvider.GetIdentity(userName);
         }
 
@@ -261,7 +288,7 @@ namespace SanteDB.Client.Upstream.Security
                     {
                         result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
                     }
-                    catch(TimeoutException)
+                    catch (TimeoutException)
                     {
                         result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
                     }
@@ -287,7 +314,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public IPrincipal ReAuthenticate(IPrincipal principal)
         {
-            if (principal is ITokenPrincipal || this.ShouldDoRemoteAuthentication(principal.Identity.Name)) // It is upstream so we have to do upstream
+            if (principal is ITokenPrincipal) // It is upstream so we have to do upstream
             {
                 var result = this.m_upstreamIdentityProvider.ReAuthenticate(principal);
                 this.SynchronizeIdentity(result as IClaimsPrincipal, null);
@@ -320,7 +347,7 @@ namespace SanteDB.Client.Upstream.Security
         public void DeleteIdentity(string userName, IPrincipal principal)
         {
             this.m_localIdentityProvider.DeleteIdentity(userName, principal);
-            if(!this.IsLocalIdentity(userName))
+            if (!this.IsLocalIdentity(userName))
             {
                 this.m_tracer.TraceWarning("Identity {0} only deleted on loca device", userName);
             }
@@ -375,7 +402,7 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public AuthenticationMethod GetAuthenticationMethods(string userName)
         {
-            if(this.IsLocalIdentity(userName))
+            if (this.IsLocalIdentity(userName))
             {
                 return AuthenticationMethod.Local;
             }
@@ -388,13 +415,23 @@ namespace SanteDB.Client.Upstream.Security
         /// <inheritdoc/>
         public IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret)
         {
-            if(this.ShouldDoRemoteAuthentication(userName))
+            if (this.ShouldDoRemoteAuthentication(userName))
             {
                 return this.m_upstreamChallenge.Authenticate(userName, challengeKey, response, tfaSecret);
             }
             else
             {
                 return this.m_localChallenge.Authenticate(userName, challengeKey, response, tfaSecret);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void ExpirePassword(string userName, IPrincipal principal)
+        {
+            this.m_localIdentityProvider.ExpirePassword(userName, principal);
+            if (!this.IsLocalIdentity(userName))
+            {
+                this.m_tracer.TraceWarning("Identity {0} only lockout on local device", userName);
             }
         }
     }
