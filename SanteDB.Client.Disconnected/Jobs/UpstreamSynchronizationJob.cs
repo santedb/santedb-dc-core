@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2024-1-23
  */
+using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
@@ -28,7 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace SanteDB.Client.Disconnected.Data.Synchronization
+namespace SanteDB.Client.Disconnected.Jobs
 {
     /// <summary>
     /// Represents a synchronization job which pulls data and pushes data to the remote
@@ -74,9 +75,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         public bool CanCancel => false;
 
         /// <inheritdoc />
-        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
+        public IDictionary<string, Type> Parameters => new Dictionary<string, Type>()
         {
-            {  "mode", typeof(String) },
+            {  "mode", typeof(string) },
             { "push", typeof(bool) }
         };
 
@@ -100,7 +101,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 // Load parameters 
                 var mode = SubscriptionTriggerType.PeriodicPoll;
-                _ = parameters.Length > 0 && Enum.TryParse<SubscriptionTriggerType>(parameters[0]?.ToString() ?? "PeriodicPoll", true, out mode);
+                _ = parameters.Length > 0 && Enum.TryParse(parameters[0]?.ToString() ?? "PeriodicPoll", true, out mode);
                 if (parameters.Length > 1 && (parameters[1] is bool includePush || bool.TryParse(parameters[1]?.ToString(), out includePush)) && includePush)
                 {
                     _Service.Push();

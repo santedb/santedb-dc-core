@@ -20,6 +20,7 @@
  */
 using Polly;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
+using SanteDB.Client.Disconnected.Jobs;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Tickles;
 using SanteDB.Client.Upstream;

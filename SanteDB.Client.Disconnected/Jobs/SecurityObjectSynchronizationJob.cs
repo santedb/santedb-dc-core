@@ -18,6 +18,8 @@
  * User: fyfej
  * Date: 2024-1-23
  */
+using SanteDB;
+using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -38,14 +40,14 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 
-namespace SanteDB.Client.Disconnected.Data.Synchronization
+namespace SanteDB.Client.Disconnected.Jobs
 {
     /// <summary>
     /// Synchronizes the security policies assigned to security roles from the upstream server.
     /// </summary>
     public class SecurityObjectSynchronizationJob : ISynchronizationJob
     {
-        private static readonly Guid JobInvariantId = Guid.Parse("31C2586A-6DAE-4AFB-8CFB-BAE1F4F26C3F");
+        internal static readonly Guid JobInvariantId = Guid.Parse("31C2586A-6DAE-4AFB-8CFB-BAE1F4F26C3F");
         /// <inheritdoc/>
         public Guid Id => JobInvariantId;
         /// <inheritdoc/>
@@ -118,7 +120,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// <inheritdoc/>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
-            if (_UpstreamManagementService?.IsConfigured() != true || _UpstreamAvailabilityProvider?.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) != true)
+            if (_UpstreamManagementService?.IsConfigured() != true || _UpstreamAvailabilityProvider?.IsAvailable(ServiceEndpointType.AdministrationIntegrationService) != true)
             {
                 _Tracer.TraceInfo("Job {0}: The upstream realm is not configured.", nameof(SecurityObjectSynchronizationJob));
                 _JobStateManager.SetState(this, JobStateType.Cancelled);
@@ -132,9 +134,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     _JobStateManager.SetState(this, JobStateType.Running);
 
                     GetUpstreamSecurityPolicies();
-
                     GetUpstreamSecurityApplications();
-                    
                     GetUpstreamSecurityRolePolicies();
 
 

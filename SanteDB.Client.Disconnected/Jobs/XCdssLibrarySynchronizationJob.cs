@@ -45,9 +45,9 @@ namespace SanteDB.Client.Disconnected.Jobs
     /// <see cref="CdssLibraryDefinition"/> instances and coordinating with the <see cref="ISynchronizationLogService"/>
     /// to record the synchronized times.
     /// </summary>
-    public class CdssLibrarySynchronizationJob : ISynchronizationJob
+    public class XCdssLibrarySynchronizationJob : ISynchronizationJob
     {
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(CdssLibrarySynchronizationJob));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(XCdssLibrarySynchronizationJob));
 
         private readonly ICdssLibraryRepository m_cdssLibraryRepositoryService;
         private readonly IUpstreamIntegrationService m_upstreamIntegrationService;
@@ -65,7 +65,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         /// <summary>
         /// DI constructor
         /// </summary>
-        public CdssLibrarySynchronizationJob(ISynchronizationLogService synchronizationLogService,
+        public XCdssLibrarySynchronizationJob(ISynchronizationLogService synchronizationLogService,
             IJobStateManagerService jobStateManagerService,
             IUpstreamIntegrationService upstreamIntegrationService,
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
@@ -111,6 +111,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         {
             try
             {
+               
                 if (!this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                 {
                     this.m_jobStateManagerService.SetState(this, JobStateType.Cancelled);
@@ -206,7 +207,7 @@ namespace SanteDB.Client.Disconnected.Jobs
             {
                 this.m_jobStateManagerService.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
                 this.m_jobStateManagerService.SetProgress(this, ex.Message, 0.0f);
-                this.m_tracer.TraceError("Error executing job {0} - {1}", nameof(CdssLibrarySynchronizationJob), ex);
+                this.m_tracer.TraceError("Error executing job {0} - {1}", nameof(XCdssLibrarySynchronizationJob), ex);
             }
         }
     }

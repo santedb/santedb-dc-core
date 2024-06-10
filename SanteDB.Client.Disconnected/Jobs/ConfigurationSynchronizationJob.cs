@@ -81,7 +81,7 @@ namespace SanteDB.Client.Disconnected.Jobs
 
         /// <inheritdoc/>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>();
-
+        
         /// <inheritdoc/>
         public void Cancel()
         {
@@ -102,6 +102,7 @@ namespace SanteDB.Client.Disconnected.Jobs
             {
                 try
                 {
+                   
                     this.m_jobStateManagerService.SetState(this, JobStateType.Running);
                     SyncUpstreamConfigurationDisclosures();
                     SyncUpstreamMatchConfigurations();
@@ -163,15 +164,20 @@ namespace SanteDB.Client.Disconnected.Jobs
                 using (var amiServiceClient = new AmiServiceClient(client))
                 {
                     var serviceOptions = amiServiceClient.Options();
+                    var ignoreSettings = new List<String>(); // Settings that have already been consumed
 
-                    this.m_configurationManager.Configuration.Sections.OfType<IDisclosedConfigurationSection>().ForEach(sec => sec.Injest(serviceOptions.Settings));
-
+                    this.m_configurationManager.Configuration.Sections.OfType<IDisclosedConfigurationSection>().ForEach(sec =>
+                    {
+                        sec.Injest(serviceOptions.Settings);
+                        ignoreSettings.AddRange(sec.ForDisclosure().Select(o => o.Key));
+                    });
+                    
                     // Allow OAUTH client credentials to be authenticated with an authenticated user principal
                     var securitySettings = this.m_configurationManager.GetSection<SecurityConfigurationSection>();
                     this.m_configurationManager.GetSection<OAuthConfigurationSection>().AllowClientOnlyGrant = securitySettings.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false);
                     // Get the general configuration and set them 
                     var appSetting = this.m_configurationManager.GetSection<ApplicationServiceContextConfigurationSection>();
-                    serviceOptions.Settings.Where(o => !o.Key.StartsWith("$")).ForEach(o => appSetting.AddAppSetting(o.Key.Substring(5), o.Value));
+                    serviceOptions.Settings.Where(o => !o.Key.StartsWith("$") && !ignoreSettings.Contains(o.Key)).ForEach(o => appSetting.AddAppSetting(o.Key, o.Value));
 
                     this.m_configurationManager.SaveConfiguration(restart: false);
                 }
