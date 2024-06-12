@@ -45,6 +45,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
@@ -98,6 +99,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly INetworkInformationService _NetworkInformationService;
         private readonly IUserPreferencesManager _UserPreferenceManager;
         private readonly SynchronizationMessagePump _MessagePump;
+        private readonly INotifyRepositoryService<Place> _PlaceRepository;
         private readonly ISyncPolicy _PushExceptionPolicy;
         private readonly Dictionary<string, Expression<Func<object, bool>>> _GuardExpressionCache;
 
@@ -157,9 +159,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
             IUserPreferencesManager userPreferenceManager,
-            INetworkInformationService networkInformationService) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
+            INetworkInformationService networkInformationService,
+            INotifyRepositoryService<Place> placeRepository) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-
+            
+            
             this._Configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
             this._ThreadPool = threadPool;
             this._TickleService = tickleService;
@@ -182,9 +186,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._GuardExpressionCache = new Dictionary<string, Expression<Func<object, bool>>>();
             this._NetworkInformationService = networkInformationService;
             this._UserPreferenceManager = userPreferenceManager;
-
             this._MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
-
+            this._PlaceRepository = placeRepository;
             this._LocalRepositoryFactory = _ServiceManager.CreateInjected<LocalRepositoryFactory>();
 
             //Exception policies
@@ -337,7 +340,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 //ivd.PreviousVersionKey = null; // previous version won't exist 
             }
             item.AddAnnotation(SystemTagNames.UpstreamDataTag); // Tag as upstream
-            if(item is ITaggable taggable)
+            if (item is ITaggable taggable)
             {
                 taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
             }
@@ -371,7 +374,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 return;
             }
-            else if (this._Configuration.ForbidSending.Any(t => t.Type == entry.Data.GetType())) // Don't send forbidden entries to the server
+            else if (!entry.Queue.Type.HasFlag(SynchronizationPattern.LowPriority) && this._Configuration.ForbidSending.Any(t => t.Type == entry.Data.GetType())) // Don't send forbidden entries to the server
             {
                 return;
             }
@@ -387,6 +390,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 bundle.Item.RemoveAll(o => this._Configuration.ForbidSending.Any(t => t.Type == o.GetType()));
             }
+            dataToSubmit = FixupSubmissionObject(dataToSubmit);
 
             try
             {
@@ -1150,12 +1154,18 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </remarks>
         private IdentifiedData FixupSubmissionObject(IdentifiedData dataToSubmit)
         {
+            if(dataToSubmit is IVersionedData ivd)
+            {
+                ivd.PreviousVersionKey = null;
+                ivd.VersionSequence = null;
+            }
+
             switch (dataToSubmit)
             {
                 case UserEntity ue:
 
                     // Do not submit pointer to security user 
-                    if(this.IsLocalUser(ue.LoadProperty(o=>o.SecurityUser).UserName))
+                    if (this.IsLocalUser(ue.LoadProperty(o => o.SecurityUser).UserName))
                     {
                         ue.SecurityUserKey = null;
                         ue.SecurityUser = null;
