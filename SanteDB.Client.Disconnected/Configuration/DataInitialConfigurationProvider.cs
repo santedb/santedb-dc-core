@@ -22,9 +22,11 @@ using SanteDB.Client.Configuration;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Matcher.Configuration;
 using SanteDB.OrmLite.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SanteDB.Client.Disconnected.Configuration
@@ -71,6 +73,23 @@ namespace SanteDB.Client.Disconnected.Configuration
                 dataSection.ConnectionString = new List<ConnectionString>();
                 configuration.AddSection(dataSection);
             }
+
+            var matchSection = configuration.GetSection<FileMatchConfigurationSection>();
+            if (matchSection == null)
+            {
+                matchSection = new FileMatchConfigurationSection()
+                {
+                    CacheFiles = true,
+                    FilePath = new List<Matcher.Definition.FilePathConfiguration>() {
+                        new  Matcher.Definition.FilePathConfiguration() {
+                             ReadOnly = false,
+                            Path = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "matching")
+                        }
+                    }
+                };
+                configuration.AddSection(matchSection);
+            }
+
 
             return configuration;
         }
