@@ -443,7 +443,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 currentBundle.Item.AddRange(dataBundle.Item);
             }
-            else
+            else if(!currentBundle.Item.Any(i=>i.Key == data.Key))
             {
                 currentBundle.Add(data);
                 currentBundle.FocalObjects.Add(data.Key.Value);

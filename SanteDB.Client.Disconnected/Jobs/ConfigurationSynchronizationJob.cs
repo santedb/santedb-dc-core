@@ -102,7 +102,6 @@ namespace SanteDB.Client.Disconnected.Jobs
             {
                 try
                 {
-                   
                     this.m_jobStateManagerService.SetState(this, JobStateType.Running);
                     SyncUpstreamConfigurationDisclosures();
                     SyncUpstreamMatchConfigurations();
