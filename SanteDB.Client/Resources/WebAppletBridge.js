@@ -26,8 +26,14 @@ setInterval(() => __SanteDBAppService.GetStatus(), 10000);
 __SanteDBAppService.GetStatus = __SanteDBAppService.GetStatus || function () {
     return new Promise(function (fulfill, reject) {
         $.getJSON({
-            url: "/app/State",
-            success: function (data) { __SanteDBAppService.state = data; fulfill(data); }
+            url: `/app/State?_full=${__SanteDBAppService.state === undefined}`,
+            success: function (data) {
+                __SanteDBAppService.state = __SanteDBAppService.state || {};
+                Object.keys(data).forEach(key => {
+                    __SanteDBAppService.state[key] = data[key] || __SanteDBAppService.state[key];
+                });
+                fulfill(data);
+            }
         });
     });
 }
@@ -45,6 +51,17 @@ __SanteDBAppService.GetRealm = __SanteDBAppService.GetRealm || function () {
 __SanteDBAppService.GetDeviceId = __SanteDBAppService.GetDeviceId || function () {
     if (__SanteDBAppService.state)
         return __SanteDBAppService.state.device_id;
+}
+
+
+__SanteDBAppService.GetAssignedFacilityId = __SanteDBAppService.GetAssignedFacilityId || function () {
+    if (__SanteDBAppService.state)
+        return __SanteDBAppService.state.facility_id;
+}
+
+__SanteDBAppService.GetAssignedOwnerId = __SanteDBAppService.GetAssignedOwnerId || function () {
+    if (__SanteDBAppService.state)
+        return __SanteDBAppService.state.owner_id;
 }
 
 __SanteDBAppService.ShowToast = __SanteDBAppService.ShowToast || function (string) {

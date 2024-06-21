@@ -22,6 +22,7 @@ using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -56,6 +57,10 @@ namespace SanteDB.Client.Upstream
 
                 this.ServiceEndpoint = serviceEndpoint;
                 this.Resource = serviceOption.ResourceType;
+                if(this.Resource == null)
+                {
+                    this.Resource = new ModelSerializationBinder().BindToType(null, serviceOption.ResourceName);
+                }
                 this.CanWrite = CAN_WRITE.All(c => serviceOption.Capabilities.Any(s => s.Capability == c));
                 this.CanRead = CAN_READ.All(c => serviceOption.Capabilities.Any(s => s.Capability == c));
             }

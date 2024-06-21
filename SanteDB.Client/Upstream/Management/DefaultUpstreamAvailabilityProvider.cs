@@ -107,10 +107,10 @@ namespace SanteDB.Client.Upstream.Management
             try
             {
                 TimeSpan? retVal = null;
-                if (this.m_networkInformationService.IsNetworkAvailable &&
+                if (this.m_adhocCacheService?.TryGet($"us.drift.{endpoint}", out retVal) != true && 
+                    this.m_networkInformationService.IsNetworkAvailable &&
                     this.m_networkInformationService.IsNetworkConnected &&
-                    this.m_upstreamManagementService.IsConfigured() &&
-                    this.m_adhocCacheService?.TryGet($"us.drift.{endpoint}", out retVal) != true)
+                    this.m_upstreamManagementService.IsConfigured())
                 {
                     if (!GetTimeDriftAndLatencyInternal(endpoint, out _, out retVal))
                     {
@@ -131,10 +131,10 @@ namespace SanteDB.Client.Upstream.Management
             try
             {
                 long? retVal = null;
-                if (this.m_networkInformationService.IsNetworkAvailable &&
+                if (this.m_adhocCacheService?.TryGet($"us.latency.{endpoint}", out retVal) != true &&
+                    this.m_networkInformationService.IsNetworkAvailable &&
                     this.m_networkInformationService.IsNetworkConnected &&
-                    this.m_upstreamManagementService.IsConfigured() &&
-                    this.m_adhocCacheService?.TryGet($"us.latency.{endpoint}", out retVal) != true)
+                    this.m_upstreamManagementService.IsConfigured())
                 {
                     if (!GetTimeDriftAndLatencyInternal(endpoint, out retVal, out _))
                     {

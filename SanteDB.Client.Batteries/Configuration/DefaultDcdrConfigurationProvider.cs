@@ -22,6 +22,7 @@ using SanteDB.BI.Services.Impl;
 using SanteDB.BusinessRules.JavaScript;
 using SanteDB.Caching.Memory;
 using SanteDB.Caching.Memory.Session;
+using SanteDB.Cdss.Xml;
 using SanteDB.Client.Batteries.Services;
 using SanteDB.Client.Configuration;
 using SanteDB.Client.Configuration.Upstream;
@@ -119,6 +120,8 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(AuditDaemonService)),
                     new TypeReferenceConfiguration(typeof(DefaultDataSigningService)),
                     new TypeReferenceConfiguration(typeof(DefaultBarcodeProviderService)),
+                    new TypeReferenceConfiguration(typeof(AppletTemplateDefinitionInstaller)),
+                    new TypeReferenceConfiguration(typeof(AppletClinicalProtocolInstaller)),
                     new TypeReferenceConfiguration(typeof(FileSystemDispatcherQueueService)),
                     new TypeReferenceConfiguration(typeof(BouncyCastleCertificateGenerator)),
                     new TypeReferenceConfiguration(typeof(RepositoryEntitySource))

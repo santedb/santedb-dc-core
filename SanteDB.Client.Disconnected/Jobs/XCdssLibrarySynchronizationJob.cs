@@ -179,7 +179,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                                     this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
                                 }
                             }
-                            this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTime.Now);
+                            this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTime.Now); 
                         }
 
                         // Synchronize DQ rules library
