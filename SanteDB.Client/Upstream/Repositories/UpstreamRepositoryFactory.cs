@@ -72,8 +72,7 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(SecurityPolicy),
             typeof(SecurityChallenge),
             typeof(MailMessage),
-            typeof(IdentityDomain),
-            typeof(ExtensionType)
+            typeof(IdentityDomain)
         };
 
         /// <summary>
