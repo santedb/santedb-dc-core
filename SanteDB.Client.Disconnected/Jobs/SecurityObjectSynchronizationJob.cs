@@ -18,8 +18,12 @@
  * User: fyfej
  * Date: 2024-1-23
  */
+using DocumentFormat.OpenXml.Office2010.Excel;
+using Microsoft.IdentityModel.Abstractions;
 using SanteDB;
 using SanteDB.Client.Disconnected.Data.Synchronization;
+using SanteDB.Client.Http;
+using SanteDB.Client.Upstream.Security;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -27,18 +31,24 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Matching;
+using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Messaging.AMI.Client;
+using SanteDB.Persistence.Data.Services.Persistence.Acts;
 using SanteDB.Rest.OAuth.Configuration;
 using SharpCompress;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Client.Disconnected.Jobs
 {
@@ -62,6 +72,8 @@ namespace SanteDB.Client.Disconnected.Jobs
         readonly Tracer _Tracer;
         readonly IJobStateManagerService _JobStateManager;
         readonly IUpstreamManagementService _UpstreamManagementService;
+        private readonly IDataSigningCertificateManagerService _LocalDataSigningCertificateManager;
+        private readonly IDataSigningCertificateManagerService _UpstreamDataSigningCertificateManager;
         readonly IPolicyInformationService _UpstreamPolicyInformationService;
         readonly IPolicyInformationService _LocalPolicyInformationService;
         readonly IRoleProviderService _UpstreamRoleProviderService;
@@ -70,6 +82,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         readonly ISecurityRepositoryService _LocalSecurityRepositoryService;
         private readonly IUpstreamAvailabilityProvider _UpstreamAvailabilityProvider;
         private readonly IRestClientFactory _RestClientFactory;
+        private readonly ISynchronizationLogService _SynchronizationLogService;
         private readonly IConfigurationManager _ConfigurationManager;
         readonly ISecurityChallengeService _UpstreamSecurityChallengeService;
         readonly ISecurityChallengeService _LocalSecurityChallengeService;
@@ -90,7 +103,9 @@ namespace SanteDB.Client.Disconnected.Jobs
             IUpstreamServiceProvider<ISecurityRepositoryService> upstreamSecurityProviderService,
             ILocalServiceProvider<ISecurityRepositoryService> localSecurityProviderService,
             IRestClientFactory restClientFactory,
-            IConfigurationManager configurationManager
+            IConfigurationManager configurationManager,
+            ISynchronizationLogService synchronizationLogService,
+            ILocalServiceProvider<IDataSigningCertificateManagerService> localDataSigningCertificateManager
             //IUpstreamServiceProvider<ISecurityChallengeService> upstreamSecurityChallengeService = null,
             //ILocalServiceProvider<ISecurityChallengeService> localSecurityChallengeService = null
             )
@@ -98,6 +113,8 @@ namespace SanteDB.Client.Disconnected.Jobs
             _Tracer = Tracer.GetTracer(typeof(SecurityObjectSynchronizationJob));
             _JobStateManager = jobStateManager;
             _UpstreamManagementService = upstreamManagementService;
+            _LocalDataSigningCertificateManager = localDataSigningCertificateManager.LocalProvider;
+            _UpstreamDataSigningCertificateManager = typeof(UpstreamCertificateAssociationManager).CreateInjected() as IDataSigningCertificateManagerService;
             _UpstreamPolicyInformationService = upstreamPolicyInformationService.UpstreamProvider;
             _LocalPolicyInformationService = localPolicyInformationService.LocalProvider;
             _UpstreamRoleProviderService = upstreamRoleProviderService.UpstreamProvider;
@@ -106,6 +123,7 @@ namespace SanteDB.Client.Disconnected.Jobs
             _LocalSecurityRepositoryService = localSecurityProviderService.LocalProvider;
             _UpstreamAvailabilityProvider = upstreamAvailabilityProvider;
             _RestClientFactory = restClientFactory;
+            _SynchronizationLogService = synchronizationLogService;
             _ConfigurationManager = configurationManager;
             //_UpstreamSecurityChallengeService = upstreamSecurityChallengeService.UpstreamProvider;
             //_LocalSecurityChallengeService = localSecurityChallengeService.LocalProvider;
@@ -136,7 +154,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                     GetUpstreamSecurityPolicies();
                     GetUpstreamSecurityApplications();
                     GetUpstreamSecurityRolePolicies();
-
+                    GetUpstreamSigningCertificates();
 
                     //TODO: Do we still need local notifications (tickles)?
                     _JobStateManager.SetState(this, JobStateType.Completed);
@@ -150,6 +168,35 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                     _Tracer.TraceWarning("Job {1}: Could not refresh system roles and policies. Exception: {0}", ex.ToString(), nameof(SecurityObjectSynchronizationJob));
                 }
+            }
+        }
+
+        private void GetUpstreamSigningCertificates()
+        {
+            if (this._UpstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService) && _UpstreamDataSigningCertificateManager != null)
+            {
+                var lastSyncLog = this._SynchronizationLogService.Get(typeof(X509Certificate2Info)) ?? this._SynchronizationLogService.Create(typeof(X509Certificate2Info));
+                this._Tracer.TraceInfo("Will synchronize data signing certificates created or deleted since {0}", lastSyncLog.LastSync);
+
+                // Fetch upstream since
+                NameValueCollection activeFilter = new NameValueCollection(), obsoleteFilter = new NameValueCollection();
+                if(lastSyncLog.LastSync.HasValue)
+                {
+                    activeFilter.Add("modifiedSince", lastSyncLog.LastSync.ToString());
+                    obsoleteFilter.Add("obsoleteSince", lastSyncLog.LastSync.ToString());
+                    foreach(var obsCert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), obsoleteFilter))
+                    {
+                        _LocalDataSigningCertificateManager.RemoveSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, obsCert, AuthenticationContext.SystemPrincipal);
+                    }
+                }
+
+                foreach(var cert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), activeFilter))
+                {
+                    _LocalDataSigningCertificateManager.AddSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, cert, AuthenticationContext.SystemPrincipal);
+                }
+
+                this._SynchronizationLogService.Save(lastSyncLog, String.Empty, DateTime.Now);
+
             }
         }
 

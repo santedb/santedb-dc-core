@@ -24,11 +24,13 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Security;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -38,7 +40,7 @@ namespace SanteDB.Client.Upstream.Security
     /// <summary>
     /// Upstream implementation of the certificate association manager
     /// </summary>
-    public class UpstreamCertificateAssociationManager : UpstreamServiceBase, ICertificateIdentityProvider, IDataSigningCertificateManagerService
+    public class UpstreamCertificateAssociationManager : UpstreamServiceBase, ICertificateIdentityProvider, IDataSigningCertificateManagerService, IUpstreamServiceProvider<IDataSigningCertificateManagerService>
     {
         private readonly ILocalizationService m_localizationService;
         private readonly ISecurityRepositoryService m_securityRepositoryService;
@@ -60,6 +62,9 @@ namespace SanteDB.Client.Upstream.Security
 
         /// <inheritdoc/>
         public string ServiceName => "Upstream Certificate Mapping Provider";
+
+        /// <inheritdoc/>
+        public IDataSigningCertificateManagerService UpstreamProvider => this;
 
 #pragma warning disable CS0067
         /// <inheritdoc/>
@@ -83,6 +88,12 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
+        public IEnumerable<IIdentity> GetCertificateIdentities(X509Certificate2 certificate)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
         public IIdentity GetCertificateIdentity(X509Certificate2 authenticationCertificate)
         {
             throw new NotSupportedException();
@@ -97,6 +108,23 @@ namespace SanteDB.Client.Upstream.Security
             => this.GetCertificates(identity, "dsig_cert");
 
         /// <inheritdoc/>
+        public IEnumerable<X509Certificate2> GetSigningCertificates(Type classOfIdentity, NameValueCollection filter)
+        {
+            try
+            {
+                using (var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var results = client.Get<AmiCollection>($"{classOfIdentity.GetSerializationName()}/dsig_cert", filter);
+                    return results.CollectionItem.OfType<X509Certificate2Info>().Select(o => new X509Certificate2(o.PublicKey));
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = nameof(X509Certificate2) }), e);
+            }
+        }
+
+        /// <inheritdoc/>
         public bool RemoveIdentityMap(IIdentity identityToBeUnMapped, X509Certificate2 authenticationCertificate, IPrincipal authenticatedPrincipal)
             => this.RemoveCertificate(identityToBeUnMapped, authenticationCertificate, "auth_cert", authenticatedPrincipal);
 
@@ -106,14 +134,35 @@ namespace SanteDB.Client.Upstream.Security
 
         /// <inheritdoc/>
         public bool TryGetSigningCertificateByHash(byte[] x509hash, out X509Certificate2 certificate)
-        {
-            throw new NotSupportedException();
-        }
+            => this.TryGetSigningCertificateByThumbprint(x509hash.HexEncode(), out certificate);
 
         /// <inheritdoc/>
         public bool TryGetSigningCertificateByThumbprint(string x509Thumbprint, out X509Certificate2 certificate)
         {
-            throw new NotSupportedException();
+            try
+            {
+                using (var client = base.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var filter = new NameValueCollection();
+                    filter.Add("thumbprint", x509Thumbprint);
+                    var res = client.Get<AmiCollection>($"{typeof(SecurityDevice).GetSerializationName()}/dsig_cert", filter).CollectionItem.OfType<X509Certificate2Info>().FirstOrDefault() ??
+                        client.Get<AmiCollection>($"{typeof(SecurityUser).GetSerializationName()}/dsig_cert", filter).CollectionItem.OfType<X509Certificate2Info>().FirstOrDefault() ??
+                        client.Get<AmiCollection>($"{typeof(SecurityApplication).GetSerializationName()}/dsig_cert", filter).CollectionItem.OfType<X509Certificate2Info>().FirstOrDefault();
+
+                    if (res != null) {
+                        certificate = new X509Certificate2(res.PublicKey);
+                    }
+                    else
+                    {
+                        certificate = null;
+                    }
+                    return res != null;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = nameof(X509Certificate2) }), e);
+            }
         }
 
         /// <summary>

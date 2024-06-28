@@ -13,12 +13,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\WebAppletBridge.js">
+    <EmbeddedResource Include="C:\Users\fyfej\source\repos\santedb-v3\santedb-server\bin\Debug\WebAppletBridge.js" Link="WebAppletBridge.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Resources\" />
     <Folder Include="Services\Impl\" />
   </ItemGroup>
 
