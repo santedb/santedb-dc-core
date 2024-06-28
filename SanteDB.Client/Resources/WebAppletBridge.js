@@ -112,8 +112,8 @@ __SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function ()
                 var closeButton = document.createElement("button");
                 closeButton.classList = "btn btn-danger d-block m-auto";
                 closeButton.onclick = function () {
-                    document.body.removeChild(cameraDivNode);
                     html5QrCode.stop().then(function () {
+                        document.body.removeChild(cameraDivNode);
                         reject(null);
                     });
                 }
