@@ -83,5 +83,6 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         [FormElement("scope")]
         public string Scope { get; internal set; }
+
     }
 }
