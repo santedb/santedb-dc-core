@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using Newtonsoft.Json;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
 using SanteDB.Core.Http;
@@ -27,6 +28,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SanteDB.Client.Upstream
@@ -52,6 +54,14 @@ namespace SanteDB.Client.Upstream
                 ResourceCapabilityType.Search
             };
 
+            /// <summary>
+            /// This ctor supports serialization and should not be used to instantiate a new instance. Use <see cref="UpstreamServiceCapability.UpstreamServiceCapability(ServiceEndpointType, ServiceResourceOptions)"/> instead.
+            /// </summary>
+            public UpstreamServiceCapability()
+            {
+
+            }
+
             public UpstreamServiceCapability(ServiceEndpointType serviceEndpoint, ServiceResourceOptions serviceOption)
             {
 
@@ -68,29 +78,39 @@ namespace SanteDB.Client.Upstream
             /// <summary>
             /// Get the service endpoint
             /// </summary>
-            public ServiceEndpointType ServiceEndpoint { get; }
+            public ServiceEndpointType ServiceEndpoint { get; set; }
 
             /// <summary>
             /// The resource name
             /// </summary>
-            public Type Resource { get; }
+            public Type Resource { get; set; }
 
             /// <summary>
             /// True if can read
             /// </summary>
-            public bool CanRead { get; }
+            public bool CanRead { get; set; }
 
             /// <summary>
             /// True if can write
             /// </summary>
-            public bool CanWrite { get; }
+            public bool CanWrite { get; set; }
 
         }
         private static UpstreamEndpointMetadataUtil s_current = null;
         private static readonly object s_lock = new object();
+        private static readonly Newtonsoft.Json.JsonSerializerSettings s_SerializerSettings = new Newtonsoft.Json.JsonSerializerSettings
+        {
+            TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All,
+            TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Full,
+            Formatting = Newtonsoft.Json.Formatting.None,
+            ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+            MaxDepth = 12
+        };
 
         private IDictionary<String, UpstreamServiceCapability> m_serviceEndpoints;
         private readonly object m_lock = new object();
+
+        private readonly string m_OptionsCacheLocation;
 
         /// <summary>
         /// Creates a new instance of the metadata utility
@@ -100,7 +120,9 @@ namespace SanteDB.Client.Upstream
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService = null) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-
+            var cachefolder = System.IO.Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory") as string, "cache");
+            Directory.CreateDirectory(cachefolder);
+            m_OptionsCacheLocation = System.IO.Path.Combine(cachefolder, "options.cache.json");
         }
 
         /// <summary>
@@ -174,31 +196,106 @@ namespace SanteDB.Client.Upstream
                 {
                     if (this.m_serviceEndpoints == null)
                     {
-                        using (var amiClient = this.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
-                        {
-                            var options = amiClient.Options<ServiceOptions>("/");
-                            this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
-                            {
-                                try
-                                {
-                                    using (var client = this.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
-                                    {
-                                        return client
-                                            .Options<ServiceOptions>("/")
-                                            .Resources
-                                            .Select(o => new KeyValuePair<String, UpstreamServiceCapability>(o.ResourceName, new UpstreamServiceCapability(e.ServiceType, o)));
-                                    }
-                                }
-                                catch
-                                {
-                                    return new KeyValuePair<String, UpstreamServiceCapability>[0];
-                                }
-                            }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
-                        }
+                        GetServiceEndpointsInternal();
                     }
                 }
             }
             return this.m_serviceEndpoints;
+        }
+
+        private void GetServiceEndpointsInternal()
+        {
+            try
+            {
+                using (var amiClient = this.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                {
+                    var options = amiClient.Options<ServiceOptions>("/");
+                    this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
+                    {
+                        try
+                        {
+                            using (var client = this.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
+                            {
+                                return client
+                                    .Options<ServiceOptions>("/")
+                                    .Resources
+                                    .Select(o => new KeyValuePair<String, UpstreamServiceCapability>(o.ResourceName, new UpstreamServiceCapability(e.ServiceType, o)));
+                            }
+                        }
+                        catch
+                        {
+                            return new KeyValuePair<String, UpstreamServiceCapability>[0];
+                        }
+                    }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
+
+                    if (null != this.m_serviceEndpoints && this.m_serviceEndpoints.Count > 0)
+                        WriteServiceEndpointsToCacheInternal();
+                }
+            }
+            catch
+            {
+                if (!TryGetServiceEndpointsFromCacheInternal()) //Try to read from the cache, otherwise throw up that we cannot get the endpoint data.
+                    throw;
+            }
+        }
+
+        /// <summary>
+        /// Writes the current service endpoints to the cache file. Should only be called if <see cref="m_lock"/> is held.
+        /// </summary>
+        private void WriteServiceEndpointsToCacheInternal()
+        {
+            using (var fs = new FileStream(m_OptionsCacheLocation, FileMode.Create, FileAccess.ReadWrite))
+            {
+                using (var sw = new StreamWriter(fs))
+                {
+                    using (var jw = new JsonTextWriter(sw))
+                    {
+                        var serializer = JsonSerializer.Create(s_SerializerSettings);
+
+                        serializer.Serialize(jw, this.m_serviceEndpoints);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reads the service endpoints from the cache file. Should only be called if <see cref="m_lock"/> is held.
+        /// </summary>
+        /// <returns>True if the read succeeded, false otherwise.</returns>
+        private bool TryGetServiceEndpointsFromCacheInternal()
+        {
+            if (!File.Exists(m_OptionsCacheLocation))
+            {
+                return false;
+            }
+
+            try
+            {
+                using (var fs = new FileStream(m_OptionsCacheLocation, FileMode.Open, FileAccess.Read))
+                {
+                    using (var sr = new StreamReader(fs))
+                    {
+                        using (var jr = new JsonTextReader(sr))
+                        {
+                            var serializer = JsonSerializer.Create(s_SerializerSettings);
+
+                            var deserializedobject = serializer.Deserialize<Dictionary<string, UpstreamServiceCapability>>(jr);
+
+                            if (null != deserializedobject)
+                            {
+                                m_serviceEndpoints = deserializedobject;
+                                return true;
+                            }
+                            else
+                                return false;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
