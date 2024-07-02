@@ -77,7 +77,6 @@ namespace SanteDB.Client
         {
             this.m_instanceName = instanceName;
             EntitySource.Current = new EntitySource(new RepositoryEntitySource());
-
         }
 
         /// <summary>
