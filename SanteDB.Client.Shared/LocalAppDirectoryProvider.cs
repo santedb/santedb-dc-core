@@ -69,7 +69,6 @@ namespace SanteDB.Client.Shared
         public string GetConfigFilePath()
         {
             EnsureDirectoriesAreCreated();
-
             return Path.Combine(m_ConfigDirectory, "santedb.config");
         }
 
