@@ -25,6 +25,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -59,6 +60,8 @@ namespace SanteDB.Client.Upstream.Security
         private readonly IRoleProviderService m_upstreamRoleProvider;
         private readonly IPolicyInformationService m_upstreamPip;
         private readonly ISecurityChallengeIdentityService m_upstreamChallenge;
+        private readonly ISecurityRepositoryService m_upstreamSecurityRepository;
+        private readonly IDataPersistenceService<UserEntity> m_localUserEntityRepository;
 
         /// <summary>
         /// Bridged identity provider
@@ -89,9 +92,13 @@ namespace SanteDB.Client.Upstream.Security
             ILocalServiceProvider<IPolicyInformationService> localPip,
             IUpstreamServiceProvider<ISecurityChallengeIdentityService> upstreamSecurityChallenge,
             ILocalServiceProvider<ISecurityChallengeIdentityService> localSecurityChallenge,
+            IUpstreamServiceProvider<ISecurityRepositoryService> upstreamSecurityRepository,
+            IDataPersistenceService<UserEntity> localUserEntityRepositoryService,
             ILocalizationService localizationService
             ) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider)
         {
+            this.m_localUserEntityRepository = localUserEntityRepositoryService;
+            this.m_upstreamSecurityRepository = upstreamSecurityRepository.UpstreamProvider;
             this.m_upstreamIdentityProvider = upstreamIdentityProvider.UpstreamProvider;
             this.m_upstreamRoleProvider = upstreamRoleProvider.UpstreamProvider;
             this.m_upstreamPip = upstreamPip.UpstreamProvider;
@@ -206,6 +213,20 @@ namespace SanteDB.Client.Upstream.Security
 
                 // Add user to roles
                 this.m_localRoleProvider.AddUsersToRoles(new string[] { userIdentity.Name }, upstreamUserRoles, AuthenticationContext.SystemPrincipal);
+
+                // Upstream user profile
+                var userProfile = this.m_upstreamSecurityRepository.GetUserEntity(remoteIdentity.Identity);
+                if(userProfile != null)
+                {
+                    if (this.m_localUserEntityRepository.Get(userProfile.Key.Value, null, AuthenticationContext.SystemPrincipal) == null)
+                    {
+                        this.m_localUserEntityRepository.Insert(userProfile, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    }
+                    else
+                    {
+                        this.m_localUserEntityRepository.Update(userProfile, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    }
+                }
             }
 
         }
@@ -244,11 +265,11 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IPrincipal Authenticate(string userName, string password) => this.Authenticate(userName, password, null);
+        public IPrincipal Authenticate(string userName, string password, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null) => this.Authenticate(userName, password, null, clientClaimAssertions);
 
 
         /// <inheritdoc/>
-        public IPrincipal Authenticate(string userName, string password, string tfaSecret)
+        public IPrincipal Authenticate(string userName, string password, string tfaSecret, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null)
         {
             if (String.IsNullOrEmpty(userName))
             {
@@ -277,7 +298,7 @@ namespace SanteDB.Client.Upstream.Security
                 {
                     try
                     {
-                        result = this.m_upstreamIdentityProvider.Authenticate(userName, password, tfaSecret);
+                        result = this.m_upstreamIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions);
                         this.SynchronizeIdentity(result as IClaimsPrincipal, password);
                     }
                     catch (RestClientException<Object> e)
@@ -286,11 +307,11 @@ namespace SanteDB.Client.Upstream.Security
                     }
                     catch (UpstreamIntegrationException e) when (e.InnerException is TimeoutException)
                     {
-                        result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
+                        result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions);
                     }
                     catch (TimeoutException)
                     {
-                        result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
+                        result = this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions);
                     }
                     catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                     {
@@ -300,8 +321,8 @@ namespace SanteDB.Client.Upstream.Security
                 else
                 {
                     result = String.IsNullOrEmpty(tfaSecret) ?
-                        this.m_localIdentityProvider.Authenticate(userName, password) :
-                        this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret);
+                        this.m_localIdentityProvider.Authenticate(userName, password, clientClaimAssertions) :
+                        this.m_localIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions);
                 }
             }
             finally

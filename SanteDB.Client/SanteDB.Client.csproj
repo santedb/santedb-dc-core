@@ -9,6 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\WebAppletBridge.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\WebAppletBridge.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Services\Impl\" />
   </ItemGroup>
 
