@@ -1059,9 +1059,20 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 .ForEach(type =>
             {
 
+                bool canWrite = false;
+                try
+                {
+                    canWrite = UpstreamEndpointMetadataUtil.Current.CanWrite(type);
+                }
+                catch (Exception e)
+                {
+                    canWrite = true;
+                    this._Tracer.TraceWarning("Could not determine if upstream supports write on {0} - will subscribe to repository events anyways - due to {1}", type, e);
+                }
+
                 if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
                     !this._Configuration.ForbidSending.Any(f => f.Type == type) &&
-                     UpstreamEndpointMetadataUtil.Current.CanWrite(type)) // This is a type of resource that can be submitted to the API
+                     canWrite) // This is a type of resource that can be submitted to the API
                 {
                     var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
                     var repositoryInstance = _ServiceProvider.GetService(repositoryType);
