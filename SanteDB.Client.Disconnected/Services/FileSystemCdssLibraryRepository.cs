@@ -86,7 +86,7 @@ namespace SanteDB.Client.Disconnected.Services
             }
 
             // First we want to insert the CDSS definition
-            this.m_cdssLibrary.TryAdd(libraryToInsert.Uuid, libraryToInsert);
+            this.m_cdssLibrary.AddOrUpdate(libraryToInsert.Uuid, libraryToInsert, (a,o) => libraryToInsert);
             try
             {
                 var fn = this.GetFilePath(libraryToInsert.Uuid);
