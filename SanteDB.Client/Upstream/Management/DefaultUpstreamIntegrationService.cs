@@ -31,6 +31,7 @@ using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -679,5 +680,32 @@ namespace SanteDB.Client.Upstream.Management
 
         /// <inheritdoc/>
         IHasTemplate IUpstreamIntegrationService.HarmonizeTemplateId(IHasTemplate iht) => this.HarmonizeTemplateId(iht as IdentifiedData) as IHasTemplate;
+
+        /// <inheritdoc/>
+        public object Invoke(Type modelType, string operation, ParameterCollection parameters)
+        {
+            try
+            {
+                var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(modelType);
+                using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+                using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+                {
+                    this.m_tracer.TraceVerbose("Invoking {0} on upstream as device...", operation);
+                    client.Credentials = new UpstreamPrincipalCredentials(AuthenticationContext.Current.Principal);
+                    client.Responding += (o, e) => this.Responding?.Invoke(this, e);
+
+
+                    var retVal = client.Post<ParameterCollection, Object>($"{modelType.GetSerializationName()}/${operation}", parameters);
+
+                    this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(null, retVal as IdentifiedData));
+                    return retVal;
+
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_READ_ERR, new { data = modelType.GetSerializationName() }), e);
+            }
+        }
     }
 }

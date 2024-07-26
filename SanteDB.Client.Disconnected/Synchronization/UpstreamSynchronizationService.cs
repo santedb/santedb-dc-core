@@ -37,8 +37,10 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
@@ -79,6 +81,20 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly String[] _ignorePatchProperties = {
             "sequence",
             "previousVersion"
+        };
+
+        private readonly Type[] _deletedObjectCheckTypes =
+        {
+            typeof(Act),
+            typeof(Entity),
+            typeof(IdentityDomain),
+            typeof(Concept),
+            typeof(ConceptSet),
+            typeof(CodeSystem),
+            typeof(ReferenceTerm),
+            typeof(TemplateDefinition),
+            typeof(ConceptClass),
+            typeof(ExtensionType),
         };
 
         private readonly SynchronizationConfigurationSection _Configuration;
@@ -162,8 +178,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             INetworkInformationService networkInformationService,
             INotifyRepositoryService<Place> placeRepository) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
-            
-            
+
+
             this._Configuration = configurationManager.GetSection<SynchronizationConfigurationSection>();
             this._ThreadPool = threadPool;
             this._TickleService = tickleService;
@@ -443,7 +459,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 currentBundle.Item.AddRange(dataBundle.Item);
             }
-            else if(!currentBundle.Item.Any(i=>i.Key == data.Key))
+            else if (!currentBundle.Item.Any(i => i.Key == data.Key))
             {
                 currentBundle.Add(data);
                 currentBundle.FocalObjects.Add(data.Key.Value);
@@ -782,6 +798,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                         lastEtag = bundle.GetFocalItems().FirstOrDefault()?.Tag ?? lastEtag;
                         inboundqueue.Enqueue(bundle, SynchronizationQueueEntryOperation.Sync);
+
                         _SynchronizationLogService.SaveQuery(syncQuery, queryControlOptions.Offset);
                     }
                 } while (result.Item.Any());
@@ -864,7 +881,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             _Tracer.TraceInfo("Processing definition {0}, subscription {1}.", def.Name, subscription.Uuid);
                             var objectstoevaluate = GetSubscribedObjectsApplyingGuards(def, subscribedobjects);
                             this.ProcessSubscriptionClientDefinition(def, objectstoevaluate, progress);
-
                         }
                         catch (Exception e)
                         {
@@ -873,6 +889,17 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     }
                 }
 
+                foreach (var t in _deletedObjectCheckTypes)
+                {
+                    try
+                    {
+                        this.PullDeletedInternal(t);
+                    }
+                    catch (Exception e)
+                    {
+                        this._Tracer.TraceWarning("Error processing deleted object check for {0} - {1}", t.GetSerializationName(), e.Message);
+                    }
+                }
                 if (trigger == SubscriptionTriggerType.OnStart)
                 {
                     _TickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Information, _LocalizationService.GetString(UserMessageStrings.SYNC_PULL_START_COMPLETE)));
@@ -888,6 +915,29 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 this.IsSynchronizing = false;
             }
 
+        }
+
+        /// <summary>
+        /// Requests the server produce a list of objects which have been deleted
+        /// </summary>
+        private void PullDeletedInternal(Type modelType)
+        {
+            // Pull the specified resources on DELETED stream
+            // We have a special synchronization request log for this type
+            var deletedSyncLogEntry = this._SynchronizationLogService.Get(modelType, "$deletedObjects");
+            if (deletedSyncLogEntry == null)
+            {
+                deletedSyncLogEntry = this._SynchronizationLogService.Create(modelType, "$deletedObjects"); // don't pull a list of all deleted objects since they would not have come to the dCDR on initial sync anyways
+            }
+            else if(deletedSyncLogEntry.LastSync.HasValue)
+            {
+                var changedObjects = (Bundle)this.UpstreamIntegrationService.Invoke(modelType, "deletedObjects", new ParameterCollection(new Parameter("since", deletedSyncLogEntry.LastSync.Value.DateTime)));
+                if (changedObjects != null)
+                {
+                    _QueueManager.GetInboundQueue().Enqueue(changedObjects, SynchronizationQueueEntryOperation.Insert);
+                }
+            }
+            this._SynchronizationLogService.Save(deletedSyncLogEntry, String.Empty, DateTimeOffset.Now);
         }
 
         /// <inheritdoc />
@@ -1165,7 +1215,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </remarks>
         private IdentifiedData FixupSubmissionObject(IdentifiedData dataToSubmit)
         {
-            if(dataToSubmit is IVersionedData ivd)
+            if (dataToSubmit is IVersionedData ivd)
             {
                 ivd.PreviousVersionKey = null;
                 ivd.VersionSequence = null;

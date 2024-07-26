@@ -66,7 +66,7 @@ namespace SanteDB.Client.Disconnected.Services
         }
 
         /// <inheritdoc/>
-        public IEnumerable<DataQualityRulesetConfiguration> GetRuleSets() => this.m_rulesetLibrary.Values;
+        public IEnumerable<DataQualityRulesetConfiguration> GetRuleSets(bool includeObsoleted = false) => this.m_rulesetLibrary.Values;
 
         /// <inheritdoc/>
         public IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>() => this.GetRulesForType(typeof(T));
