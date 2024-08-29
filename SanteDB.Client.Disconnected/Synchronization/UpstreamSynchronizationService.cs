@@ -1120,25 +1120,32 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     this._Tracer.TraceWarning("Could not determine if upstream supports write on {0} - will subscribe to repository events anyways - due to {1}", type, e);
                 }
 
-                if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
-                    !this._Configuration.ForbidSending.Any(f => f.Type == type) &&
-                     canWrite) // This is a type of resource that can be submitted to the API
+                try
                 {
-                    var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
-                    var repositoryInstance = _ServiceProvider.GetService(repositoryType);
-                    if (repositoryInstance != null)
+                    if (type.GetCustomAttribute<XmlRootAttribute>() != null &&
+                        !this._Configuration.ForbidSending.Any(f => f.Type == type) &&
+                         canWrite) // This is a type of resource that can be submitted to the API
                     {
-                        try
+                        var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
+                        var repositoryInstance = _ServiceProvider.GetService(repositoryType);
+                        if (repositoryInstance != null)
                         {
-                            repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Inserted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataInserted), type));
-                            repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Saved)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataSaved), type));
-                            repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Deleted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataDeleted), type));
-                        }
-                        catch (Exception e)
-                        {
-                            this._Tracer.TraceWarning("Cannot bind to {0} - data will not be pushed to server - {1}", type, e.ToHumanReadableString());
+                            try
+                            {
+                                repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Inserted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataInserted), type));
+                                repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Saved)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataSaved), type));
+                                repositoryType.GetEvent(nameof(INotifyRepositoryService<IdentifiedData>.Deleted)).AddEventHandler(repositoryInstance, this.CreateEventArgDelegate(nameof(HandleDataDeleted), type));
+                            }
+                            catch (Exception e)
+                            {
+                                this._Tracer.TraceWarning("Cannot bind to {0} - data will not be pushed to server - {1}", type, e.ToHumanReadableString());
+                            }
                         }
                     }
+                }
+                catch(Exception e)
+                {
+                    this._Tracer.TraceWarning("Could not setup subscription to {0}", type.FullName);
                 }
             });
         }
