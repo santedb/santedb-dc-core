@@ -281,7 +281,6 @@ namespace SanteDB.Client.Batteries.Configuration
                 PollInterval = new TimeSpan(0, 15, 0),
                 ForbidSending = new List<ResourceTypeReferenceConfiguration>()
                 {
-                    new ResourceTypeReferenceConfiguration(typeof(DeviceEntity)),
                     new ResourceTypeReferenceConfiguration(typeof(ApplicationEntity)),
                     new ResourceTypeReferenceConfiguration(typeof(Concept)),
                     new ResourceTypeReferenceConfiguration(typeof(ConceptSet)),

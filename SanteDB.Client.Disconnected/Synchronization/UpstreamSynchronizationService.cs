@@ -1233,7 +1233,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 case UserEntity ue:
 
                     // Do not submit pointer to security user 
-                    if (this.IsLocalUser(ue.LoadProperty(o => o.SecurityUser).UserName))
+                    if (ue.SecurityUserKey.HasValue && this.IsLocalUser(ue.LoadProperty(o => o.SecurityUser)?.UserName))
                     {
                         ue.SecurityUserKey = null;
                         ue.SecurityUser = null;

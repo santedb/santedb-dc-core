@@ -324,7 +324,7 @@ namespace SanteDB.Client.OAuth
             if (tokenvalidationresult?.IsValid != true)
             {
                 // HACK: Sometimes on startup the discovery document wasn't downloaded properly so attempt to locate this information
-                if (String.IsNullOrEmpty(this.TokenValidationParameters.ValidIssuer) && this.TokenValidationParameters.ValidIssuers == null)
+                if (String.IsNullOrEmpty(this.TokenValidationParameters?.ValidIssuer) && this.TokenValidationParameters?.ValidIssuers == null)
                 {
                     this.DiscoveryDocument = null;
                     this.SetTokenValidationParameters();
