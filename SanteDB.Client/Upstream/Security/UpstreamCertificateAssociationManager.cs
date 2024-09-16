@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-7-22
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Upstream.Repositories;
