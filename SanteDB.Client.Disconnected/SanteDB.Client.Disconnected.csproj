@@ -60,6 +60,11 @@
 
 
   <ItemGroup>
+    <None Include="..\..\SanteDB.licenseheader" Link="SanteDB.licenseheader" />
+  </ItemGroup>
+
+
+  <ItemGroup>
     <PackageReference Include="Polly" Version="7.2.3" />
   </ItemGroup>
 

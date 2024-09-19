@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
@@ -119,7 +117,7 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Authenticate a user using the <paramref name="username"/> and <paramref name="password"/>
         /// </summary>
-        public virtual IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null)
+        public virtual IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null, IEnumerable<IClaim> clientClaims = null, IEnumerable<String> scopes = null)
         {
             var request = new OAuthClientTokenRequest
             {
@@ -128,18 +126,20 @@ namespace SanteDB.Client.OAuth
                 Password = password,
                 ClientId = clientId,
                 Nonce = GetNonce(),
-                MfaCode = tfaSecret
+                MfaCode = tfaSecret,
+                Scope = scopes == null ? "*" : String.Join(" ", scopes)
             };
 
-            return GetPrincipal(request);
+            return GetPrincipal(request, clientClaims);
         }
 
         /// <summary>
         /// Gets a <see cref="IClaimsPrincipal"/> using the <paramref name="request"/> provided
         /// </summary>
         /// <param name="request">The oauth token request to be sent to the server</param>
+        /// <param name="clientClaimAssertions">Any claim assertions which are to be sent with the request</param>
         /// <returns>The <see cref="IClaimsPrincipal"/> which was generated from the token response from the server</returns>
-        protected virtual IClaimsPrincipal GetPrincipal(OAuthClientTokenRequest request)
+        protected virtual IClaimsPrincipal GetPrincipal(OAuthClientTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
             var response = GetToken(request);
 
@@ -322,7 +322,7 @@ namespace SanteDB.Client.OAuth
             if (tokenvalidationresult?.IsValid != true)
             {
                 // HACK: Sometimes on startup the discovery document wasn't downloaded properly so attempt to locate this information
-                if (String.IsNullOrEmpty(this.TokenValidationParameters.ValidIssuer) && this.TokenValidationParameters.ValidIssuers == null)
+                if (String.IsNullOrEmpty(this.TokenValidationParameters?.ValidIssuer) && this.TokenValidationParameters?.ValidIssuers == null)
                 {
                     this.DiscoveryDocument = null;
                     this.SetTokenValidationParameters();
@@ -349,7 +349,7 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a token request
         /// </summary>
-        protected virtual void SetupRestClientForTokenRequest(IRestClient restClient) { }
+        protected virtual void SetupRestClientForTokenRequest(IRestClient restClient, IEnumerable<IClaim> clientClaimAssertions = null) { }
 
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a JWKS fetch request
@@ -362,8 +362,9 @@ namespace SanteDB.Client.OAuth
         /// Send the <paramref name="request"/> to the OAUTH server and return the <see cref="OAuthClientTokenResponse"/>
         /// </summary>
         /// <param name="request">The request which is to be sent to the OAauth Server</param>
+        /// <param name="clientClaimAssertions">Any client assertions which are to be passed in the request</param>
         /// <returns>The response from the OAUTH server</returns>
-        protected virtual OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request)
+        protected virtual OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
             if (null == TokenValidationParameters)
             {
@@ -442,14 +443,15 @@ namespace SanteDB.Client.OAuth
         /// <param name="clientId">The client identifier to send to the oauth server</param>
         /// <param name="clientSecret">The provided client secret</param>
         /// <returns>The authenticated claims principal</returns>
-        public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null)
+        public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<string> scopes = null)
         {
             var request = new OAuthClientTokenRequest
             {
                 GrantType = "client_credentials",
                 ClientId = clientId,
                 ClientSecret = clientSecret,
-                Nonce = GetNonce()
+                Nonce = GetNonce(),
+                Scope = scopes == null ? "*" : String.Join(" ", scopes)
             };
 
             return GetPrincipal(request);

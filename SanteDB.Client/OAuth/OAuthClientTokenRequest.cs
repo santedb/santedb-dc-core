@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Http;
 using System;
@@ -83,5 +81,6 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         [FormElement("scope")]
         public string Scope { get; internal set; }
+
     }
 }

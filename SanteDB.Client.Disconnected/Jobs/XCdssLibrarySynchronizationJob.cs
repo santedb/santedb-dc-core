@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-11-27
  */
 using SanteDB.Cdss.Xml;
 using SanteDB.Cdss.Xml.Ami;
@@ -30,6 +28,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -179,8 +178,18 @@ namespace SanteDB.Client.Disconnected.Jobs
                                     this.m_cdssLibraryRepositoryService.InsertOrUpdate(new XmlProtocolLibrary(libraryData.Library));
                                 }
                             }
-                            this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTime.Now); 
                         }
+
+                        // All deleted libraries 
+                        if (cdssSyncLog.LastSync.HasValue)
+                        {
+                            foreach (var itm in client.Post<ParameterCollection, String[]>("CdssLibraryDefinition/$deletedObjects", new ParameterCollection(new Parameter("since", cdssSyncLog.LastSync.Value.DateTime))))
+                            {
+                                this.m_cdssLibraryRepositoryService.Remove(Guid.Parse(itm));
+                            }
+                        }
+                        this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTime.Now);
+
 
                         // Synchronize DQ rules library
                         client.Requesting -= cdssModifiedHeader;
@@ -195,9 +204,19 @@ namespace SanteDB.Client.Disconnected.Jobs
                             {
                                 m_dataQualityConfigurationProvider.SaveRuleSet(itm);
                             }
-                            this.m_synchronizationLogService.Save(dqSyncLog, lastEtag, DateTime.Now);
 
                         }
+
+                        // All deleted libraries 
+                        if (dqSyncLog.LastSync.HasValue)
+                        {
+                            foreach (var itm in client.Post<ParameterCollection, String[]>("DataQualityRulesetConfiguration/$deletedObjects", new ParameterCollection(new Parameter("since", dqSyncLog.LastSync.Value.DateTime))))
+                            {
+                                this.m_dataQualityConfigurationProvider.RemoveRuleSet(itm);
+                            }
+                        }
+                        this.m_synchronizationLogService.Save(dqSyncLog, lastEtag, DateTime.Now);
+
                     }
 
                 }

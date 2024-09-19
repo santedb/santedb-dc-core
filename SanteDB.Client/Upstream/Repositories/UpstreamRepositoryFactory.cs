@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Client.Upstream.Management;
 using SanteDB.Client.Upstream.Security;
@@ -72,8 +70,7 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(SecurityPolicy),
             typeof(SecurityChallenge),
             typeof(MailMessage),
-            typeof(IdentityDomain),
-            typeof(ExtensionType)
+            typeof(IdentityDomain)
         };
 
         /// <summary>

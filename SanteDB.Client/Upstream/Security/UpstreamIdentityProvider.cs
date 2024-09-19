@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.OAuth;
@@ -91,11 +89,11 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IPrincipal Authenticate(string userName, string password)
-            => Authenticate(userName, password, null);
+        public IPrincipal Authenticate(string userName, string password, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null)
+            => Authenticate(userName, password, null, clientClaimAssertions, demandedScopes);
 
         /// <inheritdoc/>
-        public IPrincipal Authenticate(string userName, string password, string tfaSecret)
+        public IPrincipal Authenticate(string userName, string password, string tfaSecret, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null)
         {
             var authenticatingargs = new AuthenticatingEventArgs(userName);
             Authenticating?.Invoke(this, authenticatingargs);
@@ -117,7 +115,7 @@ namespace SanteDB.Client.Upstream.Security
 
             try
             {
-                result = _OAuthClient.AuthenticateUser(userName, password, tfaSecret: tfaSecret);
+                result = _OAuthClient.AuthenticateUser(userName, password, tfaSecret: tfaSecret, clientClaimAssertions: clientClaimAssertions, scopes: demandedScopes);
                 return result;
             }
             catch (RestClientException<OAuthClientTokenResponse> ex)

@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using Microsoft.IdentityModel.Tokens;
 using RestSrvr;
@@ -28,6 +26,8 @@ using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace SanteDB.Client.OAuth
 {
@@ -143,7 +143,7 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         /// <param name="request">The OAUTH authentication request to send to the server</param>
         /// <returns>The response provided by the OAUTH server</returns>
-        protected override OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request)
+        protected override OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
             if (null == _RealmSettings)
             {
@@ -157,15 +157,20 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup this class to send a token request
         /// </summary>
-        protected override void SetupRestClientForTokenRequest(IRestClient restClient)
+        protected override void SetupRestClientForTokenRequest(IRestClient restClient, IEnumerable<IClaim> clientClaimAssertions = null)
         {
-            base.SetupRestClientForTokenRequest(restClient);
+            base.SetupRestClientForTokenRequest(restClient, clientClaimAssertions);
             restClient.Requesting += (o, e) =>
             {
                 var clientClaimHeader = RestOperationContext.Current?.IncomingRequest.Headers[ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName];
                 if (!String.IsNullOrEmpty(clientClaimHeader))
                 {
                     e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName, clientClaimHeader);
+                }
+                if(clientClaimAssertions != null)
+                {
+                    var claimHeaderValue = String.Join(";", clientClaimAssertions.Select(x => $"{x.Type}={x.Value}"));
+                    e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName, Convert.ToBase64String(Encoding.UTF8.GetBytes(claimHeaderValue)));
                 }
             };
         }

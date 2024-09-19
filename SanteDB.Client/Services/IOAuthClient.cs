@@ -15,11 +15,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Security.Claims;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace SanteDB.Client.Services
 {
@@ -35,17 +35,19 @@ namespace SanteDB.Client.Services
         /// <param name="password">The password to pass to the OAUTH service</param>
         /// <param name="clientId">Optional client_id to provide in the request. If this value is <c>null</c>, the Realm client_id will be used.</param>
         /// <param name="tfaSecret">The MFA secret collected from the user</param>
+        /// <param name="clientClaimAssertions">Claims which are to be provided on the OAUTH request</param>
+        /// <param name="scopes">Scopes that should be appended</param>
         /// <returns>The claims principal if the session was authenticated</returns>
-        IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null);
+        IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> scopes = null);
 
         /// <summary>
         /// Authenticate an application given an authenticated device principal.
         /// </summary>
         /// <param name="clientId">The client_id to pass to the oauth service</param>
         /// <param name="clientSecret">The client secret to pass to the oauth service</param>
-        /// <param name="onBehalfOfUser">The user under which the authentication request is being made</param>
+        /// <param name="scopes">Scopes that are being demanded</param>
         /// <returns>The claims principal if the session was authenticated</returns>
-        IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null);
+        IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<String> scopes = null);
 
         /// <summary>
         /// Refresh the current <paramref name="refreshToken"/>

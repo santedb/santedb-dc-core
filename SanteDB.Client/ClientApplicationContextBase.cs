@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Client.Configuration;
 using SanteDB.Client.UserInterface;
@@ -77,7 +75,6 @@ namespace SanteDB.Client
         {
             this.m_instanceName = instanceName;
             EntitySource.Current = new EntitySource(new RepositoryEntitySource());
-
         }
 
         /// <summary>

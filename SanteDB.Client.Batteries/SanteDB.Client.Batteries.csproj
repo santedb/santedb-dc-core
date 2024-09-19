@@ -48,5 +48,8 @@
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
     <RootNamespace>SanteDB.Client.Batteries</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\SanteDB.licenseheader" Link="SanteDB.licenseheader" />
+  </ItemGroup>
 
 </Project>

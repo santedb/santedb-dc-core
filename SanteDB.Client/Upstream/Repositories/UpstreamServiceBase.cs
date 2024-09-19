@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  *
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Client.Http;
 using SanteDB.Core.Diagnostics;
@@ -81,7 +79,7 @@ namespace SanteDB.Client.Upstream.Repositories
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IUpstreamIntegrationService upstreamIntegrationService = null)
         {
-            this._Tracer = new Tracer(GetType().Name); //Not nameof so that the non-abstract type is used.
+            this._Tracer = Tracer.GetTracer(GetType()); //Not nameof so that the non-abstract type is used.
             this.m_restClientFactory = restClientFactory;
             this.m_upstreamAvailabilityProvider = upstreamAvailabilityProvider;
             this.m_upstreamIntegrationService = upstreamIntegrationService;
