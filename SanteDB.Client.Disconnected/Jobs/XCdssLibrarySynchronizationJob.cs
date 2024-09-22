@@ -169,6 +169,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                         // Updated libraries only contains the metadata - so we want to gether them 
                         if (updatedLibraries != null)
                         {
+                            client.Requesting -= cdssModifiedHeader;
                             foreach (var itm in updatedLibraries.CollectionItem.OfType<CdssLibraryDefinitionInfo>())
                             {
                                 // fetch the libraries 
