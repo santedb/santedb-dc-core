@@ -490,7 +490,7 @@ namespace SanteDB.Client.Upstream.Management
         /// </summary>
         private IEnumerable<RestClientDescriptionConfiguration> GetRestClients(IUpstreamRealmSettings targetRealm, ServiceOptions realmOptions)
         {
-            foreach (var endpoint in realmOptions.Endpoints.Where(r => r.BaseUrl.Any(k => new Uri(k).Scheme.StartsWith("http")) && r.ServiceType != ServiceEndpointType.Metadata))
+            foreach (var endpoint in realmOptions.Endpoints.Where(r => r.BaseUrl.Any(k => new Uri(k).Scheme.StartsWith("http")) && r.ServiceType != ServiceEndpointType.Metadata && r.ServiceType != ServiceEndpointType.Other))
             {
                 yield return new RestClientDescriptionConfiguration()
                 {

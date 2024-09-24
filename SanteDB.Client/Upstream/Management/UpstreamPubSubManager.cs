@@ -267,7 +267,7 @@ namespace SanteDB.Client.Upstream.Management
                     {
                         Name = name,
                         Endpoint = endpoint.ToString(),
-                        Settings = settings.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
+                        Settings = settings?.Select(o => new PubSubChannelSetting() { Name = o.Key, Value = o.Value }).ToList()
                     });
                 }
             }
