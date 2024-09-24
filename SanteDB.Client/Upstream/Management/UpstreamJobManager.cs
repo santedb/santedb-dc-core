@@ -267,7 +267,7 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     using (var client = this.CreateRestClient(Core.Interop.ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                     {
-                        jobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName()).CollectionItem.OfType<JobInfo>().Select(o => new UpstreamJob(o, this.RestClientFactory, this.m_adhocCache)).ToArray();
+                        jobs = client.Get<AmiCollection>(typeof(JobInfo).GetSerializationName(), "_count=100".ParseQueryString()).CollectionItem.OfType<JobInfo>().Select(o => new UpstreamJob(o, this.RestClientFactory, this.m_adhocCache)).ToArray();
 
                         this.m_adhocCache?.Add(CACHE_KEY, jobs, new TimeSpan(0, 0, 1));
                         return jobs;
