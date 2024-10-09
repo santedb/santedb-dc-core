@@ -320,11 +320,16 @@ namespace SanteDB.Client.Upstream.Management
         /// <param name="submitted"></param>
         private void UpdateToServerCopy(IdentifiedData received, IdentifiedData submitted)
         {
-            switch (received)
+            if (received.BatchOperation == BatchOperationType.Delete || 
+                received.BatchOperation == BatchOperationType.Ignore)
+            {
+                return;
+            }
+
+                switch (received)
             {
                 case IVersionedData receivedVersioned:
                     var submittedVersioned = submitted as IVersionedData;
-
                     this.m_tracer.TraceVerbose("Updating {0} to server version {1}", submitted, received);
                     var idp = ApplicationServiceContext.Current.GetService(typeof(IDataPersistenceService<>).MakeGenericType(submittedVersioned.GetType())) as IDataPersistenceService;
                     if (idp != null)
