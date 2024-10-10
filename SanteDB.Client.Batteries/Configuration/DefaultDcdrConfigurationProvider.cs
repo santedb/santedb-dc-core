@@ -119,7 +119,6 @@ namespace SanteDB.Client.Batteries.Configuration
                     new TypeReferenceConfiguration(typeof(DefaultDataSigningService)),
                     new TypeReferenceConfiguration(typeof(DefaultBarcodeProviderService)),
                     new TypeReferenceConfiguration(typeof(AppletTemplateDefinitionInstaller)),
-                    new TypeReferenceConfiguration(typeof(AppletClinicalProtocolInstaller)),
                     new TypeReferenceConfiguration(typeof(FileSystemDispatcherQueueService)),
                     new TypeReferenceConfiguration(typeof(BouncyCastleCertificateGenerator)),
                     new TypeReferenceConfiguration(typeof(RepositoryEntitySource))
