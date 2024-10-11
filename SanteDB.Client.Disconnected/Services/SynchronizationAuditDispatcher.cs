@@ -87,6 +87,7 @@ namespace SanteDB.Client.Disconnected.Services
         {
             var auditSubmission = new AuditSubmission()
             {
+                Key = Guid.NewGuid(),
                 ProcessId = Process.GetCurrentProcess().Id,
                 SecurityDeviceId = this.m_deviceId
             };

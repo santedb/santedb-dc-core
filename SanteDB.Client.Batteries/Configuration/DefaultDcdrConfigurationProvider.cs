@@ -281,6 +281,7 @@ namespace SanteDB.Client.Batteries.Configuration
                     new ResourceTypeReferenceConfiguration(typeof(ApplicationEntity)),
                     new ResourceTypeReferenceConfiguration(typeof(Concept)),
                     new ResourceTypeReferenceConfiguration(typeof(ConceptSet)),
+                    new ResourceTypeReferenceConfiguration(typeof(Material)),
                     new ResourceTypeReferenceConfiguration(typeof(Place)),
                     new ResourceTypeReferenceConfiguration(typeof(ReferenceTerm)),
                     new ResourceTypeReferenceConfiguration(typeof(AssigningAuthority)),
