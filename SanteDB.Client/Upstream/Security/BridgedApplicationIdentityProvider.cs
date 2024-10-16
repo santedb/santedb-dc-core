@@ -76,13 +76,21 @@ namespace SanteDB.Client.Upstream.Security
 
             // Attempt to get the local record for this client and update if required
             this.m_tracer.TraceInfo("Initializing local application credential...");
-            if (this.m_localApplicationIdentityProvider.GetIdentity(this.m_configuration.CredentialName) == null)
+
+            try
             {
-                using (AuthenticationContext.EnterSystemContext())
+                if (this.m_localApplicationIdentityProvider.GetIdentity(this.m_configuration.CredentialName) == null)
                 {
-                    var sid = this.m_upstreamApplicationIdentityProvider.GetSid(this.m_configuration.CredentialName);
-                    this.m_localApplicationIdentityProvider.CreateIdentity(this.m_configuration.CredentialName, this.m_configuration.CredentialSecret, AuthenticationContext.SystemPrincipal, sid);
+                    using (AuthenticationContext.EnterSystemContext())
+                    {
+                        var sid = this.m_upstreamApplicationIdentityProvider.GetSid(this.m_configuration.CredentialName);
+                        this.m_localApplicationIdentityProvider.CreateIdentity(this.m_configuration.CredentialName, this.m_configuration.CredentialSecret, AuthenticationContext.SystemPrincipal, sid);
+                    }
                 }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceWarning("Could not create local application credential - unable to map SID from server, {0}", e.ToHumanReadableString());
             }
         }
 
