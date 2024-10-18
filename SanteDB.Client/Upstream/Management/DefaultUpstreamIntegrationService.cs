@@ -331,6 +331,13 @@ namespace SanteDB.Client.Upstream.Management
             {
                 case IVersionedData receivedVersioned:
                     var submittedVersioned = submitted as IVersionedData;
+
+                    // Did the server change the version?
+                    if(submittedVersioned.VersionKey == receivedVersioned.VersionKey)
+                    {
+                        return;
+                    }
+
                     this.m_tracer.TraceVerbose("Updating {0} to server version {1}", submitted, received);
                     var idp = ApplicationServiceContext.Current.GetService(typeof(IDataPersistenceService<>).MakeGenericType(submittedVersioned.GetType())) as IDataPersistenceService;
                     if (idp != null)
