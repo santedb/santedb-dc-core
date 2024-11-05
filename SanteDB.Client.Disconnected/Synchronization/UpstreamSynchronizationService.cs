@@ -1255,10 +1255,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     // If this is just a delete we want to strip out the unnececssary information
                     for (var i = 0; i < bdl.Item.Count; i++)
                     {
-                        if (bdl.Item[i].BatchOperation == BatchOperationType.Delete)
+                        if (bdl.Item[i].BatchOperation == BatchOperationType.Delete && !(bdl.Item[i] is IdentifiedDataReference))
                         {
-                            var no = Activator.CreateInstance(bdl.Item[i].GetType()) as IdentifiedData;
-                            no.Key = bdl.Item[i].Key;
+                            var no = new IdentifiedDataReference(bdl.Item[i]);
                             no.BatchOperation = BatchOperationType.Delete;
                             bdl.Item[i] = no;
                         }
