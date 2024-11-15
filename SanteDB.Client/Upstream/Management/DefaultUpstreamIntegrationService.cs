@@ -49,6 +49,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
+using ZXing.OneD;
 
 namespace SanteDB.Client.Upstream.Management
 {
@@ -330,6 +331,13 @@ namespace SanteDB.Client.Upstream.Management
             {
                 case IVersionedData receivedVersioned:
                     var submittedVersioned = submitted as IVersionedData;
+
+                    // Did the server change the version?
+                    if(submittedVersioned.VersionKey == receivedVersioned.VersionKey)
+                    {
+                        return;
+                    }
+
                     this.m_tracer.TraceVerbose("Updating {0} to server version {1}", submitted, received);
                     var idp = ApplicationServiceContext.Current.GetService(typeof(IDataPersistenceService<>).MakeGenericType(submittedVersioned.GetType())) as IDataPersistenceService;
                     if (idp != null)
@@ -377,7 +385,10 @@ namespace SanteDB.Client.Upstream.Management
 
                     // Submit the object
                     var serverResponse = client.Post<IdentifiedData, IdentifiedData>(data.GetType().GetSerializationName(), data);
-                    this.UpdateToServerCopy(serverResponse, data);
+                    if (serverResponse != null)
+                    {
+                        this.UpdateToServerCopy(serverResponse, data);
+                    }
                     this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, serverResponse));
                 }
             }
@@ -391,7 +402,75 @@ namespace SanteDB.Client.Upstream.Management
         /// <inheritdoc/>
         public void Obsolete(IdentifiedData data, bool forceObsolete = false)
         {
-            throw new NotImplementedException();
+            if(data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            try
+            {
+                // Delete the data on the server
+                var upstreamService = UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(data.GetType());
+                using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
+                using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
+                {
+                    
+                    switch (data)
+                    {
+                        case Bundle bdl:
+                            {
+                                if (!bdl.Item.Any()) { return; }
+                                bdl.Item.ForEach(i => i.BatchOperation = BatchOperationType.Delete);
+                                var serverResponse = client.Post<Bundle, Bundle>($"{typeof(Bundle).GetSerializationName()}", bdl);
+                                this.UpdateToServerCopy(serverResponse, bdl);
+                                this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(bdl, serverResponse));
+                                break;
+                            }
+                        case IdentifiedData id:
+                            {
+                                IdentifiedData response = null;
+                                EventHandler<RestRequestEventArgs> versionCheck = null;
+                                try
+                                {
+                                    if (id is IVersionedData ivd && !forceObsolete)
+                                    {
+                                        versionCheck = (o, e) =>
+                                        {
+                                            e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{id.Type}.{ivd.PreviousVersionKey}");
+                                        };
+                                        client.Requesting += versionCheck;
+                                    }
+                                    response = client.Delete<IdentifiedData>($"{data.GetType().GetSerializationName()}/{id.Key}");
+                                }
+                                catch (WebException we) when (we.Response is HttpWebResponse hwr && hwr.StatusCode == HttpStatusCode.Conflict)
+                                {
+                                    // Attempt to fetch the current object (if we can) and see if it is just a version mismatch on our update - i.e. no conflicts
+                                    if (!(data is Bundle))
+                                    {
+                                        var serverCopy = this.Get(data.GetType(), data.Key.Value, null);
+                                        var patch = this.m_patchService.Diff(serverCopy, data);
+                                        if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
+                                        {
+                                            client.Requesting -= versionCheck;
+                                            response = client.Delete<IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}");
+                                        }
+                                    }
+                                }
+                                this.UpdateToServerCopy(response, id);
+                                this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(id, response));
+
+                                break;
+                            }
+                        default:
+                            throw new NotSupportedException();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.Type }), e);
+            }
+
         }
 
         /// <inheritdoc/>
@@ -503,18 +582,20 @@ namespace SanteDB.Client.Upstream.Management
                     else // Regular object
                     {
                         IdentifiedData serverResponse = null;
+                        var focalData = data is Bundle bunde && bunde.FocalObjects.Count == 1 ? bunde.GetFocalItems().First() : data;
+                        EventHandler<RestRequestEventArgs> versionCheck = (o, e) =>
+                        {
+                            if (focalData is IVersionedData ivd && ivd.PreviousVersionKey.HasValue)
+                            {
+                                e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{data.Type}.{ivd.PreviousVersionKey}");
+                            }
+                        };
+
                         try
                         {
-                            var focalData = data is Bundle bunde && bunde.FocalObjects.Count == 1 ? bunde.GetFocalItems().First() : data;
                             if (!forceUpdate) // Use the tag to ensure the server does not have this version of the data
                             {
-                                client.Requesting += (o, e) =>
-                                {
-                                    if (focalData is IVersionedData ivd && ivd.PreviousVersionKey.HasValue)
-                                    {
-                                        e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{data.Type}.{ivd.PreviousVersionKey}");
-                                    }
-                                };
+                                client.Requesting += versionCheck; 
                             }
 
                             serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
@@ -533,6 +614,7 @@ namespace SanteDB.Client.Upstream.Management
                                     {
                                         ivd.PreviousVersionKey = null;
                                     }
+                                    client.Requesting -= versionCheck;
                                     serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
                                 }
                             }
@@ -542,7 +624,6 @@ namespace SanteDB.Client.Upstream.Management
                     }
                 }
             }
-
             catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = data.Type }), e);

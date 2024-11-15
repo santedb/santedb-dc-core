@@ -460,41 +460,54 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             else if (!currentBundle.Item.Any(i => i.Key == data.Key))
             {
                 currentBundle.Add(data);
-                currentBundle.FocalObjects.Add(data.Key.Value);
+                if (data.Key.HasValue)
+                {
+                    currentBundle.FocalObjects.Add(data.Key.Value);
+                }
             }
 
             switch (data) // Fix entity key
             {
-                case Patient patient:
-                    foreach (var rel in patient.Relationships)
+                case Entity entity:
+                    foreach (var rel in entity.LoadProperty(o => o.Relationships))
                     {
                         if (!currentBundle.Item.Any(i => i.Key == rel.TargetEntityKey))// && !integrationService.Exists<Entity>(rel.TargetEntityKey.Value))
                         {
-                            var loaded = rel.LoadProperty<Entity>(nameof(EntityRelationship.TargetEntity));
-                            currentBundle.Item.Insert(0, loaded);
-                            this.BundleDependentObjects(loaded, currentBundle); // cascade load
+                            var loaded = rel.LoadProperty(o => o.TargetEntity) ;
+                            if (loaded != null)
+                            {
+                                currentBundle.Item.Insert(0, loaded);
+                                this.BundleDependentObjects(loaded, currentBundle); // cascade load
+                            }
                         }
                     }
 
                     break;
                 case Act act:
-                    foreach (var rel in act.Relationships)
+                    foreach (var rel in act.LoadProperty(o => o.Relationships))
                     {
                         if (!currentBundle.Item.Any(i => i.Key == rel.TargetActKey))// && !integrationService.Exists<Act>(rel.TargetActKey.Value))
                         {
                             var loaded = rel.LoadProperty<Act>(nameof(ActRelationship.TargetAct));
-                            currentBundle.Item.Insert(0, loaded);
-                            this.BundleDependentObjects(loaded, currentBundle);
+
+                            if (loaded != null)
+                            {
+                                currentBundle.Item.Insert(0, loaded);
+                                this.BundleDependentObjects(loaded, currentBundle);
+                            }
                         }
                     }
 
-                    foreach (var rel in act.Participations)
+                    foreach (var rel in act.LoadProperty(o => o.Participations))
                     {
                         if (!currentBundle.Item.Any(i => i.Key == rel.PlayerEntityKey))// && !integrationService.Exists<Entity>(rel.PlayerEntityKey.Value))
                         {
                             var loaded = rel.LoadProperty<Entity>(nameof(ActParticipation.PlayerEntity));
-                            currentBundle.Item.Insert(0, loaded);
-                            this.BundleDependentObjects(loaded, currentBundle);
+                            if (loaded != null)
+                            {
+                                currentBundle.Item.Insert(0, loaded);
+                                this.BundleDependentObjects(loaded, currentBundle);
+                            }
                         }
                     }
 
@@ -927,7 +940,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 deletedSyncLogEntry = this._SynchronizationLogService.Create(modelType, "$deletedObjects"); // don't pull a list of all deleted objects since they would not have come to the dCDR on initial sync anyways
             }
-            else if(deletedSyncLogEntry.LastSync.HasValue)
+            else if (deletedSyncLogEntry.LastSync.HasValue)
             {
                 var changedObjects = (Bundle)this.UpstreamIntegrationService.Invoke(modelType, "deletedObjects", new ParameterCollection(new Parameter("since", deletedSyncLogEntry.LastSync.Value.DateTime)));
                 if (changedObjects != null)
@@ -1141,7 +1154,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         }
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     this._Tracer.TraceWarning("Could not setup subscription to {0}", type.FullName);
                 }
@@ -1237,6 +1250,31 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         ue.SecurityUser = null;
                     }
                     break;
+                case Bundle bdl:
+
+                    // If this is just a delete we want to strip out the unnececssary information
+                    for (var i = 0; i < bdl.Item.Count; i++)
+                    {
+                        if (bdl.Item[i].BatchOperation == BatchOperationType.Delete && !(bdl.Item[i] is IdentifiedDataReference))
+                        {
+                            var no = new IdentifiedDataReference(bdl.Item[i]);
+                            no.BatchOperation = BatchOperationType.Delete;
+                            bdl.Item[i] = no;
+                        }
+                    }
+                    break;
+                case Act act:
+                    // We want to bundle the dependent objects
+                    dataToSubmit = this.BundleDependentObjects(act);
+                    break;
+                case Entity ent:
+                    dataToSubmit = this.BundleDependentObjects(ent);
+                    break;
+            }
+
+            if (dataToSubmit is Bundle bdl2)
+            {
+                bdl2.Item.RemoveAll(o => o.BatchOperation == BatchOperationType.Ignore || this._Configuration.ForbidSending.Any(t => t.Type == o.GetType()));
             }
             return dataToSubmit;
         }

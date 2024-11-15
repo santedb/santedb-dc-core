@@ -17,13 +17,16 @@
  *
  */
 using SanteDB.Client.Exceptions;
+using SanteDB.Core.Configuration.Features;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
+using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
@@ -44,6 +47,8 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IPolicyInformationService UpstreamProvider => this;
 
+        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 5, 0);
+        private readonly IAdhocCacheService m_adhocCache;
         private readonly ILocalizationService m_localizationSerice;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamPolicyInformationService));
 
@@ -56,9 +61,11 @@ namespace SanteDB.Client.Upstream.Repositories
         public UpstreamPolicyInformationService(ILocalizationService localizationService,
             IRestClientFactory restClientFactory,
             IUpstreamManagementService upstreamManagementService,
+            IAdhocCacheService adhocCacheService,
             IUpstreamAvailabilityProvider availabilityProvider,
             IUpstreamIntegrationService integrationService) : base(restClientFactory, upstreamManagementService, availabilityProvider, integrationService)
         {
+            this.m_adhocCache = adhocCacheService;
             this.m_localizationSerice = localizationService;
         }
 
@@ -184,47 +191,49 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <inheritdoc/>
         public IEnumerable<IPolicy> GetPolicies()
         {
-            if (!this.IsUpstreamConfigured)
-            {
-                this.m_tracer.TraceWarning("Upstream is not conifgured - returning default list for policy check");
-                return typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-                        .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false))
-                        .ToArray();
-            }
+            var cacheKey = "pip.pol";
 
-            try
+            if (!this.m_adhocCache.TryGet(cacheKey, out GenericPolicy[] retVal))
             {
-                using (var client = this.CreateAmiServiceClient())
+                if (!this.IsUpstreamConfigured)
                 {
-                    return client.FindPolicy(o => o.ObsoletionTime == null).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride));
+                    this.m_tracer.TraceWarning("Upstream is not conifgured - returning default list for policy check");
+                    retVal = typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                            .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false))
+                            .ToArray();
                 }
+                else
+                {
+                    try
+                    {
+                        using (var client = this.CreateAmiServiceClient())
+                        {
+                            var offset = 0;
+                            AmiCollection serverResult = null;
+                            retVal = new GenericPolicy[0];
+                            do
+                            {
+                                offset = retVal.Length;
+                                serverResult = client.FindPolicy(o => o.ObsoletionTime == null && o.WithControl("_includeTotal", true) == null && o.WithControl("_offset", offset) == null);
+                                retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride))).ToArray();
+                            } while (serverResult.Size < retVal.Length);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
+                    }
+                }
+                this.m_adhocCache.Add(cacheKey, retVal, CACHE_TIMEOUT);
             }
-            catch (Exception e)
-            {
-                throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
 
-            }
+            return retVal;
         }
 
         /// <inheritdoc/>
         public IPolicy GetPolicy(string policyOid)
         {
-            if (!this.IsUpstreamConfigured)
-            {
-                return null;
-            }
-
-            try
-            {
-                using (var client = this.CreateAmiServiceClient())
-                {
-                    return client.FindPolicy(p => p.Oid == policyOid).CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride)).FirstOrDefault();
-                }
-            }
-            catch (Exception e)
-            {
-                throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
-            }
+            return this.GetPolicies().FirstOrDefault(o => o.Oid == policyOid);
         }
 
         /// <inheritdoc/>

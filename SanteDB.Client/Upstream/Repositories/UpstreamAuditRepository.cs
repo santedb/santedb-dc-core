@@ -73,7 +73,10 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 using (var client = this.CreateAmiServiceClient())
                 {
-                    var submission = new AuditSubmission();
+                    var submission = new AuditSubmission()
+                    {
+                        Key = Guid.NewGuid()
+                    };
 
                     do
                     {

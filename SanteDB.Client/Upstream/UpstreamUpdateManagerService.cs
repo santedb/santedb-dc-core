@@ -40,7 +40,7 @@ namespace SanteDB.Client.Upstream
     /// <summary>
     /// Update manager which uses the AMI to get updates for packages
     /// </summary>
-    public class UpstreamUpdateManagerService : IUpdateManager
+    public class UpstreamUpdateManagerService : IUpdateManager, IRequestRestarts, IReportProgressChanged
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamUpdateManagerService));
         private readonly IRestClientFactory m_restClientFactory;
@@ -51,6 +51,11 @@ namespace SanteDB.Client.Upstream
         private readonly IAppletManagerService m_appletManager;
         private readonly ITickleService m_tickleService;
         private readonly ILocalizationService m_localizationService;
+
+        /// <inheritdoc/>
+        public event EventHandler RestartRequested;
+        /// <inheritdoc/>
+        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <summary>
         /// Gets the service name
@@ -171,7 +176,12 @@ namespace SanteDB.Client.Upstream
                     {
 
                         this.m_tracer.TraceInfo("Updating {0}...", packageId);
-                        restClient.ProgressChanged += (o, e) => this.m_userInterfaceService.SetStatus("Update Manager", String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
+                        restClient.ProgressChanged += (o, e) =>
+                        {
+                            this.m_userInterfaceService.SetStatus("Update Manager", String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
+                            this.ProgressChanged?.Invoke(o, e);
+                        };
+
                         restClient.SetTimeout(30000);
 
                         using (var ms = new MemoryStream(restClient.Get($"AppletSolution/{this.m_configuration.UiSolution}/applet/{packageId}")))
@@ -234,6 +244,11 @@ namespace SanteDB.Client.Upstream
                                 this.m_userInterfaceService.Confirm(String.Format(UserMessages.UPDATE_INSTALL_CONFIRM, String.Join(",", remoteVersionInfo.Select(o => o.AppletInfo.GetName("en", true))))))
                             {
                                 remoteVersionInfo.ForEach(i => this.Install(i.AppletInfo.Id));
+
+                                if(ApplicationServiceContext.Current.IsRunning)
+                                {
+                                    this.RestartRequested?.Invoke(this, EventArgs.Empty);
+                                }
                             }
 
 
