@@ -180,6 +180,7 @@ namespace SanteDB.Client.Upstream.Management
             var audit = this.m_auditService.Audit()
                    .WithPrincipal()
                    .WithLocalSource()
+                    .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                    .WithAction(Core.Model.Audit.ActionType.Execute)
                    .WithEventIdentifier(Core.Model.Audit.EventIdentifierType.ApplicationActivity)
                    .WithEventType(EventTypeCodes.SecurityConfigurationChanged)
