@@ -44,6 +44,11 @@ namespace SanteDB.Client
         private readonly IServiceManager m_serviceManager;
 
         /// <summary>
+        /// Client service factory
+        /// </summary>
+        public string ServiceName => "Default Client Service Factory";
+
+        /// <summary>
         /// DI constructor
         /// </summary>
         public DefaultClientServiceFactory(IServiceManager serviceManager)

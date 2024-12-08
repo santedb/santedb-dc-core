@@ -73,6 +73,9 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(IdentityDomain)
         };
 
+        /// <inheritdoc/>
+        public string ServiceName => "Upstream Repository Factory";
+
         /// <summary>
         /// Constructor
         /// </summary>
