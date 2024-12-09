@@ -31,6 +31,8 @@ using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.Core.Templates;
+using SanteDB.Core.Templates.Definition;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,6 +55,7 @@ namespace SanteDB.Client.Disconnected.Jobs
         private readonly IUpstreamAvailabilityProvider m_upstreamAvailabilityProvider;
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IDataQualityConfigurationProviderService m_dataQualityConfigurationProvider;
+        private readonly IDataTemplateManagementService m_dataTemplateManager;
         private readonly ISynchronizationLogService m_synchronizationLogService;
         private readonly IJobStateManagerService m_jobStateManagerService;
 
@@ -70,6 +73,7 @@ namespace SanteDB.Client.Disconnected.Jobs
             IUpstreamAvailabilityProvider upstreamAvailabilityProvider,
             IRestClientFactory restClientFactory,
             IDataQualityConfigurationProviderService dataQualityConfigurationProviderService,
+            IDataTemplateManagementService dataTemplateManagementService,
             ICdssLibraryRepository cdssLibraryRepository)
         {
             this.m_synchronizationLogService = synchronizationLogService;
@@ -79,6 +83,7 @@ namespace SanteDB.Client.Disconnected.Jobs
             this.m_upstreamAvailabilityProvider = upstreamAvailabilityProvider;
             this.m_restClientFactory = restClientFactory;
             this.m_dataQualityConfigurationProvider = dataQualityConfigurationProviderService;
+            this.m_dataTemplateManager = dataTemplateManagementService;
         }
 
         /// <inheritdoc/>
@@ -122,13 +127,15 @@ namespace SanteDB.Client.Disconnected.Jobs
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     ISynchronizationLogEntry cdssSyncLog = this.m_synchronizationLogService.Get(typeof(CdssLibraryDefinition)),
-                        dqSyncLog = this.m_synchronizationLogService.Get(typeof(DataQualityRulesetConfiguration));
+                        dqSyncLog = this.m_synchronizationLogService.Get(typeof(DataQualityRulesetConfiguration)),
+                        dtSyncLog = this.m_synchronizationLogService.Get(typeof(DataTemplateDefinition));
 
                     if (parameters?.Length == 1 &&
                         Boolean.TryParse(parameters[0]?.ToString(), out bool resyncAll) && resyncAll)
                     {
                         this.m_synchronizationLogService.Delete(cdssSyncLog);
                         this.m_synchronizationLogService.Delete(dqSyncLog);
+                        this.m_synchronizationLogService.Delete(dtSyncLog);
                         cdssSyncLog = dqSyncLog = null;
                         // Remove all existing
                         foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray())
@@ -140,16 +147,22 @@ namespace SanteDB.Client.Disconnected.Jobs
                         {
                             this.m_dataQualityConfigurationProvider.RemoveRuleSet(dq.Id);
                         }
+                        // Remove all templates
+                        foreach(var dt in this.m_dataTemplateManager.Find(o=>o.IsActive == true).ToArray())
+                        {
+                            this.m_dataTemplateManager.Remove(dt.Key.Value);
+                        }
                     }
 
                     cdssSyncLog = cdssSyncLog ?? this.m_synchronizationLogService.Create(typeof(CdssLibraryDefinition));
                     dqSyncLog = dqSyncLog ?? this.m_synchronizationLogService.Create(typeof(DataQualityRulesetConfiguration));
-
+                    dtSyncLog = dtSyncLog ?? this.m_synchronizationLogService.Create(typeof(DataTemplateDefinition));
 
                     this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", cdssSyncLog.LastSync);
 
                     EventHandler<RestRequestEventArgs> cdssModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, cdssSyncLog.LastSync.ToString()),
-                        dqModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dqSyncLog.LastSync.ToString());
+                        dqModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dqSyncLog.LastSync.ToString()),
+                        dtModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dtSyncLog.LastSync.ToString());
 
                     // Determine the last synchronization query 
                     using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
@@ -217,6 +230,27 @@ namespace SanteDB.Client.Disconnected.Jobs
                             }
                         }
                         this.m_synchronizationLogService.Save(dqSyncLog, lastEtag, DateTime.Now);
+
+                        // Synchronize clinical templates
+
+                        // Synchronize DQ rules library
+                        client.Requesting -= dqModifiedHeader;
+                        if (dtSyncLog.LastSync.HasValue)
+                        {
+                            client.Requesting += dtModifiedHeader;
+                        }
+                        updatedRules = client.Get<AmiCollection>(typeof(DataTemplateDefinition).GetSerializationName());
+                        if (updatedRules != null)
+                        {
+                            foreach (var itm in updatedRules.CollectionItem.OfType<DataTemplateDefinition>())
+                            {
+                                m_dataTemplateManager.AddOrUpdate(itm);
+                            }
+
+                        }
+
+                        this.m_synchronizationLogService.Save(dtSyncLog, lastEtag, DateTime.Now);
+
 
                     }
 
