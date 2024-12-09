@@ -75,7 +75,7 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 throw new ArgumentNullException(nameof(definition));
             }
-            if(definition.Key == Guid.Empty)
+            else if(definition.Key == Guid.Empty)
             {
                 definition.Key = Guid.NewGuid();
             }
@@ -85,8 +85,11 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
             }
+            else if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            {
+                this.m_pepService.Demand(PermissionPolicyIdentifiers.AlterDataTemplates);
+            }
 
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.AlterDataTemplates);
             try
             {
                 using (var fs = File.Create(this.CreatePath(definition))) {
@@ -123,13 +126,14 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 throw new KeyNotFoundException(key.ToString());
             }
-
-            if(existing.Readonly)
+            else if(existing.Readonly)
             {
                 throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
             }
-
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.AlterDataTemplates);
+            else if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            {
+                this.m_pepService.Demand(PermissionPolicyIdentifiers.AlterDataTemplates);
+            }
 
             File.Delete(this.CreatePath(existing));
             this.m_library.TryRemove(key, out _);
