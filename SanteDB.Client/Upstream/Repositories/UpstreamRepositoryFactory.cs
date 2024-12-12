@@ -49,7 +49,8 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(UpstreamTfaService),
             typeof(UpstreamJobManager),
             typeof(UpstreamPubSubManager),
-            typeof(UpstreamCertificateAssociationManager)
+            typeof(UpstreamCertificateAssociationManager),
+            typeof(UpstreamDataTemplateManagementService)
         };
 
         private readonly IServiceManager m_serviceManager;
@@ -72,6 +73,9 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(MailMessage),
             typeof(IdentityDomain)
         };
+
+        /// <inheritdoc/>
+        public string ServiceName => "Upstream Repository Factory";
 
         /// <summary>
         /// Constructor
