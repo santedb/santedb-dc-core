@@ -216,7 +216,7 @@ namespace SanteDB.Client.Upstream.Repositories
                                 offset = retVal.Length;
                                 serverResult = client.FindPolicy(o => o.ObsoletionTime == null && o.WithControl("_includeTotal", true) == null && o.WithControl("_offset", offset) == null);
                                 retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride))).ToArray();
-                            } while (serverResult.Size < retVal.Length);
+                            } while (retVal.Length < serverResult.Size);
                         }
                     }
                     catch (Exception e)
