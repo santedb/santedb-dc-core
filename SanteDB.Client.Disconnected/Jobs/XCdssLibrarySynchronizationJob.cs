@@ -248,6 +248,14 @@ namespace SanteDB.Client.Disconnected.Jobs
                             }
 
                         }
+                        // All deleted libraries 
+                        if (dtSyncLog.LastSync.HasValue)
+                        {
+                            foreach (var itm in client.Post<ParameterCollection, String[]>("DataTemplateDefinition/$deletedObjects", new ParameterCollection(new Parameter("since", dtSyncLog.LastSync.Value.DateTime))))
+                            {
+                                this.m_dataTemplateManager.Remove(Guid.Parse(itm));
+                            }
+                        }
 
                         this.m_synchronizationLogService.Save(dtSyncLog, lastEtag, DateTime.Now);
 

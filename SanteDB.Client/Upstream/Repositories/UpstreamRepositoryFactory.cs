@@ -50,7 +50,8 @@ namespace SanteDB.Client.Upstream.Repositories
             typeof(UpstreamJobManager),
             typeof(UpstreamPubSubManager),
             typeof(UpstreamCertificateAssociationManager),
-            typeof(UpstreamDataTemplateManagementService)
+            typeof(UpstreamDataTemplateManagementService),
+            typeof(UpstreamBiMetadataRepository)
         };
 
         private readonly IServiceManager m_serviceManager;
