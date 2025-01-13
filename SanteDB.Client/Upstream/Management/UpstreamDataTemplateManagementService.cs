@@ -2,6 +2,7 @@
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.PubSub;
@@ -100,6 +101,75 @@ namespace SanteDB.Client.Upstream.Management
             catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = typeof(DataTemplateDefinition).GetSerializationName() }), e);
+            }
+        }
+
+        /// <inheritdoc/>
+        DataTemplateDefinition IRepositoryService<DataTemplateDefinition>.Delete(Guid key) => this.Remove(key);
+
+        /// <inheritdoc/>
+        IdentifiedData IRepositoryService.Delete(Guid key) => this.Remove(key);
+
+        /// <inheritdoc/>
+        IQueryResultSet<DataTemplateDefinition> IRepositoryService<DataTemplateDefinition>.Find(Expression<Func<DataTemplateDefinition, bool>> query) => this.Find(query);
+
+        /// <inheritdoc/>
+        IQueryResultSet IRepositoryService.Find(Expression query)
+        {
+            if (query is Expression<Func<DataTemplateDefinition, bool>> qr)
+            {
+                return this.Find(qr);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(Expression<Func<DataTemplateDefinition, bool>>), query.GetType()));
+            }
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<IdentifiedData> IRepositoryService.Find(Expression query, int offset, int? count, out int totalResults)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        DataTemplateDefinition IRepositoryService<DataTemplateDefinition>.Get(Guid key) => this.Get(key);
+
+        /// <inheritdoc/>
+        DataTemplateDefinition IRepositoryService<DataTemplateDefinition>.Get(Guid key, Guid versionKey) => this.Get(key);
+
+        /// <inheritdoc/>
+        IdentifiedData IRepositoryService.Get(Guid key) => this.Get(key);
+
+        /// <inheritdoc/>
+        DataTemplateDefinition IRepositoryService<DataTemplateDefinition>.Insert(DataTemplateDefinition data) => this.AddOrUpdate(data);
+
+        /// <inheritdoc/>
+        IdentifiedData IRepositoryService.Insert(object data)
+        {
+            if (data is DataTemplateDefinition dd)
+            {
+                return this.AddOrUpdate(dd);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(DataTemplateDefinition), data.GetType()));
+            }
+        }
+
+        /// <inheritdoc/>
+        DataTemplateDefinition IRepositoryService<DataTemplateDefinition>.Save(DataTemplateDefinition data) => this.AddOrUpdate(data);
+
+        /// <inheritdoc/>
+        IdentifiedData IRepositoryService.Save(object data)
+        {
+            if (data is DataTemplateDefinition dd)
+            {
+                return this.AddOrUpdate(dd);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(DataTemplateDefinition), data.GetType()));
             }
         }
     }
