@@ -27,7 +27,9 @@ using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -197,7 +199,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                         // All deleted libraries 
                         if (cdssSyncLog.LastSync.HasValue)
                         {
-                            foreach (var itm in client.Post<ParameterCollection, String[]>("CdssLibraryDefinition/$deletedObjects", new ParameterCollection(new Parameter("since", cdssSyncLog.LastSync.Value.DateTime))))
+                            foreach (var itm in client.Post<ParameterCollection, String[]>("CdssLibraryDefinition/$deletedObjects", new ParameterCollection(new Parameter("since", cdssSyncLog.LastSync.Value.DateTime))) ?? new string[0])
                             {
                                 this.m_cdssLibraryRepositoryService.Remove(Guid.Parse(itm));
                             }
@@ -224,7 +226,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                         // All deleted libraries 
                         if (dqSyncLog.LastSync.HasValue)
                         {
-                            foreach (var itm in client.Post<ParameterCollection, String[]>("DataQualityRulesetConfiguration/$deletedObjects", new ParameterCollection(new Parameter("since", dqSyncLog.LastSync.Value.DateTime))))
+                            foreach (var itm in client.Post<ParameterCollection, String[]>("DataQualityRulesetConfiguration/$deletedObjects", new ParameterCollection(new Parameter("since", dqSyncLog.LastSync.Value.DateTime))) ?? new string[0])
                             {
                                 this.m_dataQualityConfigurationProvider.RemoveRuleSet(itm);
                             }
@@ -251,9 +253,9 @@ namespace SanteDB.Client.Disconnected.Jobs
                         // All deleted libraries 
                         if (dtSyncLog.LastSync.HasValue)
                         {
-                            foreach (var itm in client.Post<ParameterCollection, String[]>("DataTemplateDefinition/$deletedObjects", new ParameterCollection(new Parameter("since", dtSyncLog.LastSync.Value.DateTime))))
+                            foreach (var itm in client.Post<ParameterCollection, Bundle>("DataTemplateDefinition/$deletedObjects", new ParameterCollection(new Parameter("since", dtSyncLog.LastSync.Value.DateTime)))?.Item ?? new List<IdentifiedData>())
                             {
-                                this.m_dataTemplateManager.Remove(Guid.Parse(itm));
+                                this.m_dataTemplateManager.Remove(itm.Key.Value);
                             }
                         }
 
