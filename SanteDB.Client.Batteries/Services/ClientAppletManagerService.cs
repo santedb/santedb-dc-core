@@ -126,7 +126,7 @@ namespace SanteDB.Client.Batteries.Services
             applet.Initialize();
             this.m_appletCollection[String.Empty].Remove(applet);
             this.m_appletCollection[String.Empty].Add(applet);
-            AppletCollection.ClearCaches();
+            this.m_appletCollection[String.Empty].ClearCaches();
             return true;
         }
     }

@@ -369,9 +369,16 @@ namespace SanteDB.Client.Upstream.Management
             try
             {
 
-                if (data is Bundle bdl && !bdl.Item.Any())
+                if (data is Bundle bdl)
                 {
-                    return; // no need to send an empty bundle
+                    if (!bdl.Item.Any())
+                    {
+                        return; // no need to send an empty bundle
+                    }
+                    else if (bdl.CorrelationKey.HasValue)
+                    {
+                        data = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                    }
                 }
 
                 // create the appropriate message
@@ -420,6 +427,10 @@ namespace SanteDB.Client.Upstream.Management
                         case Bundle bdl:
                             {
                                 if (!bdl.Item.Any()) { return; }
+                                else if(bdl.CorrelationKey.HasValue)
+                                {
+                                    bdl = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                                }
                                 bdl.Item.ForEach(i => i.BatchOperation = BatchOperationType.Delete);
                                 var serverResponse = client.Post<Bundle, Bundle>($"{typeof(Bundle).GetSerializationName()}", bdl);
                                 this.UpdateToServerCopy(serverResponse, bdl);
@@ -483,9 +494,16 @@ namespace SanteDB.Client.Upstream.Management
 
             try
             {
-                if (data is Bundle bdl && !bdl.Item.Any())
+                if (data is Bundle bdl)
                 {
-                    return; // no need to send an empty bundle
+                    if (!bdl.Item.Any())
+                    {
+                        return; // no need to send an empty bundle
+                    }
+                    else if(bdl.CorrelationKey.HasValue)
+                    {
+                        data = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                    }
                 }
 
 
