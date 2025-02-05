@@ -22,6 +22,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.OAuth;
 using SanteDB.Core.Services;
 using SanteDB.Rest.Common;
 using System;
@@ -63,7 +64,7 @@ namespace SanteDB.Client.OAuth
         /// <param name="tokenValidationResult">The token validation result to map claims for</param>
         /// <param name="response">The OAUTH server response</param>
         /// <param name="claims">The claims to be mapped</param>
-        protected override void MapClaims(TokenValidationResult tokenValidationResult, OAuthClientTokenResponse response, List<IClaim> claims)
+        protected override void MapClaims(TokenValidationResult tokenValidationResult, OAuthTokenResponse response, List<IClaim> claims)
         {
             base.MapClaims(tokenValidationResult, response, claims);
 
@@ -143,7 +144,7 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         /// <param name="request">The OAUTH authentication request to send to the server</param>
         /// <returns>The response provided by the OAUTH server</returns>
-        protected override OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
+        protected override OAuthTokenResponse GetToken(OAuthTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
             if (null == _RealmSettings)
             {

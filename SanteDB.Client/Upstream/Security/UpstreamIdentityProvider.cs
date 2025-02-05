@@ -26,6 +26,7 @@ using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.OAuth;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -118,7 +119,7 @@ namespace SanteDB.Client.Upstream.Security
                 result = _OAuthClient.AuthenticateUser(userName, password, tfaSecret: tfaSecret, clientClaimAssertions: clientClaimAssertions, scopes: demandedScopes);
                 return result;
             }
-            catch (RestClientException<OAuthClientTokenResponse> ex)
+            catch (RestClientException<OAuthTokenResponse> ex)
             {
                 // HACK: We want to relay the error from upstream
                 throw new RestClientException<Object>(ex.Result, ex, ex.Status, ex.Response);
@@ -290,7 +291,7 @@ namespace SanteDB.Client.Upstream.Security
                 result = _OAuthClient.ChallengeAuthenticateUser(userName, challengeKey, response, tfaSecret: tfaSecret);
                 return result;
             }
-            catch (RestClientException<OAuthClientTokenResponse> ex)
+            catch (RestClientException<OAuthTokenResponse> ex)
             {
                 throw new RestClientException<Object>(ex.Result, ex, ex.Status, ex.Response);
             }

@@ -119,7 +119,7 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         public virtual IClaimsPrincipal AuthenticateUser(string username, string password, string clientId = null, string tfaSecret = null, IEnumerable<IClaim> clientClaims = null, IEnumerable<String> scopes = null)
         {
-            var request = new OAuthClientTokenRequest
+            var request = new OAuthTokenRequest
             {
                 GrantType = "password",
                 Username = username,
@@ -139,7 +139,7 @@ namespace SanteDB.Client.OAuth
         /// <param name="request">The oauth token request to be sent to the server</param>
         /// <param name="clientClaimAssertions">Any claim assertions which are to be sent with the request</param>
         /// <returns>The <see cref="IClaimsPrincipal"/> which was generated from the token response from the server</returns>
-        protected virtual IClaimsPrincipal GetPrincipal(OAuthClientTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
+        protected virtual IClaimsPrincipal GetPrincipal(OAuthTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
             var response = GetToken(request);
 
@@ -164,7 +164,7 @@ namespace SanteDB.Client.OAuth
         /// <param name="tokenValidationResult">The token validation result from the identity token for claims</param>
         /// <param name="response">The response which was received from the server</param>
         /// <param name="claims">The claims which were mapped</param>
-        protected virtual void MapClaims(TokenValidationResult tokenValidationResult, OAuthClientTokenResponse response, List<IClaim> claims) { }
+        protected virtual void MapClaims(TokenValidationResult tokenValidationResult, OAuthTokenResponse response, List<IClaim> claims) { }
 
         /// <summary>
         /// Gets an array of wait times (in milliseconds) to wait during a retry operation. The size of the returned array denotes how many times to retry. This is used by <see cref="ExecuteWithRetry{T}(Func{T}, Func{Exception, bool})"/>.
@@ -310,7 +310,7 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         /// <param name="response">The token response from the OAUTH server</param>
         /// <returns>The <see cref="IClaimsPrincipal"/> which was created from the <paramref name="response"/></returns>
-        protected virtual IClaimsPrincipal CreatePrincipalFromResponse(OAuthClientTokenResponse response)
+        protected virtual IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response)
         {
 #if DEBUG
             // Allow PII to be included in exceptions
@@ -359,12 +359,12 @@ namespace SanteDB.Client.OAuth
         }
 
         /// <summary>
-        /// Send the <paramref name="request"/> to the OAUTH server and return the <see cref="OAuthClientTokenResponse"/>
+        /// Send the <paramref name="request"/> to the OAUTH server and return the <see cref="OAuthTokenResponse"/>
         /// </summary>
         /// <param name="request">The request which is to be sent to the OAauth Server</param>
         /// <param name="clientClaimAssertions">Any client assertions which are to be passed in the request</param>
         /// <returns>The response from the OAUTH server</returns>
-        protected virtual OAuthClientTokenResponse GetToken(OAuthClientTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
+        protected virtual OAuthTokenResponse GetToken(OAuthTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
             if (null == TokenValidationParameters)
             {
@@ -384,12 +384,12 @@ namespace SanteDB.Client.OAuth
             var tokenEndpoint = GetTokenEndpoint();
             if (!String.IsNullOrEmpty(tokenEndpoint))
             {
-                return restclient.Post<OAuthClientTokenRequest, OAuthClientTokenResponse>(tokenEndpoint, "application/x-www-form-urlencoded", request);
+                return restclient.Post<OAuthTokenRequest, OAuthTokenResponse>(tokenEndpoint, "application/x-www-form-urlencoded", request);
             }
             else
             {
                 Tracer.TraceWarning("Could not fetch token endpoint - online authentication is non-functional until this condition is cleared");
-                return new OAuthClientTokenResponse() // HACK: Compute this or return null and have upstream callers handle a null condition
+                return new OAuthTokenResponse() // HACK: Compute this or return null and have upstream callers handle a null condition
                 {
                     Error = "connect_failure",
                     ErrorDescription = "Token endpoint unknown"
@@ -445,7 +445,7 @@ namespace SanteDB.Client.OAuth
         /// <returns>The authenticated claims principal</returns>
         public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<string> scopes = null)
         {
-            var request = new OAuthClientTokenRequest
+            var request = new OAuthTokenRequest
             {
                 GrantType = "client_credentials",
                 ClientId = clientId,
@@ -464,7 +464,7 @@ namespace SanteDB.Client.OAuth
         /// <returns>The updated <see cref="IClaimsPrincipal"/> with the extended session</returns>
         public IClaimsPrincipal Refresh(string refreshToken)
         {
-            var request = new OAuthClientTokenRequest
+            var request = new OAuthTokenRequest
             {
                 GrantType = "refresh_token",
                 RefreshToken = refreshToken,
@@ -514,7 +514,7 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         public IClaimsPrincipal ChallengeAuthenticateUser(string userName, Guid challengeKey, string challengeResponse, string clientId = null, string tfaSecret = null)
         {
-            var request = new OAuthClientTokenRequest
+            var request = new OAuthTokenRequest
             {
                 Username = userName,
                 GrantType = "x_challenge",

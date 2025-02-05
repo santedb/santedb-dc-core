@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
