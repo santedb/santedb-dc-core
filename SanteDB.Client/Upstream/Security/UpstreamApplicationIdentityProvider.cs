@@ -27,6 +27,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.OAuth;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -160,7 +161,7 @@ namespace SanteDB.Client.Upstream.Security
                 }
                 return result;
             }
-            catch (RestClientException<OAuthClientTokenResponse> e)
+            catch (RestClientException<OAuthTokenResponse> e)
             {
                 throw new RestClientException<Object>(e.Result, e, e.Status, e.Response);
             }

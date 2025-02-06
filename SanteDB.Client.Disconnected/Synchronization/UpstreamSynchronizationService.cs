@@ -452,7 +452,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private IdentifiedData BundleDependentObjects(IdentifiedData data, Bundle currentBundle = null)
         {
             // Bundle establishment
-            currentBundle = currentBundle ?? new Bundle() { Key = Guid.NewGuid() };
+            currentBundle = currentBundle ?? new Bundle().WithCorrelationControl(data.Key.GetValueOrDefault());
             if (data is Bundle dataBundle)
             {
                 currentBundle.Item.AddRange(dataBundle.Item);
@@ -525,6 +525,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             return currentBundle;
         }
 
+        /// <summary>
+        /// Scales the take and count parameters 
+        /// </summary>
         private int ScaleTakeCount(int takecount, long lastoperation, long? estimatedLatency = null)
         {
             if (lastoperation > 0) //Don't scale with a negative value. This is for init values.
@@ -1252,6 +1255,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     break;
                 case Bundle bdl:
 
+                    if (bdl.CorrelationKey.HasValue)
+                    {
+                        bdl = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                    }
                     // If this is just a delete we want to strip out the unnececssary information
                     for (var i = 0; i < bdl.Item.Count; i++)
                     {
@@ -1301,7 +1308,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             if (this._Configuration.SubscribeToResource.Type == typeof(Place)) // We are subscribed to a place - so we want to ensure that we add a relationship
             {
-                var insertBundle = new Bundle();
+                var insertBundle = new Bundle().WithCorrelationControl(objectKey);
+
                 foreach (var itm in this._Configuration.SubscribedObjects)
                 {
                     switch (subscribeObject)

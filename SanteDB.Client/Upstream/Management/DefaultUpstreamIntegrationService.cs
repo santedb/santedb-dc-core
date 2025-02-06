@@ -369,9 +369,16 @@ namespace SanteDB.Client.Upstream.Management
             try
             {
 
-                if (data is Bundle bdl && !bdl.Item.Any())
+                if (data is Bundle bdl)
                 {
-                    return; // no need to send an empty bundle
+                    if (!bdl.Item.Any())
+                    {
+                        return; // no need to send an empty bundle
+                    }
+                    else if (bdl.CorrelationKey.HasValue)
+                    {
+                        data = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                    }
                 }
 
                 // create the appropriate message
@@ -420,6 +427,10 @@ namespace SanteDB.Client.Upstream.Management
                         case Bundle bdl:
                             {
                                 if (!bdl.Item.Any()) { return; }
+                                else if(bdl.CorrelationKey.HasValue)
+                                {
+                                    bdl = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                                }
                                 bdl.Item.ForEach(i => i.BatchOperation = BatchOperationType.Delete);
                                 var serverResponse = client.Post<Bundle, Bundle>($"{typeof(Bundle).GetSerializationName()}", bdl);
                                 this.UpdateToServerCopy(serverResponse, bdl);
@@ -483,9 +494,16 @@ namespace SanteDB.Client.Upstream.Management
 
             try
             {
-                if (data is Bundle bdl && !bdl.Item.Any())
+                if (data is Bundle bdl)
                 {
-                    return; // no need to send an empty bundle
+                    if (!bdl.Item.Any())
+                    {
+                        return; // no need to send an empty bundle
+                    }
+                    else if(bdl.CorrelationKey.HasValue)
+                    {
+                        data = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
+                    }
                 }
 
 
@@ -509,7 +527,7 @@ namespace SanteDB.Client.Upstream.Management
                         if (forceUpdate)
                         {
                             client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.ForceApplyPatchHeaderName, "true");
-                            patch.Operation.RemoveAll(o => o.OperationType == PatchOperationType.Test); // remove all safety
+                            patch.Operation.RemoveAll(o => o.OperationType == PatchOperationType.TestEqual || o.OperationType == PatchOperationType.TestNotEqual); // remove all safety
                         }
 
                         this.m_tracer.TraceVerbose("Performing patch: {0}", patch);
@@ -539,7 +557,7 @@ namespace SanteDB.Client.Upstream.Management
                                 var myCopy = idp.Get(patch.AppliesTo.Key.Value) as IdentifiedData;
                                 var serverDiff = this.m_patchService.Diff(serverCopy, myCopy);
                                 // The difference between the server version and my copy have no differing properties - so just force the patch
-                                if (!serverDiff.Operation.Any(sd => patch.Operation.Any(po => po.Path == sd.Path && sd.OperationType != PatchOperationType.Test)))
+                                if (!serverDiff.Operation.Any(sd => patch.Operation.Any(po => po.Path == sd.Path && sd.OperationType != PatchOperationType.TestEqual && sd.OperationType != PatchOperationType.TestNotEqual)))
                                 {
                                     client.Requesting += (o, ev) => ev.AdditionalHeaders.Add(ExtendedHttpHeaderNames.ForceApplyPatchHeaderName, "true");
                                     newVersionId = this.ExtractVersionFromPatchResult(client.Patch($"{patch.AppliesTo.Type.GetSerializationName()}/{patch.AppliesTo.Key}", patch.AppliesTo.Tag, patch));
