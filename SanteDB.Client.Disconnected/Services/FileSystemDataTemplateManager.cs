@@ -83,13 +83,13 @@ namespace SanteDB.Client.Disconnected.Services
             }
 
             // Check for existing as readonly
-            if(this.m_library.TryGetValue(definition.Uuid, out var existing) && existing.Readonly)
-            {
-                throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
-            }
-            else if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
             {
                 this.m_pepService.Demand(PermissionPolicyIdentifiers.AlterDataTemplates);
+                if (this.m_library.TryGetValue(definition.Uuid, out var existing) && existing.Readonly)
+                {
+                    throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
+                }
             }
 
             try
