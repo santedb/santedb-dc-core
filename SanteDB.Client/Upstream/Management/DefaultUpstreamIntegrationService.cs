@@ -388,6 +388,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetSerializationName(), data.Key);
 
+                    client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.NoResponse, "true"); // The subscription will just download this data again later so no need for callback - save the bandwidth
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
 
                     // Submit the object
@@ -421,7 +422,8 @@ namespace SanteDB.Client.Upstream.Management
                 using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
                 using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
-                    
+                    client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.NoResponse, "true"); // The subscription will just download this data again later so no need for callback - save the bandwidth
+
                     switch (data)
                     {
                         case Bundle bdl:
@@ -433,7 +435,10 @@ namespace SanteDB.Client.Upstream.Management
                                 }
                                 bdl.Item.ForEach(i => i.BatchOperation = BatchOperationType.Delete);
                                 var serverResponse = client.Post<Bundle, Bundle>($"{typeof(Bundle).GetSerializationName()}", bdl);
-                                this.UpdateToServerCopy(serverResponse, bdl);
+                                if (serverResponse != null)
+                                {
+                                    this.UpdateToServerCopy(serverResponse, bdl);
+                                }
                                 this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(bdl, serverResponse));
                                 break;
                             }
@@ -467,7 +472,11 @@ namespace SanteDB.Client.Upstream.Management
                                         }
                                     }
                                 }
-                                this.UpdateToServerCopy(response, id);
+
+                                if (response != null)
+                                {
+                                    this.UpdateToServerCopy(response, id);
+                                }
                                 this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(id, response));
 
                                 break;
@@ -515,6 +524,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetSerializationName(), data.Key);
 
+                    client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.NoResponse, "true"); // The subscription will just download this data again later so no need for callback - save the bandwidth
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
 
                     Guid newVersionId = Guid.Empty;
@@ -637,7 +647,11 @@ namespace SanteDB.Client.Upstream.Management
                                 }
                             }
                         }
-                        this.UpdateToServerCopy(serverResponse, data);
+
+                        if (serverResponse != null)
+                        {
+                            this.UpdateToServerCopy(serverResponse, data);
+                        }
                         this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(data, serverResponse));
                     }
                 }

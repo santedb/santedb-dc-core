@@ -397,6 +397,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (entry.RetryCount.GetValueOrDefault() > 0)
             {
                 dataToSubmit = this.BundleDependentObjects(dataToSubmit);
+                
             }
 
             // If we're sending a bundle we remove any forbidden objects
@@ -477,7 +478,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             if (loaded != null)
                             {
                                 currentBundle.Item.Insert(0, loaded);
-                                this.BundleDependentObjects(loaded, currentBundle); // cascade load
+                                BundleDependentObjects(loaded, currentBundle);
                             }
                         }
                     }
@@ -493,7 +494,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             if (loaded != null)
                             {
                                 currentBundle.Item.Insert(0, loaded);
-                                this.BundleDependentObjects(loaded, currentBundle);
+                                BundleDependentObjects(loaded, currentBundle);
                             }
                         }
                     }
@@ -506,7 +507,6 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             if (loaded != null)
                             {
                                 currentBundle.Item.Insert(0, loaded);
-                                this.BundleDependentObjects(loaded, currentBundle);
                             }
                         }
                     }
@@ -1282,6 +1282,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (dataToSubmit is Bundle bdl2)
             {
                 bdl2.Item.RemoveAll(o => o.BatchOperation == BatchOperationType.Ignore || this._Configuration.ForbidSending.Any(t => t.Type == o.GetType()));
+                bdl2.Item.Where(o => o.BatchOperation == BatchOperationType.Update).ForEach(o => o.BatchOperation = BatchOperationType.InsertOrUpdate);
             }
             return dataToSubmit;
         }
