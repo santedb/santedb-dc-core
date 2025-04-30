@@ -72,5 +72,15 @@ namespace SanteDB.Client.Shared
         /// </summary>
         [JsonProperty("magic")]
         public string? Magic { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonProperty("facility_id")]
+        public string? FacilityId { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonProperty("owner_id")]
+        public string? OwnerId { get; set; }
     }
 }

@@ -19,14 +19,9 @@
  * Date: 2023-6-26
  */
 using SanteDB.Core.Security.Certs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Client.Shared
 {
@@ -343,7 +338,7 @@ namespace SanteDB.Client.Shared
             if (null == certificate)
                 return false;
 
-          
+
 
             X509Certificate2? issuer = FindIssuer(certificate, authorities);
 
@@ -365,7 +360,7 @@ namespace SanteDB.Client.Shared
                 return false;
             }
 
-            if (basicconstraints.CertificateAuthority == true || basicconstraints.HasPathLengthConstraint == true)
+            if (basicconstraints.CertificateAuthority == true || (basicconstraints.HasPathLengthConstraint == true && basicconstraints.PathLengthConstraint != 0))
             {
                 return false;
             }
@@ -414,6 +409,7 @@ namespace SanteDB.Client.Shared
         #region Disposable Support
         private bool disposedValue;
 
+        ///<inheritdoc />
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -454,6 +450,7 @@ namespace SanteDB.Client.Shared
             }
         }
 
+        ///<inheritdoc />
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
