@@ -1,71 +1,76 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(VersionNumber)'==''">
-    <VersionNumber>3.0-debug</VersionNumber>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PackageId>SanteDB.Client.Shared</PackageId>
-    <Title>SanteDB.Client.Shared</Title>
-    <Version>$(VersionNumber)</Version>
-    <Description>SanteDB dCDR Shared Components for Applications</Description>
-    <Authors>SanteSuite Contributors</Authors>
-    <PackageTags>SanteDB</PackageTags>
-    <RepositoryUrl>https://github.com/santedb/santedb-dc-core</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <IncludeSymbols>true</IncludeSymbols>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Product>SanteDB</Product>
-    <Copyright>Copyright (C) 2015-2025 SanteSuite Contributors (See: NOTICES)</Copyright>
-    <Company>SanteSuite Contributors</Company>
-    <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
-    <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-  <ItemGroup>
-  </ItemGroup>
-  <Choose>
-    <When Condition="$(SolutionName.Contains('-nuget'))">
-      <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Persistence.Data" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Persistence.Synchronization.ADO" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Client.Batteries" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Client.Disconnected" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.OrmLite" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Rest.HDSI" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Rest.AMI" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Core.i18n" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Core.Applets" Version="$(VersionNumber)"/>
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
-        <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
-        <ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Synchronization.ADO\SanteDB.Persistence.Synchronization.ADO.csproj" />
-        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Batteries\SanteDB.Client.Batteries.csproj" />
-        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
-        <ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client\SanteDB.Client.csproj" />
-        <ProjectReference Include="..\..\santedb-orm\SanteDB.OrmLite\SanteDB.OrmLite.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
-        <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
-        <ProjectReference Include="..\..\santedb-i18n\SanteDB.Core.i18n\SanteDB.Core.i18n.csproj" />
-        <ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
+	<PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(VersionNumber)'==''">
+		<VersionNumber>3.0-debug</VersionNumber>
+	</PropertyGroup>
+	<PropertyGroup>
+		<PackageId>SanteDB.Client.Shared</PackageId>
+		<Title>SanteDB.Client.Shared</Title>
+		<Version>$(VersionNumber)</Version>
+		<Description>SanteDB dCDR Shared Components for Applications</Description>
+		<Authors>SanteSuite Contributors</Authors>
+		<PackageTags>SanteDB</PackageTags>
+		<RepositoryUrl>https://github.com/santedb/santedb-dc-core</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<IncludeSymbols>true</IncludeSymbols>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<Product>SanteDB</Product>
+		<Copyright>Copyright (C) 2015-2025 SanteSuite Contributors (See: NOTICES)</Copyright>
+		<Company>SanteSuite Contributors</Company>
+		<PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
+		<PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+	<ItemGroup>
+	</ItemGroup>
+	<Choose>
+		<When Condition="$(SolutionName.Contains('-nuget'))">
+			<ItemGroup>
+				<PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Persistence.Data" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Persistence.Synchronization.ADO" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Client.Batteries" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Client.Disconnected" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Client" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.OrmLite" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Rest.HDSI" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Rest.AMI" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Core.i18n" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Core.Applets" Version="$(VersionNumber)"/>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<ProjectReference Include="..\..\santedb-api\SanteDB.Core.Api\SanteDB.Core.Api.csproj" />
+				<ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
+				<ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Data\SanteDB.Persistence.Data.csproj" />
+				<ProjectReference Include="..\..\santedb-data\SanteDB.Persistence.Synchronization.ADO\SanteDB.Persistence.Synchronization.ADO.csproj" />
+				<ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Batteries\SanteDB.Client.Batteries.csproj" />
+				<ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client.Disconnected\SanteDB.Client.Disconnected.csproj" />
+				<ProjectReference Include="..\..\santedb-dc-core\SanteDB.Client\SanteDB.Client.csproj" />
+				<ProjectReference Include="..\..\santedb-orm\SanteDB.OrmLite\SanteDB.OrmLite.csproj" />
+				<ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.HDSI\SanteDB.Rest.HDSI.csproj" />
+				<ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
+				<ProjectReference Include="..\..\santedb-i18n\SanteDB.Core.i18n\SanteDB.Core.i18n.csproj" />
+				<ProjectReference Include="..\..\santedb-applets\SanteDB.Core.Applets\SanteDB.Core.Applets.csproj" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
 </Project>
