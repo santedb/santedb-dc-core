@@ -22,6 +22,7 @@ using SanteDB.Core.Security.Certs;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Linq;
 
 namespace SanteDB.Client.Shared
 {
@@ -61,7 +62,7 @@ namespace SanteDB.Client.Shared
 
             foreach (var certname in trustcerts)
             {
-                var cert = LoadCertificate(thisassembly, certname);
+                var cert = LoadCertificate(thisassembly!, certname);
 
                 if (null != cert && ValidateRootAuthority(cert))
                 {
@@ -75,7 +76,7 @@ namespace SanteDB.Client.Shared
 
                 foreach (var certname in intercerts)
                 {
-                    var cert = LoadCertificate(thisassembly, certname);
+                    var cert = LoadCertificate(thisassembly!, certname);
 
                     if (null == cert)
                         continue;
@@ -123,34 +124,23 @@ namespace SanteDB.Client.Shared
         /// <returns></returns>
         private static X509Certificate2? LoadCertificate(Assembly assembly, string resourceName)
         {
-            if(null == assembly)
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+
+            if (stream?.CanSeek == true)
             {
-                throw new ArgumentNullException(nameof(assembly));
+                using var binreader = new BinaryReader(stream);
+                var bytes = binreader.ReadBytes((int)stream.Length);
+
+                return new X509Certificate2(bytes);
+            }
+            else if (stream != null)
+            {
+                using var buffer = new MemoryStream();
+                stream.CopyTo(buffer);
+                return new X509Certificate2(buffer.ToArray());
             }
 
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            {
-
-                if (stream?.CanSeek == true)
-                {
-                    using (var binreader = new BinaryReader(stream))
-                    {
-                        var bytes = binreader.ReadBytes((int)stream.Length);
-
-                        return new X509Certificate2(bytes);
-                    }
-                }
-                else if (stream != null)
-                {
-                    using (var buffer = new MemoryStream())
-                    {
-                        stream.CopyTo(buffer);
-                        return new X509Certificate2(buffer.ToArray());
-                    }
-                }
-
-                return null;
-            }
+            return null;
         }
 
         private static bool ValidateRootAuthority(X509Certificate2 certificate)
