@@ -51,8 +51,8 @@ namespace SanteDB.Client.Shared
             var trustcerts = certificates?.Where(c => c.Contains(".trust.", StringComparison.InvariantCultureIgnoreCase));
             var intercerts = certificates?.Where(c => c.Contains(".inter.", StringComparison.InvariantCultureIgnoreCase));
 
-            _ValidatedAuthorities = new();
-            _TrustedCertificates = new();
+            _ValidatedAuthorities = new List<X509Certificate2>();
+            _TrustedCertificates = new List<X509Certificate2>();
 
             if (null == trustcerts)
             {
@@ -61,7 +61,7 @@ namespace SanteDB.Client.Shared
 
             foreach (var certname in trustcerts)
             {
-                var cert = LoadCertificate(thisassembly!, certname);
+                var cert = LoadCertificate(thisassembly, certname);
 
                 if (null != cert && ValidateRootAuthority(cert))
                 {
@@ -75,7 +75,7 @@ namespace SanteDB.Client.Shared
 
                 foreach (var certname in intercerts)
                 {
-                    var cert = LoadCertificate(thisassembly!, certname);
+                    var cert = LoadCertificate(thisassembly, certname);
 
                     if (null == cert)
                         continue;
@@ -123,23 +123,34 @@ namespace SanteDB.Client.Shared
         /// <returns></returns>
         private static X509Certificate2? LoadCertificate(Assembly assembly, string resourceName)
         {
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-
-            if (stream?.CanSeek == true)
+            if(null == assembly)
             {
-                using var binreader = new BinaryReader(stream);
-                var bytes = binreader.ReadBytes((int)stream.Length);
-
-                return new X509Certificate2(bytes);
-            }
-            else if (stream != null)
-            {
-                using var buffer = new MemoryStream();
-                stream.CopyTo(buffer);
-                return new X509Certificate2(buffer.ToArray());
+                throw new ArgumentNullException(nameof(assembly));
             }
 
-            return null;
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+
+                if (stream?.CanSeek == true)
+                {
+                    using (var binreader = new BinaryReader(stream))
+                    {
+                        var bytes = binreader.ReadBytes((int)stream.Length);
+
+                        return new X509Certificate2(bytes);
+                    }
+                }
+                else if (stream != null)
+                {
+                    using (var buffer = new MemoryStream())
+                    {
+                        stream.CopyTo(buffer);
+                        return new X509Certificate2(buffer.ToArray());
+                    }
+                }
+
+                return null;
+            }
         }
 
         private static bool ValidateRootAuthority(X509Certificate2 certificate)
@@ -173,7 +184,7 @@ namespace SanteDB.Client.Shared
                 }
                 else if (aki.NamedIssuer != null)
                 {
-                    var authority = aki.NamedIssuer!.Decode(X500DistinguishedNameFlags.None);
+                    var authority = aki.NamedIssuer?.Decode(X500DistinguishedNameFlags.None);
 
                     if (!subject.Equals(authority))
                         return false;
