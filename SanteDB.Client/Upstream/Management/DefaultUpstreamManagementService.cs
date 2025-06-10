@@ -167,7 +167,8 @@ namespace SanteDB.Client.Upstream.Management
                     {
                         AuthRealm = targetRealm.Realm.Host,
                         CredentialProvider = new UpstreamDeviceCredentialProvider(),
-                        PreemptiveAuthentication = true
+                        PreemptiveAuthentication = true,
+                        CertificateValidatorXml = new Core.Configuration.TypeReferenceConfiguration(typeof(UserInterface.UserInterfaceCertificateValidator))
                     }
                 },
                 Endpoint = new List<RestClientEndpointConfiguration>()
