@@ -60,6 +60,16 @@
 
 
   <ItemGroup>
+    <None Remove="Data\DcdrPostgresPatch.sql" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data\DcdrPostgresPatch.sql" />
+  </ItemGroup>
+
+
+  <ItemGroup>
     <None Include="..\..\SanteDB.licenseheader" Link="SanteDB.licenseheader" />
   </ItemGroup>
 

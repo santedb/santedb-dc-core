@@ -372,7 +372,7 @@ namespace SanteDB.Client.Upstream.Management
                         subjectName += $", {dnSettings}";
                     }
 
-                    if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, subjectName, StoreName.My, out var signingCertificate))
+                    if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, subjectName, StoreName.My, out var signingCertificate, validOnly: false) || signingCertificate.NotAfter < DateTimeOffset.Now)
                     {
                         if (this.m_certificateGenerator == null)
                         {
