@@ -693,9 +693,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
                             {
                                 { "subscribed", () => subscribedobject }
-                            }, relayControlVariables: true, lazyExpandVariables: true);
+                            }, relayControlVariables: true, lazyExpandVariables: true, safeNullable: false, coalesceOutput: false);
 
-                            var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr).ToHttpString();
+                            var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr, stripNullChecks: true).ToHttpString();
                             this.PullInternal(clientDefinition.ResourceType, newfilter.ParseQueryString(), clientDefinition.IgnoreModifiedOn, progressIndicator);
                         }
                     }
@@ -777,7 +777,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 throw new NotSupportedException("No inbound queue available.");
             }
 
-            var filterExpression = QueryExpressionParser.BuildLinqExpression(modelType, filter, "o", relayControlVariables: true);
+            var filterExpression = QueryExpressionParser.BuildLinqExpression(modelType, filter, "o", relayControlVariables: true, safeNullable: false, coalesceOutput: false);
 
             try
             {

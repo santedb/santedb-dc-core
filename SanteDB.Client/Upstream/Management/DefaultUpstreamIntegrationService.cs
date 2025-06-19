@@ -197,7 +197,7 @@ namespace SanteDB.Client.Upstream.Management
                 using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
                     this.m_tracer.TraceVerbose("Querying upstream as device {0}/{1}...", typeof(TModel).GetSerializationName(), predicate);
-                    var query = QueryExpressionBuilder.BuildQuery(predicate);
+                    var query = QueryExpressionBuilder.BuildQuery(predicate, stripNullChecks: true);
                     query.Add(QueryControlParameterNames.HttpCountParameterName, (queryControl?.Count ?? 100).ToString());
                     query.Add(QueryControlParameterNames.HttpOffsetParameterName, (queryControl?.Offset ?? 0).ToString());
                     if (queryControl?.QueryId != null)
