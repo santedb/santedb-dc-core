@@ -93,7 +93,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// Get resource name on the API
         /// </summary>
-        protected virtual string GetResourceName() => typeof(TModel).GetSerializationName();
+        protected virtual string GetResourceName() => typeof(TModel).GetResourceName();
 
         /// <inheritdoc/>
         public virtual TModel Delete(Guid key)

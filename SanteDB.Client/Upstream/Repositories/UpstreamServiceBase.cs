@@ -119,6 +119,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 client.Credentials = new UpstreamPrincipalCredentials(authenticatedAs);
             }
+
             return client;
         }
 

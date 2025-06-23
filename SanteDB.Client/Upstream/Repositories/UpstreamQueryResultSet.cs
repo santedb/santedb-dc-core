@@ -20,6 +20,7 @@ using SanteDB.Client.Exceptions;
 using SanteDB.Core;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
@@ -104,7 +105,6 @@ namespace SanteDB.Client.Upstream.Repositories
             this.m_fromWireFormatMapperFunc = fromWireFormatMapper;
             this.m_resourceName = resourceName;
             this.m_cacheService = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
-
         }
 
 

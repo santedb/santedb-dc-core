@@ -398,7 +398,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 dataToSubmit = this.BundleDependentObjects(dataToSubmit);
                 // In case the server rejected the previous round via insert / duplicate key
-                (dataToSubmit as Bundle).Item.Where(itm => itm.BatchOperation == BatchOperationType.Insert).ForEach(itm => itm.BatchOperation = BatchOperationType.InsertOrUpdate); 
+                (dataToSubmit as Bundle)?.Item.Where(itm => itm.BatchOperation == BatchOperationType.Insert).ForEach(itm => itm.BatchOperation = BatchOperationType.InsertOrUpdate); 
             }
 
             // If we're sending a bundle we remove any forbidden objects

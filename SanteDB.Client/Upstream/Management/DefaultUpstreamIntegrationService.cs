@@ -196,7 +196,7 @@ namespace SanteDB.Client.Upstream.Management
                 using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
                 using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
-                    this.m_tracer.TraceVerbose("Querying upstream as device {0}/{1}...", typeof(TModel).GetSerializationName(), predicate);
+                    this.m_tracer.TraceVerbose("Querying upstream as device {0}/{1}...", typeof(TModel).GetResourceName(), predicate);
                     var query = QueryExpressionBuilder.BuildQuery(predicate, stripNullChecks: true);
                     query.Add(QueryControlParameterNames.HttpCountParameterName, (queryControl?.Count ?? 100).ToString());
                     query.Add(QueryControlParameterNames.HttpOffsetParameterName, (queryControl?.Offset ?? 0).ToString());
@@ -233,10 +233,10 @@ namespace SanteDB.Client.Upstream.Management
                     switch (upstreamService)
                     {
                         case ServiceEndpointType.HealthDataService:
-                            retVal = client.Get<Bundle>($"/{typeof(TModel).GetSerializationName()}", query);
+                            retVal = client.Get<Bundle>($"/{typeof(TModel).GetResourceName()}", query);
                             break;
                         case ServiceEndpointType.AdministrationIntegrationService:
-                            retVal = client.Get<AmiCollection>($"/{typeof(TModel).GetSerializationName()}", query);
+                            retVal = client.Get<AmiCollection>($"/{typeof(TModel).GetResourceName()}", query);
                             break;
                         default:
                             throw new InvalidOperationException(ErrorMessages.SERVICE_NOT_FOUND);
@@ -262,7 +262,7 @@ namespace SanteDB.Client.Upstream.Management
                 using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
                 using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
-                    this.m_tracer.TraceVerbose("Fetching upstream as device {0}/{1}", modelType.GetSerializationName(), key);
+                    this.m_tracer.TraceVerbose("Fetching upstream as device {0}/{1}", modelType.GetResourceName(), key);
                     client.Requesting += (o, e) =>
                     {
 
@@ -287,7 +287,7 @@ namespace SanteDB.Client.Upstream.Management
                         client.SetTimeout(options.Timeout.Value);
                     }
 
-                    var requestTarget = $"{modelType.GetSerializationName()}/{key}";
+                    var requestTarget = $"{modelType.GetResourceName()}/{key}";
                     if (versionKey.HasValue)
                     {
                         requestTarget += $"/_history/{versionKey}";
@@ -386,13 +386,13 @@ namespace SanteDB.Client.Upstream.Management
                 using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
                 using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
-                    this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetSerializationName(), data.Key);
+                    this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetResourceName(), data.Key);
 
                     client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.NoResponse, "true"); // The subscription will just download this data again later so no need for callback - save the bandwidth
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
 
                     // Submit the object
-                    var serverResponse = client.Post<IdentifiedData, IdentifiedData>(data.GetType().GetSerializationName(), data);
+                    var serverResponse = client.Post<IdentifiedData, IdentifiedData>(data.GetType().GetResourceName(), data);
                     if (serverResponse != null)
                     {
                         this.UpdateToServerCopy(serverResponse, data);
@@ -434,7 +434,7 @@ namespace SanteDB.Client.Upstream.Management
                                     bdl = bdl.WithCorrelationControl(bdl.CorrelationKey.Value);
                                 }
                                 bdl.Item.ForEach(i => i.BatchOperation = BatchOperationType.Delete);
-                                var serverResponse = client.Post<Bundle, Bundle>($"{typeof(Bundle).GetSerializationName()}", bdl);
+                                var serverResponse = client.Post<Bundle, Bundle>($"{typeof(Bundle).GetResourceName()}", bdl);
                                 if (serverResponse != null)
                                 {
                                     this.UpdateToServerCopy(serverResponse, bdl);
@@ -456,7 +456,7 @@ namespace SanteDB.Client.Upstream.Management
                                         };
                                         client.Requesting += versionCheck;
                                     }
-                                    response = client.Delete<IdentifiedData>($"{data.GetType().GetSerializationName()}/{id.Key}");
+                                    response = client.Delete<IdentifiedData>($"{data.GetType().GetResourceName()}/{id.Key}");
                                 }
                                 catch (WebException we) when (we.Response is HttpWebResponse hwr && hwr.StatusCode == HttpStatusCode.Conflict)
                                 {
@@ -468,7 +468,7 @@ namespace SanteDB.Client.Upstream.Management
                                         if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
                                         {
                                             client.Requesting -= versionCheck;
-                                            response = client.Delete<IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}");
+                                            response = client.Delete<IdentifiedData>($"{data.GetType().GetResourceName()}/{data.Key}");
                                         }
                                     }
                                 }
@@ -522,7 +522,7 @@ namespace SanteDB.Client.Upstream.Management
                 using (var authenticationContext = AuthenticationContext.EnterContext(this.AuthenticateAsDevice()))
                 using (var client = this.m_restClientFactory.GetRestClientFor(upstreamService))
                 {
-                    this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetSerializationName(), data.Key);
+                    this.m_tracer.TraceVerbose("Pushing upstream as device {0}/{1}", data.GetType().GetResourceName(), data.Key);
 
                     client.Requesting += (o, e) => e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.NoResponse, "true"); // The subscription will just download this data again later so no need for callback - save the bandwidth
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
@@ -556,7 +556,7 @@ namespace SanteDB.Client.Upstream.Management
                             if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
                             {
                                 var newVersion = this.m_patchService.Patch(patch, serverCopy, true);
-                                if (client.Put<IdentifiedData, IdentifiedData>($"{newVersion.GetType().GetSerializationName()}/{newVersion.Key}", newVersion) is IVersionedData ivd)
+                                if (client.Put<IdentifiedData, IdentifiedData>($"{newVersion.GetType().GetResourceName()}/{newVersion.Key}", newVersion) is IVersionedData ivd)
                                 {
                                     newVersionId = ivd.VersionKey.Value;
                                 }
@@ -626,7 +626,7 @@ namespace SanteDB.Client.Upstream.Management
                                 client.Requesting += versionCheck; 
                             }
 
-                            serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                            serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetResourceName()}/{data.Key}", data);
                         }
                         catch (WebException we) when (we.Response is HttpWebResponse hwr && hwr.StatusCode == HttpStatusCode.Conflict)
                         {
@@ -643,7 +643,7 @@ namespace SanteDB.Client.Upstream.Management
                                         ivd.PreviousVersionKey = null;
                                     }
                                     client.Requesting -= versionCheck;
-                                    serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetSerializationName()}/{data.Key}", data);
+                                    serverResponse = client.Put<IdentifiedData, IdentifiedData>($"{data.GetType().GetResourceName()}/{data.Key}", data);
                                 }
                             }
                         }
@@ -811,7 +811,7 @@ namespace SanteDB.Client.Upstream.Management
                     client.Responding += (o, e) => this.Responding?.Invoke(this, e);
 
 
-                    var retVal = client.Post<ParameterCollection, Object>($"{modelType.GetSerializationName()}/${operation}", parameters);
+                    var retVal = client.Post<ParameterCollection, Object>($"{modelType.GetResourceName()}/${operation}", parameters);
 
                     this.Responded?.Invoke(this, new UpstreamIntegrationResultEventArgs(null, retVal as IdentifiedData));
                     return retVal;
