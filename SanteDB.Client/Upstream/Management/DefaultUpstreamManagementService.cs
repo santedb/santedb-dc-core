@@ -222,7 +222,7 @@ namespace SanteDB.Client.Upstream.Management
                         this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
                         this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
                         this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
-
+                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireRsaCerts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireRsaSignaturesName)?.Value ?? "false"));
                         // If the server allows for local user accounts then we will allow the application credential to be obtained in the UI
                         this.m_oauthConfigurationSection.AllowClientOnlyGrant = this.m_securityConfiguration.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false);
 
@@ -309,7 +309,7 @@ namespace SanteDB.Client.Upstream.Management
                                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CANNOT_GENERATE_CERTIFICATE));
                             }
 
-                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
+                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(1024);
                             if (isCaConfigured)
                             {
                                 var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(deviceSubjectName), X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement, new string[] { ExtendedKeyUsageOids.ClientAuthentication });
@@ -374,70 +374,76 @@ namespace SanteDB.Client.Upstream.Management
 
                     if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, subjectName, StoreName.My, out var signingCertificate, validOnly: false) || signingCertificate.NotAfter < DateTimeOffset.Now)
                     {
-                        if (this.m_certificateGenerator == null)
+                        if (this.m_certificateGenerator == null && this.m_securityConfiguration.GetSecurityPolicy(SecurityPolicyIdentification.RequireRsaCerts, false))
                         {
                             throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CANNOT_GENERATE_CERTIFICATE));
                         }
-
-                        var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
-                        if (isCaConfigured)
+                        else if (this.m_certificateGenerator != null)
                         {
-                            var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.CodeSigning });
-                            var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
-                            if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
-                                submissionResult.CertificatePkcs != null)
+                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(512);
+                            if (isCaConfigured)
                             {
-                                signingCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
-                                _ = this.m_platformSecurityProvider.TryInstallCertificate(signingCertificate, StoreName.My);
-                                audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
+                                var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.CodeSigning });
+                                var submissionResult = amiClient.SubmitCertificateSigningRequest(new Core.Model.AMI.Security.SubmissionRequest(csr, AuthenticationContext.Current.Principal));
+                                if (submissionResult.Status == Core.Model.AMI.Security.SubmissionStatus.Issued &&
+                                    submissionResult.CertificatePkcs != null)
+                                {
+                                    signingCertificate = this.m_certificateGenerator.Combine(submissionResult.GetCertificiate(), privateKeyPair);
+                                    _ = this.m_platformSecurityProvider.TryInstallCertificate(signingCertificate, StoreName.My);
+                                    audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CERTIFICATE_HOLD, new { message = submissionResult.Message, status = submissionResult.Status }));
+                                }
                             }
                             else
                             {
-                                throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_JOIN_CERTIFICATE_HOLD, new { message = submissionResult.Message, status = submissionResult.Status }));
+                                signingCertificate = this.m_certificateGenerator.CreateSelfSignedCertificate(privateKeyPair, new X500DistinguishedName(subjectName), new TimeSpan(730, 0, 0, 0), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature);
+                                _ = this.m_platformSecurityProvider.TryInstallCertificate(signingCertificate, StoreName.My);
+                                audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
+                            }
+
+                            this.m_tracer.TraceWarning("Installed Signing Certificate: {0} (PK: {1})", signingCertificate.Subject, signingCertificate.HasPrivateKey);
+                            if (!signingCertificate.HasPrivateKey)
+                            {
+                                this.m_tracer.TraceWarning("SECURITY-ALERT: Signing Certificate: {0} (PK: {1}) could not be used since it does not contain a private key!!!!", signingCertificate.Subject, signingCertificate.HasPrivateKey);
+                            }
+                            else
+                            {
+                                // Attempt to load from platform service
+                                if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindByThumbprint, signingCertificate.Thumbprint, out var validateCert) ||
+                                    !validateCert.HasPrivateKey)
+                                {
+                                    this.m_tracer.TraceWarning("SECURITY-ALERT: The signing certificate in the platform security provider does not have a private key! Ensure that you have configured the appropriate platform security service");
+                                }
+                                else
+                                {
+                                    // Remove all HMAC and replace with RS256
+                                    this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
+                                    this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                                }
+                            }
+
+                            // Attempt to send the device credential to the server
+                            try
+                            {
+                                this.m_tracer.TraceInfo("Sending signature public key to server");
+                                amiClient.Client.Post<X509Certificate2Info, X509Certificate2Info>($"SecurityDevice/{upstreamDevice.Key}/dsig_cert", new X509Certificate2Info(signingCertificate));
+                            }
+                            catch (Exception e)
+                            {
+                                this.m_tracer.TraceError("Could not send signature certificate to server - administrator will need to manually add it - {0}", e);
                             }
                         }
                         else
                         {
-                            signingCertificate = this.m_certificateGenerator.CreateSelfSignedCertificate(privateKeyPair, new X500DistinguishedName(subjectName), new TimeSpan(730, 0, 0, 0), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature);
-                            _ = this.m_platformSecurityProvider.TryInstallCertificate(signingCertificate, StoreName.My);
-                            audit.WithSystemObjects(Core.Model.Audit.AuditableObjectRole.SecurityResource, Core.Model.Audit.AuditableObjectLifecycle.Creation, signingCertificate);
-                        }
-                    }
-
-                    this.m_tracer.TraceWarning("Installed Signing Certificate: {0} (PK: {1})", signingCertificate.Subject, signingCertificate.HasPrivateKey);
-                    if (!signingCertificate.HasPrivateKey)
-                    {
-                        this.m_tracer.TraceWarning("SECURITY-ALERT: Signing Certificate: {0} (PK: {1}) could not be used since it does not contain a private key!!!!", signingCertificate.Subject, signingCertificate.HasPrivateKey);
-                    }
-                    else
-                    {
-                        // Attempt to load from platform service
-                        if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindByThumbprint, signingCertificate.Thumbprint, out var validateCert) ||
-                            !validateCert.HasPrivateKey)
-                        {
-                            this.m_tracer.TraceWarning("SECURITY-ALERT: The signing certificate in the platform security provider does not have a private key! Ensure that you have configured the appropriate platform security service");
-                        }
-                        else
-                        {
-                            // Remove all HMAC and replace with RS256
                             this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
-                            this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                            System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(secretBytes);
+                            this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", secretBytes.HexEncode()));
                         }
                     }
-
-                    // Attempt to send the device credential to the server
-                    try
-                    {
-                        this.m_tracer.TraceInfo("Sending signature public key to server");
-                        amiClient.Client.Post<X509Certificate2Info, X509Certificate2Info>($"SecurityDevice/{upstreamDevice.Key}/dsig_cert", new X509Certificate2Info(signingCertificate));
-                    }
-                    catch (Exception e)
-                    {
-                        this.m_tracer.TraceError("Could not send signature certificate to server - administrator will need to manually add it - {0}", e);
-                    }
-
                 }
-
 
 
                 // Now we want to save the configuration

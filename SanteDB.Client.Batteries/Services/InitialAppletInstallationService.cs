@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using Org.BouncyCastle.Crypto.Agreement.JPake;
 using SanteDB.Client.Configuration;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core.Applets.Configuration;
@@ -46,12 +47,19 @@ namespace SanteDB.Client.Batteries.Services
         public InitialAppletInstallationService(IAppletManagerService appletManagerService, IConfigurationManager configurationManager, IUserInterfaceInteractionProvider userInterfaceInteractionProvider)
         {
 
+            // Prevent re-run even if this service hangs around
+            if(!(configurationManager is InitialConfigurationManager))
+            {
+                return;
+            }
+
             this.m_userInterfaceInteraction = userInterfaceInteractionProvider;
 
             var assembly = Assembly.GetEntryAssembly();
             var execassembly = Assembly.GetExecutingAssembly();
             string seedDirectory = null;
 
+                
             if (null == assembly)
             {
                 var appletdirectory = configurationManager.GetSection<AppletConfigurationSection>()?.AppletDirectory;
@@ -79,15 +87,17 @@ namespace SanteDB.Client.Batteries.Services
                 }
 
                 bool solutionloaded = false;
-
-                foreach (var appFile in Directory.GetFiles(seedDirectory, "*.pak"))
+                var seedFiles = Directory.GetFiles(seedDirectory, "*.pak");
+                int seedFilesInstalled = 0;
+                foreach (var appFile in seedFiles)
                 {
                     try
                     {
                         using (var fs = File.OpenRead(appFile))
                         {
+                            
+                            this.m_userInterfaceInteraction.SetStatus(null, $"Installing Applets - Don't Close the Application", (float)seedFilesInstalled++ / (float)seedFiles.Length);
                             var appPackage = AppletPackage.Load(fs);
-
                             if (appPackage is AppletSolution sln)
                             {
                                 //Check if we've already loaded a solution. Multiple solutions cannot be installed on a client.
@@ -102,14 +112,13 @@ namespace SanteDB.Client.Batteries.Services
                                 {
                                     if (!appletManagerService.Install(include, true))
                                     {
-                                        this.m_tracer.TraceWarning("Could not install include in seed app: {0}", include.Meta.Id);
+                                        throw new InvalidOperationException($"Could not install {appPackage.Meta.Id}");
                                     }
                                 }
                             }
-
                             if (!appletManagerService.Install(appPackage, true))
                             {
-                                this.m_tracer.TraceWarning("Could not install seed app: {0}", appFile);
+                                throw new InvalidOperationException($"Could not install {appPackage.Meta.Id}");
                             }
 
 
@@ -118,6 +127,7 @@ namespace SanteDB.Client.Batteries.Services
                     catch (Exception e)
                     {
                         this.m_tracer.TraceError("Error installing {0} - {1}", appFile, e);
+                        throw new InvalidOperationException("Could initialize applet environment", e);
                     }
                 }
                 configurationManager.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == this.GetType());
