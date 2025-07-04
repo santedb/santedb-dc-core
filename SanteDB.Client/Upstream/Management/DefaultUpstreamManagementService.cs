@@ -199,6 +199,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     using (var amiServiceClient = new AmiServiceClient(amiRestClient))
                     {
+                        this.m_tracer.TraceInfo("Fetching options from {0}", amiRestClient.Description.Endpoint.First().Address);
                         var realmOptions = amiServiceClient.Options(); // Get the options object from the server
                         dnSettings = realmOptions.Settings.Find(o => o.Key.Equals("dn", StringComparison.OrdinalIgnoreCase))?.Value;
                         isCaConfigured = realmOptions.Resources.Any(r => r.ResourceName == "Ca");
@@ -244,6 +245,7 @@ namespace SanteDB.Client.Upstream.Management
                 }
 
                 // Invoke changing handler
+                this.m_tracer.TraceInfo("Notifying other threads of join...");
                 this.RealmChanging?.Invoke(this, new UpstreamRealmChangedEventArgs(targetRealm));
 
                 // Generate the device secret or certificate
@@ -257,6 +259,8 @@ namespace SanteDB.Client.Upstream.Management
                 using (var amiClient = new AmiServiceClient(restClient))
                 {
                     // Register the device
+                    this.m_tracer.TraceInfo("Checking for existing device registration...");
+
                     var upstreamDevice = amiClient.GetDevices(o => o.Name.ToLowerInvariant() == deviceCredential.CredentialName.ToLowerInvariant()).CollectionItem.OfType<SecurityDeviceInfo>().FirstOrDefault()?.Entity;
                     if (upstreamDevice != null && !replaceExistingRegistration)
                     {
@@ -264,6 +268,7 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     else if (upstreamDevice != null)
                     {
+                        this.m_tracer.TraceInfo("Enrolling device as {0}...");
                         upstreamDevice.DeviceSecret = deviceCredential.CredentialSecret;
                         upstreamDevice = amiClient.UpdateDevice(upstreamDevice.Key.Value, new SecurityDeviceInfo(upstreamDevice))?.Entity;
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
