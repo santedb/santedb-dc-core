@@ -427,6 +427,7 @@ namespace SanteDB.Client.Upstream.Management
                                     // Remove all HMAC and replace with RS256
                                     this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
                                     this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                                    this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
                                 }
                             }
 
@@ -446,6 +447,7 @@ namespace SanteDB.Client.Upstream.Management
                             this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
                             System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(secretBytes);
                             this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", secretBytes.HexEncode()));
+                            this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", secretBytes.HexEncode()));
                         }
                     }
                 }
