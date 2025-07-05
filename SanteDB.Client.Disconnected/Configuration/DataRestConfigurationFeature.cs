@@ -249,7 +249,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                 var servicesUsingConfiguration = AppDomain.CurrentDomain.GetAllTypes()
                     .Where(o => o.Implements(typeof(IServiceImplementation)) && !o.IsAbstract && !o.IsInterface && o.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration == itm.GetType())
                     .Select(o => new TypeReferenceConfiguration(o));
-                appSetting.ServiceProviders.AddRange(servicesUsingConfiguration);
+                appSetting.AddServices(servicesUsingConfiguration);
             }
 
             this.m_configuration = null;

@@ -49,6 +49,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
+using SanteDB.Persistence.Data;
 using SharpCompress;
 using System;
 using System.Collections;
@@ -292,7 +293,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             using (AuthenticationContext.EnterSystemContext())
                             {
                                 var localPersistence = this.GetPersistenceService(entry.Data.GetType());
-                                entry.Data.DisablePersistenceConstraints();
+                                entry.Data.DisablePersistenceValidation();
                                 if (entry.Data is Bundle bdl)
                                 {
                                     FixupBundleData(bdl);

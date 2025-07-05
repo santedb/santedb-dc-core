@@ -110,7 +110,7 @@ namespace SanteDB.Client.Rest
 
             if (!appConfiguration.ServiceProviders.Any(t => t.Type == serviceType))
             {
-                appConfiguration.ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
+                appConfiguration.AddService(new TypeReferenceConfiguration(serviceType));
             }
 
             if (!restConfiguration.Services.Any(o => o.ConfigurationName == svc.ConfigurationName))
@@ -199,7 +199,7 @@ namespace SanteDB.Client.Rest
 
             if (!appConfiguration.ServiceProviders.Any(s => typeof(IRestServiceFactory).IsAssignableFrom(s.Type)))
             {
-                appConfiguration.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RestServiceFactory)));
+                appConfiguration.AddService(new TypeReferenceConfiguration(typeof(RestServiceFactory)));
             }
 
             // Are we working on SSL? In the debugger environment? If so then we want to set the 
