@@ -312,6 +312,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                     }
 
                                     // If there is an existing - update otherwise insert
+                                    entry.Data.DisablePersistenceValidation();
                                     if (existing == null)
                                     {
                                         FixupEntity(entry.Data);
