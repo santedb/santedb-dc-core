@@ -293,10 +293,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             using (AuthenticationContext.EnterSystemContext())
                             {
                                 var localPersistence = this.GetPersistenceService(entry.Data.GetType());
-                                entry.Data.DisablePersistenceValidation();
                                 if (entry.Data is Bundle bdl)
                                 {
                                     FixupBundleData(bdl);
+                                    bdl.DisablePersistenceValidation();
                                     localPersistence.Insert(bdl);
                                 }
                                 else
