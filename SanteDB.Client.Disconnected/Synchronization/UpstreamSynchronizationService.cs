@@ -49,6 +49,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl.Repository;
+using SanteDB.Persistence.Data;
 using SharpCompress;
 using System;
 using System.Collections;
@@ -292,10 +293,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             using (AuthenticationContext.EnterSystemContext())
                             {
                                 var localPersistence = this.GetPersistenceService(entry.Data.GetType());
-                                entry.Data.DisablePersistenceConstraints();
                                 if (entry.Data is Bundle bdl)
                                 {
                                     FixupBundleData(bdl);
+                                    bdl.DisablePersistenceValidation();
                                     localPersistence.Insert(bdl);
                                 }
                                 else
@@ -311,6 +312,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                     }
 
                                     // If there is an existing - update otherwise insert
+                                    entry.Data.DisablePersistenceValidation();
                                     if (existing == null)
                                     {
                                         FixupEntity(entry.Data);
@@ -397,7 +399,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             if (entry.RetryCount.GetValueOrDefault() > 0)
             {
                 dataToSubmit = this.BundleDependentObjects(dataToSubmit);
-                
+                // In case the server rejected the previous round via insert / duplicate key
+                (dataToSubmit as Bundle)?.Item.Where(itm => itm.BatchOperation == BatchOperationType.Insert).ForEach(itm => itm.BatchOperation = BatchOperationType.InsertOrUpdate); 
             }
 
             // If we're sending a bundle we remove any forbidden objects
@@ -692,9 +695,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
                             {
                                 { "subscribed", () => subscribedobject }
-                            }, relayControlVariables: true, lazyExpandVariables: true);
+                            }, relayControlVariables: true, lazyExpandVariables: true, safeNullable: false, coalesceOutput: false);
 
-                            var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr).ToHttpString();
+                            var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr, stripNullChecks: true).ToHttpString();
                             this.PullInternal(clientDefinition.ResourceType, newfilter.ParseQueryString(), clientDefinition.IgnoreModifiedOn, progressIndicator);
                         }
                     }
@@ -776,7 +779,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 throw new NotSupportedException("No inbound queue available.");
             }
 
-            var filterExpression = QueryExpressionParser.BuildLinqExpression(modelType, filter, "o", relayControlVariables: true);
+            var filterExpression = QueryExpressionParser.BuildLinqExpression(modelType, filter, "o", relayControlVariables: true, safeNullable: false, coalesceOutput: false);
 
             try
             {

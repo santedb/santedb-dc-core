@@ -93,7 +93,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// Get resource name on the API
         /// </summary>
-        protected virtual string GetResourceName() => typeof(TModel).GetSerializationName();
+        protected virtual string GetResourceName() => typeof(TModel).GetResourceName();
 
         /// <inheritdoc/>
         public virtual TModel Delete(Guid key)
@@ -150,7 +150,7 @@ namespace SanteDB.Client.Upstream.Repositories
                         {
                             client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", $"{tm.Tag}");
                             existing = this.MapFromWire(client.Get<TWireFormat>($"{this.GetResourceName()}/{key}")) ?? existing;
-                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 1, 00));
+                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 2, 00));
                         }
                     }
                     else if (versionKey == Guid.Empty)

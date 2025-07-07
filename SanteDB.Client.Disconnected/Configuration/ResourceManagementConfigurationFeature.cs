@@ -108,7 +108,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                 if (resourceManagerRaw != null)
                 {
                     m_enabledDataManagementFeature = this.m_dataManagementPatterns.First(o => o.AssemblyQualifiedNameWithoutVersion() == resourceManagerRaw.ToString());
-                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(m_enabledDataManagementFeature));
+                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().AddService(new TypeReferenceConfiguration(m_enabledDataManagementFeature));
 
                     var rmSection = configuration.AddSection(new ResourceManagementConfigurationSection());
                     if(featureConfiguration.TryGetValue(DELETION_MODE_SETTING, out var deletionSetting))

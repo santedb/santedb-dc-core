@@ -22,6 +22,7 @@ using SanteDB.Core.Security.Certs;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Linq;
 
 namespace SanteDB.Client.Shared
 {
@@ -51,8 +52,8 @@ namespace SanteDB.Client.Shared
             var trustcerts = certificates?.Where(c => c.Contains(".trust.", StringComparison.InvariantCultureIgnoreCase));
             var intercerts = certificates?.Where(c => c.Contains(".inter.", StringComparison.InvariantCultureIgnoreCase));
 
-            _ValidatedAuthorities = new();
-            _TrustedCertificates = new();
+            _ValidatedAuthorities = new List<X509Certificate2>();
+            _TrustedCertificates = new List<X509Certificate2>();
 
             if (null == trustcerts)
             {
@@ -173,7 +174,7 @@ namespace SanteDB.Client.Shared
                 }
                 else if (aki.NamedIssuer != null)
                 {
-                    var authority = aki.NamedIssuer!.Decode(X500DistinguishedNameFlags.None);
+                    var authority = aki.NamedIssuer?.Decode(X500DistinguishedNameFlags.None);
 
                     if (!subject.Equals(authority))
                         return false;

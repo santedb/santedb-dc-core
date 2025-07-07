@@ -30,6 +30,7 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Matching;
+using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Security;
@@ -178,17 +179,17 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                 // Fetch upstream since
                 NameValueCollection activeFilter = new NameValueCollection(), obsoleteFilter = new NameValueCollection();
-                if(lastSyncLog.LastSync.HasValue)
+                if (lastSyncLog.LastSync.HasValue)
                 {
                     activeFilter.Add("modifiedSince", lastSyncLog.LastSync.ToString());
                     obsoleteFilter.Add("obsoleteSince", lastSyncLog.LastSync.ToString());
-                    foreach(var obsCert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), obsoleteFilter))
+                    foreach (var obsCert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), obsoleteFilter))
                     {
                         _LocalDataSigningCertificateManager.RemoveSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, obsCert, AuthenticationContext.SystemPrincipal);
                     }
                 }
 
-                foreach(var cert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), activeFilter))
+                foreach (var cert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), activeFilter))
                 {
                     _LocalDataSigningCertificateManager.AddSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, cert, AuthenticationContext.SystemPrincipal);
                 }
@@ -211,45 +212,47 @@ namespace SanteDB.Client.Disconnected.Jobs
                 SanteDBConstants.ClinicalStaffGroupName
             }; //TODO: Get rid of this.
 
-            foreach (var rolename in _LocalRoleProviderService.GetAllRoles().Union(systemroles))
+            // Get all policies and role information from the upstream 
+            var roles = _LocalRoleProviderService.GetAllRoles().Union(systemroles).Select(o => _LocalRoleProviderService.GetAllRoles(o)).ToArray();
+            NameValueCollection nvc = new NameValueCollection();
+            roles.ForEach(o => nvc.Add("name", o));
+            using (var amiClient = this._RestClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService))
             {
-                try
+                // Get all reference data 
+                var referenceRoleData = amiClient.Get<AmiCollection>($"{nameof(SecurityRole)}", nvc);
+
+                foreach (var upstreamRole in referenceRoleData.CollectionItem.OfType<SecurityRoleInfo>())
                 {
-                    var role = _LocalSecurityRepositoryService.GetRole(rolename);
-
-                    if (null == role)
+                    try
                     {
-                        _LocalRoleProviderService.CreateRole(rolename, AuthenticationContext.SystemPrincipal);
-                        role = _LocalSecurityRepositoryService.GetRole(rolename);
-                    }
+                        var role = _LocalSecurityRepositoryService.GetRole(upstreamRole.Entity.Name);
 
-                    var activepolicies = _UpstreamPolicyInformationService.GetPolicies(role);
-
-                    foreach (var policy in activepolicies)
-                    {
-                        if (null == _LocalPolicyInformationService.GetPolicy(policy?.Policy?.Oid))
+                        if (null == role)
                         {
-                            _LocalPolicyInformationService.CreatePolicy(policy.Policy, AuthenticationContext.SystemPrincipal);
+                            _LocalRoleProviderService.CreateRole(upstreamRole.Entity.Name, AuthenticationContext.SystemPrincipal);
+                            role = _LocalSecurityRepositoryService.GetRole(upstreamRole.Entity.Name);
+                        }
+
+
+                        var localrolepolicies = _LocalPolicyInformationService.GetPolicies(role);
+                        var removedpolicies = localrolepolicies.Where(o => !upstreamRole.Policies.Any(p => p?.Policy?.Oid == o?.Policy?.Oid));
+                        _LocalPolicyInformationService.RemovePolicies(role, AuthenticationContext.SystemPrincipal, removedpolicies?.Select(o => o?.Policy?.Oid).ToArray());
+
+                        foreach (var policy in upstreamRole.Policies)
+                        {
+                            if (null == _LocalPolicyInformationService.GetPolicy(policy?.Policy?.Oid))
+                            {
+                                _LocalPolicyInformationService.CreatePolicy(new GenericPolicy(policy.Policy.Key.Value, policy.Policy.Oid, policy.Policy.Name, policy.Policy.CanOverride), AuthenticationContext.SystemPrincipal);
+                            }
+
+                            _LocalPolicyInformationService.AddPolicies(role, policy.Grant, AuthenticationContext.SystemPrincipal, policy.Oid);
+
                         }
                     }
-
-                    var localrolepolicies = _LocalPolicyInformationService.GetPolicies(role);
-
-                    var removedpolicies = localrolepolicies.Where(o => !activepolicies.Any(p => p?.Policy?.Oid == o?.Policy?.Oid));
-
-                    _LocalPolicyInformationService.RemovePolicies(role, AuthenticationContext.SystemPrincipal, removedpolicies?.Select(o => o?.Policy?.Oid).ToArray());
-
-                    foreach (var pgroup in activepolicies.GroupBy(o => o.Rule))
+                    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                     {
-                        _LocalPolicyInformationService.AddPolicies(role, pgroup.Key, AuthenticationContext.SystemPrincipal, pgroup.Select(o => o.Policy.Oid).ToArray());
+                        _Tracer.TraceWarning("Job {1}: Error synchronizing role {0}", upstreamRole.Entity.Name, nameof(SecurityObjectSynchronizationJob));
                     }
-
-
-
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-                    _Tracer.TraceWarning("Job {1}: Error synchronizing role {0}", rolename, nameof(SecurityObjectSynchronizationJob));
                 }
             }
         }

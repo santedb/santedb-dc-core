@@ -79,7 +79,7 @@ namespace SanteDB.Client.Batteries.Configuration
             var instanceName = appServiceSection.InstanceName;
             var localDataPath = AppDomain.CurrentDomain.GetData(ClientBatteries.DATA_DIRECTORY).ToString();
 
-            appServiceSection.ServiceProviders.AddRange(new List<TypeReferenceConfiguration>() {
+            appServiceSection.AddServices(new List<TypeReferenceConfiguration>() {
                     new TypeReferenceConfiguration(typeof(AesSymmetricCrypographicProvider)),
                     new TypeReferenceConfiguration(typeof(InMemoryTickleService)),
                     new TypeReferenceConfiguration(typeof(DefaultNetworkInformationService)),

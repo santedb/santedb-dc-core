@@ -159,7 +159,7 @@ namespace SanteDB.Client.Configuration
 
             if (restart)
             {
-                this.RestartRequested?.Invoke(null, EventArgs.Empty);
+                this.RestartRequested?.Invoke(this, EventArgs.Empty);
             }
 
         }

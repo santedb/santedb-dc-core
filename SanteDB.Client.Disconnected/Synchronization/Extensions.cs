@@ -110,7 +110,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     // If the exception indicates a connection error to the server - we don't want to dead-letter them - just leave them be in the queue
                     if (!ex.IsCommunicationException())
                     {
-                        dlqueue.Enqueue(data, ex.ToHumanReadableString());
+                        dlqueue.Enqueue(data, ex.ToString());
                         //data.Queue.Delete(data.Id);
                         return SynchronizationMessagePump.Handled;
 

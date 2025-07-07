@@ -183,7 +183,7 @@ namespace SanteDB.Client.Upstream
         /// </summary>
         public ServiceEndpointType GetServiceEndpoint(Type t)
         {
-            return this.GetServiceEndpoints().TryGetValue(t.GetSerializationName(), out var retVal) ? retVal.ServiceEndpoint : ServiceEndpointType.Other;
+            return this.GetServiceEndpoints().TryGetValue(t.GetResourceName(), out var retVal) ? retVal.ServiceEndpoint : ServiceEndpointType.Other;
         }
 
         private IDictionary<String, UpstreamServiceCapability> GetServiceEndpoints()

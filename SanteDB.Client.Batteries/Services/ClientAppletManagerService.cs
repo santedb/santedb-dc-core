@@ -17,7 +17,10 @@
  *
  */
 using SanteDB.Client.Services;
+using SanteDB.Client.UserInterface;
+using SanteDB.Core;
 using SanteDB.Core.Applets;
+using SanteDB.Core.Applets.Configuration;
 using SanteDB.Core.Applets.Model;
 using SanteDB.Core.Applets.Services;
 using SanteDB.Core.Applets.Services.Impl;
@@ -26,8 +29,16 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
+using SharpCompress.Compressors;
+using SharpCompress.Compressors.Deflate;
 using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics.Tracing;
 using System.IO;
+using System.IO.Packaging;
+using System.Linq;
+using System.Reflection;
 using System.Security;
 using System.Text;
 
@@ -36,27 +47,226 @@ namespace SanteDB.Client.Batteries.Services
     /// <summary>
     /// Represents a <see cref="IAppletManagerService"/> which unpacks applet static files for faster access
     /// </summary>
-    public class ClientAppletManagerService : FileSystemAppletManagerService, IReportProgressChanged
+    public class ClientAppletManagerService : IAppletManagerService
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
+        private readonly AppletConfigurationSection m_configuration;
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
         private readonly SecurityConfigurationSection m_securityConfiguration;
-
-#pragma warning disable CS0067
-        /// <inheritdoc/>
-        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-#pragma warning restore
+        private readonly IUserInterfaceInteractionProvider m_userInterfaceInteractionProvider;
+        private readonly IPlatformSecurityProvider m_platformSecurityProvider;
+        private AppletCollection m_appletCollection;
+        private ReadonlyAppletCollection m_readonlyAppletCollection;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider, IPlatformSecurityProvider platformSecurityProvider)
-            : base(configurationManager, platformSecurityProvider)
+        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider, IUserInterfaceInteractionProvider userInterfaceInteractionProvider, IPlatformSecurityProvider platformSecurityProvider)
         {
+            this.m_configuration = configurationManager.GetSection<AppletConfigurationSection>();
             this.m_bridgeProvider = bridgeProvider;
-            this.m_appletCollection[String.Empty].Resolver = this.ResolveAppletAsset;
-            this.m_appletCollection[String.Empty].CachePages = true;
             this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_userInterfaceInteractionProvider = userInterfaceInteractionProvider;
+            this.m_platformSecurityProvider = platformSecurityProvider;
+        }
+
+        /// <inheritdoc/>
+        public ReadonlyAppletCollection Applets => this.GetOrLoadInstalledApplets();
+
+        /// <summary>
+        /// Attempt to fetch or load the installed applets
+        /// </summary>
+        private ReadonlyAppletCollection GetOrLoadInstalledApplets()
+        {
+            if (m_appletCollection == null)
+            {
+                this.m_appletCollection = new AppletCollection()
+                {
+                    Resolver = this.ResolveAppletAsset,
+#if !DEBUG
+                    CachePages = true
+#endif
+                };
+
+                try
+                {
+                    // Load packages from applets/ filesystem directory
+                    var appletDir = this.m_configuration.AppletDirectory;
+                    if (!Path.IsPathRooted(appletDir))
+                    {
+                        var location = Assembly.GetEntryAssembly()?.Location ?? Assembly.GetExecutingAssembly().Location;
+                        appletDir = Path.Combine(Path.GetDirectoryName(location), this.m_configuration.AppletDirectory);
+                    }
+
+                    if (!Directory.Exists(appletDir))
+                    {
+                        Directory.CreateDirectory(appletDir);
+                        this.m_tracer.TraceWarning("Applet directory {0} doesn't exist, no applets will be loaded", appletDir);
+                    }
+                    else
+                    {
+                        this.m_tracer.TraceEvent(EventLevel.Verbose, "Scanning {0} for applets...", appletDir);
+
+                        var appletFiles = Directory.GetFiles(appletDir, "*.gz").ToArray();
+                        int loadedApplets = 0;
+                        foreach (var file in appletFiles)
+                        {
+                            try
+                            {
+                                this.m_tracer.TraceInfo("Loading {0}...", file);
+                                this.m_userInterfaceInteractionProvider.SetStatus(null, $"Loading applet {Path.GetFileNameWithoutExtension(file)}", (float)loadedApplets++ / (float)appletFiles.Length);
+                                using (var fs = File.OpenRead(file))
+                                {
+                                    using (var gzs = new GZipStream(fs, CompressionMode.Decompress))
+                                    {
+                                        var pkg = AppletManifest.Load(gzs);
+                                        this.m_appletCollection.Add(pkg);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                if (this.m_userInterfaceInteractionProvider.Confirm($"Error loading {Path.GetFileName(file)}, would you like to ignore this error?"))
+                                {
+                                    File.Delete(file);
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException($"Error loading {Path.GetFileName(file)}", ex);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (SecurityException e)
+                {
+                    this.m_tracer.TraceEvent(EventLevel.Error, "Error loading applets: {0}", e);
+                    throw new InvalidOperationException("Cannot proceed while untrusted applets are present - Run `santedb --install-certs` or install the publisher certificate into `TrustedPublishers` certificate store", e);
+                }
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceEvent(EventLevel.Error, "Error loading applets: {0}", ex);
+                    throw new InvalidOperationException("Error loading installed applets - please re-install application", ex);
+                }
+            }
+            this.m_readonlyAppletCollection = this.m_readonlyAppletCollection ?? this.m_appletCollection.AsReadonly();
+            return this.m_readonlyAppletCollection;
+        }
+
+        /// <inheritdoc/>
+        public string ServiceName => "SanteDB DCDR Applet Manager";
+
+        /// <inheritdoc/>
+        public event EventHandler Changed;
+
+        /// <inheritdoc/>
+        public AppletManifest GetApplet(string appletId) => this.Applets.FirstOrDefault(o => o.Info.Id == appletId);
+
+        /// <inheritdoc/>
+        public byte[] GetPackage(string appletId)
+        {
+            // Save the applet
+            if (!Directory.Exists(this.m_configuration.AppletDirectory))
+            {
+                throw new InvalidOperationException(ErrorMessages.NOT_INITIALIZED);
+            }
+
+            // If we have the original copy send that if not create our own (unsigned) version don't
+            var pakFile = Path.Combine(this.m_configuration.AppletDirectory, $"{appletId}.pak");
+            if (File.Exists(pakFile))
+            {
+                return File.ReadAllBytes(pakFile);
+            }
+            else
+            {
+                var manifest = this.GetApplet(appletId);
+                using (var ms = new MemoryStream())
+                {
+                    manifest.CreatePackage().Save(ms);
+                    return ms.ToArray();
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Install(AppletPackage package, bool isUpgrade = false)
+        {
+            this.m_tracer.TraceInfo("Installing {0} isUpgrade={1}", package.Meta.Id, isUpgrade);
+
+            // Is the package valid?
+#if !DEBUG
+            if (!package.VerifySignatures(this.m_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.m_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.Id} - it may not be from a trusted source. Install anyways?"))
+            {
+                throw new SecurityException($"{package.GetType().Name} {package.Meta.Id} failed validation");
+            }
+#endif 
+            var appletPakFile = this.GetInstallationTargetFile(package.Meta.Id);
+            // Copy the package file over to our directory and copy the files
+            var existingApplet = this.GetApplet(package.Meta.Id);
+            if (existingApplet != null && File.Exists(appletPakFile) && !isUpgrade)
+            {
+                throw new InvalidOperationException($"Cannot replace {package.Meta} unless upgrade is specifically specified");
+            }
+
+            // Save the manifest contents as a uncompressed resource file
+            var manifest = package.Unpack();
+            using (var mfst = File.Create(appletPakFile))
+            {
+                using (var gzs = new GZipStream(mfst, SharpCompress.Compressors.CompressionMode.Compress))
+                {
+                    manifest.Save(gzs);
+                }
+            }
+
+            // If we're running on the gateway - we need to save the original file - otherwise we don't
+            if (ApplicationServiceContext.Current.HostType == SanteDBHostType.Gateway)
+            {
+                using (var fs = File.Create(Path.Combine(this.m_configuration.AppletDirectory, $"{package.Meta.Id}.pak")))
+                {
+                    package.Save(fs);
+                }
+            }
+
+            var retVal = this.LoadApplet(manifest);
+            this.Changed?.Invoke(this, EventArgs.Empty);
+
+            return retVal;
+        }
+
+        /// <summary>
+        /// Get the installation target file
+        /// </summary>
+        private string GetInstallationTargetFile(String appletId)
+        {
+
+            // Applet PAK directory - 
+            var appletDir = this.m_configuration.AppletDirectory;
+            if (!Path.IsPathRooted(appletDir))
+            {
+                appletDir = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), this.m_configuration.AppletDirectory);
+            }
+
+            // Create the applet container directory
+            if (!Directory.Exists(appletDir))
+            {
+                Directory.CreateDirectory(appletDir);
+            }
+
+            return Path.Combine(appletDir, appletId) + ".gz";
+        }
+
+        /// <inheritdoc/>
+        public bool LoadApplet(AppletManifest applet)
+        {
+            if (!this.m_appletCollection.VerifyDependencies(applet.Info))
+            {
+                this.m_tracer.TraceWarning($"Applet {applet.Info} depends on : [{String.Join(", ", applet.Info.Dependencies.Select(o => o.ToString()))}] which are missing or incompatible");
+            }
+
+            this.m_appletCollection.Remove(applet);
+            this.m_appletCollection.Add(applet);
+            this.m_appletCollection.ClearCaches();
+            return true;
         }
 
         /// <summary>
@@ -65,7 +275,7 @@ namespace SanteDB.Client.Batteries.Services
         public object ResolveAppletAsset(AppletAsset navigateAsset)
         {
 
-            if (navigateAsset.MimeType == "text/javascript" && navigateAsset.Name.Contains("santedb.js"))
+            if (navigateAsset.MimeType.Contains("text/javascript") && navigateAsset.Name.Contains("santedb.js"))
             {
                 string script = String.Empty;
                 switch (navigateAsset.Content)
@@ -77,6 +287,7 @@ namespace SanteDB.Client.Batteries.Services
                         script = Encoding.UTF8.GetString(bytea);
                         break;
                 }
+                script += $"\r\n// ---- BRIDGE PROVIDER FROM : {this.m_bridgeProvider} \r\n";
                 script += this.m_bridgeProvider.GetBridgeScript();
                 return script;
             }
@@ -85,48 +296,33 @@ namespace SanteDB.Client.Batteries.Services
         }
 
         /// <inheritdoc/>
-        public override bool Install(AppletPackage package, bool isUpgrade, AppletSolution owner)
+        public bool UnInstall(string appletId)
         {
-            if (owner != null)
+            this.m_tracer.TraceInfo("Un-installing {0}", appletId);
+
+            // Applet check
+            var applet = this.GetApplet(appletId);
+
+            // Dependency check
+            var dependencies = this.m_appletCollection.Where(o => o.Info.Dependencies.Any(d => d.Id == appletId));
+            if (dependencies.Any())
             {
-                throw new InvalidOperationException(ErrorMessages.SOLUTIONS_NOT_SUPPORTED);
+                throw new InvalidOperationException($"Uninstalling {applet} would break : {String.Join(", ", dependencies.Select(o => o.Info))}");
             }
 
-            try
-            {
-                return base.Install(package, isUpgrade, null);
-            }
-            catch (SecurityException e) when (e.Message == "Applet failed validation")
-            {
-                var appletPath = Path.Combine(this.m_configuration.AppletDirectory, package.Meta.Id + ".pak");
-                this.m_tracer.TraceWarning("Received error {0} trying to install the applet - will attempt to re-install from update", e);
+            // We're good to go!
+            this.m_appletCollection.Remove(applet);
+            this.m_appletCollection.ClearCaches();
 
-                if (File.Exists(appletPath))
-                {
-                    this.m_tracer.TraceError("Received error {0} trying to install the applet - will attempt to re-install from update", e);
-                    File.Delete(appletPath);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <inheritdoc/>
-        /// <remarks>Clients can only have one applet solution</remarks>
-        public override ReadonlyAppletCollection GetApplets(string solutionId) => base.GetApplets(String.Empty);
-
-        /// <inheritdoc/>
-        public override bool LoadApplet(AppletManifest applet)
-        {
-            if (applet.Info.Id == (this.m_configuration.DefaultApplet ?? "org.santedb.uicore"))
+            // Delete the file 
+            var appletPakFile = this.GetInstallationTargetFile(appletId);
+            if (File.Exists(appletPakFile))
             {
-                this.m_appletCollection[String.Empty].DefaultApplet = applet;
+                File.Delete(appletPakFile);
             }
 
-            applet.Initialize();
-            this.m_appletCollection[String.Empty].Remove(applet);
-            this.m_appletCollection[String.Empty].Add(applet);
-            this.m_appletCollection[String.Empty].ClearCaches();
+            this.Changed?.Invoke(this, EventArgs.Empty);
+
             return true;
         }
     }
