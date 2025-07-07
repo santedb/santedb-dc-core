@@ -225,11 +225,12 @@ namespace SanteDB.Client.Upstream
                     this.m_tracer.TraceInfo("Checking for updates with remote service...");
 
                     // Set progress 
-                    this.m_userInterfaceService.SetStatus("Update Manager", UserMessages.UPDATE_CHECK, 0.5f);
+                    this.m_userInterfaceService.SetStatus(null, UserMessages.UPDATE_CHECK, 0.5f);
                     using (AuthenticationContext.EnterContext(this.m_upstreamIntegrationService.AuthenticateAsDevice()))
                     {
                         using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                         {
+                            restClient.Description.Endpoint[0].ConnectTimeout = new TimeSpan(0, 0, 5);
                             var remoteVersionInfo = restClient.Get<AmiCollection>($"AppletSolution/{this.m_configuration.UiSolution}/applet").CollectionItem
                                 .OfType<AppletManifestInfo>()
                                 .Where(i =>

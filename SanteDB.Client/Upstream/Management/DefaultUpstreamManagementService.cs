@@ -385,7 +385,7 @@ namespace SanteDB.Client.Upstream.Management
                         }
                         else if (this.m_certificateGenerator != null)
                         {
-                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(512);
+                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
                             if (isCaConfigured)
                             {
                                 var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.CodeSigning });
