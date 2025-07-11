@@ -544,9 +544,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Our timeout is 120 seconds but let's try to ensure we can fulfill the request in 30 seconds
                 var objsInThirty = 30000 / (peritemcost + 1);
 
-                if (objsInThirty > 1_000)
+                if (objsInThirty > 2_000)
                 {
-                    return !this._Configuration.BigBundles ? 1_000 : 500;
+                    return this._Configuration.BigBundles ? 2_000 : 1_000;
+                }
+                else if(objsInThirty > 1_000)
+                {
+                    return this._Configuration.BigBundles ? 1_000 : 5_000;
                 }
                 else
                 {

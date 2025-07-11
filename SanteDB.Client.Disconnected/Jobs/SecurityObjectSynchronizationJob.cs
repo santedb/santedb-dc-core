@@ -189,9 +189,17 @@ namespace SanteDB.Client.Disconnected.Jobs
                     }
                 }
 
-                foreach (var cert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), activeFilter))
+
+                var signingCerts = _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), activeFilter);
+                if (_LocalDataSigningCertificateManager is IDataSigningCertificateManagerServiceEx extendedCertificateManager)
                 {
-                    _LocalDataSigningCertificateManager.AddSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, cert, AuthenticationContext.SystemPrincipal);
+                    extendedCertificateManager.AddSigningCertificates(AuthenticationContext.AnonymousPrincipal.Identity, signingCerts, AuthenticationContext.SystemPrincipal);
+                }
+                else {
+                    foreach (var cert in signingCerts)
+                    {
+                        _LocalDataSigningCertificateManager.AddSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, cert, AuthenticationContext.SystemPrincipal);
+                    }
                 }
 
                 this._SynchronizationLogService.Save(lastSyncLog, String.Empty, DateTime.Now);
@@ -237,7 +245,6 @@ namespace SanteDB.Client.Disconnected.Jobs
                         var localrolepolicies = _LocalPolicyInformationService.GetPolicies(role);
                         var removedpolicies = localrolepolicies.Where(o => !upstreamRole.Policies.Any(p => p?.Policy?.Oid == o?.Policy?.Oid));
                         _LocalPolicyInformationService.RemovePolicies(role, AuthenticationContext.SystemPrincipal, removedpolicies?.Select(o => o?.Policy?.Oid).ToArray());
-
                         foreach (var policy in upstreamRole.Policies)
                         {
                             if (null == _LocalPolicyInformationService.GetPolicy(policy?.Policy?.Oid))
@@ -246,7 +253,6 @@ namespace SanteDB.Client.Disconnected.Jobs
                             }
 
                             _LocalPolicyInformationService.AddPolicies(role, policy.Grant, AuthenticationContext.SystemPrincipal, policy.Oid);
-
                         }
                     }
                     catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
@@ -261,16 +267,25 @@ namespace SanteDB.Client.Disconnected.Jobs
         {
             try
             {
-                foreach (var policy in _UpstreamPolicyInformationService.GetPolicies())
-                {
-                    if (null == policy)
-                    {
-                        continue;
-                    }
+                var upstreamPolicies = _UpstreamPolicyInformationService.GetPolicies();
 
-                    if (null == _LocalPolicyInformationService.GetPolicy(policy.Oid))
+                if (_LocalPolicyInformationService is IPolicyInformationServiceEx extendedPolicyInformationService)
+                {
+                    extendedPolicyInformationService.CreatePolicies(upstreamPolicies, AuthenticationContext.SystemPrincipal);
+                }
+                else
+                {
+                    foreach (var policy in upstreamPolicies)
                     {
-                        _LocalPolicyInformationService.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                        if (null == policy)
+                        {
+                            continue;
+                        }
+
+                        if (null == _LocalPolicyInformationService.GetPolicy(policy.Oid))
+                        {
+                            _LocalPolicyInformationService.CreatePolicy(policy, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
             }

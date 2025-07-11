@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using RestSrvr;
 using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
@@ -455,11 +456,19 @@ namespace SanteDB.Client.Upstream.Management
                             this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", secretBytes.HexEncode()));
                         }
                     }
+                    else
+                    {
+                        // Remove all HMAC and replace with RS256
+                        this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
+                        this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                        this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                    }
                 }
+                
 
 
-                // Now we want to save the configuration
-                this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
+                    // Now we want to save the configuration
+                    this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
                 this.RealmChanged?.Invoke(this, new UpstreamRealmChangedEventArgs(targetRealm));
                 this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(this.m_configuration);
                 audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.Success);

@@ -205,29 +205,33 @@ namespace SanteDB.Client.Upstream
         {
             try
             {
-                using (var amiClient = this.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
+                // Attempt to read from cache if it exists and is not stale
+                if (!File.Exists(this.m_OptionsCacheLocation) || DateTime.Now.Subtract(File.GetLastWriteTime(this.m_OptionsCacheLocation)).TotalHours > 24 || !this.TryGetServiceEndpointsFromCacheInternal())
                 {
-                    var options = amiClient.Options<ServiceOptions>("/");
-                    this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
+                    using (var amiClient = this.CreateRestClient(ServiceEndpointType.AdministrationIntegrationService, AuthenticationContext.Current.Principal))
                     {
-                        try
+                        var options = amiClient.Options<ServiceOptions>("/");
+                        this.m_serviceEndpoints = options.Endpoints.SelectMany(e =>
                         {
-                            using (var client = this.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
+                            try
                             {
-                                return client
-                                    .Options<ServiceOptions>("/")
-                                    .Resources
-                                    .Select(o => new KeyValuePair<String, UpstreamServiceCapability>(o.ResourceName, new UpstreamServiceCapability(e.ServiceType, o)));
+                                using (var client = this.CreateRestClient(e.ServiceType, AuthenticationContext.Current.Principal))
+                                {
+                                    return client
+                                        .Options<ServiceOptions>("/")
+                                        .Resources
+                                        .Select(o => new KeyValuePair<String, UpstreamServiceCapability>(o.ResourceName, new UpstreamServiceCapability(e.ServiceType, o)));
+                                }
                             }
-                        }
-                        catch
-                        {
-                            return new KeyValuePair<String, UpstreamServiceCapability>[0];
-                        }
-                    }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
+                            catch
+                            {
+                                return new KeyValuePair<String, UpstreamServiceCapability>[0];
+                            }
+                        }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
 
-                    if (null != this.m_serviceEndpoints && this.m_serviceEndpoints.Count > 0)
-                        WriteServiceEndpointsToCacheInternal();
+                        if (null != this.m_serviceEndpoints && this.m_serviceEndpoints.Count > 0)
+                            WriteServiceEndpointsToCacheInternal();
+                    }
                 }
             }
             catch
