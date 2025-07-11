@@ -22,6 +22,7 @@ using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
 using SanteDB.Client.Services;
+using SanteDB.Client.UserInterface;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Http;
@@ -65,6 +66,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly ICertificateGeneratorService m_certificateGenerator;
         private readonly IOperatingSystemInfoService m_operatingSystemInfo;
         private ConfiguredUpstreamRealmSettings m_upstreamSettings;
+        private readonly IUserInterfaceInteractionProvider m_userInterfaceInteraction;
         private readonly IRestClientFactory m_restClientFactory;
         private readonly UpstreamConfigurationSection m_configuration;
         private readonly RestClientConfigurationSection m_restConfiguration;
@@ -75,6 +77,7 @@ namespace SanteDB.Client.Upstream.Management
         private IAuditService m_auditService;
         private readonly SecurityConfigurationSection m_securityConfiguration;
         private readonly OAuthConfigurationSection m_oauthConfigurationSection;
+        private bool? m_rewriteUrls = null;
 
         /// <summary>
         /// DI constructor
@@ -86,11 +89,13 @@ namespace SanteDB.Client.Upstream.Management
             IServiceManager serviceManager,
             IOperatingSystemInfoService operatingSystemInfoService,
             IPlatformSecurityProvider platformSecurityProvider,
+            IUserInterfaceInteractionProvider userInterfaceInteractionProvider,
             IGeographicLocationProvider geographicLocationProvider = null,
             ICertificateGeneratorService certificateGenerator = null,
             IPolicyEnforcementService pepService = null
             )
         {
+            this.m_userInterfaceInteraction = userInterfaceInteractionProvider;
             this.m_restClientFactory = restClientFactory;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
             this.m_restConfiguration = configurationManager.GetSection<RestClientConfigurationSection>();
@@ -526,7 +531,24 @@ namespace SanteDB.Client.Upstream.Management
                         CompressRequests = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression)
                     },
                     Accept = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.InternalApi) ? "application/xml" : "application/json",
-                    Endpoint = endpoint.BaseUrl.Select(o => new RestClientEndpointConfiguration(o, new TimeSpan(0, 1, 0))).ToList(),
+                    Endpoint = endpoint.BaseUrl.Select(o => {
+                        var retVal = new RestClientEndpointConfiguration(o, new TimeSpan(0, 1, 0));
+                        var amiUrl = new Uri(o);
+                        var requestedRealm = $"{targetRealm.Realm.Scheme}://{targetRealm.Realm.Host}:{targetRealm.Realm.Port}";
+                        var amiRealm = $"{amiUrl.Scheme}://{amiUrl.Host}:{amiUrl.Port}";
+                        if (requestedRealm != amiRealm) // Disagreement - confirm with user
+                        {
+                            if (!this.m_rewriteUrls.HasValue)
+                            {
+                                this.m_rewriteUrls = this.m_userInterfaceInteraction.Confirm(String.Format(UserMessages.CONFIRM_REALM_URL_OVERRIDE, requestedRealm, amiRealm));
+                            }
+                            if(this.m_rewriteUrls.GetValueOrDefault())
+                            {
+                                retVal.Address = $"{requestedRealm}/{amiUrl.LocalPath}";
+                            }
+                        }
+                        return retVal;
+                    }).ToList(),
                     Name = endpoint.ServiceType.ToString(),
                     Trace = false
                 };
