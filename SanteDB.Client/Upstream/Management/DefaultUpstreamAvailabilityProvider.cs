@@ -17,6 +17,7 @@
  *
  */
 using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
@@ -33,12 +34,13 @@ namespace SanteDB.Client.Upstream.Management
         private readonly IRestClientFactory m_restClientFactory;
         private readonly IUpstreamManagementService m_upstreamManagementService;
         private readonly IAdhocCacheService m_adhocCacheService;
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultUpstreamAvailabilityProvider));
 
         /// <summary>
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
-        private const int PING_TIMEOUT = 15_000;
-        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 1, 00);
+        private const int PING_TIMEOUT = 30_000;
+        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 5, 00);
 
         /// <summary>
         /// Get the service name
@@ -77,11 +79,14 @@ namespace SanteDB.Client.Upstream.Management
         {
             using (var client = m_restClientFactory.GetRestClientFor(endpoint))
             {
+                this.m_tracer.TraceInfo("Fetching upstream latency for {0}...", endpoint);
                 client.SetTimeout(PING_TIMEOUT);
                 var success = client.TryPing(out var latency, out var timedrift);
 
                 if (success)
                 {
+                    this.m_tracer.TraceVerbose("Ping success on {0}", endpoint);
+
                     drift = timedrift;
                     latencyMs = latency;
                     this.m_adhocCacheService?.Add($"us.drift.{endpoint}", drift, CACHE_TIMEOUT);
@@ -89,6 +94,7 @@ namespace SanteDB.Client.Upstream.Management
                 }
                 else
                 {
+                    this.m_tracer.TraceVerbose("Ping failed on {0}", endpoint);
                     this.m_adhocCacheService?.Add<TimeSpan?>($"us.drift.{endpoint}", null, CACHE_TIMEOUT);
                     this.m_adhocCacheService?.Add<long?>($"us.latency.{endpoint}", null, CACHE_TIMEOUT);
                     drift = null;
@@ -112,6 +118,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     if (!GetTimeDriftAndLatencyInternal(endpoint, out _, out retVal))
                     {
+                        this.m_tracer.TraceInfo("Could not fetch latency from upstream - {0}", endpoint);
                         return null;
                     }
                 }
@@ -119,6 +126,7 @@ namespace SanteDB.Client.Upstream.Management
             }
             catch (TimeoutException)
             {
+                this.m_tracer.TraceInfo("Timeout on fetching upstream latency from upstream");
                 return null;
             }
         }
@@ -136,6 +144,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     if (!GetTimeDriftAndLatencyInternal(endpoint, out retVal, out _))
                     {
+                        this.m_tracer.TraceInfo("Could not fetch latency from upstream - {0}", endpoint);
                         return null;
                     }
                 }
@@ -143,6 +152,8 @@ namespace SanteDB.Client.Upstream.Management
             }
             catch (TimeoutException)
             {
+                this.m_tracer.TraceInfo("Timeout on fetching upstream latency from upstream");
+
                 return null;
             }
         }

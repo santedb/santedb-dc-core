@@ -274,18 +274,19 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     else if (upstreamDevice != null)
                     {
-                        this.m_tracer.TraceInfo("Enrolling device as {0}...");
+                        this.m_tracer.TraceInfo("Updated enrolled device as {0}...", upstreamDevice.Name);
                         upstreamDevice.DeviceSecret = deviceCredential.CredentialSecret;
                         upstreamDevice = amiClient.UpdateDevice(upstreamDevice.Key.Value, new SecurityDeviceInfo(upstreamDevice))?.Entity;
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
                     else
                     {
-                        upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
-                        {
-                            DeviceSecret = deviceCredential.CredentialSecret,
-                            Name = deviceCredential.CredentialName
-                        }))?.Entity;
+                            upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
+                            {
+                                DeviceSecret = deviceCredential.CredentialSecret,
+                                Name = deviceCredential.CredentialName
+                            }))?.Entity;
+                        this.m_tracer.TraceInfo("Registering new device {0}...", upstreamDevice.Name);
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
 
