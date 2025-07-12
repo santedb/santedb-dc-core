@@ -104,6 +104,7 @@ namespace SanteDB.Client
                 
                 base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
+                
                 base.Start();
 
                 this.AutoRestoreEnvironment();
