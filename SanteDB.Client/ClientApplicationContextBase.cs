@@ -28,6 +28,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading;
 
 namespace SanteDB.Client
@@ -95,6 +96,12 @@ namespace SanteDB.Client
             try
             {
 
+                // JF - Setup the service point manager
+                ServicePointManager.CheckCertificateRevocationList = false;
+                ServicePointManager.DefaultConnectionLimit = Environment.ProcessorCount;
+                ServicePointManager.DnsRefreshTimeout = -1;
+                ServicePointManager.ReusePort = true;
+                
                 base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
                 base.Start();
