@@ -289,7 +289,7 @@ namespace SanteDB.Client.OAuth
             SetupRestClientForJwksRequest(restclient);
 
             // JF - Attempt to get the JWKS from cache
-            if (!_AdhocCache.TryGet<String>(ADHOC_JKWS_DOC_KEY, out var jwksjson))
+            if (_AdhocCache?.TryGet<String>(ADHOC_JKWS_DOC_KEY, out var jwksjson) != true)
             {
                 jwksjson = ExecuteWithRetry(() =>
                 {
@@ -307,7 +307,7 @@ namespace SanteDB.Client.OAuth
                     return true;
                 });
 
-                _AdhocCache.Add(ADHOC_JKWS_DOC_KEY, jwksjson, OAUTH_CACHE_TIMEOUT);
+                _AdhocCache?.Add(ADHOC_JKWS_DOC_KEY, jwksjson, OAUTH_CACHE_TIMEOUT);
             }
 
             if (null == jwksjson)
@@ -438,7 +438,7 @@ namespace SanteDB.Client.OAuth
                 return DiscoveryDocument;
             }
             // JF - Attempt to get discovery doc from cache
-            else if (_AdhocCache.TryGet<OpenIdConnectDiscoveryDocument>(ADHOC_DISCOVERY_DOC_KEY, out var cachedDiscoveryDoc))
+            else if (_AdhocCache?.TryGet<OpenIdConnectDiscoveryDocument>(ADHOC_DISCOVERY_DOC_KEY, out var cachedDiscoveryDoc) == true)
             {
                 DiscoveryDocument = cachedDiscoveryDoc;
                 return DiscoveryDocument;
@@ -459,7 +459,7 @@ namespace SanteDB.Client.OAuth
             });
 
             // JF - Cache the discovery document
-            _AdhocCache.Add(ADHOC_DISCOVERY_DOC_KEY, DiscoveryDocument, OAUTH_CACHE_TIMEOUT);
+            _AdhocCache?.Add(ADHOC_DISCOVERY_DOC_KEY, DiscoveryDocument, OAUTH_CACHE_TIMEOUT);
 
             return DiscoveryDocument;
         }
