@@ -434,12 +434,12 @@ namespace SanteDB.Client.OAuth
         /// <returns>The configured <see cref="OpenIdConnectDiscoveryDocument"/> which was emitted by the OAUTH server</returns>
         protected virtual OpenIdConnectDiscoveryDocument GetDiscoveryDocument()
         {
+            OpenIdConnectDiscoveryDocument cachedDiscoveryDoc= null;
             if (null != DiscoveryDocument)
             {
                 return DiscoveryDocument;
             }
             // JF - Attempt to get discovery doc from cache
-            OpenIdConnectDiscoveryDocument cachedDiscoveryDoc = null; 
             else if (_AdhocCache?.TryGet<OpenIdConnectDiscoveryDocument>(ADHOC_DISCOVERY_DOC_KEY, out cachedDiscoveryDoc) == true)
             {
                 DiscoveryDocument = cachedDiscoveryDoc;
