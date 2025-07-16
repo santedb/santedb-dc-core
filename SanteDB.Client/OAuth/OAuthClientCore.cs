@@ -289,7 +289,8 @@ namespace SanteDB.Client.OAuth
             SetupRestClientForJwksRequest(restclient);
 
             // JF - Attempt to get the JWKS from cache
-            if (_AdhocCache?.TryGet<String>(ADHOC_JKWS_DOC_KEY, out var jwksjson) != true)
+            string jwksjson = null; // for mcs
+            if (_AdhocCache?.TryGet<String>(ADHOC_JKWS_DOC_KEY, out jwksjson) != true)
             {
                 jwksjson = ExecuteWithRetry(() =>
                 {
@@ -438,7 +439,8 @@ namespace SanteDB.Client.OAuth
                 return DiscoveryDocument;
             }
             // JF - Attempt to get discovery doc from cache
-            else if (_AdhocCache?.TryGet<OpenIdConnectDiscoveryDocument>(ADHOC_DISCOVERY_DOC_KEY, out var cachedDiscoveryDoc) == true)
+            OpenIdConnectDiscoveryDocument cachedDiscoveryDoc = null; 
+            else if (_AdhocCache?.TryGet<OpenIdConnectDiscoveryDocument>(ADHOC_DISCOVERY_DOC_KEY, out cachedDiscoveryDoc) == true)
             {
                 DiscoveryDocument = cachedDiscoveryDoc;
                 return DiscoveryDocument;
