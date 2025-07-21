@@ -168,6 +168,14 @@ namespace SanteDB.Client.Upstream
                 throw new InvalidOperationException(ErrorMessages.UPSTREAM_NOT_CONFIGURED);
             }
 
+            this.InstallInternal(packageId);
+        }
+
+        /// <summary>
+        /// Installs the applets
+        /// </summary>
+        private void InstallInternal(string packageId, float progress = 0.0f)
+        {
             try
             {
                 using (AuthenticationContext.EnterContext(this.m_upstreamIntegrationService.AuthenticateAsDevice()))
@@ -188,6 +196,7 @@ namespace SanteDB.Client.Upstream
                         {
                             var package = AppletPackage.Load(ms);
                             this.m_tracer.TraceInfo("Installing {0}...", package.Meta);
+                            this.m_userInterfaceService.SetStatus(null, String.Format(UserMessages.INSTALLING, packageId), progress);
                             this.m_appletManager.Install(package, true);
                             this.m_tickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Information, this.m_localizationService.GetString(UserMessageStrings.UPDATE_INSTALLED, new { package = package.Meta.Id, version = package.Meta.Version })));
                         }
@@ -201,6 +210,8 @@ namespace SanteDB.Client.Upstream
 
             }
         }
+
+
 
         /// <inheritdoc/>
         public void Update(bool nonInteractive)
@@ -244,7 +255,11 @@ namespace SanteDB.Client.Upstream
                             if (remoteVersionInfo.Any() &&
                                 this.m_userInterfaceService.Confirm(String.Format(UserMessages.UPDATE_INSTALL_CONFIRM, String.Join(",", remoteVersionInfo.Select(o => o.AppletInfo.GetName("en", true))))))
                             {
-                                remoteVersionInfo.ForEach(i => this.Install(i.AppletInfo.Id));
+                                int vupdate = 0;
+                                remoteVersionInfo.ForEach(i =>
+                                {
+                                    this.InstallInternal(i.AppletInfo.Id, (float)vupdate++ / (float)remoteVersionInfo.Count );
+                                });
 
                                 if(ApplicationServiceContext.Current.IsRunning)
                                 {
