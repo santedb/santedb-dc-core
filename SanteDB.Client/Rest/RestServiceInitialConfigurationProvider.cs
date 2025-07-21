@@ -162,13 +162,14 @@ namespace SanteDB.Client.Rest
             {
             };
 
+#if !DEBUG
             if (hostContextType == SanteDBHostType.Client)
             {
                 apiBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(WebMagicBehavior)));
                 webBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(WebMagicBehavior)));
                 oauthBehaviors.Add(new RestServiceBehaviorConfiguration(typeof(WebMagicBehavior)));
             }
-
+#endif 
 
             var endpointBehaviors = new List<RestEndpointBehaviorConfiguration>()
             {
