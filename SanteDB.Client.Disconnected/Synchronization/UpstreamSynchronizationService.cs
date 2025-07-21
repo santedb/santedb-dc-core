@@ -549,11 +549,11 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                 if (objsInThirty > 2_000)
                 {
-                    return this._Configuration.BigBundles ? 2_000 : 1_000;
+                    return this._Configuration.BigBundles ? 2_000 : 500;
                 }
                 else if(objsInThirty > 1_000)
                 {
-                    return this._Configuration.BigBundles ? 1_000 : 500;
+                    return this._Configuration.BigBundles ? 1_000 : 250;
                 }
                 else
                 {

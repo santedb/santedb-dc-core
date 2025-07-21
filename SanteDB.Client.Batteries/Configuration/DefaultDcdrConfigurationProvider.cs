@@ -233,11 +233,12 @@ namespace SanteDB.Client.Batteries.Configuration
                 QueuePath = Path.Combine(localDataPath, "queue"),
             });
 
-            var backupSection = new BackupConfigurationSection()
+            configuration.RemoveSection<BackupConfigurationSection>();
+            configuration.Sections.Add(new BackupConfigurationSection()
             {
                 PrivateBackupLocation = Path.Combine(localDataPath, "backup"),
                 PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "santedb", "sdk", "backup")
-            };
+            });
 
             configuration.Sections.Add(new AppletConfigurationSection()
             {

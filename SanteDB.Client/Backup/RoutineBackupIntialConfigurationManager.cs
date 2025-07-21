@@ -75,11 +75,10 @@ namespace SanteDB.Client.Backup
             if (backupConfig == null)
             {
                 backupConfig = configuration.AddSection(new BackupConfigurationSection());
+                backupConfig.PrivateBackupLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "backup");
+                backupConfig.PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), ".santedb", "backup");
             }
 
-
-            backupConfig.PrivateBackupLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "backup");
-            backupConfig.PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), ".santedb", "backup");
             backupConfig.RequireEncryptedBackups = true;
             return configuration;
         }
