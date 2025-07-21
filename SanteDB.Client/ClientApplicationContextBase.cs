@@ -26,6 +26,7 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.OrmLite.Providers;
 using System;
 using System.Linq;
 using System.Net;
@@ -123,10 +124,13 @@ namespace SanteDB.Client
                 {
                     svc.RestartRequested += (o, e) =>
                     {
+                        OrmProviderManager.Current.Flush();
                         ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nerfed
                     };
                 });
 
+                // Bind a logout to flush the writeback
+                this.GetService<ISessionProviderService>().Abandoned += (o, e) => OrmProviderManager.Current.Flush(); // logout triggers a flush
             }
             catch (Exception ex)
             {
