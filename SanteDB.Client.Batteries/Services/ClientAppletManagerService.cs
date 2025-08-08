@@ -107,7 +107,7 @@ namespace SanteDB.Client.Batteries.Services
                     {
                         this.m_tracer.TraceEvent(EventLevel.Verbose, "Scanning {0} for applets...", appletDir);
 
-                        var appletFiles = Directory.GetFiles(appletDir, "*.gz").ToArray();
+                        var appletFiles = Directory.GetFiles(appletDir, "*.pak").ToArray();
                         int loadedApplets = 0;
                         foreach (var file in appletFiles)
                         {
@@ -117,11 +117,8 @@ namespace SanteDB.Client.Batteries.Services
                                 this.m_userInterfaceInteractionProvider.SetStatus(null, $"Loading applet {Path.GetFileNameWithoutExtension(file)}", (float)loadedApplets++ / (float)appletFiles.Length);
                                 using (var fs = File.OpenRead(file))
                                 {
-                                    using (var gzs = new GZipStream(fs, CompressionMode.Decompress))
-                                    {
-                                        var pkg = AppletManifest.Load(gzs);
-                                        this.m_appletCollection.Add(pkg);
-                                    }
+                                    var pkg = AppletManifest.Load(fs);
+                                    this.m_appletCollection.Add(pkg);
                                 }
                             }
                             catch (Exception ex)
@@ -212,19 +209,7 @@ namespace SanteDB.Client.Batteries.Services
             var manifest = package.Unpack();
             using (var mfst = File.Create(appletPakFile))
             {
-                using (var gzs = new GZipStream(mfst, SharpCompress.Compressors.CompressionMode.Compress))
-                {
-                    manifest.Save(gzs);
-                }
-            }
-
-            // If we're running on the gateway - we need to save the original file - otherwise we don't
-            if (ApplicationServiceContext.Current.HostType == SanteDBHostType.Gateway)
-            {
-                using (var fs = File.Create(Path.Combine(this.m_configuration.AppletDirectory, $"{package.Meta.Id}.pak")))
-                {
-                    package.Save(fs);
-                }
+                manifest.Save(mfst);
             }
 
             var retVal = this.LoadApplet(manifest);
@@ -252,7 +237,7 @@ namespace SanteDB.Client.Batteries.Services
                 Directory.CreateDirectory(appletDir);
             }
 
-            return Path.Combine(appletDir, appletId) + ".gz";
+            return Path.Combine(appletDir, appletId);
         }
 
         /// <inheritdoc/>
