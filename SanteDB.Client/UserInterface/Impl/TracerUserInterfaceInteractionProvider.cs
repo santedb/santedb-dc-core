@@ -50,6 +50,11 @@ namespace SanteDB.Client.UserInterface.Impl
             throw new NotSupportedException("Non-Interactive Environment");
         }
 
+        public string SelectFile(string title, string pattern, string path)
+        {
+            throw new NotSupportedException();
+        }
+
         /// <inheritdoc/>
         public void SetStatus(string taskIdentifier, string statusText, float progressIndicator)
         {

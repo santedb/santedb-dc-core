@@ -55,5 +55,14 @@ namespace SanteDB.Client.UserInterface
         /// <param name="statusText">The text to display on the status bar</param>
         /// <param name="progressIndicator">The progress indicator</param>
         void SetStatus(String taskIdentifier, String statusText, float progressIndicator);
+
+        /// <summary>
+        /// Open a file selector and allow the user to choose a file
+        /// </summary>
+        /// <param name="title">The title of the dialog</param>
+        /// <param name="pattern">The file patterns</param>
+        /// <param name="path">The initial path</param>
+        /// <returns>The selected file</returns>
+        string SelectFile(String title, String pattern, String path);
     }
 }
