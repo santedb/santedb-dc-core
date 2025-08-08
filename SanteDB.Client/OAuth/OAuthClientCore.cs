@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -25,7 +26,9 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.OAuth;
+using SanteDB.Core.Services;
 using SanteDB.Rest.OAuth;
+using SharpCompress.Compressors.Xz;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +42,13 @@ namespace SanteDB.Client.OAuth
     /// </summary>
     public class OAuthClientCore : IOAuthClient
     {
+
+
+        // Adhoc cache
+        private readonly IAdhocCacheService _AdhocCache;
+        private const string ADHOC_DISCOVERY_DOC_KEY = "oauth.discovery";
+        private const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
+        private readonly TimeSpan OAUTH_CACHE_TIMEOUT = new TimeSpan(18, 0, 0);
 
         /// <summary>
         /// Gets or sets the token validation parameters
@@ -83,13 +93,15 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// DI constructor
         /// </summary>
-        public OAuthClientCore(IRestClientFactory restClientFactory)
+        public OAuthClientCore(IRestClientFactory restClientFactory, IAdhocCacheService adhocCacheService)
         {
             Tracer = new Tracer(GetType().Name);
             CryptoRNG = System.Security.Cryptography.RandomNumberGenerator.Create();
             TokenHandler = new JsonWebTokenHandler();
             RestClientFactory = restClientFactory;
             _RetryTimes = GetRetryWaitTimes();
+            _AdhocCache = adhocCacheService;
+
         }
 
         /// <summary>
@@ -276,21 +288,28 @@ namespace SanteDB.Client.OAuth
 
             SetupRestClientForJwksRequest(restclient);
 
-            var jwksjson = ExecuteWithRetry(() =>
+            // JF - Attempt to get the JWKS from cache
+            string jwksjson = null; // for mcs
+            if (_AdhocCache?.TryGet<String>(ADHOC_JKWS_DOC_KEY, out jwksjson) != true)
             {
-                var bytes = restclient.Get(jwksEndpoint);
-
-                if (null == bytes)
+                jwksjson = ExecuteWithRetry(() =>
                 {
-                    return null;
-                }
+                    var bytes = restclient.Get(jwksEndpoint);
 
-                return Encoding.UTF8.GetString(bytes);
-            }, ex =>
-            {
-                Tracer.TraceInfo("Exception getting jwks endpoint: {0}", ex);
-                return true;
-            });
+                    if (null == bytes)
+                    {
+                        return null;
+                    }
+
+                    return Encoding.UTF8.GetString(bytes);
+                }, ex =>
+                {
+                    Tracer.TraceInfo("Exception getting jwks endpoint: {0}", ex);
+                    return true;
+                });
+
+                _AdhocCache?.Add(ADHOC_JKWS_DOC_KEY, jwksjson, OAUTH_CACHE_TIMEOUT);
+            }
 
             if (null == jwksjson)
             {
@@ -415,8 +434,15 @@ namespace SanteDB.Client.OAuth
         /// <returns>The configured <see cref="OpenIdConnectDiscoveryDocument"/> which was emitted by the OAUTH server</returns>
         protected virtual OpenIdConnectDiscoveryDocument GetDiscoveryDocument()
         {
+            OpenIdConnectDiscoveryDocument cachedDiscoveryDoc= null;
             if (null != DiscoveryDocument)
             {
+                return DiscoveryDocument;
+            }
+            // JF - Attempt to get discovery doc from cache
+            else if (_AdhocCache?.TryGet<OpenIdConnectDiscoveryDocument>(ADHOC_DISCOVERY_DOC_KEY, out cachedDiscoveryDoc) == true)
+            {
+                DiscoveryDocument = cachedDiscoveryDoc;
                 return DiscoveryDocument;
             }
 
@@ -433,6 +459,9 @@ namespace SanteDB.Client.OAuth
                 Tracer.TraceError("Exception fetching discovery document: {0}", ex.ToHumanReadableString());
                 return true;
             });
+
+            // JF - Cache the discovery document
+            _AdhocCache?.Add(ADHOC_DISCOVERY_DOC_KEY, DiscoveryDocument, OAUTH_CACHE_TIMEOUT);
 
             return DiscoveryDocument;
         }

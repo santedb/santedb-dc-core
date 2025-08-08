@@ -65,8 +65,8 @@ namespace SanteDB.Client.UserInterface.Impl
         /// <inheritdoc/>
         public IEnumerable<AppSettingKeyValuePair> GetUserSettings(string forUser)
         {
-            var extension = this.m_entityExtensionPersistence?.Query(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension, AuthenticationContext.SystemPrincipal).FirstOrDefault()
-                    ?? this.m_entityExtensionRepository.Find(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension).FirstOrDefault();
+            var extension = this.m_entityExtensionPersistence?.Query(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension && o.ObsoleteVersionSequenceId == null, AuthenticationContext.SystemPrincipal).FirstOrDefault()
+                    ?? this.m_entityExtensionRepository.Find(o => (o.SourceEntity as UserEntity).SecurityUser.UserName.ToLowerInvariant() == forUser.ToLowerInvariant() && o.ExtensionTypeKey == ExtensionTypeKeys.UserPreferenceExtension && o.ObsoleteVersionSequenceId == null).FirstOrDefault();
             if (extension == null)
             {
                 yield break;

@@ -26,8 +26,10 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.OrmLite.Providers;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading;
 
 namespace SanteDB.Client
@@ -95,8 +97,15 @@ namespace SanteDB.Client
             try
             {
 
+                // JF - Setup the service point manager
+                ServicePointManager.CheckCertificateRevocationList = false;
+                ServicePointManager.DefaultConnectionLimit = Environment.ProcessorCount;
+                ServicePointManager.DnsRefreshTimeout = -1;
+                ServicePointManager.ReusePort = true;
+                
                 base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
+                
                 base.Start();
 
                 this.AutoRestoreEnvironment();
@@ -115,10 +124,13 @@ namespace SanteDB.Client
                 {
                     svc.RestartRequested += (o, e) =>
                     {
+                        OrmProviderManager.Current.Flush();
                         ThreadPool.QueueUserWorkItem(this.OnRestartRequested, o); // USE .NET since our own threadpool will be nerfed
                     };
                 });
 
+                // Bind a logout to flush the writeback
+                this.GetService<ISessionProviderService>().Abandoned += (o, e) => OrmProviderManager.Current.Flush(); // logout triggers a flush
             }
             catch (Exception ex)
             {

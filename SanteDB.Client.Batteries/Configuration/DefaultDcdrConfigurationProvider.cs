@@ -193,6 +193,10 @@ namespace SanteDB.Client.Batteries.Configuration
 #if DEBUG
             DiagnosticsConfigurationSection diagSection = new DiagnosticsConfigurationSection()
             {
+                Sources = new List<TraceSourceConfiguration>()
+                {
+                    new TraceSourceConfiguration() { SourceName = "SanteDB", Filter = System.Diagnostics.Tracing.EventLevel.Informational }
+                },
                 TraceWriter = new System.Collections.Generic.List<TraceWriterConfiguration>() {
                     new TraceWriterConfiguration() {
                         Filter = System.Diagnostics.Tracing.EventLevel.Warning,
@@ -209,6 +213,10 @@ namespace SanteDB.Client.Batteries.Configuration
 #else
             DiagnosticsConfigurationSection diagSection = new DiagnosticsConfigurationSection()
             {
+                Sources = new List<TraceSourceConfiguration>()
+                {
+                    new TraceSourceConfiguration() { SourceName = "SanteDB", Filter = System.Diagnostics.Tracing.EventLevel.Warning }
+                },
                 TraceWriter = new List<TraceWriterConfiguration>() {
                     new TraceWriterConfiguration () {
                         Filter = System.Diagnostics.Tracing.EventLevel.Informational,
@@ -220,17 +228,17 @@ namespace SanteDB.Client.Batteries.Configuration
 #endif
 
             // Setup the tracers 
-            diagSection.TraceWriter.ForEach(o => Tracer.AddWriter(Activator.CreateInstance(o.TraceWriter, o.Filter, o.InitializationData, null) as TraceWriter, o.Filter));
             configuration.Sections.Add(new FileSystemDispatcherQueueConfigurationSection()
             {
                 QueuePath = Path.Combine(localDataPath, "queue"),
             });
 
-            var backupSection = new BackupConfigurationSection()
+            configuration.RemoveSection<BackupConfigurationSection>();
+            configuration.Sections.Add(new BackupConfigurationSection()
             {
                 PrivateBackupLocation = Path.Combine(localDataPath, "backup"),
                 PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "santedb", "sdk", "backup")
-            };
+            });
 
             configuration.Sections.Add(new AppletConfigurationSection()
             {

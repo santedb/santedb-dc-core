@@ -59,6 +59,7 @@ namespace SanteDB.Client.Upstream.Security
         private readonly IPolicyInformationService m_upstreamPip;
         private readonly ISecurityChallengeIdentityService m_upstreamChallenge;
         private readonly ISecurityRepositoryService m_upstreamSecurityRepository;
+        private readonly IThreadPoolService m_threadPoolService;
         private readonly IDataPersistenceService<UserEntity> m_localUserEntityRepository;
 
         /// <summary>
@@ -89,12 +90,14 @@ namespace SanteDB.Client.Upstream.Security
             IUpstreamServiceProvider<IPolicyInformationService> upstreamPip,
             ILocalServiceProvider<IPolicyInformationService> localPip,
             IUpstreamServiceProvider<ISecurityChallengeIdentityService> upstreamSecurityChallenge,
+            IThreadPoolService threadPoolService,
             ILocalServiceProvider<ISecurityChallengeIdentityService> localSecurityChallenge,
             IUpstreamServiceProvider<ISecurityRepositoryService> upstreamSecurityRepository,
             IDataPersistenceService<UserEntity> localUserEntityRepositoryService,
             ILocalizationService localizationService
             ) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider)
         {
+            this.m_threadPoolService = threadPoolService;
             this.m_localUserEntityRepository = localUserEntityRepositoryService;
             this.m_upstreamSecurityRepository = upstreamSecurityRepository.UpstreamProvider;
             this.m_upstreamIdentityProvider = upstreamIdentityProvider.UpstreamProvider;
@@ -139,92 +142,98 @@ namespace SanteDB.Client.Upstream.Security
         /// <param name="password">The password used to successfully authenticate against the upstream</param>
         private void SynchronizeIdentity(IClaimsPrincipal remoteIdentity, string password)
         {
-
-            using (AuthenticationContext.EnterSystemContext())
+            try
             {
-                if (remoteIdentity == null)
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    throw new ArgumentNullException(nameof(remoteIdentity));
-                }
-
-                // This is an IIdentityProvider which the ISecurityRepository service relies on - we want to only call it from the service context
-                var upstreamSecurityRepository = ApplicationServiceContext.Current.GetService<IUpstreamServiceProvider<ISecurityRepositoryService>>()?.UpstreamProvider;
-                var localSecurityRepository = ApplicationServiceContext.Current.GetService<ILocalServiceProvider<ISecurityRepositoryService>>()?.LocalProvider;
-                var localUserRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityUser>>();
-
-                // Get the user identity 
-                var userIdentity = remoteIdentity.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.HumanUser.ToString());
-                if (userIdentity == null)
-                {
-                    throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(SynchronizeIdentity)));
-                }
-
-                // Create local identity 
-                var localUser = localUserRepository.Find(o => o.UserName.ToLowerInvariant() == userIdentity.Name.ToLowerInvariant() && o.ObsoletionTime == null).FirstOrDefault();
-                var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
-                if (localUser == null) // create the user with the same SID
-                {
-                    upstreamUserInfo.Password = password;
-                    localUser = localUserRepository.Insert(upstreamUserInfo);
-                }
-                else
-                {
-                    localUser = localUserRepository.Save(upstreamUserInfo);
-                }
-
-                if (!String.IsNullOrEmpty(password))
-                {
-                    this.m_localIdentityProvider.ChangePassword(userIdentity.Name, password, remoteIdentity, true);
-                }
-
-                // Synchronize the roles that this user belongs to 
-                var localRoles = this.m_localRoleProvider.GetAllRoles();
-
-                // Remove all roles for the local user
-                this.m_localRoleProvider.RemoveUsersFromRoles(new string[] { userIdentity.Name }, localRoles, AuthenticationContext.SystemPrincipal);
-                var upstreamUserRoles = userIdentity.FindAll(SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray();
-
-                // We want to prevent there from being multiple users with multiple roles all hitting the role provider
-                lock (this.m_lockObject)
-                {
-                    foreach (var roleName in upstreamUserRoles)
+                    if (remoteIdentity == null)
                     {
-                        if (!localRoles.Contains(roleName))
-                        {
-                            this.m_tracer.TraceInfo("Creating remote role - {0}", roleName);
-                            this.m_localRoleProvider.CreateRole(roleName, AuthenticationContext.SystemPrincipal);
-                        }
-
-                        var role = localSecurityRepository.GetRole(roleName);
-                        // Synchronize the most accurate policies for the role 
-                        var upstreamPolicies = this.m_upstreamPip.GetPolicies(role);
-                        // Clear policies for role
-                        this.m_localPip.RemovePolicies(role, AuthenticationContext.SystemPrincipal, this.m_localPip.GetPolicies(role).Select(o => o.Policy.Oid).ToArray());
-                        // Add 
-                        foreach (var pol in upstreamPolicies.GroupBy(o => o.Rule))
-                        {
-                            this.m_localPip.AddPolicies(role, pol.Key, AuthenticationContext.SystemPrincipal, pol.Select(o => o.Policy.Oid).ToArray());
-                        }
-
+                        throw new ArgumentNullException(nameof(remoteIdentity));
                     }
-                }
 
-                // Add user to roles
-                this.m_localRoleProvider.AddUsersToRoles(new string[] { userIdentity.Name }, upstreamUserRoles, AuthenticationContext.SystemPrincipal);
+                    // This is an IIdentityProvider which the ISecurityRepository service relies on - we want to only call it from the service context
+                    var upstreamSecurityRepository = ApplicationServiceContext.Current.GetService<IUpstreamServiceProvider<ISecurityRepositoryService>>()?.UpstreamProvider;
+                    var localSecurityRepository = ApplicationServiceContext.Current.GetService<ILocalServiceProvider<ISecurityRepositoryService>>()?.LocalProvider;
+                    var localUserRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityUser>>();
 
-                // Upstream user profile
-                var userProfile = this.m_upstreamSecurityRepository.GetUserEntity(remoteIdentity.Identity);
-                if(userProfile != null)
-                {
-                    if (this.m_localUserEntityRepository.Get(userProfile.Key.Value, null, AuthenticationContext.SystemPrincipal) == null)
+                    // Get the user identity 
+                    var userIdentity = remoteIdentity.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor).Value == ActorTypeKeys.HumanUser.ToString());
+                    if (userIdentity == null)
                     {
-                        this.m_localUserEntityRepository.Insert(userProfile, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(SynchronizeIdentity)));
+                    }
+
+                    // Create local identity 
+                    var localUser = localUserRepository.Find(o => o.UserName.ToLowerInvariant() == userIdentity.Name.ToLowerInvariant() && o.ObsoletionTime == null).FirstOrDefault();
+                    var upstreamUserInfo = upstreamSecurityRepository.GetUser(userIdentity);
+                    if (localUser == null) // create the user with the same SID
+                    {
+                        upstreamUserInfo.Password = password;
+                        localUser = localUserRepository.Insert(upstreamUserInfo);
                     }
                     else
                     {
-                        this.m_localUserEntityRepository.Update(userProfile, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        localUser = localUserRepository.Save(upstreamUserInfo);
+                    }
+
+                    if (!String.IsNullOrEmpty(password))
+                    {
+                        this.m_localIdentityProvider.ChangePassword(userIdentity.Name, password, remoteIdentity, true);
+                    }
+
+                    // Synchronize the roles that this user belongs to 
+                    var localRoles = this.m_localRoleProvider.GetAllRoles();
+
+                    // Remove all roles for the local user
+                    this.m_localRoleProvider.RemoveUsersFromRoles(new string[] { userIdentity.Name }, localRoles, AuthenticationContext.SystemPrincipal);
+                    var upstreamUserRoles = userIdentity.FindAll(SanteDBClaimTypes.DefaultRoleClaimType).Select(o => o.Value).ToArray();
+
+                    // We want to prevent there from being multiple users with multiple roles all hitting the role provider
+                    lock (this.m_lockObject)
+                    {
+                        foreach (var roleName in upstreamUserRoles)
+                        {
+                            if (!localRoles.Contains(roleName))
+                            {
+                                this.m_tracer.TraceInfo("Creating remote role - {0}", roleName);
+                                this.m_localRoleProvider.CreateRole(roleName, AuthenticationContext.SystemPrincipal);
+                            }
+
+                            var role = localSecurityRepository.GetRole(roleName);
+                            // Synchronize the most accurate policies for the role 
+                            var upstreamPolicies = this.m_upstreamPip.GetPolicies(role);
+                            // Clear policies for role
+                            this.m_localPip.RemovePolicies(role, AuthenticationContext.SystemPrincipal, this.m_localPip.GetPolicies(role).Select(o => o.Policy.Oid).ToArray());
+                            // Add 
+                            foreach (var pol in upstreamPolicies.GroupBy(o => o.Rule))
+                            {
+                                this.m_localPip.AddPolicies(role, pol.Key, AuthenticationContext.SystemPrincipal, pol.Select(o => o.Policy.Oid).ToArray());
+                            }
+
+                        }
+                    }
+
+                    // Add user to roles
+                    this.m_localRoleProvider.AddUsersToRoles(new string[] { userIdentity.Name }, upstreamUserRoles, AuthenticationContext.SystemPrincipal);
+
+                    // Upstream user profile
+                    var userProfile = this.m_upstreamSecurityRepository.GetUserEntity(remoteIdentity.Identity);
+                    if (userProfile != null)
+                    {
+                        if (this.m_localUserEntityRepository.Get(userProfile.Key.Value, null, AuthenticationContext.SystemPrincipal) == null)
+                        {
+                            this.m_localUserEntityRepository.Insert(userProfile, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        else
+                        {
+                            this.m_localUserEntityRepository.Update(userProfile, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
+            }
+            catch(Exception ex)
+            {
+                this.m_tracer.TraceWarning("Cannot synchronize identity - {0}", ex);
             }
 
         }
@@ -297,7 +306,7 @@ namespace SanteDB.Client.Upstream.Security
                     try
                     {
                         result = this.m_upstreamIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions);
-                        this.SynchronizeIdentity(result as IClaimsPrincipal, password);
+                        this.m_threadPoolService.QueueUserWorkItem((o) => this.SynchronizeIdentity(o.result as IClaimsPrincipal, o.password), new { result = result, password = password });
                     }
                     catch (RestClientException<Object> e)
                     {
@@ -336,7 +345,7 @@ namespace SanteDB.Client.Upstream.Security
             if (principal is ITokenPrincipal) // It is upstream so we have to do upstream
             {
                 var result = this.m_upstreamIdentityProvider.ReAuthenticate(principal);
-                this.SynchronizeIdentity(result as IClaimsPrincipal, null);
+                this.m_threadPoolService.QueueUserWorkItem(o => this.SynchronizeIdentity(o.result as IClaimsPrincipal, null), new { result = result });
                 return result;
             }
             else

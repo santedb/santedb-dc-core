@@ -292,35 +292,38 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                             using (AuthenticationContext.EnterSystemContext())
                             {
-                                var localPersistence = this.GetPersistenceService(entry.Data.GetType());
-                                if (entry.Data is Bundle bdl)
+                                using (DataPersistenceControlContext.Create(autoUpdate: false, autoInsert: true))
                                 {
-                                    FixupBundleData(bdl);
-                                    bdl.DisablePersistenceValidation();
-                                    localPersistence.Insert(bdl);
-                                }
-                                else
-                                {
-                                    var existing = localPersistence.Get(entry.Data.Key.Value);
-                                    if (existing is IVersionedData existingVersioned && entry.Data is IVersionedData newVersioned)
+                                    var localPersistence = this.GetPersistenceService(entry.Data.GetType());
+                                    if (entry.Data is Bundle bdl)
                                     {
-                                        if (newVersioned?.VersionKey == existingVersioned.VersionKey)
-                                        {
-                                            //Skip
-                                            return SynchronizationMessagePump.Continue;
-                                        }
-                                    }
-
-                                    // If there is an existing - update otherwise insert
-                                    entry.Data.DisablePersistenceValidation();
-                                    if (existing == null)
-                                    {
-                                        FixupEntity(entry.Data);
-                                        localPersistence.Insert(entry.Data);
+                                        FixupBundleData(bdl);
+                                        bdl.DisablePersistenceValidation();
+                                        localPersistence.Insert(bdl);
                                     }
                                     else
                                     {
-                                        localPersistence.Update(entry.Data);
+                                        var existing = localPersistence.Get(entry.Data.Key.Value);
+                                        if (existing is IVersionedData existingVersioned && entry.Data is IVersionedData newVersioned)
+                                        {
+                                            if (newVersioned?.VersionKey == existingVersioned.VersionKey)
+                                            {
+                                                //Skip
+                                                return SynchronizationMessagePump.Continue;
+                                            }
+                                        }
+
+                                        // If there is an existing - update otherwise insert
+                                        entry.Data.DisablePersistenceValidation();
+                                        if (existing == null)
+                                        {
+                                            FixupEntity(entry.Data);
+                                            localPersistence.Insert(entry.Data);
+                                        }
+                                        else
+                                        {
+                                            localPersistence.Update(entry.Data);
+                                        }
                                     }
                                 }
                             }
@@ -358,7 +361,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             item.AddAnnotation(SystemTagNames.UpstreamDataTag); // Tag as upstream
             if (item is ITaggable taggable)
             {
-                taggable.AddTag(SystemTagNames.UpstreamDataTag, "true");
+                taggable.AddTagUnchecked(SystemTagNames.UpstreamDataTag, "true");
             }
         }
 
@@ -544,9 +547,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 // Our timeout is 120 seconds but let's try to ensure we can fulfill the request in 30 seconds
                 var objsInThirty = 30000 / (peritemcost + 1);
 
-                if (objsInThirty > 1_000)
+                if (objsInThirty > 2_000)
                 {
-                    return !this._Configuration.BigBundles ? 1_000 : 500;
+                    return this._Configuration.BigBundles ? 2_000 : 500;
+                }
+                else if(objsInThirty > 1_000)
+                {
+                    return this._Configuration.BigBundles ? 1_000 : 250;
                 }
                 else
                 {

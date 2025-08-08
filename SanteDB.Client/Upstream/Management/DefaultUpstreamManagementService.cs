@@ -16,12 +16,14 @@
  * the License.
  *
  */
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using RestSrvr;
 using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
 using SanteDB.Client.Services;
+using SanteDB.Client.UserInterface;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Http;
@@ -65,6 +67,7 @@ namespace SanteDB.Client.Upstream.Management
         private readonly ICertificateGeneratorService m_certificateGenerator;
         private readonly IOperatingSystemInfoService m_operatingSystemInfo;
         private ConfiguredUpstreamRealmSettings m_upstreamSettings;
+        private readonly IUserInterfaceInteractionProvider m_userInterfaceInteraction;
         private readonly IRestClientFactory m_restClientFactory;
         private readonly UpstreamConfigurationSection m_configuration;
         private readonly RestClientConfigurationSection m_restConfiguration;
@@ -75,6 +78,7 @@ namespace SanteDB.Client.Upstream.Management
         private IAuditService m_auditService;
         private readonly SecurityConfigurationSection m_securityConfiguration;
         private readonly OAuthConfigurationSection m_oauthConfigurationSection;
+        private bool? m_rewriteUrls = null;
 
         /// <summary>
         /// DI constructor
@@ -86,11 +90,13 @@ namespace SanteDB.Client.Upstream.Management
             IServiceManager serviceManager,
             IOperatingSystemInfoService operatingSystemInfoService,
             IPlatformSecurityProvider platformSecurityProvider,
+            IUserInterfaceInteractionProvider userInterfaceInteractionProvider,
             IGeographicLocationProvider geographicLocationProvider = null,
             ICertificateGeneratorService certificateGenerator = null,
             IPolicyEnforcementService pepService = null
             )
         {
+            this.m_userInterfaceInteraction = userInterfaceInteractionProvider;
             this.m_restClientFactory = restClientFactory;
             this.m_configuration = configurationManager.GetSection<UpstreamConfigurationSection>();
             this.m_restConfiguration = configurationManager.GetSection<RestClientConfigurationSection>();
@@ -268,18 +274,19 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     else if (upstreamDevice != null)
                     {
-                        this.m_tracer.TraceInfo("Enrolling device as {0}...");
+                        this.m_tracer.TraceInfo("Updated enrolled device as {0}...", upstreamDevice.Name);
                         upstreamDevice.DeviceSecret = deviceCredential.CredentialSecret;
                         upstreamDevice = amiClient.UpdateDevice(upstreamDevice.Key.Value, new SecurityDeviceInfo(upstreamDevice))?.Entity;
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
                     else
                     {
-                        upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
-                        {
-                            DeviceSecret = deviceCredential.CredentialSecret,
-                            Name = deviceCredential.CredentialName
-                        }))?.Entity;
+                            upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
+                            {
+                                DeviceSecret = deviceCredential.CredentialSecret,
+                                Name = deviceCredential.CredentialName
+                            }))?.Entity;
+                        this.m_tracer.TraceInfo("Registering new device {0}...", upstreamDevice.Name);
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
 
@@ -385,7 +392,7 @@ namespace SanteDB.Client.Upstream.Management
                         }
                         else if (this.m_certificateGenerator != null)
                         {
-                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(512);
+                            var privateKeyPair = this.m_certificateGenerator.CreateKeyPair(2048);
                             if (isCaConfigured)
                             {
                                 var csr = this.m_certificateGenerator.CreateSigningRequest(privateKeyPair, new X500DistinguishedName(subjectName), X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.DigitalSignature, new string[] { ExtendedKeyUsageOids.CodeSigning });
@@ -450,11 +457,19 @@ namespace SanteDB.Client.Upstream.Management
                             this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", secretBytes.HexEncode()));
                         }
                     }
+                    else
+                    {
+                        // Remove all HMAC and replace with RS256
+                        this.m_securityConfiguration.Signatures.RemoveAll(o => o.Algorithm == SignatureAlgorithm.HS256);
+                        this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("default", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                        this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
+                    }
                 }
+                
 
 
-                // Now we want to save the configuration
-                this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
+                    // Now we want to save the configuration
+                    this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
                 this.RealmChanged?.Invoke(this, new UpstreamRealmChangedEventArgs(targetRealm));
                 this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(this.m_configuration);
                 audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.Success);
@@ -526,7 +541,24 @@ namespace SanteDB.Client.Upstream.Management
                         CompressRequests = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression)
                     },
                     Accept = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.InternalApi) ? "application/xml" : "application/json",
-                    Endpoint = endpoint.BaseUrl.Select(o => new RestClientEndpointConfiguration(o, new TimeSpan(0, 1, 0))).ToList(),
+                    Endpoint = endpoint.BaseUrl.Select(o => {
+                        var retVal = new RestClientEndpointConfiguration(o, new TimeSpan(0, 1, 0));
+                        var amiUrl = new Uri(o);
+                        var requestedRealm = $"{targetRealm.Realm.Scheme}://{targetRealm.Realm.Host}:{targetRealm.Realm.Port}";
+                        var amiRealm = $"{amiUrl.Scheme}://{amiUrl.Host}:{amiUrl.Port}";
+                        if (requestedRealm != amiRealm) // Disagreement - confirm with user
+                        {
+                            if (!this.m_rewriteUrls.HasValue)
+                            {
+                                this.m_rewriteUrls = this.m_userInterfaceInteraction.Confirm(String.Format(UserMessages.CONFIRM_REALM_URL_OVERRIDE, requestedRealm, amiRealm));
+                            }
+                            if(this.m_rewriteUrls.GetValueOrDefault())
+                            {
+                                retVal.Address = $"{requestedRealm}/{amiUrl.LocalPath}";
+                            }
+                        }
+                        return retVal;
+                    }).ToList(),
                     Name = endpoint.ServiceType.ToString(),
                     Trace = false
                 };
