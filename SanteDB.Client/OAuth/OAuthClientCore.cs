@@ -46,8 +46,8 @@ namespace SanteDB.Client.OAuth
 
         // Adhoc cache
         private readonly IAdhocCacheService _AdhocCache;
-        private const string ADHOC_DISCOVERY_DOC_KEY = "oauth.discovery";
-        private const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
+        protected const string ADHOC_DISCOVERY_DOC_KEY = "oauth.discovery";
+        protected const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
         private readonly TimeSpan OAUTH_CACHE_TIMEOUT = new TimeSpan(18, 0, 0);
 
         /// <summary>
