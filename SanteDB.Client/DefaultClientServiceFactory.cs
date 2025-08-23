@@ -39,7 +39,8 @@ namespace SanteDB.Client
             typeof(DefaultUpstreamIntegrationService),
             typeof(UpstreamDiagnosticRepository),
             typeof(RolloverLogManagerService),
-            typeof(AppletNotificationTemplateRepository)
+            typeof(AppletNotificationTemplateRepository),
+            typeof(AppletDataReferenceResolver)
         };
         private readonly IServiceManager m_serviceManager;
 
