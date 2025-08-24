@@ -241,7 +241,7 @@ namespace SanteDB.Client.Upstream
                     {
                         using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                         {
-                            restClient.Description.Endpoint[0].ConnectTimeout = new TimeSpan(0, 0, 10);
+                            restClient.Description.Endpoint[0].ConnectTimeout = new TimeSpan(0, 0, 15);
                             var remoteVersionInfo = restClient.Get<AmiCollection>($"AppletSolution/{this.m_configuration.UiSolution}/applet").CollectionItem
                                 .OfType<AppletManifestInfo>()
                                 .Where(i =>

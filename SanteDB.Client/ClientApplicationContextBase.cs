@@ -145,7 +145,7 @@ namespace SanteDB.Client
         /// In order to restore a device environment - a user may create a backup on an old environment and then restore that environment on a new tablet. This method prompts the user 
         /// for the restoration password of the previous tablet.
         /// </remarks>
-        private void AutoRestoreEnvironment()
+        protected virtual void AutoRestoreEnvironment()
         {
             using (AuthenticationContext.EnterSystemContext())
             {

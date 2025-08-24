@@ -41,6 +41,7 @@ namespace SanteDB.Client.OAuth
         IUpstreamRealmSettings _RealmSettings;
         readonly IUpstreamManagementService _UpstreamManagement;
         readonly ILocalizationService _Localization;
+        private readonly IAdhocCacheService _AdhocCache;
         //IRestClient _AuthRestClient;
 
 
@@ -55,6 +56,7 @@ namespace SanteDB.Client.OAuth
             _UpstreamManagement.RealmChanged += UpstreamRealmChanged;
             _RealmSettings = upstreamManagement?.GetSettings();
             _Localization = localization;
+            _AdhocCache = adhocCacheService;
             //SetTokenValidationParameters();
         }
 
@@ -107,6 +109,8 @@ namespace SanteDB.Client.OAuth
                 Tracer.TraceVerbose("Removing upstream realm settings due to upstream realm changing notification.");
                 DiscoveryDocument = null;
                 ClientId = null;
+                _AdhocCache?.Remove(ADHOC_DISCOVERY_DOC_KEY);
+                _AdhocCache.Remove(ADHOC_JKWS_DOC_KEY);
                 _RealmSettings = eventArgs.UpstreamRealmSettings;
                 SetTokenValidationParameters();
                 Tracer.TraceVerbose("Removed upstream realm settings due to upstream realm changing notification.");
@@ -128,6 +132,8 @@ namespace SanteDB.Client.OAuth
             {
                 Tracer.TraceVerbose("Getting new upstream realm settings due to upstream realm changed notification.");
                 _RealmSettings = eventArgs.UpstreamRealmSettings;
+                _AdhocCache?.Remove(ADHOC_DISCOVERY_DOC_KEY);
+                _AdhocCache?.Remove(ADHOC_JKWS_DOC_KEY);
                 ClientId = _RealmSettings.LocalClientName;
                 Tracer.TraceVerbose("Successfully updated upstream realm settings due to upstream realm changed notification.");
                 SetTokenValidationParameters();

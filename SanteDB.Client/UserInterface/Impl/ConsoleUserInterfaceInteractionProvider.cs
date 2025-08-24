@@ -17,6 +17,7 @@
  *
  */
 using System;
+using System.IO;
 using System.Linq;
 
 namespace SanteDB.Client.UserInterface.Impl
@@ -62,9 +63,22 @@ namespace SanteDB.Client.UserInterface.Impl
         }
 
         /// <inheritdoc/>
+        public string SelectFile(string title, string pattern, string path)
+        {
+            var selectedFile = String.Empty;
+            do
+            {
+                Console.Write($"{title} [Enter File Path]:");
+                selectedFile = Console.ReadLine();
+            } while (!String.IsNullOrEmpty(selectedFile) && !File.Exists(selectedFile));
+            return selectedFile;
+        }
+
+        /// <inheritdoc/>
         public void SetStatus(string taskIdentifier, string statusText, float progressIndicator)
         {
             Console.WriteLine("{0} PROGRESS: {1:0%} {2}", taskIdentifier, progressIndicator, statusText);
         }
+
     }
 }
