@@ -86,6 +86,17 @@ namespace SanteDB.Client.Disconnected.Services
         }
 
         /// <inheritdoc/>
+        public override PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
+        {
+            var mappedPolicy = this.m_policyMaps.FirstOrDefault(o => o.Value.Contains(policyId));
+            if (!String.IsNullOrEmpty(mappedPolicy.Key))
+            {
+                policyId = mappedPolicy.Key;
+            }
+            return base.GetPolicyOutcome(principal, policyId);
+        }
+
+        /// <inheritdoc/>
         public override IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal principal)
         {
             var cacheKey = this.ComputeCacheKey(principal);
