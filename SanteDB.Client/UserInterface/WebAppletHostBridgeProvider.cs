@@ -68,7 +68,7 @@ namespace SanteDB.Client.UserInterface
                     sw.WriteLine("__SanteDBAppService.GetMagic = function() {{ return '{0}'; }}", ApplicationServiceContext.Current.ActivityUuid.ToByteArray().HexEncode());
                     sw.WriteLine("__SanteDBAppService.GetVersion = function() {{ return '{0} ({1})'; }}", Assembly.GetEntryAssembly().GetName().Version, Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
                     sw.WriteLine("__SanteDBAppService.GetString = function(key) {");
-                    sw.WriteLine("\tvar strData = __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()] || __SanteDBAppService._stringData['en'];");
+                    sw.WriteLine("\tvar strData = __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()] || __SanteDBAppService._stringData[/^([a-z]{2})-[a-z]{2}$/i.exec(__SanteDBAppService.GetLocale())[1]] || __SanteDBAppService._stringData['en'];");
                     sw.WriteLine("\treturn strData[key] || key;");
                     sw.WriteLine("}");
 
