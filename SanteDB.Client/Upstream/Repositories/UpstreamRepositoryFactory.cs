@@ -109,7 +109,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
 
-
+           
             var serviceCandidate = this.m_upstreamServices.FirstOrDefault(o => serviceType.IsAssignableFrom(o));
             if (serviceCandidate != null)
             {
@@ -119,22 +119,24 @@ namespace SanteDB.Client.Upstream.Repositories
             else if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IRepositoryService<>))
             {
                 var storageType = serviceType.GenericTypeArguments[0];
-                if (this.m_amiResources.Contains(storageType))
+                switch(UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(storageType))
                 {
-                    storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
-                }
-                else if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
-                {
-                    storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
-                }
-                else if (storageType.GetCustomAttribute<XmlRootAttribute>() != null)
-                {
-                    storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
-                }
-                else
-                {
-                    serviceInstance = null;
-                    return false;
+                    case Core.Interop.ServiceEndpointType.AdministrationIntegrationService:
+                        if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
+                        {
+                            storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
+                        }
+                        else
+                        {
+                            storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
+                        }
+                        break;
+                    case Core.Interop.ServiceEndpointType.HealthDataService:
+                        storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
+                        break;
+                    default:
+                        serviceInstance = null;
+                        return false;
                 }
                 serviceInstance = this.m_serviceManager.CreateInjected(storageType);
                 return true;
