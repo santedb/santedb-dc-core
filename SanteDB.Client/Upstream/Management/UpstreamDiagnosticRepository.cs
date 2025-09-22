@@ -171,6 +171,7 @@ namespace SanteDB.Client.Upstream.Management
                 {
                     data.Tags.AddRange(icp.Claims.Select(o => new DiagnosticReportTag("ses.claim", $"{o.Type}={o.Value}")));
                 }
+                data.Tags.Add(new DiagnosticReportTag("app.ver", typeof(UpstreamDiagnosticRepository).Assembly.GetName().Version.ToString()));
                 data.Tags.Add(new DiagnosticReportTag("os.type", this.m_operatingSystemInfo.OperatingSystem.ToString()));
                 data.Tags.Add(new DiagnosticReportTag("os.version", this.m_operatingSystemInfo.VersionString));
                 data.Tags.Add(new DiagnosticReportTag("os.manufacturer", this.m_operatingSystemInfo.ManufacturerName));

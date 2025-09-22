@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using DocumentFormat.OpenXml.Office2019.Drawing.Diagram11;
 using SanteDB.Client.Upstream.Management;
 using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Model.AMI.Auth;
@@ -62,7 +63,7 @@ namespace SanteDB.Client.Upstream.Repositories
             {  typeof(SecurityDevice), typeof(SecurityDeviceInfo) },
             {  typeof(SecurityApplication), typeof(SecurityApplicationInfo) }
         };
-
+        private readonly IUpstreamManagementService m_upstreamManager;
         private Type[] m_amiResources = new Type[]
         {
             typeof(SubscriptionDefinition),
@@ -81,7 +82,7 @@ namespace SanteDB.Client.Upstream.Repositories
         /// <summary>
         /// Constructor
         /// </summary>
-        public UpstreamRepositoryFactory(IServiceManager serviceManager)
+        public UpstreamRepositoryFactory(IServiceManager serviceManager, IUpstreamManagementService upstreamManager)
         {
             this.m_serviceManager = serviceManager;
             foreach (var t in typeof(Entity).Assembly.GetExportedTypesSafe().Where(o => typeof(Entity).IsAssignableFrom(o)))
@@ -89,6 +90,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<>).MakeGenericType(t));
             }
 
+            this.m_upstreamManager = upstreamManager;
             ModelSerializationBinder.RegisterModelType(typeof(EntityRelationshipMaster));
         }
 
@@ -109,7 +111,7 @@ namespace SanteDB.Client.Upstream.Repositories
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
 
-           
+
             var serviceCandidate = this.m_upstreamServices.FirstOrDefault(o => serviceType.IsAssignableFrom(o));
             if (serviceCandidate != null)
             {
@@ -119,24 +121,43 @@ namespace SanteDB.Client.Upstream.Repositories
             else if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IRepositoryService<>))
             {
                 var storageType = serviceType.GenericTypeArguments[0];
-                switch(UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(storageType))
+                // Is the upstream configured? If so we use the upstream data gathered from OPTIONS
+                if (this.m_upstreamManager.IsConfigured())
                 {
-                    case Core.Interop.ServiceEndpointType.AdministrationIntegrationService:
-                        if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
-                        {
-                            storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
-                        }
-                        else
-                        {
-                            storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
-                        }
-                        break;
-                    case Core.Interop.ServiceEndpointType.HealthDataService:
+                    switch (UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(storageType))
+                    {
+                        case Core.Interop.ServiceEndpointType.AdministrationIntegrationService:
+                            if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
+                            {
+                                storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
+                            }
+                            else
+                            {
+                                storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
+                            }
+                            break;
+                        case Core.Interop.ServiceEndpointType.HealthDataService:
+                            storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
+                            break;
+                        default:
+                            serviceInstance = null;
+                            return false;
+                    }
+                }
+                else
+                {
+                    if (this.m_amiResources.Contains(storageType))
+                    {
+                        storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
+                    }
+                    else if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
+                    {
+                        storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
+                    }
+                    else if (storageType.GetCustomAttribute<XmlRootAttribute>() != null)
+                    {
                         storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
-                        break;
-                    default:
-                        serviceInstance = null;
-                        return false;
+                    }
                 }
                 serviceInstance = this.m_serviceManager.CreateInjected(storageType);
                 return true;
