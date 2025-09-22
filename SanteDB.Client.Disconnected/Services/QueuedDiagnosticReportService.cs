@@ -146,6 +146,7 @@ namespace SanteDB.Client.Disconnected.Services
                 if (AuthenticationContext.Current.Principal is IClaimsPrincipal icp) {
                     data.Tags.AddRange(icp.Claims.Select(o => new DiagnosticReportTag("ses.claim", $"{o.Type}={o.Value}")));
                 }
+                data.Tags.Add(new DiagnosticReportTag("app.ver", typeof(QueuedDiagnosticReportService).Assembly.GetName().Version.ToString()));
                 data.Tags.Add(new DiagnosticReportTag("os.type", this.m_operatingSystemInfoService.OperatingSystem.ToString()));
                 data.Tags.Add(new DiagnosticReportTag("os.version", this.m_operatingSystemInfoService.VersionString));
                 data.Tags.Add(new DiagnosticReportTag("os.manufacturer", this.m_operatingSystemInfoService.ManufacturerName));

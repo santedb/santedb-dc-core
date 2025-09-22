@@ -68,8 +68,8 @@ namespace SanteDB.Client.UserInterface
                     sw.WriteLine("__SanteDBAppService.GetMagic = function() {{ return '{0}'; }}", ApplicationServiceContext.Current.ActivityUuid.ToByteArray().HexEncode());
                     sw.WriteLine("__SanteDBAppService.GetVersion = function() {{ return '{0} ({1})'; }}", Assembly.GetEntryAssembly().GetName().Version, Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
                     sw.WriteLine("__SanteDBAppService.GetString = function(key) {");
-                    sw.WriteLine("\tvar strData = __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()] || __SanteDBAppService._stringData['en'];");
-                    sw.WriteLine("\treturn strData[key] || key;");
+                    sw.WriteLine("\tvar strDatas = [ __SanteDBAppService._stringData[__SanteDBAppService.GetLocale()], __SanteDBAppService.GetLocale().indexOf('-') > -1 ? __SanteDBAppService._stringData[/^([a-z]{2})-[a-z]{2}$/i.exec(__SanteDBAppService.GetLocale())[1]] : null , __SanteDBAppService._stringData['en'] ];");
+                    sw.WriteLine("\tvar candidate = strDatas.find(o => o && o[key]); return candidate ? candidate[key] : key;");
                     sw.WriteLine("}");
 
                     sw.WriteLine("__SanteDBAppService._stringData = {};");
@@ -87,7 +87,7 @@ namespace SanteDB.Client.UserInterface
 
                     sw.WriteLine("__SanteDBAppService.GetTemplateForm = function(templateId) {");
                     sw.WriteLine("\tswitch(templateId) {");
-                    foreach (var itm in m_appletService.Applets.SelectMany(o => o.Templates))
+                    foreach (var itm in m_appletService.Applets.DefinedTemplates)
                     {
                         sw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.Form);
                     }
@@ -96,7 +96,7 @@ namespace SanteDB.Client.UserInterface
 
                     sw.WriteLine("__SanteDBAppService.GetTemplateView = function(templateId) {");
                     sw.WriteLine("\tswitch(templateId) {");
-                    foreach (var itm in m_appletService.Applets.SelectMany(o => o.Templates))
+                    foreach (var itm in m_appletService.Applets.DefinedTemplates)
                     {
                         sw.WriteLine("\t\tcase '{0}': return '{1}'; break;", itm.Mnemonic.ToLowerInvariant(), itm.View);
                     }
@@ -104,7 +104,7 @@ namespace SanteDB.Client.UserInterface
                     sw.WriteLine("}");
 
                     sw.WriteLine("__SanteDBAppService.GetTemplates = function() {");
-                    sw.WriteLine("return '[{0}]'", String.Join(",", m_appletService.Applets.SelectMany(o => o.Templates).Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
+                    sw.WriteLine("return '[{0}]'", String.Join(",", m_appletService.Applets.DefinedTemplates.Where(o => o.Public).Select(o => $"\"{o.Mnemonic}\"")));
                     sw.WriteLine("}");
                     sw.WriteLine("__SanteDBAppService.GetDataAsset = function(assetId) {");
                     sw.WriteLine("\tswitch(assetId) {");

@@ -40,7 +40,7 @@ namespace SanteDB.Client.Upstream.Management
         /// Timeout, in milliseconds, for the ping to complete for the endpoint.
         /// </summary>
         private const int PING_TIMEOUT = 30_000;
-        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 5, 00);
+        private readonly TimeSpan CACHE_TIMEOUT = new TimeSpan(0, 0, 10);
 
         /// <summary>
         /// Get the service name

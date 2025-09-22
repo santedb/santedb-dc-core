@@ -49,14 +49,16 @@ namespace SanteDB.Client.Disconnected.Services
         private readonly IPolicyEnforcementService m_pepService;
         private readonly ConcurrentDictionary<Guid, DataTemplateDefinition> m_library = new ConcurrentDictionary<Guid, DataTemplateDefinition>();
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemDataTemplateManager));
-        
+        private readonly ITemplateDefinitionRepositoryService m_templateDefinitionRepository;
+
         /// <summary>
         /// Policy enforcement service
         /// </summary>
-        public FileSystemDataTemplateManager(IPolicyEnforcementService pepService)
+        public FileSystemDataTemplateManager(IPolicyEnforcementService pepService, ITemplateDefinitionRepositoryService templateDefinitionRepositoryService)
         {
             this.m_pepService = pepService;
             this.m_libraryLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "templates");
+            this.m_templateDefinitionRepository = templateDefinitionRepositoryService;
             if (!Directory.Exists(this.m_libraryLocation))
             {
                 Directory.CreateDirectory(this.m_libraryLocation);
@@ -75,7 +77,27 @@ namespace SanteDB.Client.Disconnected.Services
                 {
                     var defn = DataTemplateDefinition.Load(fs);
                     this.m_library.TryAdd(defn.Uuid, defn);
+                    this.RegisterTemplateDefinition(defn);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Register the template definition with the template repository
+        /// </summary>
+        private void RegisterTemplateDefinition(DataTemplateDefinition dataTemplateDefinition)
+        {
+            // Validate database 
+            if (!this.m_templateDefinitionRepository.Find(o => o.Key == dataTemplateDefinition.Uuid).Any())
+            {
+                this.m_templateDefinitionRepository.Save(new Core.Model.DataTypes.TemplateDefinition()
+                {
+                    Key = dataTemplateDefinition.Uuid,
+                    Oid = dataTemplateDefinition.Oid,
+                    Description = dataTemplateDefinition.Description,
+                    Name = dataTemplateDefinition.Name,
+                    Mnemonic = dataTemplateDefinition.Mnemonic,
+                });
             }
         }
 
@@ -118,6 +140,7 @@ namespace SanteDB.Client.Disconnected.Services
                     // Now add to library
                     this.m_library.TryRemove(definition.Uuid, out _);
                     this.m_library.TryAdd(definition.Uuid, definition);
+                    this.RegisterTemplateDefinition(definition);
                     return definition;
                 }
             }
@@ -157,6 +180,9 @@ namespace SanteDB.Client.Disconnected.Services
 
             File.Delete(this.CreatePath(existing));
             this.m_library.TryRemove(key, out _);
+
+            // Remove registration
+            this.m_templateDefinitionRepository.Delete(key);
             return existing;
         }
 
