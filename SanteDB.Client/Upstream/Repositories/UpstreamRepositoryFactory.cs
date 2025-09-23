@@ -122,12 +122,20 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 var storageType = serviceType.GenericTypeArguments[0];
                 // Is the upstream configured? If so we use the upstream data gathered from OPTIONS
-                if (this.m_upstreamManager.IsConfigured())
+                if (this.m_amiResources.Contains(storageType))
+                {
+                    storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
+                }
+                else if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
+                {
+                    storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
+                }
+                else if (this.m_upstreamManager.IsConfigured())
                 {
                     switch (UpstreamEndpointMetadataUtil.Current.GetServiceEndpoint(storageType))
                     {
                         case Core.Interop.ServiceEndpointType.AdministrationIntegrationService:
-                            if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
+                            if (this.m_wrappedAmiResources.TryGetValue(storageType, out wrapperType))
                             {
                                 storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
                             }
@@ -144,22 +152,11 @@ namespace SanteDB.Client.Upstream.Repositories
                             return false;
                     }
                 }
-                else
+                else if (storageType.HasCustomAttribute<XmlRootAttribute>())
                 {
-                    if (this.m_amiResources.Contains(storageType))
-                    {
-                        storageType = typeof(AmiUpstreamRepository<>).MakeGenericType(storageType);
-                    }
-                    else if (this.m_wrappedAmiResources.TryGetValue(storageType, out var wrapperType))
-                    {
-                        storageType = typeof(AmiWrappedUpstreamRepository<,>).MakeGenericType(storageType, wrapperType);
-                    }
-                    else if (storageType.GetCustomAttribute<XmlRootAttribute>() != null)
-                    {
-                        storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
-                    }
+                    storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
                 }
-                serviceInstance = this.m_serviceManager.CreateInjected(storageType);
+                    serviceInstance = this.m_serviceManager.CreateInjected(storageType);
                 return true;
             }
             serviceInstance = null;
