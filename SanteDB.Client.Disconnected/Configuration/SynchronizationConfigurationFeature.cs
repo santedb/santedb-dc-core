@@ -142,8 +142,6 @@ namespace SanteDB.Client.Disconnected.Configuration
             configSection.PollIntervalXml = featureConfiguration[POLL_SETTING]?.ToString() ?? configSection.PollIntervalXml;
             configSection.ForbidSending = ((IEnumerable)featureConfiguration[FORBID_SYNC_SETTING])?.OfType<JToken>().Select(o => new ResourceTypeReferenceConfiguration(o.ToString())).ToList();
 
-
-
             switch (configSection.Mode)
             {
                 case SynchronizationMode.Full:
