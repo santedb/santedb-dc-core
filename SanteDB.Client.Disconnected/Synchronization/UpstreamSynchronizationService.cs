@@ -298,7 +298,14 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                     if (entry.Data is Bundle bdl)
                                     {
                                         FixupBundleData(bdl);
-                                        bdl.DisablePersistenceValidation();
+                                        if (entry.RetryCount.GetValueOrDefault() < 2)
+                                        {
+                                            bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.All);
+                                        }
+                                        else
+                                        {
+                                            bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints);
+                                        }
                                         localPersistence.Insert(bdl);
                                     }
                                     else
@@ -314,7 +321,15 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                         }
 
                                         // If there is an existing - update otherwise insert
-                                        entry.Data.DisablePersistenceValidation();
+                                        if (entry.RetryCount.GetValueOrDefault() < 2)
+                                        {
+                                            entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.All);
+                                        }
+                                        else
+                                        {
+                                            entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints);
+                                        }
+
                                         if (existing == null)
                                         {
                                             FixupEntity(entry.Data);
@@ -403,7 +418,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             {
                 dataToSubmit = this.BundleDependentObjects(dataToSubmit);
                 // In case the server rejected the previous round via insert / duplicate key
-                (dataToSubmit as Bundle)?.Item.Where(itm => itm.BatchOperation == BatchOperationType.Insert).ForEach(itm => itm.BatchOperation = BatchOperationType.InsertOrUpdate); 
+                (dataToSubmit as Bundle)?.Item.Where(itm => itm.BatchOperation == BatchOperationType.Insert).ForEach(itm => itm.BatchOperation = BatchOperationType.InsertOrUpdate);
             }
 
             // If we're sending a bundle we remove any forbidden objects
@@ -480,7 +495,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     {
                         if (!currentBundle.Item.Any(i => i.Key == rel.TargetEntityKey))// && !integrationService.Exists<Entity>(rel.TargetEntityKey.Value))
                         {
-                            var loaded = rel.LoadProperty(o => o.TargetEntity) ;
+                            var loaded = rel.LoadProperty(o => o.TargetEntity);
                             if (loaded != null)
                             {
                                 currentBundle.Item.Insert(0, loaded);
@@ -551,7 +566,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     return this._Configuration.BigBundles ? 2_000 : 500;
                 }
-                else if(objsInThirty > 1_000)
+                else if (objsInThirty > 1_000)
                 {
                     return this._Configuration.BigBundles ? 1_000 : 250;
                 }

@@ -105,9 +105,9 @@ namespace SanteDB.Client.Batteries.Services
                     }
                     else
                     {
-                        this.m_tracer.TraceEvent(EventLevel.Verbose, "Scanning {0} for applets...", appletDir);
+                        this.m_tracer.TraceInfo("Scanning {0} for applets...", appletDir);
 
-                        var appletFiles = Directory.GetFiles(appletDir, "*.pak").ToArray();
+                        var appletFiles = Directory.GetFiles(appletDir, "*.manifest").ToArray();
                         int loadedApplets = 0;
                         foreach (var file in appletFiles)
                         {
@@ -169,7 +169,7 @@ namespace SanteDB.Client.Batteries.Services
             }
 
             // If we have the original copy send that if not create our own (unsigned) version don't
-            var pakFile = Path.Combine(this.m_configuration.AppletDirectory, $"{appletId}.pak");
+            var pakFile = Path.Combine(this.m_configuration.AppletDirectory, $"{appletId}.manifest");
             if (File.Exists(pakFile))
             {
                 return File.ReadAllBytes(pakFile);
@@ -237,7 +237,7 @@ namespace SanteDB.Client.Batteries.Services
                 Directory.CreateDirectory(appletDir);
             }
 
-            return Path.Combine(appletDir, appletId);
+            return Path.Combine(appletDir, $"{appletId}.manifest");
         }
 
         /// <inheritdoc/>

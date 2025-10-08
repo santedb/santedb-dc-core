@@ -33,6 +33,7 @@ using SanteDB.Rest.Common.Behavior;
 using SanteDB.Rest.Common.Behaviors;
 using SanteDB.Rest.Common.Configuration;
 using SanteDB.Rest.Common.Security;
+using SanteDB.Rest.HDSI.Configuration;
 using SanteDB.Rest.WWW.Behaviors;
 using System;
 using System.Collections.Generic;
@@ -203,6 +204,13 @@ namespace SanteDB.Client.Rest
                 appConfiguration.AddService(new TypeReferenceConfiguration(typeof(RestServiceFactory)));
             }
 
+            var hdsiConfiguration = configuration.GetSection<HdsiConfigurationSection>();
+            if(hdsiConfiguration == null)
+            {
+                hdsiConfiguration = configuration.AddSection(new HdsiConfigurationSection());
+            }
+            hdsiConfiguration.AutomaticallyForwardRequests = true;
+            
             // Are we working on SSL? In the debugger environment? If so then we want to set the 
             if (bindingBase.Scheme == "https" && hostContextType == SanteDBHostType.Debugger)
             {

@@ -23,6 +23,9 @@ using SanteDB.Client.Upstream.Security;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
 using SanteDB.Core.Security;
+using SanteDB.Rest.AMI.Configuration;
+using SanteDB.Rest.BIS.Configuration;
+using SanteDB.Rest.HDSI.Configuration;
 using System;
 using System.Collections.Generic;
 
@@ -66,6 +69,15 @@ namespace SanteDB.Client.Configuration
                     };
 
         /// <inheritdoc/>
-        public void SetDefaults(SanteDBConfiguration configuration) { }
+        public void SetDefaults(SanteDBConfiguration configuration) {
+
+            var hdsiConfig = configuration.GetSection<HdsiConfigurationSection>();
+            if(hdsiConfig == null)
+            {
+                hdsiConfig = configuration.AddSection(new HdsiConfigurationSection());
+            }
+            hdsiConfig.AutomaticallyForwardRequests = true;
+
+        }
     }
 }
