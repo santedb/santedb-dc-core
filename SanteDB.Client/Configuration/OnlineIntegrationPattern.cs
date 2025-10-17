@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Management;
 using SanteDB.Client.Upstream.Matching;
 using SanteDB.Client.Upstream.Repositories;
@@ -65,7 +66,8 @@ namespace SanteDB.Client.Configuration
                         typeof(UpstreamSecurityChallengeProvider),
                         typeof(RepositoryEntitySource),
                         typeof(UpstreamResourceCheckoutService),
-                        typeof(UpstreamProtocolRepository)
+                        typeof(UpstreamProtocolRepository),
+                        typeof(UpstreamDecisionSupportService)
                     };
 
         /// <inheritdoc/>
