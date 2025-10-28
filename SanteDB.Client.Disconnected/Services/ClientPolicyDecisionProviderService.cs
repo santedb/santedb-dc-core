@@ -68,10 +68,14 @@ namespace SanteDB.Client.Disconnected.Services
                     PermissionPolicyIdentifiers.AlterSystemConfiguration,
                     PermissionPolicyIdentifiers.AssignCertificateToIdentity,
                     PermissionPolicyIdentifiers.ManageBackups,
+                    PermissionPolicyIdentifiers.CreateAnyBackup,
+                    PermissionPolicyIdentifiers.CreatePrivateBackup,
+                    PermissionPolicyIdentifiers.ReadServiceLogs,
                     PermissionPolicyIdentifiers.ManageDispatcherQueues,
                     PermissionPolicyIdentifiers.ManageForeignData,
                     PermissionPolicyIdentifiers.ManageMail,
                     PermissionPolicyIdentifiers.AccessAuditLog,
+                    PermissionPolicyIdentifiers.AlterSystemConfiguration,
                     PermissionPolicyIdentifiers.UnrestrictedAdministration
                 }
             }

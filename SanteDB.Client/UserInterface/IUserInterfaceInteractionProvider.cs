@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.Services;
 using System;
+using System.IO;
 
 namespace SanteDB.Client.UserInterface
 {
@@ -63,6 +64,16 @@ namespace SanteDB.Client.UserInterface
         /// <param name="pattern">The file patterns</param>
         /// <param name="path">The initial path</param>
         /// <returns>The selected file</returns>
-        string SelectFile(String title, String pattern, String path);
+        Stream SelectFile(String title, String pattern, String path);
+
+        /// <summary>
+        /// Open a file selector and allow the user to choose a file
+        /// </summary>
+        /// <param name="defaultPath">The path to save to</param>
+        /// <param name="defaultName">The default file name</param>
+        /// <param name="fileContents">The file contents</param>
+        /// <returns>The selected file</returns>
+        string SaveFile(String defaultPath, String defaultName, Stream fileContents);
+
     }
 }
