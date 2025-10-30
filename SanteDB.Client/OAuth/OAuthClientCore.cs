@@ -308,7 +308,11 @@ namespace SanteDB.Client.OAuth
                     return true;
                 });
 
-                _AdhocCache?.Add(ADHOC_JKWS_DOC_KEY, jwksjson, OAUTH_CACHE_TIMEOUT);
+                if (!String.IsNullOrEmpty(jwksjson))
+                {
+                    _AdhocCache?.Add(ADHOC_JKWS_DOC_KEY, jwksjson, OAUTH_CACHE_TIMEOUT);
+                }
+
             }
 
             if (null == jwksjson)
@@ -461,7 +465,10 @@ namespace SanteDB.Client.OAuth
             });
 
             // JF - Cache the discovery document
-            _AdhocCache?.Add(ADHOC_DISCOVERY_DOC_KEY, DiscoveryDocument, OAUTH_CACHE_TIMEOUT);
+            if (DiscoveryDocument != null)
+            {
+                _AdhocCache?.Add(ADHOC_DISCOVERY_DOC_KEY, DiscoveryDocument, OAUTH_CACHE_TIMEOUT);
+            }
 
             return DiscoveryDocument;
         }

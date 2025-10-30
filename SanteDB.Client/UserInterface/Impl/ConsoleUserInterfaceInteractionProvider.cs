@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using DocumentFormat.OpenXml.Wordprocessing;
 using System;
 using System.IO;
 using System.Linq;
@@ -63,7 +64,7 @@ namespace SanteDB.Client.UserInterface.Impl
         }
 
         /// <inheritdoc/>
-        public string SelectFile(string title, string pattern, string path)
+        public Stream SelectFile(string title, string pattern, string path)
         {
             var selectedFile = String.Empty;
             do
@@ -71,7 +72,31 @@ namespace SanteDB.Client.UserInterface.Impl
                 Console.Write($"{title} [Enter File Path]:");
                 selectedFile = Console.ReadLine();
             } while (!String.IsNullOrEmpty(selectedFile) && !File.Exists(selectedFile));
-            return selectedFile;
+
+            if (String.IsNullOrEmpty(selectedFile))
+            {
+                return File.OpenRead(selectedFile);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Save a file 
+        /// </summary>
+        /// <returns></returns>
+        public string SaveFile(String initialPath, string defaultName, Stream fileContents)
+        {
+            var retVal = Path.Combine(initialPath, defaultName);
+            using (var fs = File.Create(retVal))
+            {
+                fileContents.CopyTo(fs);
+            }
+            return retVal;
         }
 
         /// <inheritdoc/>

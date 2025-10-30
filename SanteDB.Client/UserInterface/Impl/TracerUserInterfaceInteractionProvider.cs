@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using System;
+using System.IO;
 
 namespace SanteDB.Client.UserInterface.Impl
 {
@@ -50,7 +51,12 @@ namespace SanteDB.Client.UserInterface.Impl
             throw new NotSupportedException("Non-Interactive Environment");
         }
 
-        public string SelectFile(string title, string pattern, string path)
+        public string SaveFile(string defaultPath, string defaultName, Stream fileContents)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Stream SelectFile(string title, string pattern, string path)
         {
             throw new NotSupportedException();
         }

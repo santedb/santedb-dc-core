@@ -298,7 +298,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                     if (entry.Data is Bundle bdl)
                                     {
                                         FixupBundleData(bdl);
-                                        if (entry.RetryCount.GetValueOrDefault() < 2)
+                                        if (entry.RetryCount.GetValueOrDefault() < 1)
                                         {
                                             bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.All);
                                         }
@@ -321,7 +321,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                         }
 
                                         // If there is an existing - update otherwise insert
-                                        if (entry.RetryCount.GetValueOrDefault() < 2)
+                                        if (entry.RetryCount.GetValueOrDefault() < 1)
                                         {
                                             entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.All);
                                         }
