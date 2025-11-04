@@ -19,6 +19,7 @@
 using SanteDB.Cdss.Xml;
 using SanteDB.Cdss.Xml.Model;
 using SanteDB.Core.Cdss;
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Data.Quality;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
@@ -36,8 +37,10 @@ namespace SanteDB.Client.Disconnected.Services
     /// <summary>
     /// A CDSS library repository that uses a file system for storage
     /// </summary>
-    public class FileSystemCdssLibraryRepository : ICdssLibraryRepository
+    public class FileSystemCdssLibraryRepository : ICdssLibraryRepository, IProvideBackupAssets, IRestoreBackupAssets
     {
+        public static Guid FILE_CDSS_BACKUP_ASSET_ID = Guid.Parse("3c530ba8-7664-4144-9561-d65514399312");
+
         // Location of the CDSS library
         private readonly string m_cdssLibraryLocation;
         private readonly ConcurrentDictionary<Guid, ICdssLibrary> m_cdssLibrary = new ConcurrentDictionary<Guid, ICdssLibrary>();
@@ -74,6 +77,9 @@ namespace SanteDB.Client.Disconnected.Services
 
         /// <inheritdoc/>
         public string ServiceName => "File System Based CDSS Library";
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { FILE_CDSS_BACKUP_ASSET_ID };
 
         /// <inheritdoc/>
         public IQueryResultSet<ICdssLibrary> Find(Expression<Func<ICdssLibrary, bool>> filter)
@@ -144,6 +150,28 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 throw new KeyNotFoundException();
             }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            foreach (var d in Directory.EnumerateFiles(this.m_cdssLibraryLocation, "*.xml"))
+            {
+                yield return new FileBackupAsset(FILE_CDSS_BACKUP_ASSET_ID, Path.GetFileName(d), d);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            using(var fs = File.Create(Path.Combine(m_cdssLibraryLocation, backupAsset.Name)))
+            {
+                using (var ins = backupAsset.Open())
+                {
+                    ins.CopyTo(fs);
+                }
+            }
+            return true;
         }
     }
 }

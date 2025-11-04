@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using Hl7.Fhir.Specification.Terminology;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -188,7 +189,7 @@ namespace SanteDB.Client.Configuration
                     {
                         assetStream.CopyTo(configStream);
                         configStream.Seek(0, SeekOrigin.Begin);
-                        this.m_configuration = SanteDBConfiguration.Load(configStream);
+                        this.m_configuration = SanteDBConfiguration.Load(configStream, validateConfiguration: false);
                         return true;
                     }
                 }

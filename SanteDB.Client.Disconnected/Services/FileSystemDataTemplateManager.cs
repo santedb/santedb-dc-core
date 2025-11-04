@@ -35,14 +35,18 @@ using System.Linq;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Core.Model;
+using SanteDB.Core.Data.Backup;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Client.Disconnected.Services
 {
     /// <summary>
     /// Implementation of the <see cref="IDataTemplateManagementService"/> which uses a file system location
     /// </summary>
-    public class FileSystemDataTemplateManager : IDataTemplateManagementService
+    public class FileSystemDataTemplateManager : IDataTemplateManagementService, IProvideBackupAssets, IRestoreBackupAssets
     {
+
+        public static readonly Guid FILE_SYSTEM_BACKUP_ASSET_ID = Guid.Parse("bf146238-66da-449d-9301-1f52f15d0dc3");
 
         // Location of the template library
         private readonly string m_libraryLocation;
@@ -108,7 +112,10 @@ namespace SanteDB.Client.Disconnected.Services
 
         /// <inheritdoc/>
         public string ServiceName => "File System Data Template Manager";
-        
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { FILE_SYSTEM_BACKUP_ASSET_ID };
+
         /// <inheritdoc/>
         public DataTemplateDefinition AddOrUpdate(DataTemplateDefinition definition)
         {
@@ -253,6 +260,28 @@ namespace SanteDB.Client.Disconnected.Services
             else
             {
                 throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(DataTemplateDefinition), data.GetType()));
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            using (var outs = File.Create(Path.Combine(this.m_libraryLocation, backupAsset.Name)))
+            {
+                using(var ins = backupAsset.Open())
+                {
+                    ins.CopyTo(outs);
+                }
+            }
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            foreach (var d in Directory.EnumerateFiles(this.m_libraryLocation, "*.xml"))
+            {
+                yield return new FileBackupAsset(FILE_SYSTEM_BACKUP_ASSET_ID, Path.GetFileName(d), d);
             }
         }
     }

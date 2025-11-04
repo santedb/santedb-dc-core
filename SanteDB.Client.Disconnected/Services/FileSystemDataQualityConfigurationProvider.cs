@@ -27,14 +27,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
+using SanteDB.Core.Data.Backup;
 
 namespace SanteDB.Client.Disconnected.Services
 {
     /// <summary>
     /// File system data quality provider
     /// </summary>
-    public class FileSystemDataQualityConfigurationProvider : IDataQualityConfigurationProviderService
+    public class FileSystemDataQualityConfigurationProvider : IDataQualityConfigurationProviderService, IProvideBackupAssets, IRestoreBackupAssets
     {
+
+        public static readonly Guid FILE_DQ_ASSET_ID = Guid.Parse("8d5edd7b-47d9-4bf0-8ab4-eca9be115fa5");
 
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemDataQualityConfigurationProvider));
         private readonly ConcurrentDictionary<String, DataQualityRulesetConfiguration> m_rulesetLibrary = new ConcurrentDictionary<string, DataQualityRulesetConfiguration>();
@@ -69,6 +72,9 @@ namespace SanteDB.Client.Disconnected.Services
         
         /// <inheritdoc/>
         public string ServiceName => "File System Data Quality Ruleset Provider";
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { FILE_DQ_ASSET_ID };
 
         /// <inheritdoc/>
         public DataQualityRulesetConfiguration GetRuleSet(string id)
@@ -123,6 +129,28 @@ namespace SanteDB.Client.Disconnected.Services
             {
                 this.m_tracer.TraceError("Error saving rule set configuration: {0}", e);
                 throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            using(var fs = File.Create(Path.Combine(this.m_libraryLocation, backupAsset.Name)))
+            {
+                using(var ins = backupAsset.Open())
+                {
+                    ins.CopyTo(fs);
+                }
+            }
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            foreach (var d in Directory.EnumerateFiles(this.m_libraryLocation, "*.xml"))
+            {
+                yield return new FileBackupAsset(FILE_DQ_ASSET_ID, Path.GetFileName(d), d);
             }
         }
     }
