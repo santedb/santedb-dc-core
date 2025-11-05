@@ -73,26 +73,26 @@ namespace SanteDB.Client.OAuth
         }
 
         /// <inheritdoc />
-        protected override bool OnBeforeSignOut(OAuthSignoutRequestContext context)
+        protected override void OnAfterSignOut(OAuthSignoutRequestContext context)
         {
-            // Abandon the UI session
-            if (context.OperationContext.Data.TryGetValue(TokenAuthorizationAccessBehavior.RestPropertyNameSession, out object session))
-            {
-                base.m_SessionProvider.Abandon(session as ISession);
-            }
 
             // HACK: Chrome does not like the way SetCookie works for the two cookies so we're going to clear them manually
-            context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}=; Max-Age=0; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
-            context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}=; Max-Age=0; Path=/; HttpOnly; Discard");
-
-            return true;
+            foreach (var session in context.AbandonedSessions)
+            {
+                // TODO: Propogate to central iCDR 
+                if (!session.Claims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && Boolean.TryParse(c.Value, out var tempSession) && tempSession))
+                {
+                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}=; Max-Age=0; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
+                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}=; Max-Age=0; Path=/; HttpOnly; Discard");
+                }
+            }
         }
 
         /// <inheritdoc />
         protected override void BeforeSendTokenResponse(OAuthTokenRequestContext context, OAuthTokenResponse response)
         {
             var clientClaims = ClaimsUtility.ExtractClientClaims(context.IncomingRequest.Headers);
-            if (!clientClaims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && c.Value == "true"))
+            if (!clientClaims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && Boolean.TryParse(c.Value, out var tempSession) && tempSession))
             {
                 if (null != response.RefreshToken)
                 {
@@ -100,7 +100,6 @@ namespace SanteDB.Client.OAuth
                 }
 
                 context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}={response.AccessToken}; Max-Age={response.ExpiresIn + 10}; Path=/; HttpOnly; Discard");
-
 
             }
         }
