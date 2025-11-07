@@ -24,6 +24,7 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -199,7 +200,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     this.m_tracer.TraceWarning("Upstream is not conifgured - returning default list for policy check");
                     retVal = typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-                            .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false))
+                            .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false, o.IsPublic))
                             .ToArray();
                 }
                 else
@@ -215,7 +216,7 @@ namespace SanteDB.Client.Upstream.Repositories
                             {
                                 offset = retVal.Length;
                                 serverResult = client.FindPolicy(o => o.ObsoletionTime == null && o.WithControl("_includeTotal", true) == null && o.WithControl("_offset", offset) == null);
-                                retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride))).ToArray();
+                                retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride, o.IsPublic))).ToArray();
                             } while (retVal.Length < serverResult.Size);
                         }
                     }
