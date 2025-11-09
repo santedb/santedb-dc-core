@@ -70,5 +70,36 @@ namespace SanteDB.Client.Rest
                 Tracer.GetTracer(typeof(RestDebugCertificateInstallation)).TraceError("Failed to Bind SSL certificate - you may need to run netsh http add sslcert ipport={0}:{1} certhash={2} from an elevated command prompt", bindingBase.Host, bindingBase.Port, ssiDebugCert.Thumbprint);
             }
         }
+
+        /// <summary>
+        /// Uninstall debugging certificate
+        /// </summary>
+        public static bool UninstallDebugCertificate(Uri bindingBase, ICertificateGeneratorService certificateGeneratorService)
+        {
+            var sslBindingUtil = HttpSslUtil.GetCurrentPlatformCertificateBinder();
+            var platService = X509CertificateUtils.GetPlatformServiceOrDefault();
+            if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", out var ssiDebugCert))
+            {
+                return false;
+            }
+            try
+            {
+                if (bindingBase.HostNameType == UriHostNameType.Dns)
+                {
+                    var ipaddress = Dns.GetHostAddresses(bindingBase.Host);
+                    sslBindingUtil.UnbindCertificate(ipaddress[0], bindingBase.Port, ssiDebugCert.GetCertHash(), StoreName.My, StoreLocation.CurrentUser);
+                }
+                else if (IPAddress.TryParse(bindingBase.Host, out var ipAddress))
+                {
+                    sslBindingUtil.UnbindCertificate(ipAddress, bindingBase.Port, ssiDebugCert.GetCertHash(), StoreName.My, StoreLocation.CurrentUser);
+                }
+                return true;
+            }
+            catch
+            {
+                Tracer.GetTracer(typeof(RestDebugCertificateInstallation)).TraceError("Failed to Un-Bind SSL certificate - you may need to run netsh http add sslcert ipport={0}:{1} certhash={2} from an elevated command prompt", bindingBase.Host, bindingBase.Port, ssiDebugCert.Thumbprint);
+                return false;
+            }
+        }
     }
 }
