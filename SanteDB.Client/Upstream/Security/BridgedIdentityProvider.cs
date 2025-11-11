@@ -272,7 +272,7 @@ namespace SanteDB.Client.Upstream.Security
         }
 
         /// <inheritdoc/>
-        public IPrincipal Authenticate(string userName, string password, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null) => this.Authenticate(userName, password, null, clientClaimAssertions);
+        public IPrincipal Authenticate(string userName, string password, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null) => this.Authenticate(userName, password, null, clientClaimAssertions, demandedScopes);
 
 
         /// <inheritdoc/>
@@ -305,7 +305,7 @@ namespace SanteDB.Client.Upstream.Security
                 {
                     try
                     {
-                        result = this.m_upstreamIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions);
+                        result = this.m_upstreamIdentityProvider.Authenticate(userName, password, tfaSecret, clientClaimAssertions, demandedScopes);
                         this.m_threadPoolService.QueueUserWorkItem((o) => this.SynchronizeIdentity(o.result as IClaimsPrincipal, o.password), new { result = result, password = password });
                     }
                     catch (RestClientException<Object> e)
