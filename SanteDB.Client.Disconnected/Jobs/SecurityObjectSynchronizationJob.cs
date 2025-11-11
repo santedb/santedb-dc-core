@@ -19,6 +19,7 @@
 using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.IdentityModel.Abstractions;
 using SanteDB;
+using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Http;
 using SanteDB.Client.Upstream.Security;
@@ -195,7 +196,8 @@ namespace SanteDB.Client.Disconnected.Jobs
                 {
                     extendedCertificateManager.AddSigningCertificates(AuthenticationContext.AnonymousPrincipal.Identity, signingCerts, AuthenticationContext.SystemPrincipal);
                 }
-                else {
+                else
+                {
                     foreach (var cert in signingCerts)
                     {
                         _LocalDataSigningCertificateManager.AddSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, cert, AuthenticationContext.SystemPrincipal);
@@ -297,43 +299,30 @@ namespace SanteDB.Client.Disconnected.Jobs
 
         private void GetUpstreamSecurityApplications()
         {
-            if (null == _UpstreamSecurityApplicationRepository) //SKIP Since there is no upstream repository for security applications.
+
+            try
             {
-                return;
+                using (var amiClient = this._RestClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService))
+                {
+                    var myAppId = _ConfigurationManager.GetSection<UpstreamConfigurationSection>().Credentials.First(o => o.CredentialType == UpstreamCredentialType.Application)?.CredentialName;
+                    if (String.IsNullOrEmpty(myAppId))
+                    {
+                        _Tracer.TraceWarning("Cannot synchronize application policies");
+                        return;
+                    }
+
+                    var appinfo = amiClient.Get<AmiCollection>($"{typeof(SecurityApplication).GetSerializationName()}", $"name={myAppId}".ParseQueryString()).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault();
+
+                    // Set the policies 
+                    foreach (var pol in appinfo.Policies.GroupBy(o=>o.Grant))
+                    {
+                        _LocalPolicyInformationService.AddPolicies(appinfo.Entity, pol.Key, AuthenticationContext.SystemPrincipal, pol.Select(o => o.Policy.Oid).ToArray());
+                    }
+                }
             }
-
-            var applications = _UpstreamSecurityApplicationRepository.Find(_ => true);
-
-            foreach (var application in applications)
+            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
-                try
-                {
-                    if (application?.Key.HasValue != true)
-                    {
-                        continue;
-                    }
-
-                    var localapp = _LocalSecurityApplicationRepository.Get(application.Key.Value);
-
-                    if (null == localapp)
-                    {
-                        var newapp = application.DeepCopy() as SecurityApplication;
-
-                        localapp = _LocalSecurityApplicationRepository.Insert(newapp);
-                    }
-
-
-                    if (localapp.Lockout != application.Lockout)
-                    {
-                        localapp.Lockout = application.Lockout;
-                        localapp = _LocalSecurityApplicationRepository.Save(localapp);
-                    }
-
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-                    _Tracer.TraceWarning("Job {1}: Failed to insert/update Application {0}", application.Name, nameof(SecurityObjectSynchronizationJob));
-                }
+                _Tracer.TraceError("Job {1}: Error synchronizing application. Exception: {0}", ex.ToString(), nameof(SecurityObjectSynchronizationJob));
             }
 
         }
