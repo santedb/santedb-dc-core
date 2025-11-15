@@ -1,4 +1,5 @@
-﻿using SanteDB.Client.Upstream.Repositories;
+﻿using RestSrvr;
+using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core.Cdss;
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
@@ -9,6 +10,8 @@ using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.Rest.Common;
+using SanteDB.Rest.Common.Serialization;
 using SanteDB.Rest.HDSI.Operation;
 using System;
 using System.Collections.Generic;
@@ -104,9 +107,21 @@ namespace SanteDB.Client.Upstream
                 {
                     requestParameters.Parameters.Add(new Parameter("library", librariesToUse.Select(o => o.Uuid)));
                 }
+
+                // We should ask for the results back in VM format?
                 parameters?.ForEach(p => requestParameters.Parameters.Add(new Parameter(p.Key, p.Value)));
                 client.Accept = SanteDBExtendedMimeTypes.JsonViewModel;
-                return client.Post<ParameterCollection, CarePlan>(requestUrl, SanteDBExtendedMimeTypes.JsonViewModel, requestParameters);
+                client.Requesting += (o, e) =>
+                {
+                    e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.ViewModelHeaderName, "full");
+                };
+
+                var retVal = client.Post<ParameterCollection, CarePlan>(requestUrl, SanteDBExtendedMimeTypes.JsonViewModel, requestParameters);
+                retVal.PreventDelayLoad();
+                retVal.Relationships.ForEach(r => r.TargetAct.PreventDelayLoad());
+                // Hack: Prevent delay loading on REST OPERATION CONTEXT
+                //RestOperationContext.Current.Data.Add(RestMessageDispatchFormatter.VIEW_MODEL_BYPASS_DELAY_LOAD, true);
+                return retVal;
             }
         }
     }
