@@ -292,7 +292,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
                             using (AuthenticationContext.EnterSystemContext())
                             {
-                                using (DataPersistenceControlContext.Create(autoUpdate: false, autoInsert: true))
+                                using (DataPersistenceControlContext.Create(autoUpdate: entry.RetryCount.GetValueOrDefault() > 0, autoInsert: true))
                                 {
                                     var localPersistence = this.GetPersistenceService(entry.Data.GetType());
                                     if (entry.Data is Bundle bdl)

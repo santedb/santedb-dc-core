@@ -161,8 +161,8 @@ namespace SanteDB.Client.Batteries.Configuration
                 }
             };
 
-
-
+            var secretData = new byte[32];
+            System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(secretData);
             configuration.AddSection(new SecurityConfigurationSection()
             {
                 PasswordRegex = @"^(?=.*\d){1,}(?=.*[a-z]){1,}(?=.*[A-Z]){1,}(?=.*[^\w\d]){1,}.{6,}$",
@@ -177,7 +177,7 @@ namespace SanteDB.Client.Batteries.Configuration
                     {
                         KeyName ="default",
                         Algorithm = SanteDB.Core.Security.Configuration.SignatureAlgorithm.HS256,
-                        HmacSecret = $"@SanteDBDefault$$${DateTime.Now.Year}_{Environment.MachineName}_{Guid.NewGuid()}"
+                        Secret = secretData
 
                     }
                 }

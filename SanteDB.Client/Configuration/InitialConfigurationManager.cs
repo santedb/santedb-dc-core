@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace SanteDB.Client.Configuration
 {
@@ -62,7 +63,7 @@ namespace SanteDB.Client.Configuration
         public string ServiceName => "Temporary Configuration Service";
 
         /// <inheritdoc/>
-        public Guid[] AssetClassIdentifiers => new[] { CONFIGURATION_FILE_ASSET_ID }; 
+        public Guid[] AssetClassIdentifiers => new[] { CONFIGURATION_FILE_ASSET_ID };
 
         /// <summary>
         /// Initial configuration manager 
@@ -139,10 +140,12 @@ namespace SanteDB.Client.Configuration
         /// <inheritdoc/>
         public void SaveConfiguration(bool restart = true)
         {
+            
             // Save configuration - 
             var encryptionCertificiate = this.m_configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o => o.KeyName == "default");
             if (encryptionCertificiate?.Algorithm != SignatureAlgorithm.HS256)
             {
+                this.m_tracer.TraceInfo("Encrypting configuration file ...");
                 this.m_configuration.ProtectedSectionKey = new X509ConfigurationElement(encryptionCertificiate);
             }
             else
@@ -185,13 +188,16 @@ namespace SanteDB.Client.Configuration
             {
                 using (var assetStream = backupAsset.Open())
                 {
-                    using (var configStream = File.Create(this.m_localConfigurationPath))
+                    var restoreConfiguration = SanteDBConfiguration.Load(assetStream, validateConfiguration: false);
+                    // Save configuration - 
+                    restoreConfiguration.GetSection<SecurityConfigurationSection>().Signatures = new List<SecuritySignatureConfiguration>(this.Configuration.GetSection<SecurityConfigurationSection>().Signatures);
+                    // Set the configuration here and save to file system
+                    this.m_configuration = restoreConfiguration;
+                    using (var fs = File.Create(this.m_localConfigurationPath))
                     {
-                        assetStream.CopyTo(configStream);
-                        configStream.Seek(0, SeekOrigin.Begin);
-                        this.m_configuration = SanteDBConfiguration.Load(configStream, validateConfiguration: false);
-                        return true;
+                        this.Configuration.Save(fs);
                     }
+                    return true;
                 }
             }
             return false;
