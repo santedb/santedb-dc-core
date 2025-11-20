@@ -45,7 +45,7 @@ namespace SanteDB.Client.Rest
             }
 
             var platService = X509CertificateUtils.GetPlatformServiceOrDefault();
-            if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", out var ssiDebugCert))
+            if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", StoreName.My, StoreLocation.LocalMachine, out var ssiDebugCert))
             {
                 var keyPair = certificateGeneratorService.CreateKeyPair(2048);
                 ssiDebugCert = certificateGeneratorService.CreateSelfSignedCertificate(keyPair, new X500DistinguishedName($"CN={bindingBase.Host}"), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment, new string[] { ExtendedKeyUsageOids.ServerAuthentication }, new String[] { bindingBase.Host });
@@ -65,9 +65,9 @@ namespace SanteDB.Client.Rest
                     sslBindingUtil.BindCertificate(ipAddress, bindingBase.Port, ssiDebugCert.GetCertHash(), false, StoreName.My, StoreLocation.CurrentUser);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                Tracer.GetTracer(typeof(RestDebugCertificateInstallation)).TraceError("Failed to Bind SSL certificate - you may need to run netsh http add sslcert ipport={0}:{1} certhash={2} from an elevated command prompt", bindingBase.Host, bindingBase.Port, ssiDebugCert.Thumbprint);
+                throw new InvalidOperationException($"Failed to Bind SSL certificate - you may need to run netsh http add sslcert ipport={bindingBase.Host}:{bindingBase.Port} certhash={ssiDebugCert.Thumbprint} from an elevated command prompt", ex);
             }
         }
 
@@ -78,7 +78,7 @@ namespace SanteDB.Client.Rest
         {
             var sslBindingUtil = HttpSslUtil.GetCurrentPlatformCertificateBinder();
             var platService = X509CertificateUtils.GetPlatformServiceOrDefault();
-            if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", out var ssiDebugCert))
+            if (!platService.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, $"CN={bindingBase.Host}", StoreName.My, StoreLocation.LocalMachine, out var ssiDebugCert))
             {
                 return false;
             }
@@ -95,10 +95,9 @@ namespace SanteDB.Client.Rest
                 }
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
-                Tracer.GetTracer(typeof(RestDebugCertificateInstallation)).TraceError("Failed to Un-Bind SSL certificate - you may need to run netsh http add sslcert ipport={0}:{1} certhash={2} from an elevated command prompt", bindingBase.Host, bindingBase.Port, ssiDebugCert.Thumbprint);
-                return false;
+                throw new InvalidOperationException($"Failed to Bind SSL certificate - you may need to run netsh http delete sslcert ipport={bindingBase.Host}:{bindingBase.Port} certhash={ssiDebugCert.Thumbprint} from an elevated command prompt", ex);
             }
         }
     }
