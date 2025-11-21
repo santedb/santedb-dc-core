@@ -1278,6 +1278,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         ue.SecurityUser = null;
                     }
                     break;
+                case DeviceEntity de:
+                    de.SecurityDeviceKey = null;
+                    de.SecurityDevice = null;
+                    break;
                 case Bundle bdl:
 
                     if (bdl.CorrelationKey.HasValue)

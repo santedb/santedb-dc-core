@@ -16,8 +16,10 @@
  * the License.
  *
  */
+using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Upstream.Management;
 using SanteDB.Core;
+using SanteDB.Core.Model.Json.Formatter;
 using SanteDB.Core.Services;
 using System;
 using System.Net;
@@ -45,6 +47,11 @@ namespace SanteDB.Client.Http
         /// </summary>
         public UpstreamDeviceCredentials(IPrincipal principal) : base(principal)
         {
+            // Get the configuration 
+            if (m_upstreamConfiguration == null)
+            {
+                m_upstreamConfiguration = ApplicationServiceContext.Current?.GetService<IUpstreamManagementService>()?.GetSettings() as ConfiguredUpstreamRealmSettings;
+            }
         }
 
         /// <summary>

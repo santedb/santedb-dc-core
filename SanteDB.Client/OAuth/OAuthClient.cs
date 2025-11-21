@@ -149,6 +149,7 @@ namespace SanteDB.Client.OAuth
         /// Contacts the OAUTH server with <paramref name="request"/>
         /// </summary>
         /// <param name="request">The OAUTH authentication request to send to the server</param>
+        /// <param name="clientClaimAssertions">Client claim assertions</param>
         /// <returns>The response provided by the OAUTH server</returns>
         protected override OAuthTokenResponse GetToken(OAuthTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
@@ -158,7 +159,7 @@ namespace SanteDB.Client.OAuth
                 throw new InvalidOperationException(_Localization.GetString(ErrorMessageStrings.INVALID_STATE));
             }
 
-            return base.GetToken(request);
+            return base.GetToken(request, clientClaimAssertions);
         }
 
         /// <summary>

@@ -169,7 +169,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                     // Determine the last synchronization query 
                     using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                     {
-                        client.Credentials = new UpstreamDeviceCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
+                        client.Credentials = new UpstreamPrincipalCredentials(this.m_upstreamIntegrationService.AuthenticateAsDevice());
 
                         string lastEtag = null;
                         if (cdssSyncLog.LastSync.HasValue)

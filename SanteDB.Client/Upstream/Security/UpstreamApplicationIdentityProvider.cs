@@ -156,7 +156,7 @@ namespace SanteDB.Client.Upstream.Security
                 {
                     using (AuthenticationContext.EnterContext(authenticationContext)) // Enter authentication context so the rest client knows to append the proper headers
                     {
-                        result = _OAuthClient.AuthenticateApp(clientId);
+                        result = _OAuthClient.AuthenticateApp(clientId, null, clientClaimAssertions: new IClaim[] { new SanteDBClaim(SanteDBClaimTypes.OnBehalfOf, authenticationContext.Identity.Name) });
                     }
                 }
                 return result;

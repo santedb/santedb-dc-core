@@ -24,6 +24,7 @@ using SanteDB.Core.Data.Quality;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -39,6 +40,39 @@ namespace SanteDB.Client.Disconnected.Services
     /// </summary>
     public class FileSystemCdssLibraryRepository : ICdssLibraryRepository, IProvideBackupAssets, IRestoreBackupAssets
     {
+        /// <summary>
+        /// Memory cdss entry data
+        /// </summary>
+        private class MemoryCdssEntry : ICdssLibraryRepositoryMetadata
+        {
+
+            public MemoryCdssEntry(CdssLibraryDefinition defn, FileInfo fi)
+            {
+                this.Key = defn.Uuid;
+                this.CreationTime = fi.CreationTimeUtc;
+                this.CreatedByKey = Guid.Parse(AuthenticationContext.SystemApplicationSid);
+            }
+
+            public long? VersionSequence { get; set; }
+            public Guid? VersionKey { get; set; }
+            public Guid? PreviousVersionKey { get; set; }
+            public bool IsHeadVersion { get; set; }
+
+            public Guid? CreatedByKey { get; private set; }
+
+            public Guid? ObsoletedByKey => null;
+
+            public DateTimeOffset CreationTime { get; private set; }
+
+            public DateTimeOffset? ObsoletionTime => null;
+
+            public Guid? Key { get; set; }
+
+            public string Tag => $"{this.Key}/{this.CreationTime.Ticks}";
+
+            public DateTimeOffset ModifiedOn => this.CreationTime;
+        }
+
         public static Guid FILE_CDSS_BACKUP_ASSET_ID = Guid.Parse("3c530ba8-7664-4144-9561-d65514399312");
 
         // Location of the CDSS library
@@ -67,10 +101,14 @@ namespace SanteDB.Client.Disconnected.Services
         {
             foreach (var d in Directory.EnumerateFiles(this.m_cdssLibraryLocation, "*.xml"))
             {
+                var fi = new FileInfo(d);
                 using (var fs = File.OpenRead(d))
                 {
                     var defn = CdssLibraryDefinition.Load(fs);
-                    this.m_cdssLibrary.TryAdd(defn.Uuid, new XmlProtocolLibrary(defn));
+                    this.m_cdssLibrary.TryAdd(defn.Uuid, new XmlProtocolLibrary(defn)
+                    {
+                        StorageMetadata = new MemoryCdssEntry(defn, fi)
+                    });
                 }
             }
         }
