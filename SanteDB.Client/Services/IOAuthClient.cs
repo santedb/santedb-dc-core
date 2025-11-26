@@ -47,7 +47,7 @@ namespace SanteDB.Client.Services
         /// <param name="clientSecret">The client secret to pass to the oauth service</param>
         /// <param name="scopes">Scopes that are being demanded</param>
         /// <returns>The claims principal if the session was authenticated</returns>
-        IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<String> scopes = null);
+        IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable <String> scopes = null);
 
         /// <summary>
         /// Refresh the current <paramref name="refreshToken"/>

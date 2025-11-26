@@ -39,6 +39,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.Core.Services.Impl.Repository;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Persistence.Data.Services.Persistence.Acts;
 using SanteDB.Rest.OAuth.Configuration;
@@ -105,7 +106,8 @@ namespace SanteDB.Client.Disconnected.Jobs
             IRestClientFactory restClientFactory,
             IConfigurationManager configurationManager,
             ISynchronizationLogService synchronizationLogService,
-            ILocalServiceProvider<IDataSigningCertificateManagerService> localDataSigningCertificateManager
+            ILocalServiceProvider<IDataSigningCertificateManagerService> localDataSigningCertificateManager,
+            ILocalServiceProvider<IRepositoryService<SecurityApplication>> localSecurityApplicationRepository = null
             //IUpstreamServiceProvider<ISecurityChallengeService> upstreamSecurityChallengeService = null,
             //ILocalServiceProvider<ISecurityChallengeService> localSecurityChallengeService = null
             )
@@ -125,6 +127,7 @@ namespace SanteDB.Client.Disconnected.Jobs
             _RestClientFactory = restClientFactory;
             _SynchronizationLogService = synchronizationLogService;
             _ConfigurationManager = configurationManager;
+            _LocalSecurityApplicationRepository = localSecurityApplicationRepository?.LocalProvider;
             //_UpstreamSecurityChallengeService = upstreamSecurityChallengeService.UpstreamProvider;
             //_LocalSecurityChallengeService = localSecurityChallengeService.LocalProvider;
         }
@@ -305,18 +308,18 @@ namespace SanteDB.Client.Disconnected.Jobs
                 using (var amiClient = this._RestClientFactory.GetRestClientFor(ServiceEndpointType.AdministrationIntegrationService))
                 {
                     var myAppId = _ConfigurationManager.GetSection<UpstreamConfigurationSection>().Credentials.First(o => o.CredentialType == UpstreamCredentialType.Application)?.CredentialName;
-                    if (String.IsNullOrEmpty(myAppId))
-                    {
-                        _Tracer.TraceWarning("Cannot synchronize application policies");
-                        return;
-                    }
-
-                    var appinfo = amiClient.Get<AmiCollection>($"{typeof(SecurityApplication).GetSerializationName()}", $"name={myAppId}".ParseQueryString()).CollectionItem.OfType<SecurityApplicationInfo>().FirstOrDefault();
+                    var systemSid = Guid.Parse(AuthenticationContext.SystemApplicationSid);
+                    var localRegisteredApps = _LocalSecurityApplicationRepository?.Find(o => o.ObsoletionTime == null).ToArray().Select(o => o.Name).ToArray() ?? new String[] { myAppId };
+                    var amiQuery = String.Join("&", localRegisteredApps.Select(o => $"name={o}")).ParseQueryString();
+                    var appinfo = amiClient.Get<AmiCollection>($"{typeof(SecurityApplication).GetSerializationName()}", amiQuery).CollectionItem.OfType<SecurityApplicationInfo>();
 
                     // Set the policies 
-                    foreach (var pol in appinfo.Policies.GroupBy(o=>o.Grant))
+                    foreach (var app in appinfo)
                     {
-                        _LocalPolicyInformationService.AddPolicies(appinfo.Entity, pol.Key, AuthenticationContext.SystemPrincipal, pol.Select(o => o.Policy.Oid).ToArray());
+                        foreach (var pol in app.Policies.GroupBy(o => o.Grant))
+                        {
+                            _LocalPolicyInformationService.AddPolicies(app.Entity, pol.Key, AuthenticationContext.SystemPrincipal, pol.Select(o => o.Policy.Oid).ToArray());
+                        }
                     }
                 }
             }

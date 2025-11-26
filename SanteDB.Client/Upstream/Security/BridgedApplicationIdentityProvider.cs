@@ -64,8 +64,9 @@ namespace SanteDB.Client.Upstream.Security
             IUpstreamServiceProvider<IPolicyInformationService> upstreamPip,
             ILocalServiceProvider<IPolicyInformationService> localPip,
             IConfigurationManager configurationManager,
-            ILocalizationService localizationService) :
-            base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider)
+            ILocalizationService localizationService,
+            IUpstreamIntegrationService upstreamIntegrationService = null) :
+            base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
             this.m_upstreamPip = upstreamPip.UpstreamProvider;
             this.m_localPip = localPip.LocalProvider;
@@ -159,7 +160,8 @@ namespace SanteDB.Client.Upstream.Security
         /// </summary>
         private bool IsLocalApplication(string applicationName)
         {
-            return this.m_localApplicationIdentityProvider.GetClaims(applicationName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
+            return this.m_localApplicationIdentityProvider.GetIdentity(applicationName) != null &&
+                this.m_localApplicationIdentityProvider.GetClaims(applicationName)?.Any(c => c.Type == SanteDBClaimTypes.LocalOnly) == true;
         }
 
         /// <summary>
@@ -216,12 +218,19 @@ namespace SanteDB.Client.Upstream.Security
             IPrincipal result = null;
             try
             {
-                if (this.ShouldDoRemoteAuthentication(applicationName) && (authenticationUnder == null || authenticationUnder is ITokenPrincipal)) // Only token principals can auth upstream so don't bother 
+                if (this.ShouldDoRemoteAuthentication(applicationName)) // Only token principals can auth upstream so don't bother 
                 {
                     try
                     {
-                        result = authenticationUnder != null ? this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, authenticationUnder) :
-                            this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, applicationSecret);
+                        if (!String.IsNullOrEmpty(applicationSecret) || authenticationUnder is ITokenPrincipal)
+                        {
+                            result = authenticationUnder != null ? this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, authenticationUnder) :
+                                this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, applicationSecret);
+                        }
+                        else if(authenticationUnder.Identity.IsAuthenticated) // We authenticated the device - but the app is not local - we need to relay our device credential up
+                        {
+                            result = this.m_upstreamApplicationIdentityProvider.Authenticate(applicationName, this.UpstreamIntegrationService.AuthenticateAsDevice(authenticationUnder));
+                        }
                         this.SynchronizeIdentity(result as IClaimsPrincipal, applicationSecret);
                     }
                     catch (RestClientException<Object>)

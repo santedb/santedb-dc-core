@@ -153,7 +153,7 @@ namespace SanteDB.Client.OAuth
         /// <returns>The <see cref="IClaimsPrincipal"/> which was generated from the token response from the server</returns>
         protected virtual IClaimsPrincipal GetPrincipal(OAuthTokenRequest request, IEnumerable<IClaim> clientClaimAssertions = null)
         {
-            var response = GetToken(request);
+            var response = GetToken(request, clientClaimAssertions);
 
             if (null == response?.AccessToken)
             {
@@ -167,7 +167,7 @@ namespace SanteDB.Client.OAuth
                 return null;
             }
 
-            return CreatePrincipalFromResponse(response);
+            return CreatePrincipalFromResponse(response, request);
         }
 
         /// <summary>
@@ -333,7 +333,7 @@ namespace SanteDB.Client.OAuth
         /// </summary>
         /// <param name="response">The token response from the OAUTH server</param>
         /// <returns>The <see cref="IClaimsPrincipal"/> which was created from the <paramref name="response"/></returns>
-        protected virtual IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response)
+        protected virtual IClaimsPrincipal CreatePrincipalFromResponse(OAuthTokenResponse response, OAuthTokenRequest tokenRequest)
         {
 #if DEBUG
             // Allow PII to be included in exceptions
@@ -341,7 +341,6 @@ namespace SanteDB.Client.OAuth
 #endif
 
             var tokenvalidationresult = TokenHandler.ValidateToken(response.IdToken, TokenValidationParameters);
-
             if (tokenvalidationresult?.IsValid != true)
             {
                 // HACK: Sometimes on startup the discovery document wasn't downloaded properly so attempt to locate this information
@@ -349,7 +348,7 @@ namespace SanteDB.Client.OAuth
                 {
                     this.DiscoveryDocument = null;
                     this.SetTokenValidationParameters();
-                    return this.CreatePrincipalFromResponse(response);
+                    return this.CreatePrincipalFromResponse(response, tokenRequest);
                 }
                 throw tokenvalidationresult.Exception ?? new SecurityTokenException("Token validation failed");
             }
@@ -393,6 +392,11 @@ namespace SanteDB.Client.OAuth
             {
                 Tracer.TraceVerbose("Token Validation Parameters have not been set. Calling SetTokenValidationParameters()");
                 SetTokenValidationParameters();
+            }
+            else if(!this.TokenValidationParameters.ValidAudiences.Contains(request.ClientId) &&
+                clientClaimAssertions?.Any(c=>c.Type == SanteDBClaimTypes.OnBehalfOf && c.Value == this.ClientId) == true)
+            {
+                this.TokenValidationParameters.ValidAudiences = this.TokenValidationParameters.ValidAudiences.Union(new String[] { request.ClientId }).ToArray();
             }
 
             if (null == request.ClientId)
@@ -477,9 +481,11 @@ namespace SanteDB.Client.OAuth
         /// Create an authenticated <see cref="IClaimsPrincipal"/> using a client credential
         /// </summary>
         /// <param name="clientId">The client identifier to send to the oauth server</param>
+        /// <param name="clientClaimAssertions">The client claim assertions</param>
+        /// <param name="scopes">The scopes for request</param>
         /// <param name="clientSecret">The provided client secret</param>
         /// <returns>The authenticated claims principal</returns>
-        public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<string> scopes = null)
+        public IClaimsPrincipal AuthenticateApp(string clientId, string clientSecret = null, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<string> scopes = null)
         {
             var request = new OAuthTokenRequest
             {
@@ -490,7 +496,7 @@ namespace SanteDB.Client.OAuth
                 Scope = scopes == null ? "*" : String.Join(" ", scopes)
             };
 
-            return GetPrincipal(request);
+            return GetPrincipal(request, clientClaimAssertions);
         }
 
         /// <summary>
