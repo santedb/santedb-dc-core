@@ -52,7 +52,8 @@ namespace SanteDB.Client.UserInterface
             }
             else
             {
-                if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, certificate.Subject, out var trustedCertificate))
+                if (!this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindByThumbprint, certificate.Thumbprint, storeName: StoreName.TrustedPeople, out var trustedCertificate) &&
+                    !this.m_platformSecurityProvider.TryGetCertificate(X509FindType.FindByThumbprint, certificate.Thumbprint, out trustedCertificate))
                 {
                     if (this.m_interactionProvider.Confirm(this.m_localizationService.GetString(UserMessageStrings.CONFIRM_CERTIFICATE_TRUST, new { cert = certificate.Subject })))
                     {
