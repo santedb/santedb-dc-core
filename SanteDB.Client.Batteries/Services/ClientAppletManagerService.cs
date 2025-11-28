@@ -337,7 +337,7 @@ namespace SanteDB.Client.Batteries.Services
         {
             if(solutionId == this.m_clientConfiguration.UiSolution)
             {
-                return this.m_readonlyAppletCollection;
+                return this.GetOrLoadInstalledApplets();
             }
             else
             {
