@@ -160,7 +160,8 @@ namespace SanteDB.Client.Batteries.Services
         /// <summary>
         /// Solution list
         /// </summary>
-        public IEnumerable<AppletSolution> Solutions {
+        public IEnumerable<AppletSolution> Solutions
+        {
             get
             {
                 yield return new AppletSolution()
@@ -335,14 +336,7 @@ namespace SanteDB.Client.Batteries.Services
         /// <inheritdoc/>
         public ReadonlyAppletCollection GetApplets(string solutionId)
         {
-            if(solutionId == this.m_clientConfiguration.UiSolution)
-            {
-                return this.m_readonlyAppletCollection;
-            }
-            else
-            {
-                throw new KeyNotFoundException();
-            }
+            return this.GetOrLoadInstalledApplets();
         }
 
         /// <inheritdoc/>
@@ -354,27 +348,13 @@ namespace SanteDB.Client.Batteries.Services
         /// <inheritdoc/>
         public AppletManifest GetApplet(string solutionId, string appletId)
         {
-            if (solutionId == this.m_clientConfiguration.UiSolution)
-            {
-                return this.GetApplet(appletId);
-            }
-            else
-            {
-                throw new KeyNotFoundException();
-            }
+            return this.GetApplet(appletId);
         }
 
         /// <inheritdoc/>
         public byte[] GetPackage(string solutionId, string appletId)
         {
-            if (solutionId == this.m_clientConfiguration.UiSolution)
-            {
-                return this.GetPackage(appletId);
-            }
-            else
-            {
-                throw new KeyNotFoundException();
-            }
+            return this.GetPackage(appletId);
         }
     }
 }
