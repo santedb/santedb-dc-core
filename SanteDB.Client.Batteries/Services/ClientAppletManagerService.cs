@@ -16,6 +16,8 @@
  * the License.
  *
  */
+using Acornima.Ast;
+using SanteDB.Client.Configuration;
 using SanteDB.Client.Services;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
@@ -47,12 +49,13 @@ namespace SanteDB.Client.Batteries.Services
     /// <summary>
     /// Represents a <see cref="IAppletManagerService"/> which unpacks applet static files for faster access
     /// </summary>
-    public class ClientAppletManagerService : IAppletManagerService
+    public class ClientAppletManagerService : IAppletManagerService, IAppletSolutionManagerService
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
         private readonly AppletConfigurationSection m_configuration;
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
         private readonly SecurityConfigurationSection m_securityConfiguration;
+        private readonly ClientConfigurationSection m_clientConfiguration;
         private readonly IUserInterfaceInteractionProvider m_userInterfaceInteractionProvider;
         private readonly IPlatformSecurityProvider m_platformSecurityProvider;
         private AppletCollection m_appletCollection;
@@ -66,6 +69,7 @@ namespace SanteDB.Client.Batteries.Services
             this.m_configuration = configurationManager.GetSection<AppletConfigurationSection>();
             this.m_bridgeProvider = bridgeProvider;
             this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_clientConfiguration = configurationManager.GetSection<ClientConfigurationSection>();
             this.m_userInterfaceInteractionProvider = userInterfaceInteractionProvider;
             this.m_platformSecurityProvider = platformSecurityProvider;
         }
@@ -152,6 +156,23 @@ namespace SanteDB.Client.Batteries.Services
 
         /// <inheritdoc/>
         public string ServiceName => "SanteDB DCDR Applet Manager";
+
+        /// <summary>
+        /// Solution list
+        /// </summary>
+        public IEnumerable<AppletSolution> Solutions {
+            get
+            {
+                yield return new AppletSolution()
+                {
+                    Meta = new AppletInfo()
+                    {
+                        Id = this.m_clientConfiguration.UiSolution,
+                        Version = typeof(ClientAppletManagerService).Assembly.GetName().Version.ToString()
+                    },
+                };
+            }
+        }
 
         /// <inheritdoc/>
         public event EventHandler Changed;
@@ -309,6 +330,51 @@ namespace SanteDB.Client.Batteries.Services
             this.Changed?.Invoke(this, EventArgs.Empty);
 
             return true;
+        }
+
+        /// <inheritdoc/>
+        public ReadonlyAppletCollection GetApplets(string solutionId)
+        {
+            if(solutionId == this.m_clientConfiguration.UiSolution)
+            {
+                return this.m_readonlyAppletCollection;
+            }
+            else
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Install(AppletSolution solution, bool isUpgrade = false)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public AppletManifest GetApplet(string solutionId, string appletId)
+        {
+            if (solutionId == this.m_clientConfiguration.UiSolution)
+            {
+                return this.GetApplet(appletId);
+            }
+            else
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        /// <inheritdoc/>
+        public byte[] GetPackage(string solutionId, string appletId)
+        {
+            if (solutionId == this.m_clientConfiguration.UiSolution)
+            {
+                return this.GetPackage(appletId);
+            }
+            else
+            {
+                throw new KeyNotFoundException();
+            }
         }
     }
 }

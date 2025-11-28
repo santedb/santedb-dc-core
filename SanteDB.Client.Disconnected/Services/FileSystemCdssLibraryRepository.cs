@@ -46,10 +46,10 @@ namespace SanteDB.Client.Disconnected.Services
         private class MemoryCdssEntry : ICdssLibraryRepositoryMetadata
         {
 
-            public MemoryCdssEntry(CdssLibraryDefinition defn, FileInfo fi)
+            public MemoryCdssEntry(CdssLibraryDefinition defn, DateTimeOffset lastUpdateTime)
             {
                 this.Key = defn.Uuid;
-                this.CreationTime = fi.CreationTimeUtc;
+                this.CreationTime = lastUpdateTime;
                 this.CreatedByKey = Guid.Parse(AuthenticationContext.SystemApplicationSid);
             }
 
@@ -107,7 +107,7 @@ namespace SanteDB.Client.Disconnected.Services
                     var defn = CdssLibraryDefinition.Load(fs);
                     this.m_cdssLibrary.TryAdd(defn.Uuid, new XmlProtocolLibrary(defn)
                     {
-                        StorageMetadata = new MemoryCdssEntry(defn, fi)
+                        StorageMetadata = new MemoryCdssEntry(defn, fi.LastWriteTime)
                     });
                 }
             }
@@ -147,8 +147,8 @@ namespace SanteDB.Client.Disconnected.Services
                 throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(XmlProtocolLibrary), libraryToInsert.GetType()));
             }
 
-            // First we want to insert the CDSS definition
-            this.m_cdssLibrary.AddOrUpdate(libraryToInsert.Uuid, libraryToInsert, (a,o) => libraryToInsert);
+            xprotoLib.StorageMetadata = new MemoryCdssEntry(xprotoLib.Library, DateTimeOffset.Now);
+            this.m_cdssLibrary.TryAdd(xprotoLib.Uuid, xprotoLib);
             try
             {
                 var fn = this.GetFilePath(libraryToInsert.Uuid);
@@ -157,6 +157,7 @@ namespace SanteDB.Client.Disconnected.Services
                 {
                     xprotoLib.Save(fs);        
                 }
+
                 return libraryToInsert;
             }
             catch (Exception e)
