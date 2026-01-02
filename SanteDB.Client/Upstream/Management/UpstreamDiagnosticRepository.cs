@@ -123,45 +123,46 @@ namespace SanteDB.Client.Upstream.Management
         {
             try
             {
-                for (int i = 0; i < data.Attachments.Count; i++)
-                {
-                    using(AuthenticationContext.EnterSystemContext()) {
-                        if (data.Attachments[i].GetType().Name == nameof(DiagnosticAttachmentInfo))
-                        {
-                            switch (data.Attachments[i].FileName)
+                if (null != data.Attachments)
+                    for (int i = 0; i < data.Attachments.Count; i++)
+                    {
+                        using(AuthenticationContext.EnterSystemContext()) {
+                            if (data.Attachments[i].GetType().Name == nameof(DiagnosticAttachmentInfo))
                             {
-                                case "SanteDB.config":
-                                    using (var ms = new MemoryStream())
-                                    {
-                                        this.m_configurationService.Configuration.Save(ms);
-                                        data.Attachments[i] = new DiagnosticBinaryAttachment()
+                                switch (data.Attachments[i].FileName)
+                                {
+                                    case "SanteDB.config":
+                                        using (var ms = new MemoryStream())
                                         {
-                                            Content = ms.ToArray(),
-                                            ContentType = "text/xml",
-                                            FileDescription = "Configuration",
-                                            FileName = "santedb.config.xml",
-                                            FileSize = ms.Length
-                                        };
-                                    }
-                                    break;
-                                case "SanteDB.log":
-                                    var newestFile = this.m_logManagerService.GetLogFiles().OrderByDescending(o => o.LastWriteTime).First();
-                                    using (var fr = newestFile.OpenText())
-                                    {
-                                        data.Attachments[i] = new DiagnosticTextAttachment()
+                                            this.m_configurationService.Configuration.Save(ms);
+                                            data.Attachments[i] = new DiagnosticBinaryAttachment()
+                                            {
+                                                Content = ms.ToArray(),
+                                                ContentType = "text/xml",
+                                                FileDescription = "Configuration",
+                                                FileName = "santedb.config.xml",
+                                                FileSize = ms.Length
+                                            };
+                                        }
+                                        break;
+                                    case "SanteDB.log":
+                                        var newestFile = this.m_logManagerService.GetLogFiles().OrderByDescending(o => o.LastWriteTime).First();
+                                        using (var fr = newestFile.OpenText())
                                         {
-                                            Content = fr.ReadToEnd(),
-                                            ContentType = "text/plain",
-                                            FileDescription = "Log File",
-                                            FileName = newestFile.Name,
-                                            LastWriteDate = newestFile.LastWriteTime
-                                        };
-                                    }
-                                    break;
+                                            data.Attachments[i] = new DiagnosticTextAttachment()
+                                            {
+                                                Content = fr.ReadToEnd(),
+                                                ContentType = "text/plain",
+                                                FileDescription = "Log File",
+                                                FileName = newestFile.Name,
+                                                LastWriteDate = newestFile.LastWriteTime
+                                            };
+                                        }
+                                        break;
+                                }
                             }
                         }
                     }
-                }
 
                 data.ApplicationInfo = new DiagnosticApplicationInfo(Assembly.GetEntryAssembly() ?? this.GetType().Assembly);
                 data.ApplicationInfo.Applets = this.m_appletManagerService.Applets.Select(o => o.Info).ToList();
