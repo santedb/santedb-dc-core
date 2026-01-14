@@ -148,7 +148,11 @@ namespace SanteDB.Client.Disconnected.Services
             }
 
             xprotoLib.StorageMetadata = new MemoryCdssEntry(xprotoLib.Library, DateTimeOffset.Now);
-            this.m_cdssLibrary.TryAdd(xprotoLib.Uuid, xprotoLib);
+            if(!this.m_cdssLibrary.TryAdd(xprotoLib.Uuid, xprotoLib))
+            {
+                this.m_cdssLibrary.TryUpdate(xprotoLib.Uuid, xprotoLib, null);
+            }
+
             try
             {
                 var fn = this.GetFilePath(libraryToInsert.Uuid);
