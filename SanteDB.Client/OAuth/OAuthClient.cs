@@ -176,7 +176,7 @@ namespace SanteDB.Client.OAuth
                 {
                     e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName, clientClaimHeader);
                 }
-                else if(clientClaimAssertions != null) // Add from internal
+                else if(clientClaimAssertions?.Any() == true) // Add from internal
                 {
                     var claimHeaderValue = String.Join(";", clientClaimAssertions.Select(x => $"{x.Type}={x.Value}"));
                     e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName, Convert.ToBase64String(Encoding.UTF8.GetBytes(claimHeaderValue)));
