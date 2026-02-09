@@ -371,7 +371,7 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a token request
         /// </summary>
-        protected virtual void SetupRestClientForTokenRequest(IRestClient restClient, IEnumerable<IClaim> clientClaimAssertions = null) { }
+        protected virtual void SetupRestClientForTokenRequest(IRestClient restClient, OAuthTokenRequest tokenRequest, IEnumerable<IClaim> clientClaimAssertions = null) { }
 
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a JWKS fetch request
@@ -406,7 +406,7 @@ namespace SanteDB.Client.OAuth
 
             var restclient = GetRestClient();
             // Copy inbound client claims to the claims that the server is getting (purpose of use, overrride, etc.)
-            SetupRestClientForTokenRequest(restclient);
+            SetupRestClientForTokenRequest(restclient, request, clientClaimAssertions);
 
             var tokenEndpoint = GetTokenEndpoint();
             if (!String.IsNullOrEmpty(tokenEndpoint))

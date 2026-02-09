@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
@@ -32,6 +33,7 @@ namespace SanteDB.Client.UserInterface
         private readonly ILocalizationService m_localizationService;
         private readonly IUserInterfaceInteractionProvider m_interactionProvider;
         private readonly IPlatformSecurityProvider m_platformSecurityProvider;
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UserInterfaceCertificateValidator));
 
         /// <summary>
         /// DI constructor
@@ -48,6 +50,7 @@ namespace SanteDB.Client.UserInterface
         {
             if (certificate == null || chain == null)
             {
+                this.m_tracer.TraceWarning("Validation of certificate callback without a certificate or chain validation error");
                 return false;
             }
             else
@@ -57,7 +60,13 @@ namespace SanteDB.Client.UserInterface
                 {
                     if (this.m_interactionProvider.Confirm(this.m_localizationService.GetString(UserMessageStrings.CONFIRM_CERTIFICATE_TRUST, new { cert = certificate.Subject })))
                     {
-                        this.m_platformSecurityProvider.TryInstallCertificate(new X509Certificate2(certificate), StoreName.TrustedPeople);
+                        this.m_tracer.TraceInfo("Installing {0} to CurrentUser/TrustedPeople via {1}", certificate.Subject, this.m_platformSecurityProvider.GetType().Name);
+                        if(!this.m_platformSecurityProvider.TryInstallCertificate(new X509Certificate2(certificate), StoreName.TrustedPeople) &&
+                            !this.m_platformSecurityProvider.TryInstallCertificate(new X509Certificate2(certificate))
+                        )
+                        {
+                            this.m_tracer.TraceWarning("Could not install certificate to CurrentUser/TrustedPeople");
+                        }
                         return true;
                     }
                     else
