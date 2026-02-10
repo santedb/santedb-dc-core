@@ -19,6 +19,7 @@
 using SanteDB.Client.Configuration;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
@@ -96,16 +97,33 @@ namespace SanteDB.Client
         {
             try
             {
-
-                // JF - Setup the service point manager
-                ServicePointManager.CheckCertificateRevocationList = false;
-                ServicePointManager.DefaultConnectionLimit = Environment.ProcessorCount;
-                ServicePointManager.DnsRefreshTimeout = -1;
-                ServicePointManager.ReusePort = true;
                 
+                // JF - Setup the service point manager
+                // TD - Ignore NIE's for these methods opportunistically. Some like ReusePort are not supported on Mono.
+                try
+                {
+                    ServicePointManager.CheckCertificateRevocationList = false;
+                }
+                catch (NotImplementedException) { }
+                try
+                {
+                    ServicePointManager.DefaultConnectionLimit = Math.Max(Environment.ProcessorCount, 2);
+                }
+                catch (NotImplementedException) { }
+                try
+                {
+                    ServicePointManager.DnsRefreshTimeout = -1;
+                }
+                catch (NotImplementedException) { }
+                try
+                {
+                    ServicePointManager.ReusePort = true;
+                }
+                catch (NotImplementedException) { }
+
                 base.DependencyServiceManager.ProgressChanged += this.MonitorStatus;
                 base.DependencyServiceManager.AddServiceProvider(typeof(DefaultClientServiceFactory));
-                
+
                 base.Start();
 
                 this.AutoRestoreEnvironment();
@@ -169,7 +187,7 @@ namespace SanteDB.Client
                         uiInteraction.Alert(e.ToHumanReadableString());
                     }
                 }
-               
+
             }
 
         }
