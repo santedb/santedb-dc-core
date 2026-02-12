@@ -138,7 +138,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                         this.m_synchronizationLogService.Delete(cdssSyncLog);
                         this.m_synchronizationLogService.Delete(dqSyncLog);
                         this.m_synchronizationLogService.Delete(dtSyncLog);
-                        cdssSyncLog = dqSyncLog = null;
+                        cdssSyncLog = dqSyncLog = dtSyncLog = null;
                         // Remove all existing
                         foreach (var cdss in this.m_cdssLibraryRepositoryService.Find(o => true).ToArray())
                         {
@@ -162,9 +162,9 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                     this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", cdssSyncLog.LastSync);
 
-                    EventHandler<RestRequestEventArgs> cdssModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, cdssSyncLog.LastSync.ToString()),
-                        dqModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dqSyncLog.LastSync.ToString()),
-                        dtModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dtSyncLog.LastSync.ToString());
+                    EventHandler<RestRequestEventArgs> cdssModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, cdssSyncLog.LastSync?.UtcDateTime.ToString()),
+                        dqModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dqSyncLog.LastSync?.UtcDateTime.ToString()),
+                        dtModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dtSyncLog.LastSync?.UtcDateTime.ToString());
 
                     // Determine the last synchronization query 
                     using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
@@ -204,7 +204,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                                 this.m_cdssLibraryRepositoryService.Remove(Guid.Parse(itm));
                             }
                         }
-                        this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTime.Now);
+                        this.m_synchronizationLogService.Save(cdssSyncLog, lastEtag, DateTimeOffset.Now);
 
 
                         // Synchronize DQ rules library
@@ -231,11 +231,11 @@ namespace SanteDB.Client.Disconnected.Jobs
                                 this.m_dataQualityConfigurationProvider.RemoveRuleSet(itm);
                             }
                         }
-                        this.m_synchronizationLogService.Save(dqSyncLog, lastEtag, DateTime.Now);
+                        this.m_synchronizationLogService.Save(dqSyncLog, lastEtag, DateTimeOffset.Now);
 
                         // Synchronize clinical templates
 
-                        // Synchronize DQ rules library
+                        // Synchronize DT templates library
                         client.Requesting -= dqModifiedHeader;
                         if (dtSyncLog.LastSync.HasValue)
                         {
@@ -259,7 +259,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                             }
                         }
 
-                        this.m_synchronizationLogService.Save(dtSyncLog, lastEtag, DateTime.Now);
+                        this.m_synchronizationLogService.Save(dtSyncLog, lastEtag, DateTimeOffset.Now);
 
 
                     }
