@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.Claims;
 
 namespace SanteDB.Client.OAuth
 {
@@ -88,11 +89,20 @@ namespace SanteDB.Client.OAuth
 
             _RefreshToken = refreshToken;
 
-            this.AddIdentity(new OAuthTokenIdentity(_IdToken, "OAUTH", true, claims));
+            var primarySid = claims.FirstOrDefault(o => o.Type == ClaimTypes.Sid)?.Value;
+            var applicationId = claims.FirstOrDefault(o => o.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim)?.Value;
 
-            if (claims.Any(c => c.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim))
+            if (!String.IsNullOrEmpty(primarySid) && primarySid.Equals(applicationId)) // this is a client credential - the primary identity is an application
             {
-                this.AddIdentity(new OAuthApplicationIdentity(claims));
+                this.AddIdentity(new OAuthTokenApplicationIdentity(_IdToken, "OAUTH", true, claims));
+            }
+            else
+            {
+                this.AddIdentity(new OAuthTokenIdentity(_IdToken, "OAUTH", true, claims));
+                if (claims.Any(c => c.Type == SanteDBClaimTypes.SanteDBApplicationIdentifierClaim))
+                {
+                    this.AddIdentity(new OAuthApplicationIdentity(claims));
+                }
             }
 
             this.ExpiresAt = DateTimeOffset.Now.Add(TimeSpan.FromSeconds(expiresIn));

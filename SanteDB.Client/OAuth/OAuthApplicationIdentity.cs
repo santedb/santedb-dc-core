@@ -26,7 +26,8 @@ using System.Linq;
 namespace SanteDB.Client.OAuth
 {
     /// <summary>
-    /// Represents an application identity created from an OAUTH token
+    /// Represents an application identity created from an OAUTH token which has not been identified by indicates the application 
+    /// authenticated on a token
     /// </summary>
     internal class OAuthApplicationIdentity : IApplicationIdentity, IClaimsIdentity
     {
