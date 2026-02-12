@@ -224,6 +224,9 @@ namespace SanteDB.Client.Upstream
 
             try
             {
+                // Set progress 
+                this.m_userInterfaceService.SetStatus(null, UserMessages.UPDATE_CHECK, 0.5f);
+
                 if (this.m_upstreamAvailabilityProvider.IsAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
                 {
                     // Are we configured to auto-update?
@@ -235,8 +238,6 @@ namespace SanteDB.Client.Upstream
 
                     this.m_tracer.TraceInfo("Checking for updates with remote service...");
 
-                    // Set progress 
-                    this.m_userInterfaceService.SetStatus(null, UserMessages.UPDATE_CHECK, 0.5f);
                     using (AuthenticationContext.EnterContext(this.m_upstreamIntegrationService.AuthenticateAsDevice()))
                     {
                         using (var restClient = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))

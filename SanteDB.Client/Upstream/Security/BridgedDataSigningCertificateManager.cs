@@ -17,6 +17,7 @@
  *
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
@@ -77,7 +78,7 @@ namespace SanteDB.Client.Upstream.Security
                 case IDeviceIdentity idi:
                     return this.m_deviceIdentityProvider.GetClaims(idi.Name).Any(o => o.Type == SanteDBClaimTypes.LocalOnly);
                 default:
-                    return this.m_identityProvider.GetClaims(identity.Name).Any(o => o.Type == SanteDBClaimTypes.LocalOnly);
+                    return identity.Name == AuthenticationContext.AnonymousPrincipal.Identity.Name || this.m_identityProvider.GetClaims(identity.Name).Any(o => o.Type == SanteDBClaimTypes.LocalOnly);
             }
         }
 

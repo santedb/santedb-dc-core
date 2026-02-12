@@ -18,8 +18,10 @@
  */
 using Microsoft.IdentityModel.Tokens;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Caching.Hosting;
 
 namespace SanteDB.Client.OAuth
 {
@@ -69,5 +71,15 @@ namespace SanteDB.Client.OAuth
 
         /// <inheritdoc/>
         public IClaim FindFirst(string claimType) => _Claims.FirstOrDefault(c => c.Type == claimType);
+    }
+
+    /// <summary>
+    /// Represnts an authenticated application token identity 
+    /// </summary>
+    public class OAuthTokenApplicationIdentity : OAuthTokenIdentity, IApplicationIdentity
+    {
+        internal OAuthTokenApplicationIdentity(SecurityToken token, string authenticationType, bool isAuthenticated, List<IClaim> claims) : base(token, authenticationType, isAuthenticated, claims)
+        {
+        }
     }
 }

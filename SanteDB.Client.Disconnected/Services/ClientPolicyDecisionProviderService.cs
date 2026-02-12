@@ -33,7 +33,7 @@ namespace SanteDB.Client.Disconnected.Services
     /// <summary>
     /// Represents a PDP service which can map between server permissions and the client permissions
     /// </summary>
-    public class ClientPolicyDecisionProviderService : DefaultPolicyDecisionService
+    public class ClientPolicyDecisionProviderService : DefaultPolicyDecisionService, IPolicyDecisionServiceEx
     {
 
         private readonly IDictionary<String, String[]> m_policyMaps = new Dictionary<String, String[]>()
@@ -129,6 +129,23 @@ namespace SanteDB.Client.Disconnected.Services
                 this.m_adhocCacheService.Add(cacheKey, basePolicySet);
             }
             return basePolicySet.OfType<IPolicyInstance>();
+        }
+
+        /// <summary>
+        /// Get all mapped policies in the input set
+        /// </summary>
+        public IEnumerable<string> ExpandInferredPolicies(IEnumerable<string> policyOids)
+        {
+            foreach(var itm in policyOids)
+            {
+                if(this.m_policyMaps.TryGetValue(itm, out var mappedPolicies))
+                {
+                    foreach(var p in mappedPolicies)
+                    {
+                        yield return p;
+                    }
+                }
+            }
         }
     }
 }
