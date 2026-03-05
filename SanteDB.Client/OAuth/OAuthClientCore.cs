@@ -48,7 +48,14 @@ namespace SanteDB.Client.OAuth
         private readonly IAdhocCacheService _AdhocCache;
         protected const string ADHOC_DISCOVERY_DOC_KEY = "oauth.discovery";
         protected const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
+        protected const string APP_SETTING_OVERRIDE_OIDC = "oauth.overrideEndpoints";
         private readonly TimeSpan OAUTH_CACHE_TIMEOUT = new TimeSpan(18, 0, 0);
+
+
+        /// <summary>
+        /// Override discovery document urls
+        /// </summary>
+        protected readonly bool _OverrideDiscoveryDocumentUrls;
 
         /// <summary>
         /// Gets or sets the token validation parameters
@@ -93,7 +100,7 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// DI constructor
         /// </summary>
-        public OAuthClientCore(IRestClientFactory restClientFactory, IAdhocCacheService adhocCacheService)
+        public OAuthClientCore(IRestClientFactory restClientFactory, IAdhocCacheService adhocCacheService, IConfigurationManager configurationManager)
         {
             Tracer = new Tracer(GetType().Name);
             CryptoRNG = System.Security.Cryptography.RandomNumberGenerator.Create();
@@ -101,7 +108,7 @@ namespace SanteDB.Client.OAuth
             RestClientFactory = restClientFactory;
             _RetryTimes = GetRetryWaitTimes();
             _AdhocCache = adhocCacheService;
-
+            _OverrideDiscoveryDocumentUrls = Boolean.TryParse(configurationManager.GetAppSetting(APP_SETTING_OVERRIDE_OIDC), out var overrideUrl) && overrideUrl;
         }
 
         /// <summary>
@@ -468,9 +475,35 @@ namespace SanteDB.Client.OAuth
                 return true;
             });
 
+            // JF - Prevent Hairpinning if the administrator has configured this
+            
+
             // JF - Cache the discovery document
             if (DiscoveryDocument != null)
             {
+
+                // JF - Override URL from OIDC?
+                if(_OverrideDiscoveryDocumentUrls)
+                {
+                    var builder = new UriBuilder(restclient.Description.Endpoint.First().Address);
+                    Uri authorizationEndpoint = new Uri(DiscoveryDocument.AuthorizationEndpoint),
+                        tokenEndpoint = new Uri(DiscoveryDocument.TokenEndpoint),
+                        signoutEndpoint = new Uri(DiscoveryDocument.SignoutEndpoint),
+                        keyEndpoint = new Uri(DiscoveryDocument.SigningKeyEndpoint),
+                        userInfoEndpoint = new Uri(DiscoveryDocument.UserInfoEndpoint);
+
+                    builder.Path = authorizationEndpoint.AbsolutePath;
+                    DiscoveryDocument.AuthorizationEndpoint = builder.ToString();
+                    builder.Path = tokenEndpoint.AbsolutePath;
+                    DiscoveryDocument.TokenEndpoint = builder.ToString();
+                    builder.Path = signoutEndpoint.AbsolutePath;
+                    DiscoveryDocument.SignoutEndpoint = builder.ToString();
+                    builder.Path = keyEndpoint.AbsolutePath;
+                    DiscoveryDocument.SigningKeyEndpoint = builder.ToString();
+                    builder.Path = userInfoEndpoint.AbsolutePath;
+                    DiscoveryDocument.UserInfoEndpoint = builder.ToString();
+                }
+
                 _AdhocCache?.Add(ADHOC_DISCOVERY_DOC_KEY, DiscoveryDocument, OAUTH_CACHE_TIMEOUT);
             }
 
