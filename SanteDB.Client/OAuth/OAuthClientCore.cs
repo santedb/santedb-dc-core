@@ -108,7 +108,7 @@ namespace SanteDB.Client.OAuth
             RestClientFactory = restClientFactory;
             _RetryTimes = GetRetryWaitTimes();
             _AdhocCache = adhocCacheService;
-            _OverrideDiscoveryDocumentUrls = Boolean.TryParse(configurationManager.GetAppSetting(APP_SETTING_OVERRIDE_OIDC), out var overrideUrl) && overrideUrl;
+            _OverrideDiscoveryDocumentUrls = Boolean.TryParse(configurationManager?.GetAppSetting(APP_SETTING_OVERRIDE_OIDC), out var overrideUrl) && overrideUrl;
         }
 
         /// <summary>
