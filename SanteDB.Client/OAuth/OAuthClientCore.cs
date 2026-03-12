@@ -48,7 +48,12 @@ namespace SanteDB.Client.OAuth
         private readonly IAdhocCacheService _AdhocCache;
         protected const string ADHOC_DISCOVERY_DOC_KEY = "oauth.discovery";
         protected const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
-        protected const string APP_SETTING_OVERRIDE_OIDC = "oauth.overrideEndpoints";
+
+        /// <summary>
+        /// When used in the configuration settings - override the endpoints for oauth
+        /// </summary>
+        public const string APP_SETTING_OVERRIDE_OIDC = "oauth.overrideEndpoints";
+
         private readonly TimeSpan OAUTH_CACHE_TIMEOUT = new TimeSpan(18, 0, 0);
 
 
