@@ -50,7 +50,7 @@ namespace SanteDB.Client.OAuth
         protected const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
 
         /// <summary>
-        /// Override the OIDC discovery document
+        /// When used in the configuration settings - override the endpoints for oauth
         /// </summary>
         public const string APP_SETTING_OVERRIDE_OIDC = "oauth.overrideEndpoints";
 

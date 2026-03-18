@@ -193,8 +193,15 @@ namespace SanteDB.Client.Batteries.Services
             // If we have the original copy send that if not create our own (unsigned) version don't
             var pakFile = Path.Combine(this.m_configuration.AppletDirectory, $"{appletId}.manifest");
             if (File.Exists(pakFile))
-            {
-                return File.ReadAllBytes(pakFile);
+            { 
+                // The pakfile on disk is not compressed - we need to compress it for the response
+                using(var fs = File.OpenRead(pakFile))
+                using (var ms = new MemoryStream())
+                {
+                    // Load the manifest
+                    AppletManifest.Load(fs).CreatePackage().Save(ms);
+                    return ms.ToArray();
+                }
             }
             else
             {
