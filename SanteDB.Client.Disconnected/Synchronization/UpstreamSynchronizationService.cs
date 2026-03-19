@@ -25,11 +25,13 @@ using SanteDB.Client.Upstream;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
+using SanteDB.Core.Data.Query;
 using SanteDB.Core.Event;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Mail;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Audit;
@@ -111,6 +113,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         private readonly IServiceProvider _ServiceProvider;
         private readonly ILocalizationService _LocalizationService;
         private readonly LocalRepositoryFactory _LocalRepositoryFactory;
+        private readonly IMailMessageService _MailMessageService;
         private readonly INetworkInformationService _NetworkInformationService;
         private readonly IUserPreferencesManager _UserPreferenceManager;
         private readonly SynchronizationMessagePump _MessagePump;
@@ -174,6 +177,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             IAdhocCacheService adhocCacheService,
             IRestClientFactory restClientFactory,
             IUserPreferencesManager userPreferenceManager,
+            IMailMessageService mailMessageService,
             INetworkInformationService networkInformationService,
             INotifyRepositoryService<Place> placeRepository) : base(restClientFactory, upstreamManagementService, upstreamAvailabilityProvider, upstreamIntegrationService)
         {
@@ -204,7 +208,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._MessagePump = new SynchronizationMessagePump(_QueueManager, _ThreadPool);
             this._PlaceRepository = placeRepository;
             this._LocalRepositoryFactory = _ServiceManager.CreateInjected<LocalRepositoryFactory>();
-
+            this._MailMessageService = mailMessageService;
             //Exception policies
             ISyncPolicy communicationExceptionPolicy = Policy.Handle<Exception>(ex => ex.IsCommunicationException() || ex.IsTimeoutException()).WaitAndRetry(2, o => new TimeSpan(0, o, 0)),  // Communication exceptions are ignored
                 otherExceptionPolicy = this._PushExceptionPolicy = Policy.Handle<UpstreamIntegrationException>(ex => ex.InnerException != null && !ex.IsHttpException(out _)).Retry(1); // Retry if there is no indication that the server got the message
@@ -716,7 +720,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         {
                             var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
                             {
-                                { "subscribed", () => subscribedobject }
+                                { "subscribed", () => subscribedobject },
+                                { "device", () => UpstreamManagementService.GetSettings().LocalDeviceName }
                             }, relayControlVariables: true, lazyExpandVariables: true, safeNullable: false, coalesceOutput: false);
 
                             var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr, stripNullChecks: true).ToHttpString();
@@ -725,7 +730,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     }
                     else
                     {
-                        this.PullInternal(clientDefinition.ResourceType, filter.ParseQueryString(), clientDefinition.IgnoreModifiedOn, progressIndicator);
+                        var expr = QueryExpressionParser.BuildLinqExpression(clientDefinition.ResourceType, NameValueCollectionExtensions.ParseQueryString(filter), "o", new Dictionary<string, Func<object>>
+                            {
+                                { "device", () => UpstreamManagementService.GetSettings().LocalDeviceName }
+                            }, relayControlVariables: true, lazyExpandVariables: true, safeNullable: false, coalesceOutput: false);
+
+                        var newfilter = QueryExpressionBuilder.BuildQuery(clientDefinition.ResourceType, expr, stripNullChecks: true).ToHttpString();
+                        this.PullInternal(clientDefinition.ResourceType, newfilter.ParseQueryString(), clientDefinition.IgnoreModifiedOn, progressIndicator);
                     }
                 }
             }
@@ -1143,6 +1154,29 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
             };
 
+
+            // Mail Operations
+            this._MailMessageService.Updated += this.NotifyMailUpdated;
+            this._MailMessageService.Deleted += this.NotifyMailUpdated;
+            this._MailMessageService.Sent += this.NotifyNewMail;
+            this._MailMessageService.MailboxCreated += (o, e) =>
+            {
+                var localOnlyClaim = e.Data.LoadProperty(s => s.Owner).ClaimLookup(SanteDBClaimTypes.LocalOnly);
+                if (String.IsNullOrEmpty(localOnlyClaim))
+                {
+                    this._QueueManager.GetAdminQueue().Enqueue(e.Data, SynchronizationQueueEntryOperation.Insert);
+                }
+            };
+            this._MailMessageService.MailboxDeleted += (o, e) =>
+            {
+                var localOnlyClaim = e.Data.LoadProperty(s => s.Owner).ClaimLookup(SanteDBClaimTypes.LocalOnly);
+                if (String.IsNullOrEmpty(localOnlyClaim))
+                {
+                    this._QueueManager.GetAdminQueue().Enqueue(e.Data, SynchronizationQueueEntryOperation.Obsolete);
+                }
+            };
+
+
             _ServiceManager.GetAllTypes()
                 .Where(type => !type.IsGenericType && !type.IsInterface && !type.IsAbstract && typeof(IdentifiedData).IsAssignableFrom(type))
                 .ForEach(type =>
@@ -1187,6 +1221,34 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                     this._Tracer.TraceWarning("Could not setup subscription to {0}", type.FullName);
                 }
             });
+        }
+
+        /// <summary>
+        /// Notify that new mail is to be delivered
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void NotifyNewMail(object sender, MailMessageEventArgs e)
+        {
+            // Ensure that the message is loaded and all the recipients are 
+            var mailMessages = e.Messages.Select(o => o.LoadProperty(x => x.TargetEntity));
+            var mailBoxes = mailMessages.SelectMany(o => o.LoadProperty(x => x.Mailboxes)).Select(r => r.LoadProperty(o => o.SourceEntity));
+
+            // Prepare a bundle 
+            var bundle = new Bundle();
+            bundle.AddRange(mailMessages);
+            bundle.AddRange(mailBoxes);
+            bundle.AddRange(mailMessages.SelectMany(o => o.Mailboxes));
+            this._QueueManager.GetAdminQueue().Enqueue(bundle, SynchronizationQueueEntryOperation.Insert);
+        }
+
+        /// <summary>
+        /// Notify that mail has been updated on the low priority queue
+        /// </summary>
+        private void NotifyMailUpdated(object sender, MailMessageEventArgs e)
+        {
+            this._QueueManager.GetAdminQueue().Enqueue(new Bundle() { Item = e.Messages.OfType<IdentifiedData>().ToList() }, SynchronizationQueueEntryOperation.Insert);
         }
 
         private Delegate CreateEventArgDelegate(string methodName, Type dataType)

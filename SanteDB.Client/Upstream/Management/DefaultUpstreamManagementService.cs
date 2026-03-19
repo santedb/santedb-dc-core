@@ -558,6 +558,7 @@ namespace SanteDB.Client.Upstream.Management
                             if(this.m_rewriteUrls.GetValueOrDefault())
                             {
                                 retVal.Address = $"{requestedRealm}/{amiUrl.LocalPath}";
+                                // HACK: Also override the hairpining for the data
                                 this.m_applicationConfiguration.AddAppSetting(OAuthClientCore.APP_SETTING_OVERRIDE_OIDC, "true");
                             }
                         }
