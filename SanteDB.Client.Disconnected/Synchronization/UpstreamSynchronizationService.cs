@@ -147,6 +147,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         private object _OutboundQueueLock;
         private object _InboundQueueLock;
+        private object _LowPriorityQueueLock;
         private readonly IAdhocCacheService _AdhocCache;
         private readonly IIdentityProviderService _IdentityProvider;
         private TimeSpan _LockTimeout;
@@ -252,7 +253,38 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 {
                     if (this.IsUpstreamAvailable(ServiceEndpointType.HealthDataService))
                     {
-                        foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream).OrderBy(o => o.Type.HasFlag(SynchronizationPattern.LowPriority) ? 999 : 0)) // order-by is so that low priority queues go after the higher priority ones
+                        // Run the outbound queues in parallel
+                        foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream).Where(o => !o.Type.HasFlag(SynchronizationPattern.LowPriority))) // order-by is so that low priority queues go after the higher priority ones
+                        {
+                            this._MessagePump.RunDefault(outboundqueue, entry =>
+                            {
+                                this.SendOutboundEntryInternal(entry);
+                                return SynchronizationMessagePump.Continue;
+                            });
+                        }
+                    }
+                }
+                finally
+                {
+                    this.PushCompleted?.Invoke(this, EventArgs.Empty);
+                    Monitor.Exit(_OutboundQueueLock);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Run all outbound queues that are low priority
+        /// </summary>
+        private void RunLowPriorityMessagePump(object state = null)
+        {
+            if (Monitor.TryEnter(this._LowPriorityQueueLock, this._LockTimeout))
+            {
+                try
+                {
+                    if (this.IsUpstreamAvailable(ServiceEndpointType.HealthDataService))
+                    {
+                        // Run the outbound queues in parallel
+                        foreach (var outboundqueue in this._QueueManager.GetAll(SynchronizationPattern.LocalToUpstream).Where(o => o.Type.HasFlag(SynchronizationPattern.LowPriority))) // order-by is so that low priority queues go after the higher priority ones
                         {
                             this._MessagePump.RunDefault(outboundqueue, entry =>
                             {
@@ -1013,6 +1045,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 return;
             }
             _ThreadPool.QueueUserWorkItem(RunOutboundMessagePump);
+            _ThreadPool.QueueUserWorkItem(RunLowPriorityMessagePump);
         }
 
         /// <inheritdoc />
@@ -1116,7 +1149,13 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             }
             foreach (var itm in _QueueManager.GetAll(SynchronizationPattern.LocalToUpstream))
             {
-                itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunOutboundMessagePump());
+                if (itm.Type.HasFlag(SynchronizationPattern.LowPriority))
+                {
+                    itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunLowPriorityMessagePump());
+                }
+                else {
+                    itm.Enqueued += (o, e) => this._ThreadPool.QueueUserWorkItem(_ => this.RunOutboundMessagePump());
+                }
             }
 
             IsRunning = true;
