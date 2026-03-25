@@ -76,7 +76,8 @@ namespace SanteDB.Client.Disconnected.Services
                     PermissionPolicyIdentifiers.ManageMail,
                     PermissionPolicyIdentifiers.AccessAuditLog,
                     PermissionPolicyIdentifiers.AlterSystemConfiguration,
-                    PermissionPolicyIdentifiers.UnrestrictedAdministration
+                    PermissionPolicyIdentifiers.UnrestrictedAdministration,
+                    PermissionPolicyIdentifiers.AdministerWarehouse
                 }
             }
         };
