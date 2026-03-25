@@ -200,6 +200,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
             this._LocalizationService = localizationService;
             this._OutboundQueueLock = new object();
             this._InboundQueueLock = new object();
+            this._LowPriorityQueueLock = new object();
             this._AdhocCache = adhocCacheService;
             this._IdentityProvider = identityProviderService;
             this._LockTimeout = TimeSpan.FromMilliseconds(100);
