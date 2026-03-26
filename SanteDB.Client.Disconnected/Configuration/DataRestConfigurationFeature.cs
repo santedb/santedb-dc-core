@@ -23,6 +23,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using SanteDB.OrmLite.Configuration;
 using System;
@@ -30,6 +31,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using static ICSharpCode.SharpZipLib.Zip.ZipEntryFactory;
 
 namespace SanteDB.Client.Disconnected.Configuration
 {
@@ -166,12 +168,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                 };
             }
 
-            JObject aleFieldSetting = null;
-            if (featureConfiguration.TryGetValue(ALE_SETTING, out var aleFieldSettingRaw))
-            {
-                aleFieldSetting = aleFieldSettingRaw as JObject;
-            }
-
+            
             // Create and update the configuration feature settings
             dataSection.ConnectionString.Clear();
             if (featureConfiguration.TryGetValue(CONNECTION_PER_FEATURE_SETTING, out var itmSettingCollectionRaw) && itmSettingCollectionRaw is JObject itmSettingCollection)
@@ -189,6 +186,12 @@ namespace SanteDB.Client.Disconnected.Configuration
                         if (provider == null)
                         {
                             throw new InvalidOperationException(String.Format(ErrorMessages.SERVICE_NOT_FOUND, providerRaw));
+                        }
+
+                        JObject aleFieldSetting = null;
+                        if (itmSetting.TryGetValue(ALE_SETTING, out var aleFieldSettingRaw))
+                        {
+                            aleFieldSetting = aleFieldSettingRaw as JObject;
                         }
 
                         // Create a connection string
@@ -216,6 +219,12 @@ namespace SanteDB.Client.Disconnected.Configuration
                 if (provider == null)
                 {
                     throw new InvalidOperationException(String.Format(ErrorMessages.SERVICE_NOT_FOUND, providerRaw));
+                }
+
+                JObject aleFieldSetting = null;
+                if (featureConfiguration.TryGetValue(ALE_SETTING, out var aleFieldSettingRaw))
+                {
+                    aleFieldSetting = aleFieldSettingRaw as JObject;
                 }
 
                 // Create a connection string
@@ -261,8 +270,8 @@ namespace SanteDB.Client.Disconnected.Configuration
         /// </summary>
         private void SetAleConfigurationSettings(SanteDBConfiguration configuration, OrmConfigurationBase configurationSection, JObject aleFieldSetting)
         {
-
-            if (aleFieldSetting?.Value<bool>(ALE_ENABLED_SETTING) == true && configuration.ProtectedSectionKey != null)
+            var certificate = configuration.ProtectedSectionKey ?? configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o => o.KeyName == "default");
+            if (aleFieldSetting?.Value<bool>(ALE_ENABLED_SETTING) == true && certificate != null)
             {
                 configurationSection.AleConfiguration = new OrmAleConfiguration()
                 {
@@ -272,7 +281,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                         Mode = OrmAleMode.Deterministic,
                         Name = o.Value<String>()
                     }).ToList(),
-                    Certificate = configuration.ProtectedSectionKey
+                    Certificate = certificate
                 };
             }
 
