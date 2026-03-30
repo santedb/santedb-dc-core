@@ -298,7 +298,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 finally
                 {
                     this.PushCompleted?.Invoke(this, EventArgs.Empty);
-                    Monitor.Exit(_OutboundQueueLock);
+                    Monitor.Exit(_LowPriorityQueueLock);
                 }
             }
         }
