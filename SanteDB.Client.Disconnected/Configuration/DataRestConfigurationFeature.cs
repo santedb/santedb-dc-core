@@ -281,7 +281,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                         Mode = OrmAleMode.Deterministic,
                         Name = o.Value<String>()
                     }).ToList(),
-                    Certificate = certificate
+                    Certificate = new X509ConfigurationElement(certificate)
                 };
             }
 

@@ -54,7 +54,7 @@ namespace SanteDB.Client.Disconnected.Configuration
             ormSection.AdoProvider = providers.Select(t => new ProviderRegistrationConfiguration(t.Invariant, t.AdoNetFactoryType)).ToList();
 
             // Construct the connection strings and initial configurations for the orm configuration section base
-            foreach (var itm in AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(OrmConfigurationBase).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract))
+            foreach (var itm in AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(OrmConfigurationBase).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract && !t.HasCustomAttribute<ObsoleteAttribute>()))
             {
                 if (configuration.GetSection(itm) == null)
                 {
