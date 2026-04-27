@@ -1074,7 +1074,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                 }
                 // Start for pull
                 _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnStart));
-                this.SubscribeToEvents();
+
+                // This next line SubscribeToEvents attempts to discover objects capabilities on the server so we want to defer it until the application is started
+                ApplicationServiceContext.Current.Started += (o, e) => _ThreadPool.QueueUserWorkItem(_ => this.SubscribeToEvents());
+
 
                 try
                 {
