@@ -341,7 +341,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                         }
                                         else
                                         {
-                                            bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints);
+                                            bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | 
+                                                DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints |
+                                                DataContextExtensions.DisablePersistenceValidationFlags.StickyRelationships); // we want sticky relationships to be deleted on sync
                                         }
                                         localPersistence.Insert(bdl);
                                     }
@@ -364,7 +366,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                         }
                                         else
                                         {
-                                            entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints);
+                                            entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | 
+                                                DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints |
+                                                DataContextExtensions.DisablePersistenceValidationFlags.StickyRelationships); // we want sticky relationships to be deleted on sync
                                         }
 
                                         if (existing == null)
