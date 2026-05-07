@@ -39,7 +39,7 @@ namespace SanteDB.Client.Disconnected.Services
     {
         private readonly ISynchronizationQueueManager m_synchronizationQueueManager;
         private readonly ConcurrentQueue<AuditEventData> m_auditEventQueue = new ConcurrentQueue<AuditEventData>();
-        private const int AUDIT_SUBMISSION_SIZE = 10;
+        private const int AUDIT_SUBMISSION_SIZE = 100;
         private readonly object m_lockBox = new object();
         private readonly Guid m_deviceId;
 

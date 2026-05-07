@@ -57,7 +57,7 @@ namespace SanteDB.Client.Disconnected.Configuration
         /// The name of the connection feature setting
         /// </summary>
         public const string CONNECTION_PER_FEATURE_SETTING = "connections";
-
+        
         /// <summary>
         /// ALE fields
         /// </summary>
