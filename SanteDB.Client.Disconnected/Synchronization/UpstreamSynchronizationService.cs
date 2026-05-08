@@ -341,7 +341,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                         }
                                         else
                                         {
-                                            bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints);
+                                            bdl.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | 
+                                                DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints |
+                                                DataContextExtensions.DisablePersistenceValidationFlags.StickyRelationships); // we want sticky relationships to be deleted on sync
                                         }
                                         localPersistence.Insert(bdl);
                                     }
@@ -364,7 +366,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                                         }
                                         else
                                         {
-                                            entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints);
+                                            entry.Data.DisablePersistenceValidation(DataContextExtensions.DisablePersistenceValidationFlags.Exists | 
+                                                DataContextExtensions.DisablePersistenceValidationFlags.BusinessContstraints |
+                                                DataContextExtensions.DisablePersistenceValidationFlags.StickyRelationships); // we want sticky relationships to be deleted on sync
                                         }
 
                                         if (existing == null)
@@ -971,6 +975,9 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         }
                     }
                 }
+
+                //Mark the sync progress complete. This will then hide notifications in apps.
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(UpstreamSynchronizationService), 1f, this._LocalizationService.GetString(UserMessageStrings.SYNC_PULL_COMPLETE)));
 
                 foreach (var t in _deletedObjectCheckTypes)
                 {
