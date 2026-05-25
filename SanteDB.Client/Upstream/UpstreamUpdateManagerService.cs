@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using ClosedXML;
 using SanteDB.Client.Configuration;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Services;
@@ -247,8 +248,8 @@ namespace SanteDB.Client.Upstream
                                 .OfType<AppletManifestInfo>()
                                 .Where(i =>
                                 {
-                                    this.m_tracer.TraceVerbose("Checking for local version of {0}...", i.AppletInfo);
                                     var installed = this.m_appletManager.GetApplet(i.AppletInfo.Id);
+                                    this.m_tracer.TraceInfo("Installed version: {0}, Upstream version: {1}...", installed?.Info, i.AppletInfo);
                                     return (installed == null ||
                                         installed.Info.Version.ParseVersion(out _) < i.AppletInfo.Version.ParseVersion(out _));
                                 }).ToList();
