@@ -69,7 +69,10 @@ namespace SanteDB.Client.Disconnected.Services
                 }
             }
         }
-        
+
+        /// <inheritdoc/>
+        public uint BackupPriority => uint.MinValue;
+
         /// <inheritdoc/>
         public string ServiceName => "File System Data Quality Ruleset Provider";
 

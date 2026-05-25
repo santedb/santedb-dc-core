@@ -79,6 +79,9 @@ namespace SanteDB.Client.Disconnected.Services
         private readonly string m_cdssLibraryLocation;
         private readonly ConcurrentDictionary<Guid, ICdssLibrary> m_cdssLibrary = new ConcurrentDictionary<Guid, ICdssLibrary>();
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemCdssLibraryRepository));
+        
+        /// <inheritdoc/>
+        public uint BackupPriority => uint.MinValue;
 
         /// <summary>
         /// DI constructor
