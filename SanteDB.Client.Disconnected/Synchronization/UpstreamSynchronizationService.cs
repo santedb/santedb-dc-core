@@ -238,7 +238,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             if (!result.HasValue) // GetUpstreamLatency returns -1 when the service is unavailable.
             {
-                throw new TimeoutException("Service Unavailable.");
+                // JF- Used to throw exception which was slow - should only return zero
+                return TimeSpan.Zero;
             }
             return TimeSpan.FromMilliseconds((double)result);
         }
