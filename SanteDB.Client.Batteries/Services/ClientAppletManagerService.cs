@@ -52,11 +52,11 @@ namespace SanteDB.Client.Batteries.Services
     public class ClientAppletManagerService : IAppletManagerService, IAppletSolutionManagerService
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ClientAppletManagerService));
-        private readonly AppletConfigurationSection m_configuration;
+        protected readonly AppletConfigurationSection p_configuration;
         private readonly IAppletHostBridgeProvider m_bridgeProvider;
         private readonly SecurityConfigurationSection m_securityConfiguration;
         private readonly ClientConfigurationSection m_clientConfiguration;
-        private readonly IUserInterfaceInteractionProvider m_userInterfaceInteractionProvider;
+        protected readonly IUserInterfaceInteractionProvider p_userInterfaceInteractionProvider;
         private readonly IPlatformSecurityProvider m_platformSecurityProvider;
         private AppletCollection m_appletCollection;
         private ReadonlyAppletCollection m_readonlyAppletCollection;
@@ -66,11 +66,11 @@ namespace SanteDB.Client.Batteries.Services
         /// </summary>
         public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider, IUserInterfaceInteractionProvider userInterfaceInteractionProvider, IPlatformSecurityProvider platformSecurityProvider)
         {
-            this.m_configuration = configurationManager.GetSection<AppletConfigurationSection>();
+            this.p_configuration = configurationManager.GetSection<AppletConfigurationSection>();
             this.m_bridgeProvider = bridgeProvider;
             this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
             this.m_clientConfiguration = configurationManager.GetSection<ClientConfigurationSection>();
-            this.m_userInterfaceInteractionProvider = userInterfaceInteractionProvider;
+            this.p_userInterfaceInteractionProvider = userInterfaceInteractionProvider;
             this.m_platformSecurityProvider = platformSecurityProvider;
         }
 
@@ -94,50 +94,11 @@ namespace SanteDB.Client.Batteries.Services
 
                 try
                 {
-                    // Load packages from applets/ filesystem directory
-                    var appletDir = this.m_configuration.AppletDirectory;
-                    if (!Path.IsPathRooted(appletDir))
+                    foreach(var appletPackage in this.GetInstalledAppletManifests())
                     {
-                        var location = Assembly.GetEntryAssembly()?.Location ?? Assembly.GetExecutingAssembly().Location;
-                        appletDir = Path.Combine(Path.GetDirectoryName(location), this.m_configuration.AppletDirectory);
+                        this.m_appletCollection.Add(appletPackage);
                     }
 
-                    if (!Directory.Exists(appletDir))
-                    {
-                        Directory.CreateDirectory(appletDir);
-                        this.m_tracer.TraceWarning("Applet directory {0} doesn't exist, no applets will be loaded", appletDir);
-                    }
-                    else
-                    {
-                        this.m_tracer.TraceInfo("Scanning {0} for applets...", appletDir);
-
-                        var appletFiles = Directory.GetFiles(appletDir, "*.manifest").ToArray();
-                        int loadedApplets = 0;
-                        foreach (var file in appletFiles)
-                        {
-                            try
-                            {
-                                this.m_tracer.TraceInfo("Loading {0}...", file);
-                                this.m_userInterfaceInteractionProvider.SetStatus(null, $"Loading applet {Path.GetFileNameWithoutExtension(file)}", (float)loadedApplets++ / (float)appletFiles.Length);
-                                using (var fs = File.OpenRead(file))
-                                {
-                                    var pkg = AppletManifest.Load(fs);
-                                    this.m_appletCollection.Add(pkg);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                if (this.m_userInterfaceInteractionProvider.Confirm($"Error loading {Path.GetFileName(file)}, would you like to ignore this error?"))
-                                {
-                                    File.Delete(file);
-                                }
-                                else
-                                {
-                                    throw new InvalidOperationException($"Error loading {Path.GetFileName(file)}", ex);
-                                }
-                            }
-                        }
-                    }
                 }
                 catch (SecurityException e)
                 {
@@ -152,6 +113,69 @@ namespace SanteDB.Client.Batteries.Services
             }
             this.m_readonlyAppletCollection = this.m_readonlyAppletCollection ?? this.m_appletCollection.AsReadonly();
             return this.m_readonlyAppletCollection;
+        }
+
+        protected virtual IEnumerable<AppletManifest> GetInstalledAppletManifests() 
+        {
+
+            // Load packages from applets/ filesystem directory
+            var appletDir = this.p_configuration.AppletDirectory;
+            if (!Path.IsPathRooted(appletDir))
+            {
+                var location = Assembly.GetEntryAssembly()?.Location ?? Assembly.GetExecutingAssembly().Location;
+                appletDir = Path.Combine(Path.GetDirectoryName(location), this.p_configuration.AppletDirectory);
+            }
+
+            if (!Directory.Exists(appletDir))
+            {
+                Directory.CreateDirectory(appletDir);
+                this.m_tracer.TraceWarning("Applet directory {0} doesn't exist, no applets will be loaded", appletDir);
+            }
+            else
+            {
+                this.m_tracer.TraceInfo("Scanning {0} for manifests...", appletDir);
+                var appletFiles = Directory.GetFiles(appletDir, "*.pak").ToArray();
+                int loadedApplets = 0;
+                foreach (var packageFile in appletFiles)
+                {
+                    AppletManifest loadedManifest = null;
+                    try
+                    {
+                        this.m_tracer.TraceInfo("Loading {0}...", packageFile);
+                        this.p_userInterfaceInteractionProvider.SetStatus(null, $"Loading applet {Path.GetFileNameWithoutExtension(packageFile)}", (float)loadedApplets++ / (float)appletFiles.Length);
+                        using (var fs = File.OpenRead(packageFile))
+                        {
+
+                            var package = AppletPackage.Load(fs);
+#if !DEBUG
+                            // Re-validate the package from disk - since it might have been tampered with
+                            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.Id} - it may not be from a trusted source. Install anyways?"))
+                            {
+                                throw new SecurityException($"{package.GetType().Name} {package.Meta.Id} failed validation");
+                            }
+                            loadedManifest = package.Unpack();
+#endif 
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (this.p_userInterfaceInteractionProvider.Confirm($"Error loading {Path.GetFileName(packageFile)}, would you like to ignore this error?"))
+                        {
+                            File.Delete(packageFile);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Error loading {Path.GetFileName(packageFile)}", ex);
+                        }
+                    }
+
+                    // use a yield return outside of the try/catch
+                    if(loadedManifest != null)
+                    {
+                        yield return loadedManifest;
+                    }
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -182,35 +206,23 @@ namespace SanteDB.Client.Batteries.Services
         public AppletManifest GetApplet(string appletId) => this.Applets.FirstOrDefault(o => o.Info.Id == appletId);
 
         /// <inheritdoc/>
-        public byte[] GetPackage(string appletId)
+        public virtual byte[] GetPackage(string appletId)
         {
             // Save the applet
-            if (!Directory.Exists(this.m_configuration.AppletDirectory))
+            if (!Directory.Exists(this.p_configuration.AppletDirectory))
             {
                 throw new InvalidOperationException(ErrorMessages.NOT_INITIALIZED);
             }
 
             // If we have the original copy send that if not create our own (unsigned) version don't
-            var pakFile = Path.Combine(this.m_configuration.AppletDirectory, $"{appletId}.manifest");
+            var pakFile = Path.Combine(this.p_configuration.AppletDirectory, $"{appletId}.pak");
             if (File.Exists(pakFile))
-            { 
-                // The pakfile on disk is not compressed - we need to compress it for the response
-                using(var fs = File.OpenRead(pakFile))
-                using (var ms = new MemoryStream())
-                {
-                    // Load the manifest
-                    AppletManifest.Load(fs).CreatePackage().Save(ms);
-                    return ms.ToArray();
-                }
+            {
+                return File.ReadAllBytes(pakFile);
             }
             else
             {
-                var manifest = this.GetApplet(appletId);
-                using (var ms = new MemoryStream())
-                {
-                    manifest.CreatePackage().Save(ms);
-                    return ms.ToArray();
-                }
+                throw new InvalidOperationException(String.Format(ErrorMessages.OBJECT_NOT_FOUND, appletId));
             }
         }
 
@@ -221,7 +233,7 @@ namespace SanteDB.Client.Batteries.Services
 
             // Is the package valid?
 #if !DEBUG
-            if (!package.VerifySignatures(this.m_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.m_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.Id} - it may not be from a trusted source. Install anyways?"))
+            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.Id} - it may not be from a trusted source. Install anyways?"))
             {
                 throw new SecurityException($"{package.GetType().Name} {package.Meta.Id} failed validation");
             }
@@ -234,13 +246,7 @@ namespace SanteDB.Client.Batteries.Services
                 throw new InvalidOperationException($"Cannot replace {package.Meta} unless upgrade is specifically specified");
             }
 
-            // Save the manifest contents as a uncompressed resource file
-            var manifest = package.Unpack();
-            using (var mfst = File.Create(appletPakFile))
-            {
-                manifest.Save(mfst);
-            }
-
+            var manifest = this.SaveAppletPackageData(package);
             var retVal = this.LoadApplet(manifest);
             this.Changed?.Invoke(this, EventArgs.Empty);
 
@@ -248,16 +254,28 @@ namespace SanteDB.Client.Batteries.Services
         }
 
         /// <summary>
+        /// Save the raw data to the disk for the package and return the loaded/unpackaged manifest
+        /// </summary>
+        protected virtual AppletManifest SaveAppletPackageData(AppletPackage package)
+        {
+            using (var pkgStream = File.Create(this.GetInstallationTargetFile(package.Meta.Id)))
+            {
+                package.Save(pkgStream);
+            }
+            return package.Unpack();
+        }
+
+        /// <summary>
         /// Get the installation target file
         /// </summary>
-        private string GetInstallationTargetFile(String appletId)
+        protected virtual string GetInstallationTargetFile(String appletId)
         {
 
             // Applet PAK directory - 
-            var appletDir = this.m_configuration.AppletDirectory;
+            var appletDir = this.p_configuration.AppletDirectory;
             if (!Path.IsPathRooted(appletDir))
             {
-                appletDir = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), this.m_configuration.AppletDirectory);
+                appletDir = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), this.p_configuration.AppletDirectory);
             }
 
             // Create the applet container directory
@@ -266,7 +284,7 @@ namespace SanteDB.Client.Batteries.Services
                 Directory.CreateDirectory(appletDir);
             }
 
-            return Path.Combine(appletDir, $"{appletId}.manifest");
+            return Path.Combine(appletDir, $"{appletId}.pak");
         }
 
         /// <inheritdoc/>

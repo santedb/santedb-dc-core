@@ -207,6 +207,7 @@ namespace SanteDB.Client.Upstream
             }
             catch (Exception e)
             {
+                this.m_tracer.TraceError("Error installing/updating {0} - {1}", packageId, e);
                 throw new UpstreamIntegrationException(String.Format(ErrorMessages.READ_ERROR, $"applet/{packageId}"), e);
 
             }
