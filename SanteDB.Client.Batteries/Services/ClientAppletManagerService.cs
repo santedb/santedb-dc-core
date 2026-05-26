@@ -149,7 +149,7 @@ namespace SanteDB.Client.Batteries.Services
                             var package = AppletPackage.Load(fs);
 #if !DEBUG
                             // Re-validate the package from disk - since it might have been tampered with
-                            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.Id} - it may not be from a trusted source. Install anyways?"))
+                            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.GetName("en")} - it may not be from a trusted source. Install anyways?"))
                             {
                                 throw new SecurityException($"{package.GetType().Name} {package.Meta.Id} failed validation");
                             }
@@ -233,7 +233,7 @@ namespace SanteDB.Client.Batteries.Services
 
             // Is the package valid?
 #if !DEBUG
-            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.Id} - it may not be from a trusted source. Install anyways?"))
+            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.GetName("en")} - it may not be from a trusted source. Install anyways?"))
             {
                 throw new SecurityException($"{package.GetType().Name} {package.Meta.Id} failed validation");
             }
