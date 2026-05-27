@@ -78,7 +78,7 @@ namespace SanteDB.Client.Rest
             {
                 throw new InvalidOperationException(ErrorMessages.PRINCIPAL_NOT_APPROPRIATE);
             }
-            return this.m_deviceMailbox.Value;
+            return this.m_deviceMailbox.GetValueOrDefault();
         }
 
         /// <inheritdoc/>
