@@ -238,7 +238,8 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
             if (!result.HasValue) // GetUpstreamLatency returns -1 when the service is unavailable.
             {
-                throw new TimeoutException("Service Unavailable.");
+                // JF- Used to throw exception which was slow - should only return zero
+                return TimeSpan.Zero;
             }
             return TimeSpan.FromMilliseconds((double)result);
         }
@@ -1188,10 +1189,16 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
         /// </summary>
         private void SubscribeToEvents()
         {
+            this._Tracer.TraceInfo("Subscribing to repository events...");
+
             // Start for network status change
             _NetworkInformationService.NetworkStatusChanged += (o, e) =>
             {
-                _ThreadPool.QueueUserWorkItem(_ => this.Pull(SubscriptionTriggerType.OnNetworkChange));
+                _ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    this.Pull(SubscriptionTriggerType.OnNetworkChange);
+                    this.Push();
+                });
             };
 
             // User preferences
@@ -1249,6 +1256,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                         !this._Configuration.ForbidSending.Any(f => f.Type == type) &&
                          canWrite) // This is a type of resource that can be submitted to the API
                     {
+                        this._Tracer.TraceInfo("Subscribing to {0}", type);
                         var repositoryType = typeof(INotifyRepositoryService<>).MakeGenericType(type);
                         var repositoryInstance = _ServiceProvider.GetService(repositoryType);
                         if (repositoryInstance != null)
@@ -1263,6 +1271,10 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
                             {
                                 this._Tracer.TraceWarning("Cannot bind to {0} - data will not be pushed to server - {1}", type, e.ToHumanReadableString());
                             }
+                        }
+                        else
+                        {
+                            this._Tracer.TraceWarning("Cannot bind to {0} - no repository exists", type);
                         }
                     }
                 }

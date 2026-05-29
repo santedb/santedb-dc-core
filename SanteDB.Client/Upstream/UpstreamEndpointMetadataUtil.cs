@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using SanteDB.Client.Upstream.Repositories;
 using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.Serialization;
@@ -94,6 +95,9 @@ namespace SanteDB.Client.Upstream
             public bool CanWrite { get; set; }
 
         }
+
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(UpstreamEndpointMetadataUtil));
+
         private static UpstreamEndpointMetadataUtil s_current = null;
         private static readonly object s_lock = new object();
         private static readonly Newtonsoft.Json.JsonSerializerSettings s_SerializerSettings = new Newtonsoft.Json.JsonSerializerSettings
@@ -230,11 +234,13 @@ namespace SanteDB.Client.Upstream
                         }).ToDictionaryIgnoringDuplicates(o => o.Key, o => o.Value);
 
                         if (null != this.m_serviceEndpoints && this.m_serviceEndpoints.Count > 0)
+                        {
                             WriteServiceEndpointsToCacheInternal();
+                        }
                     }
                 }
             }
-            catch
+            catch(Exception e)
             {
                 if (!TryGetServiceEndpointsFromCacheInternal()) //Try to read from the cache, otherwise throw up that we cannot get the endpoint data.
                     throw;
@@ -294,8 +300,9 @@ namespace SanteDB.Client.Upstream
                     }
                 }
             }
-            catch
+            catch(Exception e)
             {
+                this.m_tracer.TraceWarning("Could not load options.cache.json - {0}", e);
                 return false;
             }
         }

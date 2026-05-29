@@ -189,7 +189,10 @@ namespace SanteDB.Client.Disconnected.Jobs
                     obsoleteFilter.Add("obsoleteSince", lastSyncLog.LastSync.ToString());
                     foreach (var obsCert in _UpstreamDataSigningCertificateManager.GetSigningCertificates(typeof(SecurityDevice), obsoleteFilter))
                     {
-                        _LocalDataSigningCertificateManager.RemoveSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, obsCert, AuthenticationContext.SystemPrincipal);
+                        if (_LocalDataSigningCertificateManager.GetSigningCertificates(AuthenticationContext.AnonymousPrincipal.Identity).Any(c => c.Thumbprint == obsCert.Thumbprint))
+                        {
+                            _LocalDataSigningCertificateManager.RemoveSigningCertificate(AuthenticationContext.AnonymousPrincipal.Identity, obsCert, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
 
