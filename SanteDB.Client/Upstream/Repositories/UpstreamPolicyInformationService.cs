@@ -164,14 +164,14 @@ namespace SanteDB.Client.Upstream.Repositories
                     case Act act:
                         using (var client = this.CreateHdsiServiceClient())
                         {
-                            retVal = client.Get<Act>(act.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(act, o.Policy, PolicyGrantType.Grant));
+                            retVal = client.Get<Act>(act.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(act, o.LoadProperty(p => p.Policy), PolicyGrantType.Grant));
                         }
                         break;
 
                     case Entity ent:
                         using (var client = this.CreateHdsiServiceClient())
                         {
-                            retVal = client.Get<Entity>(ent.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(ent, o.Policy, PolicyGrantType.Grant));
+                            retVal = client.Get<Entity>(ent.Key.Value, null).Policies.Select(o => new UpstreamPolicyInstance(ent, o.LoadProperty(p => p.Policy), PolicyGrantType.Grant));
                         }
                         break;
 
