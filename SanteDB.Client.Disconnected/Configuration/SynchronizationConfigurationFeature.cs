@@ -21,6 +21,7 @@ using SanteDB.Client.Configuration;
 using SanteDB.Client.Disconnected.Data.Synchronization.Configuration;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Collections;
@@ -147,6 +148,7 @@ namespace SanteDB.Client.Disconnected.Configuration
                 case SynchronizationMode.Full:
                     // Add a subscription for the all type 
                     configSection.Subscriptions = m_subscriptionRepository.Find(o => true).Where(d => d.ClientDefinitions.Any(c => c.Mode.HasFlag(Core.Model.Subscription.SubscriptionModeType.Full))).Select(o => o.Uuid).ToList();
+
                     configSection.SubscribedObjects = null;
                     configSection.SubscribeToResource = null;
                     goto case SynchronizationMode.Partial;
@@ -155,6 +157,8 @@ namespace SanteDB.Client.Disconnected.Configuration
                     {
                         configSection.Subscriptions = ((IEnumerable)featureConfiguration[ENABLED_SUBSCRIPTIONS_SETTING])?.OfType<JToken>().Select(o => Guid.Parse(o.ToString())).ToList();
                         configSection.SubscribedObjects = ((IEnumerable)featureConfiguration[SUBSCRIBED_OBJECTS_SETTING])?.OfType<JToken>().Select(o => Guid.Parse(o.ToString())).ToList();
+                        // Add to security configuration section 
+                        configuration.GetSection<SecurityConfigurationSection>().SetPolicy(SecurityPolicyIdentification.PermittedFacilities, configSection.SubscribedObjects.Select(o => o.ToString()).ToList());
                         var subType = featureConfiguration[SUBSCRIBED_OBJECT_TYPE_SETTING].ToString();
                         if (subType == "Facility")
                         {

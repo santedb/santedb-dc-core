@@ -49,8 +49,8 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// DI constructor
         /// </summary>
-        public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory, IAdhocCacheService adhocCacheService)
-            : base(restClientFactory, adhocCacheService)
+        public OAuthClient(IUpstreamManagementService upstreamManagement, ILocalizationService localization, IRestClientFactory restClientFactory, IAdhocCacheService adhocCacheService, IConfigurationManager configurationManager)
+            : base(restClientFactory, adhocCacheService, configurationManager)
         {
             _UpstreamManagement = upstreamManagement;
             _UpstreamManagement.RealmChanging += UpstreamRealmChanging;

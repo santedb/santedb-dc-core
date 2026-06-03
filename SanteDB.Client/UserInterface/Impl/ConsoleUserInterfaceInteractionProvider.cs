@@ -20,6 +20,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace SanteDB.Client.UserInterface.Impl
 {
@@ -60,7 +61,32 @@ namespace SanteDB.Client.UserInterface.Impl
         public string Prompt(string message, bool maskEntry = false)
         {
             Console.Write("{0}:", message);
-            return Console.ReadLine();
+            if (maskEntry)
+            {
+                StringBuilder input = new StringBuilder();
+                while (true)
+                {
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        break;
+                    }
+
+                    if (key.Key == ConsoleKey.Backspace && input.Length > 0)
+                    {
+                        input.Remove(input.Length - 1, 1);
+                    }
+                    else if (key.Key != ConsoleKey.Backspace)
+                    {
+                        input.Append(key.KeyChar);
+                    }
+                }
+                return input.ToString();
+            }
+            else
+            {
+                return Console.ReadLine();
+            }
         }
 
         /// <inheritdoc/>

@@ -22,6 +22,7 @@ using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Exceptions;
 using SanteDB.Client.Http;
+using SanteDB.Client.OAuth;
 using SanteDB.Client.Services;
 using SanteDB.Client.UserInterface;
 using SanteDB.Core;
@@ -217,19 +218,21 @@ namespace SanteDB.Client.Upstream.Management
                         welcomeMessage = realmOptions.Settings.Find(o => o.Key.Equals("$welcome"))?.Value ?? this.m_localizationService.GetString(UserMessageStrings.JOIN_REALM_SUCCESS, new { realm = targetRealm.Realm.Host });
 
                         // Copy central app settings 
-                        foreach (var set in realmOptions.Settings.Where(o => !o.Key.StartsWith("$")))
+                        m_securityConfiguration.Injest(realmOptions.Settings);
+                        var injestedSettings = m_securityConfiguration.ForDisclosure().Select(o => o.Key).ToArray();
+                        foreach (var set in realmOptions.Settings.Where(o => !o.Key.StartsWith("$") && !injestedSettings.Contains(o.Key)))
                         {
                             this.m_applicationConfiguration.AddAppSetting(set.Key, set.Value);
                         }
 
                         // Pull security configuration sections from the AMI - these are only disclosed when the AMI has our authentication as an administrator
-                        this.m_securityConfiguration.PasswordRegex = realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
-                            this.m_securityConfiguration.PasswordRegex;
-                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireMfa, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireMfaName)?.Value ?? "false"));
-                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
-                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
-                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
-                        this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireRsaCerts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireRsaSignaturesName)?.Value ?? "false"));
+                        //this.m_securityConfiguration.PasswordRegex = realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
+                        //    this.m_securityConfiguration.PasswordRegex;
+                        //this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireMfa, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireMfaName)?.Value ?? "false"));
+                        //this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
+                        //this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
+                        //this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
+                        //this.m_securityConfiguration.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireRsaCerts, Boolean.Parse(realmOptions.Settings.Find(o => o.Key == SecurityConfigurationSection.RequireRsaSignaturesName)?.Value ?? "false"));
                         // If the server allows for local user accounts then we will allow the application credential to be obtained in the UI
                         this.m_oauthConfigurationSection.AllowClientOnlyGrant = this.m_securityConfiguration.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false);
 
@@ -555,6 +558,8 @@ namespace SanteDB.Client.Upstream.Management
                             if(this.m_rewriteUrls.GetValueOrDefault())
                             {
                                 retVal.Address = $"{requestedRealm}/{amiUrl.LocalPath}";
+                                // HACK: Also override the hairpining for the data
+                                this.m_applicationConfiguration.AddAppSetting(OAuthClientCore.APP_SETTING_OVERRIDE_OIDC, "true");
                             }
                         }
                         return retVal;

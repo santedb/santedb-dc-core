@@ -28,7 +28,7 @@ __SanteDBAppService.GetStatus = __SanteDBAppService.GetStatus || function () {
             success: function (data) {
                 __SanteDBAppService.state = __SanteDBAppService.state || {};
                 Object.keys(data).forEach(key => {
-                    __SanteDBAppService.state[key] = data[key] || __SanteDBAppService.state[key];
+                    __SanteDBAppService.state[key] = data[key];
                 });
                 fulfill(data);
             }

@@ -237,7 +237,7 @@ namespace SanteDB.Client.Batteries.Configuration
             configuration.Sections.Add(new BackupConfigurationSection()
             {
                 PrivateBackupLocation = Path.Combine(localDataPath, "backup"),
-                PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "santedb", "sdk", "backup")
+                PublicBackupLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments), "SanteDB")
             });
 
             configuration.Sections.Add(new AppletConfigurationSection()

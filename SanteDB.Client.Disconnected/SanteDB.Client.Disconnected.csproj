@@ -58,6 +58,11 @@
 
 
   <ItemGroup>
+    <Compile Remove="Jobs\MailSynchronizationJob.cs" />
+  </ItemGroup>
+
+
+  <ItemGroup>
     <None Remove="Data\DcdrPostgresPatch.sql" />
   </ItemGroup>
 
@@ -69,6 +74,7 @@
 
   <ItemGroup>
     <None Include="..\..\SanteDB.licenseheader" Link="SanteDB.licenseheader" />
+    <None Include="Jobs\MailSynchronizationJob.cs" />
   </ItemGroup>
 
 

@@ -445,17 +445,17 @@ namespace SanteDB.Client.Upstream.Management
                         case IdentifiedData id:
                             {
                                 IdentifiedData response = null;
-                                EventHandler<RestRequestEventArgs> versionCheck = null;
                                 try
                                 {
-                                    if (id is IVersionedData ivd && !forceObsolete)
+
+                                    client.Requesting += (o, e) =>
                                     {
-                                        versionCheck = (o, e) =>
+                                        if (id is IVersionedData ivd && !forceObsolete)
                                         {
                                             e.AdditionalHeaders.Add(HttpRequestHeader.IfMatch, $"{id.Type}.{ivd.PreviousVersionKey}");
-                                        };
-                                        client.Requesting += versionCheck;
-                                    }
+                                        }
+                                        e.AdditionalHeaders.Add(ExtendedHttpHeaderNames.DeleteModeHeaderName, DeleteMode.IgnoreMissing.ToString());
+                                    };
                                     response = client.Delete<IdentifiedData>($"{data.GetType().GetResourceName()}/{id.Key}");
                                 }
                                 catch (WebException we) when (we.Response is HttpWebResponse hwr && hwr.StatusCode == HttpStatusCode.Conflict)
@@ -467,7 +467,7 @@ namespace SanteDB.Client.Upstream.Management
                                         var patch = this.m_patchService.Diff(serverCopy, data);
                                         if (this.m_patchService.Test(patch, serverCopy)) // There is no issue - so just apply the patch locally and resubmit result to the server
                                         {
-                                            client.Requesting -= versionCheck;
+                                            forceObsolete = true;
                                             response = client.Delete<IdentifiedData>($"{data.GetType().GetResourceName()}/{data.Key}");
                                         }
                                     }

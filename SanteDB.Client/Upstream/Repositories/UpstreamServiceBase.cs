@@ -60,6 +60,11 @@ namespace SanteDB.Client.Upstream.Repositories
         protected IUpstreamAvailabilityProvider UpstreamAvailabilityProvider => this.m_upstreamAvailabilityProvider;
 
         /// <summary>
+        /// Gets the upstream management
+        /// </summary>
+        protected IUpstreamManagementService UpstreamManagementService => this.m_upstreamManagementService;
+
+        /// <summary>
         /// Get the upstream client factory
         /// </summary>
         protected IRestClientFactory RestClientFactory => this.m_restClientFactory;

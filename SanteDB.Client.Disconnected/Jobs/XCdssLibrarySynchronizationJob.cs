@@ -162,9 +162,9 @@ namespace SanteDB.Client.Disconnected.Jobs
 
                     this.m_tracer.TraceInfo("Will synchronize CDSS libraries modified since {0}", cdssSyncLog.LastSync);
 
-                    EventHandler<RestRequestEventArgs> cdssModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, cdssSyncLog.LastSync?.UtcDateTime.ToString()),
-                        dqModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dqSyncLog.LastSync?.UtcDateTime.ToString()),
-                        dtModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dtSyncLog.LastSync?.UtcDateTime.ToString());
+                    EventHandler<RestRequestEventArgs> cdssModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, cdssSyncLog.LastSync?.UtcDateTime.ToString("o")),
+                        dqModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dqSyncLog.LastSync?.UtcDateTime.ToString("o")),
+                        dtModifiedHeader = (o, ev) => ev.AdditionalHeaders.Add(System.Net.HttpRequestHeader.IfModifiedSince, dtSyncLog.LastSync?.UtcDateTime.ToString("o"));
 
                     // Determine the last synchronization query 
                     using (var client = this.m_restClientFactory.GetRestClientFor(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))

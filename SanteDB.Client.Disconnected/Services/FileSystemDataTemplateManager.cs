@@ -115,6 +115,9 @@ namespace SanteDB.Client.Disconnected.Services
 
         /// <inheritdoc/>
         public Guid[] AssetClassIdentifiers => new Guid[] { FILE_SYSTEM_BACKUP_ASSET_ID };
+        
+        /// <inheritdoc/>
+        public uint BackupPriority => uint.MinValue;
 
         /// <inheritdoc/>
         public DataTemplateDefinition AddOrUpdate(DataTemplateDefinition definition)
