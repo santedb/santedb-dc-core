@@ -1,12 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(VersionNumber)' == ''">
+		<VersionNumber>3.0-debug</VersionNumber>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(VersionNumber)' == ''">
-    <VersionNumber>3.0-debug</VersionNumber>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net10.0;net48;netstandard2.0</TargetFrameworks>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>SanteDB.Client</PackageId>
+		<Title>SanteDB.Client</Title>
+		<Version>$(VersionNumber)</Version>
+		<Description>SanteDB dCDR Client Library</Description>
+		<Authors>SanteSuite Contributors</Authors>
+		<PackageTags>SanteDB</PackageTags>
+		<RepositoryUrl>https://github.com/santedb/santedb-dc-core</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<IncludeSymbols>true</IncludeSymbols>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<Product>SanteDB</Product>
+		<Copyright>Copyright (C) 2015-2026 SanteSuite Contributors (See: NOTICES)</Copyright>
+		<Company>SanteSuite Contributors</Company>
+		<PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
+		<PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
+		<RootNamespace>SanteDB.Client</RootNamespace>
+	</PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\WebAppletBridge.js" />
@@ -14,10 +35,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\WebAppletBridge.js" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\Impl\" />
   </ItemGroup>
 
   <Choose>
@@ -39,6 +56,7 @@
         <PackageReference Include="SanteDB.Rest.BIS" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Rest.OAuth" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model.ViewModelSerializers" Version="$(VersionNumber)" />
+				<PackageReference Include="SanteDB.Caching.Memory" Version="$(VersionNumber)" />
       </ItemGroup>
     </When>
     <Otherwise>
@@ -56,6 +74,7 @@
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.AMI\SanteDB.Rest.AMI.csproj" />
         <ProjectReference Include="..\..\santedb-restsvc\SanteDB.Rest.OAuth\SanteDB.Rest.OAuth.csproj" />
         <ProjectReference Include="..\..\santedb-bis\SanteDB.Rest.BIS\SanteDB.Rest.BIS.csproj" />
+				<ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -64,32 +83,8 @@
     <None Include="..\..\SanteDB.licenseheader" Link="SanteDB.licenseheader" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="[13.0.4,13.1)" />
+    <PackageReference Include="System.Text.Json" Version="[9.0.0,10)" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\santedb-cache-memory\SanteDB.Caching.Memory\SanteDB.Caching.Memory.csproj" />
-  </ItemGroup>
-  <PropertyGroup>
-    <PackageId>SanteDB.Client</PackageId>
-    <Title>SanteDB.Client</Title>
-    <Version>$(VersionNumber)</Version>
-    <Description>SanteDB dCDR Client Library</Description>
-    <Authors>SanteSuite Contributors</Authors>
-    <PackageTags>SanteDB</PackageTags>
-    <RepositoryUrl>https://github.com/santedb/santedb-dc-core</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <IncludeSymbols>true</IncludeSymbols>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Product>SanteDB</Product>
-    <Copyright>Copyright (C) 2015-2026 SanteSuite Contributors (See: NOTICES)</Copyright>
-    <Company>SanteSuite Contributors</Company>
-    <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
-    <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
-    <RootNamespace>SanteDB.Client</RootNamespace>
-  </PropertyGroup>
+  
 </Project>
