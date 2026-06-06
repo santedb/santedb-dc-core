@@ -230,7 +230,7 @@ namespace SanteDB.Client.Disconnected.Data.Synchronization
 
         /// <summary>
         /// Get the overall drift in time between the upstream and this machine
-        /// </summary>
+        /// </summary>p
         /// <param name="endpointType">The endpoint from which the drift should be calculated</param>
         private TimeSpan GetUpstreamDrift(ServiceEndpointType endpointType)
         {
