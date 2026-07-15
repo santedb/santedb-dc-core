@@ -16,16 +16,19 @@
  * the License.
  *
  */
+using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
+using SanteDB.Client.Http;
 using SanteDB.Client.Services;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.OAuth;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using SanteDB.Rest.OAuth;
 using SharpCompress.Compressors.Xz;
@@ -46,7 +49,13 @@ namespace SanteDB.Client.OAuth
 
         // Adhoc cache
         private readonly IAdhocCacheService _AdhocCache;
+        /// <summary>
+        /// <see cref="IAdhocCacheService"/> key for the discovery document structure.
+        /// </summary>
         protected const string ADHOC_DISCOVERY_DOC_KEY = "oauth.discovery";
+        /// <summary>
+        /// <see cref="IAdhocCacheService"/> key for the JWKS key structure.
+        /// </summary>
         protected const string ADHOC_JKWS_DOC_KEY = "oauth.jkws";
 
         /// <summary>
@@ -383,7 +392,7 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a token request
         /// </summary>
-        protected virtual void SetupRestClientForTokenRequest(IRestClient restClient, OAuthTokenRequest tokenRequest, IEnumerable<IClaim> clientClaimAssertions = null) { }
+        protected virtual void SetupRestClient(IRestClient restClient, IEnumerable<IClaim> clientClaimAssertions = null) { }
 
         /// <summary>
         /// Setup the <paramref name="restClient"/> for a JWKS fetch request
@@ -418,9 +427,9 @@ namespace SanteDB.Client.OAuth
 
             var restclient = GetRestClient();
             // Copy inbound client claims to the claims that the server is getting (purpose of use, overrride, etc.)
-            SetupRestClientForTokenRequest(restclient, request, clientClaimAssertions);
+            SetupRestClient(restclient, clientClaimAssertions);
 
-            var tokenEndpoint = GetTokenEndpoint();
+            var tokenEndpoint = GetDiscoveryDocument()?.TokenEndpoint;
             if (!String.IsNullOrEmpty(tokenEndpoint))
             {
                 return restclient.Post<OAuthTokenRequest, OAuthTokenResponse>(tokenEndpoint, "application/x-www-form-urlencoded", request);
@@ -434,13 +443,6 @@ namespace SanteDB.Client.OAuth
                     ErrorDescription = "Token endpoint unknown"
                 };
             }
-        }
-
-        private string GetTokenEndpoint()
-        {
-            var doc = GetDiscoveryDocument();
-
-            return doc?.TokenEndpoint;
         }
 
         /// <summary>
@@ -477,7 +479,7 @@ namespace SanteDB.Client.OAuth
             ex =>
             {
                 Tracer.TraceError("Exception fetching discovery document: {0}", ex.ToHumanReadableString());
-                return true;
+                return true; //True means we want to retry.
             });
 
             // JF - Prevent Hairpinning if the administrator has configured this
@@ -552,6 +554,33 @@ namespace SanteDB.Client.OAuth
             };
 
             return GetPrincipal(request);
+        }
+
+        /// <inheritdoc />
+        public virtual void Signout(IClaimsPrincipal principal)
+        {
+            if (null == principal)
+                throw new ArgumentNullException(nameof(principal));
+            if (!(principal is ITokenPrincipal tokenprincipal)) //May be a MemorySessionTokenPrincipal instead of OAuthTokenPrincipal
+                throw new ArgumentException($"The provided principal is not an instance of {nameof(OAuthClaimsPrincipal)}", nameof(principal));
+
+            var restclient = GetRestClient();
+            SetupRestClient(restclient, clientClaimAssertions: null);
+            //Force the signout to use the principal that is being signed out.
+            restclient.Credentials = new UpstreamPrincipalCredentials(tokenprincipal);
+
+            var signoutendpoint = GetDiscoveryDocument()?.SignoutEndpoint;
+
+            if (string.IsNullOrEmpty(signoutendpoint))
+                throw new NotSupportedException("Provider does not offer a signout endpoint.");
+
+            var request = new OAuthSignoutRequest
+            {
+                IdTokenHint = tokenprincipal?.IdentityToken
+            };
+
+            _ = restclient.Post<OAuthSignoutRequest, object>(signoutendpoint, "application/x-www-form-urlencoded", request);
+
         }
 
         #region IDisposable

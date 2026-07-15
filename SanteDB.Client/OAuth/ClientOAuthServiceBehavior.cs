@@ -17,9 +17,11 @@
  *
  */
 using RestSrvr.Attributes;
+using SanteDB.Client.Services;
 using SanteDB.Core;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Rest.Common;
 using SanteDB.Rest.Common.Fault;
@@ -70,6 +72,24 @@ namespace SanteDB.Client.OAuth
         public void AclPrecheck(string policyId)
         {
             this.m_policyEnforcementService.Demand(policyId);
+        }
+
+        protected override bool OnBeforeSignOut(OAuthSignoutRequestContext context)
+        {
+            try
+            {
+                if (context?.AuthenticationContext?.Principal is ITokenPrincipal tokenprincipal)
+                {
+                    var client = ApplicationServiceContext.Current.GetService<IOAuthClient>();
+                    client.Signout(tokenprincipal);
+                }
+            }
+            catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+                
+            }
+
+            return base.OnBeforeSignOut(context);
         }
 
         /// <inheritdoc />
