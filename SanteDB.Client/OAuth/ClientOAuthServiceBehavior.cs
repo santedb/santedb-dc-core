@@ -99,11 +99,12 @@ namespace SanteDB.Client.OAuth
             // HACK: Chrome does not like the way SetCookie works for the two cookies so we're going to clear them manually
             foreach (var session in context.AbandonedSessions)
             {
-                // TODO: Propogate to central iCDR 
                 if (!session.Claims.Any(c => c.Type == SanteDBClaimTypes.TemporarySession && Boolean.TryParse(c.Value, out var tempSession) && tempSession))
                 {
-                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}=; Max-Age=0; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
-                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}=; Max-Age=0; Path=/; HttpOnly; Discard");
+                    context.OutgoingResponse.SetAuthCookie(ExtendedCookieNames.RefreshCookieName,  path: GetAuthPathForCookie(context));
+                    context.OutgoingResponse.SetAuthCookie(ExtendedCookieNames.SessionCookieName);
+                    //context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}=; Max-Age=0; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
+                    //context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}=; Max-Age=0; Path=/; HttpOnly; Discard");
                 }
             }
         }
@@ -116,9 +117,11 @@ namespace SanteDB.Client.OAuth
             {
                 if (null != response.RefreshToken)
                 {
-                    context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}={response.RefreshToken}; Max-Age={response.ExpiresIn}; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
+                    context.OutgoingResponse.SetAuthCookie(ExtendedCookieNames.RefreshCookieName, response.RefreshToken, response.ExpiresIn, GetAuthPathForCookie(context));
+                    //context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.RefreshCookieName}={response.RefreshToken}; Max-Age={response.ExpiresIn}; Path={GetAuthPathForCookie(context)}; HttpOnly; Discard");
                 }
 
+                context.OutgoingResponse.SetAuthCookie(ExtendedCookieNames.SessionCookieName, response.AccessToken, maxAge: response.ExpiresIn + 10);
                 context.OutgoingResponse.AppendHeader("Set-Cookie", $"{ExtendedCookieNames.SessionCookieName}={response.AccessToken}; Max-Age={response.ExpiresIn + 10}; Path=/; HttpOnly; Discard");
 
             }
