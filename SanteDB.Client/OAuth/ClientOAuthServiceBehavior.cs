@@ -74,6 +74,7 @@ namespace SanteDB.Client.OAuth
             this.m_policyEnforcementService.Demand(policyId);
         }
 
+        /// <inheritdoc />
         protected override bool OnBeforeSignOut(OAuthSignoutRequestContext context)
         {
             try
