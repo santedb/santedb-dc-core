@@ -166,9 +166,9 @@ namespace SanteDB.Client.OAuth
         /// <summary>
         /// Setup this class to send a token request
         /// </summary>
-        protected override void SetupRestClientForTokenRequest(IRestClient restClient, OAuthTokenRequest tokenRequest, IEnumerable<IClaim> clientClaimAssertions = null)
+        protected override void SetupRestClient(IRestClient restClient, IEnumerable<IClaim> clientClaimAssertions = null)
         {
-            base.SetupRestClientForTokenRequest(restClient, tokenRequest, clientClaimAssertions);
+            base.SetupRestClient(restClient, clientClaimAssertions);
             restClient.Requesting += (o, e) =>
             {
                 var clientClaimHeader = RestOperationContext.Current?.IncomingRequest.Headers[ExtendedHttpHeaderNames.BasicHttpClientClaimHeaderName];
