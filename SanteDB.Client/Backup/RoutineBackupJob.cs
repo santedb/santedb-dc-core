@@ -104,15 +104,24 @@ namespace SanteDB.Client.Backup
                     m_jobStateManager.SetState(this, JobStateType.Running);
                     m_tickleService.SendTickle(new Tickle(Guid.Empty, TickleType.Toast | TickleType.Task, m_localizationService.GetString(UserMessageStrings.BACKUP_STARTED)));
 
-                    // Backup this device
-                    m_tracer.TraceInfo("Performing routine system backup - ");
-                    m_backupService.Backup(BackupMedia.Private, m_upstreamManagementService.GetSettings().LocalDeviceName);
-
-                    // Remove any unnecessary backups
-                    foreach (var backup in m_backupService.GetBackupDescriptors(BackupMedia.Private).OrderByDescending(o=>o.Timestamp).Skip(m_maxBackups))
+                    if (m_upstreamManagementService.IsConfigured())
                     {
-                        m_tracer.TraceInfo("Removing old backup {0}", backup);
-                        m_backupService.RemoveBackup(BackupMedia.Private, backup.Label);
+
+                        // Backup this device
+                        m_tracer.TraceInfo("Performing routine system backup - ");
+                        m_backupService.Backup(BackupMedia.Private, m_upstreamManagementService.GetSettings().LocalDeviceName);
+
+                        // Remove any unnecessary backups
+                        foreach (var backup in m_backupService.GetBackupDescriptors(BackupMedia.Private).OrderByDescending(o => o.Timestamp).Skip(m_maxBackups))
+                        {
+                            m_tracer.TraceInfo("Removing old backup {0}", backup);
+                            m_backupService.RemoveBackup(BackupMedia.Private, backup.Label);
+                        }
+
+                    }
+                    else
+                    {
+                        m_tracer.TraceInfo("Upstream Management Service Reports this device is not configured. Backups will not run until the device is configured.");
                     }
 
                     m_jobStateManager.SetState(this, JobStateType.Completed);
