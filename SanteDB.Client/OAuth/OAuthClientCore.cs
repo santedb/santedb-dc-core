@@ -262,7 +262,10 @@ namespace SanteDB.Client.OAuth
             TokenValidationParameters = TokenValidationParameters ?? new TokenValidationParameters();
 
             TokenValidationParameters.ValidIssuers = new[] { discoverydocument.Issuer };
-            TokenValidationParameters.ValidAudiences = new[] { ClientId };
+
+            if (null != ClientId)
+                TokenValidationParameters.ValidAudiences = new[] { ClientId };
+
             TokenValidationParameters.ValidateAudience = true;
             TokenValidationParameters.ValidateIssuer = true;
             TokenValidationParameters.ValidateIssuerSigningKey = true;
