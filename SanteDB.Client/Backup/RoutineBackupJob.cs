@@ -24,7 +24,6 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
