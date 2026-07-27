@@ -91,6 +91,7 @@ namespace SanteDB.Client.OAuth
                 {
                     Tracer.TraceInfo("Unable to retrieve token validation parameters from upstream service.");
                 }
+
                 ClientId = _RealmSettings.LocalClientName;
             }
             else

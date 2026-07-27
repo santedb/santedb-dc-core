@@ -16,40 +16,27 @@
  * the License.
  *
  */
-using DocumentFormat.OpenXml.Office2010.Excel;
-using Microsoft.IdentityModel.Abstractions;
 using SanteDB;
 using SanteDB.Client.Configuration.Upstream;
 using SanteDB.Client.Disconnected.Data.Synchronization;
-using SanteDB.Client.Http;
 using SanteDB.Client.Upstream.Security;
 using SanteDB.Core;
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Jobs;
-using SanteDB.Core.Matching;
 using SanteDB.Core.Model.AMI.Auth;
 using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Model.AMI.Security;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl.Repository;
-using SanteDB.Messaging.AMI.Client;
-using SanteDB.Persistence.Data.Services.Persistence.Acts;
-using SanteDB.Rest.OAuth.Configuration;
-using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Configuration;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Client.Disconnected.Jobs
 {
