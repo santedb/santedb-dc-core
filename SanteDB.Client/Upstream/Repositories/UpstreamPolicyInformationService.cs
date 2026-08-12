@@ -113,7 +113,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 if (securable == AuthenticationContext.SystemPrincipal)
                 {
                     return typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-                        .Select(o => new UpstreamPolicyInstance(securable, new SecurityPolicy(o.Name, (string)o.GetValue(null), false, false), PolicyGrantType.Grant))
+                        .Select(o => new UpstreamPolicyInstance(securable, new SecurityPolicy(o.Name, (string)o.GetValue(null), false, false, null), PolicyGrantType.Grant))
                         .ToArray();
                 }
 
@@ -200,7 +200,7 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     this.m_tracer.TraceWarning("Upstream is not conifgured - returning default list for policy check");
                     retVal = typeof(PermissionPolicyIdentifiers).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
-                            .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false, o.IsPublic))
+                            .Select(o => new GenericPolicy(Guid.Empty, (string)o.GetValue(null), o.Name, false, o.IsPublic, Guid.Empty))
                             .ToArray();
                 }
                 else
@@ -216,7 +216,7 @@ namespace SanteDB.Client.Upstream.Repositories
                             {
                                 offset = retVal.Length;
                                 serverResult = client.FindPolicy(o => o.ObsoletionTime == null && o.WithControl("_includeTotal", true) == null && o.WithControl("_offset", offset) == null);
-                                retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride, o.IsPublic))).ToArray();
+                                retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride, o.IsPublic, o.ClassConceptKey))).ToArray();
                             } while (retVal.Length < serverResult.Size);
                         }
                     }
@@ -315,6 +315,46 @@ namespace SanteDB.Client.Upstream.Repositories
             {
                 throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN, new { policyOids = policy.Oid }), e);
             }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IPolicy> GetPoliciesByClassification(Guid classificationKey)
+        {
+            var cacheKey = $"pip.pol.cls{classificationKey}";
+
+            if (!this.m_adhocCache.TryGet(cacheKey, out GenericPolicy[] retVal))
+            {
+                if (!this.IsUpstreamConfigured)
+                {
+                    this.m_tracer.TraceWarning("Upstream is not conifgured - returning default list for policy check");
+                    return new IPolicy[0];
+                }
+                else
+                {
+                    try
+                    {
+                        using (var client = this.CreateAmiServiceClient())
+                        {
+                            var offset = 0;
+                            AmiCollection serverResult = null;
+                            retVal = new GenericPolicy[0];
+                            do
+                            {
+                                offset = retVal.Length;
+                                serverResult = client.FindPolicy(o => o.ObsoletionTime == null && o.ClassConceptKey == classificationKey && o.WithControl("_includeTotal", true) == null && o.WithControl("_offset", offset) == null);
+                                retVal = retVal.Union(serverResult.CollectionItem.OfType<SecurityPolicy>().Select(o => new GenericPolicy(o.Key.Value, o.Oid, o.Name, o.CanOverride, o.IsPublic, o.ClassConceptKey))).ToArray();
+                            } while (retVal.Length < serverResult.Size);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        throw new UpstreamIntegrationException(this.m_localizationSerice.GetString(ErrorMessageStrings.SEC_POL_GEN), e);
+                    }
+                }
+                this.m_adhocCache.Add(cacheKey, retVal, CACHE_TIMEOUT);
+            }
+
+            return retVal;
         }
     }
 }
