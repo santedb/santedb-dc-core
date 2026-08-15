@@ -244,7 +244,7 @@ namespace SanteDB.Client.Disconnected.Jobs
                         {
                             if (null == _LocalPolicyInformationService.GetPolicy(policy?.Policy?.Oid))
                             {
-                                _LocalPolicyInformationService.CreatePolicy(new GenericPolicy(policy.Policy.Key.Value, policy.Policy.Oid, policy.Policy.Name, policy.Policy.CanOverride, policy.IsPublic), AuthenticationContext.SystemPrincipal);
+                                _LocalPolicyInformationService.CreatePolicy(new GenericPolicy(policy.Policy.Key.Value, policy.Policy.Oid, policy.Policy.Name, policy.Policy.CanOverride, policy.IsPublic, policy.Policy.ClassConceptKey), AuthenticationContext.SystemPrincipal);
                             }
 
                             _LocalPolicyInformationService.AddPolicies(role, policy.Grant, AuthenticationContext.SystemPrincipal, policy.Oid);
