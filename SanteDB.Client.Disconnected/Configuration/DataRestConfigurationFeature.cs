@@ -271,9 +271,9 @@ namespace SanteDB.Client.Disconnected.Configuration
         private void SetAleConfigurationSettings(SanteDBConfiguration configuration, OrmConfigurationBase configurationSection, JObject aleFieldSetting)
         {
             var certificate = configuration.ProtectedSectionKey ?? configuration.GetSection<SecurityConfigurationSection>().Signatures.Find(o => o.KeyName == "default");
-            if (aleFieldSetting?.Value<bool>(ALE_ENABLED_SETTING) == true && certificate != null)
+            if (aleFieldSetting?.Value<bool>(ALE_ENABLED_SETTING) == true && certificate != null && configurationSection is OrmAleConfigurationBase ormAleConfiguration)
             {
-                configurationSection.AleConfiguration = new OrmAleConfiguration()
+                ormAleConfiguration.AleConfiguration = new OrmAleConfiguration()
                 {
                     AleEnabled = true,
                     EnableFields = (aleFieldSetting?.GetValue(ALE_FIELDS_SETTING) as JArray).Select(o => new OrmFieldConfiguration()

@@ -179,6 +179,30 @@ namespace SanteDB.Client.Upstream.Security
             return retval;
         }
 
+        /// <inheritdoc/>
+        public IEnumerable<IPolicy> GetPoliciesByClassification(Guid classificationKey)
+        {
+
+            var retval = _localPolicyProvider?.LocalProvider?.GetPoliciesByClassification(classificationKey);
+
+            if (retval?.Any() != true && IsUpstreamAvailable(Core.Interop.ServiceEndpointType.AdministrationIntegrationService))
+            {
+                try
+                {
+                    retval = _upstreamPolicyProvider?.UpstreamProvider?.GetPoliciesByClassification(classificationKey);
+                    // Local policies are created via the security synchronization - this is not needed
+                    // _localPolicyProvider.LocalProvider.CreatePolicy(retval, AuthenticationContext.SystemPrincipal);
+                }
+                catch (UpstreamIntegrationException)
+                {
+                    _Tracer.TraceError("[LOCALIZE ME] Exception getting upstream policy for {0}", classificationKey);
+                    throw;
+                }
+            }
+
+            return retval;
+        }
+
         /// <inheritdoc />
         public IPolicy GetPolicy(string policyOid)
         {

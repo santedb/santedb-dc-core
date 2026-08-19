@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup Condition="'$(VersionNumber)' == ''">
-		<VersionNumber>3.0-debug</VersionNumber>
+		<VersionNumber>3.1-debug</VersionNumber>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -83,7 +83,7 @@
     <None Include="..\..\SanteDB.licenseheader" Link="SanteDB.licenseheader" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="[13.0.4,13.1)" />
+    <PackageReference Include="Newtonsoft.Json" Version="[13.0.4,14)" />
     <PackageReference Include="System.Text.Json" Version="[9.0.0,10)" />
   </ItemGroup>
   

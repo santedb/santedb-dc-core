@@ -16,6 +16,7 @@
  * the License.
  *
  */
+using SanteDB.Client.OAuth;
 using SanteDB.Core.Security.Claims;
 using System;
 using System.Collections;
@@ -66,5 +67,13 @@ namespace SanteDB.Client.Services
         /// <param name="userName">The name of the user which is being reset</param>
         /// <returns>The <see cref="IClaimsPrincipal"/> which was authenticated with the challenge key</returns>
         IClaimsPrincipal ChallengeAuthenticateUser(string userName, Guid challengeKey, string response, string clientId = null, string tfaSecret = null);
+
+        /// <summary>
+        /// Sign out the active session from an upstream provider.
+        /// </summary>
+        /// <param name="principal">The principal which should be signed out from the upstream provider.</param>
+        /// <exception cref="ArgumentException">The <paramref name="principal"/> was not the correct type for the client implementation.</exception>
+        /// <exception cref="NotSupportedException">The client implementation does not support signout.</exception>
+        void Signout(IClaimsPrincipal principal);
     }
 }

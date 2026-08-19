@@ -16,12 +16,9 @@
  * the License.
  *
  */
-using DocumentFormat.OpenXml.Wordprocessing;
-using SanteDB.Cdss.Xml.Model;
 using SanteDB.Client.Disconnected.Data.Synchronization;
 using SanteDB.Client.Http;
 using SanteDB.Core.Configuration;
-using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
@@ -30,15 +27,11 @@ using SanteDB.Core.Model.AMI.Collections;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
-using SanteDB.Matcher.Definition;
 using SanteDB.Messaging.AMI.Client;
 using SanteDB.Rest.OAuth.Configuration;
-using SharpCompress;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Client.Disconnected.Jobs
 {
