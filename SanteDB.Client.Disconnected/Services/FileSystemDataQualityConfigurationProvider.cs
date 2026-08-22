@@ -117,6 +117,7 @@ namespace SanteDB.Client.Disconnected.Services
         /// <inheritdoc/>
         public DataQualityRulesetConfiguration SaveRuleSet(DataQualityRulesetConfiguration configuration)
         {
+            this.m_rulesetLibrary.TryRemove(configuration.Id, out _);
             this.m_rulesetLibrary.TryAdd(configuration.Id, configuration);
             try
             {

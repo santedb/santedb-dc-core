@@ -103,7 +103,6 @@ namespace SanteDB.Client.Disconnected.Jobs
         /// <inheritdoc/>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
         {
-            { "resetCdss", typeof(Boolean) }
         };
 
         /// <inheritdoc/>
