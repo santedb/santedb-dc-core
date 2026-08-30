@@ -17,9 +17,11 @@
  *
  */
 using Hl7.Fhir.Specification.Terminology;
+using Microsoft.IdentityModel.Tokens;
 using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.Configuration.Supplement;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
@@ -37,12 +39,14 @@ namespace SanteDB.Client.Configuration
     /// A configuration manager which uses a temporary configuration in memory 
     /// via implementations of <see cref="IInitialConfigurationProvider"/>
     /// </summary>
-    public class InitialConfigurationManager : IConfigurationManager, IRequestRestarts, IRestoreBackupAssets
+    public class InitialConfigurationManager : IConfigurationManager, IRequestRestarts, IRestoreBackupAssets,
+        IConfigurationSupplementManager
     {
         private static readonly Guid CONFIGURATION_FILE_ASSET_ID = Guid.Parse("09379015-3823-40F1-B051-573E9009E849");
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(InitialConfigurationManager));
         private SanteDBConfiguration m_configuration;
         private readonly string m_localConfigurationPath;
+        private readonly ConfigurationSupplementCollection m_supplementCollection;
 
         /// <inheritdoc/>
         public event EventHandler RestartRequested;
@@ -64,6 +68,9 @@ namespace SanteDB.Client.Configuration
 
         /// <inheritdoc/>
         public Guid[] AssetClassIdentifiers => new[] { CONFIGURATION_FILE_ASSET_ID };
+
+        /// <inheritdoc/>
+        public IEnumerable<ConfigurationSupplement> Supplements => this.m_supplementCollection.SupplementalConfigurations;
 
         /// <summary>
         /// Initial configuration manager 
@@ -92,6 +99,7 @@ namespace SanteDB.Client.Configuration
             }
             this.m_configuration = configuration;
             this.m_localConfigurationPath = fileLocation;
+            this.m_supplementCollection = new ConfigurationSupplementCollection();
         }
 
         /// <inheritdoc/>
@@ -161,6 +169,14 @@ namespace SanteDB.Client.Configuration
                 this.m_configuration.Save(fs);
             }
 
+            // Supplements file?
+            if(this.m_supplementCollection.SupplementalConfigurations.Any())
+            {
+                using(var fs = File.Create(Path.ChangeExtension(this.m_localConfigurationPath, "supplement.config.xml")))
+                {
+                    this.m_supplementCollection.Save(fs);
+                }
+            }
             if (restart)
             {
                 this.RestartRequested?.Invoke(this, EventArgs.Empty);
@@ -201,6 +217,18 @@ namespace SanteDB.Client.Configuration
                 }
             }
             return false;
+        }
+
+        /// <inheritdoc/>
+        public void AddConfigurationSupplement(ConfigurationSupplement configurationSupplement)
+        {
+            this.m_supplementCollection.AddOrUpdate(configurationSupplement);
+        }
+
+        /// <inheritdoc/>
+        public void RemoveConfigurationSupplement(string supplementId)
+        {
+            this.m_supplementCollection.Remove(supplementId);
         }
     }
 }
