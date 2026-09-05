@@ -27,6 +27,7 @@ using SanteDB.Core.Services;
 using SanteDB.Matcher.Definition;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SanteDB.Client.Upstream.Matching
@@ -121,6 +122,21 @@ namespace SanteDB.Client.Upstream.Matching
             catch (Exception e)
             {
                 throw new UpstreamIntegrationException(this.m_localizationService.GetString(ErrorMessageStrings.UPSTREAM_WRITE_ERR, new { data = "MatchConfiguration" }), e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool TryLoadConfigurationFromStream(Stream configurationStream, out IRecordMatchingConfiguration configuration)
+        {
+            try
+            {
+                configuration = MatchConfiguration.Load(configurationStream);
+                return true;
+            }
+            catch
+            {
+                configuration = null;
+                return false;
             }
         }
     }
