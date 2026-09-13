@@ -43,6 +43,8 @@ using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Text;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace SanteDB.Client.Batteries.Services
 {
@@ -58,20 +60,26 @@ namespace SanteDB.Client.Batteries.Services
         private readonly ClientConfigurationSection m_clientConfiguration;
         protected readonly IUserInterfaceInteractionProvider p_userInterfaceInteractionProvider;
         private readonly IPlatformSecurityProvider m_platformSecurityProvider;
+        private readonly string m_appletContentDirectory;
         private AppletCollection m_appletCollection;
         private ReadonlyAppletCollection m_readonlyAppletCollection;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public ClientAppletManagerService(IConfigurationManager configurationManager, IAppletHostBridgeProvider bridgeProvider, IUserInterfaceInteractionProvider userInterfaceInteractionProvider, IPlatformSecurityProvider platformSecurityProvider)
+        public ClientAppletManagerService(
+            IConfigurationManager configurationManager, 
+            IUserInterfaceInteractionProvider userInterfaceInteractionProvider, 
+            IPlatformSecurityProvider platformSecurityProvider,
+            IAppletHostBridgeProvider bridgeProvider = null)
         {
             this.p_configuration = configurationManager.GetSection<AppletConfigurationSection>();
-            this.m_bridgeProvider = bridgeProvider;
+            this.m_bridgeProvider = bridgeProvider ?? (WebAppletHostBridgeProvider)typeof(WebAppletHostBridgeProvider).CreateInjected();
             this.m_securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
             this.m_clientConfiguration = configurationManager.GetSection<ClientConfigurationSection>();
             this.p_userInterfaceInteractionProvider = userInterfaceInteractionProvider;
             this.m_platformSecurityProvider = platformSecurityProvider;
+            this.m_appletContentDirectory = Path.Combine(this.p_configuration.AppletDirectory, ".installed");
         }
 
         /// <inheritdoc/>
@@ -147,14 +155,7 @@ namespace SanteDB.Client.Batteries.Services
                         {
 
                             var package = AppletPackage.Load(fs);
-#if !DEBUG
-                            // Re-validate the package from disk - since it might have been tampered with
-                            if (!package.VerifySignatures(this.p_configuration.AllowUnsignedApplets, this.m_platformSecurityProvider) && !this.p_userInterfaceInteractionProvider.Confirm($"Could not validate {package.Meta.GetName("en")} - it may not be from a trusted source. Install anyways?"))
-                            {
-                                throw new SecurityException($"{package.GetType().Name} {package.Meta.Id} failed validation");
-                            }
                             loadedManifest = package.Unpack();
-#endif 
                         }
                     }
                     catch (Exception ex)
@@ -258,12 +259,42 @@ namespace SanteDB.Client.Batteries.Services
         /// </summary>
         protected virtual AppletManifest SaveAppletPackageData(AppletPackage package)
         {
+            
+            var manifest = package.Unpack();
+
+            // When we install we want to strip any non widget/html/etc. asset out so they aren't loaded in memory
+            foreach(var itm in manifest.Assets.Where(o=>o.Content is byte[] || o.Content is AppletAssetCdata).Where(o=>o.MimeType != "text/javascript"))
+            {
+                var targetFile = this.GetAssetSourceFile(itm);
+                this.m_tracer.TraceVerbose("Saving package asset {0} to {1}", itm.FullPath, targetFile);
+                if(!Directory.Exists(Path.GetDirectoryName(targetFile)))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile));
+                }
+
+                switch(itm.Content)
+                {
+                    case AppletAssetCdata xcd:
+                        File.WriteAllText(targetFile, xcd.Value);
+                        break;
+                    case byte[] b:
+                        File.WriteAllBytes(targetFile, b);
+                        break;
+                    case String s:
+                        File.WriteAllText(targetFile, s);
+                        break;
+                }
+                itm.Content = null; // strip the content out of the package so we don't load it
+            }
+
             using (var pkgStream = File.Create(this.GetInstallationTargetFile(package.Meta.Id)))
             {
-                package.Save(pkgStream);
+                manifest.CreatePackage().Save(pkgStream);
             }
-            return package.Unpack();
+
+            return manifest;
         }
+
 
         /// <summary>
         /// Get the installation target file
@@ -286,6 +317,11 @@ namespace SanteDB.Client.Batteries.Services
 
             return Path.Combine(appletDir, $"{appletId}.pak");
         }
+
+        /// <summary>
+        /// Get the asset source file
+        /// </summary>
+        private string GetAssetSourceFile(AppletAsset appletAsset) => Path.Combine(this.m_appletContentDirectory, appletAsset.FullPath.Substring(1).Replace('/', Path.DirectorySeparatorChar));
 
         /// <inheritdoc/>
         public bool LoadApplet(AppletManifest applet)
@@ -323,8 +359,22 @@ namespace SanteDB.Client.Batteries.Services
                 script += this.m_bridgeProvider.GetBridgeScript();
                 return script;
             }
-
-            return navigateAsset.Content;
+            else if (navigateAsset.Content == null)
+            {
+                var assetFile = this.GetAssetSourceFile(navigateAsset);
+                if(File.Exists(assetFile))
+                {
+                    return File.ReadAllBytes(assetFile);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return navigateAsset.Content;
+            }
         }
 
         /// <inheritdoc/>
