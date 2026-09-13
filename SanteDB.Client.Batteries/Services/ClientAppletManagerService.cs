@@ -348,6 +348,9 @@ namespace SanteDB.Client.Batteries.Services
                 string script = String.Empty;
                 switch (navigateAsset.Content)
                 {
+                    case AppletAssetCdata cd:
+                        script = cd.Value;
+                        break;
                     case String str:
                         script = str;
                         break;
