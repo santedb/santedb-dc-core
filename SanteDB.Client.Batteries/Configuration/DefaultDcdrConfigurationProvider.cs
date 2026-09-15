@@ -275,9 +275,8 @@ namespace SanteDB.Client.Batteries.Configuration
                     // Audit any failure - No matter which event
                     new AuditFilterConfiguration(null, null, OutcomeIndicator.EpicFail | OutcomeIndicator.MinorFail | OutcomeIndicator.SeriousFail, null, true, true),
                     // Audit anything that creates, reads, or updates data
-                    new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, Core.Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation, true, true) { },
-                    new AuditFilterConfiguration(ActionType.Create | ActionType.Update | ActionType.Delete, null, null, Core.Model.Attributes.ResourceSensitivityClassification.Administrative | Core.Model.Attributes.ResourceSensitivityClassification.Metadata, true, false) {  },
-                    new AuditFilterConfiguration(ActionType.Read | ActionType.Execute, null, OutcomeIndicator.Success, Core.Model.Attributes.ResourceSensitivityClassification.Administrative | Core.Model.Attributes.ResourceSensitivityClassification.Metadata, false, false) {  },
+                    new AuditFilterConfiguration(ActionType.Execute | ActionType.Read, null, null, Core.Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation, true, true) { },
+                    new AuditFilterConfiguration(ActionType.Create | ActionType.Update | ActionType.Delete, null, null, null, true, false) {  },
                     // Audit any break the glass execution
                     new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.EmergencyOverrideStarted, null, null, true, true),
                     new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, Core.Model.Attributes.ResourceSensitivityClassification.Administrative, false, false)
