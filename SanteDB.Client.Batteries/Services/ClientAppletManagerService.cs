@@ -17,6 +17,7 @@
  *
  */
 using Acornima.Ast;
+using Org.BouncyCastle.Crypto.Agreement.JPake;
 using SanteDB.Client.Configuration;
 using SanteDB.Client.Services;
 using SanteDB.Client.UserInterface;
@@ -259,20 +260,36 @@ namespace SanteDB.Client.Batteries.Services
         /// </summary>
         protected virtual AppletManifest SaveAppletPackageData(AppletPackage package)
         {
-            
+
+            this.m_tracer.TraceVerbose("Unpacking applet manifest from package {0}", package.Meta.Id);
             var manifest = package.Unpack();
+            this.ExtractManifestStaticFiles(manifest);
+
+            using (var pkgStream = File.Create(this.GetInstallationTargetFile(package.Meta.Id)))
+            {
+                manifest.CreatePackage().Save(pkgStream);
+            }
+
+            return manifest;
+        }
+
+        /// <summary>
+        /// Extract manifest static files
+        /// </summary>
+        protected void ExtractManifestStaticFiles(AppletManifest manifest)
+        {
 
             // When we install we want to strip any non widget/html/etc. asset out so they aren't loaded in memory
-            foreach(var itm in manifest.Assets.Where(o=>o.Content is byte[] || o.Content is AppletAssetCdata).Where(o=>o.MimeType != "text/javascript"))
+            foreach (var itm in manifest.Assets.Where(o => o.Content is byte[] || o.Content is AppletAssetCdata || o.Content is String).Where(o => o.MimeType != "text/javascript"))
             {
                 var targetFile = this.GetAssetSourceFile(itm);
                 this.m_tracer.TraceVerbose("Saving package asset {0} to {1}", itm.FullPath, targetFile);
-                if(!Directory.Exists(Path.GetDirectoryName(targetFile)))
+                if (!Directory.Exists(Path.GetDirectoryName(targetFile)))
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(targetFile));
                 }
 
-                switch(itm.Content)
+                switch (itm.Content)
                 {
                     case AppletAssetCdata xcd:
                         File.WriteAllText(targetFile, xcd.Value);
@@ -286,13 +303,6 @@ namespace SanteDB.Client.Batteries.Services
                 }
                 itm.Content = null; // strip the content out of the package so we don't load it
             }
-
-            using (var pkgStream = File.Create(this.GetInstallationTargetFile(package.Meta.Id)))
-            {
-                manifest.CreatePackage().Save(pkgStream);
-            }
-
-            return manifest;
         }
 
 
