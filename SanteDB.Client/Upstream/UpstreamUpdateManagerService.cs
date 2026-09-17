@@ -187,7 +187,7 @@ namespace SanteDB.Client.Upstream
                         this.m_tracer.TraceInfo("Updating {0}...", packageId);
                         restClient.ProgressChanged += (o, e) =>
                         {
-                            this.m_userInterfaceService.SetStatus("Update Manager", String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
+                            this.m_userInterfaceService.SetStatus(null, String.Format(UserMessages.DOWNLOADING, packageId), e.Progress);
                             this.ProgressChanged?.Invoke(o, e);
                         };
 
