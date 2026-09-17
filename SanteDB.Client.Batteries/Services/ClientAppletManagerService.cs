@@ -265,26 +265,34 @@ namespace SanteDB.Client.Batteries.Services
             // When we install we want to strip any non widget/html/etc. asset out so they aren't loaded in memory
             foreach(var itm in manifest.Assets.Where(o=>o.Content is byte[] || o.Content is AppletAssetCdata).Where(o=>o.MimeType != "text/javascript"))
             {
-                var targetFile = this.GetAssetSourceFile(itm);
-                this.m_tracer.TraceVerbose("Saving package asset {0} to {1}", itm.FullPath, targetFile);
-                if(!Directory.Exists(Path.GetDirectoryName(targetFile)))
+                try
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile));
-                }
+                    var targetFile = this.GetAssetSourceFile(itm);
+                    this.m_tracer.TraceVerbose("Saving package asset {0} to {1}", itm.FullPath, targetFile);
+                    if (!Directory.Exists(Path.GetDirectoryName(targetFile)))
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetFile));
+                    }
 
-                switch(itm.Content)
-                {
-                    case AppletAssetCdata xcd:
-                        File.WriteAllText(targetFile, xcd.Value);
-                        break;
-                    case byte[] b:
-                        File.WriteAllBytes(targetFile, b);
-                        break;
-                    case String s:
-                        File.WriteAllText(targetFile, s);
-                        break;
+                    switch (itm.Content)
+                    {
+                        case AppletAssetCdata xcd:
+                            File.WriteAllText(targetFile, xcd.Value);
+                            break;
+                        case byte[] b:
+                            File.WriteAllBytes(targetFile, b);
+                            break;
+                        case String s:
+                            File.WriteAllText(targetFile, s);
+                            break;
+                    }
+                    itm.Content = null; // strip the content out of the package so we don't load it
                 }
-                itm.Content = null; // strip the content out of the package so we don't load it
+                catch(Exception ex)
+                {
+                    this.m_tracer.TraceWarning("Could not optimize storage of {0}- {1}", itm.Name, ex.ToHumanReadableString());
+                    continue;
+                }
             }
 
             using (var pkgStream = File.Create(this.GetInstallationTargetFile(package.Meta.Id)))
