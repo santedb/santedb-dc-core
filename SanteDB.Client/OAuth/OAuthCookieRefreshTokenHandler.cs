@@ -94,9 +94,9 @@ namespace SanteDB.Client.OAuth
             }
             catch (SecuritySessionException ex)
             {
-                _Tracer.TraceInfo("Failed to initialize session from refresh cookie: {0}", ex.ToString());
-                context.ErrorType = OAuthErrorType.invalid_grant;
-                context.ErrorMessage = "invalid cookie";
+                _Tracer.TraceInfo("Failed to initialize session from refresh cookie: {0}", ex.ToString()); //TODO: We should log not return the error message here.
+                context.ErrorType = OAuthErrorType.unspecified_error;
+                context.ErrorMessage = "internal error";
                 return false;
             }
         }
