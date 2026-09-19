@@ -176,9 +176,7 @@ namespace SanteDB.Client.Rest
             {
                 new RestEndpointBehaviorConfiguration(typeof(AcceptLanguageEndpointBehavior)),
                 new RestEndpointBehaviorConfiguration(typeof(MessageDispatchFormatterBehavior)),
-#if DEBUG
                 new RestEndpointBehaviorConfiguration(typeof(MessageLoggingEndpointBehavior)),
-#endif
                 new RestEndpointBehaviorConfiguration(typeof(MessageCompressionEndpointBehavior)),
                 new RestEndpointBehaviorConfiguration(typeof(ServerMetadataServiceBehavior)),
                 new RestEndpointBehaviorConfiguration(typeof(SecurityPolicyHeadersBehavior))
