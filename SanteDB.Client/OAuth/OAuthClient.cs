@@ -82,6 +82,9 @@ namespace SanteDB.Client.OAuth
         {
             if (null != _RealmSettings) // This may be called before the UpstreamManagementService is fully configured - i.e. is configuring
             {
+
+                ClientId = _RealmSettings.LocalClientName;
+
                 base.SetTokenValidationParameters();
                 if (null != TokenValidationParameters)
                 {
@@ -92,7 +95,6 @@ namespace SanteDB.Client.OAuth
                     Tracer.TraceInfo("Unable to retrieve token validation parameters from upstream service.");
                 }
 
-                ClientId = _RealmSettings.LocalClientName;
             }
             else
             {
