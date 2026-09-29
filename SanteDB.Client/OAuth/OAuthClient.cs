@@ -123,7 +123,7 @@ namespace SanteDB.Client.OAuth
             catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
             {
                 Tracer.TraceError("Exception removing upstream realm settings: {0}", ex);
-                _RealmSettings = null;
+                throw new InvalidOperationException(ErrorMessages.UPSTREAM_NOT_CONFIGURED, ex);
             }
         }
 
