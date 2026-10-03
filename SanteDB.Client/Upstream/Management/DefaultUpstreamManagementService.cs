@@ -284,11 +284,11 @@ namespace SanteDB.Client.Upstream.Management
                     }
                     else
                     {
-                            upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
-                            {
-                                DeviceSecret = deviceCredential.CredentialSecret,
-                                Name = deviceCredential.CredentialName
-                            }))?.Entity;
+                        upstreamDevice = amiClient.CreateDevice(new SecurityDeviceInfo(new Core.Model.Security.SecurityDevice()
+                        {
+                            DeviceSecret = deviceCredential.CredentialSecret,
+                            Name = deviceCredential.CredentialName
+                        }))?.Entity;
                         this.m_tracer.TraceInfo("Registering new device {0}...", upstreamDevice.Name);
                         audit.WithSystemObjects(AuditableObjectRole.SecurityUser, AuditableObjectLifecycle.Amendment, upstreamDevice);
                     }
@@ -468,11 +468,9 @@ namespace SanteDB.Client.Upstream.Management
                         this.m_securityConfiguration.Signatures.Add(new SecuritySignatureConfiguration("jwsdefault", StoreLocation.CurrentUser, StoreName.My, signingCertificate));
                     }
                 }
-                
 
-
-                    // Now we want to save the configuration
-                    this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
+                // Now we want to save the configuration
+                this.m_configuration.Realm = new UpstreamRealmConfiguration(targetRealm);
                 this.RealmChanged?.Invoke(this, new UpstreamRealmChangedEventArgs(targetRealm));
                 this.m_upstreamSettings = new ConfiguredUpstreamRealmSettings(this.m_configuration);
                 audit.WithOutcome(Core.Model.Audit.OutcomeIndicator.Success);
@@ -544,7 +542,8 @@ namespace SanteDB.Client.Upstream.Management
                         CompressRequests = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.Compression)
                     },
                     Accept = endpoint.Capabilities.HasFlag(ServiceEndpointCapabilities.InternalApi) ? "application/xml" : "application/json",
-                    Endpoint = endpoint.BaseUrl.Select(o => {
+                    Endpoint = endpoint.BaseUrl.Select(o =>
+                    {
                         var retVal = new RestClientEndpointConfiguration(o, new TimeSpan(0, 1, 0));
                         var amiUrl = new Uri(o);
                         var requestedRealm = $"{targetRealm.Realm.Scheme}://{targetRealm.Realm.Host}:{targetRealm.Realm.Port}";
@@ -555,7 +554,7 @@ namespace SanteDB.Client.Upstream.Management
                             {
                                 this.m_rewriteUrls = this.m_userInterfaceInteraction.Confirm(String.Format(UserMessages.CONFIRM_REALM_URL_OVERRIDE, requestedRealm, amiRealm));
                             }
-                            if(this.m_rewriteUrls.GetValueOrDefault())
+                            if (this.m_rewriteUrls.GetValueOrDefault())
                             {
                                 retVal.Address = $"{requestedRealm}/{amiUrl.LocalPath}";
                                 // HACK: Also override the hairpining for the data

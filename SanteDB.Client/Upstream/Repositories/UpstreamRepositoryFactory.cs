@@ -156,7 +156,11 @@ namespace SanteDB.Client.Upstream.Repositories
                 {
                     storageType = typeof(HdsiUpstreamRepository<>).MakeGenericType(storageType);
                 }
-                    serviceInstance = this.m_serviceManager.CreateInjected(storageType);
+                else {
+                    serviceInstance = null;
+                    return false;
+                }
+                serviceInstance = this.m_serviceManager.CreateInjected(storageType);
                 return true;
             }
             serviceInstance = null;
