@@ -115,8 +115,14 @@ __SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function (c
 
                 var cameraDivNode = document.createElement("div");
                 cameraDivNode.id = "cameraDiv";
-                cameraDivNode.style = "margin: auto; width: 650px; height:700px;";
-                cameraDivNode.innerHTML = "<div id='reader' style='width:600px; height:450px; margin:auto'></div><div class='text-muted m-auto d-block text-center' id='qrmessage'></div>";
+
+                var width = window.innerWidth - 100;
+                if (width > 550) {
+                    width = 650;
+                }
+                var height = width / 1.33;
+                cameraDivNode.style = `margin: auto; width: ${width + 100}px; height: ${height + 200}px;`;
+                cameraDivNode.innerHTML = `<div id='reader' style='width:${width}px; height:${height}px; margin:auto'></div><div class='text-muted m-auto d-block text-center' id='qrmessage'></div>`;
                 overlayDivNode.appendChild(cameraDivNode);
 
                 var cameraSelectorNode = document.createElement("select");
