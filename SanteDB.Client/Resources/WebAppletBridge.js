@@ -96,34 +96,83 @@ __SanteDBAppService.IsClinicalAvailable = __SanteDBAppService.IsClinicalAvailabl
     else return false;
 }
 
-__SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function () {
-    return new Promise(function (fulfill, reject) {
-        Html5Qrcode.getCameras().then(devices => {
-            if (devices && devices.length) {
-                var cameraId = devices[0].id;
+__SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function (cameraId) {
+
+    if (cameraId === undefined) {
+        cameraId = 0;
+    }
+
+    return new Promise(async function (fulfill, reject) {
+        // Build the user interface
+        try {
+            const devices = await Html5Qrcode.getCameras();
+            if (devices && (devices.length || cameraId > devices.length)) {
+
+                // Construct the user interface
+                var overlayDivNode = document.createElement("div");
+                overlayDivNode.id = "overlayDiv";
+                overlayDivNode.style = "position:absolute; top:0px; left:0px; width: 100%; height: 100vh; z-index: 9000; background-color:#fff";
 
                 var cameraDivNode = document.createElement("div");
                 cameraDivNode.id = "cameraDiv";
-                cameraDivNode.style = "position:absolute; top:0px; left:0px; width: 100%; height: 100vh; z-index: 9000; background-color:#fff";
-                cameraDivNode.innerHTML = "<div id='reader' style='width:600px; height:450px; margin:auto'></div><div class='text-muted m-auto d-block text-center' id='qrmessage'></div>";
+
+                var width = window.innerWidth - 100;
+                if (width > 550) {
+                    width = 650;
+                }
+                var height = width / 1.33;
+                cameraDivNode.style = `margin: auto; width: ${width + 100}px; height: ${height + 200}px;`;
+                cameraDivNode.innerHTML = `<div id='reader' style='width:${width}px; height:${height}px; margin:auto'></div><div class='text-muted m-auto d-block text-center' id='qrmessage'></div>`;
+                overlayDivNode.appendChild(cameraDivNode);
+
+                var cameraSelectorNode = document.createElement("select");
+                cameraSelectorNode.id = "camSelector";
+                cameraSelectorNode.className = "form-control";
+                cameraDivNode.appendChild(cameraSelectorNode);
+
+                devices.forEach((dev, i) => {
+                    var optionNode = document.createElement("option");
+                    optionNode.setAttribute("value", i);
+                    optionNode.innerText = dev.label;
+                    cameraSelectorNode.appendChild(optionNode);
+                });
+                cameraSelectorNode.value = cameraId;
 
                 var closeButton = document.createElement("button");
                 closeButton.classList = "btn btn-danger d-block m-auto";
-                closeButton.onclick = function () {
-                    html5QrCode.stop().then(function () {
-                        document.body.removeChild(cameraDivNode);
-                        reject(null);
-                    });
-                }
                 closeButton.innerHTML = "<i class='fas fa-times'></i> Close";
                 cameraDivNode.appendChild(closeButton);
-                document.body.appendChild(cameraDivNode);
+                document.body.appendChild(overlayDivNode);
+                // End construction of user interface
 
                 const html5QrCode = new Html5Qrcode("reader");
+                const closeCamera = async function (shouldReject) {
+                    try {
+                        await html5QrCode.stop();
+                    }
+                    finally {
+                        document.body.removeChild(overlayDivNode);
+                    }
+                };
+                cameraSelectorNode.onchange = async function () {
+                    await closeCamera();
+                    try {
+                        var result = await __SanteDBAppService.BarcodeScan(cameraSelectorNode.value);
+                        fulfill(result);
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
+                };
+                closeButton.onclick = async function () {
+                    await closeCamera();
+                    reject(null);
+                }
+
                 html5QrCode.start(
-                    cameraId, // retreived in the previous step.
+                    devices[cameraId].id, // retreived in the previous step.
                     {
-                        fps: 5,   
+                        fps: 5,
                         qrbox: 400,
                         aspectRatio: 1.33
                     },
@@ -133,7 +182,7 @@ __SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function ()
 
                         // QR Code scanning is stopped.
                         fulfill(qrCodeMessage);
-                        document.body.removeChild(cameraDivNode);
+                        document.body.removeChild(overlayDivNode);
 
                         html5QrCode.stop().then(function (ignoreMe) {
                         }).catch(err => {
@@ -146,10 +195,16 @@ __SanteDBAppService.BarcodeScan = __SanteDBAppService.BarcodeScan || function ()
                         reject(err);
                     });
             }
-        }).catch(function (err) {
-            reject(err);
-        });
+            else {
+                reject(null);
+            }
+        }
+        catch (e) {
+            reject(e);
+        }
     });
+
+
 }
 
 __SanteDBAppService.Close = __SanteDBAppService.Close || function () {
