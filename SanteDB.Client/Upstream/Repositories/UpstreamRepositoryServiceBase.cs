@@ -48,6 +48,8 @@ namespace SanteDB.Client.Upstream.Repositories
         private readonly ILocalizationService m_localeService;
         private readonly IAdhocCacheService m_adhocCache;
 
+        private readonly TimeSpan MAX_CACHE_AGE = new TimeSpan(0, 0, 10);
+
         /// <summary>
         /// Gets the localization service
         /// </summary>
@@ -150,7 +152,7 @@ namespace SanteDB.Client.Upstream.Repositories
                         {
                             client.Requesting += (o, e) => e.AdditionalHeaders.Add("If-None-Match", $"{tm.Tag}");
                             existing = this.MapFromWire(client.Get<TWireFormat>($"{this.GetResourceName()}/{key}")) ?? existing;
-                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, new TimeSpan(0, 2, 00));
+                            this.m_adhocCache.Add(lastCheckKey, DateTime.Now, MAX_CACHE_AGE);
                         }
                     }
                     else if (versionKey == Guid.Empty)
